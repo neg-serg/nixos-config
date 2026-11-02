@@ -240,47 +240,47 @@ instantiation in the same process wrote the file), and `structuredAttrs` keying 
 
 Three techniques, ranked by confidence per hour, each with prior art rather than our invention:
 
-| Technique | Effort | Evidence it is real practice |
-| --- | --- | --- |
-| **one-field mutation corpus** — mutate each masked-derivation field in isolation and require the key to change (or the derivation to be provably identical) | ~1 day | ccache's suite re-runs after every single-input edit and asserts `cache_miss 1` |
-| **differential validation** — a `--no-memo` switch, corpus run twice, diff the drv JSON and the store path | 2–4 h | ccache compiles a reference object outside the cache and compares; Nix itself ships `--no-eval-cache`; sccache ships `SCCACHE_RECACHE` |
-| **key-coverage assertion** — hash through a wrapper that records visited fields and aborts if any are unvisited | ~half day | inference, nearest analogue is ccache's `cache-debug` dump of exactly what was hashed |
+| Technique                                                                                                                                                   | Effort    | Evidence it is real practice                                                                                                           |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **one-field mutation corpus** — mutate each masked-derivation field in isolation and require the key to change (or the derivation to be provably identical) | ~1 day    | ccache's suite re-runs after every single-input edit and asserts `cache_miss 1`                                                        |
+| **differential validation** — a `--no-memo` switch, corpus run twice, diff the drv JSON and the store path                                                  | 2–4 h     | ccache compiles a reference object outside the cache and compares; Nix itself ships `--no-eval-cache`; sccache ships `SCCACHE_RECACHE` |
+| **key-coverage assertion** — hash through a wrapper that records visited fields and aborts if any are unvisited                                             | ~half day | inference, nearest analogue is ccache's `cache-debug` dump of exactly what was hashed                                                  |
 
-The failure stories that justify the paranoia: [bazelbuild/bazel#4558](https://github.com/bazelbuild/bazel/issues/4558),
-"remote/correctness: Bazel doesn't track system libraries" — still open, and the cleanest statement of
-the class (an input that affects the output but not the key); sccache documents cases where it
-"silently produce[s] stale results"; ccache's direct mode misses new header files in rare cases, and
-its `hash_dir` section records a wrong-object bug fixed by adding the missing field to the key —
-exactly our class.
+The failure stories that justify the paranoia:
+[bazelbuild/bazel#4558](https://github.com/bazelbuild/bazel/issues/4558), "remote/correctness: Bazel
+doesn't track system libraries" — still open, and the cleanest statement of the class (an input that
+affects the output but not the key); sccache documents cases where it "silently produce[s] stale
+results"; ccache's direct mode misses new header files in rare cases, and its `hash_dir` section
+records a wrong-object bug fixed by adding the missing field to the key — exactly our class.
 
 **Citation note (2026-11-03).** `bazel.build` is unreachable from this host's sandbox and the first
 version of this section quoted an `--action_env` whitelist sentence that could not be re-verified
 afterwards: `site/en/remote/caching.md` at tag 9.0.0 does not contain it, and the attempt to fetch
-`site/en/configure/environment.md` timed out. The claim is therefore dropped rather than repeated; what
-is verified is the issue title and state above (fetched through the GitHub API) and the sccache/ccache
-statements, which come from files in their own repositories. Quoting a doc one could not re-read is the
-failure this plan is supposed to prevent.
+`site/en/configure/environment.md` timed out. The claim is therefore dropped rather than repeated;
+what is verified is the issue title and state above (fetched through the GitHub API) and the
+sccache/ccache statements, which come from files in their own repositories. Quoting a doc one could
+not re-read is the failure this plan is supposed to prevent.
 
-One finding directly relevant to our own gate: Nix's eval cache ignores files that are not in the git
-index ([NixOS/nix#12102](https://github.com/NixOS/nix/pull/12102)) — the same trap our tier-B key was
-built to avoid by hashing untracked content explicitly.
+One finding directly relevant to our own gate: Nix's eval cache ignores files that are not in the
+git index ([NixOS/nix#12102](https://github.com/NixOS/nix/pull/12102)) — the same trap our tier-B
+key was built to avoid by hashing untracked content explicitly.
 
 Residual risk that no technique removes: all of them cover only *enumerable* fields, so a new
 `Derivation` field stays invisible until a human adds it. This buys review discipline, not proof.
 
 ### What Nix's own suite can and cannot catch (read from the pinned 2.35.3 sources)
 
-| Layer | Size | What it asserts |
-| --- | --- | --- |
-| unit (`src/lib*-tests`, gtest) | 47+43+20+8+3 files | C++ object equality. The **only** `drvPath` assertion is `nix_api_expr.cc:112-125`, and it checks a name suffix plus `isValidPath` — a wrong-but-self-consistent path passes |
-| lang golden (`tests/functional/lang.sh`) | 468 cases, 6.7 s with our binary | exact values, and because it runs under `NIX_REMOTE=dummy://` with `NIX_STORE_DIR=/nix/store`, **store paths are deterministic and assertable as literals** (`lang/eval-okay-derivation-legacy.exp`) |
-| shell functional | 155 scripts, 193 cases | mostly run-and-grep; real equality only where a test compares two derivations (`impure-derivations.sh:16-19`) |
-| eval-cache (`tests/functional/flakes/eval-cache.sh:41-50`) | — | only that errors and stack overflows are *not* cached; never cached-vs-recomputed, so it cannot catch a bad memo key |
-| fuzzing | **none** (no libFuzzer/AFL, no fuzz dir) | RapidCheck properties only (`libexpr-tests/value/context.cc:123`, `derived-path.cc`) |
-| sanitizers | packaging has `withASan`/`withUBSan`/`withTSan` (`packaging/components.nix:219-240,305-325`); CI runs ASan+UBSan with GC off (`ci/gha/tests/default.nix:9-57`) | TSan is packaged but unused — the gap that matters if the maps ever go concurrent |
+| Layer                                                      | Size                                                                                                                                                           | What it asserts                                                                                                                                                                                      |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| unit (`src/lib*-tests`, gtest)                             | 47+43+20+8+3 files                                                                                                                                             | C++ object equality. The **only** `drvPath` assertion is `nix_api_expr.cc:112-125`, and it checks a name suffix plus `isValidPath` — a wrong-but-self-consistent path passes                         |
+| lang golden (`tests/functional/lang.sh`)                   | 468 cases, 6.7 s with our binary                                                                                                                               | exact values, and because it runs under `NIX_REMOTE=dummy://` with `NIX_STORE_DIR=/nix/store`, **store paths are deterministic and assertable as literals** (`lang/eval-okay-derivation-legacy.exp`) |
+| shell functional                                           | 155 scripts, 193 cases                                                                                                                                         | mostly run-and-grep; real equality only where a test compares two derivations (`impure-derivations.sh:16-19`)                                                                                        |
+| eval-cache (`tests/functional/flakes/eval-cache.sh:41-50`) | —                                                                                                                                                              | only that errors and stack overflows are *not* cached; never cached-vs-recomputed, so it cannot catch a bad memo key                                                                                 |
+| fuzzing                                                    | **none** (no libFuzzer/AFL, no fuzz dir)                                                                                                                       | RapidCheck properties only (`libexpr-tests/value/context.cc:123`, `derived-path.cc`)                                                                                                                 |
+| sanitizers                                                 | packaging has `withASan`/`withUBSan`/`withTSan` (`packaging/components.nix:219-240,305-325`); CI runs ASan+UBSan with GC off (`ci/gha/tests/default.nix:9-57`) | TSan is packaged but unused — the gap that matters if the maps ever go concurrent                                                                                                                    |
 
-Three gaps follow, each closable in a few lines: no `drvPath` literal for `derivationStrict`; the eval
-cache is never diffed against a recomputation; and there is no memo-on/off A/B anywhere.
+Three gaps follow, each closable in a few lines: no `drvPath` literal for `derivationStrict`; the
+eval cache is never diffed against a recomputation; and there is no memo-on/off A/B anywhere.
 
 ### The three tests that would catch a bad key, cheapest first
 
