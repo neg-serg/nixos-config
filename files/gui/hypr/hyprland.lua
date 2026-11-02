@@ -552,23 +552,22 @@ hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Ob
 -- desktop, and ddcutil over the monitor's DDC hangs even in `detect` here —
 -- decide on that separately.
 --
--- The Genelec keys drive the same state machine the bar's tile does, through the
--- only thing that knows both transports: the plugin's logic probes where the
--- adapter is, coalesces a burst of notches and re-anchors the CC20. A shell
--- one-liner kept getting that wrong — on the VM path `genlc-media` moved the
--- state file and sent nothing at all, because the file it wrote was watched by
--- Quickshell, and Quickshell is gone (2026-10-25: the knob turned, the monitors
--- did not). Next/Prev still go through the script; it sends on both paths now.
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("genlc-media up"), { repeating = true, locked = true })
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("genlc-media down"), { repeating = true, locked = true })
--- A plugin's events belong to its scene's logic and reach nothing from the socket or from the
--- scene's own logic, so a `pleamar --say bar "emit Genelec.turn 1"` was accepted (rc=0) and heard
--- by nobody: the volume keys did nothing. `genlc-media` is the knob's own path — it steps the
--- state file and sends to GLM on both transports (host: `genlc set-volume`, VM: CC20 over the
--- relay), and the plugin's level watch picks the new number up for the tile.
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("genlc-media up"), { repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("genlc-media down"), { repeating = true })
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("genlc-media mute"), { repeating = true })
+-- --
+-- The Genelec keys drive the same state machine the bar's tile does: the plugin's logic
+-- probes where the adapter is, coalesces a burst of notches and commits through the transport
+-- that is live (`glm5ctl` when the daemon owns the adapter, `genlc` on the host, CC20 over the
+-- relay in the VM). `genlc-media` was that path before the daemon existed; it writes the legacy
+-- state file and sends through genlc/MIDI on its own, and with `glm5d` owning the adapter both
+-- of those collide (2026-11-02: the wheel turned, the monitors did not). `pleamar --say bar
+-- "emit Genelec.turn 1"` reaches the plugin's own handler — measured here, -50 -> -49 -> -50.
+-- Keys the wheel sends as Next/Prev are the same volume steps, not track skips, as before.
+local GENELEC_UP = 'timeout 3 pleamar --say bar "emit Genelec.turn 1"'
+local GENELEC_DOWN = 'timeout 3 pleamar --say bar "emit Genelec.turn -1"'
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd(GENELEC_UP), { repeating = true, locked = true })
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd(GENELEC_DOWN), { repeating = true, locked = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(GENELEC_UP), { repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(GENELEC_DOWN), { repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit Genelec.toggle"'), { repeating = true })
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { repeating = true })
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("swayosd-client --brightness +10"), { repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("swayosd-client --brightness -10"), { repeating = true })
