@@ -264,11 +264,9 @@ scene bar {
     // a tooltip nobody reads.
     prop tip.x = 960 ~calm
     follow tip.x = cursor.x
-    // The tray's menu, open on the item `tray_index` names: the logic sets both when the
-    // right button lands on an icon, and a press anywhere closes it (this scene's own
-    // catcher, below).
+    // The tray's menu, open on the item `text tray_key` names: the logic sets it when the right
+    // button lands on an icon, and a press anywhere closes it (this scene's own catcher, below).
     fact tray_open = false
-    fact tray_index = 0
     // The tray's own state, and the only part of it the scene can decide for itself: whether the
     // icons are there at all. QS keeps it as `expanded` (`Bar/Modules/SystemTray.qml:76`, drawn by
     // `inlineBox.visible: expanded`) and moves it from four timers that live in
@@ -708,7 +706,12 @@ scene bar {
                     // A separator is a hairline, not a button: the row's zone is not drawn for it,
                     // so it is neither described as a pressable line nor wired to `tray.menu_click`
                     // with a dbusmenu separator's id.
-                    zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button; show: not m.sep }
+                    // `agent: no`: this is another application's own menu, and §8.1 puts every row
+                    // that "closes a window or application" (Quit, Log out, Disconnect) behind that
+                    // flag — a hand may still press them, an agent may not. Nothing about a
+                    // dbusmenu row says whether it is destructive, so the whole menu is closed to
+                    // agents instead of guessed row by row.
+                    zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button; agent: no; show: not m.sep }
                     on enter hit { tm.hot = m.index + 1 }
                     on press hit { emit tray_click(m.index + 1) }
                 }
