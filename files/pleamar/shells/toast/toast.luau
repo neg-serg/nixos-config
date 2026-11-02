@@ -42,6 +42,11 @@ local raw = {}
 local function read_file()
     local ok, got = pcall(function() return sys.ask("files.read", FILE, "json") end)
     if ok and type(got) == "table" then return got end
+    -- A missing file is the first run; one that is there and unreadable is a defect (§6.1).
+    if not ok then
+        local ok_ex, there = pcall(function() return sys.ask("files.exists", FILE) end)
+        if ok_ex and there == true then log("toast: settings.json is broken; defaults kept") end
+    end
     return {}
 end
 
@@ -62,20 +67,28 @@ sys.watch("files:" .. FILE, function()
 end)
 
 -- ------***------------------------- where the event is
-local HOME = "/tmp"
+local HOME = nil
 local CACHE = nil
 
 local ok_home, home = pcall(function() return sys.ask("env", "HOME") end)
 if ok_home and type(home) == "string" and home ~= "" then HOME = home end
 -- A trailing slash would turn "~" .. rest into "~rest".
-if HOME:sub(-1) == "/" then HOME = HOME:sub(1, -2) end
+if HOME and HOME:sub(-1) == "/" then HOME = HOME:sub(1, -2) end
 
 local ok_cache, cache = pcall(function() return sys.ask("env", "XDG_CACHE_HOME") end)
 if ok_cache and type(cache) == "string" and cache ~= "" then CACHE = cache end
 -- Without `XDG_CACHE_HOME` the XDG base spec's answer is `$HOME/.cache`, which is where the program
 -- that writes the event (`pic-notify`) puts it — `/tmp/.cache` was a directory nothing writes and
--- no toast could ever find.
-if not CACHE then CACHE = HOME .. "/.cache" end
+-- no toast could ever find. Without `HOME` there is nothing to derive it from: say so once instead
+-- of quietly reading the directory that is known to be empty.
+if not CACHE then
+    if HOME then
+        CACHE = HOME .. "/.cache"
+    else
+        log("toast: the env service did not hand over HOME; the screenshot event cannot be found")
+        CACHE = "/tmp/.cache"
+    end
+end
 
 local EVENT = CACHE .. "/pleamar/screenshot-event.json"
 
@@ -156,7 +169,9 @@ end
 local function poll()
     if busy then return end
     busy = true
-    run("cat", { EVENT }, function(out, code)
+    -- Wrapped like every other call here: a raise would leave `busy` true and the poll dead for the
+    -- rest of the session (a `cat` that is not installed is the quiet way to get one).
+    local ok = pcall(run, "cat", { EVENT }, function(out, code)
         busy = false
         if code ~= 0 or type(out) ~= "string" then
             primed = true
@@ -172,6 +187,10 @@ local function poll()
             show(out)
         end
     end)
+    if not ok then
+        busy = false
+        log("toast: cat could not be run; the screenshot event will not be seen")
+    end
 end
 
 every(POLL_MS, poll)
