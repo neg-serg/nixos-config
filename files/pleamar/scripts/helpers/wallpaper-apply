@@ -24,8 +24,8 @@
 # appended). It runs detached: the tools that do this (swaybg, mpvpaper) do not return, and a
 # wallpaper command that hangs must not hang the picker.
 #
-# Ported from files/qs-wallpaperpicker/scripts/wallpaper-apply (GPL-3.0-or-later), which stays
-# in the tree as the reference; the caches are the same, plus the pleamar producer path.
+# Ported from the Quickshell picker's scripts/wallpaper-apply (GPL-3.0-or-later);
+# the caches are the same, plus the pleamar producer path.
 set -u
 
 file=${1:-}

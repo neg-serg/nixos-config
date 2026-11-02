@@ -18,9 +18,10 @@
 //! Without `NAME...` the whole folder is walked in name order. A line on stdin
 //! of tab-separated names moves those names to the front of the queue.
 //!
-//! Port of `files/pleamar/scripts/helpers/wallpaper-palettes.py`. The vendored
-//! `files/qs-wallpaperpicker/scripts/wallpaper-palettes.py` is an upstream
-//! export and stays untouched.
+//! Port of `files/pleamar/scripts/helpers/wallpaper-palettes.py`, itself taken
+//! from the Quickshell picker's `scripts/wallpaper-palettes.py` (GPL-3.0-or-later,
+//! dhrruvsharma/shell). The vendored picker tree is gone from the repo; this
+//! scene and its helpers replaced it.
 //!
 //! Environment: `MATUGEN`, `WALLPAPER_STILL` (defaults: the same names on PATH).
 
