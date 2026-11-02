@@ -370,19 +370,25 @@ flag flag-path="features.cli.broot.enable":
 #                         zellij config, sops paths, …), discovered per run. Editing
 #                         a doc, a QML or a .plm scene is a HIT; editing any *.nix is
 #                         a miss.
-#   just eval-gate --drv  tier B — the toplevel drvPath: ~10 s cold (2232
-#                         instantiated derivations), ~40 ms on a hit. What a
+#   just eval-gate --drv  tier B — the toplevel drvPath: ~3.7 s cold (down from
+#                         ~9.0 s: the evaluation fans out over systemPackages
+#                         through Determinate's `builtins.parallel` at
+#                         eval-cores 16, and falls back to the plain command when
+#                         that primop is missing), ~40 ms on a hit. What a
 #                         rollout needs. Key: the WHOLE tree (HEAD, status, full
 #                         diff with binary blobs, untracked content), because the
 #                         toplevel embeds the flake source — preserve-flake pins
 #                         self.outPath — so any content change moves the drvPath.
+#                         `--json` returns {label, drvPath, toplevel, name, system}
+#                         from that one evaluation; `--field NAME` picks one.
 # A hit is the stored output of a live eval of exactly that state, never a guess;
 # scripts/dev/nixos-eval-gate.test.sh proves it against `nix eval` per state.
 # Anything unhashable (unreadable input, unknown file type, unwritable cache dir)
 # falls through to a real eval with a notice. Entries live in
 # $XDG_CACHE_HOME/nixos-eval-gate/<key>, or in the repo-local .agent/tmp-nix-cache
 # when $HOME is not writable (the same fallback `just update` has).
-# `--no-cache` forces a real eval, `--verbose` shows tier, key and hit/miss.
+# `--no-cache` forces a real eval, `--verbose` shows tier, key, hit/miss and the
+# proof record each answer was stored with.
 # Two memoized eval tiers: label (fast) and toplevel drvPath (--drv)
 eval-gate *ARGS:
     bash "{{repo_root}}/scripts/dev/nixos-eval-gate.sh" {{ARGS}}
