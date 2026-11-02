@@ -85,7 +85,9 @@ language 0.4
 //                 collides with the Capsule component's own `edge` parameter)
 //   scale         0.5..2.0, default 1.0          — applied: `user_scale`
 //   widgets       array of text, max 24          — applied as visibility for
-//                 this slice's four: clock, workspaces, network, volume
+//                 every widget this file draws (bar.luau's `WIDGETS`: clock,
+//                 workspaces, keyboard, pill, network, sysmon, weather, media,
+//                 mpd, volume, mic, genelec, systray, build)
 //   mediaPriority array of text, max 8, default  — which player the media capsule, its
 //                 mpdPlaying · anyPlaying ·        tooltip and the transport act on: the
 //                 mpdRecent · recent · manual ·    rules of QS MusicPlayers.qml, in order;
@@ -699,7 +701,10 @@ scene bar {
                     // A line with children under it: the reference's own chevron, and no action of
                     // its own — a dbusmenu parent is a container, not something to click.
                     text "›" { at: menu.w - 30, 10; anchor: right center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka"; show: m.sub }
-                    zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button }
+                    // A separator is a hairline, not a button: the row's zone is not drawn for it,
+                    // so it is neither described as a pressable line nor wired to `tray.menu_click`
+                    // with a dbusmenu separator's id.
+                    zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button; show: not m.sep }
                     on enter hit { tm.hot = m.index + 1 }
                     on press hit { emit tray_click(m.index + 1) }
                 }
@@ -912,7 +917,9 @@ scene bar {
             // `width:` and one line: a long name used to run over the plate and onto the keyboard
             // capsule beside it, which is what the fixed 69 design px are there to prevent.
             text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
-            zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab }
+            // The capsule shows the workspace that is already in force, so it is always the
+            // selected tab: `selected:` is what a reader of `--say bar describe` needs to know it.
+            zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab; selected: true }
             on enter ws { emit tip(1) }
             on leave ws { emit tip_hide }
             on press ws { emit overview }
@@ -1564,12 +1571,15 @@ scene bar {
             // reference's `Media.qml` opens its panel, and the pointer on it asks for the card.
             zone box z_track { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Media: {media.title}"; role: button }
             on press z_track { emit open_media_panel }
-            // `emit tip(6)` and nothing else: this rule used to set `tip_open` itself, which
+            // `emit tip(6)` first: this rule used to set `tip_open` itself, which
             // showed the card on the frame the surface came up — before the words had been
             // measured in it. It waits the reference's 150 ms like every other capsule now, and
-            // that wait is what the measurement needs.
-            on enter z_track { emit tip(6) }
-            on leave z_track { emit tip_hide }
+            // that wait is what the measurement needs. The second emit is what raises the
+            // transport pill: the controls live outside this capsule, so the capsule is the only
+            // zone that can report the cursor arriving (a zone inside a row that `media.hot`
+            // hides never exists, and could never report it).
+            on enter z_track { emit tip(6); emit media_hover(true) }
+            on leave z_track { emit tip_hide; emit media_hover(false) }
 
             // The transport is not in here: it is its own pill, to the left of this
             // capsule (`Transport` below), which is where QS's `MediaTransport` rides out

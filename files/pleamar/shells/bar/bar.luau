@@ -64,7 +64,7 @@ local weatherCity = ""
 local weatherLat, weatherLon = 59.9375, 30.3086
 local useFahrenheit = false
 
-local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "sysmon", "weather", "media", "mpd", "volume", "mic", "genelec" }
+local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "sysmon", "weather", "media", "mpd", "volume", "mic", "genelec", "systray", "build" }
 
 -- The canonical clamp of INTERFACES §6.1: a wrong type and NaN keep the default.
 local function num(v, lo, hi, def)
@@ -540,6 +540,17 @@ on("media_hover", function(hot)
         fact["media.hot"] = false
     end)
 end)
+
+-- The pill capsule is the tracker's other writer: a press toggles it, and the midnight rollover
+-- moves what `bar.plm` mirrors into the scene's `pill.taken`/`pill.streak`. The panels scene draws
+-- the same tracker in its calendar grid and cannot see these facts (a plugin's boundary is its
+-- own), so it is told over the same `say` the trays and the drawers use; `services: "say:panels"`
+-- in bar.plm is what makes the call legal, and a panels scene that is not running is not an error.
+local function pill_published()
+    pcall(sys.call, "say", "panels", "emit pill_sync")
+end
+on("fact:pill.taken", pill_published)
+on("fact:pill.streak", pill_published)
 
 on("media_prev", function()
     sys.call("media.previous")
@@ -2039,13 +2050,15 @@ local function moon_tick()
 end
 
 weather_cached()
+-- The scene's own defaults land after the logic's first pass — the same trap the drawer fact hits
+-- — so everything written above is overwritten by what the scene declared, and the next pass is a
+-- whole refresh away. Say it again once the scene has its feet: the moon was drawing a new moon for
+-- a quarter of an hour, and the cached reading sat on "--°C" until curl answered (or for a minute,
+-- with no network at all).
+after(1500, weather_cached)
+after(1500, moon_tick)
 weather_fetch()
 moon_tick()
--- The scene's own defaults land after the logic's first pass — the same trap the
--- drawer fact hits — so a phase set here is overwritten by the `0` the scene
--- declared, and the next tick is fifteen minutes away. Say it again once the
--- scene has its feet; the moon was drawing a new moon for a quarter of an hour.
-after(1500, moon_tick)
 every(WEATHER_REFRESH_MS, weather_fetch)
 every(WEATHER_REFRESH_MS, moon_tick)
 
