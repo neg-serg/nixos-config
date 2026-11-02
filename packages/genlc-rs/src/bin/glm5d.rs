@@ -126,7 +126,29 @@ fn main() -> Result<()> {
                     Err(e) => eprintln!("glm5d: volume failed: {e}"),
                 },
                 Cmd::Mute(on) => match if on { group.mute() } else { group.unmute() } {
-                    Ok(()) => eprintln!("glm5d: mute {on}"),
+                    Ok(()) => {
+                        // GLM follows the adapter frame with a round to every leased
+                        // session: the session's `2B` carries bit 0 (mute) plus the LED
+                        // colour, and that is the frame the monitors act on (capture
+                        // 2026-11-02: `2B 03` muted, `2B 04` unmuted, sent after
+                        // `01 2B 01` / `01 2B 00` to the adapter).
+                        let sessions: Vec<u8> = state
+                            .lock()
+                            .unwrap()
+                            .leases
+                            .iter()
+                            .map(|lease| lease.session)
+                            .collect();
+                        let value = if on { 0x03u8 } else { 0x04u8 };
+                        for session in sessions {
+                            let msg =
+                                protocol::GNetMessage::new(session, 0x2B).with_data(vec![value]);
+                            if let Err(e) = group.send(&msg) {
+                                eprintln!("glm5d: mute round to session {session:02} failed: {e}");
+                            }
+                        }
+                        eprintln!("glm5d: mute {on}");
+                    }
                     Err(e) => eprintln!("glm5d: mute failed: {e}"),
                 },
                 Cmd::LeaseNow => last_lease = Instant::now() - LEASE_GRACE,
