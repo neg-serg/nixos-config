@@ -87,6 +87,7 @@
           "menu-search"
           "dsh-worktree"
           "shtoy"
+          "proxy"
         ];
 
         autoEntries =
@@ -142,6 +143,8 @@
         ".local/bin/dsh-worktree".source = lib.getExe' pkgs.neg.local-bin-tools "dsh-worktree";
         # Rust port of the former shell helper (packages/shtoy).
         ".local/bin/shtoy".source = lib.getExe' pkgs.neg.shtoy "shtoy";
+        # Rust port of the former shell helper (packages/sing-box-proxy).
+        ".local/bin/proxy".source = lib.getExe' pkgs.neg.sing-box-proxy "proxy";
         ".local/bin/gen-unbound-hosts".source = lib.getExe' pkgs.neg.local-bin-tools "gen-unbound-hosts";
         ".local/bin/kitty-scrollback-nvim" = {
           executable = true;

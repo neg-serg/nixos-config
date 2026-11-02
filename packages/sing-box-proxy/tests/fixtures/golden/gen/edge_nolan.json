@@ -1,0 +1,366 @@
+{
+  "log": {
+    "level": "error"
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "remote",
+        "type": "https",
+        "server": "1.1.1.1",
+        "server_port": 443
+      }
+    ],
+    "strategy": "prefer_ipv4"
+  },
+  "inbounds": [
+    {
+      "type": "socks",
+      "tag": "in",
+      "listen": "127.0.0.1",
+      "listen_port": 10808
+    },
+    {
+      "type": "socks",
+      "tag": "in-lan",
+      "listen": "0.0.0.0",
+      "listen_port": 10810
+    },
+    {
+      "type": "socks",
+      "tag": "in-lan-vm",
+      "listen": "0.0.0.0",
+      "listen_port": 10811
+    },
+    {
+      "type": "http",
+      "tag": "in-lan-vm-http",
+      "listen": "0.0.0.0",
+      "listen_port": 10812
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "vl-0",
+      "server": "EDGE.Example.COM",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555560",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "EDGE.Example.COM",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/edge"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vl-1",
+      "server": "edge.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555560",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "edge.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/edge"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vl-2",
+      "server": "shortpbk.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555561",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "shortpbk.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vl-3",
+      "server": "badfp.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555562",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "badfp.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "vm-4",
+      "server": "vmport.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555563",
+      "security": "auto",
+      "alter_id": 0,
+      "transport": {
+        "type": "http"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "vm-5",
+      "server": "vmaid.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555564",
+      "security": "auto",
+      "alter_id": 0,
+      "tls": {
+        "enabled": true,
+        "server_name": "s.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "ws",
+        "headers": {
+          "Host": "h.example.com"
+        }
+      }
+    },
+    {
+      "type": "hysteria2",
+      "tag": "hy-6",
+      "server": "hyq.example.com",
+      "server_port": 443,
+      "password": "pa%40ss",
+      "tls": {
+        "enabled": true,
+        "insecure": true,
+        "server_name": "q.example.com"
+      }
+    },
+    {
+      "type": "hysteria2",
+      "tag": "hy-7",
+      "server": "hostonly.example.com",
+      "server_port": 443,
+      "password": "hostonly.example.com",
+      "tls": {
+        "enabled": true,
+        "insecure": true,
+        "server_name": "hostonly.example.com"
+      }
+    },
+    {
+      "type": "hysteria2",
+      "tag": "hy-8",
+      "server": "hostonly2.example.com",
+      "server_port": 8443,
+      "password": "hostonly2.example.com:8443",
+      "tls": {
+        "enabled": true,
+        "insecure": true,
+        "server_name": "x.example.com"
+      }
+    },
+    {
+      "type": "tuic",
+      "tag": "tu-9",
+      "server": "tuicq.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555565",
+      "password": "pass",
+      "congestion_control": "bbr",
+      "udp_relay_mode": "native",
+      "tls": {
+        "enabled": true,
+        "server_name": "tuicq.example.com",
+        "insecure": true,
+        "alpn": [
+          "h2",
+          "h3"
+        ]
+      }
+    },
+    {
+      "type": "hysteria",
+      "tag": "hy-10",
+      "server": "hyq2.example.com",
+      "server_port": 443,
+      "auth_str": "a",
+      "down_mbps": 0,
+      "obfs": "xplus",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "sn.example.com"
+      }
+    },
+    {
+      "type": "hysteria",
+      "tag": "hy-11",
+      "server": "hyq3.example.com",
+      "server_port": 443,
+      "tls": {
+        "enabled": true,
+        "insecure": true,
+        "server_name": "sni.example.com"
+      }
+    },
+    {
+      "type": "shadowsocks",
+      "tag": "sh-12",
+      "server": "ssq.example.com",
+      "server_port": 8388,
+      "method": "aes-256-gcm",
+      "password": "pass"
+    },
+    {
+      "type": "anytls",
+      "tag": "an-13",
+      "server": "anq.example.com",
+      "server_port": 443,
+      "password": "pw",
+      "tls": {
+        "enabled": true,
+        "server_name": "anq.example.com",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vl-14",
+      "server": "crlf.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555566",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "crlf.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "ws"
+      }
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+        "vl-0",
+        "vl-1",
+        "vl-2",
+        "vl-3",
+        "vm-4",
+        "vm-5",
+        "hy-6",
+        "hy-7",
+        "hy-8",
+        "tu-9",
+        "hy-10",
+        "hy-11",
+        "sh-12",
+        "an-13",
+        "vl-14"
+      ],
+      "interval": "15s",
+      "tolerance": 50
+    },
+    {
+      "type": "urltest",
+      "tag": "tg-auto",
+      "outbounds": [
+        "vl-0",
+        "vl-1",
+        "vl-2",
+        "vl-3",
+        "vm-4",
+        "vm-5",
+        "hy-6",
+        "hy-7",
+        "hy-8",
+        "tu-9",
+        "hy-10",
+        "hy-11",
+        "sh-12",
+        "an-13",
+        "vl-14"
+      ],
+      "interval": "15s",
+      "tolerance": 50
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "ip_is_private": true,
+        "outbound": "direct"
+      },
+      {
+        "domain_suffix": [
+          "telegram.org",
+          "t.me",
+          "telegram.me",
+          "telegram.dog"
+        ],
+        "outbound": "tg-auto"
+      },
+      {
+        "ip_cidr": [
+          "91.108.4.0/22",
+          "91.108.8.0/22",
+          "91.108.12.0/22",
+          "91.108.16.0/22",
+          "91.108.56.0/22",
+          "95.161.64.0/20",
+          "149.154.160.0/20",
+          "185.76.151.0/24"
+        ],
+        "outbound": "tg-auto"
+      },
+      {
+        "domain_suffix": [
+          "deepseek.com",
+          "deepseek.cn"
+        ],
+        "action": "route",
+        "outbound": "auto"
+      },
+      {
+        "action": "resolve",
+        "server": "remote",
+        "strategy": "prefer_ipv4"
+      }
+    ],
+    "final": "auto",
+    "auto_detect_interface": true,
+    "default_domain_resolver": "remote"
+  }
+}

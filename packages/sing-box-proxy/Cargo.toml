@@ -1,0 +1,23 @@
+[package]
+name = "sing-box-proxy"
+version = "0.1.0"
+edition = "2021"
+description = "sing-box proxy controller (Rust port of packages/local-bin/bin/proxy)"
+license = "MIT"
+
+[[bin]]
+name = "proxy"
+path = "src/main.rs"
+
+[dependencies]
+# Config building, JSON parsing of existing configs, status queries.
+# `preserve_order` keeps insertion order so the emitted JSON matches python's
+# json.dump key order byte for byte.
+serde_json = { version = "1", features = ["preserve_order"] }
+# vmess:// and ss:// payloads (base64 / base64url, with the lenient padding
+# rules of python's b64decode and GNU base64 -d).
+base64 = "0.22"
+# Query-string percent decoding with python's utf-8/errors=replace semantics.
+percent-encoding = "2"
+
+[workspace]

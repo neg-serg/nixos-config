@@ -1,0 +1,3 @@
+:: Config: added tg-auto group (all nodes until next refresh)
+:: Config: DNS/route reset to final shape (client-side resolve)
+:: Config: added LAN inbound (0.0.0.0:10810, password auth)

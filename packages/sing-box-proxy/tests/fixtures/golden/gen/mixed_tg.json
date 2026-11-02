@@ -1,0 +1,636 @@
+{
+  "log": {
+    "level": "error"
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "remote",
+        "type": "https",
+        "server": "1.1.1.1",
+        "server_port": 443
+      }
+    ],
+    "strategy": "prefer_ipv4"
+  },
+  "inbounds": [
+    {
+      "type": "socks",
+      "tag": "in",
+      "listen": "127.0.0.1",
+      "listen_port": 10808
+    },
+    {
+      "type": "socks",
+      "tag": "in-lan",
+      "listen": "0.0.0.0",
+      "listen_port": 10810
+    },
+    {
+      "type": "socks",
+      "tag": "in-lan-vm",
+      "listen": "0.0.0.0",
+      "listen_port": 10811
+    },
+    {
+      "type": "http",
+      "tag": "in-lan-vm-http",
+      "listen": "0.0.0.0",
+      "listen_port": 10812
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "vl-0",
+      "server": "a.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555555",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "cdn.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFG",
+          "short_id": "0123abcd"
+        }
+      },
+      "flow": "xtls-rprx-vision"
+    },
+    {
+      "type": "vless",
+      "tag": "vl-1",
+      "server": "b.example.com",
+      "server_port": 8443,
+      "uuid": "11111111-2222-3333-4444-555555555556",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "b.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/ws?ed=2048",
+        "headers": {
+          "Host": "ws.example.com"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vl-2",
+      "server": "c.example.com",
+      "server_port": 2053,
+      "uuid": "11111111-2222-3333-4444-555555555557",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "c.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "grpc",
+        "service_name": "grpcsvc"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vl-3",
+      "server": "d.example.com",
+      "server_port": 2083,
+      "uuid": "11111111-2222-3333-4444-555555555558",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "d.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "httpupgrade",
+        "host": "up.example.com",
+        "path": "/up"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vl-4",
+      "server": "e.example.com",
+      "server_port": 2087,
+      "uuid": "11111111-2222-3333-4444-555555555559",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "e.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "http",
+        "host": [
+          "h.example.com"
+        ],
+        "path": "/h"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vl-5",
+      "server": "h.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-55555555555c",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "first.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "randomized"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "AbCdEfGhIjKlMnOpQrStUvWxYz012345-_",
+          "short_id": "ab"
+        }
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "vm-6",
+      "server": "vm.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555556",
+      "security": "aes-128-gcm",
+      "alter_id": 0,
+      "tls": {
+        "enabled": true,
+        "server_name": "vmsni.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+        "alpn": [
+          "h2"
+        ]
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/vmws",
+        "headers": {
+          "Host": "vmws.example.com"
+        }
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "vm-7",
+      "server": "vm2.example.com",
+      "server_port": 8443,
+      "uuid": "11111111-2222-3333-4444-555555555557",
+      "security": "none",
+      "alter_id": 0,
+      "tls": {
+        "enabled": true,
+        "server_name": "vm2sni.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "ios"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFG",
+          "short_id": "cafe"
+        },
+        "alpn": [
+          "h2",
+          "h3"
+        ]
+      },
+      "transport": {
+        "type": "grpc",
+        "service_name": "vmsvc"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "vm-8",
+      "server": "vm3.example.com",
+      "server_port": 2053,
+      "uuid": "11111111-2222-3333-4444-555555555558",
+      "security": "auto",
+      "alter_id": 0,
+      "tls": {
+        "enabled": true,
+        "server_name": "vm3.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "httpupgrade",
+        "host": "vmup.example.com",
+        "path": "/vmup"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "vm-9",
+      "server": "vm4.example.com",
+      "server_port": 2083,
+      "uuid": "11111111-2222-3333-4444-555555555559",
+      "security": "auto",
+      "alter_id": 0,
+      "tls": {
+        "enabled": true,
+        "server_name": "vm4.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "http",
+        "host": [
+          "vmh2.example.com"
+        ],
+        "path": "/vmh2"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "vm-10",
+      "server": "vm5.example.com",
+      "server_port": 2087,
+      "uuid": "11111111-2222-3333-4444-55555555555a",
+      "security": "auto",
+      "alter_id": 0,
+      "tls": {
+        "enabled": true,
+        "server_name": "vm5.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "http",
+        "host": [
+          "vmhttp.example.com"
+        ],
+        "path": "/vmhttp"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "vm-11",
+      "server": "vm7.example.com",
+      "server_port": 2083,
+      "uuid": "11111111-2222-3333-4444-55555555555c",
+      "security": "auto",
+      "alter_id": 7,
+      "tls": {
+        "enabled": true,
+        "server_name": "vm7.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/w",
+        "headers": {
+          "Host": "vm7.example.com"
+        }
+      }
+    },
+    {
+      "type": "hysteria2",
+      "tag": "hy-12",
+      "server": "h2.example.com",
+      "server_port": 8443,
+      "password": "fixturepass",
+      "tls": {
+        "enabled": true,
+        "insecure": true,
+        "server_name": "h2sni.example.com"
+      },
+      "obfs": {
+        "type": "salamander",
+        "password": "obfspass"
+      }
+    },
+    {
+      "type": "hysteria2",
+      "tag": "hy-13",
+      "server": "h2b.example.com",
+      "server_port": 443,
+      "password": "fixturepass2",
+      "tls": {
+        "enabled": true,
+        "insecure": true,
+        "server_name": "hy2b.example.com"
+      }
+    },
+    {
+      "type": "hysteria2",
+      "tag": "hy-14",
+      "server": "h2c.example.com",
+      "server_port": 443,
+      "password": "fixturepass3",
+      "tls": {
+        "enabled": true,
+        "insecure": true,
+        "server_name": "h2c.example.com"
+      }
+    },
+    {
+      "type": "hysteria",
+      "tag": "hy-15",
+      "server": "hy1.example.com",
+      "server_port": 36712,
+      "auth_str": "token with space",
+      "up_mbps": 12,
+      "down_mbps": 7,
+      "obfs": "xplus",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "hy1sni.example.com",
+        "alpn": [
+          "h3"
+        ]
+      }
+    },
+    {
+      "type": "hysteria",
+      "tag": "hy-16",
+      "server": "hy1b.example.com",
+      "server_port": 443,
+      "tls": {
+        "enabled": true,
+        "insecure": true,
+        "server_name": "hy1b-sni.example.com"
+      }
+    },
+    {
+      "type": "tuic",
+      "tag": "tu-17",
+      "server": "tuic.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-55555555555d",
+      "password": "p@ss:word",
+      "congestion_control": "cubic",
+      "udp_relay_mode": "quic",
+      "tls": {
+        "enabled": true,
+        "server_name": "tuicsni.example.com",
+        "insecure": true,
+        "alpn": [
+          "h2",
+          "h3"
+        ]
+      }
+    },
+    {
+      "type": "shadowsocks",
+      "tag": "sh-18",
+      "server": "ss.example.com",
+      "server_port": 8388,
+      "method": "aes-256-gcm",
+      "password": "fixturepass"
+    },
+    {
+      "type": "shadowsocks",
+      "tag": "sh-19",
+      "server": "ss3.example.com",
+      "server_port": 8390,
+      "method": "aes-128-gcm",
+      "password": "fixturepass"
+    },
+    {
+      "type": "shadowsocks",
+      "tag": "sh-20",
+      "server": "ss4.example.com",
+      "server_port": 8391,
+      "method": "chacha20-ietf-poly1305",
+      "password": "fixturepass"
+    },
+    {
+      "type": "trojan",
+      "tag": "tr-21",
+      "server": "tj.example.com",
+      "server_port": 443,
+      "password": "p\u00e4ss",
+      "tls": {
+        "enabled": true,
+        "server_name": "tjsni.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/tj",
+        "headers": {
+          "Host": "tjws.example.com"
+        }
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "tr-22",
+      "server": "tj2.example.com",
+      "server_port": 8443,
+      "password": "tjpw",
+      "tls": {
+        "enabled": true,
+        "server_name": "tj2.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "safari"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "AbCdEfGhIjKlMnOpQrStUvWxYz012345-_",
+          "short_id": "beef"
+        }
+      },
+      "transport": {
+        "type": "grpc",
+        "service_name": "tjsvc"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "tr-23",
+      "server": "tj3.example.com",
+      "server_port": 9443,
+      "password": "tjpw2",
+      "transport": {
+        "type": "httpupgrade",
+        "host": "tjup.example.com",
+        "path": "/up"
+      }
+    },
+    {
+      "type": "anytls",
+      "tag": "an-24",
+      "server": "anytls.example.com",
+      "server_port": 443,
+      "password": "anpw",
+      "tls": {
+        "enabled": true,
+        "server_name": "ansni.example.com",
+        "insecure": true
+      }
+    },
+    {
+      "type": "anytls",
+      "tag": "an-25",
+      "server": "anytls2.example.com",
+      "server_port": 8443,
+      "password": "anpw2",
+      "tls": {
+        "enabled": true,
+        "server_name": "anytls2.example.com"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vl-26",
+      "server": "b.example.com",
+      "server_port": 8443,
+      "uuid": "11111111-2222-3333-4444-55555555556f",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "b.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/alt",
+        "headers": {
+          "Host": "ws.example.com"
+        }
+      }
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+        "vl-0",
+        "vl-1",
+        "vl-2",
+        "vl-3",
+        "vl-4",
+        "vl-5",
+        "vm-6",
+        "vm-7",
+        "vm-8",
+        "vm-9",
+        "vm-10",
+        "vm-11",
+        "hy-12",
+        "hy-13",
+        "hy-14",
+        "hy-15",
+        "hy-16",
+        "tu-17",
+        "sh-18",
+        "sh-19",
+        "sh-20",
+        "tr-21",
+        "tr-22",
+        "tr-23",
+        "an-24",
+        "an-25",
+        "vl-26"
+      ],
+      "interval": "15s",
+      "tolerance": 50
+    },
+    {
+      "type": "urltest",
+      "tag": "tg-auto",
+      "outbounds": [
+        "vl-0",
+        "vl-1"
+      ],
+      "interval": "15s",
+      "tolerance": 50
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "ip_is_private": true,
+        "outbound": "direct"
+      },
+      {
+        "domain_suffix": [
+          "telegram.org",
+          "t.me",
+          "telegram.me",
+          "telegram.dog"
+        ],
+        "outbound": "tg-auto"
+      },
+      {
+        "ip_cidr": [
+          "91.108.4.0/22",
+          "91.108.8.0/22",
+          "91.108.12.0/22",
+          "91.108.16.0/22",
+          "91.108.56.0/22",
+          "95.161.64.0/20",
+          "149.154.160.0/20",
+          "185.76.151.0/24"
+        ],
+        "outbound": "tg-auto"
+      },
+      {
+        "domain_suffix": [
+          "deepseek.com",
+          "deepseek.cn"
+        ],
+        "action": "route",
+        "outbound": "auto"
+      },
+      {
+        "action": "resolve",
+        "server": "remote",
+        "strategy": "prefer_ipv4"
+      }
+    ],
+    "final": "auto",
+    "auto_detect_interface": true,
+    "default_domain_resolver": "remote"
+  }
+}

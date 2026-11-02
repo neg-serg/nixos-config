@@ -1,0 +1,16 @@
+vless://11111111-2222-3333-4444-555555555560@EDGE.Example.COM:443?security=tls&type=ws&path=%2Fedge#Upper
+vless://11111111-2222-3333-4444-555555555560@edge.example.com:443?security=tls&type=ws&path=%2Fedge#Lower
+vless://11111111-2222-3333-4444-555555555561@shortpbk.example.com:443?security=reality&pbk=0123456789012345678901234567890&sid=1#Short%20PBK
+vless://11111111-2222-3333-4444-555555555562@badfp.example.com:443?security=tls&fp=bogus&type=tcp#Bad%20FP
+vmess://eyJhZGQiOiAidm1wb3J0LmV4YW1wbGUuY29tIiwgInBvcnQiOiAiNDQzIiwgImlkIjogIjExMTExMTExLTIyMjItMzMzMy00NDQ0LTU1NTU1NTU1NTU2MyIsICJuZXQiOiAidGNwIiwgInR5cGUiOiAiaHR0cCIsICJob3N0IjogIiIsICJwYXRoIjogIiIsICJzY3kiOiAiIn0=
+vmess://eyJhZGQiOiAidm1haWQuZXhhbXBsZS5jb20iLCAicG9ydCI6IDQ0MywgImlkIjogIjExMTExMTExLTIyMjItMzMzMy00NDQ0LTU1NTU1NTU1NTU2NCIsICJhaWQiOiBudWxsLCAibmV0IjogIndzIiwgImhvc3QiOiAiaC5leGFtcGxlLmNvbSIsICJwYXRoIjogIiIsICJ0bHMiOiAieHRscyIsICJzbmkiOiAicy5leGFtcGxlLmNvbSJ9
+hy2://pa%40ss@hyq.example.com:443?sni=q.example.com#Encoded%20At
+hy2://hostonly.example.com
+hy2://hostonly2.example.com:8443?sni=x.example.com
+tuic://11111111-2222-3333-4444-555555555565:pass@tuicq.example.com:443?allow_insecure=yes&alpn=h2%2Ch3#Tuic%20Yes
+hysteria://hyq2.example.com:443?auth=a&up=abc&down=0&obfs=xplus&insecure=no&server_name=sn.example.com#Hy%20Edge
+hysteria://hyq3.example.com:443?sni=sni.example.com&insecure=maybe#Hy%20Insecure%20Maybe
+ss://YWVzLTI1Ni1nY206cGFzcw==@ssq.example.com:8388#SS%20Padded
+trojan://pw@tjq.example.com:notaport?security=tls#Trojan%20Bad%20Port
+anytls://pw@anq.example.com:443?insecure=yes#AnyTLS%20Yes
+vless://11111111-2222-3333-4444-555555555566@crlf.example.com:443?security=tls&type=ws#CRLF

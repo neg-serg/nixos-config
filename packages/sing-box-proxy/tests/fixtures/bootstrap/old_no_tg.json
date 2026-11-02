@@ -1,0 +1,91 @@
+{
+  "log": {
+    "level": "error"
+  },
+  "dns": {
+    "servers": [],
+    "strategy": "ipv4_only"
+  },
+  "inbounds": [
+    {
+      "type": "socks",
+      "tag": "in",
+      "listen": "127.0.0.1",
+      "listen_port": 10808
+    },
+    {
+      "type": "socks",
+      "tag": "in-lan-vm",
+      "listen": "0.0.0.0",
+      "listen_port": 10811
+    },
+    {
+      "type": "http",
+      "tag": "in-lan-vm-http",
+      "listen": "0.0.0.0",
+      "listen_port": 10812
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "vl-0",
+      "server": "a.example.com",
+      "server_port": 443,
+      "uuid": "11111111-2222-3333-4444-555555555555",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "cdn.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFG",
+          "short_id": "0123abcd"
+        }
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "tr-1",
+      "server": "tj.example.com",
+      "server_port": 443,
+      "password": "p\u00e4ss",
+      "tls": {
+        "enabled": true,
+        "server_name": "tjsni.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/tj",
+        "headers": {
+          "Host": "tjws.example.com"
+        }
+      }
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+        "vl-0",
+        "tr-1"
+      ],
+      "interval": "1m",
+      "tolerance": 50
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

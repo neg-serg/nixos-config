@@ -1,0 +1,5 @@
+# only comments
+
+not-a-uri
+http://example.com/sub
+vless://
