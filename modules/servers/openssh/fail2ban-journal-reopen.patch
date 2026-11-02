@@ -1,0 +1,87 @@
+--- a/fail2ban/server/filtersystemd.py
++++ b/fail2ban/server/filtersystemd.py
+@@ -170,6 +170,8 @@
+ 		"""
+ 		try:
+ 			# open?
++			if self.__journal is None: # pragma: no cover
++				return False
+ 			if self.__journal.closed: # pragma: no cover
+ 				return False
+ 			# has cursor? if it is broken (e. g. no descriptor) - it'd raise this:
+@@ -181,27 +183,47 @@
+ 		return False
+ 
+ 	def _reopenJournal(self): # pragma: no cover
+-		"""Reopen journal (if it becomes offline after rotation)
++		"""Reopen journal (if it becomes offline after rotation).
++
++		Returns True when the reader is usable again.
+ 		"""
+-		if self.__journal.closed:
+-			# recreate reader:
+-			self.__journal = journal.Reader(**self.__jrnlargs)
+-		else:
+-			try:
+-				# workaround for gh-3929 (no journal descriptor after rotation),
+-				# to reopen journal we'd simply invoke inherited init again:
+-				self.__journal.close()
+-				ja = self.__jrnlargs
+-				super(journal.Reader, self.__journal).__init__(
+-					ja.get('flags', 0), ja.get('path'), ja.get('files'), ja.get('namespace'))
+-			except:
+-				# cannot reopen in that way, so simply recreate reader:
+-				self.closeJournal()
++		# The file list was globbed at __init__ and can be stale by now: journald
++		# renames system.journal on rotation, and transient users (nix build
++		# users, uid 30001+) take their user-*.journal with them when the build
++		# ends. journal.Reader() then raised ENOENT and the old code left
++		# self.__journal as None, so every pass of the main loop afterwards died
++		# on AttributeError, hit "Too many errors at once" and the jail went idle
++		# for good. Re-glob, keep the old reader on failure, let the caller retry.
++		if self.__jrnlargs.get('files') is not None:
++			files = _globJournalFiles(journal.LOCAL_ONLY, self.__jrnlargs.get('path'))
++			self.__jrnlargs['files'] = list(files) if files else None
++		try:
++			if self.__journal is None or self.__journal.closed:
++				# recreate reader:
+ 				self.__journal = journal.Reader(**self.__jrnlargs)
++			else:
++				try:
++					# workaround for gh-3929 (no journal descriptor after rotation),
++					# to reopen journal we'd simply invoke inherited init again:
++					self.__journal.close()
++					ja = self.__jrnlargs
++					super(journal.Reader, self.__journal).__init__(
++						ja.get('flags', 0), ja.get('path'), ja.get('files'), ja.get('namespace'))
++				except:
++					# cannot reopen in that way, so simply recreate reader:
++					try:
++						self.__journal.close()
++					except Exception:
++						pass
++					self.__journal = journal.Reader(**self.__jrnlargs)
++		except Exception as e:
++			logSys.error("Cannot reopen journal (will retry): %r", e)
++			return False
+ 		# restore journalmatch specified for the jail:
+ 		self.resetJournalMatches()
+ 		# just to avoid "Invalidate signaled" happening again after reopen:
+ 		self.__bypassInvalidateMsg = MyTime.time() + 1
++		return True
+ 
+ 	##
+ 	# Add a journal match filters from list structure
+@@ -430,6 +452,12 @@
+ 						continue
+ 				## wait for entries using journal.wait:
+ 				if wcode == journal.NOP and self.inOperation:
++					## a failed reopen leaves the reader closed (never None): retry
++					## here instead of calling wait() on it, without a main-cycle error:
++					if self.__journal is None or self.__journal.closed:
++						if not self._reopenJournal():
++							time.sleep(self.sleeptime)
++							continue
+ 					## todo: find better method as wait_for to break (e.g. notify) journal.wait(self.sleeptime),
+ 					## don't use `journal.close()` for it, because in some python/systemd implementation it may 
+ 					## cause abnormal program termination (e. g. segfault)

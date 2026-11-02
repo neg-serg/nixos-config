@@ -7,6 +7,7 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }:
 let
@@ -101,6 +102,16 @@ in
     # on sshd; loopback and the home LAN (192.168.0.0/24) are ignored so
     # fail2ban cannot lock out the user's own devices.
     services.fail2ban = {
+      # fail2ban 1.1.1 globs the journal files once and reuses that list when it
+      # reopens the reader. After journald's boot-time rotation a globbed file
+      # (a transient nix build user's user-*.journal, for one) can be gone:
+      # Reader() raises ENOENT, the old code left the reader as None and every
+      # pass of the main loop then died on AttributeError — 100 errors, "going
+      # idle", no banning at all (observed 2026-11-03). The patch re-globs, keeps
+      # the old reader and retries; drop it when fail2ban ships the fix.
+      package = pkgs.fail2ban.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [ ./fail2ban-journal-reopen.patch ];
+      });
       enable = true;
       maxretry = 4;
       bantime = "1h";
