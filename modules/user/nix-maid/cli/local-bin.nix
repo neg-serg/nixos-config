@@ -85,6 +85,7 @@
           "window-activate"
           "paths"
           "menu-search"
+          "dsh-worktree"
         ];
 
         autoEntries =
@@ -136,6 +137,8 @@
         ".local/bin/surfingkeys-server".source = lib.getExe' pkgs.neg.local-bin-tools "surfingkeys-server";
         ".local/bin/glm-midi-relay".source = lib.getExe' pkgs.neg.local-bin-tools "glm-midi-relay";
         ".local/bin/fetch-covers".source = lib.getExe' pkgs.neg.local-bin-tools "fetch-covers";
+        # Rust port of the former shell helper (packages/local-bin-tools).
+        ".local/bin/dsh-worktree".source = lib.getExe' pkgs.neg.local-bin-tools "dsh-worktree";
         ".local/bin/gen-unbound-hosts".source = lib.getExe' pkgs.neg.local-bin-tools "gen-unbound-hosts";
         ".local/bin/kitty-scrollback-nvim" = {
           executable = true;
