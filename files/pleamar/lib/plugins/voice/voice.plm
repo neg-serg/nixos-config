@@ -1,0 +1,54 @@
+language 0.4
+
+// voice.plm — the MPD voice badge: lit while `mpd-voice once` runs (the
+// Super+Shift+Q command), so a voice from the speakers is never a surprise.
+//
+// The quickshell bar had no such indicator. The process is the source of truth:
+// voice.luau polls `pgrep -x mpd-voice` once a second and flips `active`, and the
+// tile takes no bar space while nothing runs (the scene gates the row on the fact,
+// the way the build badge does).
+//
+//     import "../../lib/plugins/voice/voice.plm" as voice
+//     row voice_slot { show: Voice.active
+//         voice.Tile(type_scale: text_scale) }
+//
+// Compile proof: voice.check.plm.
+
+import "../../palette.plm"
+import "../../capsule.plm"
+
+library Voice strict {
+
+    // The poll is the plugin's own program, not the scene's.
+    permissions { run: "pgrep" }
+
+    // ----------------------------------------------------------------- facts
+    // A fact is a number or a yes-or-no and nothing else, so the words are `text`.
+    fact active = false
+    text glyph = "mic"
+    text summary = "VOICE"
+
+    // ------------------------------------------------------------------- tile
+    // One capsule: the microphone and the word. No press action — the badge reports,
+    // it does not drive the client; the zone exists so `describe` names what the
+    // capsule is.
+    component Tile(scale: number = ui, type_scale: number = 1) {
+        let size.icon = 14
+        let label.w = 56
+        let w = 2 * capsule.pad + size.icon + capsule.gap + label.w
+        let h = capsule.height
+        size: w * scale, h * scale
+        group zoom {
+            scale: scale
+            Capsule(w, h, scale: 1) {
+                row content {
+                    gap: capsule.gap
+                    align: center
+                    text "{glyph}" { family: "Material Symbols Outlined"; size: size.icon; color: accent }
+                    text "{summary}" { family: "Iosevka"; size: 13 * type_scale; weight: 500; width: label.w; lines: 1; color: ink }
+                }
+            }
+            zone box tile { from: 0, 0; size: w, h; corner: corner; label: "Voice command"; role: region }
+        }
+    }
+}
