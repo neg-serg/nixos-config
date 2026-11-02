@@ -108,8 +108,11 @@ local nt_hist = {}    -- the records, newest first: { id, app, title, body, icon
 local nt_live = {}    -- id -> record, only while the server keeps it
 local nt_toast = {}   -- ids on screen, oldest first
 local nt_timers = {}  -- id -> the timer that takes the toast away
-local nt_acts = {}    -- flat action table, rebuilt with the models
+local nt_acts = {}    -- flat action table, stable across rebuilds
+local nt_act_ix = {}  -- "slot\1key" -> its index in nt_acts
 local nt_slot = 0     -- the record handle the scene presses with
+local restored = {}   -- identity -> record, for the first delivery after a load
+local restored_pending = false
 local loading = false -- while the logic itself writes `dnd`: do not save it back
 
 local function actions_of(n)
@@ -183,6 +186,18 @@ local function refresh(r, n)
     r.actions = actions_of(n)
 end
 
+-- The identity a record keeps across a process boundary. The server's ids restart at 1 and are
+-- reused, so the first watch after a load matches restored history on this instead.
+local function record_key(r)
+    return table.concat({
+        r.app or "",
+        r.title or "",
+        r.body or "",
+        tostring(r.time or 0),
+        tostring(r.urgency or 0),
+    }, "\1")
+end
+
 local function save_settings()
     raw.dnd = settings.dnd
     pcall(sys.call, "files.write", FILE, raw)
@@ -239,17 +254,32 @@ local function view_body(s)
     return table.concat(kept, "\n")
 end
 
+-- The models carry this index across a rebuild, so a pressed row still names the action it was
+-- drawn for. Indices are keyed by the record slot and the action key and are never reused.
+local function act_slot(r, key)
+    local k = tostring(r.slot) .. "\1" .. key
+    local ix = nt_act_ix[k]
+    if ix then
+        local e = nt_acts[ix]
+        e.id, e.on, e.slot = r.id, r.on, r.slot
+        return ix
+    end
+    nt_acts[#nt_acts + 1] = { id = r.id, key = key, on = r.on, slot = r.slot }
+    ix = #nt_acts
+    nt_act_ix[k] = ix
+    return ix
+end
+
 local function entry_of(r, old, first, with_actions)
     local acts = {}
     local def = -1
     if with_actions then
         for _, a in ipairs(r.actions) do
             if a.key ~= "default" and #acts < 3 then
-                nt_acts[#nt_acts + 1] = { id = r.id, key = a.key, on = r.on }
                 local label = clean(a.label, a.key)
                 local glyph = glyph_of(label)
                 acts[#acts + 1] = {
-                    ix = #nt_acts - 1,
+                    ix = act_slot(r, a.key) - 1,
                     label = label,
                     glyph = glyph,
                     mark = (glyph ~= "") and 1 or 0,
@@ -258,8 +288,7 @@ local function entry_of(r, old, first, with_actions)
         end
         for _, a in ipairs(r.actions) do
             if a.key == "default" then
-                nt_acts[#nt_acts + 1] = { id = r.id, key = "default", on = r.on }
-                def = #nt_acts - 1
+                def = act_slot(r, "default") - 1
             end
         end
     end
@@ -353,7 +382,6 @@ local function window_at(s)
 end
 
 local function rebuild()
-    nt_acts = {}
     local toasts = {}
     for _, id in ipairs(nt_toast) do
         local r = nt_live[id]
@@ -438,8 +466,12 @@ local function trim_history()
             kept[#kept + 1] = r
             old_kept = old_kept + 1
         else
-            if nt_live[r.id] == r then nt_live[r.id] = nil end
-            hide_toast(r.id)
+            -- Only a record the server still keeps owns the toast/timer under its id: a
+            -- restored history entry can carry a dead process's id that a live toast reused.
+            if nt_live[r.id] == r then
+                nt_live[r.id] = nil
+                hide_toast(r.id)
+            end
         end
     end
     nt_hist = kept
@@ -488,10 +520,21 @@ local function on_notifications(list)
             if r then
                 refresh(r, n)
             else
-                r = new_record(n)
-                nt_live[n.id] = r
-                table.insert(nt_hist, 1, r)
-                fresh[#fresh + 1] = r
+                local made = new_record(n)
+                local key = record_key(made)
+                local old = restored_pending and restored[key] or nil
+                if old ~= nil then
+                    -- The server re-announced a record this scene restored from disk: adopt the
+                    -- restored entry (new server id, same slot) instead of adding a twin.
+                    restored[key] = nil
+                    old.id = n.id
+                    nt_live[n.id] = old
+                    refresh(old, n)
+                else
+                    nt_live[n.id] = made
+                    table.insert(nt_hist, 1, made)
+                    fresh[#fresh + 1] = made
+                end
             end
         end
     end
@@ -539,6 +582,7 @@ local function on_notifications(list)
         end
     end
 
+    restored_pending = false
     save_hist()
     rebuild()
 end
@@ -551,10 +595,12 @@ on("act", function(v)
     local ix = math.floor(num(v, -1, 1e9, -1)) + 1
     local a = nt_acts[ix]
     if a == nil or a.on ~= true then return end
+    -- The id alone is not proof: a restored entry's dead id can collide with a live record's.
+    local r = nt_live[a.id]
+    if r == nil or r.slot ~= a.slot then return end
     pcall(sys.call, "notifications.invoke", a.id, a.key)
     pcall(sys.call, "notifications.dismiss", a.id)
-    local r = nt_live[a.id]
-    if r then r.on = false end
+    r.on = false
     hide_toast(a.id)
     rebuild()
     save_hist()
@@ -574,7 +620,7 @@ local function drop_slot(slot)
         end
     end
     if r == nil then return end
-    if r.on then
+    if r.on and nt_live[r.id] == r then
         pcall(sys.call, "notifications.dismiss", r.id)
         r.on = false
         hide_toast(r.id)
@@ -582,8 +628,10 @@ local function drop_slot(slot)
         for i = #nt_hist, 1, -1 do
             if nt_hist[i] == r then table.remove(nt_hist, i) end
         end
-        if nt_live[r.id] == r then nt_live[r.id] = nil end
-        hide_toast(r.id)
+        if nt_live[r.id] == r then
+            nt_live[r.id] = nil
+            hide_toast(r.id)
+        end
     end
     rebuild()
     save_hist()
@@ -731,6 +779,8 @@ local function load_history()
                 slot = nt_slot,
             }
             nt_hist[#nt_hist + 1] = r
+            restored[record_key(r)] = r
+            restored_pending = true
         end
     end
 end

@@ -79,7 +79,7 @@ import "../../lib/sun.plm" as sun
 scene panels {
 
     // The fit divisor is the work area, not the monitor. Inside a scene `screen.height` is
-    // what the surfaces get (1080 minus the bars' reserves = 1030 here), while palette's
+    // what the surfaces get (1080 minus the bar's 25 px reserve = 1055 here), while palette's
     // `design.height` is the monitor's 1080 — so the stock expression shaved the scale to
     // 1.15 * 1030/1080 = 1.0968 and every drawer came out 4.5 % smaller than the
     // reference's. Measured on 2026-10-23: the flow plate drew 515 x 371 where the popup is
@@ -87,7 +87,7 @@ scene panels {
     // showing through. `fit.height` is the work area the drawers are fitted to, named so it
     // does not shadow the palette token (the compiler says why: a `screens: each` scene may
     // take one or the other per copy).
-    let fit.height = 1030
+    let fit.height = 1055
 
     // The drawer surface: full monitor, anchored top (geometry origin), overlay
     // level, reserve 0 so the bar's exclusive zone is the bar's alone. It is
