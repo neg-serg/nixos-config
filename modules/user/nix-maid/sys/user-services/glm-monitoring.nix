@@ -38,12 +38,16 @@ lib.mkIf (cfg.enable or false) {
 
     # glm5d — the one process that owns the GLM adapter and keeps GLM's own cycle
     # (probe, lease, poll every ~0.57 s) so the monitors never drop their sessions.
-    # NOT started by default: the adapter normally lives inside the Windows VM, and a
-    # daemon that cannot open it would only restart-loop. Start it by hand after
-    # `glm-adapter host`, and stop it before giving the adapter back:
-    #   systemctl --user start glm5d && printf 'status\n' | nc -U $XDG_RUNTIME_DIR/glm5d.sock
+    # This is the normal owner on this host: the Linux port controls the monitors
+    # directly, and the Windows VM is only the occasional GLM-UI/calibration path.
+    # The daemon starts at login and takes the adapter as it finds it; before
+    # handing the adapter back to the VM, stop it (systemctl --user stop glm5d),
+    # then attach and start the VM.
     glm5d = systemdUser.mkUserService {
-      presets = [ "restartOnFailure" ];
+      presets = [
+        "defaultWanted"
+        "restartOnFailure"
+      ];
       description = "GLM adapter owner: lease cycle, polling, Unix-socket control";
       serviceConfig = {
         ExecStart = "${pkgs.genlc}/bin/glm5d";
@@ -132,11 +136,13 @@ lib.mkIf (cfg.enable or false) {
     };
   };
 
-  # Self-healing timer for glm-adapter-auto: keep the adapter inside the VM
-  # whenever the VM runs (cheap idempotent check every 60s).
+  # Self-healing timer for glm-adapter-auto: it kept the adapter inside the VM
+  # whenever the VM ran. Not scheduled any more: the adapter's home is the host now
+  # (glm5d owns it) and this check would restart the Windows VM to claim it — the
+  # VM is only started by hand for GLM's UI, with the daemon stopped first. The
+  # unit stays for that path: `systemctl --user start glm-adapter-auto`.
   systemd.user.timers.glm-adapter-auto = {
     description = "Periodic GLM adapter placement check";
-    wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "30s";
       OnUnitActiveSec = "60s";
