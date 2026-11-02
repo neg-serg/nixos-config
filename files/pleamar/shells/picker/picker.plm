@@ -5,7 +5,7 @@ import "../../theme.plm"
 import "../../lib/capsule.plm"
 
 // picker.plm — the wallpaper deck (scene `picker`), the pleamar port of the swatch-deck picker
-// Quickshell ran (files/qs-wallpaperpicker stays in the tree as the reference for parity).
+// Quickshell ran (the vendored tree was the parity reference and is gone now).
 //
 // What it does
 // ------------

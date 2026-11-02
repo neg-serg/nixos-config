@@ -165,7 +165,7 @@ lint:
     # (no -e) and a plain `;` would let black's success mask it.
     if git ls-files -- '*.py' >/dev/null 2>&1; then \
       ruff check -- . && \
-      black --check --line-length 79 --extend-exclude '(files/kitty|files/art/fun-art|files/qs-wallpaperpicker)' .; \
+      black --check --line-length 79 --extend-exclude '(files/kitty|files/art/fun-art)' .; \
     fi
     # TOML syntax/style — tracked files only: a bare `taplo lint` follows result/
     # into the nix store (pyright's typeshed alone is ~200 METADATA.toml) plus the
