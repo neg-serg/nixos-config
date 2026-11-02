@@ -8,6 +8,7 @@
 
 mod config;
 mod mpd;
+mod rex;
 mod song;
 mod toml;
 
@@ -80,6 +81,8 @@ fn run(argv: &[String]) -> u8 {
             println!("{}", cfg.as_toml());
             EXIT_OK
         }
+        // Hidden helper for the parity harness: print what the engine matched.
+        "rex" if rest.len() >= 3 => cmd_rex(&rest[1], &rest[2]),
         other => {
             eprintln!("unknown command: {other}");
             println!("{DOC}");
@@ -181,6 +184,37 @@ fn cmd_doctor(cfg: &Config, sources: &[PathBuf]) -> u8 {
         EXIT_OK
     } else {
         EXIT_ERROR
+    }
+}
+
+fn cmd_rex(pattern: &str, text: &str) -> u8 {
+    let Some(regex) = rex::Regex::new(pattern) else {
+        println!("{{\"error\": \"bad pattern\"}}");
+        return EXIT_UNKNOWN;
+    };
+    if text == "-" {
+        println!("{regex:?}");
+        return EXIT_OK;
+    }
+    match regex.search(text) {
+        Some(m) => {
+            let caps: Vec<String> = m
+                .captures
+                .iter()
+                .map(|(key, value)| format!("{}: {}", json_string(key), json_string(value)))
+                .collect();
+            println!(
+                "{{\"start\": {}, \"end\": {}, \"caps\": {{{}}}}}",
+                m.start,
+                m.end,
+                caps.join(", ")
+            );
+            EXIT_OK
+        }
+        None => {
+            println!("{{\"start\": null}}");
+            EXIT_OK
+        }
     }
 }
 
