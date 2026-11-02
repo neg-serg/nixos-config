@@ -1,0 +1,2 @@
+! no Telegram-capable nodes — tg-auto falls back to all nodes
+✓ Config: 15 outbounds + urltest (15 tg-capable)

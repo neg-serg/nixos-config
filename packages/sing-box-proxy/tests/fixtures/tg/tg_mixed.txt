@@ -1,0 +1,6 @@
+vless://11111111-2222-3333-4444-555555555555@a.example.com:443?encryption=none&security=reality&pbk=0123456789abcdefghijklmnopqrstuvwxyzABCDEFG&sid=0123abcd&sni=cdn.example.com&fp=firefox&flow=xtls-rprx-vision&type=tcp#telegram%20variant
+vless://11111111-2222-3333-4444-555555555556@b.example.com:8443?security=tls&sni=b.example.com&type=ws&host=ws.example.com&path=%2Fws%3Fed%3D2048#Node%20B
+vless://11111111-2222-3333-4444-555555555555@a.example.com:443?encryption=none&security=reality&pbk=0123456789abcdefghijklmnopqrstuvwxyzABCDEFG&sid=0123abcd&sni=cdn.example.com&fp=firefox&flow=xtls-rprx-vision&type=tcp#Node%20A
+not-a-uri
+vless://11111111-2222-3333-4444-55555555555a@f.example.com:2096?security=tls&type=xhttp#dropped%20node
+vless://11111111-2222-3333-4444-555555555571@absent.example.com:443?security=tls#absent
