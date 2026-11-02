@@ -41,7 +41,7 @@ scan_rule() {
   # keeps grep from printing "No such file or directory".
   [ -d "$scope" ] || return 0
   hits=$(grep -R -nE \
-    --exclude-dir=.direnv --exclude-dir=result --exclude-dir=.git \
+    --exclude-dir=.direnv --exclude-dir='result*' --exclude-dir=.agent --exclude-dir=.git \
     --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
     -e "$pattern" -- "$scope" || true)
   if [ -n "$filter" ] && [ -n "$hits" ]; then
@@ -66,7 +66,7 @@ scan_restart_preset() {
   fi
   prefix="${option//./\\.}"
   hits=$(
-    grep -R -lE --exclude-dir=.direnv --exclude-dir=result --exclude-dir=.git \
+    grep -R -lE --exclude-dir=.direnv --exclude-dir='result*' --exclude-dir=.agent --exclude-dir=.git \
       --include='*.nix' "$prefix" modules hosts 2> /dev/null \
       | xargs -r awk -v option="$option" '
         index($0, option) { inblk = 1 }
@@ -97,7 +97,7 @@ scan_restart_preset() {
 scan_dsh_plugin_source_kind() {
   local hits
   hits=$(
-    grep -R -nE --exclude-dir=node_modules --exclude-dir=result \
+    grep -R -nE --exclude-dir=node_modules --exclude-dir='result*' --exclude-dir=.agent \
       --include='*.js' "source:[[:space:]]*\{[^}]*kind:[[:space:]]*['\"]plugin['\"]" \
       modules/user/nix-maid/apps 2> /dev/null || true
   )
