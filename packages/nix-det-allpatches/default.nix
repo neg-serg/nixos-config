@@ -39,6 +39,55 @@
 # The machinery (PGO cycle, packaging shims, forks) is packages/nix-det-pgo's,
 # unchanged; only the patch list grows and a `pgo ? true` switch is added so the
 # patches can be compile-tested without paying for the profile run.
+#
+# Measured 2026-11-03 (trantor, shared host, ambient load 10-17 from other
+# sessions, so every wall-clock number below is a median over interleaved
+# rounds, and none of them is a win):
+#   * builds: nix-2.35.3+7 with PGO (the default patch list below), and a
+#     +8 variant with 0009 added back for the measurement. Both agree byte for
+#     byte with the shipped 2.35.3+5 binary on the same tree state: a plain
+#     `git archive HEAD` directory and a committed copy of it (a real git
+#     flake) both give the same drvPath from every binary.
+#   * functional suite, built from the same source and patches and run out of
+#     band (see `passthru.functional-tests`), 226 tests:
+#       pristine tree                     Ok 201 / Fail 1
+#       this patch stack, 8 patches       Ok 200 / Fail 2   (0009 included)
+#       this patch stack, lazy-trees=true Ok 200 / Fail 2   (0009 included)
+#       packages/nix-det-pgo (5 patches)  Ok 200 / Fail 2   (0009 included)
+#       five patches minus 0009           Ok 201 / Fail 1
+#       this package's default (7)        Ok 201 / Fail 1
+#     Name-keyed, the eight-patch stack changes exactly one test versus pristine
+#     and versus nix-det-pgo — and 0009 is what changes it: `flakes` fails at
+#     tests/functional/flakes/flakes.sh:262 (git fetch asks for
+#     `refs/heads/master` on a repository whose HEAD is `main`). That regression
+#     was in the shipping binary at the time of the measurement; it is not
+#     introduced here, and 0009 is therefore *not* applied by default — without
+#     it the suite is identical to pristine (one pre-existing failure,
+#     `libstoreconsumer`). 24 tests skip in every configuration.
+#   * memo (0006): `scripts/dev/nix-memo-diff.sh` passes — drvPath and a 29183
+#     derivation closure are identical with the memo on and off, 19167 hits.
+#     It does not pay for itself on this tree: 10.36 s versus 9.89 s (best of 3)
+#     for the same evaluation, because AsyncPathWriter already drops duplicate
+#     writes (that is also why 0007 is absent below). Expect the same order of
+#     magnitude for 0002: it removes daemon round-trips, and this host's daemon
+#     is a local socket, so it measured inside the noise.
+#   * lazy-trees on versus off, same binary, same tree: no measurable saving
+#     here. The copy it defers is what `nix hash path` costs on this tree,
+#     0.23-0.31 s, and the mounted-accessor indirection costs about the same; on
+#     a loaded shared host the difference is below the noise floor. Value stays
+#     `true` because that is what the setting was in the binaries this was
+#     compared against.
+#
+# MEASURED 2026-11-02: this build is NOT faster than packages/nix-det-pgo in
+# practice. On `nh os switch --dry` after an edit, interleaved three rounds:
+# nix-det-pgo (four patches) 14802/10180/11214 ms, this package 11002/11087/11028 ms
+# — the medians are 11214 vs 11028 ms, inside the run-to-run noise. The memo of
+# 0006 is timing-neutral on a warm store (the skipped writeDerivation is a validity
+# check there, while the key hash and structuredAttrs unparse still cost), which is
+# also what the upstream build measured. Kept because it is the only Determinate
+# build that carries the memoisation patch and therefore the only one
+# scripts/dev/nix-memo-diff.sh can exercise on their tree; it is not a candidate
+# for nix.package.
 {
   lib,
   pkgs,
@@ -50,16 +99,21 @@
   # Overridable so the *same* packaging shims (forks, -Dwasm/sentry/otel,
   # splices) can build the tree pristine — `patches = []` — which is what the
   # functional-suite baseline is: identical packaging, zero evaluation patches.
+  # Everything this package needs is vendored in ./patches/: the four other
+  # evaluation patches from ~/src/nix-optimized/patches/2.35 (byte-identical to
+  # packages/nix-det-pgo's copies), the two rebased here, and our 0006a.
+  # 0009 is vendored but deliberately *not* applied: it is the one patch in the
+  # stack that fails a functional test (`flakes`, see the header). Add it back
+  # to this list to reproduce the 8-patch measurement.
   patches ? [
-    ../nix-det-pgo/patches/0001-libstore-unparse-structured-attrs-without-copying-th.patch
+    ./patches/0001-libstore-unparse-structured-attrs-without-copying-th.patch
     ./patches/0002-libstore-skip-IsValidPath-for-paths-pinned-and-valid.patch
-    ../nix-det-pgo/patches/0003-libexpr-reuse-the-memoized-derivation-hash-for-a-rep.patch
-    ../nix-det-pgo/patches/0004-libutil-check-the-allow-list-predecessor-before-walk.patch
-    ../nix-det-pgo/patches/0005-libexpr-use-constant-error-contexts-in-builtins.any-.patch
+    ./patches/0003-libexpr-reuse-the-memoized-derivation-hash-for-a-rep.patch
+    ./patches/0004-libutil-check-the-allow-list-predecessor-before-walk.patch
+    ./patches/0005-libexpr-use-constant-error-contexts-in-builtins.any-.patch
     ./patches/0006-libexpr-memoize-derivationStrict-by-the-masked-deriv.patch
     # Must stay immediately after 0006: it edits that patch's hunks.
     ./patches/0006a-libexpr-gate-the-derivationStrict-memo-behind-eval-.patch
-    ../nix-det-pgo/patches/0009-libfetchers-refresh-the-cached-git-HEAD-after-readin.patch
   ],
 }:
 let
@@ -237,8 +291,9 @@ let
   # package's patch stack appended to every component. Kept as a scope (not just
   # `.nix-everything`) so the tree's own functional test suite can be built from
   # the same source and patches — see `functional-tests` in passthru below.
-  patchedScope = (noWasm (components.overrideScope (_: _: { libgit2 = libgit2Det; }))).appendPatches
-    patches;
+  patchedScope =
+    (noWasm (components.overrideScope (_: _: { libgit2 = libgit2Det; }))).appendPatches
+      patches;
 
   nixPkg = patchedScope.nix-everything;
 

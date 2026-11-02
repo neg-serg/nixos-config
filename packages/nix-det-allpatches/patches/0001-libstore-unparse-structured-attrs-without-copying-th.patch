@@ -1,0 +1,73 @@
+From 54c299280962414d635d700ff18851daa3a7b6e7 Mon Sep 17 00:00:00 2001
+From: ElXreno <elxreno@gmail.com>
+Date: Sun, 4 Oct 2026 15:36:50 +0300
+Subject: [PATCH] libstore: unparse structured attrs without copying the JSON
+ object
+
+---
+ .../include/nix/store/parsed-derivations.hh     |  7 ++++++-
+ src/libstore/parsed-derivations.cc              | 17 +++++++++++++++--
+ src/nix/develop.cc                              |  1 +
+ 3 files changed, 22 insertions(+), 3 deletions(-)
+
+diff --git a/src/libstore/include/nix/store/parsed-derivations.hh b/src/libstore/include/nix/store/parsed-derivations.hh
+index 098591310..a5d0fee76 100644
+--- a/src/libstore/include/nix/store/parsed-derivations.hh
++++ b/src/libstore/include/nix/store/parsed-derivations.hh
+@@ -21,7 +21,12 @@ struct StructuredAttrs
+ 
+     nlohmann::json::object_t structuredAttrs;
+ 
+-    bool operator==(const StructuredAttrs &) const = default;
++    mutable std::shared_ptr<const std::string> unparsedCache;
++
++    bool operator==(const StructuredAttrs & other) const
++    {
++        return structuredAttrs == other.structuredAttrs;
++    }
+ 
+     /**
+      * Unconditionally parse from a JSON string. Used by `tryExtract`.
+diff --git a/src/libstore/parsed-derivations.cc b/src/libstore/parsed-derivations.cc
+index 95434bd20..81e25709a 100644
+--- a/src/libstore/parsed-derivations.cc
++++ b/src/libstore/parsed-derivations.cc
+@@ -33,8 +33,21 @@ std::optional<StructuredAttrs> StructuredAttrs::tryExtract(StringPairs & env)
+ 
+ std::pair<std::string_view, std::string> StructuredAttrs::unparse() const
+ {
+-    // TODO don't copy the JSON object just to dump it.
+-    return {envVarName, static_cast<nlohmann::json>(structuredAttrs).dump()};
++    if (unparsedCache)
++        return {envVarName, *unparsedCache};
++    std::string s{"{"};
++    bool first = true;
++    for (auto & [k, v] : structuredAttrs) {
++        if (!first)
++            s += ',';
++        first = false;
++        s += nlohmann::json(k).dump();
++        s += ':';
++        s += v.dump();
++    }
++    s += '}';
++    unparsedCache = std::make_shared<const std::string>(s);
++    return {envVarName, std::move(s)};
+ }
+ 
+ void StructuredAttrs::checkKeyNotInUse(const StringPairs & env)
+diff --git a/src/nix/develop.cc b/src/nix/develop.cc
+index 3105efa82..658e1ac90 100644
+--- a/src/nix/develop.cc
++++ b/src/nix/develop.cc
+@@ -254,6 +254,7 @@ static StorePath getDerivationEnvironment(ref<Store> store, ref<Store> evalStore
+     /* Remove derivation checks. */
+     if (drv.structuredAttrs) {
+         drv.structuredAttrs->structuredAttrs.erase("outputChecks");
++        drv.structuredAttrs->unparsedCache.reset();
+     } else {
+         drv.env.erase("allowedReferences");
+         drv.env.erase("allowedRequisites");
+-- 
+2.55.0
+

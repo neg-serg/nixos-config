@@ -1,0 +1,27 @@
+From b8aff72419d678fac730aa1219e1d53a07de93c4 Mon Sep 17 00:00:00 2001
+From: ElXreno <elxreno@gmail.com>
+Date: Sun, 4 Oct 2026 15:38:55 +0300
+Subject: [PATCH] libutil: check the allow-list predecessor before walking
+ parents
+
+---
+ src/libutil/canon-path.cc | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/libutil/canon-path.cc b/src/libutil/canon-path.cc
+index a90206ee1..b252e133c 100644
+--- a/src/libutil/canon-path.cc
++++ b/src/libutil/canon-path.cc
+@@ -133,6 +133,9 @@ bool CanonPath::isAllowed(const std::set<CanonPath> & allowed) const
+             return true;
+     }
+ 
++    if (lb != allowed.begin() && isWithin(*std::prev(lb)))
++        return true;
++
+     /* Check if a parent of `this` is allowed. */
+     auto path = *this;
+     while (!path.isRoot()) {
+-- 
+2.55.0
+
