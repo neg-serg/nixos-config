@@ -43,6 +43,10 @@
   # which is how the render gate reaches the binary when it is not on PATH.
   pleamar = pkgs.pleamar;
 
+  # Animated nixie-tube renderer; also ships `nixie-metrics`, the screenshot
+  # measurer the A1..A7 acceptance criteria are stated in.
+  nixie = pkgs.nixie;
+
   # D-Bus fixtures for the pleamar engine tests (MPRIS player, nested tray item).
   pleamar-fixtures = pkgs.neg.pleamar-fixtures;
 
