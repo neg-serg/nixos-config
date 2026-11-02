@@ -166,9 +166,51 @@ The host could not capture USB traffic at all; the following is now in the tree 
   `modules/user/nix-maid/sys/user-services/glm-monitoring.nix` and is deliberately **not**
   auto-started: the adapter normally sits inside the Windows VM, so it is started by hand after
   `glm-adapter host`.
-- `glm-usbmon-priv` no longer fails silently: if tshark dies within half a second of starting, the
-  helper unmounts debugfs, prints the tail of its log and exits non-zero. The capture directory is
-  0755 so the pcap it hands to the caller is actually reachable (0700 made the chown useless).
+- **`apply` is a daemon method now.** The plan parser moved into the library (`src/plan.rs`) so the
+  CLI and `glm5d` build the same frames from the same file; the socket gained `apply <plan-file>`,
+  answered by the loop thread that owns the transport, paced at 12 ms per frame and with the
+  acknowledgement count in the reply. Verified on hardware 2026-11-02 against the running daemon:
+  `ok applied 27 frames to session 03 (27 acknowledged)`.
+- **`glm-adapter host` was broken and is fixed.** It unbound `usbhid` while QEMU still held the
+  passed through device and reported "adapter NOT usable"; the `glm-adapter-auto` timer then
+  restarted the VM within a minute and QEMU re-claimed the adapter at its own start. It now stops
+  the timer, stops the container, waits for the usbfs release, binds `usbhid`, waits for the hidraw
+  node and verifies `genlc`; `attach` restores the timer. Verified end to end on hardware.
+- **The OSC bridge runs on the daemon (2026-11-02).** `packages/glm-osc/src/main.rs` (the live
+  bridge is Rust since 9f5549d47 — the old `server.py` path was stale) now speaks the `glm5d` line
+  protocol over a persistent `UnixStream` (`GLM_DAEMON_SOCKET`, default
+  `$XDG_RUNTIME_DIR/glm5d.sock`) for volume (absolute/ratio/relative), mute and status, and keeps
+  the `genlc` CLI only for power, LED and discovery — the parts the daemon does not serve yet. A
+  missing or dropped socket logs the outage once and falls back to the CLI, so the widget never goes
+  dead on a host without the daemon. Verified live: OSC `/glm/volume -38.5` reached the daemon
+  (`glm5d: volume -38.5 dB`) and `/glm/status` answered from the daemon's JSON; after a connection
+  reset the bridge reconnected and the next volume landed again. Six crate tests pass, two of them
+  new.
+- **`glm5ctl`** — the client CLI (status table, `volume`, `mute`, `lease`), verified against the
+  live daemon and against a stub. **Open hardware question (2026-11-02, evening).** After the
+  Windows VM had been off for a while, the monitors stopped accepting leases although they still
+  answered probes. The capture shows the exchange exactly:
+
+```
+FF FE probe        -> 01 09 12 75 29      the monitor answers with its hardware id
+F0 02 12 75 29 03  -> 01 09 12 75 29      it replies with the hardware id again, not the session
+```
+
+The same bytes worked five hours earlier (`F0 02 12 75 29 03` → `01 09 03`, capture
+`capture-20261102-170841.pcap`), so the frames are right and the *monitor's state* differs —
+plausibly ISS standby, where a monitor answers probes but does not enter a session. `genlc wakeup`
+(`3A 03 7F` / `3A 03 01` broadcast, the sequence GLM uses) did not change it from the host. Until
+this is settled, `glm5d` shows `leases 0` on a bus the VM has left asleep, and the workaround is to
+let GLM start once (it wakes the system) or to power the monitors out of standby by hand. Two bugs
+were found and fixed while chasing it, both real: replies are matched by shape now (the adapter
+broadcasts `F0 1F 00 00 00` about every 610 ms on its own, which desynced positional pairing), and
+the lease ack is matched as `09 <session>` rather than any `09` (a second probe answer used to look
+like a failure).
+
+dies within half a second of starting, the helper unmounts debugfs, prints the tail of its log and
+exits non-zero. The capture directory is 0755 so the pcap it hands to the caller is actually
+reachable (0700 made the chown useless).
+
 - `hidraw` access to the adapter — `files/hardware/udev/trantor-host.rules`: the node was root-only
   (kernel default 0600, and the stock `uaccess` rules only tag AV/wallet-class devices), so no
   hidraw backend could open it as a user. `MODE=0660 GROUP=users TAG+=uaccess` fixes exactly that
@@ -484,11 +526,20 @@ systemd service (this repo's `systemdUser.mkUserService` pattern) exposing D-Bus
 per-consumer invocations. Deliverable: module under `modules/user/nix-maid/sys/user-services/`,
 migrated consumers, no behaviour change for existing keybindings.
 
-**T8 — UI.** Goal: a daily driver for the operations people actually do. Do: Quickshell/QML panel
-consistent with the existing shell (a Qt/GTK app is acceptable if QML proves hostile to the
-measurement workflow), covering inventory, volume/mute/power, per-monitor settings, presets, and
-setup import/export. Measurement/AutoCal screens only if D2 says the data is available. Deliverable:
-QML in `files/` + wiring, screenshots in the artifact.
+**T8 — UI.** *First pass delivered (2026-11-02).* `glm5ctl` (`packages/genlc-rs/src/bin/glm5ctl.rs`)
+is the client CLI over the daemon socket: `status` prints the cycle count, the volume and a table of
+leased monitors with their telemetry, and `volume <dB>`, `mute on|off`, `lease` send commands;
+`--socket` overrides the path, and a missing socket fails with the exact command to start the
+daemon. Verified against the live daemon (`cycles 9`, three leased monitors, `volume -35` →
+`ok queued`) and against a stub server. What a desktop widget still needs is a QML front end over
+the same socket — the protocol, the safety rails and the CLI exist now, so that is presentation
+work, not protocol work.
+
+**T8 — UI (original task text).** Goal: a daily driver for the operations people actually do. Do:
+Quickshell/QML panel consistent with the existing shell (a Qt/GTK app is acceptable if QML proves
+hostile to the measurement workflow), covering inventory, volume/mute/power, per-monitor settings,
+presets, and setup import/export. Measurement/AutoCal screens only if D2 says the data is available.
+Deliverable: QML in `files/` + wiring, screenshots in the artifact.
 
 ### Phase 3 — rollout
 
