@@ -104,7 +104,7 @@ library Build strict {
         let clock.w = 46
         let stage.w = 62
         let name.w = w - clock.w - stage.w - 12
-        size: w * scale, builds.count * 20 * scale
+        size: w * scale, builds.total * 20 * scale
         group zoom {
             scale: scale
             column rows {

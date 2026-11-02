@@ -12,7 +12,7 @@
 --   - the adapter's placement is probed every 30 s with `genlc discover`
 --     (host path) — no answer means the adapter is in the VM and the MIDI
 --     bridge is the only way in;
---   - the target is read back every 2 s with `glm-vol read`, adopted only after
+--   - the target is read back with `glm-vol read`, six looks a second, adopted only after
 --     the wheel has been quiet for 2.5 s and never while muted (the port of the
 --     QS FileView watch and its user-input guard).
 --
@@ -27,7 +27,6 @@ local COMMIT_MS = 150
 local MIN_SEND_GAP_MS = 400
 local ANCHORS_MS = { 400, 2000, 8000 }
 local PROBE_MS = 30000
-local POLL_MS = 2000
 
 local target = fact.volume or -40
 local muted = false
@@ -237,7 +236,10 @@ local function watchLevel()
     local script = "f=\"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/genlc-volume\"\nlast=\"\"\nwhile :; do\n  v=$(cat \"$f\" 2>/dev/null)\n  if [ -n \"$v\" ] && [ \"$v\" != \"$last\" ]; then printf \"%s\n\" \"$v\"; last=\"$v\"; fi\n  sleep 0.15\ndone"
     spawn("bash", { "-c", script }, function(line)
         local value = tonumber((line or ""):match("-?%d+"))
-        if value and clampDb(value) ~= target then setVolume(value) end
+        -- The guard the header promises: a level that arrives while the wheel is still moving, or
+        -- while muted, is somebody else's (the file is a shared knob) and must not fight the
+        -- gesture in flight.
+        if value and quiet and not muted and clampDb(value) ~= target then setVolume(value) end
     end)
 end
 
