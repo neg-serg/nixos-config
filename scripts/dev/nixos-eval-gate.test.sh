@@ -21,8 +21,19 @@
 #   8. restore it: tier A hits the original key again;
 #   9. --no-cache: live eval, same value, nothing stored;
 #  10. an unreadable untracked `.nix` file: tier A refuses to cache (notice on
-#      stderr) and still answers like a live eval; skipped as root.
+#      stderr) and still answers like a live eval; skipped as root;
+#  11. tier B answers byte-identically through the parallel and the plain shape
+#      (`builtins.parallel` is a forcing hint, so the value must not move);
+#  12. no `builtins.parallel` (a NIX wrapper answers `false` to the probe): the
+#      gate falls back to the plain shape, says so on --verbose, never claims the
+#      fast path and still answers correctly;
+#  13. the key does not move with the shape — parallelism is a forcing order, not
+#      an input, so a plain-shape call hits the entry a parallel-shape call wrote;
+#  14. one evaluation, many answers: `--json` returns all five fields and
+#      `--field label` returns the label, both equal to live evals.
 #
+# Every tier-B value is compared against a live `nix eval` of the plain shape,
+# which is the oracle for both shapes.
 # Hermetic: everything runs in a `git clone --shared` of this repo under $TMPDIR,
 # so the real tree is only read, the cache is steered into the same temp dir with
 # EVAL_GATE_CACHE_DIR, and the clone is removed on exit.
@@ -88,19 +99,32 @@ CLONE="$TMP/repo"
 cd "$CLONE"
 
 # One gate invocation: stdout in $out, stderr in $err, wall time in $ms, status in $rc.
+# $run_env carries per-call environment (`EVAL_GATE_PARALLEL=off`, `NIX=…`).
 out="" err="" ms=0 rc=0
+run_env=()
 run_gate() {
   local start err_file="$TMP/stderr.$$"
   start="$(now_ms)"
   rc=0
-  out="$(bash ./scripts/dev/nixos-eval-gate.sh "$@" 2> "$err_file")" || rc=$?
+  out="$(env ${run_env[@]+"${run_env[@]}"} bash ./scripts/dev/nixos-eval-gate.sh "$@" 2> "$err_file")" || rc=$?
   ms=$(($(now_ms) - start))
   err="$(cat "$err_file")"
 }
 
 live_label() { nix eval --raw ".#$LABEL_ATTR"; }
 live_drv() { nix eval --raw ".#$DRV_ATTR"; }
-entries() { ls -1 "$EVAL_GATE_CACHE_DIR" 2> /dev/null | wc -l | tr -d ' '; }
+# Cache entries only: the answer files are named by the key, the proof records
+# carry a `.record` suffix and must not be counted as answers.
+entries() {
+  local n=0 f
+  for f in "$EVAL_GATE_CACHE_DIR"/*; do
+    case "${f##*/}" in
+      *[!0-9a-f]*) : ;;
+      *) n=$((n + 1)) ;;
+    esac
+  done
+  printf '%s\n' "$n"
+}
 key_of() { sed -n 's/.* key=\([0-9a-f]\{64\}\).*/\1/p' <<< "$1" | tail -n 1; }
 
 echo
@@ -115,6 +139,8 @@ ck "logged a key" test -n "$akey1"
 ck "printed the label" test -n "$label"
 ck "exactly one cache entry" test "$(entries)" -eq 1
 ck "label equals a live eval" test "$label" = "$(live_label)"
+ck "wrote a proof record beside the answer" test -f "$EVAL_GATE_CACHE_DIR/$akey1.record"
+ck "the record names the tier and the answer" contains "$(head -n 12 "$EVAL_GATE_CACHE_DIR/$akey1.record")" "answer $label"
 echo "   label: $label"
 
 echo
@@ -220,6 +246,90 @@ else
   ck "answer still equals a live eval" test "$out" = "$(live_label)"
   chmod 600 "$CLONE/scratch-input.nix"
   rm -f "$CLONE/scratch-input.nix"
+fi
+
+echo
+echo "11. tier B: the parallel shape answers byte-identically to the plain shape"
+run_gate --drv --no-cache --verbose
+par_out="$out"
+par_ms="$ms"
+ck "parallel-shape exit status is 0" test "$rc" -eq 0
+ck "parallel shape used the fan-out" contains "$err" "parallel shape"
+ck "parallel-shape answer equals a live plain eval" test "$par_out" = "$drv1"
+run_env=(EVAL_GATE_PARALLEL=off)
+run_gate --drv --no-cache --verbose
+plain_out="$out"
+plain_ms="$ms"
+run_env=()
+ck "plain-shape exit status is 0" test "$rc" -eq 0
+ck "plain shape says so" contains "$err" "plain shape"
+ck "plain-shape answer equals a live plain eval" test "$plain_out" = "$drv1"
+ck "the two shapes are byte-identical" test "$par_out" = "$plain_out"
+echo "   parallel: ${par_ms} ms, plain: ${plain_ms} ms, same bytes"
+
+echo
+echo "12. no builtins.parallel: fall back to the plain shape, same answer"
+# A stand-in Nix that answers `false` to the probe and forwards everything else:
+# the only way to exercise the fallback on this host, where the primop is real.
+cat > "$TMP/nix-no-parallel" << 'WRAP'
+#!/usr/bin/env bash
+for arg in "$@"; do
+  if [ "$arg" = 'builtins ? parallel' ]; then
+    printf 'false\n'
+    exit 0
+  fi
+done
+exec nix "$@"
+WRAP
+chmod +x "$TMP/nix-no-parallel"
+run_env=(NIX="$TMP/nix-no-parallel")
+run_gate --drv --no-cache --verbose
+run_env=()
+ck "exit status is 0 without the primop" test "$rc" -eq 0
+ck "falls back to the plain shape" contains "$err" "plain shape"
+ck "never claims the parallel shape" not_contains "$err" "parallel shape"
+ck "the fallback answers like a live eval" test "$out" = "$drv1"
+echo "   fallback: ${ms} ms, answer $out"
+# The whole-set expression must also fall back without the primop, and a scalar
+# field must stay a bare string (not JSON-quoted) so both shapes stay identical.
+run_env=(NIX="$TMP/nix-no-parallel")
+run_gate --drv --field label
+run_env=()
+ck "--field falls back without the primop" test "$out" = "$label"
+
+echo
+echo "13. parallelism is a forcing order, not an input: the key does not move"
+run_gate --drv --verbose
+ck "the warm tier-B entry is a hit" contains "$err" "hit"
+ck "the hit key is the original tier-B key" test "$(key_of "$err")" = "$bkey1"
+par_key="$(key_of "$err")"
+run_env=(EVAL_GATE_PARALLEL=off)
+run_gate --drv --verbose
+run_env=()
+ck "plain-shape exit status is 0" test "$rc" -eq 0
+ck "plain shape reuses the parallel entry (same key space)" contains "$err" "hit"
+ck "the key is identical in both shapes" test "$(key_of "$err")" = "$par_key"
+ck "the value is identical in both shapes" test "$out" = "$drv1"
+
+echo
+echo "14. one evaluation, many answers: --json and --field"
+if ! command -v jq > /dev/null 2>&1; then
+  echo "   skip: jq not available, the JSON case cannot be checked"
+else
+  run_gate --drv --json
+  json="$out"
+  json_ms="$ms"
+  ck "--json exit status is 0" test "$rc" -eq 0
+  ck "it is a JSON object with all five fields" test "$(jq -r 'keys | length' <<< "$json")" -eq 5
+  ck "drvPath field equals the tier-B answer" test "$(jq -r .drvPath <<< "$json")" = "$drv1"
+  ck "label field equals a live label eval" test "$(jq -r .label <<< "$json")" = "$(live_label)"
+  ck "toplevel field is a store path" contains "$(jq -r .toplevel <<< "$json")" "/nix/store/"
+  ck "system field names the host platform" test "$(jq -r .system <<< "$json")" = "x86_64-linux"
+  ck "one evaluation answered the whole set (${json_ms} ms)" test "$json_ms" -lt 20000
+  run_gate --drv --field label
+  ck "--field exit status is 0" test "$rc" -eq 0
+  ck "--field label equals a live eval" test "$out" = "$label"
+  echo "   --json: ${json_ms} ms for five answers, --field: ${ms} ms"
 fi
 
 summary "nixos-eval-gate self-test"
