@@ -52,7 +52,6 @@ let
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
     pkgs.neg.renoise-osc # OSC CLI for Renoise: renoise-osc eval '...' / renoise-reverb [--track N] [--wet X]
     pkgs.neg.midi-transcribe # audio->MIDI transcription: midi-transcribe <file.mp3> (hFT-Transformer, CPU)
-    pkgs.neg.midi2sheet # MIDI -> sheet music PDF: midi2sheet <file.mid> [-o out.pdf] [--mscz] (headless MuseScore)
     pkgs.vmpk # Qt virtual MIDI keyboard (replaces GTK2 jack-keyboard) — plays into SC/VST MIDI ports
     pkgs.a2jmidid # ALSA→JACK MIDI bridge (SuperCollider MIDIOut → PipeWire → VSTs via yabridge)
     # -- Noise Processing --
