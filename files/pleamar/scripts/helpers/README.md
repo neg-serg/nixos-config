@@ -6,7 +6,7 @@ service has, so each view spawns one small stateless worker while it exists and 
 the same pattern as Vitreus' `vitreus-sysmon`. All workers are the Rust crates
 `packages/pleamar-sysmon`, `packages/pleamar-weather`, `packages/pleamar-calendar`,
 `packages/pleamar-journal` and `packages/pleamar-kbdlayout`; this directory keeps the picker's
-commands (`wallpaper-apply`, `wallpaper-still`, `picker-toggle.sh`). None of them runs in the
+commands in the `packages/pleamar-picker` crate (apply/still/the deck CLI). None of them runs in the
 background on its own.
 
 The protocol is **INTERFACES.md §7, frozen by PH1-T1**; this file repeats it for convenience and
@@ -214,7 +214,7 @@ Two of the names in `PATH` are not workers but commands a scene runs to completi
 `spawn(...)`: `pleamar-wallpaper-palettes` (the schemes of a folder's wallpapers, one JSON line
 each, as in §7 — and `--names DIR` for the folder's list) and
 `pleamar-wallpaper-apply FILE [COMMAND]` (the caches a new wallpaper sets, the wallpaper command,
-matugen). `wallpaper-still` and `picker-toggle.sh` sit beside them as the piece each one calls: the
-still of a video, and the compositor bind's `pleamar-picker toggle` that starts the scene when a
-session has none running. Ported from the Quickshell picker's `scripts/` (GPL-3.0-or-later);
-`shells/picker/picker.plm` is what runs them.
+matugen). `pleamar-wallpaper-still` and `pleamar-picker` (both from `packages/pleamar-picker`) sit
+beside them as the piece each one calls: the still of a video, and the compositor bind's
+`pleamar-picker toggle` that starts the scene when a session has none running. Ported from the
+Quickshell picker's `scripts/` (GPL-3.0-or-later); `shells/picker/picker.plm` is what runs them.
