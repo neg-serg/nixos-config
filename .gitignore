@@ -7,6 +7,11 @@ nixos.qcow2
 __pycache__/
 .pi/
 packages/target/
+# Cargo build dirs of the per-package crates (`packages/pleamar-harness/target/`,
+# `packages/local-bin-desktop/target/`, …). Only the repo-root `packages/target/`
+# was ignored, so a local `cargo build` in a crate directory left hundreds of
+# untracked artifacts that a `git add -A` would have swept into the history.
+packages/*/target/
 .omo/
 # J-Space controller ledger — the j-space skill keeps .jspace/ in the task workspace
 .jspace/
