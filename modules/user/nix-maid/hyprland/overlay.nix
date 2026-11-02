@@ -299,22 +299,30 @@
 
               # Hyprwinwrap: any window (mpv, a browser, a shader canvas) pinned as a
               # background layer behind the desktop. Upstream is a hyprpm plugin; the
-              # rev is the commit its hyprpm.toml pins for Hyprland 0.56.2, the same
-              # commit family as the rest of this overlay, so plugin and compositor
-              # stay in step. hyprpm builds it with CMake and `install(TARGETS)`
-              # drops libhyprwinwrap.so into $out/lib, so the default phases work.
-              # The .so is dlopen'd by the generated hyprwinwrap-setup helper at
-              # session start (see main.nix); the background-window declarations in
-              # files/gui/hypr/hyprwinwrap.lua are pushed through `hyprctl eval`,
-              # because a plugin cannot be loaded while hyprland.lua is parsed.
-              # One local patch (hyprwinwrap-lua-window-merge.patch): upstream's
-              # luaWindow() only appends to gLuaSpecs and leaves the merge to the
-              # config.reloaded event, which a runtime `hyprctl eval` never fires —
-              # and a reload would clear the list in its config.preReload handler
-              # before merging. The patch merges immediately, which is what makes
-              # the eval push take effect at all. Verified in a nested 0.56.2
-              # instance: after the patch a window matching the pushed class is
-              # adopted as a full-screen background window.
+              # rev is the commit its hyprpm.toml pins for Hyprland 0.56.2, so the
+              # compositor is a major version ahead of it. hyprpm builds it with CMake
+              # and `install(TARGETS)` drops libhyprwinwrap.so into $out/lib, so the
+              # default phases work. The .so is dlopen'd by the generated
+              # hyprwinwrap-setup helper at session start (see main.nix); the
+              # background-window declarations in files/gui/hypr/hyprwinwrap.lua are
+              # pushed through `hyprctl eval`, because a plugin cannot be loaded while
+              # hyprland.lua is parsed.
+              # Two local patches, both rebased onto the pinned upstream commit:
+              #   hyprwinwrap-lua-window-merge.patch — upstream's luaWindow() only
+              #     appends to gLuaSpecs and leaves the merge to the config.reloaded
+              #     event, which a runtime `hyprctl eval` never fires — and a reload
+              #     would clear the list in its config.preReload handler before
+              #     merging. The patch merges immediately, which is what makes the
+              #     eval push take effect at all. Verified in a nested 0.56.2 instance:
+              #     after the patch a window matching the pushed class is adopted as a
+              #     full-screen background window.
+              #   hyprwinwrap-hyprland-057.patch — the 0.57 port. The window header
+              #     moved under desktop/view/window/, title/class/floating/pinned are
+              #     behind metadata(), layoutTarget()->floating() and m_state now,
+              #     IHyprRenderer::m_renderData is gone in favour of the CRenderContext
+              #     that render.stage hands to its listeners, and commitWindow() grew
+              #     an initialCommit bool (so the hardcoded hook symbol changed too:
+              #     a stale mangled name would throw out of PLUGIN_INIT at load).
               hyprwinwrap = prev.hyprlandPlugins.mkHyprlandPlugin {
                 pluginName = "hyprwinwrap";
                 version = "0-unstable-2026-09-10";
@@ -326,16 +334,10 @@
                   hash = "sha256-J3dFF2ibY+SjYoSm2JnBrBu9riVbycQ1q39xnYlNUjM=";
                 };
 
-                patches = [ ./hyprwinwrap-lua-window-merge.patch ];
-                # 0.57 moved the window header one directory down
-                # (`desktop/view/Window.hpp` -> `desktop/view/window/Window.hpp`); every
-                # other include this plugin uses still resolves. Kept as a substitution
-                # rather than a patch file: it is one string.
-                postPatch = ''
-                  substituteInPlace main.cpp \
-                    --replace-fail "hyprland/src/desktop/view/Window.hpp" \
-                                   "hyprland/src/desktop/view/window/Window.hpp"
-                '';
+                patches = [
+                  ./hyprwinwrap-lua-window-merge.patch
+                  ./hyprwinwrap-hyprland-057.patch
+                ];
 
                 nativeBuildInputs = [ final.cmake ];
                 # The CMakeLists asks pkg-config for hyprland, libdrm, libinput,
@@ -388,8 +390,7 @@
             # Plugins that build against Hyprland 0.57. Everything else is a stub until
             # it is ported: the loader scripts run `hyprctl plugin load … || true`, so a
             # missing `.so` costs one line in the session log instead of a broken login.
-            # Still stubbed: hyprwinwrap (upstream never moved off 0.56 and the window
-            # fields sit behind accessors now) and hypr-dynamic-cursors (builds against
+            # Still stubbed: hypr-dynamic-cursors (builds against
             # 0.57, but upstream SIGSEGV #170 in tilt/stretch/shake is unfixed and the
             # effect is off in the config).
             ported = [
@@ -399,9 +400,9 @@
               "hymission"
               "hyprcapture"
               "hyprwindowshade"
+              "hyprwinwrap"
             ];
             unported = [
-              "hyprwinwrap"
               "hypr-dynamic-cursors"
             ];
           in
