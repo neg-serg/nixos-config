@@ -84,7 +84,7 @@ library Capsule strict {
             color: fill
             opacity: alpha
             rim: 1 * rim
-            shadow: shadow.dx, shadow.dy * scale, shadow.blur * scale, shadow, shadow_tone
+            shadow: shadow.dx * scale, shadow.dy * scale, shadow.blur * scale, shadow, shadow_tone
             border: edge * scale, mix(fill, edge_tone, edge_alpha)
             box { from: 0, 0; size: w * scale, h * scale; corner: radius * scale }
         }

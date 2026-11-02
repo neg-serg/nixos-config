@@ -49,12 +49,12 @@ Rules the file obeys, so PH2 writers can rely on them:
 | `skin.coal`         | darkest wallpaper tone (`colors.background` role) | darkest of four Oklab k-means clusters            |
 | `skin.surface`      | raised surface (`colors.surfaceVariant` role)     | second-darkest cluster                            |
 | `skin.ink`          | text (`colors.text.primary` role)                 | lightest cluster, readability-clamped (see below) |
-| `skin.ink.dim`      | secondary text (`colors.text.secondary` role)     | the static `#AEB9C8` / `#4B5464` (see below)       |
+| `skin.ink.dim`      | secondary text (`colors.text.secondary` role)     | the static `#AEB9C8` / `#4B5464` (see below)      |
 | `skin.accent`       | accent (`colors.accent.primary` role)             | wallpaper mean hue, QS saturation/lightness       |
 | `skin.accent.hover` | `Theme.accentHover`                               | `mix(skin.accent, #ffffff, 20%)`                  |
 | `skin.accent.deep`  | `Theme.accentDarkStrong`                          | `mix(skin.accent, skin.coal, 80%)`                |
 | `skin.on.accent`    | `colors.onAccent`                                 | constant `#ffffff`, as in the legacy theme        |
-| `skin.light`        | is this the light palette?                       | wallpaper mean WCAG luminance, or `--mode`        |
+| `skin.light`        | is this the light palette?                        | wallpaper mean WCAG luminance, or `--mode`        |
 
 `theme.sh` writes one comment above each name saying where that name's value came from — the sampled
 wallpaper, `--accent`, `--from-json`, or the QS base-palette fallback.
