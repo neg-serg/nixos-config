@@ -2,9 +2,15 @@
 ## Purpose: OSC bridge to Genelec SAM monitors via the genlc Python module
 ##   (alternative to the official GLM software; controls volume/mute/power/status
 ##   over the GLM USB adapter 1781:0e39 without the GLM app running).
+##
+## The bridge itself is Rust (src/main.rs): OSC over UDP, the state file and the
+## replies are hand-rolled, no python-osc. `genlc` stays a Python CLI because it
+## *is* the third-party implementation of the GLM USB protocol — reimplementing
+## that would be a different project, so the wrapper pins its interpreter and
+## the hidapi library path.
 {
   lib,
-  stdenv,
+  rustPlatform,
   python3,
   fetchFromGitHub,
   fetchPypi,
@@ -48,27 +54,34 @@ let
     ps.hid
     libscrc
     ps.click
-    ps.python-osc
   ]);
 in
-stdenv.mkDerivation {
+rustPlatform.buildRustPackage {
   pname = "glm-osc";
   version = "0.1.0";
+
   src = ./.;
-  dontUnpack = true;
+
+  cargoLock.lockFile = ./Cargo.lock;
+
   nativeBuildInputs = [ makeWrapper ];
-  installPhase = ''
-    mkdir -p $out/bin
-    makeWrapper ${py}/bin/python $out/bin/glm-osc-server \
+
+  # genlc controls the monitors over hidapi, so both the interpreter and the
+  # library path have to come from the store; GLM_OSC_STATE keeps the volume
+  # across restarts.
+  postInstall = ''
+    wrapProgram $out/bin/glm-osc-server \
+      --prefix PATH : ${lib.makeBinPath [ py ]} \
       --set LD_LIBRARY_PATH "${hidapi}/lib" \
       --set-default HIDAPI_LIB "${hidapi}/lib" \
       --set-default GENLC_CLI "${py}/bin/genlc" \
-      --set-default GLM_OSC_STATE "$HOME/.local/state/glm-osc-state.json" \
-      --add-flags "${./server.py}"
+      --set-default GLM_OSC_STATE "$HOME/.local/state/glm-osc-state.json"
   '';
-  meta = {
+
+  meta = lib.mkMeta {
     description = "OSC bridge for Genelec SAM monitors (genlc-based, no official GLM)";
+    homepage = "https://github.com/neg-serg/nixos-config";
     license = lib.licenses.gpl3Plus;
-    platforms = lib.platforms.linux;
+    mainProgram = "glm-osc-server";
   };
 }

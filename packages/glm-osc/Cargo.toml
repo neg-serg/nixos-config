@@ -1,0 +1,14 @@
+[package]
+name = "glm-osc"
+version = "0.1.0"
+edition = "2021"
+description = "OSC bridge for Genelec SAM monitors via genlc"
+license = "GPL-3.0-or-later"
+
+[[bin]]
+name = "glm-osc-server"
+path = "src/main.rs"
+
+[dependencies]
+
+[workspace]
