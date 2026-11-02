@@ -1,65 +1,94 @@
 #!/usr/bin/env bash
-# Ensure SurfingKeys extension loads the local config and runs it reliably
+# Keep the force-installed SurfingKeys extension loading its config from the
+# local server.
+#
+# Vivaldi updates extensions in place (1.19.3 replaced 1.18.0 while the session
+# was already running) and the minifier renames identifiers between releases.
+# Every step below therefore patches the newest version directory, is guarded
+# by the marker it writes, and *fails loudly* when neither the marker nor the
+# anchor is present: a silent skip is how a `403 Forbidden` response body once
+# stayed registered as the settings userScript (2026-11-02).
 set -euo pipefail
 
 EXT_BASE="$HOME/.config/vivaldi/Default/Extensions/gfbliohnnapiefjpjlpjnehglfpaknnc"
 URL="http://localhost:18888/surfingkeys.js"
 
-# Find the latest version directory
+# Patch the newest version directory only.
 VER_DIR=$(ls -d "$EXT_BASE"/*/ 2>/dev/null | sort -V | tail -1)
 [ -z "$VER_DIR" ] && exit 0
 
 BG_JS="$VER_DIR/background.js"
-OP_JS="$VER_DIR/pages/options.js"
+MD_CSS="$VER_DIR/pages/markdown.css"
 
-# 1. Config URL injection at worker start. SurfingKeys 1.18 reads the config
-# URL from the 'localPath' storage key, NOT 'loadSettingsUrl' (dead key).
-if [ -f "$BG_JS" ] && ! grep -q 'NEG_SK_URL' "$BG_JS"; then
+fail=0
+note() { logger "surfingkeys-patch: $*"; }
+missing() {
+  logger -p user.err "surfingkeys-patch: $*"
+  fail=1
+}
+
+# 1. Config URL injection at worker start. SurfingKeys reads the config URL
+# from the 'localPath' storage key, NOT 'loadSettingsUrl' (dead key).
+if ! grep -q 'NEG_SK_URL' "$BG_JS"; then
+  if grep -q '^(()=>{"use strict"' "$BG_JS"; then
     cp "$BG_JS" "$BG_JS.orig"
     sed -i "s|^(()=>{\"use strict\"|const NEG_SK_URL=\"$URL\";\nchrome.storage.sync.set({localPath:NEG_SK_URL});\nchrome.storage.local.set({localPath:NEG_SK_URL});\n(()=>{\"use strict\"|" "$BG_JS"
-    logger "surfingkeys-patch: Patched $BG_JS (URL injection)"
+    note "Patched $BG_JS (URL injection)"
+  else
+    missing "URL-injection anchor not found in $BG_JS"
+  fi
 fi
 
-# 2. Hardcode the config URL at the read point and persist it back to storage.
-# The options page can overwrite 'localPath' (e.g. 'Load from URL'), making the
-# browser fetch a stale external config; force the local URL on every load and
-# write it back so storage/options show it too.
-if [ -f "$BG_JS" ] && ! grep -qF '(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath})' "$BG_JS"; then
-    sed -i 's|e.localPath?g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,n(e)})):n(e)|(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath}),g(q(e.localPath),(function(t){e.snippets=t,setTimeout(function(){F(t)},100),n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,e.snippets="",n(e)}))|' "$BG_JS"
-    logger "surfingkeys-patch: Patched $BG_JS (hardcoded config URL)"
+# 2. Re-registration helper. SurfingKeys registers its settings as the
+# 'settingsSnippets' userScript; if the config fetch ever fails, whatever body
+# was registered last keeps running on every page. The helper mirrors the
+# extension's own registration wrapper and is called from the fetch callback
+# (step 4), so a successful fetch always replaces the registered code.
+if ! grep -q 'NEG_SK_REGISTER' "$BG_JS"; then
+  tmp=$(mktemp)
+  cat > "$tmp" <<'JS'
+const NEG_SK_REGISTER=function(s){var c="import(\"./api.js\").then(function(m){m.default(\""+chrome.runtime.getURL("/")+"\",function(api,settings){"+s+"\n})});";chrome.userScripts.unregister({ids:["settingsSnippets"]},function(){chrome.userScripts.register([{allFrames:!0,id:"settingsSnippets",matches:["*://*/*","file:///*"],js:[{code:c}],runAt:"document_start"}])})};
+JS
+  cat "$tmp" "$BG_JS" > "$BG_JS.tmp"
+  mv "$BG_JS.tmp" "$BG_JS"
+  rm -f "$tmp"
+  note "Patched $BG_JS (config re-registration helper)"
 fi
 
-# 3. Auto-register the config userScript on every page load: the page-load
-# getSettings flow never triggered F (Vivaldi kept a stale registration);
-# call F from the fetch callback so the registered config is always current.
-if [ -f "$BG_JS" ] && ! grep -qF '(function(t){e.snippets=t,setTimeout(function(){F(t)},100),n(e)})' "$BG_JS"; then
-    sed -i 's|(function(t){e.snippets=t,n(e)})|(function(t){e.snippets=t,setTimeout(function(){F(t)},100),n(e)})|' "$BG_JS"
-    logger "surfingkeys-patch: Patched $BG_JS (auto-register on load)"
+# 3. Force the local config URL at the read point. The options page can
+# overwrite 'localPath' ('Load from URL'), which would make the browser fetch a
+# stale external config; the comma expression sets it on every load.
+if ! grep -qF "(e.localPath=\"$URL\",e.localPath)" "$BG_JS"; then
+  if grep -qF 'e.localPath?B(e.localPath,' "$BG_JS"; then
+    sed -i "s|e.localPath?B(e.localPath,|(e.localPath=\"$URL\",e.localPath)?B(e.localPath,|" "$BG_JS"
+    note "Patched $BG_JS (hardcoded config URL)"
+  else
+    missing "config-URL read anchor not found in $BG_JS"
+  fi
 fi
 
-# 4. Force userScript re-registration. Vivaldi sometimes keeps the previously
-# registered settingsSnippets userScript instead of updating it; always
-# unregister+register so the latest fetched config is what runs.
-if [ -f "$BG_JS" ] && ! grep -qF 'chrome.userScripts.unregister({ids:[n]},i)' "$BG_JS"; then
-    sed -i 's|r.length>0?r\[0\].js\[0\].code!==s?chrome.userScripts.unregister({ids:\[n\]},i):t&&t():i()|chrome.userScripts.unregister({ids:[n]},i)|' "$BG_JS"
-    logger "surfingkeys-patch: Patched $BG_JS (forced re-registration)"
+# 4. Refresh the registered userScript after every successful fetch: Vivaldi
+# otherwise keeps the previously registered 'settingsSnippets' code.
+if ! grep -qF 'NEG_SK_REGISTER(t)' "$BG_JS"; then
+  if grep -qF 'B(e.localPath,function(t){e.snippets=t,o(e)},' "$BG_JS"; then
+    sed -i 's|B(e.localPath,function(t){e.snippets=t,o(e)},|B(e.localPath,function(t){e.snippets=t,NEG_SK_REGISTER(t),o(e)},|' "$BG_JS"
+    note "Patched $BG_JS (refresh registration after fetch)"
+  else
+    missing "fetch-callback anchor not found in $BG_JS"
+  fi
 fi
 
-# 5. Options page: stop persisting the 'Load from URL' value into localPath.
-if [ -f "$OP_JS" ] && grep -qF 'localPath:A(w.value)' "$OP_JS"; then
-    sed -i 's|e("updateSettings",{settings:{snippets:t,localPath:A(w.value)}})|e("updateSettings",{settings:{snippets:t}})|' "$OP_JS"
-    logger "surfingkeys-patch: Patched $OP_JS (localPath save dropped)"
+# 5. Remove zebra striping from the markdown preview tables (cosmetic).
+if [ -f "$MD_CSS" ] && grep -qF 'background-color: #f8f8f8;' "$MD_CSS"; then
+  sed -i 's|background-color: #f8f8f8;|background-color: transparent;|' "$MD_CSS"
+  note "Patched $MD_CSS (no zebra)"
 fi
 
-# 6. Worker 'Load from URL' handler: do not write localPath into storage.
-if [ -f "$BG_JS" ] && grep -qF 'E({localPath:o,snippets:e})' "$BG_JS"; then
-    sed -i 's|E({localPath:o,snippets:e})|E({snippets:e})|' "$BG_JS"
-    logger "surfingkeys-patch: Patched $BG_JS (loadFromUrl localPath dropped)"
-fi
+# A critical patch that silently stopped matching means the minifier moved and
+# the anchors need an update; fail the unit so the breakage is visible.
+grep -qF 'NEG_SK_URL' "$BG_JS" || missing "critical patch missing: URL injection"
+grep -qF 'NEG_SK_REGISTER' "$BG_JS" || missing "critical patch missing: registration helper"
+grep -qF 'NEG_SK_REGISTER(t)' "$BG_JS" || missing "critical patch missing: registration refresh"
+grep -qF "(e.localPath=\"$URL\",e.localPath)" "$BG_JS" || missing "critical patch missing: hardcoded config URL"
 
-# 7. Remove zebra striping from the markdown preview tables.
-MD_JS="$VER_DIR/pages/markdown.css"
-if [ -f "$MD_JS" ] && grep -qF 'background-color: #f8f8f8;' "$MD_JS"; then
-    sed -i 's|background-color: #f8f8f8;|background-color: transparent;|' "$MD_JS"
-    logger "surfingkeys-patch: Patched $MD_JS (no zebra)"
-fi
+exit "$fail"

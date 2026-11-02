@@ -44,4 +44,18 @@ lib.mkIf (config.lib.neg.enabled "web") {
       wants = [ "graphical-session.target" ];
       wantedBy = [ "graphical-session.target" ];
     };
+
+  # Vivaldi updates the force-installed extension in place and mid-session
+  # (1.19.3 landed at 21:17 while the session was already running), while the
+  # oneshot above only runs at login. Without this watch a new version stays
+  # unpatched — and an unpatched SurfingKeys can register the server's error
+  # body as its settings userScript (see the script header).
+  systemd.user.paths.surfingkeys-extension-watch = {
+    description = "Re-patch SurfingKeys when Vivaldi updates the extension";
+    wantedBy = [ "graphical-session.target" ];
+    pathConfig = {
+      PathChanged = "%h/.config/vivaldi/Default/Extensions/gfbliohnnapiefjpjlpjnehglfpaknnc";
+      Unit = "surfingkeys-extension-patch.service";
+    };
+  };
 }
