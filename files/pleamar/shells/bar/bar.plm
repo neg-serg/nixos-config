@@ -277,7 +277,9 @@ scene bar {
     // it off the strip (`visible: false`, :219 — the tray is revealed by the hot corner instead), and
     // the port keeps that default. With the fact on, the bar shows the same button, which turns its
     // arrow a quarter while the tray is out (`iconRotation`, :223). No dot in the name, as with
-    // `tip_open`: `pleamar --say bar "fact tray_trigger true"` is how a tool turns it on.
+    // `tip_open`: `pleamar --say bar "fact tray_trigger true"` is how a tool turns it on. The hot
+    // corner does not depend on it — that is the path a hand takes, and gating it on a flag nothing
+    // sets left the tray unreachable with the mouse.
     fact tray_trigger = false
     // The open menu's rows, flattened by the logic from `sys.ask("tray.menu", key)` — the
     // engine reads `com.canonical.dbusmenu` and answers a list of records, which a scene
@@ -1834,10 +1836,14 @@ scene bar {
     // drawing nothing. Here it is a zone like any other, declared with the strip's own hover target
     // so the widgets stay above it: a press in its box still reaches the capsule drawn over it
     // (Genelec), and its hover fires where a hand reaching for the bottom-right corner lands.
-    // Only while the tray is there: this corner sits on the Genelec tile's plate (the tile ends
-    // 8 px short of the row's right edge), and on a host with no tray trigger it was a dead zone
-    // lying over a control.
-    zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region; show: widget.systray and tray_trigger }
+    // Only while there is a tray to reveal: nothing is drawn for an empty one, and the state
+    // machine has nothing to expand. The corner does lie over the last 8 design px of the Genelec
+    // tile's plate, so a hand reaching for the very corner reveals the tray while the rest of the
+    // tile stays the tile's — which is what the reference's hand does too (`Bar.qml:1246-1260`
+    // hangs the same 16 x 9 zone over the same corner). It is no longer gated on `tray_trigger`:
+    // that flag is off by default and nothing sets it, so the corner was a dead zone and the tray
+    // could not be reached with the mouse at all.
+    zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region; show: widget.systray and icons.count > 0 }
     on enter tray_reveal { emit tray_hot(1) }
     on leave tray_reveal { emit tray_hot(0) }
 
