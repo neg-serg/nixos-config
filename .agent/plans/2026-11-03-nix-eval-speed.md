@@ -95,13 +95,13 @@ plan.
 `nix eval --eval-profiler flamegraph --eval-profile-file /tmp/eval.folded` on the toplevel eval,
 self-time of 12.9 s profiled cpuTime:
 
-| Share | Where |
-| --- | --- |
+| Share    | Where                                                                                                                                                                                                |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **47 %** | nixpkgs derivation machinery — `pkgs/stdenv/generic/make-derivation.nix` (`buildInputs++optionals` 5.3 %, `getDev`/`__spliced` 10.4 %, `makeMesonFlags`/`makeCMakeFlags` 3.9 %, `isAttrs env` 2.4 %) |
-| 12 % | `lib/modules.nix` (`applyModuleArgs` 2.2 %) |
-| 7.3 % | `callPackage`/`makeOverridable` |
-| 5.3 % | `functionArgs`/`isFunction` |
-| 2.3 % | the overlay fixpoint itself (`lib/fixed-points.nix:333`) |
+| 12 %     | `lib/modules.nix` (`applyModuleArgs` 2.2 %)                                                                                                                                                          |
+| 7.3 %    | `callPackage`/`makeOverridable`                                                                                                                                                                      |
+| 5.3 %    | `functionArgs`/`isFunction`                                                                                                                                                                          |
+| 2.3 %    | the overlay fixpoint itself (`lib/fixed-points.nix:333`)                                                                                                                                             |
 
 **≥ 2232 distinct derivations are instantiated**, and `derivationStrict` is on the stack in 90 % of
 samples. That is the real budget: ~2.7 ms per derivation, no matter how the repo is organised.
@@ -109,20 +109,18 @@ samples. That is the real budget: ~2.7 ms per derivation, no matter how the repo
 Answering the questions the plan asked:
 
 - Modules are 12 %, `pkgs` is ~47 % self-time plus the Python/Haskell/fetchurl builders behind it.
-- **Yes, unused local packages are parsed**: 110 of 122 `packages/*/default.nix` are read even when the
-  evaluation never forces them, plus 167 directory opens for source hashing.
+- **Yes, unused local packages are parsed**: 110 of 122 `packages/*/default.nix` are read even when
+  the evaluation never forces them, plus 167 directory opens for source hashing.
 - `readFile` is 0.13 % (irrelevant). `import` is 12.4 % inclusive but 0.38 % self.
-- The overlay is evaluated once, but **three nixpkgs revisions are live** and `flake/lib.nix:128` does
-  `import inputs.nixpkgs { … }` inside an overlay — a second full instance whenever
+- The overlay is evaluated once, but **three nixpkgs revisions are live** and `flake/lib.nix:128`
+  does `import inputs.nixpkgs { … }` inside an overlay — a second full instance whenever
   `pkgs.buildFHSEnv` is touched.
 
 **Repo-side ceiling: ~0.6–0.8 s (5 %)** from the three safe fixes (direct `import` instead of
 `callPackage` for the hot local packages; de-overlapping the `files/` source roots, which are
 re-listed up to 8x; binding `buildFHSEnv` to `_prev` instead of a fresh nixpkgs). Everything else is
-nixpkgs' own per-derivation cost — which is exactly why **T0 (a faster evaluator) is the only path to
-2 s**, and why a "light gate" attribute that evaluates fewer derivations is the complement to it.
-
-
+nixpkgs' own per-derivation cost — which is exactly why **T0 (a faster evaluator) is the only path
+to 2 s**, and why a "light gate" attribute that evaluates fewer derivations is the complement to it.
 
 1. Split the number before touching anything, with three probes on the *same* tree state:
    - `nix eval --raw .#nixosConfigurations.trantor.config.system.nixos.label` — flake + module
@@ -136,6 +134,46 @@ nixpkgs' own per-derivation cost — which is exactly why **T0 (a faster evaluat
    dirty and whether it was the first eval after a change.
 1. Fix one thing, re-measure, keep the diff only if the number moved and `just check` still passes
    and the resulting `drvPath` is unchanged for the same tree.
+
+## Attribution: the graph is irreducible (2026-11-03)
+
+Inclusive stacks (15,964 samples, `--eval-profiler-frequency 997`) plus per-area counting with
+closure membership:
+
+| Finding                                                     | Number                                                                                                                       |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| instantiated derivations that exist in the toplevel closure | **5,185 of 5,248 names = 98.8 %**                                                                                            |
+| `config.system.build.toplevel`                              | 61.8 % inclusive                                                                                                             |
+| └ the `etc` entry loop (`etc.nix:56`)                       | 60.9 %, and inside it **47.9 %** is one chain: the `dbus-1` etc source → `dbus-consolidated` → `system-path` → every package |
+| activation-time assertions (`top-level.nix:78`)             | 33.4 % (apparmor profiles 8.6 %, nix-maid 3.1 %, 32-bit graphics 3.1 %, searxng 1.8 %)                                       |
+| documentation / checks / specialisation                     | **0.00 %** each                                                                                                              |
+
+Mechanism: nixpkgs `services/system/dbus.nix:153-156` sets
+`services.dbus.packages = [ dbusPackage config.system.path ]` and `modules/user/dbus.nix:41` makes
+the `dbus-1` etc entry that consolidated config, so forcing one `environment.etc` entry forces
+`config.system.path` and with it all ~716 packages. Unavoidable — `system.path` is a toplevel input.
+
+**Consequence: a "light gate" that evaluates fewer attributes cannot be both correct and much faster
+(≤3 %).** The one avoidable artefact found: `pkgs.tmd-top` pulls a python3.12 doc/test closure
+(sphinx, furo, pytest, pandas — 63 names, ~0.25 s) that never reaches the closure; not fixable from
+eval-side code without overriding that package's python env.
+
+## Where the seconds actually came from (2026-11-03, end of the day)
+
+| Lever                                              | Number                                                                                                                                                         |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tier-A gate (`config.system.nixos.label`)          | **0.46–0.9 s** cold, 65–79 ms on a hit                                                                                                                         |
+| tier-B gate, plain `--raw`                         | 9.0 s                                                                                                                                                          |
+| tier-B gate, `builtins.parallel` + `eval-cores 16` | **3.7 s** (2.42×), byte-identical answer                                                                                                                       |
+| nine eval patches on upstream 2.35.3               | −14 %, tests green (193 functional), drvPath unchanged                                                                                                         |
+| PGO+BOLT nix-optimized binary                      | −20 % (4.6–5.5 s vs 5.7–6.0 s), but no `lazy-trees`                                                                                                            |
+| fork for parallelism                               | ceiling 4.5 s, realistic 6.0 s — **not worth it**                                                                                                              |
+| incremental eval server                            | **zero locality**: a one-option module edit still costs the full 9 s, and the flake source path is not stable even for identical bytes — not worth 2–3 k lines |
+
+Two findings that closed lines of work: `eval-cores` is a **no-op** for `nix eval --raw …` (the
+executor shuts down with zero work items; only three call sites fan out), and Determinate's
+`lazy-trees` does **not** rescue untracked-but-referenced paths — it only saves the per-edit tree
+copy (`nix hash path /etc/nixos` = 0.9–1.2 s).
 
 ## Investigations, ordered by expected win
 
