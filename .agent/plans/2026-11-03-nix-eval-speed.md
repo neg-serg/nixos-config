@@ -236,6 +236,31 @@ observations: the memo hit skips `writeDerivation` entirely (safe only because t
 instantiation in the same process wrote the file), and `structuredAttrs` keying depends on
 `unparse()` being deterministic (a false *miss* if it is not — cost, not correctness).
 
+### What the field does about this class (external evidence, 2026-11-03)
+
+Three techniques, ranked by confidence per hour, each with prior art rather than our invention:
+
+| Technique | Effort | Evidence it is real practice |
+| --- | --- | --- |
+| **one-field mutation corpus** — mutate each masked-derivation field in isolation and require the key to change (or the derivation to be provably identical) | ~1 day | ccache's suite re-runs after every single-input edit and asserts `cache_miss 1` |
+| **differential validation** — a `--no-memo` switch, corpus run twice, diff the drv JSON and the store path | 2–4 h | ccache compiles a reference object outside the cache and compares; Nix itself ships `--no-eval-cache`; sccache ships `SCCACHE_RECACHE` |
+| **key-coverage assertion** — hash through a wrapper that records visited fields and aborts if any are unvisited | ~half day | inference, nearest analogue is ccache's `cache-debug` dump of exactly what was hashed |
+
+The failure stories that justify the paranoia, all real: Bazel admitted different outputs under the same
+action hash for out-of-workspace tools ([#4558](https://github.com/bazelbuild/bazel/issues/4558));
+sccache documents cases where it "silently produce[s] stale results"; ccache's direct mode misses new
+header files in rare cases, and its `hash_dir` section records a wrong-object bug that was fixed by
+adding a missing field to the key — exactly our class. Bazel's mechanism is worth copying: its key is
+complete **by declaration** (`--action_env` whitelists what enters the action definition), which makes
+an omission a visible decision rather than a silent one.
+
+One finding directly relevant to our own gate: Nix's eval cache ignores files that are not in the git
+index ([NixOS/nix#12102](https://github.com/NixOS/nix/pull/12102)) — the same trap our tier-B key was
+built to avoid by hashing untracked content explicitly.
+
+Residual risk that no technique removes: all of them cover only *enumerable* fields, so a new
+`Derivation` field stays invisible until a human adds it. This buys review discipline, not proof.
+
 ### The three tests that would catch a bad key, cheapest first
 
 1. **Key-completeness unit test** (`src/libexpr/tests`, a day of work): build one `Derivation`, take
