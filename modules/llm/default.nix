@@ -35,43 +35,7 @@
 #     ollama pull qwen3:32b
 #     ollama run qwen3:32b
 #
-# ### colibrì (GLM-5.2 744B MoE engine, CPU-only)
-#
-# - Module: `modules/llm/colibri.nix`
-# - Engine: pure C, streams experts from disk; no GPU required.
-# - Expected performance on this machine (9950X3D, AVX-512+VNNI, 60 GB RAM, PCIe 5.0 NVMe): ~0.8–1.6
-#   tok/s with warm cache + MTP.
-# - Model dir: `/zero/ai/glm52_i4` (~370 GB, int4, pre-converted
-#   mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp (https://huggingface.co/mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp),
-#   357 GiB · 141 shards `out-*.safetensors` + 3 MTP shards + config/tokenizer). **Activated and
-#   smoke-tested (2026-08-19): `coli run --model /zero/ai/glm52_i4 "Privet"` answers in Russian; cold
-#   cache ~0.2 tok/s (expert hit 28%, expert-disk bound), RSS 19 GB.** With `features.llm.enable` the
-#   `modules/llm/colibri.nix` installs the engine + `coli` CLI; the serve unit
-#   (`services.colibri.serve.enable`) stays off unless explicitly enabled.
-# - Defaults: `arch = "native"`, `ramBudget = 45`, settings
-#   `DIRECT=1 PIPE_WORKERS=16 PREFETCH=1 MTP=3`.
-#
-# Get the model (one-time, ~370 GB — resumable, ~1 h at ~100 MB/s):
-#
-#     mkdir -p /zero/ai/glm52_i4 && cd /zero/ai/glm52_i4
-#     for f in $(curl -s "https://huggingface.co/api/models/mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp?blobs=true" \
-#       | jq -r '.siblings[]?.rfilename' | grep -v '^\.gitattributes$'); do
-#       wget -c "https://huggingface.co/mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp/resolve/main/$f" &
-#     done; wait
-#     # validate (works with a partial download too):
-#     coli info --model /zero/ai/glm52_i4
-#     # or convert yourself after installing colibri:
-#     coli convert --model /path/to/GLM-5.2-weights
-#
-# Serve OpenAI-compatible API (after the model is present):
-#
-#     services.colibri = {
-#       enable = true;
-#       serve = {
-#         enable = true;
-#         port = 8003;            # NOT 8000: taken by omnirouter (see the port table below)
-#       };
-#     };
+# - colibrì (GLM-5.2 CPU engine) removed 2026-11-02; leftover weights: /zero/ai/glm52_i4
 #
 # ### llama-server (qwen3-vl vision, Vulkan/RADV)
 #
@@ -210,29 +174,19 @@
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
 #   tmpfiles)
-# - `/zero/ai/glm52_i4` — colibrì int4 model (~384 GB, 144 shards: out-00000..3.safetensors +
-#   config.json; moved here 2026-08-20, staging dir is empty)
+# - `/zero/ai/glm52_i4` — leftover colibrì int4 model (~384 GB, 144 shards); the engine was removed
+#   2026-11-02, the weights stay on disk until they are deleted by hand
 # - `/zero/ai/vllm` — vLLM: HF cache (`hf/`, weights + tokenizers), download dir (`hub/`) and the
 #   Triton kernel cache (`cache/`), created by the activation script
 #
 # ## Status on trantor
 #
-# - `features.llm.enable = true` (colibri CLI via `modules/llm/colibri.nix`; serve unit off by
-#   default)
+# - `features.llm.enable = true` (Ollama serving on 11434; every other engine starts manually)
 # - Ollama: enabled; merged the orphaned 413 GB store (was nested under `/zero/ai/ollama/models/`)
 #   into the active store — all 23 models now visible to `ollama list`, no re-download.
 # - stable-diffusion.cpp: package added (Vulkan), models in `/zero/ai/image`.
-# - colibrì: CLI `coli` installed and working (verified 2026-08-28: `coli info`, `coli doctor`, chat,
-#   and the OpenAI-compatible API all pass). Model fully moved to `/zero/ai/glm52_i4`.
-# - **colibri-serve is NOT auto-enabled** (user's choice): start it manually when needed — port
-#   **8003** (8000=omnirouter, 8001=piper TTS, 8002=whisper STT are taken):
-#       COLI_MODEL=/zero/ai/glm52_i4 RAM_GB=45 DIRECT=1 PIPE_WORKERS=16 PREFETCH=1 MTP=3 \
-#         coli serve --host 127.0.0.1 --port 8003 --model-id glm-5.2-colibri
-#   Then `curl http://127.0.0.1:8003/v1/chat/completions` (OpenAI-compatible). First request is slow
-#   (~100 s / 40 tok, cold expert cache); with MTP + warm cache expect 0.8–1.6 tok/s. To auto-start
-#   instead, set `services.colibri.serve.enable = true` (module ready).
-# - Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT), 8003 (colibri,
-#   manual), 8004 (vLLM, manual), 8080 (llama-server, manual)
+# - Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT), 8004 (vLLM,
+#   manual), 8080 (llama-server, manual)
 
 {
   neg,

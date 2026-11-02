@@ -59,7 +59,7 @@ in
 
     port = lib.mkOption {
       type = lib.types.port;
-      default = 8004; # 8000 omnirouter, 8001 piper, 8002 whisper, 8003 colibri
+      default = 8004; # 8000 omnirouter, 8001 piper, 8002 whisper
       description = "Port for the OpenAI-compatible endpoint (bound to 127.0.0.1).";
     };
 
