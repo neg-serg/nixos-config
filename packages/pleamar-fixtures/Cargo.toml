@@ -1,0 +1,22 @@
+[package]
+name = "pleamar-fixtures"
+version = "0.1.0"
+edition = "2021"
+description = "D-Bus fixtures for the pleamar engine: an MPRIS player and a nested tray item"
+license = "MIT"
+
+[[bin]]
+name = "mpris-stub"
+path = "src/bin/mpris-stub.rs"
+
+[[bin]]
+name = "tray-nested"
+path = "src/bin/tray-nested.rs"
+
+[dependencies]
+zbus = "4"
+serde = { version = "1", features = ["derive"] }
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]

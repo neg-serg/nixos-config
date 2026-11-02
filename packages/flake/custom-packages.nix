@@ -43,6 +43,9 @@
   # which is how the render gate reaches the binary when it is not on PATH.
   pleamar = pkgs.pleamar;
 
+  # D-Bus fixtures for the pleamar engine tests (MPRIS player, nested tray item).
+  pleamar-fixtures = pkgs.neg.pleamar-fixtures;
+
   dsh = pkgs.neg.dsh;
 
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)
