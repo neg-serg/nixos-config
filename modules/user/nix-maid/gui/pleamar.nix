@@ -376,7 +376,10 @@ let
 
       if timeout 15 pleamar --say "$scene" describe > /dev/null 2>&1; then
         rm -f "$fails_file" 2>/dev/null || true
-        exit 0
+        # `continue`, not `exit 0`: this probe watches every scene in `healthScenes`, and leaving
+        # the script on the first healthy one meant a wedged `panels` was never looked at while
+        # the bar answered — which is the normal case.
+        continue
       fi
 
       # Only an instance that has been up for a while can be called wedged: a
