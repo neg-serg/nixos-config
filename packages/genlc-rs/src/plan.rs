@@ -2,7 +2,7 @@
 //! block for that monitor consists of.
 //!
 //! Kept in the library rather than the CLI because both `genlc apply` (one shot) and
-//! `glm5d` (a socket method) have to turn the same file into the same frames.
+//! `genlc daemon` (its socket method) have to turn the same file into the same frames.
 
 use anyhow::{Context, Result};
 
