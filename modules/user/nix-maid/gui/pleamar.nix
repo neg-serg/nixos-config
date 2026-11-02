@@ -227,6 +227,7 @@ let
     // lib.optionalAttrs pickerEnabled pleamarPickerHelperLinks
     // pleamarIconLinks
     // pleamarThemeLinks
+    // pleamarPaletteBin
     // {
       ".config/pleamar/autostart" = {
         source = pleamarAutostart;
