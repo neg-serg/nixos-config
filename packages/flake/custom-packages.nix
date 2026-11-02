@@ -32,6 +32,7 @@
   pw-audioshare = pkgs.pw-audioshare; # GTK4 PipeWire patchbay with auto-connect presets
   topowall = pkgs.neg.topowall; # Topographic contour wallpapers from real elevation data (GPU render)
   genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
+  renoise-osc = pkgs.neg.renoise-osc; # OSC client for Renoise: Lua eval, transport, mixer, recording
 
   # pleamar scene runtime (the shell port's compiler and the plugin render gate).
   # `nix run .#pleamar -- --scene …` works without enabling features.gui.pleamar,

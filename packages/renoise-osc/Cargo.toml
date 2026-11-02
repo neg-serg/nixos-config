@@ -1,0 +1,12 @@
+[package]
+name = "renoise-osc"
+version = "0.1.0"
+edition = "2021"
+description = "Send OSC messages to Renoise's built-in OSC server"
+license = "MIT"
+
+[[bin]]
+name = "renoise-osc"
+path = "src/main.rs"
+
+[dependencies]
