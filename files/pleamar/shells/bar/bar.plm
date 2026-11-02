@@ -10,7 +10,7 @@ language 0.4
 //
 // Reading order, left to right, is the legacy one:
 //   left row:  clock · workspaces · pill · keyboard · network · sysmon · weather
-//   right row: media · MPD · sysmon · tray · mic · volume · Genelec
+//   right row: media · MPD · voice (while the command runs) · tray · mic · volume · Genelec
 // This slice draws clock/date, the workspace tabs, the network capsule (left)
 // and the volume capsule (right). The other modules come later; each has a
 // marked extension point below.
@@ -131,6 +131,7 @@ import "../../lib/plugins/genelec/genelec.plm" as gen
 import "../../lib/plugins/spectrum/spectrum.plm" as spec
 import "../../lib/plugins/cover/cover.plm" as art
 import "../../lib/plugins/build/build.plm" as build
+import "../../lib/plugins/voice/voice.plm" as voice
 
 scene bar {
 
@@ -1751,6 +1752,12 @@ scene bar {
             // to "something is playing" and nothing was. A flag the owner set is not a media
             // state — it is shown while any flag is on.
             row mpd_slot { show: widget.mpd and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags(type_scale: text_scale) }
+            // The voice command's badge: `mpd-voice once` (Super+Shift+Q) listens to the
+            // microphone and then speaks the answer, so the capsule says a client is on
+            // instead of leaving a voice from the speakers unexplained. `Voice.active` is
+            // the plugin's poll of the process; the row takes no space while nothing runs.
+            row voice_slot { show: Voice.active
+                voice.Tile(type_scale: text_scale) }
             // The icons, while the tray is out: `tray.expanded` is the whole state machine's answer
             // (`SystemTray.qml:102-105` draws the box on the same property), so the strip keeps the
             // reference's resting look — no tray at all — instead of showing it whenever the pointer
