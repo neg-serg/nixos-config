@@ -37,6 +37,16 @@ stdenv.mkDerivation rec {
     # Fix for kernel >= 6.8: del_timer renamed to timer_delete, mod_timer still exists
     substituteInPlace sound/pci/hdsp/hdspe/hdspe_midi.c \
       --replace-fail 'del_timer (' 'timer_delete('
+
+    # The driver header enables DEBUG for development ("TODO: undefine in
+    # production version"). With CONFIG_DYNAMIC_DEBUG=y that compiles every
+    # dev_dbg callsite in the module with the PRINT flag already set, so the
+    # card's 2-second status poll floods the kernel log: "polling timeout
+    # expired" plus a control get/put trace, ~200 lines per session. Undefine
+    # it — the callsites stay in the module and can be re-enabled at runtime
+    # via /proc/dynamic_debug/control (module=snd_hdspe +p).
+    sed -i -E 's|^#define DEBUG$|/* #define DEBUG */|' \
+      sound/pci/hdsp/hdspe/hdspe_core.h
   '';
 
   buildPhase = ''
