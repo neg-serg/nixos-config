@@ -234,13 +234,24 @@ label texts in §8 (`Volume`, `Network`, `Media`, `Calendar`, `Weather`, `Build`
 
 ### 2.3 Surfaces, screens and reserve
 
+- **A scene whose surfaces are all named has nowhere to put loose drawing.** Drawing declared at
+  scene level — a scrim `box`, a `zone`, a component copy like `Panel()` — belongs to the scene's
+  *unnamed* surface; with none, it is painted nowhere, silently: the scene compiles, reports
+  `open = true`, measures its surface, and shows an empty screen. `launcher.plm` shipped that way
+  until 2026-11-02 — and with `keyboard: exclusive while open` it also held the session's keyboard
+  while painting nothing, so typing went nowhere. Either keep the drawing inside the named surface
+  block (rules included: the compiler wants the whole group in one place) or leave one surface
+  unnamed for it, which is what `picker.plm` does.
+
 - Bar and panels are separate processes on purpose (crash isolation, disjoint writers). The bar
   keeps the reserve; `panels` is `level: overlay` and reserves nothing, so a full-screen window
   still reaches under it (D2).
+
 - Every per-monitor scene declares `screens: each`. Inside the copies, `$screen`, `screen.index`,
   `screen.name`, `screen.width`, `screen.height` are the copy's own, and every geometry expression
   that must differ per monitor is written *inside* the repeated drawing (see §3.2 — loose `let`s,
   `prop`s and `fact`s are shared by all copies).
+
 - The bar's surface carries the shadow room the QS theme expected: a body shadow of `0, 2, 6` needs
   4 px below the strip, so `size: full, bar.height * scale + 4 * scale` with the strip drawn in the
   top `bar.height * scale`, or anchor the surface where the shadow cannot be cut (§5.3 of the
@@ -864,11 +875,12 @@ bool | true | — | a press outside closes the open drawer | | `notifications` |
 stacked toasts | | `notifications` | `autoDismissMs` | number | 6000 | 0 – 60000 | 0 = keep until
 dismissed | | `notifications` | `historyMax` | number | 50 | 0 – 200 | history entries kept across
 restarts | | `toast` | `anchor` | text | `"bottom_right"` | a `surface.anchor` value | where toasts
-stack (QS `top_right`; the port hangs them over the bar's corner) | | `toast` | `margin` | number | 24 | 0 – 64 | design px from the corner (QS 12; 24 keeps the card clear of the 25 px bar) | | `overlay` |
-`dismissOnEscape` | bool | true | — | Escape closes overlays | | `lock` | `clock24h` | bool | true |
-— | greeter `nixie24h` | | `lock` | `uiScale` | number | 1.2 | 0.8 – 2.0 | greeter `uiScale` | |
-`launcher` | `maxResults` | number | 8 | 1 – 20 | list cap | | `theme` | `wallpaper` | text | `""` |
-— | the wallpaper the theme was built from |
+stack (QS `top_right`; the port hangs them over the bar's corner) | | `toast` | `margin` | number |
+24 | 0 – 64 | design px from the corner (QS 12; 24 keeps the card clear of the 25 px bar) | |
+`overlay` | `dismissOnEscape` | bool | true | — | Escape closes overlays | | `lock` | `clock24h` |
+bool | true | — | greeter `nixie24h` | | `lock` | `uiScale` | number | 1.2 | 0.8 – 2.0 | greeter
+`uiScale` | | `launcher` | `maxResults` | number | 8 | 1 – 20 | list cap | | `theme` | `wallpaper` |
+text | `""` | — | the wallpaper the theme was built from |
 
 A scene documents its own extra keys in its file header as `key (type, default, clamp)` and adds a
 row here only when another scene, a script or a test reads it. A key that is dropped in the port is
@@ -1047,12 +1059,12 @@ drawer opener | the drawer title, §2.2 | `button` | — | — | | drawer close 
 `button` | — | — | | power: log out | `Log out` | `button` | — | `no` | | power: reboot | `Reboot` |
 `button` | — | `no` | | power: power off | `Power off` | `button` | — | `no` | | toast |
 `{n.app}: {n.title}` | `item` | — | — | | toast notice actions | `{action.label}` | `button` | — | —
-| | toast dismiss | `Dismiss` (a screenshot card says `Dismiss screenshot`) | `button` | — | — | | notification centre |
-`Notifications` | `list` | — | — | | centre entry | `{n.app}: {n.title}` | `item` | — | — | | centre
-clear | `Clear all notifications` | `button` | — | `no` | | overlay catcher | `Dismiss overlay` |
-`region` | — | `no` | | lock password | `Password` | field | — | `no` + `secret: true` | | lock
-unlock | `Unlock` | `button` | — | `no` | | launcher input | `Search applications` | field | — | — |
-| launcher result | `{app.local_name}` | `item` | — | — |
+| | toast dismiss | `Dismiss` (a screenshot card says `Dismiss screenshot`) | `button` | — | — | |
+notification centre | `Notifications` | `list` | — | — | | centre entry | `{n.app}: {n.title}` |
+`item` | — | — | | centre clear | `Clear all notifications` | `button` | — | `no` | | overlay
+catcher | `Dismiss overlay` | `region` | — | `no` | | lock password | `Password` | field | — | `no`
+\+ `secret: true` | | lock unlock | `Unlock` | `button` | — | `no` | | launcher input |
+`Search applications` | field | — | — | | launcher result | `{app.local_name}` | `item` | — | — |
 
 `—` in the agent column means the default. The default for a zone that only navigates or changes a
 preference is `agent: yes` (pressable); the default for `agent:` is what the surface says, and the
