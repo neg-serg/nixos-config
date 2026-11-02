@@ -25,8 +25,11 @@ fi
 
 case "${1:-}" in
   up|down)
-    current=-40.0
-    [ -f "$STATE" ] && current=$(cat "$STATE" 2>/dev/null || echo -40.0) || true
+    # Seed from the state file, and on a fresh session (XDG_RUNTIME_DIR is wiped on logout, so the
+    # file is not there yet) from `glm-vol read`, which falls back to the last shell's cache. The
+    # bare -40 used to be the answer, and the first notch of a session then pushed the monitors
+    # from wherever they stood — -54 here — fifteen dB louder.
+    current=$(glm-vol read 2>/dev/null || echo -40)
 
     # Snap to whole dB, then hard-clamp to the safe range [-95,-20].
     # The clamp is applied to BOTH the current state and the target so a stale
