@@ -92,7 +92,10 @@ local function read_settings()
     if ok and type(got) == "table" then
         raw = got
     elseif not ok then
-        log("launcher: settings.json is broken; defaults kept")
+        -- A file that is not there is the first run, not a defect (§6.1); only one that is there
+        -- and unreadable deserves a line in the journal.
+        local ok_ex, there = pcall(function() return sys.ask("files.exists", FILE) end)
+        if ok_ex and there == true then log("launcher: settings.json is broken; defaults kept") end
     end
 end
 
@@ -106,7 +109,9 @@ end
 
 local function snapshot()
     local list = model.apps
-    if type(list) == "table" and #list > 0 then
+    -- An empty list is an answer too: the service reports what is installed, and the watch above
+    -- takes it the same way. Refusing it left the fallback showing applications that are gone.
+    if type(list) == "table" then
         apps_all = list
         apps_n = #list
     end

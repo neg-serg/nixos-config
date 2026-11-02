@@ -46,7 +46,9 @@ local function apply_settings()
     if ok and type(got) == "table" then
         raw = got
     elseif not ok then
-        log("overview: settings.json is broken; defaults kept")
+        -- Missing is the first run; only a file that is there and unreadable is a defect (§6.1).
+        local ok_ex, there = pcall(function() return sys.ask("files.exists", FILE) end)
+        if ok_ex and there == true then log("overview: settings.json is broken; defaults kept") end
     end
     conf.enabled = flag(raw.enabled, D.enabled)
     conf.cooldownMs = num(raw.cooldownMs, 0, 2000, D.cooldownMs)
