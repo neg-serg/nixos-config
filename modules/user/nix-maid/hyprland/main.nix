@@ -855,6 +855,13 @@ let
     exec >> "''${XDG_RUNTIME_DIR:-/tmp}/hyprcapture-setup.log" 2>&1
     echo "--- $(date '+%F %T') hyprcapture-setup"
 
+    # The stub package (plugin not ported to the running Hyprland) has no .so:
+    # skip cleanly instead of polling for it and failing the unit.
+    if [ ! -e "$plugin" ]; then
+      echo "not ported to this Hyprland, skipping"
+      exit 0
+    fi
+
     loaded() {
       "$hyprctl_bin" plugin list 2>/dev/null | grep -q "HyprCapture"
     }
@@ -899,6 +906,16 @@ let
 
     exec >> "''${XDG_RUNTIME_DIR:-/tmp}/hyprdynamiccursors-setup.log" 2>&1
     echo "--- $(date '+%F %T') hyprdynamiccursors-setup"
+
+    # hypr-dynamic-cursors is stubbed on Hyprland 0.57 (upstream SIGSEGV #170
+    # in tilt/stretch/shake, and the effect is off in the config), so the
+    # package is an empty directory and there is no .so to load. Skip cleanly:
+    # polling for a plugin that cannot appear only fails the unit every
+    # session and spams hyprctl with a load error.
+    if [ ! -e "$plugin" ]; then
+      echo "not ported to this Hyprland, skipping"
+      exit 0
+    fi
 
     loaded() {
       "$hyprctl_bin" plugin list 2>/dev/null | grep -q "^Plugin dynamic-cursors "
