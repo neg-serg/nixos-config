@@ -27,6 +27,13 @@ in
   # package's header comment).
   nix-eval-patched = call (pkg "nix-eval-patched") { };
 
+  # Determinate Nix 3.23.3 rebuilt with PGO + the five evaluation-speedup
+  # patches their tree accepts (see packages/nix-det-pgo/default.nix). The one
+  # candidate that keeps lazy-trees, so this is what
+  # `features.nix.pgoNix.enable` puts in `nix.package` (off by default;
+  # modules/nix/nix-pgo.nix).
+  nix-det-pgo = call (pkg "nix-det-pgo") { };
+
   # Reserved for development/toolchain overlays
 
   # Patch pre-commit to add a space before "Skipped" message
