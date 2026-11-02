@@ -37,7 +37,6 @@ while IFS= read -r -d '' file; do
   # glyph in its prose. The policy below covers docs this repo authors, so the
   # vendored tree is skipped by prefix rather than by content.
   case "$rel" in
-    files/quickshell/Chaldea/*) continue ;;
   esac
   case " $GLYPH_ALLOWLIST " in
     *" $rel "*) continue ;;

@@ -1,7 +1,0 @@
-// SPDX-License-Identifier: 0BSD
-import QtQuick
-
-ArtWidget {
-    property bool compact: false
-    compactCanvas: compact
-}
