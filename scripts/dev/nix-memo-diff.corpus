@@ -1,0 +1,9 @@
+# Targets for nix-memo-diff.sh: one `REF [ATTR]` per line, ATTR defaulting to
+# `drvPath`. The mix is deliberate — a NixOS toplevel instantiates ~2200
+# derivations and repeats many of them (mkDerivation called per package), while
+# the two nixpkgs leaves are small and shaped differently (hello: a handful of
+# inputs; python3: a deeper dependency chain). Add flakes here rather than
+# editing the script.
+/etc/nixos nixosConfigurations.trantor.config.system.build.toplevel.drvPath
+nixpkgs#hello
+nixpkgs#python3
