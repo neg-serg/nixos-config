@@ -30,7 +30,20 @@
 #  13. the key does not move with the shape — parallelism is a forcing order, not
 #      an input, so a plain-shape call hits the entry a parallel-shape call wrote;
 #  14. one evaluation, many answers: `--json` returns all five fields and
-#      `--field label` returns the label, both equal to live evals.
+#      `--field label` returns the label, both equal to live evals;
+#  15. the tier-B key was rebuilt from git blob OIDs instead of whole-tree diffs
+#      (v3 -> v4), so the old key is frozen at the bottom of this file as
+#      `legacy_key_b` and the two are compared over a matrix of tree states:
+#      clean, edited, added, deleted, mode-only change, staged-only change, type
+#      change and each of their restores. For every pair of states the v3 key and
+#      the v4 key must agree on *whether* the state changed — and the same-bytes
+#      restore and the mode-only change are asserted on their own, because those
+#      are the two ways a content hash can be weaker than the diff it replaced,
+#      and so is a symlink retargeted between files with identical bytes;
+#  16. a mode-only change through the real cache: MISS with a new key, the old
+#      entry kept and hit again once the mode is restored (an entry is invalidated
+#      exactly when it should be, no more and no less);
+#  17. `--print-key` reports the same key a real run computes and stores nothing.
 #
 # Every tier-B value is compared against a live `nix eval` of the plain shape,
 # which is the oracle for both shapes.
@@ -163,6 +176,8 @@ ck "exit status is 0" test "$rc" -eq 0
 ck "reports a miss" contains "$err" "miss"
 ck "printed a store path" contains "$drv1" "/nix/store/"
 ck "drvPath equals a live eval" test "$drv1" = "$(live_drv)"
+ck "the record names the key format" contains "$(head -n 12 "$EVAL_GATE_CACHE_DIR/$bkey1.record")" "key_format v4"
+ck "the record stores the key material itself" contains "$(grep -c -a -e 'wtfiles' "$EVAL_GATE_CACHE_DIR/$bkey1.record")" "1"
 echo "   drvPath: $drv1"
 
 echo
@@ -331,5 +346,211 @@ else
   ck "--field label equals a live eval" test "$out" = "$label"
   echo "   --json: ${json_ms} ms for five answers, --field: ${ms} ms"
 fi
+
+echo
+echo "15. old key (v3) vs new key (v4): the change/no-change matrix"
+# The gate has no v3 path any more, so the key this change replaced is frozen
+# here and used as an oracle: exactly the material the previous commit hashed —
+# header, HEAD, `git status`, the whole `git diff HEAD --binary` and a sha256 per
+# untracked file.
+legacy_key_b() {
+  local path sum
+  {
+    printf 'format\0v3\0'
+    printf 'tier\0b\0'
+    printf 'attr\0%s\0' "$DRV_ATTR"
+    printf 'selector\0attr\0'
+    printf 'nix\0%s\0' "$(nix --version)"
+    printf 'root\0%s\0' "$(pwd -P)"
+    printf 'head\0'
+    git rev-parse HEAD
+    printf '\0'
+    printf 'status\0'
+    git status --porcelain=v1 -z | sort -z
+    printf '\0'
+    printf 'diff\0'
+    git diff HEAD --binary --no-color --no-ext-diff --no-textconv \
+      --src-prefix=a/ --dst-prefix=b/
+    printf '\0'
+    printf 'untracked\0'
+    while IFS= read -r -d '' path; do
+      if [ -L "$path" ]; then
+        sum="link:$(readlink -- "$path" || true)"
+      elif [ -x "$path" ]; then
+        sum="x:$(sha256sum -- "$path" || true)"
+      else
+        sum="-:$(sha256sum -- "$path" || true)"
+      fi
+      printf '%s\0%s\0' "$path" "$sum"
+    done < <(git ls-files --others --exclude-standard -z)
+    printf '\0'
+    printf 'end\0'
+  } | sha256sum | cut -d' ' -f1
+}
+
+# One row of the matrix: the state's name plus the key each of the two
+# implementations gives it.
+declare -a st_name=() st_old=() st_new=()
+declare -A st_index=()
+matrix_state() {
+  st_name+=("$1")
+  st_index["$1"]=$((${#st_name[@]} - 1))
+  st_old+=("$(legacy_key_b)")
+  st_new+=("$(bash ./scripts/dev/nixos-eval-gate.sh --drv --print-key)")
+}
+
+MATRIX_MODE_FILE="$NIXFILE"
+mode_base="$(stat -c %a "$CLONE/$MATRIX_MODE_FILE")"
+cp -p "$CLONE/$ASSET" "$TMP/matrix-asset.orig"
+
+matrix_state "clean"
+printf '\n# matrix: edited\n' >> "$CLONE/$ASSET"
+matrix_state "one file edited"
+cp -p "$TMP/matrix-asset.orig" "$CLONE/$ASSET"
+matrix_state "same bytes restored"
+printf 'matrix\n' > "$CLONE/matrix-untracked.txt"
+matrix_state "one file added"
+rm -f "$CLONE/matrix-untracked.txt"
+matrix_state "added file removed"
+rm -f "$CLONE/$ASSET"
+matrix_state "one file deleted"
+cp -p "$TMP/matrix-asset.orig" "$CLONE/$ASSET"
+matrix_state "deleted file restored"
+if [ -x "$CLONE/$MATRIX_MODE_FILE" ]; then
+  chmod -x "$CLONE/$MATRIX_MODE_FILE"
+else
+  chmod +x "$CLONE/$MATRIX_MODE_FILE"
+fi
+matrix_state "mode-only change"
+chmod "$mode_base" "$CLONE/$MATRIX_MODE_FILE"
+matrix_state "mode reverted"
+printf '\n# matrix: staged\n' >> "$CLONE/$ASSET"
+git -C "$CLONE" add -- "$ASSET"
+matrix_state "staged-only change"
+git -C "$CLONE" reset -q -- "$ASSET"
+cp -p "$TMP/matrix-asset.orig" "$CLONE/$ASSET"
+matrix_state "staged change reverted"
+rm -f "$CLONE/$ASSET"
+ln -s ../../../../README.md "$CLONE/$ASSET"
+matrix_state "type change (file -> symlink)"
+rm -f "$CLONE/$ASSET"
+cp -p "$TMP/matrix-asset.orig" "$CLONE/$ASSET"
+matrix_state "type change reverted"
+# An untracked symlink retargeted between two files with identical bytes: the
+# blob OID of the target content cannot see this, so the link target has to be a
+# field of its own (it was a `link:` line in the v3 key, it is `wtlinks` in v4).
+printf 'same bytes\n' > "$CLONE/matrix-a.txt"
+printf 'same bytes\n' > "$CLONE/matrix-b.txt"
+ln -s matrix-a.txt "$CLONE/matrix-link"
+matrix_state "untracked symlink"
+rm -f "$CLONE/matrix-link"
+ln -s matrix-b.txt "$CLONE/matrix-link"
+matrix_state "symlink retargeted, same bytes"
+rm -f "$CLONE/matrix-link" "$CLONE/matrix-a.txt" "$CLONE/matrix-b.txt"
+matrix_state "symlink removed"
+
+# Both implementations against the base state, side by side: "changed" means the
+# key differs from the clean row, and the last column is the agreement itself.
+echo "   state                       v3 key      v4 key      agree"
+printf '   %-27s %-11s %-11s %s\n' "clean" "${st_old[0]:0:10}" "${st_new[0]:0:10}" "-"
+table_disagreements=""
+pairs=0
+for i in "${!st_name[@]}"; do
+  if [ "$i" -eq 0 ]; then
+    continue
+  fi
+  o="changed"
+  n="changed"
+  if [ "${st_old[$i]}" = "${st_old[0]}" ]; then o="same"; fi
+  if [ "${st_new[$i]}" = "${st_new[0]}" ]; then n="same"; fi
+  agree="yes"
+  if [ "$o" != "$n" ]; then
+    agree="NO"
+    table_disagreements+="${st_name[$i]}; "
+  fi
+  printf '   %-27s %-11s %-11s %s\n' "${st_name[$i]}" "$o" "$n" "$agree"
+done
+# Every pair of states, not just each state against the base: two different
+# dirty states must not collide in one key and be the same in the other.
+for i in "${!st_name[@]}"; do
+  for j in "${!st_name[@]}"; do
+    if [ "$j" -le "$i" ]; then
+      continue
+    fi
+    pairs=$((pairs + 1))
+    o_same=0
+    n_same=0
+    if [ "${st_old[$i]}" = "${st_old[$j]}" ]; then o_same=1; fi
+    if [ "${st_new[$i]}" = "${st_new[$j]}" ]; then n_same=1; fi
+    if [ "$o_same" -ne "$n_same" ]; then
+      table_disagreements+="${st_name[$i]} vs ${st_name[$j]}; "
+    fi
+  done
+done
+echo "   ${#st_name[@]} states, $pairs pairs, disagreements: ${table_disagreements:-none}"
+
+# changed_in_both / same_in_both: what "agreement" means per named state, with
+# the base state as the reference.
+changed_in_both() {
+  local i="${st_index[$1]}"
+  [ "${st_old[$i]}" != "${st_old[0]}" ] && [ "${st_new[$i]}" != "${st_new[0]}" ]
+}
+same_in_both() {
+  local i="${st_index[$1]}"
+  [ "${st_old[$i]}" = "${st_old[0]}" ] && [ "${st_new[$i]}" = "${st_new[0]}" ]
+}
+
+ck "the v4 key is never empty" test -n "${st_new[0]}"
+ck "both keys move when a tracked file is edited" changed_in_both "one file edited"
+ck "both keys move when a file is added" changed_in_both "one file added"
+ck "both keys move when a file is deleted" changed_in_both "one file deleted"
+ck "both keys move on a mode-only change" changed_in_both "mode-only change"
+ck "both keys move on a staged-only change" changed_in_both "staged-only change"
+ck "both keys move on a type change" changed_in_both "type change (file -> symlink)"
+changed_between() {
+  local i="${st_index[$1]}" j="${st_index[$2]}"
+  [ "${st_old[$i]}" != "${st_old[$j]}" ] && [ "${st_new[$i]}" != "${st_new[$j]}" ]
+}
+ck "both keys move when an untracked symlink is retargeted to a file with identical bytes" \
+  changed_between "untracked symlink" "symlink retargeted, same bytes"
+ck "a same-bytes restore returns both keys to the base value" same_in_both "same bytes restored"
+restores=("added file removed" "deleted file restored" "mode reverted" "staged change reverted" "type change reverted" "symlink removed")
+bad_restores=""
+for restore_state in "${restores[@]}"; do
+  if ! same_in_both "$restore_state"; then
+    bad_restores+="$restore_state; "
+  fi
+done
+ck "every other restore returns both keys to the base value (${bad_restores:-all})" test -z "$bad_restores"
+ck "the two keys agree on change/no-change for all $pairs pairs" test -z "$table_disagreements"
+
+echo
+echo "16. a mode-only change through the real cache: one new entry, old one kept"
+before="$(entries)"
+mode_nix="$(stat -c %a "$CLONE/$NIXFILE")"
+if [ -x "$CLONE/$NIXFILE" ]; then
+  chmod -x "$CLONE/$NIXFILE"
+else
+  chmod +x "$CLONE/$NIXFILE"
+fi
+run_gate --drv --verbose
+mkey="$(key_of "$err")"
+ck "the mode-only change is a miss" contains "$err" "miss"
+ck "the mode-only change moved the key" test "$mkey" != "$bkey1"
+ck "exactly one entry was added" test "$(entries)" -eq $((before + 1))
+ck "the entry for the unmodified tree is still there" test -f "$EVAL_GATE_CACHE_DIR/$bkey1"
+chmod "$mode_nix" "$CLONE/$NIXFILE"
+run_gate --drv --verbose
+ck "restoring the mode hits the original entry again" contains "$err" "hit"
+ck "with the original key" test "$(key_of "$err")" = "$bkey1"
+ck "and the original drvPath" test "$out" = "$drv1"
+
+echo
+echo "17. --print-key: the key a real run computed, and nothing stored"
+before="$(entries)"
+run_gate --drv --print-key
+ck "--print-key exit status is 0" test "$rc" -eq 0
+ck "--print-key agrees with the key a real run used" test "$out" = "$bkey1"
+ck "--print-key stored nothing" test "$(entries)" -eq "$before"
 
 summary "nixos-eval-gate self-test"
