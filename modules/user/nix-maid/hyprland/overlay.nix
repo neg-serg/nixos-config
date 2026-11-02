@@ -52,43 +52,34 @@
               # moved monitor access into a State query system and made
               # CCompositor a small class. Re-port it before re-exporting.
               # HyprExpo: upstream retired the plugin from hyprwm/hyprland-plugins
-              # (hence no nixpkgs attr), sandwichfarm's fork continues it and pins
-              # 0.56.2 at commit 5891014c (see its hyprpm.toml). Built with the
-              # nixpkgs helper so it links against the same Hyprland as the session;
-              # the .so is dlopen'd by hyprexpo-setup at session start (see main.nix).
-              hyprexpo = final.hyprlandPlugins.mkHyprlandPlugin {
+              # (hence no nixpkgs attr), sandwichfarm's fork continues it and its
+              # v0.57.0 release targets Hyprland 0.57.0 — the commit this nixpkgs
+              # pins. Built with the nixpkgs helper so it links against the same
+              # Hyprland as the session; the .so is dlopen'd by hyprexpo-setup at
+              # session start (see main.nix).
+              hyprexpo = prev.hyprlandPlugins.mkHyprlandPlugin {
                 pluginName = "hyprexpo";
-                version = "0-unstable-2026-09-18";
+                version = "0.57.0";
 
-                # The overview must be the workspace *grid* here, not upstream's scrolling
-                # overview: upstream picks by layout — `createOverviewSession()` sends every
-                # workspace whose layout is Hyprland's native `scrolling` (our workspace rules
-                # set it for most workspaces) to `CScrollingOverview`, a strip of that
-                # workspace's columns, and everything else to `COverview`, the grid. The patch
-                # adds `plugin:hyprexpo:grid_overview` (default 1) which forces the grid for
-                # scrolling workspaces too; the layout itself stays untouched.
+                # One local patch is left: hyprexpo-click-swallow.patch drops the
+                # orphan mouse release of the click that *opened* the overview —
+                # the panel capsule toggles on the press, and the release (pointer
+                # still over the bar) arrived as a workspace choice, so the
+                # overview opened and closed within one gesture. The plugin's own
+                # 5% entry guard is too narrow to catch this.
                 #
-                # The second patch (hyprexpo-click-swallow.patch) drops the orphan mouse
-                # release of the click that *opened* the overview: the panel capsule
-                # toggles on the press, and the release (pointer still over the bar)
-                # arrived as a workspace choice — the overview opened and closed within
-                # one gesture. Releases in the first 400 ms of a session are ignored;
-                # the plugin's own 5% entry guard is too narrow to catch this.
-                #
-                # Order matters only in that both are plain unified diffs against the
-                # same upstream files (grid_overview touches IOverviewSession.cpp,
-                # HyprexpoConfig.hpp and PluginConfig.cpp; click-swallow touches
-                # Overview.cpp).
-                patches = [
-                  ./hyprexpo-grid-overview.patch
-                  ./hyprexpo-click-swallow.patch
-                ];
+                # 0.57.0 upstreams the grid switch that used to be a second patch:
+                # `plugin:hyprexpo:overview_mode = "grid"` (set in
+                # files/gui/hypr/hyprexpo.lua) forces the classic grid for
+                # workspaces with the native scrolling layout, which `auto` would
+                # open as a strip of columns.
+                patches = [ ./hyprexpo-click-swallow.patch ];
 
                 src = final.fetchFromGitHub {
                   owner = "sandwichfarm";
                   repo = "hyprexpo";
-                  rev = "5891014c611e1bd56d0121143f0221d46b5c0967";
-                  hash = "sha256-86gJ8YixG+FeEcnkGHc0O3eCemoDLe9/cOa21VZKdQM=";
+                  rev = "3ec4d82e52f0d4765b87f6ef14f1883a44e85e27";
+                  hash = "sha256-xhu3Un8dUIJSYv/gqQUlP74SkbQgewhv1tgllBcheAQ=";
                 };
                 dontUseCmakeConfigure = true;
                 # The Makefile links lua through pkg-config (lua5.4, falls back to lua).
@@ -115,24 +106,25 @@
 
               # GloView: macOS Mission-Control-style overview — live previews of
               # every window plus a workspace strip. Upstream ships CMake + hyprpm
-              # and pins Hyprland 0.56.2 in its own flake; the rev below is main as
-              # of 2026-10-15 (no release tag, and its hyprpm.toml pins no commit),
-              # so the plugin is built here against the same nixpkgs Hyprland the
-              # session runs. CMake pkg-configs hyprland + glesv2 (libglvnd, already
-              # in Hyprland's buildInputs) and searches for a Lua module named
-              # lua/lua5.4/luajit; nixpkgs' lua5_5 installs the generic lua.pc, so
-              # putting lua5_5 first links the interpreter Hyprland itself runs.
+              # and pins Hyprland v0.57.0 in its own flake; the rev below is main as
+              # of 2026-10-31, the "Port to Hyprland 0.57" commit (no release tag,
+              # and its hyprpm.toml pins 0.56 only), so the plugin is built here
+              # against the same nixpkgs Hyprland the session runs. CMake pkg-configs
+              # hyprland + glesv2 (libglvnd, already in Hyprland's buildInputs) and
+              # searches for a Lua module named lua/lua5.4/luajit; nixpkgs' lua5_5
+              # installs the generic lua.pc, so putting lua5_5 first links the
+              # interpreter Hyprland itself runs.
               # The .so is dlopen'd by the generated gloview-setup helper at session
               # start (see main.nix).
-              gloview = final.hyprlandPlugins.mkHyprlandPlugin {
+              gloview = prev.hyprlandPlugins.mkHyprlandPlugin {
                 pluginName = "gloview";
-                version = "0.3.0";
+                version = "0-unstable-2026-10-31";
 
                 src = final.fetchFromGitHub {
                   owner = "fedsfarm";
                   repo = "gloview";
-                  rev = "f08f38e242107bc4459813b4fb4e5e8ff7916dce";
-                  hash = "sha256-sG6YUV6Se7kNk4F6+dKRU1mmMFvfrKTwrYw3uK0SInI=";
+                  rev = "67857e6f8b715d6d100068ef89ba554c8fecb918";
+                  hash = "sha256-M6LBP59p9v241hQ5vSmk6gjhKQavTrImNOGy+HpWwSo=";
                 };
 
                 nativeBuildInputs = [ final.cmake ];
@@ -164,35 +156,32 @@
               # Hymission: Mission-Control-style overview — live compositor-side
               # previews of every window, workspace strip, Stage mode, trackpad
               # gestures and a search box. Upstream ships CMake + a hyprpm manifest;
-              # its docs/changelog/releases.json names Hyprland 0.56.2 for 0.11.0,
-              # the same 0.56.2 commit this nixpkgs ships, so plugin and compositor
-              # stay in one commit family. Built with the nixpkgs helper against the
-              # session's Hyprland. Two artifacts: the plugin module, and the search
-              # helper the plugin posix_spawns — it resolves
-              # `hymission-search-input` next to its own .so first
-              # (src/overview_controller.cpp), so the helper is installed into
-              # $out/lib beside libhymission.so instead of upstream's install()
+              # its v0.12.1-v0.57.0 release targets Hyprland 0.57.0 (the commit this
+              # nixpkgs pins), so plugin and compositor stay in one commit family.
+              # Built with the nixpkgs helper against the session's Hyprland. Two
+              # artifacts: the plugin module, and the search helper the plugin
+              # posix_spawns — it resolves `hymission-search-input` next to its own
+              # .so first (src/overview_controller.cpp), so the helper is installed
+              # into $out/lib beside libhymission.so instead of upstream's install()
               # libexec dir. Review note: the pinned tree has no network or shell
               # calls; the only spawn is that helper.
               # The .so is dlopen'd by the generated hymission-setup helper at
               # session start (see main.nix): PLUGIN_INIT registers the
               # plugin.hymission.* keys and reloads the config, which must not
               # happen while hyprland.lua is still being parsed.
-              hymission = final.hyprlandPlugins.mkHyprlandPlugin {
+              hymission = prev.hyprlandPlugins.mkHyprlandPlugin {
                 pluginName = "hymission";
-                version = "0.11.0";
+                version = "0.12.1";
 
                 src = final.fetchFromGitHub {
                   owner = "gfhdhytghd";
                   repo = "hymission";
-                  rev = "d0e847d9208076d74f94d4c0cf42911c92bfad50";
-                  hash = "sha256-H1NnR/235b9j69pu/+X32x1ByERffPvzCRdjlNXtpes=";
+                  rev = "d4b2f91f9dc6018154a35d14a79d7bda098f6b08";
+                  hash = "sha256-y3tu1fEDlEDQRlvtr3vcZnE+RJRU2DuGDHr+GoZ7QxI=";
                 };
-                # 0.57 replaced the hyprctl command API: `registerHyprCtlCommand` now takes
-                # `IPC::Socket1::SCommand` (name/match/handler) and returns an `SP<>`, and the
-                # handler is `(const SRequest&) -> SResponse` instead of
-                # `(eHyprCtlOutputFormat, std::string) -> std::string`.
-                patches = [ ./hymission-ipc-s1.patch ];
+                # 0.57's hyprctl command API (`IPC::Socket1::SCommand`,
+                # `(const SRequest&) -> SResponse`) is upstream since 0.12.1, so the
+                # local hymission-ipc-s1.patch is gone.
 
                 # The helper's own nativeBuildInputs (cmake, pkg-config) do not
                 # survive an override, and without cmake in nativeBuildInputs its
@@ -235,7 +224,7 @@
               # (frozen-compositor artifacts, region/window/scrolling capture,
               # annotation, pinning, recording with sound). Upstream ships
               # nix/package.nix for its own flake, and the release tag names the
-              # Hyprland ABI it was cut for — v0.4.2-0.56.2 is exactly the 0.56.2
+              # Hyprland ABI it was cut for — v0.6.0-v0.57.0 is exactly the 0.57.0
               # this nixpkgs ships. The recipe is evaluated from the pinned checkout
               # (its ../cmake and ./aec-sources.json references resolve in the
               # store), so upstream stays the single source of truth for the build:
@@ -254,43 +243,36 @@
                   hyprcaptureSrc = final.fetchFromGitHub {
                     owner = "gfhdhytghd";
                     repo = "HyprCapture";
-                    rev = "v0.4.2-0.56.2";
-                    hash = "sha256-uTcUsV/sEkZ1TbAuto05eeVT2kQ++wkbs4a/5Pw3z3g=";
+                    rev = "v0.6.0-v0.57.0";
+                    hash = "sha256-M3YB76XNiuN37ARgicl5ImEhiRHgNvxWu9OtxyhunsI=";
                   };
                 in
                 final.callPackage "${hyprcaptureSrc}/nix/package.nix" {
                   src = hyprcaptureSrc;
                   lua = final.lua5_5;
+                  # The overlay below narrows `hyprlandPlugins` to the ported set
+                  # via intersectAttrs, so the helper lives only in the previous
+                  # set (same reason as the direct mkHyprlandPlugin calls above).
+                  hyprlandPlugins = prev.hyprlandPlugins;
                 };
 
               # HyprWindowShade: per-window, per-layer and per-class fragment shaders
-              # (HyprShade-compatible GLSL ES 3.20). Upstream ships a Makefile for hyprpm;
-              # the rev is the commit its hyprpm.toml pins for the Hyprland commit we run
-              # (efb50993780079460b0cbed1363e2166a2de1d9f = 0.56.2), so the plugin and the
-              # compositor stay in one commit family. The .so is dlopen'd by the generated
-              # hyprwindowshade-setup helper at session start (see main.nix).
-              hyprwindowshade = final.hyprlandPlugins.mkHyprlandPlugin {
+              # (HyprShade-compatible GLSL ES 3.20). Upstream ships a Makefile for
+              # hyprpm; v0.26 is the release for Hyprland 0.57 (the new window header
+              # and the metadata()/isFloating() accessors are already in it), so the
+              # plugin and the compositor stay in one commit family. The .so is
+              # dlopen'd by the generated hyprwindowshade-setup helper at session
+              # start (see main.nix).
+              hyprwindowshade = prev.hyprlandPlugins.mkHyprlandPlugin {
                 pluginName = "hyprwindowshade";
-                version = "0-unstable-2026-09-19";
+                version = "0.26";
 
                 src = final.fetchFromGitHub {
                   owner = "ManofJELLO";
                   repo = "HyprWindowShade";
-                  rev = "a4c6b8af424a189072427c4c90ef2938e1b481d3";
-                  hash = "sha256-hFs3AVnH6j9ZnDzfG19pAL9cO+pVl21pT9q9A1c6DNw=";
+                  rev = "b62fc3d8d04514d7b51e61c281a34231b04e95e3";
+                  hash = "sha256-IMAQ6HYmhdSNQhQWSFFnTRYEbOdUPADun6Ecr027PTw=";
                 };
-                # 0.57 moved the window header one directory down.
-                postPatch = ''
-                  substituteInPlace Globals.hpp \
-                    --replace-fail "hyprland/src/desktop/view/Window.hpp" \
-                                   "hyprland/src/desktop/view/window/Window.hpp"
-                  # 0.57 hides the window fields behind accessors: the class is
-                  # `metadata().appID()` now (`initialAppID()` for the initial one) and
-                  # floating is `isFloating()`.
-                  substituteInPlace main.cpp \
-                    --replace-fail "->m_class" "->metadata().appID()" \
-                    --replace-fail "->m_isFloating" "->isFloating()"
-                '';
 
                 dontUseCmakeConfigure = true;
                 # The Makefile asks pkg-config for Hyprland's flags and links
@@ -333,7 +315,7 @@
               # the eval push take effect at all. Verified in a nested 0.56.2
               # instance: after the patch a window matching the pushed class is
               # adopted as a full-screen background window.
-              hyprwinwrap = final.hyprlandPlugins.mkHyprlandPlugin {
+              hyprwinwrap = prev.hyprlandPlugins.mkHyprlandPlugin {
                 pluginName = "hyprwinwrap";
                 version = "0-unstable-2026-09-10";
 
@@ -403,19 +385,22 @@
               });
             };
 
-            # Plugins that build against Hyprland 0.57. Everything else is a stub until it
-            # is ported: the loader scripts run `hyprctl plugin load … || true`, so a
+            # Plugins that build against Hyprland 0.57. Everything else is a stub until
+            # it is ported: the loader scripts run `hyprctl plugin load … || true`, so a
             # missing `.so` costs one line in the session log instead of a broken login.
-            # What breaks in each of them is written on the branch `hyprland-0.57-wip`.
+            # Still stubbed: hyprwinwrap (upstream never moved off 0.56 and the window
+            # fields sit behind accessors now) and hypr-dynamic-cursors (builds against
+            # 0.57, but upstream SIGSEGV #170 in tilt/stretch/shake is unfixed and the
+            # effect is off in the config).
             ported = [
               "hy3"
-            ];
-            unported = [
               "hyprexpo"
               "gloview"
               "hymission"
               "hyprcapture"
               "hyprwindowshade"
+            ];
+            unported = [
               "hyprwinwrap"
               "hypr-dynamic-cursors"
             ];
