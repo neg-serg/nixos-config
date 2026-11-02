@@ -107,13 +107,13 @@ lib.mkIf (cfg.enable or false) {
     };
 
     # rtpmidid — RTP-MIDI (AppleMIDI) daemon: exposes ALSA sequencer ports over
-    # the network. Linux MIDI (SC/glm-midi) reaches the dockur Windows VM's
-    # rtpMIDI -> Genelec GLM MIDI control (see docs/howto/windows-vm-dockur.md).
+    # the network. It was the path from Linux MIDI (SC/glm-midi) to the dockur
+    # Windows VM's rtpMIDI -> Genelec GLM control (see
+    # docs/howto/windows-vm-dockur.md). Not started by default any more: the GLM
+    # adapter lives on the host and `glm5d` controls it, so the RTP listener has
+    # nothing to feed. Start it by hand together with the VM.
     rtpmidid = systemdUser.mkUserService {
-      presets = [
-        "defaultWanted"
-        "restartOnFailure"
-      ];
+      presets = [ "restartOnFailure" ];
       description = "RTP MIDI (AppleMIDI) daemon";
       after = [ "pipewire.service" ];
       wants = [ "pipewire.service" ];

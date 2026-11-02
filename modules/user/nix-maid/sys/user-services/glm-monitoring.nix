@@ -22,13 +22,12 @@ in
 lib.mkIf (cfg.enable or false) {
   systemd.user.services = {
     # glm-osc — OSC bridge for Genelec SAM monitors (volume/mute/power/status
-    # via Python genlc over the GLM USB adapter, no official GLM required).
-    # Listen: UDP 127.0.0.1:9000; map in docs/howto/windows-vm-dockur.md.
+    # via Python genlc over the GLM USB adapter). Kept for the OSC API, but not
+    # started by default: `glm5d` owns the adapter now and a second process
+    # opening it would fight the daemon for the device. Start it by hand when an
+    # OSC client needs it.
     glm-osc = systemdUser.mkUserService {
-      presets = [
-        "defaultWanted"
-        "restartOnFailure"
-      ];
+      presets = [ "restartOnFailure" ];
       description = "OSC bridge for Genelec SAM monitors";
       serviceConfig = {
         ExecStart = "${pkgs.glm-osc}/bin/glm-osc-server";
@@ -59,11 +58,10 @@ lib.mkIf (cfg.enable or false) {
     # bridge (oem/glm-midi-bridge.ps1) connects OUT to :9003 (VM-initiated TCP
     # is the only bidirectional host<->VM channel under the same-IP pasta
     # topology, unlike RTP-MIDI UDP); local glm-midi feeds 127.0.0.1:9004.
+    # Not started by default: the adapter is on the host and `glm5d` controls it,
+    # so the relay would only listen into an empty room. Start it with the VM.
     glm-midi-relay = systemdUser.mkUserService {
-      presets = [
-        "defaultWanted"
-        "restartOnFailure"
-      ];
+      presets = [ "restartOnFailure" ];
       description = "MIDI relay to the dockur Windows VM";
       serviceConfig = {
         # The relay is the Rust port from `packages/local-bin-tools`, installed at
@@ -123,12 +121,12 @@ lib.mkIf (cfg.enable or false) {
     };
   };
 
-  # Self-healing timer for ensure-vm-proxy-alias: pasta copies the host .11
-  # alias into the container netns on every (re)start, so re-check
-  # periodically (cheap, idempotent).
+  # Cleanup for ensure-vm-proxy-alias: pasta copies the host .11 alias into the
+  # container netns on every (re)start, so it has to be removed on the same
+  # occasion. Not scheduled any more — that container is the Windows VM, which is
+  # a manual path now; start this by hand with it.
   systemd.user.timers.ensure-vm-proxy-alias = {
-    description = "Periodic VM proxy alias cleanup";
-    wantedBy = [ "timers.target" ];
+    description = "VM proxy alias cleanup (manual)";
     timerConfig = {
       OnBootSec = "20s";
       OnUnitActiveSec = "30s";
