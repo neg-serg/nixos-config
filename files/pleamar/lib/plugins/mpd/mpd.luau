@@ -45,7 +45,9 @@ local function apply(text)
     fact.random = isOn(text:match("random:%s*(%w+)"))
     fact.single = isOn(text:match("single:%s*(%w+)"))
     fact.consume = isOn(text:match("consume:%s*(%w+)"))
-    fact.xfade = xfadeOn(text:match("xfade:%s*(%w+)"))
+    -- mpc prints `crossfade:`; the reference's regex accepted both spellings (QS
+    -- Services/Mpd.qml). Keep the `xfade` fallback for older MPDs.
+    fact.xfade = xfadeOn(text:match("crossfade:%s*(%w+)") or text:match("xfade:%s*(%w+)"))
 end
 
 local function refresh()

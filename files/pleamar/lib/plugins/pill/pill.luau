@@ -98,10 +98,48 @@ end
 -- The state file is the plugin's own, so the files service writes it (a table
 -- goes out as JSON); the calendar event lives outside that folder and goes
 -- through `tee`, the way the QS heredoc did.
+--
+-- The Telegram bridge reads `$HOME/.local/state/pleamar/pill-tracker.json` (its
+-- `todayDate`/`taken`/`takenAt` shape is the legacy quickshell one; the bot also
+-- rewrites it when a mark arrives from chat). The plugin is its other writer:
+-- the panel's marks are invisible to the reminder until this file exists, so
+-- every persist mirrors the state there with `tee` (the path is outside the
+-- plugin's own folder, which `files.write` cannot reach).
+local function bridgePath()
+    local home = sys.ask("env", "HOME")
+    if type(home) ~= "string" or home == "" then home = "/home/neg" end
+    return home .. "/.local/state/pleamar/pill-tracker.json"
+end
+
+local function bridgeJson()
+    local entries = {}
+    for _, entry in ipairs(history) do
+        if type(entry) == "table" and type(entry.date) == "string" then
+            entries[#entries + 1] = string.format(
+                '{"date":"%s","taken":%s,"takenAt":"%s"}',
+                entry.date, tostring(entry.taken == true), tostring(entry.takenAt or "")
+            )
+        end
+    end
+    return string.format(
+        '{"todayDate":"%s","taken":%s,"takenAt":"%s","history":[%s]}',
+        today, tostring(taken), tostring(takenAt or ""), table.concat(entries, ",")
+    )
+end
+
+local function writeBridge()
+    if today == "" then return end
+    local path = bridgePath()
+    pcall(run, "mkdir", { "-p", path:match("^(.*)/[^/]+$") })
+    local ok, err = pcall(run, "tee", { path }, nil, { input = bridgeJson(), output = false })
+    if not ok then log("pill: the Telegram bridge not written: " .. tostring(err)) end
+end
+
 local function persist()
     local state = { today = today, taken = taken, takenAt = takenAt, history = history }
     local ok, err = pcall(sys.call, "files.write", STATE, state)
     if not ok then log("pill: state not saved: " .. tostring(err)) end
+    writeBridge()
 end
 
 local function writeEvent()
@@ -150,6 +188,10 @@ end
 -- `_syncFromCalendar` did the same.
 local HISTORY_MAX = 400
 
+-- Forward-declared: the sync callback below re-evaluates the reminder once `taken` may have
+-- changed from today's ICS; the function itself sits after `deadlinePassed`.
+local refreshReminder
+
 local function syncFromCalendar()
     local ok = pcall(run, "ls", { "-1", calDir() }, function(out)
         if type(out) ~= "string" then return end
@@ -183,6 +225,7 @@ local function syncFromCalendar()
         history = merged
         persist()
         publish()
+        refreshReminder()
     end)
     if not ok then log("pill: the calendar could not be listed") end
 end
@@ -195,7 +238,7 @@ local function deadlinePassed()
     return now >= hour * 60 + minute
 end
 
-local function refreshReminder()
+function refreshReminder()
     local reminder = (not taken) and deadlinePassed()
     if reminder ~= fact.reminder then fact.reminder = reminder end
 end
@@ -217,7 +260,9 @@ local function onClock(clock)
     local date = dateStr(clock)
     if today == "" then
         today = date
-        publish()
+        -- A fresh state has no date yet; syncing with `today == ""` would file today's ICS under
+        -- history and miss that the dose was already taken, so the sync waits for this tick.
+        syncFromCalendar()
         refreshReminder()
         return
     end
@@ -260,5 +305,7 @@ end)
 pcall(run, "mkdir", { "-p", calDir() })
 load()
 publish()
-syncFromCalendar()
+-- A state file from a previous session carries the date it ended on; sync with that date now.
+-- A fresh state has no date yet, and the sync waits for the first clock tick (see `onClock`).
+if today ~= "" then syncFromCalendar() end
 sys.watch("clock", onClock)

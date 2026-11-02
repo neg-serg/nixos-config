@@ -438,6 +438,14 @@ let
         fi
         # Helper links live in ~/.local/bin: drop the broken ones pointing into this repo.
         find "$HOME/.local/bin" -maxdepth 1 -type l -lname '*files/pleamar*' -xtype l -delete 2>/dev/null || true
+        # The scenes import ~/.config/pleamar/art.plm (`bar.plm`, `panels.plm`), and only the bar's
+        # logic writes it, after a cover is sampled. A fresh HOME has no bar yet, and a missing
+        # import is a compile error, not a fallback. Seed the repository default first; a generated
+        # file is kept (the bar rewrites it). This runs before maid-activation, so before any scene.
+        art="$HOME/.config/pleamar/art.plm"
+        if [ ! -e "$art" ]; then
+          install -Dm644 ${config.lib.neg.live "files/pleamar/art.plm"} "$art" 2>/dev/null || true
+        fi
         # The static tree the links point at is NOT removed here: pruning it before
         # activation is what left every deployed scene dangling for the length of a copy —
         # 2 "cannot read … .plm" errors per switch (bar and notifications, 18:06 today).
