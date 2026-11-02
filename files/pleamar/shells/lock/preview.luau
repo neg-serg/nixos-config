@@ -31,7 +31,11 @@ end
 local function read_file()
     local ok, got = pcall(function() return sys.ask("files.read", FILE, "json") end)
     if ok and type(got) == "table" then return got end
-    if not ok then log("settings: unreadable, the defaults are used") end
+    if not ok then
+        -- Missing is the first run; only a file that is there and unreadable is a defect (§6.1).
+        local ok_ex, there = pcall(function() return sys.ask("files.exists", FILE) end)
+        if ok_ex and there == true then log("settings: unreadable, the defaults are used") end
+    end
     return {}
 end
 

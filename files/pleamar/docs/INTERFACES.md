@@ -29,8 +29,8 @@ checked through a small consumer scene. Keep consumers in `/tmp`, never in the r
 files/pleamar/
   lib/palette.plm            tokens: colours, sizes, type, timers, springs   (this PH1)
   lib/capsule.plm            the widget background component                 (this PH1)
-  lib/menu.plm               menu rows, frozen in §5, not written yet        (next lib task)
-  lib/icons.plm              icon helpers, frozen in §5.3, not written yet   (next lib task)
+  lib/menu.plm               menu rows, frozen in §5                        (PH2-B)
+  lib/icons.plm              icon helpers, frozen in §5.3                    (PH2-A)
   lib/plugins/<name>/        a plugin: `<name>.plm` (library) + `<name>.luau` (its logic), §10
   lib/plugins/<name>/<name>.check.plm  that plugin's compile proof (a scene, not deployed), §9.1
   shells/<scene>/<scene>.plm the scene; directory name == scene name == IPC name
@@ -135,7 +135,8 @@ three 0–1 numbers and is the only colour that can come from facts.
 
 ## 2. Scene catalog and IPC names
 
-The seven scene processes of the port, with their names fixed here. The IPC name is the scene name:
+The scene processes of the port, with their names fixed here (the tree is the list: one directory
+per scene, `shells/<scene>/<scene>.plm`, and the rows below are the ones with a frozen contract). The IPC name is the scene name:
 `pleamar --say <name> …` (unit `pleamar-<name>.service`). One scene per process, one or more
 surfaces inside it (D1/D2), never a popup for a drawer.
 
@@ -186,7 +187,7 @@ drawer is open (one at a time, D1) | | `notifications` | `dnd` | bool | `false` 
 `notifications` | `centre` | bool | `false` | the notification centre is open | | `notifications` |
 `count` | number | `0` | notifications currently shown or kept (read-only for other scenes) | |
 `toast` | `visible` | number | `0` | how many toasts are on screen | | `overlay` | `active` | bool |
-`false` | the dismissal catcher is up | | `lock` | `locked` | bool | `false` | the lock surface
+`false` | the dismissal catcher is up | | `lock` | `locked` | bool | `true` | the lock surface
 wants the session (the compositor's own `lock.held` says whether it has it) | | `launcher` | `open`
 | bool | `false` | the launcher is up | | `launcher` | `query` | text | `""` | what has been typed |
 
@@ -662,7 +663,8 @@ Two traps the example avoids, both compiler behaviour in 0.4.11:
   `Capsule(…, scale: 1)` inside it. Expression properties (`at`, `from`, a box/zone `size`, `fill`
   alpha, `content`, `step`, an `anchor` fact) are unaffected.
 
-## 5. Menu and icon APIs (frozen, `lib/menu.plm` / `lib/icons.plm` not written yet)
+## 5. Menu and icon APIs (frozen; both live in `lib/menu.plm` and `lib/icons.plm`, and
+`lib/menu.check.plm` is the scene that compiles the first of them)
 
 `lib/menu.plm` and `lib/icons.plm` are the next two files of `lib/`; PH2-B needs the menu rows and
 PH2-A the icon names, so their surface is frozen here. Whoever writes them adds them to `lib/` and
@@ -885,7 +887,8 @@ protocol error and the sample is dropped.
 
 **Names and permissions.** Workers live in `files/pleamar/scripts/helpers/` (PH2-E scope), are
 installed into `PATH` as `pleamar-<name>` (`pleamar-sysmon`, `pleamar-weather`, `pleamar-calendar`,
-`pleamar-kbdlayout`, `pleamar-palette`, `pleamar-netdetail`, `pleamar-btdetail`), and are spawned by
+`pleamar-kbdlayout`, `pleamar-journal`, `pleamar-wallpaper-palettes`, `pleamar-wallpaper-apply`,
+`pleamar-wallpaper-still`), and are spawned by
 that bare name. A scene declares only the ones it uses: `permissions { run: "pleamar-sysmon" }`.
 Never `sh -c`, never a path, never a second worker name the module does not install.
 
