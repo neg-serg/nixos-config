@@ -333,6 +333,20 @@ fn main() -> std::process::ExitCode {
         }
     };
     println!("Serving at port {port} from {}", root.display());
+    // `localhost` resolves to ::1 first for Chromium, so without an IPv6 listener
+    // every browser request pays a failed connect before falling back to IPv4. Bind
+    // the IPv6 loopback too; a host without IPv6 keeps the IPv4 contract only.
+    match TcpListener::bind(("::1", port)) {
+        Ok(v6) => {
+            let root = root.clone();
+            std::thread::spawn(move || {
+                for stream in v6.incoming().flatten() {
+                    handle(stream, &root);
+                }
+            });
+        }
+        Err(exc) => eprintln!("surfingkeys-server: no IPv6 loopback on :{port}: {exc}"),
+    }
     for stream in listener.incoming().flatten() {
         handle(stream, &root);
     }
