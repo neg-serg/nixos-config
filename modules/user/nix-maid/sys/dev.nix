@@ -63,20 +63,24 @@ in
           CCACHE_DIR = "/cache/user";
           CCACHE_COMPRESS = "1";
           CCACHE_MAXSIZE = "50G";
-          CCACHE_SLOPPINESS = "file_macro,time_macros,include_file_ctime,include_file_mtime";
           CMAKE_C_COMPILER_LAUNCHER = "ccache";
           CMAKE_CXX_COMPILER_LAUNCHER = "ccache";
 
           # Rust
           CARGO_HOME = "${home}/.local/share/cargo";
           RUSTUP_HOME = "${home}/.local/share/rustup";
-          RUSTC_WRAPPER = "sccache"; # cargo routes every rustc call through the cache
-          # sccache refuses to cache a rustc invocation that carries `-C incremental`
-          # ("CannotCache(incremental)" in its debug log), and cargo enables that by
-          # default in the dev profile — so the cache silently did nothing for Rust.
-          # With it off, a library crate goes miss -> hit. Bin crates stay uncacheable
-          # ("CannotCache(crate-type, bin)"), which is a sccache limitation, not a bug.
-          CARGO_INCREMENTAL = "0";
+          # sccache caches Rust builds of everything cargo does *not* compile
+          # incrementally — the upstream README is explicit: "Incrementally compiled
+          # crates cannot be cached. By default, in the debug profile Cargo will use
+          # incremental compilation for workspace members and path dependencies."
+          # Dependencies keep being cached with the default settings, so switching
+          # incremental off globally would buy nothing and cost the fast edit loop;
+          # projects that want the workspace crates cached too set
+          # `[profile.dev] incremental = false` in their own Cargo.toml.
+          RUSTC_WRAPPER = "sccache"; # routes every rustc call through the cache
+          # The local daemon exits after 600 s idle by default, so the first build
+          # after a pause pays a server start; 0 keeps it resident (sccache docs).
+          SCCACHE_IDLE_TIMEOUT = "0";
           SCCACHE_DIR = "/cache/sccache";
           SCCACHE_CACHE_SIZE = "50G";
 
