@@ -9,7 +9,6 @@ use genlc::protocol;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use std::str::FromStr;
 
 #[derive(Parser)]
 #[command(name = "genlc", version, about = "Genelec SAM loudspeaker control")]
@@ -443,7 +442,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
     let transport = protocol::HidTransport::open()?;
-    let mut group = protocol::SamGroup::new(transport);
+    let group = protocol::SamGroup::new(transport);
 
     match cli.command {
         Commands::SetVolume { volume } => {
