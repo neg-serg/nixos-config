@@ -1,0 +1,14 @@
+[package]
+name = "wallpaper-palettes"
+version = "0.1.0"
+edition = "2021"
+description = "Colour schemes matugen would make from each wallpaper"
+license = "GPL-3.0-or-later"
+
+[[bin]]
+name = "wallpaper-palettes"
+path = "src/main.rs"
+
+[dependencies]
+
+[workspace]
