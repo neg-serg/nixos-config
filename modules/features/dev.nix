@@ -20,7 +20,7 @@
       enable = mkBool "enable C/C++ tooling (gcc/clang, cmake, ninja, lldb)" true;
     };
     java = {
-      enable = mkBool "enable Java/JVM development tooling (JDK, Maven)" false;
+      enable = mkBool "enable Java/JVM development tooling (Maven)" false;
       maven = mkBool "enable Apache Maven build tool" true;
     };
     python = {

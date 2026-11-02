@@ -10,7 +10,7 @@ lib.mkIf (builtins.elem "dev" (config.features.profiles or [ ])) {
       ai.enable = lib.mkDefault true;
       rust.enable = lib.mkDefault true;
       cpp.enable = lib.mkDefault true;
-      java.enable = lib.mkDefault true; # enable Java/JVM toolchain (JDK, Maven, PraxisLIVE)
+      java.enable = lib.mkDefault true; # enable Java/JVM toolchain (Maven)
     };
   };
 }
