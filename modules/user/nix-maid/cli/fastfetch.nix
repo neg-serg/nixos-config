@@ -5,13 +5,15 @@
   lib,
   config,
   neg,
+  pkgs,
   ...
 }:
 {
   config = lib.mkIf (config.lib.neg.enabled "cli") (
     neg.mkHomeFiles {
-      ".local/share/fastfetch/make_blizzard.py".source =
-        config.lib.neg.live "files/fastfetch/make_blizzard.py";
+      # The Rust generator (packages/blizzard): the wrapper and `fetch` run it
+      # from beside themselves, so the Python script is gone.
+      ".local/share/fastfetch/blizzard".source = lib.getExe pkgs.neg.blizzard;
       ".local/share/fastfetch/blizzard.sh".source = config.lib.neg.live "files/fastfetch/blizzard.sh";
       ".local/share/fastfetch/blizzard.sh".executable = true;
       ".local/share/fastfetch/fetch".source = config.lib.neg.live "files/fastfetch/fetch";

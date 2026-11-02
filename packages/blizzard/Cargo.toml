@@ -1,0 +1,22 @@
+[package]
+name = "blizzard"
+version = "0.1.0"
+edition = "2021"
+description = "Black-metal blizzard animated WebP generator from a reference image"
+license = "MIT"
+
+[[bin]]
+name = "blizzard"
+path = "src/main.rs"
+
+[dependencies]
+# JPEG decoding only: the reference is a JPEG and Pillow's LANCZOS resampler
+# is ported in-crate, so the rest of image's default format set is dead weight.
+image = { version = "0.25", default-features = false, features = ["jpeg"] }
+# Animated WebP through libwebp's WebPAnimEncoder. libwebp-sys vendors libwebp
+# and builds it with cc, so no system libwebp is needed.
+webp = { version = "0.3", default-features = false }
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]
