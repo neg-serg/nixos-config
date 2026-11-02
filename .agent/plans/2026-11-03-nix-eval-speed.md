@@ -90,7 +90,39 @@ Risks and what to check before trusting it:
 If T0 lands, the config-side investigations below become the second-order cleanup rather than the
 plan.
 
-## Method (do not skip)
+## What the profiler says (2026-11-03, flamegraph, 2371 samples @199 Hz)
+
+`nix eval --eval-profiler flamegraph --eval-profile-file /tmp/eval.folded` on the toplevel eval,
+self-time of 12.9 s profiled cpuTime:
+
+| Share | Where |
+| --- | --- |
+| **47 %** | nixpkgs derivation machinery — `pkgs/stdenv/generic/make-derivation.nix` (`buildInputs++optionals` 5.3 %, `getDev`/`__spliced` 10.4 %, `makeMesonFlags`/`makeCMakeFlags` 3.9 %, `isAttrs env` 2.4 %) |
+| 12 % | `lib/modules.nix` (`applyModuleArgs` 2.2 %) |
+| 7.3 % | `callPackage`/`makeOverridable` |
+| 5.3 % | `functionArgs`/`isFunction` |
+| 2.3 % | the overlay fixpoint itself (`lib/fixed-points.nix:333`) |
+
+**≥ 2232 distinct derivations are instantiated**, and `derivationStrict` is on the stack in 90 % of
+samples. That is the real budget: ~2.7 ms per derivation, no matter how the repo is organised.
+
+Answering the questions the plan asked:
+
+- Modules are 12 %, `pkgs` is ~47 % self-time plus the Python/Haskell/fetchurl builders behind it.
+- **Yes, unused local packages are parsed**: 110 of 122 `packages/*/default.nix` are read even when the
+  evaluation never forces them, plus 167 directory opens for source hashing.
+- `readFile` is 0.13 % (irrelevant). `import` is 12.4 % inclusive but 0.38 % self.
+- The overlay is evaluated once, but **three nixpkgs revisions are live** and `flake/lib.nix:128` does
+  `import inputs.nixpkgs { … }` inside an overlay — a second full instance whenever
+  `pkgs.buildFHSEnv` is touched.
+
+**Repo-side ceiling: ~0.6–0.8 s (5 %)** from the three safe fixes (direct `import` instead of
+`callPackage` for the hot local packages; de-overlapping the `files/` source roots, which are
+re-listed up to 8x; binding `buildFHSEnv` to `_prev` instead of a fresh nixpkgs). Everything else is
+nixpkgs' own per-derivation cost — which is exactly why **T0 (a faster evaluator) is the only path to
+2 s**, and why a "light gate" attribute that evaluates fewer derivations is the complement to it.
+
+
 
 1. Split the number before touching anything, with three probes on the *same* tree state:
    - `nix eval --raw .#nixosConfigurations.trantor.config.system.nixos.label` — flake + module
