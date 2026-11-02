@@ -306,6 +306,43 @@ which differ only in a field deliberately excluded from the key really do produc
 That remains a design decision, and the patch's own guard — refusing fixed-output and `childMap`
 cases — is the honest form of it.
 
+## `lazy-trees`, for the future (2026-11-03, not implemented)
+
+Determinate's `lazy-trees` is a **plain bool setting**, not an experimental feature
+(`src/libexpr/include/nix/expr/eval-settings.hh:481`, default false), read in three places
+(`paths.cc:84,105`, `nix/flake-prefetch-inputs.cc:55`); the machinery is `EvalState::devirtualize()`
+plus ~22 call sites in 10 files. Upstream 2.35 already mounts inputs lazily; what Determinate adds
+is *virtual* store paths.
+
+What it actually buys on this host: **0.9–1.2 s per evaluation**, i.e. the per-tree-state copy
+(`nix hash path /etc/nixos`). It does **not** change the client/daemon protocol (`PROTOCOL_VERSION`
+identical, no daemon-side setting), and — measured twice — it does **not** rescue untracked-but-
+referenced paths: Determinate refuses them exactly like stock Nix. The precondition for evaluating
+this flake is `git add -N` on referenced paths, full stop.
+
+So the trade is: our patched Nix (`nix-eval-patched`, 2.35.3+12) keeps the nine evaluation speedups
+and loses the tree-copy shortcut; Determinate keeps the shortcut and cannot take the patches. If
+someone later wants both, the options are, in order of cost:
+
+1. **Rebuild Determinate's source with PGO/BOLT only** (no patch rebase): the compiler flags do not
+   touch the code, so `lazy-trees` survives by construction. Reuses `~/src/nix-optimized`'s PGO
+   machinery; expected −20 % on the evaluator, no semantic risk, but it must be redone whenever
+   Determinate bumps a version. Five of the nine patches apply cleanly to their tree
+   (`0001/0003/0004/0005/0009`); `0002`, `0006`, `0007` conflict structurally because Determinate
+   replaced `addTempRoot()` with a batched `addTempRoots()` and writes derivations through an
+   `AsyncPathWriter` overload (`derivations.cc:169`), and `0008` applies with fuzz onto a path their
+   hot loop bypasses, so it would do nothing.
+1. **Backport `devirtualize` to upstream** — ~250–300 lines across 12 files — then apply all nine
+   patches verbatim. Medium risk, and it buys only the copy saving.
+1. **Rebase `0002/0006/0007` onto Determinate's APIs** — the honest estimate is 2–3 days of C++,
+   with the worst failure mode being a silently wrong `drvPath`, because `0006` memoises the hot
+   path. This is the only route that gets both features *and* the patches, and it is why the
+   differential harness in `scripts/dev/nix-memo-diff.sh` and the `eval-memo` switch exist: they
+   make that rebase verifiable rather than hopeful.
+
+Nothing here is required for the current setup: `just eval-gate` and the pins already give 35 ms
+hits and 3.7 s cold without touching the evaluator.
+
 ## Guardrails
 
 - A faster eval must produce the **same `drvPath`** for the same tree; record it before and after
