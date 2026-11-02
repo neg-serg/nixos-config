@@ -129,10 +129,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     extra-container.url = "git+https://github.com/erikarvstedt/extra-container.git";
-    colibri = {
-      url = "github:JustVugg/colibri";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # Out-of-tree MT7927/MT6639 WiFi (mt76/mt7925e) + BT drivers for NixOS
     # (jetm dkms port). WiFi only: BT is handled by the in-tree 6.18 backport.
     # Pinned rev: API rate-limits block unpinned resolution; update with
