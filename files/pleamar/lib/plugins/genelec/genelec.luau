@@ -118,7 +118,9 @@ local function cancelAnchors()
     anchors = {}
 end
 
--- The VM path: the state file first (glm-vol owns it), then the CC20 anchors.
+-- The VM path (the adapter inside the dockur VM): the state file first (glm-vol
+-- owns it), then the CC20 anchors. This branch can be deleted with that VM:
+-- .agent/notes/2026-11-02-glm-vm-removal-backlog.md.
 local function commitMidi()
     run("glm-vol", { tostring(target) }, function(_, code)
         if code ~= 0 then log("genelec: glm-vol exited with " .. tostring(code)) end

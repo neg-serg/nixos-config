@@ -9,11 +9,14 @@ let
   podman = lib.getExe pkgs.podman;
   r = neg.rooted repoRoot;
 
-  # The dockur VM is the primary Genelec GLM control path (host-side genlc /
-  # glm-osc stays a manual reserve), so it starts with the machine. QEMU opens a
-  # passed-through device only when the QEMU process starts — libusb hotplug
-  # events never reach the container (its own netns, no /run/udev) — so the GLM
-  # adapter (1781:0e39) has to be on the bus before the container starts.
+  # The dockur VM is the GLM UI/calibration fallback now: `glm5d` owns the GLM
+  # adapter on the host (modules/user/nix-maid/sys/user-services/glm-monitoring.nix),
+  # so this unit is not wanted by any target — start it by hand with the daemon
+  # stopped and the adapter handed back. The whole VM path can be deleted:
+  # .agent/notes/2026-11-02-glm-vm-removal-backlog.md.
+  # QEMU opens a passed-through device only when the QEMU process starts — libusb
+  # hotplug events never reach the container (its own netns, no /run/udev) — so
+  # the GLM adapter (1781:0e39) has to be on the bus before the container starts.
   # Starting without it would leave the VM unable to control the monitors until
   # the next restart, hence the wait.
   waitForAdapter = pkgs.writeShellScript "windows-vm-wait-adapter" ''

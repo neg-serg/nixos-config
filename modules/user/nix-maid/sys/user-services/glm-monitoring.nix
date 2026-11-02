@@ -20,6 +20,10 @@ let
   '';
 in
 lib.mkIf (cfg.enable or false) {
+  # glm5d is the owner here. Everything else in this file that speaks of a VM or
+  # of GLM's Windows app (glm-osc, glm-midi-relay, glm-adapter-auto,
+  # ensure-vm-proxy-alias) is the fallback path and can be deleted together with
+  # the dockur VM: .agent/notes/2026-11-02-glm-vm-removal-backlog.md.
   systemd.user.services = {
     # glm-osc — OSC bridge for Genelec SAM monitors (volume/mute/power/status
     # via Python genlc over the GLM USB adapter). Kept for the OSC API, but not
