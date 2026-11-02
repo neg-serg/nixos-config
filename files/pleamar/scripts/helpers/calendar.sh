@@ -118,7 +118,7 @@ while [ $# -gt 0 ]; do
     --workdays-base)
       [ $# -ge 2 ] || die "--workdays-base needs a value"
       WORKDAY_BASE=$2
-      shift
+      shift 2
       ;;
     --holidays-base)
       [ $# -ge 2 ] || die "--holidays-base needs a value"
@@ -425,8 +425,8 @@ build_payload() {
     age=$((NOW - c_fetched))
     if [ "$c_month" = "$MONTH" ] && [ "$age" -lt 120 ]; then
       PAYLOAD=$(jq -c --argjson now "$NOW" \
-        '{month, first, last, events, holidays, holidays_error, fetched_at,
-          cached: true, age_s: ($now - (.fetched_at // $now))}' "$cache_file")
+        '{month, first, last, events, holidays, holidays_error, workdays, workdays_error,
+          fetched_at, cached: true, age_s: ($now - (.fetched_at // $now))}' "$cache_file")
       return 0
     fi
   fi
