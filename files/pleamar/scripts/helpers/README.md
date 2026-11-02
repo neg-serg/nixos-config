@@ -3,9 +3,10 @@
 pleamar's services carry audio, network, bluetooth, battery, media, tray, notifications, workspaces,
 window and apps. The system monitor, weather, calendar and keyboard-layout views need data no
 service has, so each view spawns one small stateless worker while it exists and kills it on close —
-the same pattern as Vitreus' `vitreus-sysmon`. The weather, calendar and keyboard-layout workers
-live here, next to the scene harness; the system monitor is the Rust crate
-`packages/pleamar-sysmon`. None of them runs in the background on its own.
+the same pattern as Vitreus' `vitreus-sysmon`. The calendar and keyboard-layout workers live here,
+next to the scene harness; the system monitor and weather are the Rust crates
+`packages/pleamar-sysmon` and `packages/pleamar-weather`. None of them runs in the background on its
+own.
 
 The protocol is **INTERFACES.md §7, frozen by PH1-T1**; this file repeats it for convenience and
 adds the data keys each worker emits. Where this file and §7 disagree, §7 wins.
@@ -21,12 +22,12 @@ adds the data keys each worker emits. Where this file and §7 disagree, §7 wins
   name — never `sh -c`, never a path. A scene declares the ones it uses:
   `permissions { run: "pleamar-sysmon" }`.
 
-  | file here                 | installed name      | worker name in lines | topics                                                |
-  | ------------------------- | ------------------- | -------------------- | ----------------------------------------------------- |
-  | `packages/pleamar-sysmon` | `pleamar-sysmon`    | `sysmon`             | `sysmon`, `cpu`, `mem`, `swap`, `disk`, `gpu`, `temp` |
-  | `weather.sh`              | `pleamar-weather`   | `weather`            | `weather`                                             |
-  | `calendar.sh`             | `pleamar-calendar`  | `calendar`           | `calendar`                                            |
-  | `kbd.sh`                  | `pleamar-kbdlayout` | `kbdlayout`          | `layout`                                              |
+  | file here                  | installed name      | worker name in lines | topics                                                |
+  | -------------------------- | ------------------- | -------------------- | ----------------------------------------------------- |
+  | `packages/pleamar-sysmon`  | `pleamar-sysmon`    | `sysmon`             | `sysmon`, `cpu`, `mem`, `swap`, `disk`, `gpu`, `temp` |
+  | `packages/pleamar-weather` | `pleamar-weather`   | `weather`            | `weather`                                             |
+  | `calendar.sh`              | `pleamar-calendar`  | `calendar`           | `calendar`                                            |
+  | `kbd.sh`                   | `pleamar-kbdlayout` | `kbdlayout`          | `layout`                                              |
 
 - **Handshake.** The first line a worker writes is
   `{"ok":true,"worker":"sysmon","version":1,"topics":["sysmon",…]}`. A scene that does not know
@@ -53,11 +54,11 @@ adds the data keys each worker emits. Where this file and §7 disagree, §7 wins
 - **Lifecycle.** One worker per view, started when the view opens and killed when it closes:
   `write(id, '{"cmd":"stop"}\n')` or `write(id)` for a clean finish, `kill(id, "term")` as the hard
   stop. **A closed stdin ends every worker** — none of them outlives its scene, and a `term` during
-  an in-flight request kills that request first (weather and calendar kill their `curl` child), so
-  the worker is gone within a few milliseconds. Cache files are the only things they write: one JSON
-  document under `${XDG_CACHE_HOME:-$HOME/.cache}/pleamar/helpers/` (weather, calendar), written
-  atomically (temp file + rename); sysmon's counter baseline lives in a private temp file under
-  `$TMPDIR` that is removed on exit.
+  an in-flight request kills that request first (weather aborts its request thread, calendar kills
+  its `curl` child), so the worker is gone within a few milliseconds. Cache files are the only
+  things they write: one JSON document under `${XDG_CACHE_HOME:-$HOME/.cache}/pleamar/helpers/`
+  (weather, calendar), written atomically (temp file + rename); sysmon's counter baseline lives in a
+  private temp file under `$TMPDIR` that is removed on exit.
 
 - **Auto-subscription.** So a scene that only reads lines still gets data, each worker subscribes
   itself once before the first loop: sysmon `sysmon` at `--interval-ms` (1000), weather `weather` at
@@ -124,10 +125,10 @@ topic carries the full sample, each subtopic carries its own object:
 Usage: subscribe to `sysmon` for one full sample per interval (the default), or to subtopics to draw
 only what the view shows. A missing source is an `err` object inside `data`, never a dead worker.
 
-### weather.sh — `pleamar-weather`
+### weather — `pleamar-weather` (Rust crate `packages/pleamar-weather`)
 
 ```
-weather.sh [--city NAME] [--lat N --lon N] [--cache-file PATH] [--ttl SECONDS]
+pleamar-weather [--city NAME] [--lat N --lon N] [--cache-file PATH] [--ttl SECONDS]
            [--force] [--interval-ms N] [--once] [--forecast-days N]
            [--timeout SECONDS] [--api-base URL] [--geocoding-base URL]
            [--wttr-base URL] [--metno-base URL] [--no-fallback]
@@ -146,8 +147,8 @@ forecast is out of reach. MET Norway names the sky (`symbol_code`), so the worke
 WMO numbers the card knows, thunder first and "partlycloudy" before "cloudy". A payload written
 before `daily` existed is not served from the cache — a forecast-less payload is stale whatever its
 age says. The payload cache (`$XDG_CACHE_HOME/pleamar/helpers/weather.json`, TTL `--ttl`, default
-300 s) is served without network; `--force` ignores a fresh one. Needs `curl` and `jq`; a failed
-provider is an `err` line and the worker retries on the next sample. No API keys, no secrets.
+300 s) is served without network; `--force` ignores a fresh one. A failed provider is an `err` line
+and the worker retries on the next sample. No API keys, no secrets.
 
 ### calendar.sh — `pleamar-calendar`
 

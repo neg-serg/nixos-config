@@ -1,7 +1,7 @@
 // pages/weather.plm — the weather drawer (`drawer == weather`).
 //
 // Current conditions and a short daily forecast from the pleamar-weather
-// worker (Open-Meteo + wttr.in fallback; scripts/helpers/README.md): the
+// worker (Open-Meteo, MET Norway, wttr.in fallback; scripts/helpers/README.md): the
 // worker reports numbers and WMO codes, panels.luau turns them into the
 // formatted live texts this part draws (`weather.temp`, `weather.cond`,
 // `weather.wind`, `weather.humidity`, `weather.pressure`, `weather.city`) and
