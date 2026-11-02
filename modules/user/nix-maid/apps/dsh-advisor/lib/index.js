@@ -12,6 +12,10 @@
  * Config (cordis patch row): { endpoint?, model?, interval?, timeoutMs?,
  * enabled? } — endpoint default http://127.0.0.1:11434/api/chat,
  * model default qwen3:8b-q8_0 (benchmarked on trantor).
+ *
+ * Each request pins `keep_alive` to KEEP_ALIVE (30s). Without it the daemon-wide
+ * OLLAMA_KEEP_ALIVE=5m holds ~10 GiB of VRAM (qwen3:8b-q8_0 at 32k ctx) for
+ * five minutes after a three-second background remark.
  */
 
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
@@ -26,6 +30,9 @@ const DEFAULT_TIMEOUT = 60000
 const MAX_ADVICE_PER_SESSION = 5
 const MAX_TRANSCRIPT = 4000
 const WINDOW = 12
+
+/** Short VRAM lease: a one-shot remark must not pin the model for the daemon keep-alive. */
+const KEEP_ALIVE = '30s'
 
 /** Advisor system prompt (compact adaptation of agent-advisor.md). */
 const SYSTEM_PROMPT = 'You are an advisor on top of the main agent: a defender of code quality and of how accurately the user\'s request is executed. You receive an incremental transcript of the last steps. Challenge premature done, thin verification, skipped reasoning. Flag drift from the user\'s request immediately. Prevent rabbit holes and baked-in edge cases. Do NOT repeat what the agent already knows: type errors, diagnostics, failing tests, lint. Do NOT assert concrete values for hidden arguments — only observable facts. Check first (read/grep/glob), then raise the question; after enough investigation propose an approach or a fix, not just a warning. Reply: ONE short concrete sentence. When there is nothing to say — return an empty line. Answer in the language of the transcript. No markdown, no explanations, only the remark itself or nothing.'
@@ -69,6 +76,7 @@ async function askAdvisor(endpoint, model, transcript, timeoutMs) {
       body: JSON.stringify({
         model,
         stream: false,
+        keep_alive: KEEP_ALIVE,
         options: { temperature: 0.3 },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
