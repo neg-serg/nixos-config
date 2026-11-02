@@ -44,8 +44,7 @@ in
       type = lib.types.str;
       # Fully-qualified: no unqualified-search registries are configured on
       # trantor (see /etc/containers/registries.conf), so a bare short-name fails
-      # with "did not resolve to an alias". Same docker.io/ prefix the dockur
-      # windows image uses on this host.
+      # with "did not resolve to an alias".
       default = "docker.io/itzcrazykns1337/vane:latest";
       description = "OCI image (single container: UI + API + private SearXNG).";
     };
