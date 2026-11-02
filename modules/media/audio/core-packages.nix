@@ -14,12 +14,19 @@ let
   glmAdapterPriv = pkgs.writeShellScriptBin "glm-adapter-priv" (
     builtins.readFile ./core-packages/glm-adapter-priv.sh
   );
+  # glm-usbmon-priv: root helper for USB traffic captures — mounts debugfs for
+  # the length of one usbmon session and unmounts it on stop (invoked via
+  # NOPASSWD sudo from the GLM/GNet protocol work).
+  glmUsbmonPriv = pkgs.writeShellScriptBin "glm-usbmon-priv" (
+    builtins.readFile ./core-packages/glm-usbmon-priv.sh
+  );
 in
 {
   environment.systemPackages = lib.mkAfter [
     # -- Volume control --
     pkgs.genlc # Genelec SAM monitor volume control via GLM USB adapter
     glmAdapterPriv # root helper (NOPASSWD) that moves the GLM adapter host<->VM
+    glmUsbmonPriv # root helper (NOPASSWD) for usbmon captures of the GLM adapter
 
     # -- RME HDSPe --
     pkgs.hdspeconf # HDSPe matrix mixer & config (for snd-hdspe driver)

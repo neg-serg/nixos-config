@@ -151,6 +151,15 @@ in
               command = "/run/current-system/sw/bin/glm-adapter-priv";
               options = [ "NOPASSWD" ];
             }
+            # USB traffic captures for the GLM/GNet protocol work
+            # (.agent/plans/2026-11-02-glm5-linux-port.md): usbmon lives in
+            # debugfs, so the helper mounts it for one capture and unmounts it on
+            # stop. Narrowness: the verbs are start/stop/status, no path or shell
+            # argument is honoured, everything is written under /var/log/glm-usbmon.
+            {
+              command = "/run/current-system/sw/bin/glm-usbmon-priv";
+              options = [ "NOPASSWD" ];
+            }
             # `nh os switch` runs its activation as `sudo env <vars> ...`
             # (nix build --profile and <toplevel>/bin/switch-to-configuration),
             # and a NOPASSWD rule for `env *` used to keep it prompt-free.

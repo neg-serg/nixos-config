@@ -45,7 +45,12 @@ let
     "init_on_alloc=1"
     "randomize_kstack_offset=on"
     "vsyscall=none"
-    "debugfs=off"
+    # "debugfs=off" was dropped on 2026-11-02: usbmon, the only way to read the
+    # undocumented Genelec GLM/GNet wire protocol (.agent/plans/2026-11-02-glm5-linux-port.md),
+    # is reachable exclusively through debugfs. The hardening survives in a narrower
+    # shape — debugfs is never mounted at boot, the mountpoint is created 0700 by
+    # modules/system/usbmon.nix, and only the root helper glm-usbmon-priv mounts it,
+    # for the duration of one capture.
   ];
   idle_nomwait = [ "idle=nomwait" ]; # latency over power
   usb_noautosuspend = [ "usbcore.autosuspend=-1" ]; # avoid hiccups
