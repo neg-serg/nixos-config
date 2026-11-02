@@ -15,8 +15,9 @@ let
 
   serve = pkgs.writeShellScript "aura-diary-serve" ''
     # Bind only to the loopback interface: the diary never leaves this host.
-    exec ${lib.getExe pkgs.python3} -m http.server 8080 \
-      --bind 127.0.0.1 --directory ${diaryDir}
+    # miniserve (Rust) serves index.html at / like the Python http.server did.
+    exec ${lib.getExe pkgs.miniserve} --port 8080 --interfaces 127.0.0.1 \
+      --index index.html ${diaryDir}
   '';
 in
 {
