@@ -29,14 +29,12 @@ hl.config({
       -- workspace labels and a wallpaper background", docs/configuration/options).
       -- dynamic_grid sizes the grid from the workspaces that exist instead of
       -- counting columns, so the layout follows the desktop rather than a fixed 3x3.
-      -- Packaged option (modules/user/nix-maid/hyprland/hyprexpo-grid-overview.patch):
-      -- 1 = draw the grid even for workspaces with the native scrolling layout,
-      -- which upstream would open as its scrolling overview (a strip of columns).
-      -- On: with the config read fixed (see the patch header) the grid opens on a
-      -- scrolling workspace — verified in the live session (submap default ->
-      -- hyprexpo, 69% of the frame redrawn, no crash), and the nested run that
-      -- suggested otherwise had too few workspaces for a grid to have any tiles.
-      grid_overview = 1,
+      -- Upstream option since v0.57.0: `auto` (the default) detects Hyprland's
+      -- native scrolling layout on the triggering workspace and opens the scrolling
+      -- overview for it; `grid` always opens the classic workspace grid. The grid is
+      -- what this config wants (the 0.56 local patch that forced it is gone — 0.57
+      -- upstreams the switch).
+      overview_mode = "grid",
 
       dynamic_grid = 1,
       -- Empty workspaces are drawn as tiles and can be selected like any other
