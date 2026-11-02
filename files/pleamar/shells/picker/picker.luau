@@ -73,6 +73,11 @@ local favs = {}      -- name -> true, the ones marked favourite (from favourites
 local vis = {}       -- what the deck shows: `names` in the sort's order, favourites first
 local schemes = {}   -- name -> {{ r, g, b }, …}, what the reader has answered so far
 local reader = nil   -- the palettes process, while it runs
+-- Which read the reader on screen belongs to. A worker that is killed can still have a line in
+-- flight, and that line would paint a card of the page the deck has already left — or of a folder
+-- that is no longer the one on screen. The reader's lines are dropped unless they carry the
+-- current number.
+local reader_gen = 0
 local skipped = 0    -- files left out because they are clips
 local listed = false -- whether the folder has been listed since the scene started
 
@@ -179,7 +184,9 @@ end
 local function read_settings()
     local ok, got = pcall(function() return sys.ask("files.read", FILE, "json") end)
     if not ok then
-        log("picker: settings.json is broken; defaults kept")
+        -- Missing is the first run; only a file that is there and unreadable is a defect (§6.1).
+        local ok_ex, there = pcall(function() return sys.ask("files.exists", FILE) end)
+        if ok_ex and there == true then log("picker: settings.json is broken; defaults kept") end
         got = nil
     end
     if type(got) ~= "table" then got = {} end
@@ -380,6 +387,8 @@ local function read_page()
         kill(reader)
         reader = nil
     end
+    reader_gen = reader_gen + 1
+    local mine = reader_gen
 
     local at = fact.page * PAGE
     -- Only what has not been read yet: a re-sort moves names the reader already answered onto
@@ -395,13 +404,21 @@ local function read_page()
     local args = { dir }
     for _, name in ipairs(page_names) do args[#args + 1] = name end
 
-    local ok, why = pcall(spawn, "pleamar-wallpaper-palettes", args, read_line, function(_, code)
-        reader = nil
+    local ok, id = pcall(spawn, "pleamar-wallpaper-palettes", args, function(line)
+        -- A line from a read the deck has already left is not this page's business.
+        if mine ~= reader_gen then return end
+        read_line(line)
+    end, function(_, code)
+        if mine == reader_gen then reader = nil end
         if code ~= 0 then log("picker: the palette reader exited with " .. tostring(code)) end
     end)
     if not ok then
         text.status = "the palette reader is not installed"
-        log("picker: " .. tostring(why))
+        log("picker: " .. tostring(id))
+    else
+        -- The id is what `kill` takes: without it every read leaves its worker (and the three
+        -- matugen children it starts) running for the rest of the session.
+        reader = id
     end
 end
 

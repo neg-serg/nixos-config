@@ -33,7 +33,9 @@ import "../../lib/capsule.plm"
 // Settings (~/.local/share/pleamar/picker/settings.json; read and written by picker.luau)
 //   folder    text    ~/pic/wl          the wallpapers to browse
 //   command   text    wl img {}         the tool that paints the desktop; {} is the path
-//   columns   number  4        1 – 8     how many cards a row holds
+//   columns   —       —                 NOT a setting: the deck is laid out from `let cols` when the
+//                                       scene loads (the model's `list cells max 4` and the row
+//                                       arithmetic follow it), so the four a row is fixed here.
 // `g` opens the screen that edits the first two — Enter in either field saves — and a key the
 // logic does not know survives the write, because the table it read is what it writes back. The
 // screen is not the only way in: the logic watches the file, and an edit by hand lands the same
