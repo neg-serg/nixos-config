@@ -1,10 +1,11 @@
-//! glm5d — the one process that owns the GLM adapter.
+//! `genlc daemon` — the one process that owns the GLM adapter.
 //!
 //! GLM's own model is a host that never stops talking: it probes for unleased
 //! monitors, polls each leased one and the adapter's status about twice a second, and
 //! a monitor drops its lease ~2.5 s after the last answer it gave (protocol.md,
 //! "When a monitor loses its lease"). A CLI that runs once cannot hold that state, so
-//! this daemon keeps the cycle and serves the state over a Unix socket.
+//! the daemon keeps the cycle and serves it over a Unix socket. It is a subcommand of
+//! `genlc` rather than a binary of its own: the adapter has one owner and one name.
 //!
 //! Socket protocol: one command per line, one reply line each (`ok …` / `error …`).
 //! ```text
@@ -12,14 +13,16 @@
 //! volume -30.5      -> set the system volume (broadcast 1F)
 //! mute on|off       -> mute-all / unmute-all through the adapter (01 2B 01/00)
 //! lease             -> force a probe cycle now
+//! apply PATH        -> write a plan file through the daemon's own leases
 //! quit              -> stop the daemon
 //! ```
 
+use crate::plan::{parse_plan, plan_frames};
+use crate::protocol;
 use anyhow::{Context, Result};
-use genlc::plan::{parse_plan, plan_frames};
-use genlc::protocol;
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::{UnixListener, UnixStream};
+use std::path::PathBuf;
 use std::sync::mpsc::{self, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -38,6 +41,9 @@ struct State {
     /// enough to decode into fields (see the plan, telemetry section).
     telemetry: std::collections::BTreeMap<u8, Vec<u8>>,
     volume_db: Option<f64>,
+    /// Whether the last mute round the daemon sent was `on`; `None` until one was
+    /// sent this run. `genlc mute toggle` reads it back from `status`.
+    muted: Option<bool>,
     cycles: u64,
     last_cycle: Option<Instant>,
 }
@@ -63,10 +69,13 @@ impl State {
             })
             .collect();
         format!(
-            "{{\"cycles\":{},\"volume_db\":{},\"leases\":[{}],\"telemetry\":{{{}}}}}",
+            "{{\"cycles\":{},\"volume_db\":{},\"muted\":{},\"leases\":[{}],\"telemetry\":{{{}}}}}",
             self.cycles,
             self.volume_db
                 .map(|v| format!("{v:.1}"))
+                .unwrap_or_else(|| "null".into()),
+            self.muted
+                .map(|m| m.to_string())
                 .unwrap_or_else(|| "null".into()),
             leases.join(","),
             telemetry.join(",")
@@ -84,10 +93,8 @@ enum Cmd {
     Quit,
 }
 
-fn main() -> Result<()> {
-    let socket = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| format!("{}/glm5d.sock", runtime_dir()));
+pub fn run(socket: Option<PathBuf>) -> Result<()> {
+    let socket = socket.unwrap_or_else(|| PathBuf::from(format!("{}/genlc.sock", runtime_dir())));
 
     let transport = protocol::HidTransport::open()?;
     let group = protocol::SamGroup::new(transport);
@@ -95,12 +102,12 @@ fn main() -> Result<()> {
 
     // Remove a socket left behind by a previous run; the daemon owns this path.
     let _ = std::fs::remove_file(&socket);
-    if let Some(dir) = std::path::Path::new(&socket).parent() {
+    if let Some(dir) = socket.parent() {
         std::fs::create_dir_all(dir).ok();
     }
     let listener = UnixListener::bind(&socket)
-        .with_context(|| format!("binding the control socket {socket}"))?;
-    eprintln!("glm5d listening on {socket}");
+        .with_context(|| format!("binding the control socket {}", socket.display()))?;
+    eprintln!("genlc daemon listening on {}", socket.display());
 
     let (tx, rx) = mpsc::channel::<Cmd>();
     {
@@ -114,19 +121,22 @@ fn main() -> Result<()> {
         while let Ok(cmd) = rx.try_recv() {
             match cmd {
                 Cmd::Quit => {
-                    eprintln!("glm5d: quit");
+                    eprintln!("genlc daemon: quit");
                     let _ = std::fs::remove_file(&socket);
                     return Ok(());
                 }
                 Cmd::Volume(db) => match group.set_volume(db) {
                     Ok(()) => {
                         state.lock().unwrap().volume_db = Some(db);
-                        eprintln!("glm5d: volume {db:.1} dB");
+                        eprintln!("genlc daemon: volume {db:.1} dB");
                     }
-                    Err(e) => eprintln!("glm5d: volume failed: {e}"),
+                    Err(e) => eprintln!("genlc daemon: volume failed: {e}"),
                 },
                 Cmd::Mute(on) => match if on { group.mute() } else { group.unmute() } {
                     Ok(()) => {
+                        // The state `status` reports (and `genlc mute toggle` reads):
+                        // only what this daemon actually sent this run.
+                        state.lock().unwrap().muted = Some(on);
                         // GLM follows the adapter frame with a round to every leased
                         // session: the session's `2B` carries bit 0 (mute) plus the LED
                         // colour, and that is the frame the monitors act on (capture
@@ -144,12 +154,14 @@ fn main() -> Result<()> {
                             let msg =
                                 protocol::GNetMessage::new(session, 0x2B).with_data(vec![value]);
                             if let Err(e) = group.send(&msg) {
-                                eprintln!("glm5d: mute round to session {session:02} failed: {e}");
+                                eprintln!(
+                                    "genlc daemon: mute round to session {session:02} failed: {e}"
+                                );
                             }
                         }
-                        eprintln!("glm5d: mute {on}");
+                        eprintln!("genlc daemon: mute {on}");
                     }
-                    Err(e) => eprintln!("glm5d: mute failed: {e}"),
+                    Err(e) => eprintln!("genlc daemon: mute failed: {e}"),
                 },
                 Cmd::LeaseNow => last_lease = Instant::now() - LEASE_GRACE,
                 Cmd::Apply(path, reply) => {
@@ -171,7 +183,7 @@ fn main() -> Result<()> {
                     drop(st);
                     last_lease = Instant::now();
                 }
-                Err(e) => eprintln!("glm5d: lease cycle failed: {e}"),
+                Err(e) => eprintln!("genlc daemon: lease cycle failed: {e}"),
             }
         }
 
@@ -246,7 +258,7 @@ fn apply_plan(
     for monitor_plan in &plans {
         if !leased.contains(&monitor_plan.session) {
             out.push(format!(
-                "error session {:02X} is not leased by glm5d (held: {:02X?})",
+                "error session {:02X} is not leased by genlc daemon (held: {:02X?})",
                 monitor_plan.session, leased
             ));
             continue;
@@ -288,7 +300,7 @@ fn accept_loop(listener: UnixListener, tx: Sender<Cmd>, state: Arc<Mutex<State>>
         let state = Arc::clone(&state);
         std::thread::spawn(move || {
             if let Err(e) = serve(stream, tx, state) {
-                eprintln!("glm5d: client error: {e}");
+                eprintln!("genlc daemon: client error: {e}");
             }
         });
     }
