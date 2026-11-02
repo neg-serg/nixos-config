@@ -70,18 +70,25 @@ end
 -- when the file reports them, the bitrate in kbps.
 local function summary()
     local parts = {}
+    -- "FLAC 24/96 · 1024 kbps" is what INTERFACES §10.4 and meta.plm promise: the codec and the
+    -- depth read as one phrase, and the container is not repeated when it is the codec again (a
+    -- flac in a flac container said "FLAC · 24/96 · 1024 kbps · flac").
+    local head = {}
     if text.codec ~= "" then
-        parts[#parts + 1] = text.codec:upper()
+        head[#head + 1] = text.codec:upper()
     end
     if fact.bitDepth > 0 and fact.sampleRate > 0 then
-        parts[#parts + 1] = fact.bitDepth .. "/" .. string.format("%.1f", fact.sampleRate / 1000):gsub("%.0$", "")
+        head[#head + 1] = fact.bitDepth .. "/" .. string.format("%.1f", fact.sampleRate / 1000):gsub("%.0$", "")
     elseif fact.sampleRate > 0 then
-        parts[#parts + 1] = string.format("%.1f kHz", fact.sampleRate / 1000):gsub("%.0 ", " ")
+        head[#head + 1] = string.format("%.1f kHz", fact.sampleRate / 1000):gsub("%.0 ", " ")
+    end
+    if #head > 0 then
+        parts[#parts + 1] = table.concat(head, " ")
     end
     if fact.bitrateKbps > 0 then
         parts[#parts + 1] = fact.bitrateKbps .. " kbps"
     end
-    if text.container ~= "" then
+    if text.container ~= "" and text.container:lower() ~= text.codec:lower() then
         parts[#parts + 1] = text.container
     end
     text.summary = table.concat(parts, " · ")
@@ -174,7 +181,14 @@ local function publishMediainfo(data)
 end
 
 local function introspect(path)
-    if introspecting then return end
+    -- A track change while an ffprobe is in flight used to be dropped for good: the caller had
+    -- already written `lastFile = path`, so the next poll saw "same file" and never asked again, and
+    -- that track kept an empty quality line for as long as it played. Clearing the remembered file
+    -- makes the next tick retry instead.
+    if introspecting then
+        lastFile = nil
+        return
+    end
     introspecting = true
     local ok = pcall(run, "ffprobe",
         { "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", path },
@@ -196,16 +210,22 @@ local function introspect(path)
                         return
                     end
                 end
-                clear()
+                clear_file()
+                text.file = path
+                publish_rows()
                 introspecting = false
             end)
             if not okInfo then
-                clear()
+                clear_file()
+                text.file = path
+                publish_rows()
                 introspecting = false
             end
         end)
     if not ok then
-        clear()
+        clear_file()
+        text.file = path
+        publish_rows()
         introspecting = false
     end
 end
@@ -302,6 +322,9 @@ local function refresh()
             return
         end
         lastFile = path
+        -- The rows belong to the file just read: clear what the previous one reported before they
+        -- are drawn, or the new title carries the old codec and bitrate until ffprobe answers.
+        clear_file()
         text.file = path
         publish_rows()
         introspect(path)
