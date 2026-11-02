@@ -418,9 +418,10 @@ scene bar {
     event media_prev ->
     event media_toggle ->
     event media_next ->
-    // The capsule's cover opens the now-playing card in the `panels` scene.
-    // That scene exits while no drawer is open (its only surface is the drawer),
-    // so the logic has to start the unit and then say where to go.
+    // The capsule's cover shows the now-playing card in the `panels` scene (its press
+    // toggles it, `toggle_media_panel`; this is the open-only half for callers that want it
+    // up regardless). That scene exits while no drawer is open (its only surface is the
+    // drawer), so the logic has to start the unit and then say where to go.
     // The cursor went onto the media capsule or its transport pill, or left them.
     // The scene cannot hold a grace period of its own, and without one the pill would
     // vanish in the gap between the two: the logic keeps it up for 300 ms (reference:
@@ -435,21 +436,27 @@ scene bar {
     // command a service, and only it knows which tray record the slot stands for.
     event vpn_press ->
     event vpn_menu ->
-    // The rest of the reference's pressable capsules, each opening the drawer QS opened
+    // The rest of the reference's pressable capsules, each with the drawer QS opened
     // from it: the clock its calendar (ClockWidget's `calendar.toggle()`), the weather
     // capsule its card (WeatherButton's overlay), the system cluster the monitoring
     // dashboard (SystemMonitorCapsule's `qs-monitor` overlay), the build badge the build
     // list (BuildStatus's `qs-buildstatus` popup). Drawer names are §2.2 of INTERFACES.md;
-    // the logic says which, because a rule cannot run `pleamar --say`.
+    // the logic says which, because a rule cannot run `pleamar --say`. These `open_*`
+    // events stay for callers that want the drawer shown regardless of what is on screen.
     event open_calendar_panel ->
     event open_weather_panel ->
-    // The keybinds toggle instead of opening: the same drawer a second time closes
-    // it (the legacy `toggleCalendar`/`toggleWeather` did), so the two events below
-    // read the drawer's current name first and flip it (bar.luau's `toggle_drawer`).
-    event toggle_calendar_panel ->
-    event toggle_weather_panel ->
     event open_system_panel ->
     event open_build_panel ->
+    // The presses toggle instead: every one of those capsules is QS's `OverlayToggleCapsule`
+    // with `autoToggleOnTap: true`, so the same drawer a second time closes it (the legacy
+    // `toggleCalendar`/`toggleWeather` did the same). These events read the drawer's current
+    // name first and flip it (bar.luau's `toggle_drawer`).
+    event toggle_calendar_panel ->
+    event toggle_weather_panel ->
+    event toggle_media_panel ->
+    event toggle_network_panel ->
+    event toggle_system_panel ->
+    event toggle_build_panel ->
     // The build badge's pointer, for its tooltip (QS's `PanelTooltip` over `capsule.hovered`).
     event build_hover ->
     // The workspace capsule asked for hyprexpo (QS: `Services.Expo.toggle()`), and the
@@ -900,7 +907,7 @@ scene bar {
             zone box clock { from: 0, 0; size: w.card, strip; corner: corner; cursor: pointer; label: "Clock {now.time}"; role: button }
             on enter clock { emit tip(0) }
             on leave clock { emit tip_hide }
-            on press clock { emit open_calendar_panel }
+            on press clock { emit toggle_calendar_panel }
         }
     }
 
@@ -1023,12 +1030,12 @@ scene bar {
             }
             // The cluster had no zone at all, so a hand could not hover it and the line
             // `tip_line` already writes for it (case 4) never reached the screen. The plate is
-            // the pressable area, as on every other capsule, and the press opens the
+            // the pressable area, as on every other capsule, and the press toggles the
             // monitoring dashboard (QS: `autoToggleOnTap` on SystemMonitorCapsule).
             zone box sysmon { from: 0, 0; size: inner + 12, strip; corner: corner; cursor: pointer; label: "System monitor"; role: button }
             on enter sysmon { emit tip(4) }
             on leave sysmon { emit tip_hide }
-            on press sysmon { emit open_system_panel }
+            on press sysmon { emit toggle_system_panel }
         }
     }
 
@@ -1147,7 +1154,7 @@ scene bar {
             zone box weather { from: 0, 0; size: 156, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { emit tip(5) }
             on leave weather { emit tip_hide }
-            on press weather { emit open_weather_panel }
+            on press weather { emit toggle_weather_panel }
         }
     }
 
@@ -1263,7 +1270,7 @@ scene bar {
             zone box net { from: vpn.w, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
             on enter net { emit tip(3) }
             on leave net { emit tip_hide }
-            on press net { emit open_network_panel }
+            on press net { emit toggle_network_panel }
             // The tunnel, as §8 of INTERFACES.md names it: a button that says `VPN: <state>`.
             // Its presses are the reference's: left activates the Hiddify item, right asks for
             // that item's menu — both land in bar.luau, which is the one holding the record.
@@ -1599,10 +1606,11 @@ scene bar {
                 // box of this scene's: the slot collapses while the analyser is not shown.
                 row spec_slot { show: media.hot; spec.Bars(width: 22, height: 20, gap: 1) }
             }
-            // The capsule answers for itself: a press opens the now-playing page, as the
-            // reference's `Media.qml` opens its panel, and the pointer on it asks for the card.
+            // The capsule answers for itself: a press toggles the now-playing page, as the
+            // reference's `Media.qml` does through `toggleSidePanel()`, and the pointer on it
+            // asks for the card.
             zone box z_track { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Media: {media.title}"; role: button }
-            on press z_track { emit open_media_panel }
+            on press z_track { emit toggle_media_panel }
             // `emit tip(6)` first: this rule used to set `tip_open` itself, which
             // showed the card on the frame the surface came up — before the words had been
             // measured in it. It waits the reference's 150 ms like every other capsule now, and
@@ -1848,10 +1856,10 @@ scene bar {
     on change Mpd.hot while not Mpd.hot { emit tip_hide }
     on change Genelec.hot while Genelec.hot { emit tip(11) }
     on change Genelec.hot while not Genelec.hot { emit tip_hide }
-    // The pill's right press opens the calendar, as QS's second TapHandler did (`calendar.toggle()`),
-    // and that drawer now marks the tracked days and their streak: it reads the same `Pill.days`
-    // model this mark is drawn from (`pages/calendar.plm`).
-    on change Pill.asks { emit open_calendar_panel }
+    // The pill's right press toggles the calendar, as QS's second TapHandler did
+    // (`calendar.toggle()`), and that drawer now marks the tracked days and their streak: it
+    // reads the same `Pill.days` model this mark is drawn from (`pages/calendar.plm`).
+    on change Pill.asks { emit toggle_calendar_panel }
 
     // The whole strip is a hover target for the widgets that hide at idle
     // (QS's `panelHovering`): declared before the rows, so every widget's own
@@ -1888,9 +1896,9 @@ scene bar {
     // centred along the bottom edge, so its capsule stands where the bar's centre is — not at
     // the end of a row where it shoved the weather and the clock around every time a build
     // started. It takes no space at rest (`Build.busy` is false while nothing runs), and a
-    // press on it opens the build drawer (QS: `autoToggleOnTap` on BuildStatus).
+    // press on it toggles the build drawer (QS: `autoToggleOnTap` on BuildStatus).
     row build_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; show: widget.build and Build.busy
-        build.Tile(open_build_panel, build_hover, type_scale: text_scale)
+        build.Tile(toggle_build_panel, build_hover, type_scale: text_scale)
         // A zone that goes away takes its pointer with it and `leave` never comes: a build that ends
         // under the cursor takes its card too (the rule the audio capsules carry).
         on change Build.busy while not Build.busy { emit tip_hide }
