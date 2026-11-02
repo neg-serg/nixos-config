@@ -1,0 +1,1 @@
+{"lowlevel":{"dynamic_complexity":3.1},"highlevel":{"genre_dortmund":{"probability":{"rock":0.5,"pop":0.25,"jazz":0.25},"value":"rock"},"danceability":{"probability":0.75,"value":1.0},"moods_mirex":{"probability":{"happy":0.9,"sad":0.1},"value":"happy"},"tonal_atonal":{"probability":{"atonal":0.125},"value":0.5}}}

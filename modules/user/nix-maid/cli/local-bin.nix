@@ -108,7 +108,12 @@
         scriptSkip = [
           "ren"
           "vid-info.py"
-        ]; # These need substitution
+          "pass-2col"
+          "punzip"
+          "tty-log"
+          "journal-clean.sh"
+          "music-highlevel"
+        ]; # substitution or Rust ports
 
         scriptEntries =
           neg.mkDirEntries ".local/bin"
@@ -138,6 +143,12 @@
         ".local/bin/window-activate".source = lib.getExe' pkgs.neg.local-bin-tools "window-activate";
         ".local/bin/surfingkeys-server".source = lib.getExe' pkgs.neg.local-bin-tools "surfingkeys-server";
         ".local/bin/fetch-covers".source = lib.getExe' pkgs.neg.local-bin-tools "fetch-covers";
+        # Rust ports of the remaining scripts/ helpers (packages/local-bin-scripts).
+        ".local/bin/pass-2col".source = lib.getExe' pkgs.neg.local-bin-scripts "pass-2col";
+        ".local/bin/punzip".source = lib.getExe' pkgs.neg.local-bin-scripts "punzip";
+        ".local/bin/tty-log".source = lib.getExe' pkgs.neg.local-bin-scripts "tty-log";
+        ".local/bin/journal-clean.sh".source = lib.getExe' pkgs.neg.local-bin-scripts "journal-clean";
+        ".local/bin/music-highlevel".source = lib.getExe' pkgs.neg.local-bin-scripts "music-highlevel";
         # Rust port of the former shell helper (packages/local-bin-tools).
         ".local/bin/dsh-worktree".source = lib.getExe' pkgs.neg.local-bin-tools "dsh-worktree";
         # Rust port of the former shell helper (packages/shtoy).

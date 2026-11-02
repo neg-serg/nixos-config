@@ -115,6 +115,7 @@ in
       pleamar-theme = final.callPackage ./pleamar-theme { }; # pleamar theme pipeline (wallpaper colours -> theme.plm)
       pleamar-calendar = final.callPackage ./pleamar-calendar { }; # pleamar calendar worker (khal, holidays, production calendar, JSON lines)
       pleamar-picker = final.callPackage ./pleamar-picker { }; # picker scene commands (wallpaper still/apply, deck CLI)
+      local-bin-scripts = final.callPackage ./local-bin-scripts { }; # Rust ports of the small local-bin helper scripts
       tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the Python tgchat after a fresh login)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
       renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)
