@@ -2,6 +2,7 @@
   lib,
   fetchurl,
   python3,
+  dsh-patch,
   makeWrapper,
   buildNpmPackage,
   runCommand,
@@ -68,29 +69,21 @@ buildNpmPackage {
 
   # The HMR plugin requires node --expose-internals, which the default wrapper
   # omits. Rewrap the launcher the same way the dsh systemd service does.
-  # The patch scripts import the shared count-assert helper (./lib/patchlib.py)
-  # through PYTHONPATH, so that directory is substituted in alongside them.
-  # (patch-preset-names.py retired with 0.2.0-rc.2: the preset names are
-  # localized upstream now — see post-install.sh.)
+  # The post-install patches run as `dsh-patch <set> <dir>` (packages/dsh-patch,
+  # a Rust port of the former patch-*.py scripts): exact-string replacements
+  # with count assertions, so a dsh upgrade that drifts an anchor fails the
+  # build instead of shipping a half-patched tree.
   postInstall =
     builtins.replaceStrings
       [
         "@NODEJS@"
         "@NODELIB@"
-        "@PY@"
-        "@PY_V2@"
-        "@PY_MIG@"
-        "@PY_PTC@"
-        "@PATCHLIB_DIR@"
+        "@DSHPATCH@"
       ]
       [
         (lib.getExe nodejsRuntime)
         nodejsRuntime.libraryPath
-        "${./patch-widgets.py}"
-        "${./patch-session-format.py}"
-        "${./patch-session-migration.py}"
-        "${./patch-ptc-env.py}"
-        "${./lib}"
+        (lib.getExe dsh-patch)
       ]
       (builtins.readFile ./post-install.sh);
 

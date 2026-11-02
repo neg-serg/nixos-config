@@ -3,7 +3,7 @@
 // Decodes every stored Session artifact through dsh's own format catalog (the
 // whole v0->v3 migration chain plus the target validation, exactly as the
 // persistence backend does on a cold read) and groups the failures. This is the
-// gate for `packages/dsh/patch-session-format.py`: a dsh upgrade that
+// gate for dsh-patch's `session-format` set: a dsh upgrade that
 // reintroduces a migration gap shows up here as a failure class, not as an
 // unreadable history in the web UI.
 //
