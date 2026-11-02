@@ -36,8 +36,9 @@
 #   (`fact locked = true`), so autostart would put the pleamar lock screen in front of every login
 #   before PH3-L's PAM matrix has been run by hand. Start it when it is wanted —
 #   `systemctl --user start pleamar-lock.service`.
-# - `pleamar-health` + `pleamar-health.timer` — hang watchdog: probes the bar scene (2-minute period,
-#   first run after 5 minutes) and restarts the scene when it stops answering.
+# - `pleamar-health` + `pleamar-health.timer` — hang watchdog: probes every scene in
+#   `pleamarHealthScenes` (the bar and the panels; 2-minute period, first run after 5 minutes) and
+#   restarts the one that stops answering.
 # - `pleamar-theme` — runs the theme pipeline (`files/pleamar/scripts/theme`) on every wallpaper
 #   change, writing `~/.config/pleamar/theme.plm`.
 # - `pleamar-cleanup-symlink` — removes stale deployed links; without it a scene dies on a missing
@@ -115,13 +116,12 @@ let
     "launcher"
   ];
 
-  # Scene the hang watchdog probes: the bar is the one the session cannot lose.
-  # A scene with no deployed file is skipped by its own condition, so the name
-  # may be listed before the file lands (the bar scene exists since PH2-A).
-  # The scenes the watchdog watches: a wedged bar is the obvious one, but the panels scene draws
-  # every drawer, and a wedged panels looks like a dead shell while the bar keeps ticking. `toast`,
-  # `launcher` and `notifications` are left out on purpose — they are on demand, and a hung one is
-  # noticed by the thing that asked for it.
+  # The scenes the hang watchdog probes. A wedged bar is the obvious one, but the panels scene draws
+  # every drawer, and a wedged panels looks like a dead shell while the bar keeps ticking — which is
+  # why the probe walks the whole list instead of leaving on the first healthy scene. A scene with no
+  # deployed file is skipped by its own condition, so a name may be listed before the file lands.
+  # `toast`, `launcher` and `notifications` are left out on purpose — they are on demand, and a hung
+  # one is noticed by the thing that asked for it.
   pleamarHealthScenes = [
     "bar"
     "panels"
@@ -468,6 +468,11 @@ let
             [ -e "$dst/$sub/$name" ] || rm -rf "$entry" 2>/dev/null || true
           done
         done
+        # A `.path` unit whose file a switch replaced is stopped and does not come back on its own:
+        # `WantedBy=graphical-session.target` only pulls it in when that target *starts*, and it was
+        # already up. On 2026-11-02 `pleamar-theme.path` sat dead from 02:36 to 06:00 that way, so a
+        # wallpaper change ran nothing at all. Starting it again is idempotent.
+        systemctl --user start pleamar-theme.path > /dev/null 2>&1 || true
       '';
     };
   };
