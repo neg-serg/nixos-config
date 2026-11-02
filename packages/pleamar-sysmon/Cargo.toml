@@ -1,0 +1,21 @@
+[package]
+name = "pleamar-sysmon"
+version = "0.1.0"
+edition = "2021"
+description = "pleamar system monitor worker (procfs/sysfs, JSON lines, INTERFACES.md §7)"
+license = "MIT"
+
+[[bin]]
+name = "pleamar-sysmon"
+path = "src/main.rs"
+
+[dependencies]
+# Parsing the stdin command lines and escaping strings inside sample objects.
+serde_json = "1"
+# SIGTERM/SIGINT cleanup: std carries no POSIX signal API, and the worker must
+# remove its counter state file on the same signals the shell trapped.
+signal-hook = "0.3"
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]
