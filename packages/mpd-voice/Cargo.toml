@@ -1,12 +1,12 @@
 [package]
-name = "mpd-voice-rs"
+name = "mpd-voice"
 version = "0.1.0"
 edition = "2021"
 description = "Voice control for MPD (Rust port)"
 license = "MIT"
 
 [[bin]]
-name = "mpd-voice-rs"
+name = "mpd-voice"
 path = "src/main.rs"
 
 [dependencies]
