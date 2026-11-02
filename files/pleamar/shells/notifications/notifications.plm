@@ -191,10 +191,11 @@ scene notifications {
     // the monitor's 240 frames a second to draw one pixel. Measured 2026-10-31 with
     // `pleamar --report`: 2911 frames in 12 s with nothing on screen, and every one
     // of them is a compositor frame on a 4K/240 output (a cursor move rides one too).
-    // 30 while idle, not lower, for the reason panels.plm:118 gives: the pace is also
-    // how long a `fact` change waits before it is drawn (at 1 fps a card took 1.4 s).
+    // 15 while idle since 2026-11-02, for the reason panels.plm gives: the pace is also how long
+    // a `fact` change waits before it is drawn (1 fps 1.4 s, 15 fps 67 ms), and the 0.57
+    // compositor pays ~3 ms per presented frame, so the idle rounds are what cost a core.
     surface keeper { size: 1, 1; anchor: top_left; level: background; reserve: 0; screens: each
-                     rate: 240, 30 while not centre and toasts.count == 0 }
+                     rate: 240, 10 while not centre and toasts.count == 0 }
 
     surface centre_panel {
         size: 364, full

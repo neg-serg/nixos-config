@@ -495,17 +495,34 @@ scene bar {
         // 1920x35 frame costs 4.2 ms while 240 Hz gives it only 4.16 ms, so the screen rate
         // missed frames. 120 Hz leaves an 8.3 ms budget — twice the measured cost — while
         // keeping hover and tooltip motion ahead of a 60 Hz panel.
-        // 120 while the pointer is on the strip, 30 when nobody is near it: the engine paints at
+        // 120 while the pointer is on the strip, 12 when nobody is near it: the engine paints at
         // the surface's pace and never idles on its own, so a full-width layer at 120 fps is paid
         // for on every compositor frame whether anything changed or not. Measured: 1205 frames in
         // 10 s at rest, `waiting for the screen` in every slow frame — the bar's own paint is
         // 0.6 ms, so what it costs is the round, not the drawing.
-        rate: 120, 30 while not strip.hot
+        // The resting pace was 30 and is 12 since 2026-11-02: on 0.57 the compositor spends
+        // ~2-4 ms of CPU per presented frame at 4K, so the resting rounds are what a core went
+        // into — 64 % of one for the bar alone at 30, 31 % at 12 (measured on the quiet host,
+        // nothing else painting). Hover and tooltip motion keep the 120, so nothing a hand
+        // waits on got slower; only the facts that change by themselves (clock, sysmon,
+        // workspaces) now land within 83 ms instead of 33.
+        rate: 120, 12 while not strip.hot
         screens: each
     }
 
-    // Who blurs the bar: 100 % the scene, 0 % the compositor (§ the strip below).
-    let strip.glass = 100%
+    // Who blurs the bar: nobody, for now. The scene's own glass was measured on
+    // 2026-11-02 at 69 % of a core for the bar alone against 27 % without (every
+    // capture is a screencopy the compositor paints and reads back), so it is off;
+    // the compositor's `decoration:blur` on the `pleamar` namespace was the next
+    // layer of the same cost (it re-blurs all ~18 mapped shell layers on every
+    // presented frame, closed ones included) and is off too — hyprland.lua has the
+    // numbers. The strip keeps its `opacity: 60 %` coal over the desktop, which is
+    // the look: flat, still translucent, no frost. `lens` is off as well: `lens: true`
+    // kept taking screencopies even at `strip.glass = 0%` (measured 2026-11-02: 74 %
+    // of a core with it against 62 % without, and every capture is a 4K readback that
+    // holds the compositor — and therefore input — for 10-20 ms, which is what made
+    // the cursor hitch). A switch back to the scene glass brings both back together.
+    let strip.glass = 0%
 
     // The moon's own shader: the phase terminator, stippled (moon.wgsl).
     shader moon_face = file "moon.wgsl"
@@ -1772,17 +1789,17 @@ scene bar {
         // light one does not: `skin.coal` is #000000 there, so 0.84 of it is a black wall with
         // nothing behind it to bend, and the glass reads as paint.
         opacity: if(skin.light, 84%, 60%)
-        // The glass sits here, not on the capsules: in the reference the compositor
-        // (a Hyprland glass plugin) blurs and refracts the whole surface, and
-        // the widgets are flat fills over it. No plugin is loaded on this host
-        // (`hyprctl plugin list` has only `hyprwinwrap`), so the surface draws its own:
-        // a lens that bends the edge, `frost: auto` — frosted where what is behind is busy,
-        // which is what keeps a terminal's words from fighting the bar's, clear over a bare
-        // wallpaper — and a faint rim highlight where the light catches the bevel.
-        // One number decides who does the glass; 0 % the moment a glass plugin is back,
-        // is back, or the bar would be blurred twice.
+        // No blur anywhere at the moment: the compositor's `decoration:blur` is off
+        // (hyprland.lua has the measurement) and `strip.glass` is 0, so this body is
+        // just its `opacity` coal over the desktop. `lens: false` because the lens
+        // kept taking screencopies at 0 % glass too — each one a 4K readback that
+        // held the compositor (and input) for 10-20 ms; 74 % of a core against 62 %
+        // without, measured 2026-11-02. The scene's own lens is the alternative look
+        // (a screencopy of what is behind the strip on every capture, 61-69 % of a
+        // core for the bar alone): the frost below belongs to it and is inert at 0 %,
+        // kept so the switch back is one number.
         glass: 70% * strip.glass
-        lens: true
+        lens: false
         tint: 42%
         // Smoked glass in the dark theme: what is seen through is taken down, the brighter the
         // more, its colour kept — so a window under the bar stops competing with the strip's own

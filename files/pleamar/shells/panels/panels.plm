@@ -116,13 +116,14 @@ scene panels {
     // The unnamed full-monitor surface is the catcher — the press outside that
     // dismisses the drawer. It paints nothing, so it is up only while it has something to
     // catch; a closed surface takes no press (the engine empties its input region).
-    // `rate:` is the scene's own pace, so the idle rate lives here: 30 frames a second while no
+    // `rate:` is the scene's own pace, so the idle rate lives here: 15 frames a second while no
     // drawer is open (nothing of this scene is on screen) and the monitor's the moment one is.
-    // Without it the scene kept asking for the screen's 240 Hz to draw nothing. Not lower: the
-    // pace is also how long a `fact drawer …` waits before it is drawn, and at 1 fps the card
-    // took 1.4 s to appear (measured; 30 fps is ~40 ms).
+    // Without it the scene kept asking for the screen's 240 Hz to draw nothing. The pace is also
+    // how long a `fact drawer …` waits before it is drawn: 1 fps took 1.4 s (measured), 15 fps is
+    // 67 ms, and since 2026-11-02 the 0.57 compositor pays ~3 ms of CPU per presented frame at 4K,
+    // so the idle rounds are where a core went (`bar.plm`'s rate note has the A/B).
     surface { size: full, full; anchor: top; level: overlay; reserve: 0; screens: each
-              keyboard: on_demand; open: drawer != none; rate: 240, 30 while drawer == none }
+              keyboard: on_demand; open: drawer != none; rate: 240, 10 while drawer == none }
 
     // The panel rectangles are the reference's own numbers, read from its popups and
     // not eyeballed. The units matter and cost a round: a surface's `size:`/`margin:`
