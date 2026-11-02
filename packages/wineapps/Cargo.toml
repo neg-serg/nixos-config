@@ -1,0 +1,16 @@
+[package]
+name = "wineapps"
+version = "0.1.0"
+edition = "2021"
+description = "Declarative Wine app manager"
+license = "MIT"
+
+[[bin]]
+name = "wineapps"
+path = "src/main.rs"
+
+[dependencies]
+
+# Standalone: the crate is its own workspace root, so this Cargo.lock is the one
+# the nix build uses (`src = ./.` copies just this directory).
+[workspace]
