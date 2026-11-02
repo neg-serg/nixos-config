@@ -1,0 +1,22 @@
+[package]
+name = "tgchat-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Telegram chat access for the agent and the user (grammers user session)"
+license = "MIT"
+
+[[bin]]
+name = "tgchat-rs"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+grammers-client = { version = "0.11", features = ["proxy"] }
+grammers-session = "0.11"
+jiff = "0.2"
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]
