@@ -66,6 +66,11 @@ in
       accept-flake-config = true;
       builders-use-substitutes = true;
       show-trace = false;
+      # Measured 2026-11-03 on the toplevel eval: the parallel evaluator costs ~0.4 s
+      # here (8.85 s with eval-cores = 1 against 9.32-9.80 s on the default), because a
+      # 2232-derivation graph has little parallelism to exploit and the coordination
+      # overhead dominates. One core is the faster setting for this configuration.
+      eval-cores = 1;
       netrc-file = config.sops.secrets."github-netrc".path;
       system-features = [
         "big-parallel"
