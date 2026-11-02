@@ -46,6 +46,9 @@ local quiet = true
 -- and with the daemon owning the adapter it is another session's number.
 local daemonKnown = false
 local commitTimer = nil
+-- How many times the coalescing timer has come back for a send the busy slot ate; bounded so a
+-- command that never answers cannot leave a timer spinning every 150 ms.
+local commitRetries = 0
 local quietTimer = nil
 local anchors = {}
 
@@ -149,6 +152,23 @@ local function commitDaemon()
 end
 
 local function commit()
+    -- `busy` is the probe or a send already on the wire; each transport returns early then, and
+    -- the last notch used to be dropped with it — measured 2026-11-02: the tile read -50 while
+    -- `glm5ctl status` still said -49, so the monitors lagged a keypress behind. Come back for it.
+    if busy then
+        if commitRetries >= 8 then
+            commitRetries = 0
+            return
+        end
+        commitRetries = commitRetries + 1
+        if commitTimer then cancel(commitTimer) end
+        commitTimer = after(COMMIT_MS, function()
+            commitTimer = nil
+            commit()
+        end)
+        return
+    end
+    commitRetries = 0
     if fact.daemon then
         commitDaemon()
     elseif fact.midi then
