@@ -14,9 +14,10 @@
 #   * --open herdr fails loudly when no herdr binary is available, and auto
 #     stays on the print fallback inside a Herdr pane without one.
 #
-# Usage: check-dsh-worktree.sh [dsh-worktree-path]
+# Usage: check-dsh-worktree.sh <dsh-worktree-binary-or-script>
 #
-# Without an argument the helper is taken from this repository.
+# The helper is a Rust binary now (packages/local-bin-tools); the argument may
+# still be the old shell script, in which case it is run through `sh`.
 #
 # NOTE: no `set -e`. A failing assertion must be reported and the run must
 # continue, so every check captures its status explicitly; a first failure
@@ -25,15 +26,15 @@
 set -uo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BIN="${1:-$here/../../packages/local-bin/bin/dsh-worktree}"
+BIN="${1:-$(command -v dsh-worktree || true)}"
 
-if [ ! -f "$BIN" ]; then
-  echo "check-dsh-worktree: no such helper: $BIN" >&2
+if [ -z "$BIN" ] || [ ! -f "$BIN" ]; then
+  echo "check-dsh-worktree: usage: check-dsh-worktree.sh <dsh-worktree>" >&2
   exit 1
 fi
 
-# Run through the interpreter when the source tree has not kept the exec bit
-# (the deployed copy under ~/.local/bin is always executable).
+# The deployed helper is a Rust binary; a source checkout may still hold the
+# old shell script (no exec bit in some trees), which is run through `sh`.
 run() {
   if [ -x "$BIN" ]; then "$BIN" "$@"; else sh "$BIN" "$@"; fi
 }
@@ -49,8 +50,12 @@ mkdir -p "$DSH_WORKTREE_ROOT" "$repo"
 # shellcheck source-path=SCRIPTDIR source=lib.sh
 . "$here/lib.sh"
 
-sh -n "$BIN"
-assert $? "the helper parses as POSIX sh"
+if head -c 2 "$BIN" | grep -q '#!'; then
+  sh -n "$BIN"
+  assert $? "the helper parses as POSIX sh"
+else
+  echo "ok   the helper is a binary (nothing to parse)"
+fi
 
 cd "$repo" || exit 1
 git init -q -b main .

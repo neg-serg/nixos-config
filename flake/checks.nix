@@ -181,8 +181,8 @@ in
       );
 
   # ── dsh-worktree guard ─────────────────────────────────────────────
-  # packages/local-bin/bin/dsh-worktree creates real git worktrees outside the
-  # repository so parallel dsh sessions never fight over the working copy. The
+  # packages/local-bin-tools' dsh-worktree creates real git worktrees outside
+  # the repository so parallel dsh sessions never fight over the working copy. The
   # guard pins the contract: trees stay out of the main checkout's `git status`,
   # each carries its own branch, and a dirty tree is not removed without
   # --force. It runs against a throwaway repository in $TMPDIR.
@@ -200,7 +200,7 @@ in
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME"
         # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
-        bash ${../scripts/dev}/check-dsh-worktree.sh ${../packages/local-bin/bin/dsh-worktree}
+        bash ${../scripts/dev}/check-dsh-worktree.sh ${pkgs.neg.local-bin-tools}/bin/dsh-worktree
         touch $out
       '';
 

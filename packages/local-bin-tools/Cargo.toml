@@ -37,6 +37,12 @@ path = "src/window_activate.rs"
 name = "surfingkeys-server"
 path = "src/surfingkeys_server.rs"
 
+[[bin]]
+name = "dsh-worktree"
+path = "src/dsh_worktree.rs"
+
 [dependencies]
+serde_json = "1"
+sha1 = "0.10"
 
 [workspace]
