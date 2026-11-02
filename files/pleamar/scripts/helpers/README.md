@@ -3,8 +3,9 @@
 pleamar's services carry audio, network, bluetooth, battery, media, tray, notifications, workspaces,
 window and apps. The system monitor, weather, calendar and keyboard-layout views need data no
 service has, so each view spawns one small stateless worker while it exists and kills it on close —
-the same pattern as Vitreus' `vitreus-sysmon`. The workers live here, next to the scene harness, and
-never run in the background on their own.
+the same pattern as Vitreus' `vitreus-sysmon`. The weather, calendar and keyboard-layout workers
+live here, next to the scene harness; the system monitor is the Rust crate
+`packages/pleamar-sysmon`. None of them runs in the background on its own.
 
 The protocol is **INTERFACES.md §7, frozen by PH1-T1**; this file repeats it for convenience and
 adds the data keys each worker emits. Where this file and §7 disagree, §7 wins.
@@ -20,12 +21,12 @@ adds the data keys each worker emits. Where this file and §7 disagree, §7 wins
   name — never `sh -c`, never a path. A scene declares the ones it uses:
   `permissions { run: "pleamar-sysmon" }`.
 
-  | file here     | installed name      | worker name in lines | topics                                                |
-  | ------------- | ------------------- | -------------------- | ----------------------------------------------------- |
-  | `sysmon.sh`   | `pleamar-sysmon`    | `sysmon`             | `sysmon`, `cpu`, `mem`, `swap`, `disk`, `gpu`, `temp` |
-  | `weather.sh`  | `pleamar-weather`   | `weather`            | `weather`                                             |
-  | `calendar.sh` | `pleamar-calendar`  | `calendar`           | `calendar`                                            |
-  | `kbd.sh`      | `pleamar-kbdlayout` | `kbdlayout`          | `layout`                                              |
+  | file here                 | installed name      | worker name in lines | topics                                                |
+  | ------------------------- | ------------------- | -------------------- | ----------------------------------------------------- |
+  | `packages/pleamar-sysmon` | `pleamar-sysmon`    | `sysmon`             | `sysmon`, `cpu`, `mem`, `swap`, `disk`, `gpu`, `temp` |
+  | `weather.sh`              | `pleamar-weather`   | `weather`            | `weather`                                             |
+  | `calendar.sh`             | `pleamar-calendar`  | `calendar`           | `calendar`                                            |
+  | `kbd.sh`                  | `pleamar-kbdlayout` | `kbdlayout`          | `layout`                                              |
 
 - **Handshake.** The first line a worker writes is
   `{"ok":true,"worker":"sysmon","version":1,"topics":["sysmon",…]}`. A scene that does not know
@@ -99,16 +100,16 @@ contract.
 
 ## The workers
 
-### sysmon.sh — `pleamar-sysmon`
+### sysmon — `pleamar-sysmon` (Rust crate `packages/pleamar-sysmon`)
 
 ```
-sysmon.sh [--interval-ms N] [--once] [--io-max-kibps N]
+pleamar-sysmon [--interval-ms N] [--once] [--io-max-kibps N]
           [--gpu-path PATH | --no-gpu] [--temp-path PATH | --no-temp]
 ```
 
 Reads procfs/sysfs only (`/proc/stat`, `/proc/meminfo`, `/proc/swaps`, `/proc/diskstats`, one
-`gpu_busy_percent`, one hwmon CPU temperature input) and samples in one `awk` process per tick. The
-`sysmon` topic carries the full sample, each subtopic carries its own object:
+`gpu_busy_percent`, one hwmon CPU temperature input) and samples in-process per tick. The `sysmon`
+topic carries the full sample, each subtopic carries its own object:
 
 - `data.ts` epoch seconds (in `sysmon`);
 - `cpu.percent` 0..100 from procfs tick deltas;
