@@ -246,13 +246,20 @@ Three techniques, ranked by confidence per hour, each with prior art rather than
 | **differential validation** — a `--no-memo` switch, corpus run twice, diff the drv JSON and the store path | 2–4 h | ccache compiles a reference object outside the cache and compares; Nix itself ships `--no-eval-cache`; sccache ships `SCCACHE_RECACHE` |
 | **key-coverage assertion** — hash through a wrapper that records visited fields and aborts if any are unvisited | ~half day | inference, nearest analogue is ccache's `cache-debug` dump of exactly what was hashed |
 
-The failure stories that justify the paranoia, all real: Bazel admitted different outputs under the same
-action hash for out-of-workspace tools ([#4558](https://github.com/bazelbuild/bazel/issues/4558));
-sccache documents cases where it "silently produce[s] stale results"; ccache's direct mode misses new
-header files in rare cases, and its `hash_dir` section records a wrong-object bug that was fixed by
-adding a missing field to the key — exactly our class. Bazel's mechanism is worth copying: its key is
-complete **by declaration** (`--action_env` whitelists what enters the action definition), which makes
-an omission a visible decision rather than a silent one.
+The failure stories that justify the paranoia: [bazelbuild/bazel#4558](https://github.com/bazelbuild/bazel/issues/4558),
+"remote/correctness: Bazel doesn't track system libraries" — still open, and the cleanest statement of
+the class (an input that affects the output but not the key); sccache documents cases where it
+"silently produce[s] stale results"; ccache's direct mode misses new header files in rare cases, and
+its `hash_dir` section records a wrong-object bug fixed by adding the missing field to the key —
+exactly our class.
+
+**Citation note (2026-11-03).** `bazel.build` is unreachable from this host's sandbox and the first
+version of this section quoted an `--action_env` whitelist sentence that could not be re-verified
+afterwards: `site/en/remote/caching.md` at tag 9.0.0 does not contain it, and the attempt to fetch
+`site/en/configure/environment.md` timed out. The claim is therefore dropped rather than repeated; what
+is verified is the issue title and state above (fetched through the GitHub API) and the sccache/ccache
+statements, which come from files in their own repositories. Quoting a doc one could not re-read is the
+failure this plan is supposed to prevent.
 
 One finding directly relevant to our own gate: Nix's eval cache ignores files that are not in the git
 index ([NixOS/nix#12102](https://github.com/NixOS/nix/pull/12102)) — the same trap our tier-B key was
