@@ -355,7 +355,7 @@ music-ai-status *ARGS:
 music-apply-tags *ARGS:
     python3 "{{repo_root}}/scripts/dev/music-apply-tags.py" {{ARGS}}
 
-# Eval one trantor feature flag: just flag features.dev.ai.omp.enable
+# Eval one trantor feature flag: just flag features.cli.broot.enable
 flag flag-path="features.cli.broot.enable":
     nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false
 

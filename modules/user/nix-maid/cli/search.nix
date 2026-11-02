@@ -126,7 +126,7 @@
         --glob=!tags
         --glob=!.pub-cache
         # NB: no --glob=!package-lock.json / !lazy-lock.json — those lock files
-        # are tracked in this repo (packages/{dsh,omp}, the vicinae extension,
+        # are tracked in this repo (packages/dsh, the vicinae extension,
         # files/nvim/lazy-lock.json) and a basename glob hides them from rg and
         # fd despite being committed (audit 2026-09-15).
         # 16C/32T Ryzen: ripgrep defaults to 12 worker threads — use all 32.

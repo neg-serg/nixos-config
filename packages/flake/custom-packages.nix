@@ -19,8 +19,6 @@
   brrtfetch = pkgs.neg.brrtfetch;
   tint = pkgs.neg.tint; # colouriser for CLI output (scanners + per-tool rulesets)
 
-  omp = pkgs.neg.omp; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
-
   sola-mpd = pkgs.sola-mpd; # browser MPD client (Node backend + React UI)
 
   aurora = pkgs.neg.aurora; # aurora: local MPD player with a Vulkan UI (winit + ash + cosmic-text)

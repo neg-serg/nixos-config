@@ -1,7 +1,7 @@
 # Ignore lock files from search (rg, fd).
 # NB: no bare `lazy-lock.json` / `package-lock.json` here — those ARE tracked
 # (files/nvim/lazy-lock.json, files/gui/vicinae-extensions/*/package-lock.json,
-# packages/{dsh,omp}/package-lock.json) and a basename pattern hides them from
+# packages/dsh/package-lock.json) and a basename pattern hides them from
 # rg/fd (audit 2026-09-15). Keep only patterns with no tracked matches.
 yarn.lock
 pnpm-lock.yaml

@@ -63,11 +63,11 @@ Project Structure
 Feature Flags
 - Most components are controlled via feature flags in `modules/features/`:
   ```nix
-  features.dev.ai.omp.enable = true;
+  features.dev.ai.rocm.enable = true;
   features.cli.broot.enable = true;
   ```
 - Check a flag's current value: `just flag <flag-path>`, e.g.
-  `just flag features.dev.ai.omp.enable` (or `nix eval .#nixosConfigurations.trantor.config.<flag-path>`).
+  `just flag features.cli.broot.enable` (or `nix eval .#nixosConfigurations.trantor.config.<flag-path>`).
 - trantor uses a restricted domain set (`trantorDomains` in `flake/nixos.nix`); changes in excluded
   domains (`appimage`, `apps`) do not take effect on trantor — warn the user before touching them.
   (`llm` IS active on trantor.)
