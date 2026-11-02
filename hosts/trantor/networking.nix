@@ -53,12 +53,8 @@
           # dsh-lan-proxy binds 192.168.0.10:3080 — and for br0 NAT. Keep .10
           # out of the router's DHCP pool (reserve it) to avoid a
           # duplicate-address conflict.
-          # Alias .11: the dockur Windows VM's DHCP lease collides with the
-          # host's .10, so the VM reaches the host's sing-box through this
-          # alias (auth-less in-lan-vm inbound, port 10811, LAN-only).
           Address = [
             "192.168.0.10/24"
-            "192.168.0.11/24"
           ];
           KeepConfiguration = "yes";
         };

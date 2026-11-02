@@ -14,10 +14,6 @@ name = "fetch-covers"
 path = "src/fetch_covers.rs"
 
 [[bin]]
-name = "glm-midi-relay"
-path = "src/glm_midi_relay.rs"
-
-[[bin]]
 name = "ren"
 path = "src/ren.rs"
 

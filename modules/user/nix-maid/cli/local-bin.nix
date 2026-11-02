@@ -80,7 +80,6 @@
         # Scripts to skip automatic generation for (handled specially below)
         autoSkip = [
           "kitty-scrollback-nvim"
-          "glm-midi-relay"
           "surfingkeys-server"
           "window-activate"
           "paths"
@@ -138,7 +137,6 @@
         ".local/bin/paths".source = lib.getExe' pkgs.neg.local-bin-tools "paths";
         ".local/bin/window-activate".source = lib.getExe' pkgs.neg.local-bin-tools "window-activate";
         ".local/bin/surfingkeys-server".source = lib.getExe' pkgs.neg.local-bin-tools "surfingkeys-server";
-        ".local/bin/glm-midi-relay".source = lib.getExe' pkgs.neg.local-bin-tools "glm-midi-relay";
         ".local/bin/fetch-covers".source = lib.getExe' pkgs.neg.local-bin-tools "fetch-covers";
         # Rust port of the former shell helper (packages/local-bin-tools).
         ".local/bin/dsh-worktree".source = lib.getExe' pkgs.neg.local-bin-tools "dsh-worktree";

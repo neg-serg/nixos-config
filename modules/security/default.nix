@@ -147,10 +147,6 @@ in
               command = "/run/current-system/sw/bin/gpu-oc";
               options = [ "NOPASSWD" ];
             }
-            {
-              command = "/run/current-system/sw/bin/glm-adapter-priv";
-              options = [ "NOPASSWD" ];
-            }
             # USB traffic captures for the GLM/GNet protocol work
             # (.agent/plans/2026-11-02-glm5-linux-port.md): usbmon lives in
             # debugfs, so the helper mounts it for one capture and unmounts it on

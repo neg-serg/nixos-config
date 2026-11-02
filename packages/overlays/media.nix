@@ -17,8 +17,6 @@ in
   pwroute = call (pkg "pwroute") { };
   pw-audioshare = call (pkg "pw-audioshare") { };
   genlc = call (pkg "genlc-rs") { };
-  # OSC bridge for Genelec SAM monitors via Python genlc (no official GLM).
-  glm-osc = call (pkg "glm-osc") { };
   # MPD client for large libraries: Node backend + React UI, served on loopback.
   sola-mpd = call (pkg "sola-mpd") { };
   # Voice control for MPD: microphone -> local speech recognition -> player

@@ -3,9 +3,8 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0105", MODE="0666"
 # Dygma Defy
 SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0108", MODE="0666"
 
-# Genelec GLM USB adapter (Gnet Adapter): 0666 so the dockur Windows VM's
-# QEMU (user-namespaced container, root -> host nobody) can open the node
-# for usb-host passthrough. Default 0644 root:root blocks it with EPERM.
+# Genelec GLM USB adapter (Gnet Adapter): 0666 so any client can open the raw
+# node — genlc's hidapi may fall back to libusb when the hidraw node is absent.
 SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="0e39", MODE="0666"
 # hidraw node of the GLM adapter: the kernel default for hidraw is 0600 root:root
 # and the stock uaccess rules only tag AV/wallet-class devices, so the hidraw
@@ -30,12 +29,6 @@ SUBSYSTEM=="block", ENV{ID_PART_ENTRY_TYPE}=="6a898cc3-1dd2-11b2-99a6-0800207366
 # Disable writeback throttling on NVMe — conflicts with ZFS's own I/O scheduler.
 # WBT adds latency jitter that ZFS doesn't need (ZFS schedules I/O internally).
 ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="nvme*n*", ATTR{queue/wbt_lat_usec}="0"
-
-# vfio group nodes (iGPU 7c:00.0/7c:00.1 → /dev/vfio/30,31) must be
-# world-accessible for the userns'd dockur QEMU (root -> host nobody),
-# same rationale as the GLM USB 0666 rule above.
-KERNEL=="vfio", MODE="0666"
-SUBSYSTEM=="vfio", MODE="0666"
 
 # ASUS ALC4080 onboard "USB Audio" (0b05:1b7c). When snd-usb-audio is loaded
 # for real gear — the plugged-in Expressive E Osmose pulls it in — the kernel

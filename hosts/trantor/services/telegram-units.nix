@@ -36,21 +36,6 @@ let
     '';
   };
 
-  # Notifies Telegram on the down->up edge of the dockur Windows VM ("таз"):
-  # probes RDP (127.0.0.1:3389) twice 5s apart; when the VM accepts
-  # connections and no notification was recorded yet, sends one and marks it.
-  # A failed probe clears the marker so the next VM boot re-notifies.
-  windowsReadyCheckScript = pkgs.writeShellApplication {
-    name = "telegram-notify-windows-ready";
-    runtimeInputs = [ pkgs.coreutils ]; # rm/touch of the state marker
-    text = builtins.readFile (
-      pkgs.replaceVars ./telegram/windows-ready.sh {
-        sender = lib.getExe config.trantor.telegram.sender;
-      }
-    );
-
-  };
-
   # Pleamar pill panel state (user neg): the panel pill capsule writes this
   # state and the calendar event; the Telegram reminder and pill bot mirror
   # marks in both directions (panel <-> chat).
@@ -180,21 +165,6 @@ in
         script = lib.getExe telegramBootNotifyScript;
         onBootSec = "20s";
         restartSec = 300;
-      })
-
-      # Telegram "taz is up" notice for the dockur Windows VM: the VM is started
-      # by the windows-vm user unit, but readiness is an RDP accept — poll that,
-      # not the container state.
-      (systemdUser.mkOneshotTimer {
-        name = "telegram-notify-windows-ready";
-        description = "Send a Telegram message when the dockur Windows VM accepts RDP";
-        timerDescription = "Poll the dockur Windows VM RDP port and notify on boot";
-        script = lib.getExe windowsReadyCheckScript;
-        onBootSec = "60";
-        onUnitActiveSec = "30";
-        networkOnline = false;
-        restart = null;
-        stateDirectory = "telegram-notify";
       })
 
       # Telegram pill reminder: daily at 12:00 with a confirm button that
