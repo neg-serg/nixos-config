@@ -15,3 +15,7 @@ clap = { version = "4", features = ["derive"] }
 [[bin]]
 name = "nixie"
 path = "src/main.rs"
+
+[[bin]]
+name = "nixie-metrics"
+path = "src/bin/nixie-metrics.rs"
