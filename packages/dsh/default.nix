@@ -2,6 +2,7 @@
   lib,
   fetchurl,
   python3,
+  jq,
   dsh-patch,
   makeWrapper,
   buildNpmPackage,
@@ -32,27 +33,22 @@ let
   # not on the registry, 404) does not reproduce on 0.2.0-rc.2: every devDep
   # resolves now. Dropping them keeps the closure and the npmDepsHash fetch
   # small; re-check this note if npm ci ever fails again.
-  src = runCommand "dsh-src" { nativeBuildInputs = [ python3 ]; } ''
-        mkdir -p $out
-        tar xzf ${tarball} -C $out --strip-components=1
-        cp ${./package-lock.json} $out/package-lock.json
-        python3 - "$out/package.json" <<'PY'
-    import json
-    import sys
-
-    path = sys.argv[1]
-    pkg = json.load(open(path))
-    pkg.pop("devDependencies", None)
-    # Security overrides, kept in sync with package-lock.json. npm ci replays
-    # the lockfile offline and re-resolves anything an override does not cover
-    # (the lockfile itself cannot carry overrides), so this must match the
-    # npm `overrides` the lockfile was generated with.
-    pkg["overrides"] = {
-        "@modelcontextprotocol/client": "2.2.0",
-        "fflate": "0.8.3",
-    }
-    json.dump(pkg, open(path, "w"), indent=2, ensure_ascii=False)
-    PY
+  src = runCommand "dsh-src" { nativeBuildInputs = [ jq ]; } ''
+    mkdir -p $out
+    tar xzf ${tarball} -C $out --strip-components=1
+    cp ${./package-lock.json} $out/package-lock.json
+    # Drop the devDependency tree the published package.json declares (this
+    # build never runs its scripts) and inject the security overrides kept in
+    # sync with package-lock.json: npm ci replays the lockfile offline and
+    # re-resolves anything an override does not cover (the lockfile cannot
+    # carry overrides itself), so these must match what the lockfile was
+    # generated with. jq keeps the JSON semantics of the former python step.
+    jq 'del(.devDependencies)
+        | .overrides = {
+            "@modelcontextprotocol/client": "2.2.0",
+            "fflate": "0.8.3"
+          }' "$out/package.json" > "$out/package.json.tmp"
+    mv "$out/package.json.tmp" "$out/package.json"
   '';
 in
 buildNpmPackage {
