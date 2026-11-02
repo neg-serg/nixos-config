@@ -184,8 +184,23 @@ local function launch(i)
     end
 
     fact.open = false
+    fact.armed = false
     text.query = ""
     fact.selected = 0
+end
+
+-- Escape closes the launcher only after it has been up for a moment: the runtime delivers an Escape
+-- of its own as soon as the surface takes the keyboard (see the `armed` fact in launcher.plm), so an
+-- unguarded `on key Escape` shut the launcher a second after it opened.
+local ARM_MS = 1500
+local arm_timer = nil
+
+local function disarm()
+    fact.armed = false
+    if arm_timer then
+        cancel(arm_timer)
+        arm_timer = nil
+    end
 end
 
 -- ======================= events =======================
@@ -224,9 +239,17 @@ end)
 -- the filter; opening through the fact alone (--say "fact open true", a
 -- compositor bind) does what open_launcher does, so both routes are complete.
 on("fact:open", function(v)
+    -- The runtime's own Escape arrives about 1.5 s after the keyboard hand-over, so `armed` stays
+    -- false until that has passed (see the fact in launcher.plm) and the phantom key finds the
+    -- Escape rule unarmed.
+    disarm()
     if v then
         refresh()
         focus("query")
+        arm_timer = after(ARM_MS, function()
+            arm_timer = nil
+            fact.armed = true
+        end)
     else
         text.query = ""
         fact.selected = 0

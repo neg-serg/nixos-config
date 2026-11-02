@@ -67,6 +67,11 @@ scene launcher {
     // seen nor pressed (INTERFACES §2.3). `keyboard: exclusive while open` is what
     // makes it type-to-filter without a click first; Escape gives the keyboard
     // back (INTERFACES §2, D5).
+    // Unnamed, like the picker's: the scene's loose statements — the scrim, the dismissal catcher
+    // and `Panel()` — belong to the scene's own surface, and a scene whose surfaces are ALL named
+    // has nowhere to put them. With the name it was `surface launcher { … }` holding properties
+    // only, and the launcher reported `open = true` while painting an empty screen (and holding the
+    // keyboard, because `keyboard: exclusive while open` does not care whether anything is drawn).
     surface launcher {
         size: full, full
         anchor: center
@@ -75,6 +80,19 @@ scene launcher {
         screens: each
         keyboard: exclusive while open
         open: open
+
+        // The scrim dims what is under the launcher. The catcher is the full-monitor
+        // zone that closes it on an outside press; it is declared before the panel,
+        // so every panel zone sits above it (INTERFACES §2.2's pattern).
+        box { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: shadow.strong; show: open }
+
+        zone box catcher {
+            from: 0, 0; size: screen.width, screen.height
+            label: "Dismiss launcher"; role: region
+        }
+        on press catcher while open { open = false }
+
+        Panel() { show: open }
     }
 
     // The keeper: one pixel, no body, no input — the reason the scene stays loaded
@@ -94,6 +112,13 @@ scene launcher {
     // The interface facts (INTERFACES §2.1); `max_results` and `zoom` are the
     // user's settings, merged by launcher.luau.
     fact open = false
+    // Escape only closes the launcher once it has been up for a moment. The runtime delivers one
+    // Escape by itself as soon as this surface takes the keyboard: measured 2026-11-02 — with
+    // `keyboard: exclusive while open` (and with `on_demand`) the scene logged an Escape 1.5 s after
+    // `open` went true, with nobody touching a key, and closed itself; with `keyboard: none` the
+    // same run stayed up. The logic arms this fact after ARM_MS, so a hand on the Escape key still
+    // closes the launcher and the phantom one does not.
+    fact armed = false
     fact selected = 0
     fact max_results = 8
     fact zoom = 1
@@ -123,16 +148,6 @@ scene launcher {
     event pick_row
 
     // ----***--------------------------- close behaviour
-    // The scrim dims what is under the launcher. The catcher is the full-monitor
-    // zone that closes it on an outside press; it is declared before the panel,
-    // so every panel zone sits above it (INTERFACES §2.2's pattern).
-    box { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: shadow.strong; show: open }
-
-    zone box catcher {
-        from: 0, 0; size: screen.width, screen.height
-        label: "Dismiss launcher"; role: region
-    }
-    on press catcher while open { open = false }
 
     // Escape and the keyboard-driven selection. Up/Down are the primary keys;
     // Ctrl+p/Ctrl+n repeat them because a single-line input may keep the arrow
@@ -253,5 +268,4 @@ scene launcher {
         }
     }
 
-    Panel() { show: open }
 }
