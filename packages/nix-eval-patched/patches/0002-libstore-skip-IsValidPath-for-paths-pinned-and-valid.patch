@@ -1,0 +1,57 @@
+From ad740c24da15f48118386450ffabb782a8540387 Mon Sep 17 00:00:00 2001
+From: ElXreno <elxreno@gmail.com>
+Date: Sun, 4 Oct 2026 15:38:17 +0300
+Subject: [PATCH] libstore: skip IsValidPath for paths pinned and validated on
+ the connection
+
+---
+ .../include/nix/store/remote-store-connection.hh       |  1 +
+ src/libstore/remote-store.cc                           | 10 ++++++++--
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/src/libstore/include/nix/store/remote-store-connection.hh b/src/libstore/include/nix/store/remote-store-connection.hh
+index c248f7c78..6d2fc41da 100644
+--- a/src/libstore/include/nix/store/remote-store-connection.hh
++++ b/src/libstore/include/nix/store/remote-store-connection.hh
+@@ -35,6 +35,7 @@ public:
+      * is not required.
+      * Skipping the wire call is an optional but worthwhile optimization that
+      * reduces communication overhead. LRU eviction would cost a round-trip.
++     * The value records that the path was valid after it was pinned.
+      */
+     LRUCache<StorePath, bool> tempRootsPinned{65536};
+ };
+diff --git a/src/libstore/remote-store.cc b/src/libstore/remote-store.cc
+index d579c5db1..1c913097b 100644
+--- a/src/libstore/remote-store.cc
++++ b/src/libstore/remote-store.cc
+@@ -181,10 +181,16 @@ void RemoteStore::setOptions()
+ bool RemoteStore::isValidPathUncached(const StorePath & path)
+ {
+     auto conn(getConnection());
++    auto pinned = conn->tempRootsPinned.get(path);
++    if (pinned && *pinned)
++        return true;
+     conn->to << WorkerProto::Op::IsValidPath;
+     WorkerProto::write(*this, *conn, path);
+     conn.processStderr();
+-    return readInt(conn->from);
++    bool valid = readInt(conn->from);
++    if (valid && pinned)
++        conn->tempRootsPinned.upsert(path, true);
++    return valid;
+ }
+ 
+ StorePathSet RemoteStore::queryValidPaths(const StorePathSet & paths, SubstituteFlag maybeSubstitute)
+@@ -674,7 +680,7 @@ void RemoteStore::addTempRoot(const StorePath & path)
+     if (conn->tempRootsPinned.get(path))
+         return;
+     conn->addTempRoot(*this, &conn.daemonException, path);
+-    conn->tempRootsPinned.upsert(path, true);
++    conn->tempRootsPinned.upsert(path, false);
+ }
+ 
+ Roots RemoteStore::findRoots(bool censor)
+-- 
+2.55.0
+

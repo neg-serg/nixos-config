@@ -1,0 +1,35 @@
+From 89de4041dc791984056dba180e8ffccce7b01b51 Mon Sep 17 00:00:00 2001
+From: ElXreno <elxreno@gmail.com>
+Date: Sun, 4 Oct 2026 15:45:23 +0300
+Subject: [PATCH] libexpr: use constant error contexts in builtins.any and
+ builtins.all
+
+---
+ src/libexpr/primops.cc | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/src/libexpr/primops.cc b/src/libexpr/primops.cc
+index 58c6304c3..a1daba6ab 100644
+--- a/src/libexpr/primops.cc
++++ b/src/libexpr/primops.cc
+@@ -3993,9 +3993,15 @@ static RegisterPrimOp primop_foldlStrict({
+ static void anyOrAll(bool any, EvalState & state, const PosIdx pos, Value ** args, Value & v)
+ {
+     state.forceFunction(
+-        *args[0], pos, std::string("while evaluating the first argument passed to builtins.") + (any ? "any" : "all"));
++        *args[0],
++        pos,
++        any ? "while evaluating the first argument passed to builtins.any"
++            : "while evaluating the first argument passed to builtins.all");
+     state.forceList(
+-        *args[1], pos, std::string("while evaluating the second argument passed to builtins.") + (any ? "any" : "all"));
++        *args[1],
++        pos,
++        any ? "while evaluating the second argument passed to builtins.any"
++            : "while evaluating the second argument passed to builtins.all");
+ 
+     std::string_view errorCtx = any ? "while evaluating the return value of the function passed to builtins.any"
+                                     : "while evaluating the return value of the function passed to builtins.all";
+-- 
+2.55.0
+

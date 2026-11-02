@@ -1,0 +1,102 @@
+From 982d77ab76690dcc11ffd42de4e395e94a83e60b Mon Sep 17 00:00:00 2001
+From: ElXreno <elxreno@gmail.com>
+Date: Sun, 4 Oct 2026 18:48:16 +0300
+Subject: [PATCH] libstore: pipeline AddTempRoot and IsValidPath in
+ writeDerivation
+
+---
+ src/libstore/derivations.cc                   |  4 +--
+ .../include/nix/store/remote-store.hh         |  2 ++
+ src/libstore/include/nix/store/store-api.hh   |  9 +++++++
+ src/libstore/remote-store.cc                  | 27 +++++++++++++++++++
+ 4 files changed, 39 insertions(+), 3 deletions(-)
+
+diff --git a/src/libstore/derivations.cc b/src/libstore/derivations.cc
+index 812818aa7..1570fa161 100644
+--- a/src/libstore/derivations.cc
++++ b/src/libstore/derivations.cc
+@@ -142,9 +142,7 @@ StorePath Store::writeDerivation(const Derivation & drv, RepairFlag repair)
+        faster. But we need to make sure that the derivation has a corresponding
+        temproot. It is added by the remote in addToStoreFromDump, but we'd like
+        to avoid sending a lot of drv contents to the daemon. */
+-    addTempRoot(path);
+-
+-    if (isValidPath(path) && !repair)
++    if (addTempRootAndIsValidPath(path) && !repair)
+         return path;
+ 
+     StringSource s{contents};
+diff --git a/src/libstore/include/nix/store/remote-store.hh b/src/libstore/include/nix/store/remote-store.hh
+index 144b4b8e4..58f9affa1 100644
+--- a/src/libstore/include/nix/store/remote-store.hh
++++ b/src/libstore/include/nix/store/remote-store.hh
+@@ -128,6 +128,8 @@ public:
+ 
+     void addTempRoot(const StorePath & path) override;
+ 
++    bool addTempRootAndIsValidPath(const StorePath & path) override;
++
+     Roots findRoots(bool censor) override;
+ 
+     void collectGarbage(const GCOptions & options, GCResults & results) override;
+diff --git a/src/libstore/include/nix/store/store-api.hh b/src/libstore/include/nix/store/store-api.hh
+index 68a18f48d..afcb528a6 100644
+--- a/src/libstore/include/nix/store/store-api.hh
++++ b/src/libstore/include/nix/store/store-api.hh
+@@ -864,6 +864,15 @@ public:
+         debug("not creating temporary root, store doesn't support GC");
+     }
+ 
++    /**
++     * `addTempRoot` followed by `isValidPath`, which a store may do in one round trip.
++     */
++    virtual bool addTempRootAndIsValidPath(const StorePath & path)
++    {
++        addTempRoot(path);
++        return isValidPath(path);
++    }
++
+     /**
+      * @return a string representing information about the path that
+      * can be loaded into the database using `nix-store --load-db` or
+diff --git a/src/libstore/remote-store.cc b/src/libstore/remote-store.cc
+index 1c913097b..0b1864d07 100644
+--- a/src/libstore/remote-store.cc
++++ b/src/libstore/remote-store.cc
+@@ -683,6 +683,33 @@ void RemoteStore::addTempRoot(const StorePath & path)
+     conn->tempRootsPinned.upsert(path, false);
+ }
+ 
++bool RemoteStore::addTempRootAndIsValidPath(const StorePath & path)
++{
++    {
++        auto conn(getConnection());
++        auto pinned = conn->tempRootsPinned.get(path);
++        if (!pinned) {
++            try {
++                conn->to << WorkerProto::Op::AddTempRoot << printStorePath(path);
++                conn->to << WorkerProto::Op::IsValidPath;
++                WorkerProto::write(*this, *conn, path);
++                conn.processStderr();
++                readInt(conn->from);
++                conn.processStderr();
++                bool valid = readInt(conn->from);
++                conn->tempRootsPinned.upsert(path, valid);
++                return valid;
++            } catch (...) {
++                conn.daemonException = false;
++                throw;
++            }
++        }
++        if (*pinned)
++            return true;
++    }
++    return isValidPath(path);
++}
++
+ Roots RemoteStore::findRoots(bool censor)
+ {
+     auto conn(getConnection());
+-- 
+2.55.0
+
