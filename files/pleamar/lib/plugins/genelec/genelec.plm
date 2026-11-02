@@ -34,7 +34,9 @@ library Genelec strict {
     // the VM MIDI bridge.
     // `files`/`files.write` are the plugin's own folder: the pre-mute volume lives there so a
     // restart does not lose it (the QS service kept the same pair in its StateCache).
-    permissions { run: "genlc", "glm-vol", "glm-midi", "bash"; services: "files", "files.write" }
+    // `glm5ctl` is the daemon client: when `glm5d` owns the adapter it is the only path that can
+    // hold monitor sessions, so the logic prefers it and falls back to the two below.
+    permissions { run: "glm5ctl", "genlc", "glm-vol", "glm-midi", "bash"; services: "files", "files.write" }
 
     // ------------------------------------------------------------- boundary
     // The target volume, whole dB (the QS displayDb/volume). The logic owns the
@@ -45,6 +47,9 @@ library Genelec strict {
     // adapter sits in the VM, where the MIDI bridge is the only way in.
     fact available = true
     fact midi = false
+    // `glm5d` holds the adapter itself: leases, the poll cycle, and writes through its socket.
+    // True only while `glm5ctl status` answers, so the two older paths stay the fallback.
+    fact daemon = false
     // The clamp, per host: Settings.json genelecMaxVolume (-20) and the QS floor.
     fact minVolume: number = -95
     fact maxVolume: number = -20
