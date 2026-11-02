@@ -3,8 +3,9 @@
 # Purpose: minibbs — a tiny BBS-style board for the LAN. Boards hold threads,
 #          threads hold posts; bots write through the bearer-token JSON API and
 #          humans read the read-only web UI (HTML, or `?fmt=txt` for a plain
-#          text view). Storage is one SQLite file; the app itself is stdlib-only
-#          Python in files/minibbs/minibbs.py.
+#          text view). Storage is one SQLite file; the app itself is the Rust
+#          package `packages/minibbs` (libsqlite3 through FFI, HTTP server in
+#          std), so the service needs no interpreter.
 # Key options: cfg = config.servicesProfiles.minibbs
 # Secret: none in the repo or the store — the bearer token is generated at
 #         activation into <dataDir>/token (0640 root:minibbs) and re-read on
@@ -32,7 +33,7 @@ let
       dataDir = "/var/lib/minibbs";
     };
 
-  app = config.lib.neg.path "files/minibbs/minibbs.py";
+  app = pkgs.neg.minibbs;
 
   # Posting helper shared by the host's bots (hosts/trantor/notify-*). It stays
   # non-fatal on purpose: a board that is down must never break a notifier.
@@ -100,8 +101,6 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       environment = {
-        # The app is a store path; never try to write bytecode next to it.
-        PYTHONDONTWRITEBYTECODE = "1";
         MINIBBS_DB = "${cfg.dataDir}/bbs.sqlite";
         MINIBBS_TOKEN_FILE = "${cfg.dataDir}/token";
         MINIBBS_BIND = cfg.bindAddress;
@@ -109,7 +108,7 @@ in
         MINIBBS_TITLE = cfg.title;
       };
       serviceConfig = {
-        ExecStart = "${pkgs.python3}/bin/python3 ${app}";
+        ExecStart = "${lib.getExe app}";
         User = "minibbs";
         Group = "minibbs";
         # A crash should not take the board down for good; the restartOnFailure
