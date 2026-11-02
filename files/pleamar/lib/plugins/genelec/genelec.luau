@@ -346,11 +346,11 @@ end
 -- moment it happened. Reading it with a fresh process every two seconds was both late — the
 -- number stood still while somebody turned the knob — and a fork each time.
 --
--- One `bash` for the life of the scene, six looks a second, printing only what changed: the
--- immediacy of a watch without a process per look.
+-- One process for the life of the scene, six looks a second, printing only what
+-- changed: the immediacy of a watch without a process per look. The watch lives
+-- in `genlc volume-watch` now, so no interpreter is involved.
 local function watchLevel()
-    local script = "f=\"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/genlc-volume\"\nlast=\"\"\nwhile :; do\n  v=$(cat \"$f\" 2>/dev/null)\n  if [ -n \"$v\" ] && [ \"$v\" != \"$last\" ]; then printf \"%s\n\" \"$v\"; last=\"$v\"; fi\n  sleep 0.15\ndone"
-    spawn("bash", { "-c", script }, function(line)
+    spawn("genlc", { "volume-watch" }, function(line)
         local value = tonumber((line or ""):match("-?%d+"))
         if not value then return end
         -- A level that arrives while the wheel is still moving is somebody else's and must not

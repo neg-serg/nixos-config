@@ -9,6 +9,7 @@ use genlc::protocol;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use std::io::Write;
 
 #[derive(Parser)]
 #[command(name = "genlc", version, about = "Genelec SAM loudspeaker control")]
@@ -96,6 +97,14 @@ enum Commands {
         #[arg(long = "addr", default_value = "0xFF")]
         addr: String,
     },
+    /// Print the volume state file's value whenever it changes — the file the
+    /// shell helpers write and the pleamar Genelec plugin watches. No adapter is
+    /// opened: this is the plugin's read-back channel, not monitor I/O.
+    VolumeWatch {
+        /// Poll interval for the state file, in milliseconds
+        #[arg(long = "interval-ms", default_value_t = 150)]
+        interval_ms: u64,
+    },
 }
 
 fn parse_addr(s: &str) -> Result<u8> {
@@ -128,6 +137,33 @@ fn state_file() -> Option<std::path::PathBuf> {
         .ok()
         .filter(|dir| !dir.is_empty())?;
     Some(std::path::Path::new(&runtime).join("genlc-volume"))
+}
+
+/// Print each new value of the volume state file, one line per change.
+///
+/// Polling rather than inotify: the file is a few bytes, one open/read pair per
+/// tick is free, and the plugin's previous `bash` loop already polled at 150 ms —
+/// a watch library would be a new dependency for no measurable win. A missing
+/// file is normal (a fresh session starts without one); an empty or unreadable
+/// value is skipped, and the first read is always printed.
+fn watch_volume_state(interval_ms: u64) -> Result<()> {
+    let path = state_file().context("XDG_RUNTIME_DIR is not set: no volume state file to watch")?;
+    let interval = std::time::Duration::from_millis(interval_ms.max(50));
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+    let mut last = String::new();
+    loop {
+        if let Ok(text) = std::fs::read_to_string(&path) {
+            let value = text.trim();
+            if !value.is_empty() && value != last {
+                writeln!(out, "{value}").context("writing the volume state line")?;
+                out.flush().context("flushing the volume state line")?;
+                last.clear();
+                last.push_str(value);
+            }
+        }
+        std::thread::sleep(interval);
+    }
 }
 
 /// One HID report as bytes. Accepts what `tshark -T fields -e usb.capdata` prints
@@ -441,6 +477,11 @@ fn main() -> Result<()> {
         println!("{planned} frames planned (dry run; pass --commit --take to send)");
         return Ok(());
     }
+    // The volume state-file watch is the pleamar plugin's read-back channel and
+    // must run without the adapter (the daemon may own it, or none be attached).
+    if let Commands::VolumeWatch { interval_ms } = cli.command {
+        return watch_volume_state(interval_ms);
+    }
     let transport = protocol::HidTransport::open()?;
     let group = protocol::SamGroup::new(transport);
 
@@ -556,6 +597,7 @@ fn main() -> Result<()> {
         Commands::Unmute => group.unmute()?,
         Commands::SetMute => group.toggle_mute()?,
         Commands::Decode { .. } => unreachable!("handled before the adapter is opened"),
+        Commands::VolumeWatch { .. } => unreachable!("handled before the adapter is opened"),
     }
     Ok(())
 }
