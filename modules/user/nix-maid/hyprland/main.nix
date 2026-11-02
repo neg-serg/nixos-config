@@ -684,8 +684,14 @@ let
             # Panel band, in the compositor's own logical coordinates. The old test
             # compared cursorpos (LOGICAL: 1080 tall here) against hyprctl monitors
             # .height (PHYSICAL: 2160) and therefore never fired — the capsule click
-            # kept selecting the tile under the bar. Take the shell's layer boxes
-            # instead: they are logical and correct for a top or a bottom bar.
+            # kept selecting the tile under the bar. Take the shell's layer box
+            # instead: it is logical and correct for a top or a bottom bar.
+            #
+            # The shell puts every surface under one namespace ("pleamar") and the
+            # overlay levels carry full-screen pleamar layers (drawers, hit-test
+            # surfaces), so the namespace alone would mark every cursor position as
+            # "inside the bar". The bar lives on the top level (2), where it is the
+            # only pleamar layer — match that, not the retired `qs-*` namespace.
             panel_boxes="$("$hyprctl_bin" -j layers 2> /dev/null | python3 -c '
     import json, sys
     try:
@@ -693,10 +699,11 @@ let
     except Exception:
         sys.exit(0)
     for monitor in (data.values() if isinstance(data, dict) else []):
-        for level in (monitor.get("levels") or {}).values():
-            for layer in level:
-                ns = layer.get("namespace") or ""
-                if ns.startswith("qs-") or ns.startswith("quickshell"):
+        for level_id, layers in (monitor.get("levels") or {}).items():
+            if level_id != "2":
+                continue
+            for layer in layers:
+                if (layer.get("namespace") or "") == "pleamar":
                     print(layer["x"], layer["y"], layer["x"] + layer["w"], layer["y"] + layer["h"])
     ' 2> /dev/null || true)"
             printf '%s select cursor=%s,%s panels=[%s]\n' "$(date +%T)" "''${cursor_x:-?}" "''${cursor_y:-?}" "$(printf '%s' "$panel_boxes" | tr '\n' ';')" >> /tmp/hypr-expo-select.log 2> /dev/null || true
