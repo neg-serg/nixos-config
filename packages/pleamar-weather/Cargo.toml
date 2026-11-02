@@ -1,0 +1,37 @@
+[package]
+name = "pleamar-weather"
+version = "0.1.0"
+edition = "2021"
+description = "pleamar weather worker (Open-Meteo, MET Norway, wttr.in; JSON lines, INTERFACES.md §7)"
+license = "MIT"
+
+[[bin]]
+name = "pleamar-weather"
+path = "src/main.rs"
+
+[dependencies]
+# Parsing the stdin command lines, provider documents and the cache file, and
+# writing every reply. `derive` lets the cache/payload model borrow the raw
+# number literals with `RawValue` (see src/payload.rs), which is what keeps
+# `fetched_at`, temperatures and coordinates byte-identical to the shell's jq
+# output instead of normalising them through f64.
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+# HTTP: the shell drove curl; this is the same blocking request/response model.
+# - rustls-tls: no OpenSSL at build or run time.
+# - socks: curl honoured ALL_PROXY=socks5h://… and this host's proxy is SOCKS5,
+#   so the port must too; see src/http.rs for the proxy notes.
+# - default-features = false drops cookies, gzip and native-tls, none of which
+#   the curl calls used.
+reqwest = { version = "0.12", default-features = false, features = [
+  "blocking",
+  "rustls-tls",
+  "socks",
+] }
+# SIGTERM/SIGINT cleanup: std carries no POSIX signal API, and the worker must
+# exit 0 on the same signals the shell trapped (and drop an in-flight request).
+signal-hook = "0.3"
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./` copies just this directory).
+[workspace]
