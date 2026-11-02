@@ -151,7 +151,7 @@ scene panels {
 
     surface media_card { size: 420, 320; anchor: bottom_right; margin: 0, 131, 0, 0
                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
-                         open: drawer == media or page == 5
+                         open: drawer == media
         include "pages/media.plm"
     }
     surface network_card { size: 470, 338; anchor: bottom_left; margin: 0, 0, 41, 5
@@ -196,9 +196,9 @@ scene panels {
 
     // ----***--------------- drawer state and settings
     fact drawer: none | volume | network | media | calendar | weather | build | system = none
-    // Numbers are what `--say fact` can set; the enum `drawer` above is not accepted by the socket
-    // in this version. `page` mirrors it for the outside: 5 is media, 6 calendar, …
-    fact page = 0
+    // The socket takes the enum's value names (`--say panels "fact drawer weather"`), which is how
+    // the bar opens a drawer; a separate numeric mirror was declared here and never written, and
+    // its only reader opened the media card without the catcher, so the card could not be closed.
     fact close_on_escape = true
     fact close_on_outside = true
     fact zoom = 1
@@ -400,8 +400,9 @@ scene panels {
 
 
     // ----***---------------------- close behaviour
-    // Declared before the parts: a later zone is on top, so the catcher is under
-    // every drawer zone and a press inside a drawer does not close it.
+    // The catcher lives on the scene's own surface while every drawer is a surface of its own, and
+    // surfaces stack in declaration order — that, not this zone's position inside the scene, is
+    // what keeps a press inside a drawer from dismissing it.
     // A drawer scene with nothing drawn stops itself after a second or two, and
     // the fact that opens a drawer would then have to land in a window of
     // milliseconds. One design pixel at 2 % keeps the scene resident without

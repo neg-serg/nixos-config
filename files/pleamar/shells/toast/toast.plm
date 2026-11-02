@@ -115,12 +115,17 @@ scene toast {
         level: overlay
         reserve: -1
         screens: each
-        open: shown or (ever_shown and lift > 1)
+        // `lift` rests at 44 (the slide is `if(shown, 0, 44)` above): "still sliding" is
+        // `lift < 43`, not `lift > 1`. The comparison was inverted, so after the first screenshot
+        // the surface stayed open for the rest of the session — a full-screen overlay holding a
+        // 460 x 520 card of live buttons over the bottom-right corner, invisible (`opacity` 0 at
+        // rest) and taking every click that landed on the bar or the windows under it.
+        open: shown or (ever_shown and lift < 43)
         // Same pace rule as the rest: 60 frames a second to hold an empty corner is
         // paid for by the compositor on every frame (measured 2026-11-01: 61.2 fps
         // with no card up). Low only while the card is down *and* its slide has come
         // to rest, so the slide itself keeps the screen's pace.
-        rate: 240, 30 while not shown and not (ever_shown and lift > 1)
+        rate: 240, 30 while not shown and not (ever_shown and lift < 43)
     }
 
     // ------***------------------------- card
