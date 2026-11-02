@@ -17,6 +17,11 @@ rustPlatform.buildRustPackage {
     lockFile = ./Cargo.lock;
   };
 
+  # The crate carries unit tests for the GNet framing and the forbidden-frame
+  # guard (src/protocol.rs); they are cheap and need no hardware, so the package
+  # build runs them instead of letting them rot.
+  doCheck = true;
+
   nativeBuildInputs = [ pkg-config ];
   buildInputs = [
     udev
