@@ -473,6 +473,9 @@ cmd_status() {
 }
 
 cmd_attach() {
+  # cmd_host stops this timer to keep the VM from stealing the adapter back; restore
+  # the normal posture first, before any early return below can skip it.
+  systemctl --user start glm-adapter-auto.timer 2> /dev/null || true
   if [ "$(vm_running)" != 1 ]; then
     fail "VM '$CT' is not running — start it first: docker start windows"
     return 1
@@ -619,15 +622,40 @@ cmd_auto() {
 
 cmd_host() {
   echo "=== moving adapter to the host ==="
-  if host_present || [ "$(qemu_usb)" -ge 1 ]; then
-    # Release from QEMU (usbfs), then bind usbhid for host genlc control.
-    warn "releasing from QEMU and binding usbhid"
-    sudo "$PRIV" to-host 2>/dev/null || true
-  else
+  # QEMU opens a passed-through device at its own start and never lets go of the
+  # usbfs handle, so unbinding usbhid while the VM runs does nothing: the release has
+  # to come from the VM side. The glm-adapter-auto timer also restarts the VM within
+  # ~60 s, and it re-claims the adapter the moment it is back — hence the timer first,
+  # then the container, then the bind. (Before 2026-11-02 this command just unbound and
+  # reported "adapter NOT usable" every time the VM happened to be up.)
+  if ! host_present; then
     warn "adapter not found on the host USB"
   fi
-  sleep 3
-  if host_genlc_ok; then ok "host genlc: adapter usable"; else fail "host genlc: adapter NOT usable"; fi
+  if vm_running || [ "$(qemu_usb)" -ge 1 ]; then
+    warn "stopping the auto-attach timer and the VM so QEMU releases the adapter"
+    systemctl --user stop glm-adapter-auto.timer 2> /dev/null || true
+    timeout 180 podman stop "$CT" > /dev/null 2>&1 || warn "podman stop '$CT' failed"
+    for _ in $(seq 1 30); do
+      [ "$(qemu_usb)" -ge 1 ] || break
+      sleep 1
+    done
+  fi
+  if [ "$(qemu_usb)" -ge 1 ]; then
+    # Release from QEMU (usbfs) and bind usbhid for host genlc control.
+    warn "releasing from usbfs and binding usbhid"
+    sudo "$PRIV" to-host 2> /dev/null || true
+  fi
+  for _ in $(seq 1 15); do
+    host_genlc_ok && break
+    sleep 1
+  done
+  if host_genlc_ok; then
+    ok "host genlc: adapter usable"
+    echo "       the auto-attach timer is stopped; 'glm-adapter attach' restores the VM"
+  else
+    fail "host genlc: adapter NOT usable"
+    return 1
+  fi
 }
 
 cmd_verify() { verify_chain; }

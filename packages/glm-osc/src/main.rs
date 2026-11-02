@@ -1,7 +1,7 @@
-//! glm-osc — OSC bridge to Genelec SAM monitors via `genlc`.
+//! glm-osc — OSC bridge to Genelec SAM monitors via `glm5d` (and `genlc`).
 //!
 //! Listens on UDP `127.0.0.1:9000` (`GLM_OSC_HOST`/`GLM_OSC_PORT`) and turns OSC
-//! messages into `genlc` calls, so the monitors can be driven from a DAW, a
+//! messages into adapter commands, so the monitors can be driven from a DAW, a
 //! stream deck or a shell script without the official GLM app running:
 //!
 //!   /glm/volume <dB>          absolute volume (float dB)
@@ -16,26 +16,51 @@
 //!   /glm/status               replies /glm/status/reply with JSON
 //!   /glm/discover             replies /glm/discover/reply
 //!
+//! Two backends, and the split between them is deliberate:
+//!
+//!   * `glm5d` (`src/bin/glm5d.rs` of packages/genlc-rs) owns the USB adapter
+//!     and is the only process that keeps the monitors leased — it polls and
+//!     re-leases about every 0.5 s, and a lease lapses ~2.5 s after it stops.
+//!     Volume, mute and status therefore go through its Unix socket as one
+//!     command per line (`volume <dB>`, `mute on|off`, `status` → one JSON
+//!     line), so this bridge never opens the adapter behind the daemon's back.
+//!   * `genlc` stays for `/glm/power`, `/glm/led` and `/glm/discover`: the
+//!     daemon's protocol has no wakeup/shutdown, no LED `bypass` and no device
+//!     discovery yet. Those three branches move over once it grows them, and
+//!     then the CLI is left for diagnostics only.
+//!   * Fallback: volume/mute also go to the CLI when the socket is missing or
+//!     the connection drops (logged once, not per message), so a host without
+//!     a running `glm5d` keeps working exactly as before that daemon existed.
+//!
 //! `genlc` stays an external program: it is the third-party implementation of
 //! the GLM USB protocol, and reimplementing that would be a different project.
-//! The server itself is Rust with no crates — OSC, the UDP loop and the state
-//! file are hand-rolled.
+//! The server itself is Rust with no crates — OSC, the UDP loop, the daemon
+//! line protocol and the state file are hand-rolled.
 //!
 //! Environment:
+//!   GLM_DAEMON_SOCKET path to the glm5d control socket
+//!                    (default `$XDG_RUNTIME_DIR/glm5d.sock`)
 //!   GENLC_CLI      path to the genlc binary
 //!   HIDAPI_LIB     LD_LIBRARY_PATH for hidapi (unset = inherit)
 //!   GLM_OSC_STATE  JSON state file (volume/mute/power)
 
 use std::collections::BTreeMap;
+use std::io::{BufRead, BufReader, Write};
 use std::net::{SocketAddr, UdpSocket};
+use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::time::Duration;
 
 const DEFAULT_STATE_FILE: &str = "/tmp/glm-osc-state.json";
 const DEFAULT_GENLC: &str = "/tmp/glm-osc-venv/bin/genlc";
 const DEFAULT_HOST: &str = "127.0.0.1";
 const DEFAULT_PORT: u16 = 9000;
 const GENLC_TIMEOUT_SECONDS: u64 = 40;
+/// A daemon reply is one line computed from an in-memory snapshot, so a couple
+/// of seconds is already generous; a hung daemon must not stall an OSC message.
+const DAEMON_TIMEOUT: Duration = Duration::from_secs(2);
+const DEFAULT_RUNTIME_DIR: &str = "/run/user/1000";
 
 fn env_or(name: &str, fallback: &str) -> String {
     match std::env::var(name) {
@@ -337,12 +362,183 @@ fn json_escape(text: &str) -> String {
         .replace('\n', "\\n")
 }
 
+// -- glm5d -------------------------------------------------------------
+
+fn daemon_socket() -> PathBuf {
+    let fallback = format!(
+        "{}/glm5d.sock",
+        env_or("XDG_RUNTIME_DIR", DEFAULT_RUNTIME_DIR)
+    );
+    PathBuf::from(env_or("GLM_DAEMON_SOCKET", &fallback))
+}
+
+/// The raw JSON value text of `key` in the daemon's `status` line.
+///
+/// The daemon writes compact JSON with a fixed key set (`cycles`, `volume_db`,
+/// `leases`, `telemetry`), so scanning for `"key":` and copying either a quoted
+/// string, a balanced `{}`/`[]` block or a bare literal is enough — a full JSON
+/// parser would be several hundred lines of crates-free code for no gain.
+fn json_field(text: &str, key: &str) -> Option<String> {
+    let needle = format!("\"{key}\":");
+    let start = text.find(&needle)? + needle.len();
+    let rest = &text[start..];
+    let first = rest.chars().next()?;
+    if first == '"' {
+        let mut escaped = false;
+        for (index, ch) in rest.char_indices().skip(1) {
+            match ch {
+                '\\' if !escaped => escaped = true,
+                '"' if !escaped => return Some(rest[..=index].to_string()),
+                _ => escaped = false,
+            }
+        }
+        return None;
+    }
+    if first == '{' || first == '[' {
+        let mut depth = 0usize;
+        let mut in_string = false;
+        let mut escaped = false;
+        for (index, ch) in rest.char_indices() {
+            if in_string {
+                match ch {
+                    '\\' if !escaped => escaped = true,
+                    '"' if !escaped => in_string = false,
+                    _ => escaped = false,
+                }
+            } else {
+                match ch {
+                    '"' => in_string = true,
+                    '{' | '[' => depth += 1,
+                    '}' | ']' => {
+                        depth = depth.saturating_sub(1);
+                        if depth == 0 {
+                            return Some(rest[..=index].to_string());
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        return None;
+    }
+    let end = rest.find([',', '}']).unwrap_or(rest.len());
+    Some(rest[..end].trim().to_string())
+}
+
+/// Line-protocol client for `glm5d`: one command per line, one reply line each.
+///
+/// The connection is kept between messages. When the socket is missing or the
+/// connection breaks, the outage is logged once (not once per OSC message) and
+/// every caller sees `None`, which is what makes the CLI fallback possible;
+/// later messages retry, so the daemon wins again as soon as it is back, and
+/// that recovery is logged once too.
+struct Daemon {
+    path: PathBuf,
+    reader: Option<BufReader<UnixStream>>,
+    writer: Option<UnixStream>,
+    down: bool,
+}
+
+impl Daemon {
+    fn new(path: PathBuf) -> Daemon {
+        Daemon {
+            path,
+            reader: None,
+            writer: None,
+            down: false,
+        }
+    }
+
+    fn drop_connection(&mut self, reason: &str) {
+        self.reader = None;
+        self.writer = None;
+        if !self.down {
+            self.down = true;
+            println!(
+                "glm5d unavailable at {} ({reason}); using the genlc CLI",
+                self.path.display()
+            );
+        }
+    }
+
+    fn connect(&mut self) {
+        let stream = match UnixStream::connect(&self.path) {
+            Ok(stream) => stream,
+            Err(exc) => return self.drop_connection(&exc.to_string()),
+        };
+        let _ = stream.set_read_timeout(Some(DAEMON_TIMEOUT));
+        let _ = stream.set_write_timeout(Some(DAEMON_TIMEOUT));
+        match stream.try_clone() {
+            Ok(writer) => {
+                self.reader = Some(BufReader::new(stream));
+                self.writer = Some(writer);
+            }
+            Err(exc) => self.drop_connection(&format!("cannot duplicate socket: {exc}")),
+        }
+    }
+
+    /// Send one command and return its reply line; `None` = daemon unreachable.
+    fn command(&mut self, line: &str) -> Option<String> {
+        if self.reader.is_none() {
+            self.connect();
+            self.reader.as_ref()?;
+        }
+        let written = self
+            .writer
+            .as_mut()
+            .map(|writer| {
+                writer
+                    .write_all(format!("{line}\n").as_bytes())
+                    .and_then(|()| writer.flush())
+            })
+            .unwrap_or_else(|| Err(std::io::Error::other("no connection")));
+        if let Err(exc) = written {
+            self.drop_connection(&format!("write failed: {exc}"));
+            return None;
+        }
+        let mut reply = String::new();
+        let read = self
+            .reader
+            .as_mut()
+            .map(|reader| reader.read_line(&mut reply))
+            .unwrap_or(Ok(0));
+        match read {
+            Ok(0) => {
+                self.drop_connection("connection closed");
+                None
+            }
+            Ok(_) => {
+                if self.down {
+                    self.down = false;
+                    println!("glm5d reachable again at {}", self.path.display());
+                }
+                Some(reply.trim().to_string())
+            }
+            Err(exc) => {
+                self.drop_connection(&format!("read failed: {exc}"));
+                None
+            }
+        }
+    }
+
+    /// The `status` reply line, or `None` when the daemon cannot answer.
+    fn status(&mut self) -> Option<String> {
+        let reply = self.command("status")?;
+        if !reply.starts_with('{') {
+            println!("glm5d status failed: {}", tail(&reply, 200));
+            return None;
+        }
+        Some(reply)
+    }
+}
+
 // -- the bridge --------------------------------------------------------
 
 pub struct Bridge {
     pub state: State,
     pub path: PathBuf,
     socket: Option<UdpSocket>,
+    daemon: Daemon,
 }
 
 impl Bridge {
@@ -353,6 +549,7 @@ impl Bridge {
             state,
             path,
             socket: None,
+            daemon: Daemon::new(daemon_socket()),
         }
     }
 
@@ -363,13 +560,21 @@ impl Bridge {
     }
 
     pub fn volume(&mut self, db: f64) {
-        let output = run_genlc(&["set-volume", "--volume", &format!("{db:.2}dB")]);
-        if output.ok {
+        // Absolute volume: the daemon owns the adapter, the CLI is the fallback
+        // for a host where glm5d is not running (or just died).
+        let (ok, detail) = match self.daemon.command(&format!("volume {db:.2}")) {
+            Some(reply) => (reply.starts_with("ok"), tail(&reply, 200)),
+            None => {
+                let output = run_genlc(&["set-volume", "--volume", &format!("{db:.2}dB")]);
+                (output.ok, tail(&output.stderr, 200))
+            }
+        };
+        if ok {
             self.state.volume_db = db;
             save_state(&self.path, &self.state);
             println!("/glm/volume {db:.2}dB OK");
         } else {
-            println!("/glm/volume FAIL: {}", tail(&output.stderr, 200));
+            println!("/glm/volume FAIL: {detail}");
         }
     }
 
@@ -383,13 +588,22 @@ impl Bridge {
     }
 
     pub fn mute(&mut self, on: bool) {
-        let output = run_genlc(&[if on { "mute" } else { "unmute" }]);
-        if output.ok {
+        let (ok, detail) = match self
+            .daemon
+            .command(&format!("mute {}", if on { "on" } else { "off" }))
+        {
+            Some(reply) => (reply.starts_with("ok"), tail(&reply, 200)),
+            None => {
+                let output = run_genlc(&[if on { "mute" } else { "unmute" }]);
+                (output.ok, tail(&output.stderr, 200))
+            }
+        };
+        if ok {
             self.state.muted = on;
             save_state(&self.path, &self.state);
             println!("/glm/mute {on} OK");
         } else {
-            println!("/glm/mute FAIL: {}", tail(&output.stderr, 200));
+            println!("/glm/mute FAIL: {detail}");
         }
     }
 
@@ -433,25 +647,63 @@ impl Bridge {
         println!("/glm/led {color} {status}");
     }
 
+    /// `/glm/status/reply`, served from the daemon's `status` JSON.
+    ///
+    /// The field names clients already parse stay (`ok`, `poll_rc`, `poll`,
+    /// `error`, `state`); `poll` now carries the daemon's status line instead of
+    /// `genlc poll` output, and the daemon's own view of the bus is added next
+    /// to it: `cycles`, `volume_db`, `leases`, `telemetry`, plus `source` so a
+    /// client can tell which backend answered. `state.volume_db` is refreshed
+    /// from the daemon, so relative moves start from the level the adapter was
+    /// actually told instead of a stale cache.
     pub fn status(&mut self, to: SocketAddr) {
-        let output = run_genlc(&["poll", "--count", "1"]);
-        let mut payload = format!(
-            "{{\"ok\": false, \"poll_rc\": {}, \"poll\": \"{}\"",
-            if output.ok { 0 } else { 1 },
-            json_escape(&tail(&output.stdout, 2000))
-        );
-        if !output.ok {
-            payload.push_str(&format!(
-                ", \"error\": \"{}\"",
-                json_escape(&tail(&output.stderr, 300))
-            ));
-        }
-        payload.push_str(&format!(
-            ", \"state\": {{\"volume_db\": {}, \"muted\": {}, \"power\": {}}}}}",
-            self.state.volume_db, self.state.muted, self.state.power
-        ));
+        let (payload, source) = match self.daemon.status() {
+            Some(line) => {
+                let cycles = json_field(&line, "cycles").unwrap_or_else(|| "null".to_string());
+                let volume = json_field(&line, "volume_db").unwrap_or_else(|| "null".to_string());
+                let leases = json_field(&line, "leases").unwrap_or_else(|| "[]".to_string());
+                let telemetry = json_field(&line, "telemetry").unwrap_or_else(|| "{}".to_string());
+                if let Ok(volume_db) = volume.parse::<f64>() {
+                    self.state.volume_db = volume_db;
+                    save_state(&self.path, &self.state);
+                }
+                let reply = format!(
+                    "{{\"ok\": true, \"poll_rc\": 0, \"poll\": \"{}\", \"state\": {{\"volume_db\": {}, \"muted\": {}, \"power\": {}}}, \"source\": \"daemon\", \"cycles\": {}, \"volume_db\": {}, \"leases\": {}, \"telemetry\": {}}}",
+                    json_escape(&tail(&line, 2000)),
+                    self.state.volume_db,
+                    self.state.muted,
+                    self.state.power,
+                    cycles,
+                    volume,
+                    leases,
+                    telemetry,
+                );
+                (reply, "daemon")
+            }
+            None => {
+                // No daemon: the old genlc-poll answer, unchanged, so existing
+                // clients and dashboards keep working on a daemon-less host.
+                let output = run_genlc(&["poll", "--count", "1"]);
+                let mut payload = format!(
+                    "{{\"ok\": false, \"poll_rc\": {}, \"poll\": \"{}\"",
+                    if output.ok { 0 } else { 1 },
+                    json_escape(&tail(&output.stdout, 2000))
+                );
+                if !output.ok {
+                    payload.push_str(&format!(
+                        ", \"error\": \"{}\"",
+                        json_escape(&tail(&output.stderr, 300))
+                    ));
+                }
+                payload.push_str(&format!(
+                    ", \"state\": {{\"volume_db\": {}, \"muted\": {}, \"power\": {}}}, \"source\": \"genlc\"}}",
+                    self.state.volume_db, self.state.muted, self.state.power
+                ));
+                (payload, "genlc")
+            }
+        };
         self.reply(to, "/glm/status/reply", &payload);
-        println!("/glm/status -> reply");
+        println!("/glm/status -> reply ({})", source);
     }
 
     pub fn discover(&mut self, to: SocketAddr) {
@@ -533,7 +785,11 @@ fn main() -> std::process::ExitCode {
         }
     };
     let mut bridge = Bridge::new();
-    println!("glm-osc listening on {host}:{port} (genlc: {})", genlc());
+    println!(
+        "glm-osc listening on {host}:{port} (glm5d: {}, genlc: {})",
+        daemon_socket().display(),
+        genlc()
+    );
     bridge.socket = Some(match socket.try_clone() {
         Ok(clone) => clone,
         Err(_) => socket,
@@ -612,5 +868,78 @@ mod tests {
     fn tails_are_truncated_for_logs() {
         assert_eq!(tail("short", 10), "short");
         assert_eq!(tail("0123456789", 4), "6789");
+    }
+
+    #[test]
+    fn json_field_slices_the_daemon_status_line() {
+        let line = r#"{"cycles":42,"volume_db":-24.5,"leases":[{"hardware_id":"127529","session":3}],"telemetry":{"03":"41 2E 81 00"}}"#;
+        assert_eq!(json_field(line, "cycles").as_deref(), Some("42"));
+        assert_eq!(json_field(line, "volume_db").as_deref(), Some("-24.5"));
+        assert_eq!(
+            json_field(line, "leases").as_deref(),
+            Some(r#"[{"hardware_id":"127529","session":3}]"#)
+        );
+        assert_eq!(
+            json_field(line, "telemetry").as_deref(),
+            Some(r#"{"03":"41 2E 81 00"}"#)
+        );
+        // No volume yet is `null`, and a truncated frame must not panic.
+        assert_eq!(
+            json_field(r#"{"cycles":1,"volume_db":null}"#, "volume_db").as_deref(),
+            Some("null")
+        );
+        assert_eq!(json_field(r#"{"leases":[{]"#, "leases"), None);
+        assert_eq!(json_field(line, "nope"), None);
+    }
+
+    #[test]
+    fn daemon_speaks_the_glm5d_line_protocol() {
+        use std::os::unix::net::UnixListener;
+
+        let dir = std::env::temp_dir().join(format!("glm-osc-daemon-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("glm5d.sock");
+        let _ = std::fs::remove_file(&path);
+        let listener = UnixListener::bind(&path).unwrap();
+        // The stub stands in for the daemon: same one-line-in/one-line-out protocol.
+        let stub = std::thread::spawn(move || {
+            let (stream, _) = listener.accept().unwrap();
+            let mut reader = BufReader::new(stream.try_clone().unwrap());
+            let mut writer = stream;
+            let mut line = String::new();
+            while reader.read_line(&mut line).unwrap_or(0) > 0 {
+                let command = line.trim().to_string();
+                line.clear();
+                let reply = match command.as_str() {
+                    "status" => {
+                        r#"{"cycles":7,"volume_db":-31.5,"leases":[{"hardware_id":"127529","session":3}],"telemetry":{"03":"41 2E"}}"#
+                    }
+                    _ => "ok queued",
+                };
+                writeln!(writer, "{reply}").unwrap();
+                writer.flush().unwrap();
+            }
+        });
+
+        let mut daemon = Daemon::new(path.clone());
+        assert_eq!(
+            daemon.command("volume -31.50").as_deref(),
+            Some("ok queued")
+        );
+        assert_eq!(daemon.command("mute on").as_deref(), Some("ok queued"));
+        assert!(!daemon.down);
+        let status = daemon.status().unwrap();
+        assert_eq!(json_field(&status, "cycles").as_deref(), Some("7"));
+        assert_eq!(json_field(&status, "volume_db").as_deref(), Some("-31.5"));
+        drop(daemon);
+        let _ = stub.join();
+
+        // A host without the daemon must degrade to the CLI, not fail.
+        std::fs::remove_file(&path).ok();
+        let mut gone = Daemon::new(path.clone());
+        assert!(gone.command("volume -20.00").is_none());
+        assert!(gone.down);
+        assert!(gone.status().is_none());
+        std::fs::remove_dir_all(&dir).ok();
     }
 }
