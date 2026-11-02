@@ -6,10 +6,12 @@
 
 use genlc::plan::{parse_plan, plan_frames};
 use genlc::protocol;
+use genlc::{client, daemon};
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::io::Write;
+use std::os::unix::fs::PermissionsExt;
 
 #[derive(Parser)]
 #[command(name = "genlc", version, about = "Genelec SAM loudspeaker control")]
@@ -26,19 +28,43 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Set volume for all GLM devices
-    SetVolume {
-        /// Volume in dB (e.g., -40dB)
-        #[arg(long = "volume", value_name = "VOLUME", allow_hyphen_values = true)]
-        volume: String,
+    /// Run the adapter daemon: leases, mute rounds and the status socket
+    Daemon {
+        /// Control socket (default: $XDG_RUNTIME_DIR/genlc.sock)
+        socket: Option<std::path::PathBuf>,
     },
-    /// Mute all SAM monitors
-    Mute,
-    /// Unmute all SAM monitors
+    /// Print the running daemon's state; exits 1 when no daemon answers
+    Status {
+        /// Print the raw JSON reply instead of the summary
+        #[arg(long)]
+        json: bool,
+    },
+    /// Set or step the volume; writes the state file and routes through the daemon
+    /// when it is running, otherwise straight to the adapter
+    Volume {
+        /// Absolute level, e.g. -40, -40dB or 40%
+        #[arg(value_name = "DB", allow_hyphen_values = true)]
+        db: Option<String>,
+        /// Step relative to the current level, in dB (clamped to -95..-20)
+        #[arg(long = "by", value_name = "DB", allow_hyphen_values = true)]
+        by: Option<f64>,
+        /// Print the state file's value and exit
+        #[arg(long)]
+        show: bool,
+        /// Print each new state-file value as it changes
+        #[arg(long)]
+        watch: bool,
+        /// Poll interval for --watch, in milliseconds
+        #[arg(long = "interval-ms", default_value_t = 150)]
+        interval_ms: u64,
+    },
+    /// Mute (`on`), unmute (`off`) or flip (`toggle`) every monitor
+    Mute {
+        #[arg(value_name = "on|off|toggle", default_value = "on")]
+        state: MuteState,
+    },
+    /// Unmute every monitor (same as `mute off`)
     Unmute,
-    /// Mute (alias of `mute`; this CLI keeps no mute state, so it cannot toggle
-    /// — use `mute`/`unmute`, or glm-osc, which tracks the state)
-    SetMute,
     /// Probe the bus once and print the hardware id of a monitor that holds no
     /// lease ("every monitor is leased" when none answers)
     Probe,
@@ -58,11 +84,15 @@ enum Commands {
         #[arg(long)]
         first: bool,
     },
-    /// Probe for monitors without a lease (report only), or lease them with --take
+    /// Probe for monitors without a lease (report only), or lease them with --take;
+    /// --now asks a running daemon for a probe cycle instead
     Lease {
         /// Send the lease frames. Without it the command only reports what the probe saw
         #[arg(long)]
         take: bool,
+        /// Ask the running daemon to run its probe cycle now (no adapter access here)
+        #[arg(long)]
+        now: bool,
     },
     /// Discover devices on the GLM network
     Discover,
@@ -92,19 +122,21 @@ enum Commands {
         #[arg(long, default_value = "40", value_name = "N")]
         max_tokens: usize,
     },
-    /// Poll device status
-    Status {
+    /// Probe the adapter's own device status (was `status --addr`)
+    Poll {
         #[arg(long = "addr", default_value = "0xFF")]
         addr: String,
     },
-    /// Print the volume state file's value whenever it changes — the file the
-    /// shell helpers write and the pleamar Genelec plugin watches. No adapter is
-    /// opened: this is the plugin's read-back channel, not monitor I/O.
-    VolumeWatch {
-        /// Poll interval for the state file, in milliseconds
-        #[arg(long = "interval-ms", default_value_t = 150)]
-        interval_ms: u64,
-    },
+    /// Print diagnostics: hidraw devices, udev rules, adapter and discovery
+    Diagnose,
+}
+
+#[derive(Clone, Copy, clap::ValueEnum)]
+enum MuteState {
+    On,
+    Off,
+    /// Flip the state the daemon last reported (`genlc mute toggle`)
+    Toggle,
 }
 
 fn parse_addr(s: &str) -> Result<u8> {
@@ -124,14 +156,14 @@ fn parse_volume(s: &str) -> Result<f64> {
     }
 }
 
-/// Where genlc and the quickshell Genelec widget exchange the volume target.
+/// The volume target genlc shares with its readers: the pleamar Genelec plugin
+/// watches this file, and `genlc volume --show` reads it back.
 ///
 /// Per-session state, so it belongs in XDG_RUNTIME_DIR (0700, wiped on logout)
 /// rather than the fixed `/tmp/genlc-volume` it used to be: a world-writable
 /// path with a predictable name is a symlink-attack surface and a collision
 /// between users, and a value left over from yesterday's session would be read
-/// as today's target. The shell scripts (glm-vol, genlc-media, glm-sync,
-/// glm-adapter) resolve the same path with `${XDG_RUNTIME_DIR:-/run/user/$(id -u)}`.
+/// as today's target.
 fn state_file() -> Option<std::path::PathBuf> {
     let runtime = std::env::var("XDG_RUNTIME_DIR")
         .ok()
@@ -441,6 +473,158 @@ fn run_decode(stats_only: bool, sequences: bool, gap: f64, max_tokens: usize) ->
     Ok(())
 }
 
+/// The running daemon's state, or a clear error: `genlc status` is also the probe
+/// the pleamar plugin uses to decide whether the daemon path is live.
+fn status_command(json: bool) -> Result<()> {
+    let socket = client::default_socket();
+    let reply = client::round_trip(&socket, "status").map_err(|error| {
+        anyhow::anyhow!("{error}\nstart the daemon with: systemctl --user start genlc")
+    })?;
+    if json {
+        println!("{reply}");
+        Ok(())
+    } else {
+        client::print_status(&reply, &socket)
+    }
+}
+
+/// The state file's value, with the historical -40 fallback for a fresh session.
+fn show_volume() -> Result<()> {
+    let value = state_file()
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .map(|text| text.trim().to_string())
+        .filter(|value| value.parse::<f64>().is_ok())
+        .unwrap_or_else(|| "-40".into());
+    println!("{value}");
+    Ok(())
+}
+
+/// The level a relative step starts from: the daemon's last set, else the state
+/// file, else -40. Clamped the way the media keys always were — a stale state must
+/// never make the first notch louder than -20 dB.
+fn current_level() -> f64 {
+    let from_daemon = client::round_trip(&client::default_socket(), "status")
+        .ok()
+        .and_then(|json| client::scalar_field(&json, "volume_db").map(str::to_string))
+        .and_then(|value| value.parse::<f64>().ok());
+    let from_file = state_file()
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .and_then(|text| text.trim().parse::<f64>().ok());
+    from_daemon
+        .or(from_file)
+        .unwrap_or(-40.0)
+        .clamp(-95.0, -20.0)
+}
+
+fn resolve_volume_target(db: Option<&str>, by: Option<f64>) -> Result<f64> {
+    match (db, by) {
+        (Some(value), None) => parse_volume(value),
+        (None, Some(step)) => Ok((current_level() + step).round().clamp(-95.0, -20.0)),
+        _ => anyhow::bail!("volume needs a level (-40) or a step (--by -1)"),
+    }
+}
+
+/// Set a level through the daemon when it is running, otherwise straight to the
+/// adapter, and write the state file either way: it is the bar's and the plugin's
+/// read-back channel, and it must agree with what the monitors were told.
+fn set_volume_routed(db: f64) -> Result<()> {
+    match client::round_trip(&client::default_socket(), &format!("volume {db}")) {
+        Ok(reply) if !reply.starts_with("error") => {}
+        Ok(reply) => anyhow::bail!("genlc daemon refused volume {db}: {reply}"),
+        Err(_) => {
+            let transport = protocol::HidTransport::open()?;
+            protocol::SamGroup::new(transport).set_volume(db)?;
+        }
+    }
+    if let Some(path) = state_file() {
+        let _ = std::fs::write(path, format!("{db:.1}"));
+    }
+    println!("{db:.1} dB");
+    Ok(())
+}
+
+/// `toggle` needs the daemon's own state: the adapter cannot be asked whether it is
+/// muted, and keeping a second state file would recreate the split this CLI removed.
+fn mute_command(state: MuteState) -> Result<()> {
+    match state {
+        MuteState::On => mute_routed(true),
+        MuteState::Off => mute_routed(false),
+        MuteState::Toggle => {
+            let socket = client::default_socket();
+            let reply = client::round_trip(&socket, "status").map_err(|error| {
+                anyhow::anyhow!(
+                    "mute toggle needs the daemon (its state is the only mute bit): {error}"
+                )
+            })?;
+            let muted = matches!(client::scalar_field(&reply, "muted"), Some("true"));
+            mute_routed(!muted)
+        }
+    }
+}
+
+fn mute_routed(on: bool) -> Result<()> {
+    let word = if on { "on" } else { "off" };
+    match client::round_trip(&client::default_socket(), &format!("mute {word}")) {
+        Ok(reply) if !reply.starts_with("error") => {
+            println!("{reply}");
+            Ok(())
+        }
+        Ok(reply) => anyhow::bail!("genlc daemon refused mute {word}: {reply}"),
+        Err(_) => {
+            let transport = protocol::HidTransport::open()?;
+            let group = protocol::SamGroup::new(transport);
+            if on { group.mute() } else { group.unmute() }
+        }
+    }
+}
+
+/// Everything the old `genlc-diagnose` shell script printed, without the interpreter.
+fn diagnose() -> Result<()> {
+    println!("=== Genelec GLM adapter diagnostics ===");
+    println!("genlc      {}", env!("CARGO_PKG_VERSION"));
+    let mut hidraw: Vec<std::path::PathBuf> = Vec::new();
+    if let Ok(entries) = std::fs::read_dir("/dev") {
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            if name.to_string_lossy().starts_with("hidraw") {
+                hidraw.push(entry.path());
+            }
+        }
+    }
+    if hidraw.is_empty() {
+        println!("hidraw     none under /dev");
+    } else {
+        for path in &hidraw {
+            let mode = std::fs::metadata(path)
+                .map(|meta| format!("{:03o}", meta.permissions().mode() & 0o777))
+                .unwrap_or_else(|_| "???".into());
+            println!("hidraw     {} mode {mode}", path.display());
+        }
+    }
+    let rules = [
+        "/etc/udev/rules.d/99-genelec.rules",
+        "/etc/udev/rules.d/99-genlc.rules",
+    ];
+    match rules
+        .iter()
+        .find(|path| std::path::Path::new(path).exists())
+    {
+        Some(path) => println!("udev       {path}"),
+        None => println!("udev       no 99-genelec/99-genlc rule"),
+    }
+    match protocol::HidTransport::open() {
+        Ok(transport) => {
+            let group = protocol::SamGroup::new(transport);
+            match group.discover() {
+                Ok(()) => println!("discover   ok"),
+                Err(error) => println!("discover   failed: {error}"),
+            }
+        }
+        Err(error) => println!("adapter    not available: {error}"),
+    }
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     // `decode` works on a capture file and must not need the adapter: opening the
@@ -477,27 +661,43 @@ fn main() -> Result<()> {
         println!("{planned} frames planned (dry run; pass --commit --take to send)");
         return Ok(());
     }
-    // The volume state-file watch is the pleamar plugin's read-back channel and
-    // must run without the adapter (the daemon may own it, or none be attached).
-    if let Commands::VolumeWatch { interval_ms } = cli.command {
-        return watch_volume_state(interval_ms);
+    // Commands that must decide their transport before the adapter is opened: the
+    // daemon may own it. `volume`/`mute` go through the socket when it answers and
+    // fall back to the adapter only when it does not.
+    match &cli.command {
+        Commands::Daemon { socket } => return daemon::run(socket.clone()),
+        Commands::Status { json } => return status_command(*json),
+        Commands::Volume {
+            db,
+            by,
+            show,
+            watch,
+            interval_ms,
+        } => {
+            if *show {
+                return show_volume();
+            }
+            if *watch {
+                return watch_volume_state(*interval_ms);
+            }
+            let target = resolve_volume_target(db.as_deref(), *by)?;
+            return set_volume_routed(target);
+        }
+        Commands::Mute { state } => return mute_command(*state),
+        Commands::Unmute => return mute_routed(false),
+        Commands::Diagnose => return diagnose(),
+        Commands::Lease { now: true, .. } => {
+            let reply = client::round_trip(&client::default_socket(), "lease")
+                .map_err(|error| anyhow::anyhow!("lease --now needs the daemon: {error}"))?;
+            println!("{reply}");
+            return Ok(());
+        }
+        _ => {}
     }
     let transport = protocol::HidTransport::open()?;
     let group = protocol::SamGroup::new(transport);
 
     match cli.command {
-        Commands::SetVolume { volume } => {
-            let db = parse_volume(&volume)?;
-            eprintln!("Setting volume to {db:.2} dB");
-            group.set_volume(db)?;
-            // No XDG_RUNTIME_DIR (cron, a bare container, a shell without the
-            // session environment) means there is no per-session state file to
-            // sync through: the widget is not running either in that case, so
-            // skipping the write is the honest outcome, not an error.
-            if let Some(path) = state_file() {
-                let _ = std::fs::write(path, format!("{:.1}", db));
-            }
-        }
         Commands::Probe => match group.probe()? {
             Some(id) => println!(
                 "monitor answered: hardware id {:02X} {:02X} {:02X}",
@@ -564,7 +764,7 @@ fn main() -> Result<()> {
             }
             println!("{sent} frames sent");
         }
-        Commands::Lease { take } => {
+        Commands::Lease { take, now: _ } => {
             if take {
                 let leased = group.take_leases()?;
                 if leased.is_empty() {
@@ -592,12 +792,14 @@ fn main() -> Result<()> {
         Commands::Discover => group.discover()?,
         Commands::Wakeup => group.wakeup()?,
         Commands::Shutdown => group.shutdown()?,
-        Commands::Status { addr } => group.poll(parse_addr(&addr)?)?,
-        Commands::Mute => group.mute()?,
-        Commands::Unmute => group.unmute()?,
-        Commands::SetMute => group.toggle_mute()?,
-        Commands::Decode { .. } => unreachable!("handled before the adapter is opened"),
-        Commands::VolumeWatch { .. } => unreachable!("handled before the adapter is opened"),
+        Commands::Poll { addr } => group.poll(parse_addr(&addr)?)?,
+        Commands::Decode { .. }
+        | Commands::Daemon { .. }
+        | Commands::Status { .. }
+        | Commands::Volume { .. }
+        | Commands::Mute { .. }
+        | Commands::Unmute
+        | Commands::Diagnose => unreachable!("handled before the adapter is opened"),
     }
     Ok(())
 }
