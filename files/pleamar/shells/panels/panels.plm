@@ -276,7 +276,11 @@ scene panels {
     // the month when the walk leaves it.
     event cal_step ->
     // The pill tracker published (a toggle, a rollover, the state file written by another
-    // instance): the grid's markers and the streak header are rebuilt from it.
+    // instance): the grid's markers and the streak header are rebuilt from it. Nothing in this
+    // scene can see the tracker — it is another scene's plugin — so the bar's logic sends this over
+    // `sys.call("say", "panels", "emit pill_sync")` when its `pill.*` mirror moves, and
+    // `pleamar --say panels "emit pill_sync"` does the same by hand.
+    event pill_sync
 
     // Mixer (the logic carries them to sys.call("audio.…")).
     event set_out ->
@@ -409,6 +413,7 @@ scene panels {
     on open_calendar { drawer = calendar }
     on open_weather { drawer = weather }
     on open_system { drawer = system }
+    on open_build { drawer = build }
     // The analyser runs only while the card that draws it is up (see spectrum.plm:
     // a plugin deciding for itself kept cava and its decay timer alive in a
     // scene with nothing on screen). `mirror = true`: the reference's band is

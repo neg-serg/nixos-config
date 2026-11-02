@@ -322,10 +322,12 @@ on("set_default_in", function(i)
 end)
 
 -- app_set packs the stream index and the volume into one number
--- (index * 1000 + round(volume * 1000)); an event payload is a number only.
+-- (index * 1001 + round(volume * 1000)); an event payload is a number only. The odd base is what
+-- keeps 100 % on its own stream: with 1000 the payload for the last step of stream `i` read as
+-- the first step of stream `i + 1`, so dragging a slider to the right silenced its neighbour.
 on("app_set", function(p)
-    local i = math.floor(p / 1000)
-    local v = (p % 1000) / 1000
+    local i = math.floor(p / 1001)
+    local v = (p % 1001) / 1000
     local rec = pick_rec(audio_raw.apps, model.streams, i)
     local id = idOf(rec)
     if id then sys.call("audio.app_volume", id, v) end
@@ -1285,6 +1287,15 @@ end
 -- the workers in line; the half-second pass is the safety net, not the main
 -- path (the fact listener below is).
 local function reconcile()
+    -- The date is the logic's own, and a scene lives for days: the "today" marker, the holidays row
+    -- and the pill's `pending` are all decided against `today_*` when the grid is built. Turn them
+    -- over here — the check is one `os.date` per reconcile, and without it a shell left running
+    -- overnight keeps yesterday's frame around today's date.
+    local stamp = os.date("*t")
+    if stamp.year ~= today_y or stamp.month ~= today_m or stamp.day ~= today_d then
+        today_y, today_m, today_d = stamp.year, stamp.month, stamp.day
+        cal_rebuild()
+    end
     ensure_audio_watch()
     for name in pairs(WORKERS) do
         if wanted(name) then
