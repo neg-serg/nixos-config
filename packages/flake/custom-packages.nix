@@ -68,4 +68,9 @@
   # Candidate Nix (2.35 + eval-speedup patches) — `nix build .#nix-eval-patched`.
   # Not `nix.package`: see the header comment of packages/nix-eval-patched.
   nix-eval-patched = pkgs.nix-eval-patched;
+
+  # Determinate Nix 3.23.3 with PGO + eval-speedup patches —
+  # `nix build .#nix-det-pgo`. Reaches `nix.package` only through
+  # `features.nix.pgoNix.enable` (default off).
+  nix-det-pgo = pkgs.nix-det-pgo;
 }
