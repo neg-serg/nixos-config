@@ -1,0 +1,31 @@
+[package]
+name = "pleamar-picker"
+version = "0.1.0"
+edition = "2021"
+description = "pleamar picker commands: wallpaper apply/still and the deck's command line"
+license = "GPL-3.0-or-later"
+
+[lib]
+name = "pleamar_picker"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pleamar-wallpaper-apply"
+path = "src/bin/pleamar-wallpaper-apply.rs"
+
+[[bin]]
+name = "pleamar-wallpaper-still"
+path = "src/bin/pleamar-wallpaper-still.rs"
+
+[[bin]]
+name = "pleamar-picker"
+path = "src/bin/pleamar-picker.rs"
+
+# No Rust dependencies on purpose. The only outside tools are the ones the
+# shell commands already required — ffmpeg, matugen, setsid/sh, nice,
+# pleamar, systemctl, tail, sleep — plus the still helper beside the apply
+# binary. The cache, MD5 key and bash `printf %q` quoting live in this crate.
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = lib.cleanSource ./.` copies just this directory).
+[workspace]
