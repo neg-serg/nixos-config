@@ -847,29 +847,35 @@ fn range_trash_clears_a_stale_mark_and_falls_back_to_one_file() {
 }
 
 #[test]
-fn range_trash_with_an_anchor_reproduces_the_c_line_bug() {
+fn range_trash_with_an_anchor_moves_the_inclusive_slice() {
     let sandbox = Sandbox::new("range-trash-anchor");
     sandbox.create_images(&["one.jpg", "two.jpg", "three.jpg", "four.jpg", "five.jpg"]);
     sandbox.write_mark(sandbox.pictures.join("three.jpg").to_str().unwrap());
-    let output = sandbox.run_with([
-        OsStr::new("range-trash"),
-        sandbox.pictures.join("five.jpg").as_os_str(),
-    ]);
+    let (listener, socket) = sandbox.listener("ipc.sock");
+    let output = sandbox
+        .command()
+        .env("SWAYIMG_IPC", &socket)
+        .args([
+            OsStr::new("range-trash"),
+            sandbox.pictures.join("five.jpg").as_os_str(),
+        ])
+        .output()
+        .unwrap();
     assert_eq!(code(&output), 0);
-    let stderr = stderr(&output);
-    assert!(
-        stderr.contains("sed: -e expression #1, char 3: unexpected ','"),
-        "stderr: {stderr}"
-    );
-    assert!(
-        stderr.contains("mv: cannot stat '': No such file or directory"),
-        "stderr: {stderr}"
-    );
-    // Nothing was moved, and the mark was cleared by the broken range path.
-    for name in ["one.jpg", "two.jpg", "three.jpg", "four.jpg", "five.jpg"] {
-        assert!(sandbox.pictures.join(name).is_file(), "{name} moved");
+    assert_eq!(receive(&listener), b"prev_file\n");
+    let trash = sandbox.home.join("trash/1st-level/pic");
+    for name in ["three.jpg", "four.jpg", "five.jpg"] {
+        assert!(trash.join(name).is_file(), "{name} was not trashed");
+    }
+    for name in ["one.jpg", "two.jpg"] {
+        assert!(sandbox.pictures.join(name).is_file(), "{name} was moved");
     }
     assert!(sandbox.mark().is_none());
+    assert!(
+        !stderr(&output).contains("sed:"),
+        "stderr: {}",
+        stderr(&output)
+    );
 }
 
 #[test]
@@ -895,26 +901,22 @@ fn range_listing_is_ordered_by_ctime_descending() {
     let names: Vec<String> = (1..=11).map(|index| format!("{index:02}.jpg")).collect();
     let refs: Vec<&str> = names.iter().map(String::as_str).collect();
     sandbox.create_images(&refs);
-    // The first-created image has the oldest ctime, so it is line 11 of the
-    // newest-first listing; the sed expression "11,p" makes GNU sed report
-    // character 4. An ascending listing would report "1,p" / character 3.
+    // 01 was created first (oldest, last line of the newest-first listing) and
+    // 11 last (first line), so the inclusive slice is the whole directory.
     sandbox.write_mark(sandbox.pictures.join("01.jpg").to_str().unwrap());
     let output = sandbox.run_with([
         OsStr::new("range-trash"),
         sandbox.pictures.join("11.jpg").as_os_str(),
     ]);
     assert_eq!(code(&output), 0);
-    assert!(
-        stderr(&output).contains("char 4: unexpected ','"),
-        "stderr: {}",
-        stderr(&output)
-    );
-    assert!(sandbox.pictures.join("01.jpg").is_file());
+    let trash = sandbox.home.join("trash/1st-level/pic");
+    assert_eq!(fs::read_dir(&trash).unwrap().count(), 11);
+    assert_eq!(fs::read_dir(sandbox.pictures.join("")).unwrap().count(), 0);
     assert!(sandbox.mark().is_none());
 }
 
 #[test]
-fn range_cp_with_an_anchor_prompts_first_and_then_hits_the_empty_file_list() {
+fn range_cp_with_an_anchor_copies_the_inclusive_slice() {
     let sandbox = Sandbox::new("range-cp-anchor");
     sandbox.create_images(&["one.jpg", "two.jpg", "three.jpg", "four.jpg", "five.jpg"]);
     fs::create_dir_all(sandbox.pictures.join("dest")).unwrap();
@@ -933,18 +935,17 @@ fn range_cp_with_an_anchor_prompts_first_and_then_hits_the_empty_file_list() {
         sandbox.captured("vicinae.stdin"),
         b"~/Pictures\n~/Pictures/dest\n"
     );
-    let stderr = stderr(&output);
-    assert!(stderr.contains("sed: -e expression #1, char 3"), "{stderr}");
-    assert!(stderr.contains("cp: cannot stat ''"), "{stderr}");
-    assert_eq!(
-        fs::read_dir(sandbox.pictures.join("dest")).unwrap().count(),
-        0
-    );
+    for name in ["three.jpg", "four.jpg", "five.jpg"] {
+        assert!(sandbox.pictures.join("dest").join(name).is_file(), "{name}");
+        assert!(sandbox.pictures.join(name).is_file(), "{name} moved");
+    }
+    assert!(!sandbox.pictures.join("dest/one.jpg").exists());
+    assert!(!sandbox.pictures.join("dest/two.jpg").exists());
     assert!(sandbox.mark().is_none());
 }
 
 #[test]
-fn range_mv_with_an_anchor_sends_prev_file_and_moves_nothing() {
+fn range_mv_with_an_anchor_moves_the_slice_and_sends_prev_file() {
     let sandbox = Sandbox::new("range-mv-anchor");
     sandbox.create_images(&["one.jpg", "two.jpg", "three.jpg", "four.jpg", "five.jpg"]);
     fs::create_dir_all(sandbox.pictures.join("dest")).unwrap();
@@ -962,9 +963,30 @@ fn range_mv_with_an_anchor_sends_prev_file_and_moves_nothing() {
         .unwrap();
     assert_eq!(code(&output), 0);
     assert_eq!(receive(&listener), b"prev_file\n");
-    assert!(stderr(&output).contains("mv: cannot stat ''"));
-    assert!(sandbox.pictures.join("five.jpg").is_file());
+    for name in ["three.jpg", "four.jpg", "five.jpg"] {
+        assert!(sandbox.pictures.join("dest").join(name).is_file(), "{name}");
+        assert!(!sandbox.pictures.join(name).exists(), "{name} stayed");
+    }
+    assert!(sandbox.pictures.join("one.jpg").is_file());
+    assert!(sandbox.pictures.join("two.jpg").is_file());
     assert!(sandbox.mark().is_none());
+}
+
+#[test]
+fn range_current_file_outside_the_image_listing_fails_and_keeps_the_mark() {
+    let sandbox = Sandbox::new("range-current-non-image");
+    sandbox.create_images(&["one.jpg", "two.jpg", "three.jpg"]);
+    sandbox.write_mark(sandbox.pictures.join("three.jpg").to_str().unwrap());
+    let notes = sandbox.pictures.join("notes.txt");
+    fs::write(&notes, b"not an image").unwrap();
+    let output = sandbox.run_with([OsStr::new("range-trash"), notes.as_os_str()]);
+    assert_eq!(code(&output), 1);
+    assert!(stderr(&output).contains("current file not found in the image listing"));
+    assert!(sandbox.mark().is_some());
+    for name in ["one.jpg", "two.jpg", "three.jpg"] {
+        assert!(sandbox.pictures.join(name).is_file(), "{name} moved");
+    }
+    assert!(notes.is_file());
 }
 
 #[test]

@@ -1,16 +1,16 @@
 # Parity harness (migration only)
 
 `run.sh` runs the old zsh helper and the Rust binary in identical sandboxes and compares what a
-caller can observe. It exists to prove the port while the shell script is still in the tree; it is
-**not** a cargo test and the integration step that deletes
-`packages/local-bin/bin/swayimg-actions.sh` also makes it inapplicable.
+caller can observe. It exists to prove the port; the shell script it compares against was deleted by
+the integration step, so run it with a saved copy as the second argument. It is **not** a cargo
+test.
 
 ```sh
 # cargo build first, then:
 tests/parity/run.sh /tmp/swayimg-target/debug/swayimg-actions
 # optional: a different shell script path as the second argument
-ONLY=mv-explicit,range-trash-anchor VERBOSE=1 \
-  tests/parity/run.sh target/debug/swayimg-actions
+ONLY=mv-explicit,wall-center VERBOSE=1 \
+  tests/parity/run.sh target/debug/swayimg-actions /tmp/swayimg-actions.sh
 ```
 
 Requirements on the host: `zsh`, `socat`, `python3` and the usual coreutils. Everything runs under a
@@ -18,6 +18,15 @@ fresh `mktemp -d` root: HOME, XDG_DATA_HOME, XDG_PICTURES_DIR, XDG_RUNTIME_DIR a
 inside it, fake tools shadow every external command, and the only socket is a `UnixListener` created
 by `listener.py`. The real `~/tmp`, `~/trash`, `~/.local/share`, wallpaper list and swayimg socket
 are never touched.
+
+## Fixed against the shell
+
+The shell's `_range_files` never assigned `c_line`, so every range-trash/cp/mv with an anchor ran
+`sed -n "<a_line>,p"`, failed, and acted on an empty path. The Rust port computes both ends of the
+inclusive slice instead. The `range-*-anchor` scenarios are therefore absent from this harness (they
+would compare a fixed result against a broken one); the fixed behaviour is pinned by `tests/cli.rs`
+(`range_*` tests). All other range scenarios (no mark, empty mark, stale mark, anchor outside the
+directory) still compare equal.
 
 ## What is compared
 

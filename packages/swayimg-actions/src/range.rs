@@ -12,14 +12,12 @@
 //! `ug` wrapper is currently broken (readable config, but ugrep >= 7.8 rejects
 //! `--config` for non-root), which the shell could not work around.
 //!
-//! `_range_files` has a real bug that the port must keep: `c_line` is declared
-//! but never assigned, so `end` is always empty and the slice is always
-//! `sed -n "<a_line>,p"` — GNU sed rejects that expression. The shell printed
-//! sed's diagnostic, captured no files, then its caller ran one `mv`/`cp` with
-//! an empty path (the command substitution produced an empty string, and
-//! `printf '%s\n' ""` still yields one empty line). `range_slice` therefore
-//! deliberately spawns that same sed invocation on the listing and returns its
-//! stdout; the empty-path calls are made by the action loops.
+//! `_range_files` declared `c_line` but never assigned it, so the shell's
+//! `sed -n "<a_line>,p"` expression was invalid and the range actions acted on
+//! an empty path. This port fixes that: both the anchor and the current file
+//! are located in the listing, and the inclusive slice between their positions
+//! (in either order) is returned. A current file that is absent from the image
+//! listing is reported instead of silently producing an empty range.
 
 use std::fs;
 use std::os::unix::ffi::OsStrExt;
@@ -29,7 +27,9 @@ use std::path::PathBuf;
 use crate::bytes::{os_owned, strip_trailing_newlines};
 use crate::tools::{self, Call};
 
-/// `_range_files` writes to stderr and returns 1 on its two guarded failures.
+/// `_range_files` writes to stderr and returns 1 on its guarded failures.
+/// Returns the inclusive `[anchor, current]` slice of the image listing
+/// (newest ctime first), followed by a trailing newline per file.
 pub fn range_slice(anchor: &[u8], current: &[u8]) -> Result<Vec<u8>, ()> {
     if anchor.is_empty() {
         return fail(b"swayimg-actions: no range mark set (range_mark is empty)\n");
@@ -38,46 +38,48 @@ pub fn range_slice(anchor: &[u8], current: &[u8]) -> Result<Vec<u8>, ()> {
     let directory = crate::bytes::dirname(current);
     let listing = list_images(&directory);
 
-    // The shell wrote the listing to a mktemp file and ran sed on it; feeding
-    // the same bytes on stdin preserves sed's diagnostics byte-for-byte while
-    // dropping the temp file.
-    let mut listing_text = Vec::new();
-    for (index, path) in listing.iter().enumerate() {
-        if index > 0 {
-            listing_text.push(b'\n');
-        }
-        listing_text.extend_from_slice(path);
-    }
-    if !listing.is_empty() {
-        listing_text.push(b'\n');
-    }
-
     // a_resolved="$(realpath "$anchor" 2>/dev/null)" || { ... }
-    let Some(resolved) = tools::realpath(anchor, true) else {
+    let Some(resolved_anchor) = tools::realpath(anchor, true) else {
         let mut message = b"swayimg-actions: range anchor not found (was deleted?): ".to_vec();
         message.extend_from_slice(anchor);
         message.push(b'\n');
         return fail(&message);
     };
-
-    // a_line="$(grep -nFx "$a_resolved" "$tmp" | cut -d: -f1)"
-    let Some(position) = listing.iter().position(|path| path == &resolved) else {
+    let Some(anchor_position) = listing.iter().position(|path| path == &resolved_anchor) else {
         return fail(b"Range mark not found in current directory\n");
     };
-    let a_line = position + 1;
 
-    // c_line is never set in the shell; `end` is empty and this expression is
-    // "N,p", which sed rejects.
-    let expression = format!("{a_line},p");
-    let outcome = Call::new("sed")
-        .argument("-n")
-        .argument(expression)
-        .input(listing_text)
-        .capture_stdout()
-        .run();
-    // `sed ...; rm -f "$tmp"` — the rm made the function succeed even when sed
-    // failed, so the caller sees an empty file list rather than a failure.
-    Ok(strip_trailing_newlines(outcome.stdout))
+    // c_resolved="$(realpath "$current" 2>/dev/null)" (the shell never looked
+    // its line up; the fix needs both ends of the slice).
+    let Some(resolved_current) = tools::realpath(current, true) else {
+        let mut message = b"swayimg-actions: current file not found: ".to_vec();
+        message.extend_from_slice(current);
+        message.push(b'\n');
+        return fail(&message);
+    };
+    let Some(current_position) = listing.iter().position(|path| path == &resolved_current) else {
+        let mut message =
+            b"swayimg-actions: current file not found in the image listing: ".to_vec();
+        message.extend_from_slice(current);
+        message.push(b'\n');
+        return fail(&message);
+    };
+
+    let (start, end) = if anchor_position <= current_position {
+        (anchor_position, current_position)
+    } else {
+        (current_position, anchor_position)
+    };
+    // Command substitution strips trailing newlines; `apply_lines` adds the
+    // final one, so the slice is joined without a trailing separator.
+    let mut slice = Vec::new();
+    for (index, path) in listing[start..=end].iter().enumerate() {
+        if index > 0 {
+            slice.push(b'\n');
+        }
+        slice.extend_from_slice(path);
+    }
+    Ok(slice)
 }
 
 fn fail(message: &[u8]) -> Result<Vec<u8>, ()> {
