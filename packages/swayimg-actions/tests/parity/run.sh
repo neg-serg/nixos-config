@@ -301,11 +301,6 @@ configure() {
       FIXTURE=fixture_range_stale
       USE_IPC=1
       ;;
-    range-trash-anchor)
-      ARGS=(range-trash "$RANGE/five.jpg")
-      FIXTURE=fixture_range_with_mark
-      USE_IPC=1
-      ;;
     range-trash-anchor-other-dir)
       ARGS=(range-trash "$RANGE/five.jpg")
       FIXTURE=fixture_range_other_mark
@@ -325,11 +320,6 @@ configure() {
       FIXTURE=fixture_range_stale
       VICINAE_OUT="$TILDE/Pictures/dest"
       ;;
-    range-cp-anchor)
-      ARGS=(range-cp "$RANGE/five.jpg")
-      FIXTURE=fixture_range_with_mark
-      VICINAE_OUT="$TILDE/Pictures/dest"
-      ;;
     range-cp-anchor-other-dir)
       ARGS=(range-cp "$RANGE/five.jpg")
       FIXTURE=fixture_range_other_mark
@@ -344,12 +334,6 @@ configure() {
     range-mv-stale)
       ARGS=(range-mv "$RANGE/five.jpg")
       FIXTURE=fixture_range_stale
-      VICINAE_OUT="$TILDE/Pictures/dest"
-      USE_IPC=1
-      ;;
-    range-mv-anchor)
-      ARGS=(range-mv "$RANGE/five.jpg")
-      FIXTURE=fixture_range_with_mark
       VICINAE_OUT="$TILDE/Pictures/dest"
       USE_IPC=1
       ;;
@@ -694,16 +678,13 @@ SCENARIOS=(
   range-trash-no-mark
   range-trash-empty-mark
   range-trash-stale
-  range-trash-anchor
   range-trash-anchor-other-dir
   range-cp-no-mark
   range-cp-cancel
   range-cp-stale
-  range-cp-anchor
   range-cp-anchor-other-dir
   range-mv-no-mark
   range-mv-stale
-  range-mv-anchor
   range-mv-anchor-other-dir
   missing-vicinae
   missing-zoxide

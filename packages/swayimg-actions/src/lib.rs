@@ -12,18 +12,20 @@
 //! wall-mono/fill/full/tile/center/cover (ImageMagick render + swww), and the
 //! range actions (anchor in $XDG_DATA_HOME/swayimg/range_mark).
 //!
-//! Deliberate shell quirks retained:
-//! - `range_files` never sets `c_line`, so its sed slice is always invalid and
-//!   the range actions operate on an empty file list (see `range.rs`);
+//! Shell quirks retained:
 //! - `repeat` is dispatched by `files/gui/swayimg/init.lua` but the shell never
 //!   had a `repeat` case, so it is an unknown action here too;
 //! - the wallpaper list is written through zsh's `echo`, including escapes;
 //! - `range-cp`'s regular path does not create the destination directory,
 //!   unlike every other copy/move path.
 //!
-//! The documentation in `docs/howto/swayimg-hotkeys.md` mentions a sync mode,
-//! debug logging and status overlays. The shell script never implemented those,
-//! so this port does not either.
+//! Fixed against the shell: `_range_files` never set `c_line`, so its sed
+//! expression was invalid and every range action acted on an empty path. The
+//! port locates both ends of the slice (see `range.rs`).
+//!
+//! The helper is synchronous; `files/gui/swayimg/init.lua` backgrounds it with
+//! `&`. There is no sync mode, debug log or status overlay (the old howto
+//! described features the script never had).
 
 use std::io::Write;
 use std::os::unix::ffi::OsStrExt;
