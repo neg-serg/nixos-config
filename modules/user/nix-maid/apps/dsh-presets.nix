@@ -9,7 +9,7 @@
 # presets live as `presets/<id>.patch.yml` inside the dsh-web-app bundle, which
 # the tui profile does not mount; the dsh-TUI bundle only wires the registry
 # itself (default `standard`). So this deployment declares the two presets it
-# uses, as rows in the profile patch layer written by dsh-tui-preset-patch.py
+# uses, as rows in the profile patch layer written by `dsh-patch tui-preset`
 # from the data below.
 #
 # `plugins` points at the same `agent.cordis.yml` files the modules used to

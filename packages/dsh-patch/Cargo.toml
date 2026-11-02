@@ -1,0 +1,17 @@
+[package]
+name = "dsh-patch"
+version = "0.1.0"
+edition = "2021"
+description = "Exact-string, count-asserted patcher for dsh bundles and profiles"
+license = "MIT"
+
+[[bin]]
+name = "dsh-patch"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "1"
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]

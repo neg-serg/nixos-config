@@ -5,7 +5,7 @@ set -euo pipefail
 #
 # Decodes every stored Session artifact through dsh's own format catalog (the
 # v0->v3 migration chain) and fails when any of them no longer migrates. See
-# packages/dsh/patch-session-format.py for the compatibility patches this guards.
+# dsh-patch's `session-format` set for the compatibility patches this guards.
 #
 # Usage: check-dsh-sessions.sh [dsh-store-path] [sessions-root]
 #

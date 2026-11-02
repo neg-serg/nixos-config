@@ -95,7 +95,8 @@ in
       dwg-reverb = final.callPackage ./dwg-reverb { }; # compiled SC UGen plugin: virtual room reverb (early reflections + FDN late reverb)
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
       vowel = final.callPackage ./vowel { inherit (final.neg.functions) mkScQuark; }; # Vowel SC quark (formant tables) used by SuperDirt
-      dsh = final.callPackage ./dsh { }; # DeepSeek Harness agent CLI (dsh)
+      dsh-patch = final.callPackage ./dsh-patch { }; # count-asserted patcher for dsh bundles and profiles
+      dsh = final.callPackage ./dsh { inherit (final.neg) dsh-patch; }; # DeepSeek Harness agent CLI (dsh)
       aurora = final.callPackage ./aurora.nix {
         src = inputs.aurora-src;
       }; # aurora: local MPD player with a Vulkan UI

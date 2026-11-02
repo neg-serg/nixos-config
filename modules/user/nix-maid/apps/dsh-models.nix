@@ -67,12 +67,10 @@ let
 
   blocksJson = pkgs.writeText "dsh-models-blocks.json" (builtins.toJSON blocks);
 
-  patch = ./dsh-models-settings.py;
-
   ensure = pkgs.writeShellScript "dsh-models-ensure" ''
     set -eu
     export PATH=/run/current-system/sw/bin:$PATH
-    ${lib.getExe pkgs.python3} ${patch} "${homeDir}/.dsh/settings.yaml" ${blocksJson}
+    ${lib.getExe pkgs.neg.dsh-patch} models-settings "${homeDir}/.dsh/settings.yaml" ${blocksJson}
   '';
 in
 {

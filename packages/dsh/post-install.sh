@@ -61,20 +61,19 @@ if [ "$(grep -c '^    - id: file-upload-transport$' "$webapp_patch")" != 1 ]; th
 fi
 
 # dsh-widgets server patches (exact-string + count-asserted, fails the
-# build loudly on dsh version drift): subagent model override param
-# (delegate to deepseek-flash etc. per call) + presentationMeta on the
-# subagent / workflow / ralph tools so their persisted tool/result meta
-# carries a structured descriptor, and Session.append() accepts
-# { ignorable: true } for plugin events (bash_live) so they stop killing
-# sessions (see packages/dsh/patch-widgets.py).
-PYTHONPATH=@PATCHLIB_DIR@ python3 @PY@ "$search_pkg"
+# build loudly on dsh version drift): presentationMeta on the subagent /
+# workflow / ralph tools so their persisted tool/result meta carries a
+# structured descriptor, and Session.append() accepts { ignorable: true }
+# for plugin events (bash_live) so they stop killing sessions (dsh-patch
+# `widgets`, packages/dsh-patch/src/patches.rs).
+@DSHPATCH@ widgets "$search_pkg"
 
 # Session history: released v0 (0.1.1) wrote an obsolete `origin` member in
 # `permission/preset` events, and 0.1.5's frozen v0 inventory refuses it, so
 # pre-upgrade sessions fail to open ("Failed to load history: ... refuses
 # this format v0 Session"). The patcher strips the member while migrating
-# (exact-string + count-asserted, see packages/dsh/patch-session-format.py).
-PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_V2@ "$search_pkg"
+# (exact-string + count-asserted, see dsh-patch `session-format`).
+@DSHPATCH@ session-format "$search_pkg"
 
 # Session migration v3->v4: 0.1.x marks a steering restart by splicing a
 # next-turn message and opening turn/N+1 without a turn/end for turn/N. The
@@ -82,14 +81,14 @@ PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_V2@ "$search_pkg"
 # events that settle the aborted turn, or it skips the synthetic turn/end and
 # the transformed artifact is refused ("turn/start does not open the expected
 # turn"), which blocked session search entirely (exact-string + count-asserted,
-# see packages/dsh/patch-session-migration.py).
-PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_MIG@ "$search_pkg"
+# see dsh-patch `session-migration`).
+@DSHPATCH@ session-migration "$search_pkg"
 
 # run_code / PTC workers: the node runtime tombstones every ambient env key
 # except STARTUP_ENVIRONMENT_NAMES, which silently drops LD_LIBRARY_PATH and
 # kills the official Node build (no RPATH) with exit 127 before it boots
-# (see packages/dsh/patch-ptc-env.py).
-PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_PTC@ "$search_pkg"
+# (see dsh-patch `ptc-env`).
+@DSHPATCH@ ptc-env "$search_pkg"
 
 # Agent presets are declarative rows in 0.2.0-rc.2 (and since 0.1.7): the
 # shipped ones are `presets/<id>.patch.yml` files of the dsh-web-app bundle,
@@ -107,4 +106,4 @@ PYTHONPATH=@PATCHLIB_DIR@ python3 @PY_PTC@ "$search_pkg"
 #     there is no Chinese UI copy left to rewrite.
 #
 # The `neg`/`fast` declarations live in the repo's profile patch layers — see
-# modules/user/nix-maid/apps/dsh-tui-preset-patch.py and dsh.nix.
+# dsh-patch's `tui-preset` subcommand and dsh.nix.

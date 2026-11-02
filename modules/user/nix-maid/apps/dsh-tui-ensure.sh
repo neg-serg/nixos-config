@@ -161,7 +161,7 @@ case "$DSH_RUNTIME" in
   "" | 0.0.* | 0.1.*) ;;
   *)
     if [ -f "$LIANGSHEN_PRESET" ]; then
-      python3 @liangshenPrune@ "$LIANGSHEN_PRESET" \
+      @dshPatch@ liangshen-prune "$LIANGSHEN_PRESET" \
         || echo "dsh-tui-ensure: liangshen row prune failed" >&2
     fi
     ;;
@@ -258,7 +258,7 @@ if [ -f "$PATCH" ]; then
   # The rewriter owns the fallback-preset row (the scoped id dsh-TUI's bundle
   # exposes), the agent-preset declarations and the plugin rows; see its header
   # for the retired code-runtime block it also consumes.
-  python3 @presetPatch@ "$PATCH" "$ROWS" @presetData@ dsh-tui-ensure \
+  @dshPatch@ tui-preset "$PATCH" "$ROWS" @presetData@ dsh-tui-ensure \
     || echo "dsh-tui-ensure: preset patch failed" >&2
   rm -f "$ROWS"
 fi

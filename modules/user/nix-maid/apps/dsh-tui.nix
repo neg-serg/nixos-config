@@ -35,14 +35,10 @@ let
   # The profile ships `cordis.patch.yml` as an empty list; rows must replace
   # that `[]` (a second YAML root node is a parse error). The caretaker rewrites
   # the header comments plus its own rows, so a hand-edited or half-written file
-  # heals on the next run.
-  presetPatch = ./dsh-tui-preset-patch.py;
-
-  # The dsh-TUI bundle's own liangshen preset still carries the 0.1.x
-  # workflow-provider row next to its 0.2.0 replacement; the harness's static
-  # compatibility preflight denies it and with it the whole preset. The pruner
-  # drops that dead row from the installed copy (see its header).
-  liangshenPrune = ./dsh-tui-liangshen-prune.py;
+  # heals on the next run. dsh-patch's `tui-preset` owns that rewrite and
+  # `liangshen-prune` drops the bundle's dead 0.1.x workflow-provider row (the
+  # harness's static compatibility preflight denies it and with it the preset).
+  dshPatch = lib.getExe pkgs.neg.dsh-patch;
 
   # One-time XDG relocation of ~/.dsh / ~/.dsh-tui (idempotent; the caretaker
   # calls it on every run and leaves compatibility symlinks behind).
@@ -54,8 +50,7 @@ let
         advisor = pkgs.copyPathToStore ./dsh-advisor;
         categoryPlugin = pkgs.copyPathToStore ./dsh-category-skill-reminder;
         ttsr = pkgs.copyPathToStore ./dsh-ttsr;
-        presetPatch = pkgs.copyPathToStore presetPatch;
-        liangshenPrune = pkgs.copyPathToStore liangshenPrune;
+        inherit dshPatch;
         themeJson = pkgs.copyPathToStore themeJson;
         inherit homeDir;
         inherit xdgMigrate;
