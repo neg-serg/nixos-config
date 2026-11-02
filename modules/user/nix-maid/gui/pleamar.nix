@@ -163,14 +163,15 @@ let
   # Helper workers a scene spawns by name (`permissions { run: "pleamar-sysmon" }`):
   # nix-maid links them into ~/.local/bin so `spawn("pleamar-sysmon", …)` resolves
   # (the unit PATH already puts %h/.local/bin first). The names are the contract
-  # INTERFACES.md §7 fixes. sysmon is the Rust crate packages/pleamar-sysmon now;
-  # weather/calendar/kbd remain scripts in files/pleamar/scripts/helpers.
+  # INTERFACES.md §7 fixes. sysmon and weather are the Rust crates
+  # packages/pleamar-sysmon and packages/pleamar-weather; calendar/kbd remain
+  # scripts in files/pleamar/scripts/helpers.
   pleamarHelperLinks = {
     ".local/bin/pleamar-sysmon" = {
       source = lib.getExe pkgs.neg.pleamar-sysmon;
     };
     ".local/bin/pleamar-weather" = {
-      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/weather.sh";
+      source = lib.getExe pkgs.neg.pleamar-weather;
     };
     ".local/bin/pleamar-journal" = {
       source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/journal.sh";

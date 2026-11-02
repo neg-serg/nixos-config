@@ -109,6 +109,7 @@ in
       questyle-ctl = final.callPackage ./questyle-ctl { }; # USB/ALSA/PipeWire + vendor HID channel of the Questyle QCC dongle
       pleamar-fixtures = final.callPackage ./pleamar-fixtures { }; # D-Bus fixtures for the pleamar engine (MPRIS player, nested tray item)
       pleamar-sysmon = final.callPackage ./pleamar-sysmon { }; # pleamar system monitor worker (procfs/sysfs, JSON lines)
+      pleamar-weather = final.callPackage ./pleamar-weather { }; # pleamar weather worker (Open-Meteo/MET Norway/wttr.in, JSON lines)
       tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the Python tgchat after a fresh login)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
       renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)

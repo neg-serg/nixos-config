@@ -1999,7 +1999,7 @@ end
 
 -- `%c|%t|%h|%w|%C|%p|%P`: an arrow, the temperature, the humidity, the wind, the sky in words,
 -- the precipitation and the pressure. Each field is read for its first number, and the sky's words
--- go through the same ladder the worker uses (`scripts/helpers/weather.sh`, `case "$cond"`), so
+-- go through the same ladder the worker uses (`packages/pleamar-weather/src/wttr.rs`), so
 -- both halves of the shell name a WMO code the same way.
 local function weather_fetch()
     run("curl", { "-s", "--max-time", "6", weather_url() }, function(out, code)

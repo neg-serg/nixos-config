@@ -898,7 +898,8 @@ with `write(id, line .. "\n")`. `stderr` is for humans only (a traceback a journ
 never part of the protocol. Logs on stdout are a defect: a line that does not parse is reported as a
 protocol error and the sample is dropped.
 
-**Names and permissions.** Workers live in `files/pleamar/scripts/helpers/` (PH2-E scope), are
+**Names and permissions.** Workers live in `files/pleamar/scripts/helpers/` (calendar, kbdlayout) or
+in the Rust crates `packages/pleamar-sysmon` and `packages/pleamar-weather` (PH2-E scope), are
 installed into `PATH` as `pleamar-<name>` (`pleamar-sysmon`, `pleamar-weather`, `pleamar-calendar`,
 `pleamar-kbdlayout`, `pleamar-journal`, `pleamar-wallpaper-palettes`, `pleamar-wallpaper-apply`,
 `pleamar-wallpaper-still`), and are spawned by that bare name. A scene declares only the ones it

@@ -219,7 +219,6 @@ once_pair() {
   compare_once "$label"
 }
 
-
 # seed_cache KIND LAT LON GEOCODED_AT FETCHED_AT PROVIDER — a hand-written
 # cache document, so a scenario can choose the age of the payload and of the
 # geocoding memory.
@@ -280,7 +279,6 @@ once_pair "joined-errors" --forecast-status 503 --wttr-body 'no weather here' --
 section "broken met.no leaves daily empty"
 once_pair "broken-metno" --forecast-status 503 --metno-body '<html>down</html>' -- \
   --lat 59.9 --lon 30.7
-
 
 section "geocoding finds nothing"
 once_pair "city-not-found" --geocode-body '{"results":[]}' -- --city Nowhere
@@ -402,7 +400,7 @@ compare_once "force"
 
 section "stale cache is refetched"
 for kind in shell rust; do
-  old=$(( $(date +%s) - 1000 ))
+  old=$(($(date +%s) - 1000))
   jq -n -c --arg city "Oslo" --argjson lat 59.9 --argjson lon 10.7 \
     --argjson old "$old" \
     '{city:$city,latitude:$lat,longitude:$lon,geocoded_at:$old,fetched_at:$old,
@@ -654,9 +652,9 @@ sigterm_case() {
   set -e
   exec 9>&-
   rm -f "$WORK/fifo-$kind"
-  elapsed_ns=$(( $(date +%s%N) - started ))
+  elapsed_ns=$(($(date +%s%N) - started))
   stop_mock
-  local elapsed_ms=$(( elapsed_ns / 1000000 ))
+  local elapsed_ms=$((elapsed_ns / 1000000))
   printf '  %s: exit %d after %d ms\n' "$kind" "$code" "$elapsed_ms"
   [ "$code" -eq 0 ] && [ "$elapsed_ms" -lt 2000 ]
 }
