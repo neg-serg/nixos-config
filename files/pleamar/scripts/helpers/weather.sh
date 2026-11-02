@@ -158,7 +158,7 @@ while [ $# -gt 0 ]; do
     --metno-base)
       [ $# -ge 2 ] || die "--metno-base needs a value"
       METNO_BASE=$2
-      shift
+      shift 2
       ;;
     --wttr-base)
       [ $# -ge 2 ] || die "--wttr-base needs a value"
@@ -245,7 +245,7 @@ ack() {
 # serving it would keep the card's forecast row empty for a whole TTL after an upgrade).
 CACHE_JSON=""
 if [ -f "$CACHE_FILE" ]; then
-  CACHE_JSON=$(jq -c 'select(.daily != null)' "$CACHE_FILE" 2> /dev/null || true)
+  CACHE_JSON=$(jq -c 'select(.payload.daily != null)' "$CACHE_FILE" 2> /dev/null || true)
 fi
 
 NOW=0
@@ -488,6 +488,9 @@ cache_write() {
       fetched_at:$now, payload:$payload}' > "$tmp"
   mv -f -- "$tmp" "$CACHE_FILE"
   TMP_CACHE=""
+  # The in-memory copy is what the next sample compares against: a fresh write it does not see is
+  # dismissed as a miss, and every interval would hit the network again.
+  CACHE_JSON=$(jq -c 'select(.payload.daily != null)' "$CACHE_FILE" 2> /dev/null || true)
 }
 
 # Resolve coordinates from --lat/--lon, the cache, or the geocoding API.

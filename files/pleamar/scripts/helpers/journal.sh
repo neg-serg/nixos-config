@@ -53,15 +53,15 @@ command -v jq > /dev/null || {
   exit 1
 }
 
-logs=$(journalctl --user --since "$SINCE" --no-pager -o cat 2> /dev/null | wc -l || echo 0)
-errors=$(journalctl --user --since "$SINCE" -p err --no-pager -o cat 2> /dev/null | wc -l || echo 0)
-services=$(systemctl --user list-units --type=service --state=running --no-legend 2> /dev/null | wc -l || echo 0)
+logs=$(journalctl --user --since "$SINCE" --no-pager -o cat 2> /dev/null | wc -l) || logs=0
+errors=$(journalctl --user --since "$SINCE" -p err --no-pager -o cat 2> /dev/null | wc -l) || errors=0
+services=$(systemctl --user list-units --type=service --state=running --no-legend 2> /dev/null | wc -l) || services=0
 
 entries=$(
   journalctl --user --since "$SINCE" -p warning --no-pager -o json \
     --output-fields=__REALTIME_TIMESTAMP,_SYSTEMD_UNIT,SYSLOG_IDENTIFIER,MESSAGE -n "$ENTRIES" 2> /dev/null \
     | jq -s -c '[ .[] | {
-        time: ((.__REALTIME_TIMESTAMP | tonumber? // 0) / 1000000 | strftime("%H:%M")),
+        time: ((.__REALTIME_TIMESTAMP | tonumber? // 0) / 1000000 | strflocaltime("%H:%M")),
         service: (._SYSTEMD_UNIT // .SYSLOG_IDENTIFIER // "journal"),
         msg: ((.MESSAGE // "") | if type == "array" then join(" ") else tostring end | .[0:120])
       } ]' 2> /dev/null || echo '[]'
