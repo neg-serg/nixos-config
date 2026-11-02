@@ -121,8 +121,17 @@ let
     ./patches/0003-libexpr-reuse-the-memoized-derivation-hash-for-a-rep.patch
     ./patches/0004-libutil-check-the-allow-list-predecessor-before-walk.patch
     ./patches/0005-libexpr-use-constant-error-contexts-in-builtins.any-.patch
-    ./patches/0009-libfetchers-refresh-the-cached-git-HEAD-after-readin.patch
   ];
+  # 0009 (refresh the cached git HEAD after reading) is deliberately absent: on
+  # Determinate's tree it makes the functional suite fail a flakes test that the
+  # pristine tree passes — tests/functional/flakes/flakes.sh:262,
+  # `nix build "git+file://…/flake%202#bar"` answers
+  # "fatal: couldn't find remote ref refs/heads/master". Measured across variants:
+  # pristine Ok 201 / Fail 1, the five-patch build Ok 200 / Fail 2 (that test
+  # included), four patches without 0009 Ok 201 / Fail 1. The patch fixes a real
+  # staleness bug in git input caching, so this is a trade — correctness of this
+  # host's flakes against a fix we do not need here — and it is the sort of thing
+  # to revisit when nix-src moves.
 
   # The instrumented build must not use -Db_lto: Determinate builds with LTO,
   # and with LTO the per-TU counters are only created at the LTO link step, so
