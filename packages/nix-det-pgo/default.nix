@@ -19,6 +19,15 @@
 # the resulting drvPath is identical to the system Nix's. Dropping the `patches`
 # list below reproduces the PGO-only control.
 #
+# Re-measured through this package after it was folded into the tree (same
+# method: 6 interleaved rounds, one eval cache per binary, drvPath as the
+# oracle): stock Determinate 3.23.3 median 8.59 s, this build median 7.32 s
+# (-14.9 %), every binary producing the same toplevel drvPath. The gain is
+# smaller than the prototype's -18 % because the nixpkgs pin moved between the
+# two measurements (the prototype built against a 26.11 snapshot whose own nix
+# attr is 2.35.2, this tree against rev 1c89083 where it is 2.35.3), so
+# compiler, stdenv and the component closures are all newer.
+#
 # lazy-trees survives by construction: none of the five patches touches
 # eval-settings.hh, so the setting table and its defaults are Determinate's own
 # — `nix config show` keeps `lazy-trees = true`, and eval-cache/parallel-eval
@@ -274,8 +283,20 @@ let
       # Same choice modules/nix/settings.nix makes for nix.package: Determinate's
       # own test suite gates the build on nix-*-tests-run inputs, and a subset of
       # those tests (IPv6 zone-id URL parsing) fails on their tree regardless of
-      # this package. The patches are proven by behaviour instead — see the
-      # header's measurements, all with an identical drvPath to the system Nix.
+      # this package. Turning doCheck on would therefore fail the build on a
+      # failure this package did not cause, so the patches are accepted by
+      # behaviour instead, in three layers:
+      #   1. the toplevel drvPath matches the stock binary on the same tree
+      #      (measured repeatedly, including the -18 % A/B runs);
+      #   2. a differential battery runs stock against this build and compares
+      #      output byte for byte: builtins.any/all, a structuredAttrs drvPath,
+      #      `nix hash path`, fromJSON/toJSON, path canonicalisation and
+      #      `nix flake metadata --json` — all identical on 2026-11-02;
+      #   3. `scripts/dev/nix-memo-diff.sh` covers the memoisation patch for the
+      #      upstream build (packages/nix-eval-patched), where doCheck is on.
+      # What none of this proves: that a patch behaves right in a code path the
+      # battery does not touch. That is the price of shipping a build whose own
+      # suite cannot go green on this source tree.
       doCheck = false;
 
       passthru = (prevAttrs.passthru or { }) // {
