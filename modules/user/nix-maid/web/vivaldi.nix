@@ -208,20 +208,18 @@ in
     #   5. set the new tab to the dark newtab extension (vivaldi.tabs.new_page.link
     #      = extension), so Ctrl+T no longer opens the start page and its white
     #      first frame (files/vivaldi-newtab, loaded via --load-extension).
-    systemd.user.services.vivaldi-prefs =
-      let
-        python = lib.getExe' pkgs.python3 "python3";
-      in
-      {
-        description = "Re-assert Vivaldi preferences (CSS mods dir, UI auto-hide, Ctrl+W free, Ctrl+G closes the tab, dark new tab)";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${python} ${./vivaldi-prefs.py}";
-        };
-        after = [ "graphical-session.target" ];
-        wants = [ "graphical-session.target" ];
-        wantedBy = [ "graphical-session.target" ];
+    # The profile fixer is a Rust package now (packages/vivaldi-prefs): the
+    # unit needs no interpreter, and the profile path comes from $HOME.
+    systemd.user.services.vivaldi-prefs = {
+      description = "Re-assert Vivaldi preferences (CSS mods dir, UI auto-hide, Ctrl+W free, Ctrl+G closes the tab, dark new tab)";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = lib.getExe pkgs.neg.vivaldi-prefs;
       };
+      after = [ "graphical-session.target" ];
+      wants = [ "graphical-session.target" ];
+      wantedBy = [ "graphical-session.target" ];
+    };
 
   };
 }

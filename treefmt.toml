@@ -12,7 +12,6 @@ excludes = [
   "files/kitty/**/*.py",
   # ASCII-art scripts — shfmt/black would mangle the layout
   "files/art/fun-art/*.sh",
-  "files/art/fun-art/zalgo.py",
   # Personal Obsidian vault — tracked, but prose-only: kept out of formatting
   "files/obsidian-vault/**",
   # Zsh-specific scripts that shfmt can't parse
