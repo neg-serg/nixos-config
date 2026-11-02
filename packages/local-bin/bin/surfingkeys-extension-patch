@@ -43,11 +43,17 @@ fi
 # 'settingsSnippets' userScript; if the config fetch ever fails, whatever body
 # was registered last keeps running on every page. The helper mirrors the
 # extension's own registration wrapper and is called from the fetch callback
-# (step 4), so a successful fetch always replaces the registered code.
-if ! grep -q 'NEG_SK_REGISTER' "$BG_JS"; then
+# (step 4), so a successful fetch always replaces the registered code. It reads
+# the current registration first and leaves it alone when the code already
+# matches: this runs on every page load, and an unconditional unregister+register
+# would rewrite the extension's dynamic-script store for no reason.
+if ! grep -q 'NEG_SK_REGISTER2' "$BG_JS"; then
+  # Drop the first version of the helper (no equality guard) if a previous run
+  # of this patcher left it behind.
+  sed -i '/^const NEG_SK_REGISTER=function(s){var c=/d' "$BG_JS" || true
   tmp=$(mktemp)
   cat > "$tmp" <<'JS'
-const NEG_SK_REGISTER=function(s){var c="import(\"./api.js\").then(function(m){m.default(\""+chrome.runtime.getURL("/")+"\",function(api,settings){"+s+"\n})});";chrome.userScripts.unregister({ids:["settingsSnippets"]},function(){chrome.userScripts.register([{allFrames:!0,id:"settingsSnippets",matches:["*://*/*","file:///*"],js:[{code:c}],runAt:"document_start"}])})};
+const NEG_SK_REGISTER2=function(s){var c="import(\"./api.js\").then(function(m){m.default(\""+chrome.runtime.getURL("/")+"\",function(api,settings){"+s+"\n})});";chrome.userScripts.getScripts({ids:["settingsSnippets"]},function(r){if(!chrome.runtime.lastError&&r&&r.length&&r[0].js&&r[0].js[0]&&r[0].js[0].code===c){return}chrome.userScripts.unregister({ids:["settingsSnippets"]},function(){chrome.userScripts.register([{allFrames:!0,id:"settingsSnippets",matches:["*://*/*","file:///*"],js:[{code:c}],runAt:"document_start"}])})})};
 JS
   cat "$tmp" "$BG_JS" > "$BG_JS.tmp"
   mv "$BG_JS.tmp" "$BG_JS"
@@ -68,11 +74,15 @@ if ! grep -qF "(e.localPath=\"$URL\",e.localPath)" "$BG_JS"; then
 fi
 
 # 4. Refresh the registered userScript after every successful fetch: Vivaldi
-# otherwise keeps the previously registered 'settingsSnippets' code.
-if ! grep -qF 'NEG_SK_REGISTER(t)' "$BG_JS"; then
+# otherwise keeps the previously registered 'settingsSnippets' code. The helper
+# itself skips the write when the wrapped code already matches.
+if ! grep -qF 'NEG_SK_REGISTER2(t)' "$BG_JS"; then
   if grep -qF 'B(e.localPath,function(t){e.snippets=t,o(e)},' "$BG_JS"; then
-    sed -i 's|B(e.localPath,function(t){e.snippets=t,o(e)},|B(e.localPath,function(t){e.snippets=t,NEG_SK_REGISTER(t),o(e)},|' "$BG_JS"
+    sed -i 's|B(e.localPath,function(t){e.snippets=t,o(e)},|B(e.localPath,function(t){e.snippets=t,NEG_SK_REGISTER2(t),o(e)},|' "$BG_JS"
     note "Patched $BG_JS (refresh registration after fetch)"
+  elif grep -qF 'NEG_SK_REGISTER(t)' "$BG_JS"; then
+    sed -i 's|NEG_SK_REGISTER(t)|NEG_SK_REGISTER2(t)|g' "$BG_JS"
+    note "Patched $BG_JS (refresh registration after fetch, upgraded)"
   else
     missing "fetch-callback anchor not found in $BG_JS"
   fi
@@ -87,8 +97,8 @@ fi
 # A critical patch that silently stopped matching means the minifier moved and
 # the anchors need an update; fail the unit so the breakage is visible.
 grep -qF 'NEG_SK_URL' "$BG_JS" || missing "critical patch missing: URL injection"
-grep -qF 'NEG_SK_REGISTER' "$BG_JS" || missing "critical patch missing: registration helper"
-grep -qF 'NEG_SK_REGISTER(t)' "$BG_JS" || missing "critical patch missing: registration refresh"
+grep -qF 'NEG_SK_REGISTER2' "$BG_JS" || missing "critical patch missing: registration helper"
+grep -qF 'NEG_SK_REGISTER2(t)' "$BG_JS" || missing "critical patch missing: registration refresh"
 grep -qF "(e.localPath=\"$URL\",e.localPath)" "$BG_JS" || missing "critical patch missing: hardcoded config URL"
 
 exit "$fail"
