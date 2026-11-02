@@ -1,0 +1,18 @@
+[package]
+name = "minibbs"
+version = "0.1.0"
+edition = "2021"
+description = "Tiny BBS-style message board (SQLite + HTTP)"
+license = "MIT"
+
+[[bin]]
+name = "minibbs"
+path = "src/main.rs"
+
+[dependencies]
+
+[build-dependencies]
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]
