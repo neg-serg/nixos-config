@@ -1,0 +1,16 @@
+[package]
+name = "questyle-ctl"
+version = "0.1.0"
+edition = "2021"
+description = "Inspect and drive the Questyle QCC Dongle Pro2 over its vendor HID channel"
+license = "MIT"
+
+[[bin]]
+name = "questyle-ctl"
+path = "src/main.rs"
+
+[dependencies]
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]
