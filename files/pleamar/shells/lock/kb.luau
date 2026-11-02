@@ -1,7 +1,7 @@
 -- kb.luau — the keyboard chip's source, shared by the real lock and its preview.
 --
 -- `require("kb")(on_caps_changed)` returns a handle with `start`/`stop`: it spawns the
--- `pleamar-kbdlayout` worker (scripts/helpers/kbd.sh), subscribes to its `layout` topic, and keeps
+-- `pleamar-kbdlayout` worker (packages/pleamar-kbdlayout), subscribes to its `layout` topic, and keeps
 -- two names up to date — `text.kb_layout` (the code in force, `ru`) and `fact.kb_caps`. A live
 -- change of the second calls `on_caps_changed`, because the status line has three claims on it and
 -- only the caller knows the other two.

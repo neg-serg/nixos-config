@@ -1,0 +1,44 @@
+[package]
+name = "pleamar-calendar"
+version = "0.1.0"
+edition = "2021"
+description = "pleamar calendar worker (khal, nager.at holidays, isdayoff.ru production calendar; JSON lines, INTERFACES.md §7)"
+license = "MIT"
+
+[[bin]]
+name = "pleamar-calendar"
+path = "src/main.rs"
+
+[dependencies]
+# The §7 command lines, the payload and both caches are JSON. `preserve_order`
+# keeps the key order of a document read back from the cache, which is what
+# jq's `{month, first, ...}` projection preserved; without it serde would sort
+# the nested event/holiday objects and the cached sample would not be byte-equal
+# to the shell's.
+serde_json = { version = "1", features = ["preserve_order"] }
+# HTTP: the shell drove curl; this is the same blocking request/response model.
+# - rustls-tls: no OpenSSL at build or run time.
+# - socks: curl honoured ALL_PROXY=socks5h://… and this host's proxy is SOCKS5,
+#   so the port must too; see src/http.rs for the proxy notes.
+# - default-features = false drops cookies, gzip and native-tls, none of which
+#   the curl calls used.
+reqwest = { version = "0.12", default-features = false, features = [
+  "blocking",
+  "rustls-tls",
+  "socks",
+] }
+# SIGTERM/SIGINT cleanup: std carries no POSIX signal API, and the worker must
+# exit 0 on the same signals the shell trapped (and drop an in-flight request).
+signal-hook = "0.3"
+# The shell used GNU `date` for the default month (`date +%Y-%m`), for the
+# month's first/last day (`+1 month -1 day`) and for normalising khal dates.
+# chrono provides the same wall clock (`Local`) and calendar arithmetic without
+# a runtime date program; `clock` is only for Local::now, `std` for formatting.
+chrono = { version = "0.4", default-features = false, features = [
+  "clock",
+  "std",
+] }
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = lib.cleanSource ./.` copies just this directory).
+[workspace]

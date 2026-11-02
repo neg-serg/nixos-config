@@ -26,9 +26,9 @@ The contract behind those files (the names, the two samplers, the atomic write, 
 ## Re-theme from the wallpaper
 
 ```bash
-bash files/pleamar/scripts/theme/theme.sh                      # the cached wallpaper
-bash files/pleamar/scripts/theme/theme.sh --wallpaper ~/pic/wall.png
-bash files/pleamar/scripts/theme/theme.sh --accent '#006FCC'   # force the accent only
+pleamar-theme                      # the cached wallpaper
+pleamar-theme --wallpaper ~/pic/wall.png
+pleamar-theme --accent '#006FCC'   # force the accent only
 ```
 
 The script takes the wallpaper from `--wallpaper`, else from
@@ -40,7 +40,7 @@ No wallpaper and no `--accent`/`--from-json` is an error and leaves the previous
 
 Pleamar re-reads an imported file when it changes, so rewriting `theme.plm` re-themes every running
 scene that imports it — no restart, no signal. The trigger is already wired: `pleamar-theme.service`
-(oneshot) seeds `theme.plm` from `theme.default.plm` when absent and runs `theme.sh`, and the
+(oneshot) seeds `theme.plm` from `theme.default.plm` when absent and runs `pleamar-theme`, and the
 `pleamar-theme` path unit in `modules/user/nix-maid/gui/pleamar.nix` starts it when either cache
 path changes. `theme.mode` is read at run time, so a mode change applies on the next wallpaper
 change or on an explicit run with `--mode`.
@@ -48,7 +48,7 @@ change or on an explicit run with `--mode`.
 ## Verify
 
 ```bash
-bash files/pleamar/scripts/theme/test.sh   # hermetic: temp HOME/XDG, fixtures, assertions
+cargo test --manifest-path packages/pleamar-theme/Cargo.toml --locked   # hermetic suite
 bash scripts/dev/check-plm.sh .            # every scene still compiles
 ```
 
@@ -56,5 +56,5 @@ bash scripts/dev/check-plm.sh .            # every scene still compiles
 
 The Quickshell theming section (the `files/quickshell/` layout, the `Theme/panel.jsonc` colours and
 the `quickshell --quit` reload) described a tree that no longer exists; its palette and accent
-behaviour is what `theme.sh` reproduces for pleamar, and the panel's own tones are now the frozen
-ones in `lib/palette.plm`.
+behaviour is what `pleamar-theme` reproduces for pleamar, and the panel's own tones are now the
+frozen ones in `lib/palette.plm`.

@@ -898,13 +898,16 @@ with `write(id, line .. "\n")`. `stderr` is for humans only (a traceback a journ
 never part of the protocol. Logs on stdout are a defect: a line that does not parse is reported as a
 protocol error and the sample is dropped.
 
-**Names and permissions.** Workers live in `files/pleamar/scripts/helpers/` (calendar, kbdlayout) or
-in the Rust crates `packages/pleamar-sysmon` and `packages/pleamar-weather` (PH2-E scope), are
-installed into `PATH` as `pleamar-<name>` (`pleamar-sysmon`, `pleamar-weather`, `pleamar-calendar`,
-`pleamar-kbdlayout`, `pleamar-journal`, `pleamar-wallpaper-palettes`, `pleamar-wallpaper-apply`,
-`pleamar-wallpaper-still`), and are spawned by that bare name. A scene declares only the ones it
-uses: `permissions { run: "pleamar-sysmon" }`. Never `sh -c`, never a path, never a second worker
-name the module does not install.
+**Names and permissions.** Workers are the Rust crates `packages/pleamar-sysmon`,
+`packages/pleamar-weather`, `packages/pleamar-calendar`, `packages/pleamar-journal` and
+`packages/pleamar-kbdlayout` (PH2-E scope), installed into `PATH` as `pleamar-<name>`
+(`pleamar-sysmon`, `pleamar-weather`, `pleamar-calendar`, `pleamar-kbdlayout`, `pleamar-journal`,
+`pleamar-wallpaper-palettes`, `pleamar-wallpaper-apply`, `pleamar-wallpaper-still`), and are spawned
+by that bare name. A scene declares only the ones it uses: `permissions { run: "pleamar-sysmon" }`.
+Never `sh -c`, never a path, never a second worker name the module does not install.
+
+`pleamar-journal` also installs beside them but is a command, not a streaming worker: the panels
+scene runs it once per dashboard open with `run(...)`, one JSON snapshot line, no handshake.
 
 Two names install beside them and are **not** workers: `pleamar-wallpaper-palettes` and
 `pleamar-wallpaper-apply` are commands the `picker` scene runs to completion with `run(...)` — the

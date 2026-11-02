@@ -66,7 +66,7 @@ never implemented. Dev tooling is gated where it is installed instead — `featu
   with memory/CPU caps, a `pleamar-health` hang watchdog, and nix-maid links of
   `files/pleamar/{shells,lib}` plus a generated `~/.config/pleamar/autostart`. The flag is what
   makes pleamar the session's shell; the theme pipeline that feeds its palette is
-  `files/pleamar/scripts/theme/`.
+  `packages/pleamar-theme`.
 
 ## Extra Arguments (flake extraSpecialArgs)
 

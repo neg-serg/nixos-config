@@ -1,0 +1,19 @@
+# journal.sh - journal snapshot worker (pleamar helper; protocol: INTERFACES.md §7).
+#
+# The system dashboard (the `system` drawer) shows what the reference's
+# SystemMonitorPopup shows: how many lines the journal wrote in the last day,
+# how many of them were errors, how many user services are running, and the last
+# few entries with a time, a unit and a message.
+#
+# Unlike the sampling workers this one does not stream: it prints one JSON
+# object and exits, so the scene spawns it when the drawer opens and reads a
+# single line.
+#
+#   {"ok":true,"worker":"journal","version":1,
+#    "data":{"logs":N,"errors":N,"services":N,
+#            "entries":[{"time":"14:32","service":"x.service","msg":"…"}]}}
+#
+# Usage: journal.sh [--since "-24h"] [--entries N] [--help]
+#
+# Exit: 0 on success, 1 when journalctl or systemctl is missing.
+

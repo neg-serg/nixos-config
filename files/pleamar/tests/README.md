@@ -76,7 +76,7 @@ the scene on it, the drawer opened through IPC, `grim` of that display.
   copy when it is started from `shells/`, the generated one under `~/.config/pleamar` when started
   from there. So a *look* is rehearsed by editing the repo copy and never the user's file — but note
   that `skin.light` is only a flag: flipping it does not turn the repo's dark values into a light
-  palette, which takes `scripts/theme/theme.sh --mode light`.
+  palette, which takes `pleamar-theme --mode light`.
 - A light background for the compositor makes glass legible in the shot:
   `printf 'output * bg #ffffff solid_color\n' > sway.conf` and `sway -c sway.conf`.
 

@@ -39,7 +39,7 @@
 # - `pleamar-health` + `pleamar-health.timer` — hang watchdog: probes every scene in
 #   `pleamarHealthScenes` (the bar and the panels; 2-minute period, first run after 5 minutes) and
 #   restarts the one that stops answering.
-# - `pleamar-theme` — runs the theme pipeline (`files/pleamar/scripts/theme`) on every wallpaper
+# - `pleamar-theme` — runs the theme pipeline (packages/pleamar-theme) on every wallpaper
 #   change, writing `~/.config/pleamar/theme.plm`.
 # - `pleamar-cleanup-symlink` — removes stale deployed links; without it a scene dies on a missing
 #   `.plm` between cleanup and activation.
@@ -163,9 +163,8 @@ let
   # Helper workers a scene spawns by name (`permissions { run: "pleamar-sysmon" }`):
   # nix-maid links them into ~/.local/bin so `spawn("pleamar-sysmon", …)` resolves
   # (the unit PATH already puts %h/.local/bin first). The names are the contract
-  # INTERFACES.md §7 fixes. sysmon and weather are the Rust crates
-  # packages/pleamar-sysmon and packages/pleamar-weather; calendar/kbd remain
-  # scripts in files/pleamar/scripts/helpers.
+  # INTERFACES.md §7 fixes. All workers are the Rust crates
+  # packages/pleamar-sysmon/-weather/-calendar/-journal/-kbdlayout.
   pleamarHelperLinks = {
     ".local/bin/pleamar-sysmon" = {
       source = lib.getExe pkgs.neg.pleamar-sysmon;
@@ -174,13 +173,13 @@ let
       source = lib.getExe pkgs.neg.pleamar-weather;
     };
     ".local/bin/pleamar-journal" = {
-      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/journal.sh";
+      source = lib.getExe pkgs.neg.pleamar-journal;
     };
     ".local/bin/pleamar-calendar" = {
-      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/calendar.sh";
+      source = lib.getExe pkgs.neg.pleamar-calendar;
     };
     ".local/bin/pleamar-kbdlayout" = {
-      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/kbd.sh";
+      source = lib.getExe pkgs.neg.pleamar-kbdlayout;
     };
   };
 
@@ -209,17 +208,19 @@ let
     neg.mkDirLinks ".local/share/icons" "${pkgs.adwaita-icon-theme}/share/icons" [ "Adwaita" ]
     // neg.mkDirLinks ".local/share/icons" "${pkgs.hicolor-icon-theme}/share/icons" [ "hicolor" ];
 
-  # Theme pipeline (scripts/theme): theme.sh and theme-extract.awk deploy together
-  # so the script finds its awk beside it; the generated ~/.config/pleamar/theme.plm
-  # is user data and never a Nix-owned file.
+  # Theme pipeline: the compiled crate lives in the system closure; the theme
+  # directory only carries the seed and its docs, and the generated
+  # ~/.config/pleamar/theme.plm is user data, never a Nix-owned file.
   pleamarThemeLinks =
     neg.mkDirLinks ".local/lib/pleamar" "${config.lib.neg.live "files/pleamar/scripts"}"
       [ "theme" ];
 
-  # `pleamar-wallpaper-palettes` is a Rust package now; the rest of the helper
-  # links stay plain files (apply/still/picker are shell).
+  # `pleamar-wallpaper-palettes` and the theme pipeline are Rust packages now;
+  # the rest of the helper links stay plain files (apply/still/picker are shell).
   pleamarPaletteBin = {
     ".local/bin/pleamar-wallpaper-palettes".source = lib.getExe pkgs.neg.wallpaper-palettes;
+    # Manual runs (and the theming workflow) use the same compiled pipeline.
+    ".local/bin/pleamar-theme".source = lib.getExe pkgs.neg.pleamar-theme;
   };
 
   pleamarHomeFiles =
@@ -491,8 +492,9 @@ let
     };
   };
 
-  # Seed ~/.config/pleamar/theme.plm once from the default, then let theme.sh
-  # rewrite it from the wallpaper. A failing run leaves the previous file intact.
+  # Seed ~/.config/pleamar/theme.plm once from the default, then let the compiled
+  # pipeline rewrite it from the wallpaper. A failing run leaves the previous
+  # file intact.
   pleamarThemeRun = pkgs.writeShellScript "pleamar-theme" ''
     set -eu
     theme_dir="$HOME/.local/lib/pleamar/theme"
@@ -500,7 +502,7 @@ let
     if [ ! -e "$dst" ]; then
       install -Dm644 "$theme_dir/theme.default.plm" "$dst"
     fi
-    exec "$theme_dir/theme.sh"
+    exec ${lib.getExe pkgs.neg.pleamar-theme}
   '';
 in
 lib.mkIf pleamarEnabled (
@@ -559,12 +561,10 @@ lib.mkIf pleamarEnabled (
             wantedBy = [ "graphical-session.target" ];
             # Runs on every wallpaper change: bursts are normal, not a failure.
             unitConfig.StartLimitIntervalSec = 0;
-            # theme.sh shells out to imagemagick, gawk and jq.
+            # The compiled pipeline shells out to imagemagick and jq.
             path = [
-              pkgs.coreutils # install and text tools used by the wrapper and the script
-              pkgs.bash # interpreter for theme.sh
+              pkgs.coreutils # install/text tools used by the wrapper
               pkgs.imagemagick # samples the wallpaper's colours
-              pkgs.gawk # runs theme-extract.awk
               pkgs.jq # JSON reads in the pipeline
             ];
             serviceConfig = {
