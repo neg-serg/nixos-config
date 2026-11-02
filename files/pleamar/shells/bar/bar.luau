@@ -1202,24 +1202,9 @@ local function tip_line(i)
         end
         if streak > 0 then line = line .. " · streak " .. streak end
         return line
-    elseif i == 10 then
-        -- The MPD flags (QS MpdFlags': the title, the state, and one hint per flag that is on).
-        local state = tostring(fact["Mpd.state"] or "unknown")
-        local flags = {}
-        if fact["Mpd.repeat"] == true then flags[#flags + 1] = "Repeat" end
-        if fact["Mpd.random"] == true then flags[#flags + 1] = "Random" end
-        if fact["Mpd.single"] == true then flags[#flags + 1] = "Single" end
-        if fact["Mpd.consume"] == true then flags[#flags + 1] = "Consume" end
-        if fact["Mpd.xfade"] == true then flags[#flags + 1] = "Crossfade" end
-        local on = (#flags > 0) and table.concat(flags, " · ") or "No active flags"
-        return "MPD · " .. state .. "\n" .. on
-    elseif i == 11 then
-        -- Genelec (QS GenelecWidget's tooltip: the reading, the clamp and where the volume lives).
-        local db = math.floor((tonumber(fact["Genelec.volume"]) or 0) + 0.5)
-        local cap = math.floor((tonumber(fact["Genelec.maxVolume"]) or 0) + 0.5)
-        local muted = fact["Genelec.muted"] == true
-        local mode = (fact["Genelec.midi"] == true) and "VM MIDI bridge" or "host GLM adapter"
-        return string.format("Genelec SAM · %d dB%s\ncap %d dB · %s", db, muted and " (muted)" or "", cap, mode)
+    -- 10 and 11 never reach here: `on("tip")` sends them to `mpd_tip()` and `genelec_tip()`,
+    -- which read the scene's own mirror of the plugin state — the plugins' facts are stale for this
+    -- logic (measured 2026-10-31), and a branch here read exactly those.
     elseif i == 12 then
         return text.tip_title ~= "" and text.tip_title or "Tray item"
     elseif i == 5 then
@@ -1701,7 +1686,6 @@ local tray_menu_ids = {}
 -- and it raises when it does not get both — which is why a press used to leave the menu open:
 -- the handler died before it could close it.
 on("tray_click", function(n)
-    log("TRAYCLICK " .. tostring(n))
     local at = tonumber(n) or 0
     local key = text["tray_key"]
     local id = tray_menu_ids[at]
@@ -1733,7 +1717,6 @@ end)
 -- and closing it is what arms the long hold, so that is the whole answer — while a tray without a
 -- menu gets the 5000 ms collapse delay instead of being taken away under the pointer.
 on("tray_close", function()
-    log("TRAYCLOSE")
     if fact.tray_open then
         setMenu(false)
         return
