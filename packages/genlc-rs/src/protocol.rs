@@ -6,7 +6,12 @@ const VID: u16 = 0x1781;
 const PID: u16 = 0x0E39;
 const GNET_BROADCAST: u8 = 0xFF;
 const CID_VOLUME_GLM: u8 = 0x1F;
+// Captured but not driven by any path yet: `0x21` starts a volume interface and
+// `0x1D` is its own controller; the volume commands all go through the GLM
+// broadcast above. Kept as part of the reverse-engineered CID map.
+#[allow(dead_code)]
 const CID_START_VOLUME: u8 = 0x21;
+#[allow(dead_code)]
 const CID_VOLUME_IF: u8 = 0x1D;
 const CID_WAKEUP: u8 = 0x3A;
 const CID_SOFTWARE: u8 = 0x39;
@@ -841,7 +846,7 @@ mod tests {
         assert_eq!(tags.first(), Some(&(0x41, 0x32)));
         assert!(tags.iter().any(|&(t, v)| t == 0x81 && v == 0x0032));
         assert!(tags.iter().any(|&(t, v)| t == 0x47 && v == 0x01));
-        assert!(tags.iter().any(|&(t, v)| t == 0x84));
+        assert!(tags.iter().any(|&(t, _)| t == 0x84));
         assert_eq!(tags.iter().map(|(_, _)| 1).sum::<i32>(), tags.len() as i32);
     }
 
