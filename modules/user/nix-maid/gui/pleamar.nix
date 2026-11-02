@@ -189,13 +189,13 @@ let
   # producer path already holds.
   pleamarPickerHelperLinks = {
     ".local/bin/pleamar-wallpaper-apply" = {
-      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/wallpaper-apply";
+      source = lib.getExe' pkgs.neg.pleamar-picker "pleamar-wallpaper-apply";
     };
     ".local/bin/pleamar-wallpaper-still" = {
-      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/wallpaper-still";
+      source = lib.getExe' pkgs.neg.pleamar-picker "pleamar-wallpaper-still";
     };
     ".local/bin/pleamar-picker" = {
-      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/picker-toggle.sh";
+      source = lib.getExe' pkgs.neg.pleamar-picker "pleamar-picker";
     };
   };
 
@@ -215,8 +215,8 @@ let
     neg.mkDirLinks ".local/lib/pleamar" "${config.lib.neg.live "files/pleamar/scripts"}"
       [ "theme" ];
 
-  # `pleamar-wallpaper-palettes` and the theme pipeline are Rust packages now;
-  # the rest of the helper links stay plain files (apply/still/picker are shell).
+  # `pleamar-wallpaper-palettes`, the theme pipeline and the picker commands are
+  # Rust packages now; no picker helper is a shell script any more.
   pleamarPaletteBin = {
     ".local/bin/pleamar-wallpaper-palettes".source = lib.getExe pkgs.neg.wallpaper-palettes;
     # Manual runs (and the theming workflow) use the same compiled pipeline.
@@ -292,7 +292,7 @@ let
         CPUQuota = "100%";
         Environment = [
           # ~/.local/bin first: scenes shell out to user helpers that live there
-          # (glm-vol, rsmetrx, …), then the system profile.
+          # (rsmetrx, …), then the system profile.
           "PATH=%h/.local/bin:/run/current-system/sw/bin:\${PATH}"
           # No cursor variables: the shell carries no cursor patch either, so a scene asks for the
           # shape its own zones declare (arrow, hand, text) and gives the default back on leaving —

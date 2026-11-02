@@ -3,19 +3,18 @@ language 0.4
 // genelec.plm — the Genelec SAM volume widget as a plugin: the tile, the facts
 // and the logic (`genelec.luau`) that talks to the monitors.
 //
-// Legacy: files/quickshell/Services/Genelec.qml (the state machine, the two
-// transports, the commit coalescing) and Bar/Modules/GenelecWidget.qml (the
-// tile: whole dB, wheel ±1, muted label). The dB range is the QS one: -95 at
-// the bottom, `genelecMaxVolume` (Settings.json -20) at the top, whole dB only,
-// because GLM's CC20 is an integer.
+// Legacy: files/quickshell/Services/Genelec.qml (the state machine, the commit
+// coalescing) and Bar/Modules/GenelecWidget.qml (the tile: whole dB, wheel ±1,
+// muted label). The dB range is the QS one: -95 at the bottom,
+// `genelecMaxVolume` (Settings.json -20) at the top, whole dB only, because
+// GLM's CC20 is an integer.
 //
-// Two transports, chosen by the adapter's placement (the logic probes it):
-//   host — `genlc set-volume --volume <dB>dB` (the GLM adapter is on the host);
-//   VM   — `glm-vol <dB>` writes $XDG_RUNTIME_DIR/genlc-volume and the absolute
-//          CC20 goes out over `glm-midi` (relay :9004 -> dockur VM -> GLM).
-// The dB target is written by `glm-vol` on the VM path; the logic reads it back with
-// `glm-vol read` (a spawned read, because the files service is sandboxed to the
-// plugin's own folder), which is the port of the QS FileView watch on that file.
+// One transport: `genlc volume <dB>` writes $XDG_RUNTIME_DIR/genlc-volume and
+// routes the write itself — through the daemon's socket when the daemon holds
+// the adapter, straight to the HID adapter otherwise. The logic reads the same
+// state file back with `genlc volume --show` and `genlc volume --watch` (a
+// spawned watch, because the files service is sandboxed to the plugin's own
+// folder), the port of the QS FileView watch on that file.
 //
 //     import "../../lib/plugins/genelec/genelec.plm" as gen
 //     gen.Tile()
@@ -30,26 +29,20 @@ import "../../capsule.plm"
 
 library Genelec strict {
 
-    // Its logic's, not the scene's: the host path, the state file's owner and
-    // the VM MIDI bridge.
+    // Its logic's, not the scene's: the one binary every write and read goes
+    // through.
     // `files`/`files.write` are the plugin's own folder: the pre-mute volume lives there so a
     // restart does not lose it (the QS service kept the same pair in its StateCache).
-    // `glm5ctl` is the daemon client: when `glm5d` owns the adapter it is the only path that can
-    // hold monitor sessions, so the logic prefers it and falls back to the two below.
-    permissions { run: "glm5ctl", "genlc", "glm-vol", "glm-midi"; services: "files", "files.write" }
+    permissions { run: "genlc"; services: "files", "files.write" }
 
     // ------------------------------------------------------------- boundary
     // The target volume, whole dB (the QS displayDb/volume). The logic owns the
     // writes; a scene may read it.
     fact volume: number = -40
     fact muted = false
-    // `available` is the host path answering (genlc discover); `midi` says the
-    // adapter sits in the VM, where the MIDI bridge is the only way in.
+    // `available` is the last write answering; `genlc volume` itself decides whether it went
+    // through the daemon's socket or straight to the adapter.
     fact available = true
-    fact midi = false
-    // `glm5d` holds the adapter itself: leases, the poll cycle, and writes through its socket.
-    // True only while `glm5ctl status` answers, so the two older paths stay the fallback.
-    fact daemon = false
     // The clamp, per host: Settings.json genelecMaxVolume (-20) and the QS floor.
     fact minVolume: number = -95
     fact maxVolume: number = -20

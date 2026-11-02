@@ -1290,10 +1290,10 @@ local function mpd_tip()
 end
 
 -- The Genelec card, for the same reason as the MPD one: the plugin's facts do not reach this logic.
--- Measured 2026-10-31 — the scene said `Genelec.volume` -50, `glm-vol read` said -50, and the card
--- said «-40 dB · host GLM adapter», which is the library's declared default *and* the wrong path
--- (`genlc discover` answers "GLM USB adapter not found", so the adapter is in the VM).
--- `glm-vol read` is the live level; the cap and the mode are left out rather than printed stale.
+-- Measured 2026-10-31 — the scene said `Genelec.volume` -50, `genlc volume --show` said -50, and
+-- the card said «-40 dB · host GLM adapter»: the library's declared default instead of the live
+-- level. `genlc volume --show` is that level (the state file every writer maintains); the cap and
+-- the mode are left out rather than printed stale.
 local function genelec_tip()
     text.tip_body = "Genelec SAM · …"
     fact.tip_hover = true
@@ -1302,12 +1302,16 @@ local function genelec_tip()
         tipTimer = nil
         fact.tip_open = true
     end)
-    run("glm-vol", { "read" }, function(out, code)
-        local level = tostring(out or ""):gsub("^%s+", ""):gsub("%s+$", "")
-        if code ~= 0 or level == "" then
+    run("genlc", { "volume", "--show" }, function(out, code)
+        -- The state file is whole dB from every writer the shell has, but `genlc volume` also
+        -- takes fractions: print what the file says instead of truncating it in the card.
+        local level = tostring(out or ""):match("-?%d+%.?%d*")
+        if code ~= 0 or not level then
             text.tip_body = "Genelec SAM · no reading"
             return
         end
+        -- `genlc` writes one decimal (`-40.0`); the tile is whole dB, so print it that way.
+        level = level:gsub("%.0+$", ""):gsub("%.$", "")
         text.tip_body = "Genelec SAM · " .. level .. " dB\nwheel — level · press — mute"
     end)
 end
