@@ -353,7 +353,7 @@ music-ai-status *ARGS:
 # players and MPD search see them; dry run unless --apply is passed, and every
 # change is logged to a JSONL file. See docs/howto/local-music-ai.md.
 music-apply-tags *ARGS:
-    python3 "{{repo_root}}/scripts/dev/music-apply-tags.py" {{ARGS}}
+    music-apply-tags {{ARGS}}
 
 # Eval one trantor feature flag: just flag features.cli.broot.enable
 flag flag-path="features.cli.broot.enable":

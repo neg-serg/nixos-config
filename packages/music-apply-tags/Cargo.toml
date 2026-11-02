@@ -1,0 +1,18 @@
+[package]
+name = "music-apply-tags"
+version = "0.1.0"
+edition = "2021"
+description = "Write the ML mood (and optionally the Discogs style) into audio files"
+license = "MIT"
+
+[[bin]]
+name = "music-apply-tags"
+path = "src/main.rs"
+
+[dependencies]
+lofty = "0.25"
+serde_json = "1"
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]
