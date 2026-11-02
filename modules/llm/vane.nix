@@ -9,11 +9,11 @@
 #              same master switch that already gates modules/llm/ollama.nix.
 #
 # Runtime model: Vane has no nixpkgs package, so it is deployed as a container.
-# trantor runs containers rootless under the `neg` user session (see the dockur
-# windows VM: hosts/trantor/services/windows-vm.nix + libpod scopes), NOT as root systemd
-# services. ollama is the exception because nixpkgs ships it natively. To stay
-# inside the repo's existing container runtime, Vane is a neg *user* systemd
-# unit that drives `podman run` — it starts with the neg session, like the VM.
+# trantor runs containers rootless under the `neg` user session (podman/libpod
+# scopes), NOT as root systemd services. ollama is the exception because nixpkgs
+# ships it natively. To stay inside the repo's existing container runtime, Vane
+# is a neg *user* systemd unit that drives `podman run` — it starts with the
+# neg session.
 #
 # Unverified / needs a live pull-test before enabling (see rollout notes in the
 # module header of hosts/trantor or docs):

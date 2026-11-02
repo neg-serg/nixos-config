@@ -244,7 +244,7 @@ Builds: substitution through the proxy
   nixos-rebuild does not escalate by itself — it would build the whole system and only then fail.
 - Passwordless `sudo` exists only for the narrow entries in `modules/security/default.nix`
   (`systemctl start/stop xray` — with sudo's `""` exact-arguments marker —, `reboot`,
-  `poweroff`, `suspend`, `dmesg`, `ryzenadj`, `gpu-oc`, `glm-adapter-priv`); everything else,
+  `poweroff`, `suspend`, `dmesg`, `ryzenadj`, `gpu-oc`); everything else,
   `sudo -n` included, prompts. The agent switch is not in this list: it is triggered by a polkit
   rule for one unit and the `start` verb.
 - The user's own switch binding is `nh os switch /etc/nixos#trantor --option substitute false`; the

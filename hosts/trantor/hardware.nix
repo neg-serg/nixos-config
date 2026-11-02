@@ -188,17 +188,14 @@ in
   # MT6639/MT7927 Bluetooth firmware blob — see hardware/system.nix
   hardware.firmware = lib.mkAfter [ systemData.firmwareBlob ];
 
-  # dockur Windows VM + vfio (iGPU 1002:13c0 passthrough): QEMU must pin the
-  # guest RAM (~5-6GB with RAM_SIZE=6G) for DMA into the vfio container, but
-  # systemd/pam memlock defaults (8MB–4GB) are far below that → dma_map fails
-  # with ENOMEM. Raise the lock limit for the whole user session. Three layers
-  # are needed because the VM is started from user-space (rootless podman):
-  # 1) system manager default (applies to system services incl. user@.service),
-  # 2) user manager default (user units: dsh web, terminals under systemd --user),
-  # 3) pam loginLimits (fresh login sessions; does not retrofit live ones).
-  # Live sessions that predate this config still carry the old 4GiB hard limit;
+  # Raise the memlock limit for the whole user session. Three layers, because
+  # workloads start from user space: 1) system manager default (applies to system
+  # services incl. user@.service), 2) user manager default (user units), 3) pam
+  # loginLimits (fresh login sessions; does not retrofit live ones).
+  # Introduced for the dockur passthrough VM (2026-11), which is gone; the limits
+  # stay as they are — tightening them is a separate tuning decision.
+  # Live sessions that predate a change still carry the old 4GiB hard limit;
   # remedy without reboot: sudo prlimit --pid <pid> --memlock=unlimited:unlimited
-  # (see docs/howto/windows-vm-dockur.md, "Pitfall: memlock").
   systemd.settings.Manager.DefaultLimitMEMLOCK = "infinity";
   systemd.user.settings.Manager.DefaultLimitMEMLOCK = "infinity";
   security.pam.loginLimits = lib.mkAfter [

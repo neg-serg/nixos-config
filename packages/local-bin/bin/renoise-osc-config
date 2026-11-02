@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # renoise-osc-config — pin Renoise's OSC server to UDP 127.0.0.1:9002 so the
-# renoise-osc CLI (UDP) has a working, conflict-free path. glm-osc owns UDP
-# 9000 (Genelec SAM), so Renoise must NOT stay on 9000/UDP.
+# renoise-osc CLI (UDP) has a working, conflict-free path. 9000/UDP belonged to
+# the Genelec bridge (glm-osc, removed with the VM path in 2026-11); Renoise
+# stays on 9002 so a future listener there cannot collide with it.
 #
 # Patches ~/.config/Renoise/V3.5.4/Config.xml only while Renoise is closed
 # (it rewrites the file on exit). Keeps a timestamped backup on first use.
