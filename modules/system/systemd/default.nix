@@ -59,6 +59,13 @@ in
         RebootWatchdogSec = "10s";
       };
     };
+    # systemd 262 gives every manager a 200 ms PSI threshold for memory, CPU and
+    # IO on its own cgroup. On the user manager the IO write fails with EBUSY
+    # (user@1000.service is not a leaf: app.slice and the transient scopes live
+    # under it), so every user-manager start logged "Failed to adjust io pressure
+    # threshold, ignoring" (~100 per session). Nothing consumes the IO watch
+    # here; memory and CPU keep their defaults.
+    user.settings.Manager.DefaultIOPressureThresholdSec = "infinity";
     services = {
       nix-daemon.serviceConfig = {
         CPUWeight = 200;
