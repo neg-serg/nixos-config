@@ -136,7 +136,10 @@ fn simplify(nodes: Vec<Node>) -> Option<Vec<Node>> {
     let mut out: Vec<Node> = Vec::with_capacity(nodes.len());
     for node in nodes {
         match node {
-            Node::Group { index, nodes: inner } => out.push(Node::Group {
+            Node::Group {
+                index,
+                nodes: inner,
+            } => out.push(Node::Group {
                 index,
                 nodes: simplify(inner)?,
             }),
@@ -319,7 +322,10 @@ impl Regex {
                     None
                 }
             }
-            Node::Group { index, nodes: inner } => {
+            Node::Group {
+                index,
+                nodes: inner,
+            } => {
                 // Flatten the group into the enclosing sequence: a group is not
                 // an isolated match, its alternatives must be able to retry
                 // once the rest of the pattern fails (`(?:a|ab)$` on "ab").
@@ -346,10 +352,13 @@ impl Regex {
             Node::Alt(branches) => {
                 for branch in branches {
                     let saved = caps.clone();
-                    if let Some(end) = self.match_nodes(branch, chars, pos, caps) {
-                        if let Some(result) = self.match_nodes(rest, chars, end, caps) {
-                            return Some(result);
-                        }
+                    // Append the enclosing continuation to the branch, so a
+                    // choice nested inside a group can still backtrack once the
+                    // rest of the pattern fails (`(?:a|ab)?$` on "ab").
+                    let mut combined: Vec<Node> = branch.clone();
+                    combined.extend_from_slice(rest);
+                    if let Some(result) = self.match_nodes(&combined, chars, pos, caps) {
+                        return Some(result);
                     }
                     *caps = saved;
                 }
@@ -766,7 +775,13 @@ mod tests {
     #[test]
     fn optional_groups() {
         let regex = Regex::new(r"(?:громче)(?:\s+на\s+\d{1,3})?").unwrap();
-        assert_eq!(search(r"(?:громче)(?:\s+на\s+\d{1,3})?", "громче на 15"), Some((0, 12)));
-        assert_eq!(search(r"(?:громче)(?:\s+на\s+\d{1,3})?", "громче"), Some((0, 6)));
+        assert_eq!(
+            search(r"(?:громче)(?:\s+на\s+\d{1,3})?", "громче на 15"),
+            Some((0, 12))
+        );
+        assert_eq!(
+            search(r"(?:громче)(?:\s+на\s+\d{1,3})?", "громче"),
+            Some((0, 6))
+        );
     }
 }

@@ -10,3 +10,8 @@ name = "mpd-voice-rs"
 path = "src/main.rs"
 
 [dependencies]
+
+# Standalone: the crate is its own workspace root, so the Cargo.lock next to
+# this manifest is the one the nix build uses (`src = ./.` copies just this
+# directory). Otherwise the parent packages/Cargo.toml would pull it in.
+[workspace]
