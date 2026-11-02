@@ -1,0 +1,22 @@
+[package]
+name = "swayimg-actions"
+version = "0.1.0"
+edition = "2021"
+description = "Rotate/move/copy/wallpaper/range actions for swayimg (Rust port of the local-bin zsh helper)"
+license = "MIT"
+
+[[bin]]
+name = "swayimg-actions"
+path = "src/main.rs"
+
+[lib]
+name = "swayimg_actions"
+path = "src/lib.rs"
+
+[dependencies]
+# The only crate: replaces `swaymsg ... | jq` in screen_wh (and nothing else).
+# Everything the old helper did with find/sort/awk/sed is native std code; all
+# remaining process calls are the user-facing tools it always spawned.
+serde_json = "1"
+
+[workspace]

@@ -88,6 +88,7 @@
           "dsh-worktree"
           "shtoy"
           "proxy"
+          "swayimg-actions.sh"
         ];
 
         autoEntries =
@@ -145,6 +146,9 @@
         ".local/bin/shtoy".source = lib.getExe' pkgs.neg.shtoy "shtoy";
         # Rust port of the former shell helper (packages/sing-box-proxy).
         ".local/bin/proxy".source = lib.getExe' pkgs.neg.sing-box-proxy "proxy";
+        # Rust port of the former shell helper (packages/swayimg-actions).
+        # The .sh name is kept: files/gui/swayimg/init.lua execs that path.
+        ".local/bin/swayimg-actions.sh".source = lib.getExe' pkgs.neg.swayimg-actions "swayimg-actions";
         ".local/bin/gen-unbound-hosts".source = lib.getExe' pkgs.neg.local-bin-tools "gen-unbound-hosts";
         ".local/bin/kitty-scrollback-nvim" = {
           executable = true;
