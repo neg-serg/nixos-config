@@ -21,7 +21,6 @@ in
   nixie = call (pkg "nixie") { };
 
   # Reserved for development/toolchain overlays
-  mojo = call (pkg "mojo") { }; # Mojo programming language (PyPI wheels repackaged)
 
   # Patch pre-commit to add a space before "Skipped" message
   pre-commit = prev.pre-commit.overrideAttrs (old: {
