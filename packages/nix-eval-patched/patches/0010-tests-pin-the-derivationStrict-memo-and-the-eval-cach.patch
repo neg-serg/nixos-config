@@ -1,0 +1,134 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nix-eval-patched maintenance <nix-eval-patched@localhost>
+Date: Mon, 3 Nov 2026 12:20:00 +0300
+Subject: [PATCH] tests: pin the derivationStrict memo and the eval-cache /
+ repair agreements
+
+Three checks for the one patch in the stack that can silently move a
+`drvPath` (0006, the `derivationStrict` memo keyed by the masked derivation),
+none of which the suite had:
+
+- `lang/eval-okay-drvPath-memo.nix`: four `derivationStrict` constructions in
+  one process — base, one env value changed, one argument changed, base again —
+  asserting the first three paths are pairwise different and the repeat is
+  byte-identical, then pinning all four as literals in the `.exp` (`lang.sh`
+  runs under `NIX_REMOTE=dummy://`, so store paths are deterministic). Every
+  other lang case builds at most one derivation, and `lang.sh` runs one process
+  per case, so nothing else in the golden suite can see a key that leaves a
+  masked field out: the memo would have nothing to confuse this derivation
+  with. The `.exp` was generated with `_NIX_TEST_ACCEPT=1 bash lang.sh`.
+
+- `eval.sh`: the same expression — one derivation built twice inside one
+  evaluation, so the second construction is a memo hit — evaluated plainly and
+  with `--repair`. 0006 consults the memo only under `NoRepair`, so this is the
+  memo-on/memo-off A/B on a live store: repairing may change how the store is
+  written, never what the derivation is.
+
+- `flakes/eval-cache.sh`: a cached `drvPath`, the same value from a second
+  (`cache` hit) run, and the value recomputed with `--no-eval-cache` must be
+  equal. The existing cases there only prove that errors and stack overflows
+  are not cached, never that a cached answer equals a fresh one.
+---
+  tests/functional/eval.sh                         | 23 ++++++++++++++++
+  tests/functional/flakes/eval-cache.sh            | 10 +++++++
+  tests/functional/lang/eval-okay-drvPath-memo.exp |  1 +
+  tests/functional/lang/eval-okay-drvPath-memo.nix | 35 ++++++++++++++++++++++++
+  4 files changed, 69 insertions(+)
+
+diff --git a/tests/functional/eval.sh b/tests/functional/eval.sh
+index 39cad2b..9510864 100755
+--- a/tests/functional/eval.sh
++++ b/tests/functional/eval.sh
+@@ -88,3 +88,26 @@ out="$(expectStderr 0 nix eval --option foobar baz --expr '""' --raw)"
+ # Test flag alias
+ out="$(nix eval --expr '{}' --build-cores 1)"
+ [[ "$(echo "$out" | wc -l)" = 1 ]]
++
++# The evaluator memoises `derivationStrict` by a hash of the masked derivation,
++# but only while it is not repairing: `--repair` takes the un-memoised path
++# through the same code. Build one derivation twice inside a single evaluation
++# (the second construction is a memo hit, or an identical write) and run the
++# very same expression again with `--repair`. Repairing changes how the store
++# is written, never what the derivation is, so both runs must agree.
++# shellcheck disable=SC2016 # the ${} below is Nix, not shell
++memoExpr='
++  let
++    mk = arg: derivation {
++      name = "eval-repair";
++      system = "x86_64-linux";
++      builder = "/dontcare";
++      inherit arg;
++    };
++    first = mk "same";
++    second = mk "same";
++  in [ "${first.drvPath}" "${second.drvPath}" ]
++'
++memoPlain=$(nix-instantiate --eval --strict --json --expr "$memoExpr")
++memoRepair=$(nix-instantiate --repair --eval --strict --json --expr "$memoExpr")
++[[ $memoPlain == "$memoRepair" ]]
+diff --git a/tests/functional/flakes/eval-cache.sh b/tests/functional/flakes/eval-cache.sh
+index 75a2c8c..564d84d 100755
+--- a/tests/functional/flakes/eval-cache.sh
++++ b/tests/functional/flakes/eval-cache.sh
+@@ -48,3 +48,13 @@ nix build --no-link "$flake1Dir#stack-depth"
+ expect 1 nix build "$flake1Dir#ifd" --option allow-import-from-derivation false 2>&1 \
+   | grepQuiet 'error: cannot build .* during evaluation because the option '\''allow-import-from-derivation'\'' is disabled'
+ nix build --no-link "$flake1Dir#ifd"
++
++# A cached answer has to be the answer the evaluation produces from scratch: the
++# eval cache shortens the work, it must never change the result. (The
++# derivationStrict memo is the in-process analogue of the same rule.)
++drvPathCached=$(nix eval --raw "$flake1Dir#drv.drvPath")
++drvPathCachedAgain=$(nix eval --raw "$flake1Dir#drv.drvPath")
++drvPathUncached=$(nix eval --raw --no-eval-cache "$flake1Dir#drv.drvPath")
++[[ -n $drvPathCached ]]
++[[ $drvPathCached == "$drvPathCachedAgain" ]]
++[[ $drvPathCached == "$drvPathUncached" ]]
+diff --git a/tests/functional/lang/eval-okay-drvPath-memo.exp b/tests/functional/lang/eval-okay-drvPath-memo.exp
+new file mode 100644
+index 0000000..03bfb1c
+--- /dev/null
++++ b/tests/functional/lang/eval-okay-drvPath-memo.exp
+@@ -0,0 +1 @@
++[ "/nix/store/99kqgk4c5cm4ha63gpw1rk03q1678q4n-drvpath-memo.drv" "/nix/store/jqy0pjmibmrmvpdaa5c22n9ppw4bbsr6-drvpath-memo.drv" "/nix/store/kb2d56kwp6cydkb7wazmbr6kgvsgvld8-drvpath-memo.drv" "/nix/store/99kqgk4c5cm4ha63gpw1rk03q1678q4n-drvpath-memo.drv" ]
+diff --git a/tests/functional/lang/eval-okay-drvPath-memo.nix b/tests/functional/lang/eval-okay-drvPath-memo.nix
+new file mode 100644
+index 0000000..26e3752
+--- /dev/null
++++ b/tests/functional/lang/eval-okay-drvPath-memo.nix
+@@ -0,0 +1,35 @@
++# `derivationStrict` is memoised by a hash of the masked derivation, so a key
++# that leaves out a masked field would answer with the drvPath of a *different*
++# derivation. All four constructions below happen in one process (one
++# `nix-instantiate` run), so the first one fills the memo and every later one
++# either hits it or misses it on a genuinely different key. The generated `.exp`
++# pins the four literal store paths, which is what a mis-masked key moves.
++let
++  base = {
++    name = "drvpath-memo";
++    system = "x86_64-linux";
++    builder = "/dontcare";
++    args = [ "-c" "true" ];
++    envA = "1";
++    envB = "2";
++  };
++
++  drvPath = attrs: (builtins.derivationStrict attrs).drvPath;
++
++  # Context is a property of how the string was obtained, not of the path, and
++  # an attribute name may not carry it; strip it before comparing and printing.
++  paths = map builtins.unsafeDiscardStringContext [
++    (drvPath base)
++    (drvPath (base // { envB = "changed"; }))
++    (drvPath (base // { args = [ "-c" "false" ]; }))
++    # The same masked derivation as the first one: a memo hit, or an identical
++    # write, still has to produce the first path.
++    (drvPath base)
++  ];
++
++  distinct = l:
++    builtins.length (builtins.attrNames (builtins.listToAttrs (map (p: { name = p; value = null; }) l)));
++in
++if distinct (builtins.tail paths) == 3 && builtins.elemAt paths 3 == builtins.elemAt paths 0
++then paths
++else throw "derivationStrict answered differently for equal or different derivations: ${builtins.toJSON paths}"

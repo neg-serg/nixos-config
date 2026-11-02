@@ -19,7 +19,8 @@
 # of that flake, but 2.35.3 — the version this repo's nixpkgs pins — already
 # contains it (`patch -p1 --dry-run` reports "Reversed (or previously applied)
 # patch detected"), so re-applying it would fail the build. Hence: #16244 +
-# the nine = 10 patches, carrying the "+10" in the derivation version.
+# the nine = 10 patches, plus our own 0006a in between, so the derivation
+# version reads "+11".
 #
 # Checks: doCheck is left on (nixpkgs' `nix_2_35` gates on the unit tests of
 # every component plus the functional test suite), so the patches are proven
@@ -54,6 +55,13 @@
 # `git archive HEAD` snapshot compared against the system Nix, the same
 # comparison on /etc/nixos as it is, the untracked-path refusal, and
 # `git add -N` unblocking it.
+#
+# 0006 is the one patch here that can silently move a drvPath (it answers a
+# repeated derivation from a memo and skips the write), so 0006a adds the
+# `eval-memo` setting to switch that memo off and `scripts/dev/nix-memo-diff.sh`
+# runs the same evaluation with it on and off in one binary, comparing the
+# drvPath and the whole derivation closure. 0010 pins the same property in the
+# test suites doCheck runs. Neither is wired into `nix.package`.
 let
   # Upstream #16244 — prerequisite for 0002 and 0008, vendored instead of
   # fetchpatch'd so the build needs no network and no hash upkeep; the copy is
@@ -69,9 +77,16 @@ let
     ./patches/0004-libutil-check-the-allow-list-predecessor-before-walk.patch
     ./patches/0005-libexpr-use-constant-error-contexts-in-builtins.any-.patch
     ./patches/0006-libexpr-memoize-derivationStrict-by-the-masked-deriv.patch
+    # Ours, not from ~/src/nix-optimized: gates 0006 behind the `eval-memo`
+    # setting (default true) so scripts/dev/nix-memo-diff.sh can A/B the memo in
+    # one binary. Must stay immediately after 0006 — it edits that patch's hunks.
+    ./patches/0006a-libexpr-gate-the-derivationStrict-memo-behind-eval-.patch
     ./patches/0007-libexpr-skip-re-adding-builtins.toFile-paths-written.patch
     ./patches/0008-libstore-pipeline-AddTempRoot-and-IsValidPath-in-wri.patch
     ./patches/0009-libfetchers-refresh-the-cached-git-HEAD-after-readin.patch
+    # Also ours: the tests that pin 0006's behaviour (a mis-masked memo key, the
+    # memo-on/--repair A/B, eval-cache vs recompute), so `doCheck` runs them.
+    ./patches/0010-tests-pin-the-derivationStrict-memo-and-the-eval-cach.patch
   ];
 in
 (nixVersions.nix_2_35.appendPatches (upstream ++ speedups)).overrideAttrs (prev: {
