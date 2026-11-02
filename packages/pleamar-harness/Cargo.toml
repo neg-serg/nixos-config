@@ -1,0 +1,32 @@
+[package]
+name = "pleamar-harness"
+version = "0.1.0"
+edition = "2021"
+description = "The pleamar developer harnesses: measure, describe-snap and smoke"
+license = "GPL-3.0-or-later"
+
+[lib]
+name = "pleamar_harness"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pleamar-measure"
+path = "src/bin/pleamar-measure.rs"
+
+[[bin]]
+name = "pleamar-describe-snap"
+path = "src/bin/pleamar-describe-snap.rs"
+
+[[bin]]
+name = "pleamar-smoke"
+path = "src/bin/pleamar-smoke.rs"
+
+# No Rust dependencies on purpose. The external commands the shell harnesses
+# ran stay external and keep their argv: pleamar, pleamar-wm, ps, systemctl,
+# systemd-run, grim, sway/cage, timeout, setsid, kill, date, mktemp, getconf,
+# id, sleep, column, jq and diff. Everything else (scene discovery, tables,
+# snapshots, diffs, cgroup reads, proc sampling) is in-process.
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = lib.cleanSource ./.` copies just this directory).
+[workspace]
