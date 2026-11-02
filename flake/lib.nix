@@ -45,21 +45,35 @@ let
         # Last overlay wins: neg-pkgs defines python3-lto from prev.python3
         # and drops the untangle src override, so re-apply the vendored-source
         # fix here (upstream tag was re-pushed → hash mismatch otherwise).
-        (_final: prev: {
-          python3-lto = prev.python3.override {
-            packageOverrides = _pythonSelf: _pythonSuper: {
-              enableOptimizations = true;
-              enableLTO = true;
-              reproducibleBuild = false;
-              untangle = _pythonSuper.untangle.overrideAttrs (_: {
-                src = ../files/sources/untangle-1.2.1.tar.gz;
-              });
-              distutils = _pythonSuper.distutils.overrideAttrs (_o: {
-                doCheck = false;
-              });
+        # It also still ships its python-era pretty-printer there, and that one
+        # has no `vid-info`, so the nix-maid link in cli/local-bin.nix dangles.
+        # Re-assert the local Rust port from packages/ — the overlay above loses
+        # to this one for the whole `neg` attribute set.
+        (
+          _final: prev:
+          let
+            prettyPrinter = _final.callPackage ../packages/pretty-printer { };
+          in
+          {
+            neg = (prev.neg or { }) // {
+              pretty_printer = prettyPrinter;
+              "pretty-printer" = prettyPrinter;
             };
-          };
-        })
+            python3-lto = prev.python3.override {
+              packageOverrides = _pythonSelf: _pythonSuper: {
+                enableOptimizations = true;
+                enableLTO = true;
+                reproducibleBuild = false;
+                untangle = _pythonSuper.untangle.overrideAttrs (_: {
+                  src = ../files/sources/untangle-1.2.1.tar.gz;
+                });
+                distutils = _pythonSuper.distutils.overrideAttrs (_o: {
+                  doCheck = false;
+                });
+              };
+            };
+          }
+        )
         # onetbb's test suite is flaky under the nix builder (SIGABRT in
         # concurrency tests: test_collaborative_call_once, test_concurrent_vector,
         # test_task_arena ...). The library builds fine; only its tests crash
