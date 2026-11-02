@@ -22,14 +22,10 @@ in
   # MPD client for large libraries: Node backend + React UI, served on loopback.
   sola-mpd = call (pkg "sola-mpd") { };
   # Voice control for MPD: microphone -> local speech recognition -> player
-  # commands. Standard library only (protocol client, capture, HTTP speech
-  # clients), so the closure is Python plus whatever speech stack the host
-  # enables separately.
+  # commands. Rust with no crates (MPD protocol client, capture argv, HTTP
+  # speech clients, intent parser), so the closure is the binary plus whatever
+  # speech stack the host enables separately.
   mpd-voice = call (pkg "mpd-voice") { };
-  # The Rust port of the same tool, built from packages/mpd-voice-rs: stage 1
-  # (MPD client, config, status/doctor/ping) with no crates. It is not the
-  # installed mpd-voice yet — `nix build .#mpd-voice-rs` runs its tests.
-  mpd-voice-rs = call (pkg "mpd-voice-rs") { };
   # ggml-based runtime for local audio models (prebuilt Vulkan build); it runs
   # Audio Flamingo Next GGUF on the GPU when the ROCm torch path cannot.
   audio-cpp = call (pkg "audio-cpp") { };
