@@ -1,0 +1,27 @@
+[package]
+name = "music-index-tools"
+version = "0.1.0"
+edition = "2021"
+description = "Build and query the MERT music similarity index"
+license = "MIT"
+
+[lib]
+name = "music_index_tools"
+path = "src/lib.rs"
+
+[[bin]]
+name = "music-index"
+path = "src/bin/music-index.rs"
+
+[[bin]]
+name = "music-similar"
+path = "src/bin/music-similar.rs"
+
+[dependencies]
+serde_json = "1"
+sha1 = "0.10"
+sha3 = "0.10"
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]

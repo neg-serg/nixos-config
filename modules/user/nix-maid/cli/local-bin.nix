@@ -45,7 +45,7 @@
           # that has to know where the tree sits.
           "@MUSIC_AI_BASE@" = "/zero/ai/music-ai";
           # Music tagging/embedding wrappers (music-embed, music-tags,
-          # music-index, music-similar, audio-analysis): a nix python is the
+          # audio-analysis): a nix python is the
           # interpreter, the venv contributes site-packages over PYTHONPATH,
           # and the payloads are a store copy of packages/local-bin/lib. Both
           # store paths ride in the system closure, so nix-collect-garbage

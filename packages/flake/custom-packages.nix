@@ -52,6 +52,9 @@
 
   dsh = pkgs.neg.dsh;
 
+  # MERT similarity index tooling (Rust; embeddings come from music-embed).
+  music-index-tools = pkgs.neg.music-index-tools;
+
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)
   atrium = pkgs.atrium; # Wayland multiseat display manager
   wordcraft = pkgs.wordcraft; # Word-style word processor (.docx/.odt/.rtf) + converter CLI

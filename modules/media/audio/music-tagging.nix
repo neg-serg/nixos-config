@@ -7,8 +7,8 @@
 #          autoIndex.enable, a weekly user timer also keeps the MERT similarity
 #          index fresh without a manual hours-long pass.
 # Key options: features.media.audio.musicTagging.*
-# Dependencies: the music-AI venv tree on /zero (python3.12 site-packages);
-#               the deployed ~/.local/bin/music-index wrapper (nix-maid).
+# Dependencies: the music-AI venv tree on /zero (python3.12 site-packages) for
+#               music-embed/tags/describe; music-index/music-similar are Rust.
 {
   lib,
   config,
@@ -23,9 +23,9 @@ let
   # Per-user unit constructor (lib/systemd-user.nix, see modules/AGENTS.md).
   systemdUser = config.lib.neg.systemdUser;
 
-  # music-index is rendered into ~/.local/bin by nix-maid (the venv interpreter
-  # and library paths are substituted at deploy time), so there is no store path
-  # to call: like other local-bin units, address the deployed copy via %h.
+  # music-index is a Rust binary from packages/music-index-tools (it shells out
+  # to the `music-embed` wrapper for embeddings), so the unit can address the
+  # store path directly; the deployed ~/.local/bin copy is gone.
   #
   # --quiet keeps one progress line per 25 tracks out of the journal; the run
   # summary and failures still land there. --threads 4 trades ~1.8x per-clip
@@ -56,6 +56,9 @@ in
         # Writes MOOD/GENRE into the files for `just music-apply-tags`
         # (FLAC/Ogg/Opus/MP3/WAV/M4A through one code path, no Python).
         pkgs.neg.music-apply-tags # write ML mood/style tags into audio files (dry run by default)
+        # Builds/queries the MERT similarity index. Embeddings still come from
+        # the Python `music-embed` (torch); the index, cache and ranking are Rust.
+        pkgs.neg.music-index-tools # music-index / music-similar (index math, npy, ranking)
         pkgs.audio-cpp # ggml audio runtime: Audio Flamingo Next on Vulkan (the only 8B path that fits the GPU)
       ];
 
@@ -78,7 +81,13 @@ in
           "restartOnFailure"
         ];
         description = "Refresh the MERT similarity index incrementally";
+        # The refresh chain resolves `music-index` through PATH when it is not
+        # in ~/.local/bin any more (the Rust binary lives in the store).
+        path = [ pkgs.neg.music-index-tools ];
         serviceConfig = {
+          # The binary defaults to the packaged model; keep the configured one in
+          # reach (the deleted wrapper exported MUSIC_EMBED_MODEL too).
+          Environment = "MUSIC_EMBED_MODEL=${cfg.embedModel}";
           ExecStart =
             if useRefreshChain then
               # The chain refreshes index -> tags -> describe -> playlists;
@@ -87,7 +96,7 @@ in
               # incremental, so an unchanged library costs seconds.
               "${pkgs.bash}/bin/bash ${refreshScript} --index-args '${indexArgs}'${describeArgs}"
             else
-              "%h/.local/bin/music-index ${indexArgs}";
+              "${pkgs.neg.music-index-tools}/bin/music-index ${indexArgs}";
           # A cold pass over the whole library is hours (12h covers the measured
           # ~6h at the default thread count, ~1.8x that with --threads 4); warm
           # runs finish in minutes. A timeout is not fatal: the per-file cache

@@ -268,27 +268,33 @@ render-plugins out="":
 paths *ARGS:
     "{{repo_root}}/packages/local-bin/bin/paths" --root "{{repo_root}}" {{ARGS}}
 
-# Offline self-checks for the music index/similar payloads, using a stub
-# embedder (no torch, no model, no venv; a machine without numpy prints a
-# skip and exits 0). Called from `lint`; see `just --list` for the recipe.
+# Offline self-checks for the music tooling. Index/similar are Rust binaries
+# (stub embedder, no torch/model/venv); the describe payload is still Python and
+# needs a numpy-capable interpreter. Called from `lint`.
 music-selftest:
     #!/usr/bin/env bash
-    # Prefer an interpreter that can actually import numpy (the venv's cp312
-    # builds do not load under the system 3.14), then fall back to whatever
-    # python3 is around: the payloads print a skip and exit 0 without numpy.
+    # The index/similar self-checks are the Rust `music-index`/`music-similar`
+    # binaries now (stub embedder: no torch, no model, no venv). They are built
+    # from the flake so this works without the tools on PATH; a machine that
+    # cannot build them prints a skip.
     set -euo pipefail
+    if out="$(nix build --no-link --print-out-paths ".#music-index-tools" 2>/dev/null)"; then
+      "$out/bin/music-index" --selftest
+      "$out/bin/music-similar" --selftest
+    else
+      echo "music index/similar selftest skipped (nix build .#music-index-tools failed)"
+    fi
+    # music-describe still runs torch; prefer an interpreter that can import numpy.
     venv_sp=/zero/ai/music-ai/venv-analysis/lib/python3.12/site-packages
     for py in "${MUSIC_AI_SELFTEST_PY:-}" "$HOME/.local/bin/python3.12" python3; do
       [ -n "$py" ] || continue
       command -v "$py" >/dev/null 2>&1 || continue
       if PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" -c 'import numpy' >/dev/null 2>&1; then
-        PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "{{repo_root}}/packages/local-bin/lib/music_index.py" --selftest
-        PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "{{repo_root}}/packages/local-bin/lib/music_similar.py" --selftest
         PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "{{repo_root}}/packages/local-bin/lib/music_describe.py" --selftest
         exit 0
       fi
     done
-    echo "music payload selftest skipped (no numpy-capable interpreter found)"
+    echo "music-describe selftest skipped (no numpy-capable interpreter found)"
 
 # Check that all packages in environment.systemPackages have inline annotations
 lint-annotations:
@@ -374,13 +380,19 @@ flag flag-path="features.cli.broot.enable":
 #                         ~9.0 s: the evaluation fans out over systemPackages
 #                         through Determinate's `builtins.parallel` at
 #                         eval-cores 16, and falls back to the plain command when
-#                         that primop is missing), ~40 ms on a hit. What a
-#                         rollout needs. Key: the WHOLE tree (HEAD, status, full
-#                         diff with binary blobs, untracked content), because the
-#                         toplevel embeds the flake source — preserve-flake pins
+#                         that primop is missing), ~29 ms on a hit of a clean
+#                         tree, ~76 ms on one with ~1700 changed paths. What a
+#                         rollout needs. Key: the WHOLE tree, because the toplevel
+#                         embeds the flake source — preserve-flake pins
 #                         self.outPath — so any content change moves the drvPath.
+#                         It is built from git's own content addresses (HEAD,
+#                         `ls-files -s` blob OIDs, one batched `hash-object` for
+#                         every path status calls dirty or untracked) instead of a
+#                         whole-tree diff plus a sha256 per file: same
+#                         invalidation strength, 6x cheaper on a dirty tree.
 #                         `--json` returns {label, drvPath, toplevel, name, system}
-#                         from that one evaluation; `--field NAME` picks one.
+#                         from that one evaluation; `--field NAME` picks one, and
+#                         `--print-key` prints the key a state hashes to.
 # A hit is the stored output of a live eval of exactly that state, never a guess;
 # scripts/dev/nixos-eval-gate.test.sh proves it against `nix eval` per state.
 # Anything unhashable (unreadable input, unknown file type, unwritable cache dir)
