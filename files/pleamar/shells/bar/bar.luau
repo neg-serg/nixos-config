@@ -2200,37 +2200,13 @@ watch_layout()
 run("hyprctl", { "submap" }, function(out) set_submap(out) end)
 
 -- ------------------------------------------------------------- system monitor
--- QS Services/SystemMonitor.qml, same probe and same arithmetic: one dash and
--- one awk over the four procfs files plus the GPU and CPU-temperature paths
--- discovered once per probe. The bar shows the same six metrics with the same
--- thresholds and the same idle rule (panel: systemMonitorHideIdle, 3%).
-local SYS_PROBE = [[
-tp=''
-for h in /sys/class/hwmon/hwmon*/; do
-  n=$(cat "$h/name" 2>/dev/null)
-  case $n in k10temp|coretemp|zenpower) f="${h}temp1_input"; [ -r "$f" ] && tp=$f && break;; esac
-done
-[ -n "$tp" ] || tp=/sys/class/thermal/thermal_zone0/temp
-gp=''; bv=0
-for d in /sys/class/drm/card[0-9]*/device; do
-  [ -f "$d/gpu_busy_percent" ] || continue
-  v=$(cat "$d/mem_info_vram_total" 2>/dev/null) || v=0
-  [ "$v" -gt "$bv" ] && bv=$v && gp=$d/gpu_busy_percent
-done
-awk -v tp="$tp" -v gp="$gp" '
-  FILENAME=="/proc/stat"      { if (FNR==1) print "cpu", $2,$3,$4,$5,$6,$7,$8,$9; next }
-  FILENAME=="/proc/meminfo"   { if ($1=="MemTotal:") t=$2; else if ($1=="MemAvailable:") a=$2; next }
-  FILENAME=="/proc/swaps"     { if (FNR>1) { st+=$3; su+=$4 } next }
-  FILENAME=="/proc/diskstats" { if ($3 ~ /^(sd[a-z]|nvme[0-9]+n[0-9]+|vd[a-z])$/) { r+=$6; w+=$10 } next }
-  FILENAME==tp                { print "temp", $1+0; next }
-  FILENAME==gp                { print "gpu", $1+0; next }
-  END { print "mem", t+0, a+0; print "swap", st+0, su+0; print "io", r+0, w+0 }
-' /proc/stat /proc/meminfo /proc/swaps /proc/diskstats "$tp" "$gp" 2>/dev/null
-]]
-
-local POLL_MS = 2000
-local IO_MAX_KIBPS = 512000
-local prevCpu, prevIo = nil, nil
+-- The worker does the arithmetic now (packages/pleamar-sysmon, the same one the
+-- panels subscribe to): one JSON object per line with the ratios already scaled,
+-- and an unavailable GPU/temperature carried as `{ err = ... }`. The bar keeps
+-- its thresholds and the idle rule (panel: systemMonitorHideIdle, 3%).
+local SYS_INTERVAL_MS = 2000
+local sysmon_handle = nil
+local sysmon_restart = nil
 
 local function clamp01(v)
     if v ~= v then return 0 end
@@ -2239,53 +2215,61 @@ local function clamp01(v)
     return v
 end
 
-local function applyLine(line)
-    local tag, rest = line:match("^(%a+)%s+(.*)$")
-    if not tag then return end
-    local n = {}
-    for f in rest:gmatch("%S+") do n[#n + 1] = tonumber(f) or 0 end
-    if tag == "cpu" and #n >= 8 then
-        local total = 0
-        for i = 1, 8 do total = total + n[i] end
-        local idle = n[4] + n[5]
-        if prevCpu then
-            local dTotal = total - prevCpu.total
-            local dIdle = idle - prevCpu.idle
-            if dTotal > 0 then fact.cpu = clamp01((dTotal - dIdle) / dTotal) end
-        end
-        prevCpu = { total = total, idle = idle }
-    elseif tag == "mem" and #n >= 2 then
-        local total, avail = n[1], n[2]
-        fact.ram = total > 0 and clamp01((total - avail) / total) or 0
+local function applySample(data)
+    if type(data) ~= "table" then return end
+
+    local cpu = data.cpu
+    if type(cpu) == "table" and type(cpu.percent) == "number" then
+        fact.cpu = clamp01(cpu.percent / 100)
+    end
+
+    local mem = data.mem
+    if type(mem) == "table" and type(mem.percent) == "number" then
+        fact.ram = clamp01(mem.percent / 100)
         -- The tooltip prints the pair beside the share, as the reference does ("7.2 / 16 GiB").
-        fact.ram_total_gib = math.floor(total / 1048576 + 0.5)
-        fact.ram_used_gib = math.floor((total - avail) / 104857.6 + 0.5) / 10
-    elseif tag == "swap" and #n >= 2 then
-        local total, used = n[1], n[2]
-        fact["has.swap"] = total > 0
-        fact.swap = total > 0 and clamp01(used / total) or 0
-    elseif tag == "io" and #n >= 2 then
-        local sectors = n[1] + n[2]
-        if prevIo then
-            local kbps = (sectors - prevIo) / 2 / (POLL_MS / 1000)
-            fact.io = clamp01(kbps / IO_MAX_KIBPS)
-        end
-        prevIo = sectors
-    elseif tag == "temp" and #n >= 1 then
-        local c = n[1] / 1000
-        fact.temp = clamp01((c - 30) / 70)
-    elseif tag == "gpu" and #n >= 1 then
+        fact.ram_total_gib = math.floor((mem.total_gib or 0) + 0.5)
+        fact.ram_used_gib = math.floor((mem.used_gib or 0) * 10 + 0.5) / 10
+    end
+
+    local swap = data.swap
+    if type(swap) == "table" then
+        fact["has.swap"] = swap.available == true
+        fact.swap = swap.available == true and clamp01((swap.percent or 0) / 100) or 0
+    end
+
+    local disk = data.disk
+    if type(disk) == "table" and type(disk.percent) == "number" then
+        fact.io = clamp01(disk.percent / 100)
+    end
+
+    local temp = data.temp
+    if type(temp) == "table" and type(temp.percent) == "number" then
+        fact.temp = clamp01(temp.percent / 100)
+    end
+
+    local gpu = data.gpu
+    if type(gpu) == "table" and type(gpu.percent) == "number" then
         fact["has.gpu"] = true
-        fact.gpu = clamp01(n[1] / 100)
+        fact.gpu = clamp01(gpu.percent / 100)
     end
 end
 
-local function sysmon()
-    run("dash", { "-c", SYS_PROBE }, function(out)
-        if type(out) ~= "string" then return end
-        for line in out:gmatch("[^\n]+") do applyLine(line) end
-    end)
+local function sysmon_start()
+    if sysmon_handle or sysmon_restart then return end
+    -- `--interval-ms` sets the worker's own cadence; stdin stays open so it does
+    -- not read EOF and exit after the handshake (INTERFACES.md §7).
+    local ok, handle = pcall(spawn, "pleamar-sysmon", { "--interval-ms", tostring(SYS_INTERVAL_MS) }, function(line)
+        local parsed, msg = pcall(json.decode, line)
+        if not parsed or type(msg) ~= "table" or type(msg.data) ~= "table" then return end
+        applySample(msg.data)
+    end, function()
+        sysmon_handle = nil
+        sysmon_restart = after(2000, function()
+            sysmon_restart = nil
+            sysmon_start()
+        end)
+    end, { stdin = "open" })
+    if ok then sysmon_handle = handle end
 end
 
-sysmon()
-every(POLL_MS, sysmon)
+sysmon_start()
