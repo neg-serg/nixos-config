@@ -84,9 +84,11 @@ part NowPlaying {
 
                 // ----***---------- analyser band
                 // QS draws IPhoneSpectrum here, one-sided, with the scrub line
-                // under it; panels.plm sets `Spectrum.mirror`.
+                // under it; panels.plm sets `Spectrum.mirror`. Its colour is the cover's
+                // (`Music.qml`'s `accentColor: detailsCol.musicAccent`), not the wallpaper
+                // palette's accent — the card follows the album, the shell follows the wall.
                 group { move: 12, 224
-                    spec.Bars(width: 396, height: 76, tone: skin.accent, end: highlight, gap: 0)
+                    spec.Bars(width: 396, height: 76, tone: cover_accent, end: cover_accent, gap: 0)
                 }
 
                 // ----***----------------------- scrub line
@@ -97,14 +99,15 @@ part NowPlaying {
                 // fill colour at 0.14, the played part at full strength under it,
                 // and a vertical bloom rising 30 % of the band behind the fill
                 // (a gradient from nothing to 0.38 there; one box at a fifth
-                // here, since a box carries one colour).
-                box { from: 12, 305; size: 396, 3; corner: 1.5; color: skin.accent; opacity: 14% }
+                // here, since a box carries one colour). The fill is the cover accent
+                // (`_progressFillColor`, the reference's `musicAccent`).
+                box { from: 12, 305; size: 396, 3; corner: 1.5; color: cover_accent; opacity: 14% }
                 box { from: 12, 280; corner: 3
                     size: 396 * clamp(media.pos / max(media.length, 1), 0, 1), 25
-                    color: skin.accent; opacity: 15% }
+                    color: cover_accent; opacity: 15% }
                 box { from: 12, 305; corner: 1.5
                     size: 396 * clamp(media.pos / max(media.length, 1), 0, 1), 3
-                    color: skin.accent }
+                    color: cover_accent }
 
                 // ----***----------------- the scrub band
                 // QS seeks from a press on the progress bar (`Music.qml`'s `seekFromX`, a MouseArea
