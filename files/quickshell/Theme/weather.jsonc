@@ -1,7 +1,0 @@
-{
-  "weather": {
-    "headerScale": 0.75,
-    "centerOffset": -2,
-    "httpTimeoutMs": 8000
-  }
-}

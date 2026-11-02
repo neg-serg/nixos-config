@@ -45,7 +45,7 @@
 # PH3-L's PAM matrix (right password, wrong password, no enrolled finger, layout
 # switch) is a human gate: it is run by the owner at the next logout, never by a
 # test. Rolling back is a `git revert` of this wiring or the previous generation;
-# files/quickshell stays in the tree until that gate has passed.
+# The legacy QML tree (files/quickshell) was deleted on 2026-11-02; git history is the rollback.
 set -u
 
 PLEAMAR="@pleamar@"

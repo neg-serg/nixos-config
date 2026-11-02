@@ -1,4 +1,0 @@
-module qs
-singleton ShellGlobals 1.0 ShellGlobals.qml
-singleton GreeterTheme 1.0 GreeterTheme.qml
-greeter 1.0 greeter.qml

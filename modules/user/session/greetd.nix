@@ -121,7 +121,7 @@ in
     #
     # This replaced both Quickshell deployments of the login screen
     # (environment.etc."quickshell" and the greeter fallback under /etc/greetd):
-    # nothing reads files/quickshell at login any more. That also ends the
+    # nothing reads the deleted legacy QML tree at login any more. That also ends the
     # theme copy modules/user/session/greetd/wallpaper.sh used to make — the login
     # phase now runs as the main user, whose own ~/.config/pleamar/theme.plm is the
     # live palette, and the tree here carries the committed files/pleamar/theme.plm
