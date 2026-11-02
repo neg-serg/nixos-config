@@ -1,7 +1,10 @@
 #!/bin/bash
 # regenerate blizzard-*.webp variants (dither x palette) into XDG_DATA_HOME/fastfetch/logos
+# The Rust `blizzard` binary (packages/blizzard) is installed beside this
+# script by modules/user/nix-maid/cli/fastfetch.nix.
 set -e
 cd "$(dirname "$0")"
+gen=(./blizzard)
 if [ -z "$1" ]; then
   dithers="fs atkinson sierra stucki bayer noise"
 else
@@ -9,7 +12,7 @@ else
 fi
 for d in $dithers; do
   for pal in ash ember ice; do
-    python3 make_blizzard.py --dither "$d" --palette "$pal" --out "$HOME/.local/share/fastfetch/logos/blizzard-$d-$pal.webp"
+    "${gen[@]}" --dither "$d" --palette "$pal" --out "$HOME/.local/share/fastfetch/logos/blizzard-$d-$pal.webp"
   done
 done
 echo "done"
