@@ -3,8 +3,8 @@
 //! asks for is exactly where the renderer put it.
 //!
 //! The numbers and their limits are the acceptance criteria A1..A7 of
-//! docs/howto/designs/nixie-lamps-plan.xml, the same ones nixie-metrics.py
-//! measured on a screen shot.
+//! docs/howto/designs/nixie-lamps-plan.xml, the same ones the `nixie-metrics`
+//! binary measures on a screen shot.
 
 /// The limits, in device pixels and ratios. A wire is white-hot and thin, the
 /// gas falls away inside the mesh, the glass adds little of its own light.
