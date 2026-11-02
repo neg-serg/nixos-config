@@ -27,6 +27,11 @@ local raw = {}
 local function read_file()
     local ok, got = pcall(function() return sys.ask("files.read", FILE, "json") end)
     if ok and type(got) == "table" then return got end
+    -- A missing file is the first run; one that is there and unreadable is a defect (§6.1).
+    if not ok then
+        local ok_ex, there = pcall(function() return sys.ask("files.exists", FILE) end)
+        if ok_ex and there == true then log("overlay: settings.json is broken; defaults kept") end
+    end
     return {}
 end
 
@@ -45,7 +50,7 @@ sys.watch("files:" .. FILE, function()
 end)
 
 -- ------***------------------------- the semaphores
-local HOME = "/tmp"
+local HOME = nil
 local CACHE = nil
 
 local ok_home, home = pcall(function() return sys.ask("env", "HOME") end)
@@ -54,8 +59,16 @@ if ok_home and type(home) == "string" and home ~= "" then HOME = home end
 local ok_cache, cache = pcall(function() return sys.ask("env", "XDG_CACHE_HOME") end)
 if ok_cache and type(cache) == "string" and cache ~= "" then CACHE = cache end
 -- Without `XDG_CACHE_HOME` the XDG base spec's answer is `$HOME/.cache`, which is the directory the
--- binds touch (`~/.cache/pleamar/dismiss-overlay`); `/tmp/.cache` was a path nothing wrote.
-if not CACHE then CACHE = HOME .. "/.cache" end
+-- binds touch (`~/.cache/pleamar/dismiss-overlay`); `/tmp/.cache` was a path nothing wrote. Without
+-- `HOME` there is nothing to derive it from, and a semaphore nobody reads is worse than a log line.
+if not CACHE then
+    if HOME then
+        CACHE = HOME .. "/.cache"
+    else
+        log("overlay: the env service did not hand over HOME; the dismissal semaphores cannot be found")
+        CACHE = "/tmp/.cache"
+    end
+end
 
 local DIR = CACHE .. "/pleamar"
 local DISMISS = DIR .. "/dismiss-overlay"
