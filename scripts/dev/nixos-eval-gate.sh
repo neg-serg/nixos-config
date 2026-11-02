@@ -29,15 +29,42 @@
 #   never read during evaluation), while editing any `.nix` file, `flake.lock` or
 #   read-in data file is a miss.
 #
-# Tier B (`--drv`, before a rollout): …toplevel.drvPath. Its key is the WHOLE tree
-#   (HEAD + the full `git status --porcelain=v1 -z` + the whole `git diff HEAD
-#   --binary` + every untracked file's content hash), not the input set, because
-#   the toplevel embeds the flake source tree itself: modules/system/preserve-flake.nix
-#   pins `inputs.self.outPath` into an activation script, so *any* tree content —
-#   a README, a picture — is an input of the derivation (measured: appending one
-#   line to README.md moves the drvPath, and the same edit leaves the tier-A label
-#   untouched). Keying tier B on the input set would serve a stale drvPath, i.e. a
-#   wrong-direction hit; over-invalidating is the only honest option here.
+# Tier B (`--drv`, before a rollout): …toplevel.drvPath. Its key is the WHOLE tree,
+#   not the input set, because the toplevel embeds the flake source tree itself:
+#   modules/system/preserve-flake.nix pins `inputs.self.outPath` into an activation
+#   script, so *any* tree content — a README, a picture — is an input of the
+#   derivation (measured: appending one line to README.md moves the drvPath, and
+#   the same edit leaves the tier-A label untouched). Keying tier B on the input
+#   set would serve a stale drvPath, i.e. a wrong-direction hit; over-invalidating
+#   is the only honest option here.
+#
+#   The tree key is built from git's own content addresses rather than a fresh
+#   digest of every file, for the same reason the proof record stores blob OIDs:
+#   hashing the content the caller already asked git about costs more than the
+#   answer it protects. Per key section:
+#     head    — `git rev-parse HEAD`;
+#     index   — `git ls-files -s -z`: mode + blob OID + path for every tracked
+#               path, i.e. the content address git keeps for each file, which *is*
+#               the working tree content for every path status calls clean;
+#     status  — `git status --porcelain=v2 -z -uall --no-renames`: the change set
+#               itself (additions, deletions, type changes, stage state);
+#     wtfiles/wtexec/wtids — for every path status calls dirty or untracked, in
+#               status order: the path, one exec-bit character, and one blob OID
+#               of its RAW bytes from a single `git hash-object --no-filters
+#               --stdin-paths` run (one process per tree instead of one per file).
+#               The worktree mode in porcelain v2 carries the exec bit, so a
+#               mode-only change moves the key without re-reading anything;
+#     wtlinks — symlinks by target text (`hash-object` would follow them);
+#     wtgone  — paths the working tree no longer has.
+#   `git diff HEAD --binary` is gone on purpose: its entire information content is
+#   a function of (HEAD content, working-tree content), and both sides are pinned
+#   above by OID, so it could only ever restate the key — while costing 45% of it
+#   (measured on a 1600-path dirty tree: 71 ms of the 156 ms of v3 key material,
+#   against 1 ms for `ls-files -s` and 23 ms for the whole hash-object batch).
+#   Equally conservative: a blob OID moves iff the content moves, the exec bit and
+#   the symlink target ride along as their own fields, and the path sets come from
+#   the same `git status` the v3 key hashed verbatim. The key format tag is bumped
+#   to v4 so a v3 entry can never be read as a v4 one.
 #
 # Tier-B evaluation shape: `--option eval-cores` alone buys nothing for
 #   `nix eval --raw …drvPath` — the executor is created and shuts down with zero
@@ -53,7 +80,8 @@
 #   Bare `nix eval`, one warm cache, 4 interleaved runs (median / min): plain
 #   shape 8.44 s / 8.35 s, this shape 3.45 s / 3.31 s = 2.4x. End to end the gate
 #   goes 9.00 s / 8.74 s -> 3.72 s / 3.67 s (5 interleaved runs of each), and a
-#   cache hit still costs 37 ms, the same as before this change. Core count comes
+#   cache hit is now 29 ms on a clean tree and 76 ms with ~1700 dirty paths (v4
+#   key, 5+ runs each; the v3 key cost 445 ms on the same dirty tree). Core count comes
 #   from TIER_B_CORES below. The primop exists only in Determinate builds, so it
 #   is probed once (`builtins ? parallel`) before the first tier-B evaluation and
 #   the gate falls back to the plain shape when it is missing: it must never fail
@@ -89,7 +117,9 @@
 #   - anything that cannot be hashed falls through to a real eval with a note on
 #     stderr instead of caching: git fails, an input is unreadable or is neither a
 #     regular file nor a symlink nor a directory, an untracked directory cannot be
-#     listed, or no cache directory is writable;
+#     listed, a changed path carries a newline (the batched `git hash-object
+#     --stdin-paths` is line-based and cannot express it), or no cache directory
+#     is writable;
 #   - ignored files are out of both keys on purpose: the flake source copy drops
 #     them, so they cannot reach evaluation.
 # Known blind spot of the tier-A key: a non-Nix *content* read whose path is
@@ -100,12 +130,17 @@
 # literal path, see `collect_inputs`), and the whole-tree tier-B key covers the
 # case when it matters for a rollout.
 #
-# Usage: nixos-eval-gate.sh [--drv] [--no-cache] [--verbose] [--field NAME | --json] [attr]
+# Usage: nixos-eval-gate.sh [--drv] [--no-cache] [--verbose] [--print-key]
+#                            [--field NAME | --json] [attr]
 #   --drv       tier B: evaluate the toplevel drvPath instead of the label
 #   --label     tier A explicitly (the default; here so a wrapper can be explicit)
 #   --no-cache  skip the cache: always run `nix eval`, store nothing
 #   --verbose   print tier, key, cache entry, hit/miss/stored, and the proof
 #               record on stderr
+#   --print-key print the key this state hashes to and exit, without evaluating
+#               and without reading or writing an entry: a key can never answer,
+#               so this is a diagnostic only. The self-test uses it to compare
+#               keys across tree states without paying for an evaluation each.
 #   --field NAME  tier B only: print one of label, drvPath, toplevel, name,
 #                 system from the single evaluation that returns the whole set
 #   --json      tier B only: print that whole set as JSON
@@ -148,6 +183,7 @@ usage() {
 tier=a # default: the fast feedback tier; `--drv` selects tier B
 no_cache=0
 verbose=0
+print_key=0
 attr=""
 field=""
 json_out=0
@@ -156,6 +192,7 @@ while [ $# -gt 0 ]; do
     --drv) tier=b ;;
     --label) tier=a ;;
     --no-cache) no_cache=1 ;;
+    --print-key) print_key=1 ;;
     --verbose | -v) verbose=1 ;;
     --json) json_out=1 ;;
     --field)
@@ -182,6 +219,12 @@ done
 if [ -z "$attr" ]; then
   if [ "$tier" = b ]; then attr="$TIER_B_ATTR"; else attr="$TIER_A_ATTR"; fi
 fi
+
+# The key format tag: in the key material (so entries from two formats can never
+# collide) and in the proof record (so a stored answer says which layout its key
+# was built from). Tier A's material is unchanged and stays v3; tier B moved to
+# whole-tree blob OIDs in v4.
+if [ "$tier" = b ]; then KEY_FORMAT=v4; else KEY_FORMAT=v3; fi
 
 # What the answer is: `attr` (the tier's own attribute, today's behaviour), one
 # named field of the tier-B answer set, or the whole set as JSON. It is part of
@@ -431,7 +474,7 @@ key_material_a() {
   spec+=(${in_paths[@]+"${in_paths[@]}"})
   debug "input set: ${#in_paths[@]} file(s), ${#in_dirs[@]} directory reference(s)"
 
-  printf 'format\0v3\0'
+  printf 'format\0%s\0' "$KEY_FORMAT"
   printf 'tier\0a\0'
   printf 'attr\0%s\0' "$attr"
   printf 'selector\0%s\0' "$selector"
@@ -499,50 +542,152 @@ key_material_a() {
 # ── tier B: the whole tree ──────────────────────────────────────────────────
 # The toplevel embeds the flake source tree (preserve-flake pins self.outPath), so
 # every tracked file's content is an input of the derivation: key on all of it.
+# The identity of that content is git's (blob OIDs), not a fresh digest per file —
+# see the header for the section layout, and for why `git diff --binary` adds
+# nothing over the OIDs it has replaced.
 key_material_b() {
-  local path sum
+  local entry tag mode path rest target ver ver_pid
+  local -a batch=() mask=() links=() lrec=() gone=() oids=()
 
-  printf 'format\0v3\0'
+  # `nix --version` costs ~11 ms on its own and depends on nothing below, so it
+  # runs while the tree is being walked; its section is emitted last, when the
+  # probe has certainly finished. A cache hit pays for neither.
+  "$NIX" --version > "$b_version_file" 2> /dev/null &
+  ver_pid=$!
+
+  printf 'format\0%s\0' "$KEY_FORMAT"
   printf 'tier\0b\0'
   printf 'attr\0%s\0' "$attr"
   printf 'selector\0%s\0' "$selector"
-  printf 'nix\0%s\0' "$("$NIX" --version)"
   printf 'root\0%s\0' "$ROOT_REAL"
 
   printf 'head\0'
   git -C "$REPO_ROOT" rev-parse HEAD || return 1
   printf '\0'
 
+  # The content address git keeps for every tracked path: mode, blob OID, path.
+  printf 'index\0'
+  git -C "$REPO_ROOT" ls-files -s -z || return 1
+  printf '\0'
+
+  # The change set itself. `--no-renames` keeps the record format to one shape
+  # (a rename shows up as a delete plus an add, which is the same tree); porcelain
+  # v2 is used for the worktree mode in field 6, which carries the exec bit.
   printf 'status\0'
-  git -C "$REPO_ROOT" status --porcelain=v1 -z | sort -z || return 1
+  git -C "$REPO_ROOT" status --porcelain=v2 -z --untracked-files=all --no-renames \
+    > "$b_status_file" || return 1
+  cat -- "$b_status_file"
   printf '\0'
 
-  printf 'diff\0'
-  git -C "$REPO_ROOT" diff HEAD --binary --no-color --no-ext-diff --no-textconv \
-    --src-prefix=a/ --dst-prefix=b/ || return 1
+  # One pass over the change set, collecting the working-tree identity of every
+  # path that is not clean. No file is read here: the mode comes from git, and
+  # only untracked entries need a stat to tell a symlink from a file.
+  while IFS= read -r -d '' entry; do
+    tag="${entry:0:1}"
+    case "$tag" in
+      '?')
+        path="${entry:2}"
+        case "$path" in
+          *$'\n'*)
+            note "cannot hash changed path (it contains a newline)"
+            return 1
+            ;;
+        esac
+        if [ -L "$ROOT_REAL/$path" ]; then
+          links+=("$path")
+        elif [ -f "$ROOT_REAL/$path" ]; then
+          batch+=("$path")
+          if [ -x "$ROOT_REAL/$path" ]; then mask+=('x'); else mask+=('-'); fi
+        else
+          note "cannot hash untracked entry ($path is not a regular file or symlink)"
+          return 1
+        fi
+        ;;
+      '1' | 'u')
+        # 1 XY sub mH mI mW hH hI path / u XY sub m1 m2 m3 mW h1 h2 h3 path:
+        # the fields before the object names are fixed width, so mW is at 24:30
+        # and everything after it is space-separated with the path last.
+        mode="${entry:24:6}"
+        rest="${entry:31}"
+        rest="${rest#* }"                               # h1
+        rest="${rest#* }"                               # h2
+        if [ "$tag" = 'u' ]; then rest="${rest#* }"; fi # h3
+        path="$rest"
+        case "$mode" in
+          000000) gone+=("$path") ;;
+          120000) links+=("$path") ;;
+          100644 | 100755)
+            batch+=("$path")
+            if [ "$mode" = 100755 ]; then mask+=('x'); else mask+=('-'); fi
+            ;;
+          *)
+            note "cannot hash changed path ($path has working-tree mode $mode)"
+            return 1
+            ;;
+        esac
+        ;;
+      '!') : ;; # ignored: the store copy drops those, so they are not inputs
+      *)
+        note "unexpected git status record (${entry:0:16}…)"
+        return 1
+        ;;
+    esac
+  done < "$b_status_file"
+
+  # One process for the whole tree instead of one per file: --stdin-paths reads
+  # the path list, --no-filters hashes the RAW bytes (the store copy is raw, so a
+  # CRLF-only edit must still move the key), and the OIDs come back in input
+  # order, which is what the positional sections below rely on.
+  if [ "${#batch[@]}" -gt 0 ]; then
+    printf '%s\n' "${batch[@]}" \
+      | git -C "$REPO_ROOT" hash-object --no-filters --stdin-paths > "$b_oid_file" || {
+      note "cannot hash the working tree (git hash-object failed)"
+      return 1
+    }
+    mapfile -t oids < "$b_oid_file" || return 1
+    if [ "${#oids[@]}" -ne "${#batch[@]}" ]; then
+      note "cannot hash the working tree (${#oids[@]} identities for ${#batch[@]} paths)"
+      return 1
+    fi
+  fi
+
+  # wtfiles / wtexec / wtids are parallel and in the same order: path, one
+  # exec-bit character, blob OID of the raw bytes.
+  printf 'wtfiles\0'
+  printf '%s\0' ${batch[@]+"${batch[@]}"}
+  printf '\0'
+  printf 'wtexec\0'
+  printf '%s' ${mask[@]+"${mask[@]}"}
+  printf '\0'
+  printf 'wtids\0'
+  if [ -s "$b_oid_file" ]; then cat -- "$b_oid_file"; fi
   printf '\0'
 
-  printf 'untracked\0'
-  while IFS= read -r -d '' path; do
-    if [ -L "$ROOT_REAL/$path" ]; then
-      sum="link:$(readlink -- "$ROOT_REAL/$path")" || sum=""
-    elif [ -f "$ROOT_REAL/$path" ]; then
-      if [ -x "$ROOT_REAL/$path" ]; then
-        sum="x:$(sha256sum -- "$ROOT_REAL/$path")" || sum=""
-      else
-        sum="-:$(sha256sum -- "$ROOT_REAL/$path")" || sum=""
-      fi
-    else
-      note "cannot hash untracked entry ($path is not a regular file or symlink)"
+  printf 'wtlinks\0'
+  for path in ${links[@]+"${links[@]}"}; do
+    target="$(readlink -- "$ROOT_REAL/$path")" || {
+      note "cannot hash changed path ($path is not readable)"
       return 1
-    fi
-    if [ -z "$sum" ]; then
-      note "cannot hash untracked entry ($path is not readable)"
-      return 1
-    fi
-    printf '%s\0%s\0' "$path" "$sum"
-  done < <(git -C "$REPO_ROOT" ls-files --others --exclude-standard -z) || return 1
+    }
+    lrec+=("$path" "$target")
+  done
+  printf '%s\0' ${lrec[@]+"${lrec[@]}"}
   printf '\0'
+
+  printf 'wtgone\0'
+  printf '%s\0' ${gone[@]+"${gone[@]}"}
+  printf '\0'
+
+  wait "$ver_pid" || {
+    note "cannot read the evaluator version ($NIX --version failed)"
+    return 1
+  }
+  ver="$(< "$b_version_file")"
+  if [ -z "$ver" ]; then
+    note "cannot read the evaluator version ($NIX --version printed nothing)"
+    return 1
+  fi
+  printf 'nix\0%s\0' "$ver"
 
   printf 'end\0'
   return 0
@@ -550,18 +695,39 @@ key_material_b() {
 
 # Hashes the key material and keeps it in $material_file: the proof record stores
 # those exact bytes, so a cached answer can be re-derived without guessing which
-# inputs the cache believed in. Cleaned up by the EXIT trap.
+# inputs the cache believed in. Tier B also needs two scratch files — the raw
+# status listing (parsed once, hashed once) and the batch of blob OIDs — so that
+# neither the change set nor the file contents are computed twice.
+# The names are created here, not inside compute_key, because a command
+# substitution would hide them from the EXIT trap (and from the proof record).
 material_file=""
-tree_key() {
-  local key
+b_status_file=""
+b_oid_file=""
+b_version_file=""
+key_scratch() {
+  if [ -n "$material_file" ]; then
+    return 0
+  fi
   material_file="$(mktemp "${TMPDIR:-/tmp}/nixos-eval-gate.XXXXXXXX")" || return 1
+  if [ "$tier" = b ]; then
+    b_status_file="$(mktemp "${TMPDIR:-/tmp}/nixos-eval-gate.XXXXXXXX")" || return 1
+    b_oid_file="$(mktemp "${TMPDIR:-/tmp}/nixos-eval-gate.XXXXXXXX")" || return 1
+    b_version_file="$(mktemp "${TMPDIR:-/tmp}/nixos-eval-gate.XXXXXXXX")" || return 1
+  fi
+}
+
+# Leave the key in $key (no subshell: key_scratch has to run in this shell).
+key=""
+compute_key() {
+  local sum
+  key_scratch || return 1
   if [ "$tier" = b ]; then
     key_material_b > "$material_file" || return 1
   else
     key_material_a > "$material_file" || return 1
   fi
-  key="$(sha256sum < "$material_file")" || return 1
-  printf '%s\n' "${key%% *}"
+  sum="$(sha256sum < "$material_file")" || return 1
+  key="${sum%% *}"
 }
 
 # The live evaluation. Tier A is unchanged: one `--raw` of the label. Tier B runs
@@ -611,14 +777,17 @@ live_eval() {
 # The proof record beside the answer: what the cache believed in. Cheap (one
 # `rev-parse`, one `ls-files -s`), written only on a miss. The file OIDs are
 # git's own content hashes rather than sha256: a sha256sum per file would fork
-# once per tracked file and cost more than the evaluation the gate exists to
-# save. The material below carries the content of everything that differs from
-# HEAD, so HEAD + these OIDs + that material re-derive the answer exactly.
+# once per file and cost more than the evaluation the gate exists to save — and
+# the key is built from those same OIDs, so the record and the key cannot
+# disagree about what a file was. The material below carries, section by section,
+# the head commit, the index identity of every tracked path, the change set, and
+# the blob OIDs of everything the working tree changed.
 write_record() {
   local answer="$1" tmp="$cache_dir/.$key.record.$$"
   {
     printf '# nixos-eval-gate proof record: what this cache entry believed in.\n'
     printf 'key %s\n' "$key"
+    printf 'key_format %s\n' "$KEY_FORMAT"
     printf 'tier %s\n' "$tier"
     printf 'selector %s\n' "$selector"
     printf 'attr %s\n' "$attr"
@@ -662,13 +831,28 @@ if [ "$no_cache" -eq 0 ]; then
   cache_dir="$(resolve_cache_dir)" || cache_dir=""
 fi
 
-if [ -n "$cache_dir" ]; then
-  trap 'if [ -n "${material_file:-}" ]; then rm -f "$material_file"; fi' EXIT
-fi
+# The scratch files exist for a key computation only, cached or not (`--print-key`
+# hashes a state without touching an entry), so the trap is unconditional.
+trap 'if [ -n "${material_file:-}" ]; then rm -f "$material_file"; fi
+if [ -n "${b_status_file:-}" ]; then rm -f "$b_status_file"; fi
+if [ -n "${b_oid_file:-}" ]; then rm -f "$b_oid_file"; fi
+if [ -n "${b_version_file:-}" ]; then rm -f "$b_version_file"; fi' EXIT
 
 key=""
+if [ "$print_key" -eq 1 ]; then
+  # A key can never answer anything, so printing it cannot serve a stale value:
+  # this path reads no entry and writes none. It is how the self-test compares
+  # keys across tree states without paying for an evaluation in every state.
+  if compute_key; then
+    printf '%s\n' "$key"
+    exit 0
+  fi
+  note "the key cannot be computed for this state"
+  exit 1
+fi
+
 if [ -n "$cache_dir" ]; then
-  if key="$(tree_key)"; then
+  if compute_key; then
     debug "tier=$tier attr=$attr selector=$selector key=$key"
     entry="$cache_dir/$key"
     if [ -f "$entry" ]; then
