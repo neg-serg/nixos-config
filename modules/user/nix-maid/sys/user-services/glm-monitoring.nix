@@ -36,6 +36,21 @@ lib.mkIf (cfg.enable or false) {
       };
     };
 
+    # glm5d — the one process that owns the GLM adapter and keeps GLM's own cycle
+    # (probe, lease, poll every ~0.57 s) so the monitors never drop their sessions.
+    # NOT started by default: the adapter normally lives inside the Windows VM, and a
+    # daemon that cannot open it would only restart-loop. Start it by hand after
+    # `glm-adapter host`, and stop it before giving the adapter back:
+    #   systemctl --user start glm5d && printf 'status\n' | nc -U $XDG_RUNTIME_DIR/glm5d.sock
+    glm5d = systemdUser.mkUserService {
+      presets = [ "restartOnFailure" ];
+      description = "GLM adapter owner: lease cycle, polling, Unix-socket control";
+      serviceConfig = {
+        ExecStart = "${pkgs.genlc}/bin/glm5d";
+        RestartSec = 3;
+      };
+    };
+
     # glm-midi-relay — one-way MIDI relay to the dockur Windows VM: the VM's
     # bridge (oem/glm-midi-bridge.ps1) connects OUT to :9003 (VM-initiated TCP
     # is the only bidirectional host<->VM channel under the same-IP pasta
