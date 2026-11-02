@@ -136,9 +136,9 @@ three 0–1 numbers and is the only colour that can come from facts.
 ## 2. Scene catalog and IPC names
 
 The scene processes of the port, with their names fixed here (the tree is the list: one directory
-per scene, `shells/<scene>/<scene>.plm`, and the rows below are the ones with a frozen contract). The IPC name is the scene name:
-`pleamar --say <name> …` (unit `pleamar-<name>.service`). One scene per process, one or more
-surfaces inside it (D1/D2), never a popup for a drawer.
+per scene, `shells/<scene>/<scene>.plm`, and the rows below are the ones with a frozen contract).
+The IPC name is the scene name: `pleamar --say <name> …` (unit `pleamar-<name>.service`). One scene
+per process, one or more surfaces inside it (D1/D2), never a popup for a drawer.
 
 | scene | file | surface | purpose | owner | | --------------- |
 \---------------------------------------- |
@@ -187,9 +187,9 @@ drawer is open (one at a time, D1) | | `notifications` | `dnd` | bool | `false` 
 `notifications` | `centre` | bool | `false` | the notification centre is open | | `notifications` |
 `count` | number | `0` | notifications currently shown or kept (read-only for other scenes) | |
 `toast` | `visible` | number | `0` | how many toasts are on screen | | `overlay` | `active` | bool |
-`false` | the dismissal catcher is up | | `lock` | `locked` | bool | `true` | the lock surface
-wants the session (the compositor's own `lock.held` says whether it has it) | | `launcher` | `open`
-| bool | `false` | the launcher is up | | `launcher` | `query` | text | `""` | what has been typed |
+`false` | the dismissal catcher is up | | `lock` | `locked` | bool | `true` | the lock surface wants
+the session (the compositor's own `lock.held` says whether it has it) | | `launcher` | `open` | bool
+| `false` | the launcher is up | | `launcher` | `query` | text | `""` | what has been typed |
 
 IPC examples that other tools (Hyprland binds, health probe, scripts) may rely on:
 
@@ -664,6 +664,7 @@ Two traps the example avoids, both compiler behaviour in 0.4.11:
   alpha, `content`, `step`, an `anchor` fact) are unaffected.
 
 ## 5. Menu and icon APIs (frozen; both live in `lib/menu.plm` and `lib/icons.plm`, and
+
 `lib/menu.check.plm` is the scene that compiles the first of them)
 
 `lib/menu.plm` and `lib/icons.plm` are the next two files of `lib/`; PH2-B needs the menu rows and
@@ -862,8 +863,8 @@ bool | true | — | a press outside closes the open drawer | | `notifications` |
 | — | do not disturb (also a fact, §2.1) | | `notifications` | `maxToasts` | number | 2 | 1 – 6 |
 stacked toasts | | `notifications` | `autoDismissMs` | number | 6000 | 0 – 60000 | 0 = keep until
 dismissed | | `notifications` | `historyMax` | number | 50 | 0 – 200 | history entries kept across
-restarts | | `toast` | `anchor` | text | `"top_right"` | a `surface.anchor` value | where toasts
-stack | | `toast` | `margin` | number | 12 | 0 – 64 | design px from the corner | | `overlay` |
+restarts | | `toast` | `anchor` | text | `"bottom_right"` | a `surface.anchor` value | where toasts
+stack (QS `top_right`; the port hangs them over the bar's corner) | | `toast` | `margin` | number | 24 | 0 – 64 | design px from the corner (QS 12; 24 keeps the card clear of the 25 px bar) | | `overlay` |
 `dismissOnEscape` | bool | true | — | Escape closes overlays | | `lock` | `clock24h` | bool | true |
 — | greeter `nixie24h` | | `lock` | `uiScale` | number | 1.2 | 0.8 – 2.0 | greeter `uiScale` | |
 `launcher` | `maxResults` | number | 8 | 1 – 20 | list cap | | `theme` | `wallpaper` | text | `""` |
@@ -888,9 +889,9 @@ protocol error and the sample is dropped.
 **Names and permissions.** Workers live in `files/pleamar/scripts/helpers/` (PH2-E scope), are
 installed into `PATH` as `pleamar-<name>` (`pleamar-sysmon`, `pleamar-weather`, `pleamar-calendar`,
 `pleamar-kbdlayout`, `pleamar-journal`, `pleamar-wallpaper-palettes`, `pleamar-wallpaper-apply`,
-`pleamar-wallpaper-still`), and are spawned by
-that bare name. A scene declares only the ones it uses: `permissions { run: "pleamar-sysmon" }`.
-Never `sh -c`, never a path, never a second worker name the module does not install.
+`pleamar-wallpaper-still`), and are spawned by that bare name. A scene declares only the ones it
+uses: `permissions { run: "pleamar-sysmon" }`. Never `sh -c`, never a path, never a second worker
+name the module does not install.
 
 Two names install beside them and are **not** workers: `pleamar-wallpaper-palettes` and
 `pleamar-wallpaper-apply` are commands the `picker` scene runs to completion with `run(...)` — the
@@ -1046,7 +1047,7 @@ drawer opener | the drawer title, §2.2 | `button` | — | — | | drawer close 
 `button` | — | — | | power: log out | `Log out` | `button` | — | `no` | | power: reboot | `Reboot` |
 `button` | — | `no` | | power: power off | `Power off` | `button` | — | `no` | | toast |
 `{n.app}: {n.title}` | `item` | — | — | | toast notice actions | `{action.label}` | `button` | — | —
-| | toast dismiss | `Dismiss notification` | `button` | — | — | | notification centre |
+| | toast dismiss | `Dismiss` (a screenshot card says `Dismiss screenshot`) | `button` | — | — | | notification centre |
 `Notifications` | `list` | — | — | | centre entry | `{n.app}: {n.title}` | `item` | — | — | | centre
 clear | `Clear all notifications` | `button` | — | `no` | | overlay catcher | `Dismiss overlay` |
 `region` | — | `no` | | lock password | `Password` | field | — | `no` + `secret: true` | | lock
@@ -1340,7 +1341,7 @@ paints a path or an icon name, not a URL.
 | file             | what it is                                                                   |
 | ---------------- | ---------------------------------------------------------------------------- |
 | `meta.plm`       | `library Meta strict`: the file facts and texts, the quality summary, `Line` |
-| `meta.luau`      | the playerctl lookup, the ffprobe/mediainfo chain, the summary formatting     |
+| `meta.luau`      | the playerctl lookup, the ffprobe/mediainfo chain, the summary formatting    |
 | `meta.check.plm` | the compile proof                                                            |
 
 | name                                                                                                      | kind       | meaning                                            |

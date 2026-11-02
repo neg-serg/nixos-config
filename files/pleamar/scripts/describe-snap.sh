@@ -11,7 +11,7 @@
 # non-zero on drift, printing a human-readable summary.
 #
 # Usage: describe-snap.sh [--update] [--timeout N] [--scene NAME]
-#                         [--live] [--keep-tmp] [SCENE]
+#                         [--live] [--systemd] [--soft] [--keep-tmp] [SCENE]
 # Environment: PLEAMAR_BIN (default: pleamar), PLEAMAR_WM_BIN (default:
 # pleamar-wm).
 #
