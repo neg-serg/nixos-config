@@ -404,5 +404,14 @@ lib.mkMerge [
       };
 
     };
+
+    # Keep the Secret Service, but drop pam_gnome_keyring from the `login` PAM
+    # stack: the root-side stdio bridges (systemd-run --user with PAMName=login)
+    # open a login session per agent tool call without a password, so the module
+    # logged "gkr-pam: couldn't unlock the login keyring" ~2400 times per
+    # session. The graphical login goes through greetd/pleamar, which never
+    # carried the module, and gnome-keyring itself is D-Bus activated — nothing
+    # that worked loses its auto-unlock.
+    security.pam.services.login.enableGnomeKeyring = lib.mkForce false;
   }
 ]
