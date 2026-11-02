@@ -1337,7 +1337,7 @@ paints a path or an icon name, not a URL.
 | file             | what it is                                                                   |
 | ---------------- | ---------------------------------------------------------------------------- |
 | `meta.plm`       | `library Meta strict`: the file facts and texts, the quality summary, `Line` |
-| `meta.luau`      | the mpc file lookup, the ffprobe/mediainfo chain, the summary formatting     |
+| `meta.luau`      | the playerctl lookup, the ffprobe/mediainfo chain, the summary formatting     |
 | `meta.check.plm` | the compile proof                                                            |
 
 | name                                                                                                      | kind       | meaning                                            |
@@ -1346,15 +1346,15 @@ paints a path or an icon name, not a URL.
 | `Meta.codec` · `container` · `genre` · `label` · `albumArtist` · `composer` · `file`                      | live texts | the tags, empty when the file has none             |
 | `Meta.summary`                                                                                            | live text  | the QS quality line, e.g. `FLAC 24/96 · 1024 kbps` |
 
-The QS `MusicMeta.qml` reads the track **file**; pleamar's `media` service reports no URL, so this
-plugin asks MPD instead: `mpc -f '%file%' current` (relative to music_directory) resolved against
-the plugin's own settings file, `meta.json` in its folder (`{ "root": "/home/neg/music" }`, the
-default is the QS MusicManager's directory).
+The QS `MusicMeta.qml` reads the track **file**. pleamar's `media` service reports no URL, so this
+plugin asks MPRIS itself: `playerctl -a metadata --format …` over every player, one line each, and
+the file is that line's `xesam:url` (`file://` decoded, an absolute path taken as it is, an
+`http(s)`/`icy` URL reported as no file at all — a stream has no tags to read). There is no music
+root to configure and no settings file: the URL is either a path or it is not one.
 `ffprobe -v quiet -print_format json -show_streams -show_format` does the introspection;
 `mediainfo --Output=JSON` is the fallback, as in QS; `sox --i` is left out (its text output would be
 a third parser for the tail of a tail). A player that reports no file — a browser tab, a stream —
-leaves every field empty, which is the honest answer. On a host where the file path is not MPD's,
-the music root is the only thing to change.
+leaves every field empty, which is the honest answer.
 
 ### 10.5 Port order (PH3-P)
 
@@ -1365,14 +1365,13 @@ One plugin per commit, each with its `.check.plm` and its row here:
 1. **MPD flags** — done (mpc only; `rmpc` is left out on purpose).
 1. **PillTracker** — done (state file moved into the plugin's folder).
 1. **CoverResolver** — done.
-1. **MusicMeta** — done as `lib/plugins/meta/`, with a documented deviation: the file path comes
-   from MPD, not from MPRIS. The QS service read the player's `xesam:url`; pleamar's `media` service
-   carries no URL (`playing/title/artist/album/length/position/rate/art/player/players`), and
-   `playerctl metadata xesam:url` is not a substitute — with two MPRIS players up it answers
-   `No player could handle this command`, and the player pleamar reports is not a `playerctl -p`
-   name. **Upstream ask: add `url` (the `xesam:url` MPRIS field) to the `media` service.** When it
-   lands, `meta.luau` loses its `mpc` call and its settings file and becomes player-agnostic; the
-   boundary does not change.
+1. **MusicMeta** — done as `lib/plugins/meta/`. The file path comes from MPRIS read directly:
+   `playerctl -a metadata --format …` asks every player at once and takes the line's `xesam:url`,
+   which is what the QS service used. `pleamar`'s own `media` service still carries no URL
+   (`playing/title/artist/album/length/position/rate/art/player/players`), so the plugin keeps this
+   call; `playerctl -p` is not usable for it (the player pleamar reports is not a `--player` name).
+   **Upstream ask: add `url` (the `xesam:url` MPRIS field) to the `media` service** — then the
+   plugin drops its `playerctl` call and the boundary does not change.
 
 ### 10.6 The two gates of PH3-P
 

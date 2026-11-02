@@ -590,7 +590,7 @@ else
   SCENE_PID="$(resolve_scene_pid "$SCENE_NAME" || true)"
   if [ -z "$SCENE_PID" ]; then
     stop_scene
-    die "could not resolve the pid of scene '$SCENE_NAME' (tried $(hello) and the runner's children)"
+    die "could not resolve the pid of scene '$SCENE_NAME' (tried the runner's own pid and its children)"
   fi
 fi
 
