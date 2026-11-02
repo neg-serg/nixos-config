@@ -132,8 +132,22 @@ local function commitHost()
     end)
 end
 
+-- The daemon path is the same absolute target, handed to the process that already owns
+-- the adapter: no state file, no MIDI anchor, and the write is paced by glm5d itself.
+local function commitDaemon()
+    if busy then return end
+    busy = true
+    markSent()
+    run("glm5ctl", { "volume", tostring(target) }, function(_, code)
+        busy = false
+        if code ~= 0 then log("genelec: glm5ctl volume exited with " .. tostring(code)) end
+    end)
+end
+
 local function commit()
-    if fact.midi then
+    if fact.daemon then
+        commitDaemon()
+    elseif fact.midi then
         commitMidi()
     else
         commitHost()
@@ -170,6 +184,19 @@ end)
 
 on("toggle", function()
     markInput()
+    if fact.daemon then
+        muted = not muted
+        fact.muted = muted
+        if not muted then setVolume(preMute) else preMute = target end
+        persist()
+        if busy then return end
+        busy = true
+        run("glm5ctl", { "mute", muted and "on" or "off" }, function(_, code)
+            busy = false
+            if code ~= 0 then log("genelec: glm5ctl mute exited with " .. tostring(code)) end
+        end)
+        return
+    end
     if fact.midi then
         if not busy then
             busy = true
@@ -208,8 +235,29 @@ on("toggle", function()
 end)
 
 -- ------------------------------------------------------------------ probe
--- The adapter on the host answers `genlc discover`; silence means the VM path.
+-- `glm5d` first: when the daemon owns the adapter it is the only path that can hold the
+-- sessions (a lease lapses ~2.5 s after the monitor's last answer, which is why the daemon
+-- exists at all), so it wins over both older transports. `glm5ctl status` exits 0 only when
+-- the socket answers.
+-- Fallback, unchanged: the adapter on the host answers `genlc discover`; silence means the
+-- VM path.
 local function probe()
+    if busy then return end
+    busy = true
+    run("glm5ctl", { "status" }, function(_, code)
+        busy = false
+        if code == 0 then
+            fact.daemon = true
+            fact.midi = false
+            fact.available = true
+            return
+        end
+        fact.daemon = false
+        probeLegacy()
+    end)
+end
+
+local function probeLegacy()
     if busy then return end
     busy = true
     run("genlc", { "discover" }, function(_, code)
