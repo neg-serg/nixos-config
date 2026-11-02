@@ -15,14 +15,15 @@
     # PGO build of Determinate Nix (packages/nix-det-pgo/): the same 3.23.3
     # source the host already runs, rebuilt with a profile trained on this
     # repo's own evaluation plus the five eval-speedup patches it accepts.
-    # Measured -18 % on the toplevel drvPath eval, same drvPath out.
+    # Measured -15 % on the toplevel drvPath eval (this tree, -18 % on the
+    # prototype's nixpkgs pin), same drvPath out.
     nix.pgoNix.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = ''
         Swap `nix.package` for the PGO + eval-speedup-patched build of
         Determinate Nix 3.23.3 (packages/nix-det-pgo), which evaluates this
-        flake ~18 % faster than the stock Determinate build while keeping
+        flake ~15 % faster than the stock Determinate build while keeping
         lazy-trees.
 
         Off by default, and the trade-off is not free:

@@ -3,7 +3,7 @@
 # Purpose: put packages/nix-det-pgo — Determinate Nix 3.23.3 rebuilt with PGO and
 # the five evaluation-speedup patches their tree accepts — into `nix.package`.
 # That is the whole point of the package: the toplevel eval of this flake drops
-# ~18 % (measured A/B, header of packages/nix-det-pgo/default.nix) without
+# ~15 % (measured A/B, header of packages/nix-det-pgo/default.nix) without
 # losing lazy-trees, because the source is still Determinate's own tree, so the
 # setting table the running system relies on (lazy-trees, eval-cache,
 # parallel-eval) is byte-for-byte the same one.
