@@ -15,18 +15,23 @@ let
   # run, then posts one Telegram alert per affected unit with a per-unit
   # cooldown so it can never spam. Delivery goes through the shared sender in
   # hosts/trantor/telegram.nix (socks-proxy retry lives there).
-  crashLoopScript = pkgs.replaceVars ./notify/telegram-crashloop.py {
-    sender = config.trantor.telegram.sender;
+  # Rust scanner (pkgs.neg.telegram-notify); it takes the sender, the user
+  # manager and the optional BBS mirror from the environment, so the wrapper
+  # below carries what the old build-time substitution used to bake in.
+  crashLoopScript = pkgs.writeShellScript "telegram-crashloop-scan" ''
+    export CRASHLOOP_SENDER=${lib.getExe config.trantor.telegram.sender}
     # The scanner is a system service (root), so the user scope needs the
     # target manager spelled out (`systemctl --user --machine neg@.host`).
-    userManager = "${config.lib.neg.mainUser}@.host";
+    export CRASHLOOP_USER_MANAGER=${config.lib.neg.mainUser}@.host
     # Local BBS mirror; empty when servicesProfiles.minibbs is off.
-    minibbsPost =
+    export CRASHLOOP_MINIBBS=${
       let
         post = config.servicesProfiles.minibbs.postCommand or null;
       in
-      if post == null then "" else lib.getExe post;
-  };
+      if post == null then "" else lib.getExe post
+    }
+    exec ${lib.getExe' pkgs.neg.telegram-notify "telegram-crashloop"} "$@"
+  '';
 in
 {
   # Telegram crash-loop scanner for systemd services. Gated on
@@ -36,7 +41,7 @@ in
       name = "telegram-crashloop-scan";
       description = "Scan for crash-looping systemd services and alert on Telegram";
       timerDescription = "Run the crash-loop Telegram scanner every 5 minutes";
-      script = "${pkgs.python3}/bin/python3 ${crashLoopScript}";
+      script = "${crashLoopScript}";
       onCalendar = "*-*-* *:0/5:00";
       restartSec = 10;
       # Root owns the per-unit restart state snapshot.
