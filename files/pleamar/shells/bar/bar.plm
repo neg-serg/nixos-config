@@ -1355,13 +1355,12 @@ scene bar {
     //     the level's own colour (panel.volume.lowColor -> highColor). The port
     //     used to paint the level as a filled bar inside a capsule — not the
     //     reference, and what made the right end read much lighter;
-    //   · the pill (rounded fill, glyph, "NN %") rides out to the LEFT of the
-    //     glyph while the cursor is over the capsule, over its neighbours, so
-    //     the row never moves (PillIndicator does the same);
-    //   · the capsule is not there at all when the endpoint is silent: QS hides
-    //     the volume capsule at 100 % once panel.volume.fullHideMs has passed
-    //     and the microphone when it is muted. `vol.shown`/`mic.shown` carry
-    //     that (bar.luau), so the layout closes up like the reference's.
+    //   · the plate is a fixed slot and the reading is always in it. QS grew the capsule on hover
+    //     (`pick(strip.hot, 26, 46)`) and hid it entirely when the endpoint was silent, carrying
+    //     that in `vol.shown`/`mic.shown`; the port followed the first and the second. Both were
+    //     dropped on 2026-11-02: entering the bar anywhere re-laid the whole right row out from
+    //     under the hand, which is worse than a wider plate. `vol.shown`/`mic.shown` are still
+    //     published by bar.luau and nothing here reads them — the capsules are always there.
     component AudioTile(glyph: number, slot: number, readout: text, hot: bool, fill: color,
                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         let icon = pill.icon
@@ -1372,7 +1371,11 @@ scene bar {
         // of the glyph and put the number outside the capsule it belongs to.
         // The plate *is* the slot, and the slot shrinks with the tile: a plate drawn wider than what
         // it holds is the empty pill that sat to the right of the microphone.
-        let w = pick(hot, 2 * capsule.pad + icon, slot)
+        // The plate is the slot, always: it used to be `pick(hot, icon-only, slot)`, so the two
+        // audio capsules grew by 20 px each the moment the pointer touched the bar anywhere — the
+        // whole right row slid out from under the hand. A fixed plate cannot jump; the reading is
+        // always in it, and hovering only raises the tip.
+        let w = slot
         let gx = pick(hot, w / 2, w - capsule.pad - icon / 2)
         size: w * scale, strip * scale
         group zoom {
@@ -1399,14 +1402,13 @@ scene bar {
                 weight: 500
                 color: skin.ink
                 family: "Iosevka"
-                show: hot
             }
         }
     }
 
     component VolCapsule(step: event, route: event,
                          scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        let slot = pick(strip.hot, 26, 46)
+        let slot = 46
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
@@ -1427,7 +1429,7 @@ scene bar {
 
     component MicCapsule(mute: event, step: event,
                          scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        let slot = pick(strip.hot, 26, 46)
+        let slot = 46
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
@@ -1665,7 +1667,7 @@ scene bar {
             // row (shown on `media.hot`) vanished from under the pointer before it arrived, and its
             // own `leave` never fired. The row does not act on a press here, so the pointer is not
             // told otherwise.
-            zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: default; label: "Now playing"; role: region }
+            zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: region }
             on enter z_media { emit tip(6); emit media_hover(true) }
             on leave z_media { emit tip_hide }
 
@@ -1673,15 +1675,15 @@ scene bar {
             // that they were placed past the capsule's width while the buttons were drawn
             // inside it.
             zone box z_prev { from: pad, 0; size: btn, strip; corner: corner
-                cursor: pick(media.can_go_prev, default, pointer)
+                cursor: pick(media.can_go_prev, not_allowed, pointer)
                 label: pick(media.can_go_prev, "Previous track (this player has nothing before this song)", "Previous track")
                 role: button }
             zone box z_play { from: pad + btn + gap, 0; size: btn, strip; corner: corner
-                cursor: pick(media.can_play or media.can_pause, default, pointer)
+                cursor: pick(media.can_play or media.can_pause, not_allowed, pointer)
                 label: pick(media.can_play or media.can_pause, "Play or pause (this player cannot)", "Play or pause")
                 role: button }
             zone box z_next { from: pad + 2 * (btn + gap), 0; size: btn, strip; corner: corner
-                cursor: pick(media.can_go_next, default, pointer)
+                cursor: pick(media.can_go_next, not_allowed, pointer)
                 label: pick(media.can_go_next, "Next track (this player cannot skip)", "Next track")
                 role: button }
             // Entering the strip keeps it up: the cursor has to be able to walk from the
@@ -1738,8 +1740,8 @@ scene bar {
             // `or strip.hot`: the reference brings a muted (or 100 %) capsule back while the
             // pointer is on the panel, and without that there is nothing on the bar to press to
             // unmute — the control vanished exactly when it was needed.
-            MicCapsule(toggle_mic, mic_step) { show: widget.mic and (mic.shown or strip.hot) }
-            VolCapsule(wheel_volume, toggle_route) { show: widget.volume and (vol.shown or strip.hot) }
+            MicCapsule(toggle_mic, mic_step) { show: widget.mic }
+            VolCapsule(wheel_volume, toggle_route) { show: widget.volume }
             // Genelec, the rightmost module, as in the legacy bar. The reference hides it until
             // `panelHovering` (the strip's hover) — but this slot was gated on the tile's own
             // hover, and a tile that is not drawn cannot be hovered: once hidden it stayed
