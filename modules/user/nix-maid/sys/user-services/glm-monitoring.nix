@@ -62,9 +62,11 @@ lib.mkIf (cfg.enable or false) {
       ];
       description = "MIDI relay to the dockur Windows VM";
       serviceConfig = {
-        # Script shebang is /usr/bin/env python3, which is not in the minimal
-        # user-service PATH — call the interpreter explicitly.
-        ExecStart = "${lib.getExe pkgs.python3} %h/.local/bin/glm-midi-relay";
+        # The relay is the Rust port from `packages/local-bin-tools`, installed at
+        # %h/.local/bin by nix-maid — not the old Python script. Running the binary through
+        # the interpreter reads ELF as source and dies on "cannot contain null bytes"
+        # (2026-11-02: the unit sat in a restart loop and the MIDI path had no relay).
+        ExecStart = "%h/.local/bin/glm-midi-relay";
         RestartSec = 3;
         # Log every forwarded packet (what the wheel sends) to /tmp/glm-relay.log.
         Environment = [ "GLM_RELAY_LOG=/tmp/glm-relay.log" ];
