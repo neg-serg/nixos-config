@@ -5,28 +5,24 @@
   ...
 }:
 lib.mkIf (config.lib.neg.enabled "web") {
-  systemd.user.services.surfingkeys-server =
-    let
-      serverScript = pkgs.writeText "surfingkeys-server.py" (
-        builtins.readFile (config.lib.neg.path "packages/local-bin/bin/surfingkeys-server")
-      );
-    in
-    config.lib.neg.systemdUser.mkUserService {
-      presets = [
-        "graphicalSession"
-        "restartOnFailure"
-      ];
-      description = "HTTP server for Surfingkeys configuration (focus/close/addressbar/proxy)";
-      # The preset carries wantedBy+partOf; ordering (After=/Wants=) stays explicit.
-      after = [ "graphical-session.target" ];
-      wants = [ "graphical-session.target" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe' pkgs.python3 "python3"} -u ${serverScript}";
-        Environment = "PATH=${pkgs.hyprland}/bin:$PATH";
-        RestartSec = "5";
-        Slice = "background.slice";
-      };
+  # The hooks server is a Rust binary now (packages/local-bin-tools): it needs no
+  # interpreter and prints one log line per request instead of five.
+  systemd.user.services.surfingkeys-server = config.lib.neg.systemdUser.mkUserService {
+    presets = [
+      "graphicalSession"
+      "restartOnFailure"
+    ];
+    description = "HTTP server for Surfingkeys configuration (focus/close/addressbar/proxy)";
+    # The preset carries wantedBy+partOf; ordering (After=/Wants=) stays explicit.
+    after = [ "graphical-session.target" ];
+    wants = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = "${lib.getExe' pkgs.neg.local-bin-tools "surfingkeys-server"}";
+      Environment = "PATH=${pkgs.hyprland}/bin:$PATH";
+      RestartSec = "5";
+      Slice = "background.slice";
     };
+  };
 
   systemd.user.services.surfingkeys-extension-patch =
     let

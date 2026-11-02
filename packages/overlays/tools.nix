@@ -51,7 +51,8 @@ in
     hypr-focus = callPkg (pkg "hypr-focus") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
     niri-screen-time = callPkg (pkg "niri-screen-time") { }; # Screen time tracker by window class/title (niri + Hyprland daemon and report CLI)
     tidalctl = callPkg (pkg "tidalctl") { }; # TidalCycles session controller — engine start/stop, editor, recording
-    pretty_printer = callPkg (pkg "pretty-printer") { }; # Pretty-printer library + CLI (ppinfo)
+    # Explicit path: `pkg` resolved this dir to a stale python-era copy.
+    pretty_printer = callPkg (paths.path "packages/pretty-printer") { }; # coloured ppinfo + vid-info
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
     termeverything = callPkg (pkg "termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
     zsh-native-syntax = callPkg (pkg "zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
@@ -62,6 +63,7 @@ in
     nixard = callPkg (pkg "nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
     nixbuild-status = callPkg (pkg "nixbuild-status") { }; # One-line NixOS build status for status bars (waybar/i3bar/polybar)
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/main/@projects/lusty
+    telegram-notify = callPkg (pkg "telegram-notify") { }; # Rust Telegram notification binaries (calendar, pill, bot, alert scanner/bridge, zfs watch)
     tgchat = callPkg (pkg "tgchat") { }; # Telegram chat access via Telethon (read/send as the user)
     topowall = callPkg (pkg "topowall") { }; # Topographic contour wallpapers from real elevation data (GPU render)
     terrascope = callPkg (pkg "terrascope") { }; # Interactive world map for the terminal (braille; live weather/aircraft/earthquakes)

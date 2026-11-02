@@ -1,0 +1,18 @@
+[package]
+name = "pretty-printer"
+version = "0.1.0"
+edition = "2021"
+description = "Pretty-printing helpers: coloured file info (ppinfo) and video info (vid-info)"
+license = "Unlicense"
+
+[[bin]]
+name = "ppinfo"
+path = "src/main.rs"
+
+[[bin]]
+name = "vid-info"
+path = "src/vid_info.rs"
+
+[dependencies]
+
+[workspace]

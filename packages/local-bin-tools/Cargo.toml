@@ -1,0 +1,42 @@
+[package]
+name = "local-bin-tools"
+version = "0.1.0"
+edition = "2021"
+description = "Small $PATH helpers that used to be Python scripts in packages/local-bin"
+license = "MIT"
+
+[[bin]]
+name = "gen-unbound-hosts"
+path = "src/gen_unbound_hosts.rs"
+
+[[bin]]
+name = "fetch-covers"
+path = "src/fetch_covers.rs"
+
+[[bin]]
+name = "glm-midi-relay"
+path = "src/glm_midi_relay.rs"
+
+[[bin]]
+name = "ren"
+path = "src/ren.rs"
+
+[[bin]]
+name = "menu-search"
+path = "src/menu_search.rs"
+
+[[bin]]
+name = "paths"
+path = "src/paths.rs"
+
+[[bin]]
+name = "window-activate"
+path = "src/window_activate.rs"
+
+[[bin]]
+name = "surfingkeys-server"
+path = "src/surfingkeys_server.rs"
+
+[dependencies]
+
+[workspace]

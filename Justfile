@@ -362,7 +362,7 @@ flag flag-path="features.cli.broot.enable":
 # Regenerate hosts/trantor/unbound-hosts.nix from its sources
 # (unbound-local.txt + files/sources/malw-hosts.txt, minus malw-hosts-allow.txt)
 unbound-hosts:
-    "{{repo_root}}/packages/local-bin/scripts/gen-unbound-hosts" "{{repo_root}}"; \
+    nix run .#gen-unbound-hosts -- "{{repo_root}}"; \
     nix fmt
 
 # Freshness gate for the same generated file: reruns the generator against a
@@ -379,7 +379,7 @@ unbound-hosts-guard:
     cp "{{repo_root}}/hosts/trantor/unbound-local.txt" "$tmp/hosts/trantor/"
     cp "{{repo_root}}/files/sources/malw-hosts.txt" "$tmp/files/sources/"
     cp "{{repo_root}}/files/sources/malw-hosts-allow.txt" "$tmp/files/sources/"
-    "{{repo_root}}/packages/local-bin/scripts/gen-unbound-hosts" "$tmp"
+    nix run .#gen-unbound-hosts -- "$tmp"
     if ! diff -q "{{repo_root}}/hosts/trantor/unbound-hosts.nix" "$tmp/hosts/trantor/unbound-hosts.nix" >/dev/null; then
       echo "hosts/trantor/unbound-hosts.nix is stale — run 'just unbound-hosts' and commit it:" >&2
       diff -u "{{repo_root}}/hosts/trantor/unbound-hosts.nix" "$tmp/hosts/trantor/unbound-hosts.nix" | head -40 >&2
