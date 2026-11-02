@@ -1,0 +1,141 @@
+diff --git a/src/libexpr/include/nix/expr/eval.hh b/src/libexpr/include/nix/expr/eval.hh
+index 9d4d595..80c7b26 100644
+--- a/src/libexpr/include/nix/expr/eval.hh
++++ b/src/libexpr/include/nix/expr/eval.hh
+@@ -398,6 +398,14 @@ public:
+      */
+     RepairFlag repair;
+ 
++    /**
++     * Results of `derivationStrict` keyed by the hash of the masked
++     * derivation, so that a derivation that is constructed twice during one
++     * evaluation is written once.
++     */
++    struct DerivationStrictMemo;
++    std::shared_ptr<DerivationStrictMemo> derivationStrictMemo;
++
+     /**
+      * The accessor corresponding to `store`.
+      */
+diff --git a/src/libexpr/primops.cc b/src/libexpr/primops.cc
+index ced2579..87e36b4 100644
+--- a/src/libexpr/primops.cc
++++ b/src/libexpr/primops.cc
+@@ -19,6 +19,7 @@
+ #include "nix/expr/primops.hh"
+ #include "nix/fetchers/fetch-to-store.hh"
+ #include "nix/util/sort.hh"
++#include "nix/util/sync.hh"
+ #include "nix/util/mounted-source-accessor.hh"
+ #include "nix/expr/provenance.hh"
+ #include "nix/util/override-provenance-source-accessor.hh"
+@@ -1419,6 +1420,65 @@ static void prim_second(EvalState & state, const PosIdx pos, Value ** args, Valu
+  * Derivations
+  *************************************************************/
+ 
++struct EvalState::DerivationStrictMemo
++{
++    Sync<std::map<Hash, std::pair<StorePath, DerivationOutputs>>> entries;
++};
++
++/**
++ * Hash of the parts of a derivation that are already final before
++ * `fillInOutputPaths()` runs: the masked derivation plus the set of output
++ * names. Everything else a derivation is written from is covered here, so two
++ * derivations with the same key would be written to the same store path with
++ * the same output paths. Derivations whose key cannot be computed (floating
++ * content-addressed outputs, unresolved output paths in `inputDrvs`) are not
++ * memoised.
++ */
++static std::optional<Hash> derivationStrictMemoKey(const Derivation & drv)
++{
++    HashSink sink(HashAlgorithm::SHA256);
++    auto put = [&](std::string_view s) {
++        sink << s.size();
++        sink(s);
++    };
++    put(drv.name);
++    put(drv.platform);
++    put(drv.builder);
++    sink << drv.args.size();
++    for (auto & a : drv.args)
++        put(a);
++    sink << drv.env.size();
++    for (auto & [k, v] : drv.env) {
++        put(k);
++        put(v);
++    }
++    sink << drv.outputs.size();
++    for (auto & [k, o] : drv.outputs) {
++        if (!std::holds_alternative<DerivationOutput::Deferred>(o.raw))
++            return std::nullopt;
++        put(k);
++    }
++    sink << drv.inputSrcs.size();
++    for (auto & p : drv.inputSrcs)
++        put(p.to_string());
++    sink << drv.inputDrvs.map.size();
++    for (auto & [p, node] : drv.inputDrvs.map) {
++        if (!node.childMap.empty())
++            return std::nullopt;
++        put(p.to_string());
++        sink << node.value.size();
++        for (auto & o : node.value)
++            put(o);
++    }
++    if (drv.structuredAttrs) {
++        auto [jsonName, jsonValue] = drv.structuredAttrs->unparse();
++        put(jsonName);
++        put(jsonValue);
++    } else
++        put("");
++    return sink.finish().hash;
++}
++
+ static void derivationStrictInternal(
+     EvalState & state,
+     std::string_view name,
+@@ -1848,6 +1908,9 @@ static void derivationStrictInternal(
+             .debugThrow();
+     }
+ 
++    std::optional<Hash> memoKey;
++    std::optional<StorePath> memoDrvPath;
++
+     if (outputHash) {
+         /* Handle fixed-output derivations.
+ 
+@@ -1912,14 +1975,31 @@ static void derivationStrictInternal(
+             drv.outputs.insert_or_assign(i, DerivationOutput::Deferred{});
+         }
+ 
+-        drv.fillInOutputPaths(*state.store);
++        if (state.repair == NoRepair) {
++            if (!state.derivationStrictMemo)
++                state.derivationStrictMemo = std::make_shared<EvalState::DerivationStrictMemo>();
++            memoKey = derivationStrictMemoKey(drv);
++            if (memoKey) {
++                auto memo(state.derivationStrictMemo->entries.lock());
++                if (auto i = memo->find(*memoKey); i != memo->end()) {
++                    memoDrvPath = i->second.first;
++                    drv.outputs = i->second.second;
++                }
++            }
++        }
++
++        if (!memoDrvPath)
++            drv.fillInOutputPaths(*state.store);
+     }
+ 
+     /* Write the resulting term into the Nix store directory. The
+        writer handles read-only mode (in which case nothing is written,
+        which users commonly rely on to speed up evaluation in contexts
+        where they don't actually want to build anything). */
+-    auto drvPath = state.store->writeDerivation(*state.asyncPathWriter, drv, state.repair, provenance);
++    auto drvPath = memoDrvPath ? *memoDrvPath
++                               : state.store->writeDerivation(*state.asyncPathWriter, drv, state.repair, provenance);
++    if (memoKey && !memoDrvPath)
++        state.derivationStrictMemo->entries.lock()->emplace(*memoKey, std::pair{drvPath, drv.outputs});
+     auto drvPathS = state.store->printStorePath(drvPath);
+ 
+     printMsg(lvlChatty, "instantiated '%1%' -> '%2%'", drvName, drvPathS);

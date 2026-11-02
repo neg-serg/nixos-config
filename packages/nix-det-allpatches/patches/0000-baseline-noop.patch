@@ -1,0 +1,7 @@
+--- a/CITATION.cff
++++ b/CITATION.cff
+@@ -1,3 +1,4 @@
++
+ cff-version: 1.2.0
+ title: Nix
+ message: >-

@@ -1,0 +1,64 @@
+diff --git a/src/libexpr/include/nix/expr/eval-settings.hh b/src/libexpr/include/nix/expr/eval-settings.hh
+index 9d07761..2c88226 100644
+--- a/src/libexpr/include/nix/expr/eval-settings.hh
++++ b/src/libexpr/include/nix/expr/eval-settings.hh
+@@ -307,6 +307,28 @@ public:
+             Intermediate results are not cached.
+         )"};
+ 
++    /**
++     * Memoise `derivationStrict` by the hash of the masked derivation.
++     *
++     * Consulted and filled only when enabled; it is a pure cache of the
++     * evaluator's own output, so disabling it changes no result. Exists so
++     * the memo can be differentially validated against its absence
++     * (`scripts/dev/nix-memo-diff.sh`), not for everyday use.
++     */
++    Setting<bool> evalMemo{
++        this,
++        true,
++        "eval-memo",
++        R"(
++            Whether `derivationStrict` memoises its result under the hash of the
++            masked derivation, so that a derivation built a second time during
++            the same evaluation reuses the store path and the output paths of
++            the first instead of being written to the store again.
++
++            This is a cache of the evaluator's own result only: disabling it
++            changes no outcome, only the work done. Defaults to `true`.
++        )"};
++
+     Setting<bool> ignoreExceptionsDuringTry{
+         this,
+         false,
+diff --git a/src/libexpr/primops.cc b/src/libexpr/primops.cc
+index 87e36b4..5e00aa6 100644
+--- a/src/libexpr/primops.cc
++++ b/src/libexpr/primops.cc
+@@ -1975,7 +1975,7 @@ static void derivationStrictInternal(
+             drv.outputs.insert_or_assign(i, DerivationOutput::Deferred{});
+         }
+ 
+-        if (state.repair == NoRepair) {
++        if (state.settings.evalMemo && state.repair == NoRepair) {
+             if (!state.derivationStrictMemo)
+                 state.derivationStrictMemo = std::make_shared<EvalState::DerivationStrictMemo>();
+             memoKey = derivationStrictMemoKey(drv);
+@@ -2002,6 +2002,17 @@ static void derivationStrictInternal(
+         state.derivationStrictMemo->entries.lock()->emplace(*memoKey, std::pair{drvPath, drv.outputs});
+     auto drvPathS = state.store->printStorePath(drvPath);
+ 
++    /* One line per memoised derivation, at a level `-vvv` reaches: the
++       differential harness counts these to prove the memo is consulted when
++       enabled and untouched when disabled. */
++    if (memoKey)
++        printMsg(
++            lvlDebug,
++            "derivationStrict: memo %1% for '%2%' -> '%3%'",
++            memoDrvPath ? "hit" : "stored",
++            drvName,
++            drvPathS);
++
+     printMsg(lvlChatty, "instantiated '%1%' -> '%2%'", drvName, drvPathS);
+ 
+     /* Optimisation, but required in read-only mode! because in that
