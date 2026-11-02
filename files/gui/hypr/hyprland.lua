@@ -126,7 +126,6 @@ local cls = {
   -- (files/gui/swayimg/init.lua: swayimg.enable_overlay(true)), so allow the suffix.
   pic         = "^swayimg(_[0-9]+)?$",
   vm          = "^(.virt-manager-wrapped|qemu-system-x86_64|Qemu-system-x86_64)$",
-  wine        = "^(com.usebottles.bottles)$",
   daw         = "^(Renoise)$",
   vital       = "^(Vital)$",
   dw          = "^(org.nicotine_plus.Nicotine)$",
@@ -543,9 +542,14 @@ hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Ob
 -- did not). Next/Prev still go through the script; it sends on both paths now.
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("genlc-media up"), { repeating = true, locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("genlc-media down"), { repeating = true, locked = true })
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd('pleamar --say bar "emit Genelec.turn 1"'), { repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd('pleamar --say bar "emit Genelec.turn -1"'), { repeating = true })
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd('pleamar --say bar "emit Genelec.toggle"'), { repeating = true })
+-- A plugin's events belong to its scene's logic and reach nothing from the socket or from the
+-- scene's own logic, so a `pleamar --say bar "emit Genelec.turn 1"` was accepted (rc=0) and heard
+-- by nobody: the volume keys did nothing. `genlc-media` is the knob's own path — it steps the
+-- state file and sends to GLM on both transports (host: `genlc set-volume`, VM: CC20 over the
+-- relay), and the plugin's level watch picks the new number up for the tile.
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("genlc-media up"), { repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("genlc-media down"), { repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("genlc-media mute"), { repeating = true })
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { repeating = true })
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("swayosd-client --brightness +10"), { repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("swayosd-client --brightness -10"), { repeating = true })
@@ -1317,7 +1321,6 @@ local routes = {
   { class = cls.obs,         id = 7 },
   { class = cls.pic,         id = 8 },
   { class = cls.vm,          id = 9 },
-  { class = cls.wine,        id = 10 },
   { class = cls.unity,       id = 11 },
   { class = cls.daw,         id = 12 },
   { class = cls.dw,          id = 13 },
