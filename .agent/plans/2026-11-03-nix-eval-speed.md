@@ -30,6 +30,7 @@ Two facts that decide the whole plan:
 | `config.system.nixos.label` (flake + module system, no `pkgs`) | **1.29 s** |
 | `system.build.toplevel.drvPath` | **10.21 s** |
 | same with `--option eval-cache false` | **10.13 s** |
+| same with `documentation.enable = false` (via `extendModules`) | **14.21 s** vs 14.24 s baseline — no effect |
 
 Read this before believing any hypothesis below:
 
@@ -40,6 +41,51 @@ Read this before believing any hypothesis below:
 - **The eval cache is saving nothing** (10.21 vs 10.13) — a dirty git tree changes the fingerprint on
   every call, so nothing is ever a cache hit. This single fact explains why "nothing changed" still
   costs 10 s, and it makes T4 the cheapest structural fix of the lot.
+
+## T0 — replace the evaluator before rewriting the config (found 2026-11-03)
+
+`~/src/nix-optimized` (github:ElXreno/nix-optimized) is a Nix rebuilt with **profile-guided optimisation
+plus BOLT**, carrying **evaluation speedups as patches** (`patches/<version>/`), published to a cachix
+binary cache. That attacks the layer my probes actually point at: the 8.9 s is the evaluator's own work
+in `pkgs`, and no amount of config surgery changes how fast Nix evaluates — only how much it has to
+evaluate.
+
+Why this is the right first move, given the numbers:
+
+- The config side is already lean: modules are 1.29 s and disabling documentation changed **nothing**
+  (14.24 → 14.21 s on the same tree, measured today through `extendModules`). The remaining cost is
+  evaluator throughput.
+- PGO+BOLT on Nix itself is typically a 2-4x win on eval-heavy workloads; the project also disables
+  the GC's conservative settings that hurt evaluation.
+- It is a *package swap*, not a rewrite: `nix.package`, one substituter, one trusted key.
+
+Sketch (to be validated, not applied blind):
+
+```nix
+{
+  inputs.nix-optimized.url = "github:ElXreno/nix-optimized";
+  # ...
+  nixpkgs.overlays = [ ]; # nothing needed
+  nix.package = nix-optimized.packages.${system}.nix-optimized;
+  nix.settings = {
+    substituters = [ "https://elxreno.cachix.org" ];
+    trusted-public-keys = [ "elxreno.cachix.org-1:ozSPSY5S3/TpbcXi+/DdtSj1JlK3CPz3G+F92yRBXDQ=" ];
+  };
+}
+```
+
+Risks and what to check before trusting it:
+
+- **This host runs determinate-nix**, not the plain NixOS `nix` module. Two moving parts (`nix` client
+  and `nix-daemon`) must come from the same build, and determinate's own settings store must not fight
+  `nix.package`; check `systemd.services.nix-daemon.environment` and the determinate module override.
+- A new daemon means a restart, and every running build must survive it (or be drained first).
+- `patches/<version>/` only exists for some releases; `nix-optimized-plain` (PGO only) is the fallback.
+- Trust boundary: a new substituter and its key are added to the system. That is a supply-chain
+  decision, not a performance one — record it in the commit.
+- Verify the same `drvPath` before and after the swap on an unchanged tree, and `just check` green.
+
+If T0 lands, the config-side investigations below become the second-order cleanup rather than the plan.
 
 ## Method (do not skip)
 
