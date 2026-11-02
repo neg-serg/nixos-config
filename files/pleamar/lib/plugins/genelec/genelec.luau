@@ -243,10 +243,11 @@ on("toggle", function()
         fact.muted = muted
         if not muted then setVolume(preMute) else preMute = target end
         persist()
-        if busy then return end
-        busy = true
+        -- The daemon's command queue is sequential, so a mute does not need the `busy`
+        -- slot the volume commits coalesce through. Guarding on it dropped the command
+        -- whenever a wheel burst or the 30 s probe held the flag, and the fact flipped
+        -- over monitors that never muted.
         run("glm5ctl", { "mute", muted and "on" or "off" }, function(_, code)
-            busy = false
             if code ~= 0 then log("genelec: glm5ctl mute exited with " .. tostring(code)) end
         end)
         return
