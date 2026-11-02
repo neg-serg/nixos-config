@@ -48,7 +48,6 @@ in
     hwctl = callPkg (pkg "hwctl") { }; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
     iris = callPkg (pkg "iris") { }; # IRIS — shell auto-completion that works like code editor's IntelliSense
     oryx = callPkg (pkg "oryx") { }; # TUI for sniffing network traffic using eBPF (needs root + BTF kernel)
-    omp = callPkg (pkg "omp") { }; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
     hypr-focus = callPkg (pkg "hypr-focus") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
     niri-screen-time = callPkg (pkg "niri-screen-time") { }; # Screen time tracker by window class/title (niri + Hyprland daemon and report CLI)
     tidalctl = callPkg (pkg "tidalctl") { }; # TidalCycles session controller — engine start/stop, editor, recording
