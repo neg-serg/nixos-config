@@ -54,9 +54,8 @@ in
       environment.systemPackages = [
         pkgs.python312 # music-AI venv interpreter (torch/transformers live in the venv)
         # Writes MOOD/GENRE into the files for `just music-apply-tags`
-        # (FLAC/Ogg/MP3/M4A through one code path). It also arrives with beets,
-        # but the tool must not depend on that staying enabled.
-        pkgs.python3Packages.mutagen
+        # (FLAC/Ogg/Opus/MP3/WAV/M4A through one code path, no Python).
+        pkgs.neg.music-apply-tags # write ML mood/style tags into audio files (dry run by default)
         pkgs.audio-cpp # ggml audio runtime: Audio Flamingo Next on Vulkan (the only 8B path that fits the GPU)
       ];
 
