@@ -1,0 +1,67 @@
+From 9c37759f1d34f39f2db00b5b415ceac35c5c4ef0 Mon Sep 17 00:00:00 2001
+From: ElXreno <elxreno@gmail.com>
+Date: Sun, 4 Oct 2026 19:03:29 +0300
+Subject: [PATCH] libfetchers: refresh the cached git HEAD after reading it
+ from the remote
+
+---
+ src/libfetchers/git.cc | 22 ++++++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/src/libfetchers/git.cc b/src/libfetchers/git.cc
+index 29fcb5dfc..4b642e1f8 100644
+--- a/src/libfetchers/git.cc
++++ b/src/libfetchers/git.cc
+@@ -1,5 +1,7 @@
+ #include "nix/util/environment-variables.hh"
+ #include "nix/util/error.hh"
++#include "nix/util/file-system.hh"
++#include "nix/util/util.hh"
+ #include "nix/fetchers/fetchers.hh"
+ #include "nix/util/users.hh"
+ #include "nix/fetchers/cache.hh"
+@@ -109,6 +111,17 @@ bool storeCachedHead(const std::string & actualUrl, bool shallow, const std::str
+     return true;
+ }
+ 
++static std::optional<std::string> readCachedHeadFile(const std::filesystem::path & headRefFile)
++{
++    try {
++        auto head = trim(readFile(headRefFile));
++        if (head.starts_with("ref: "))
++            return head.substr(5);
++    } catch (SystemError &) {
++    }
++    return std::nullopt;
++}
++
+ static std::optional<std::string> readHeadCached(const Settings & settings, const std::string & actualUrl, bool shallow)
+ {
+     // Create a cache path to store the branch of the HEAD ref. Append something
+@@ -120,7 +133,9 @@ static std::optional<std::string> readHeadCached(const Settings & settings, cons
+     auto st = maybeStat(headRefFile);
+     std::optional<std::string> cachedRef;
+     if (st) {
+-        cachedRef = readHead(cacheDir);
++        cachedRef = readCachedHeadFile(headRefFile);
++        if (!cachedRef)
++            cachedRef = readHead(cacheDir);
+         if (cachedRef != std::nullopt && isCacheFileWithinTtl(settings, now, *st)) {
+             debug("using cached HEAD ref '%s' for repo '%s'", *cachedRef, actualUrl);
+             return cachedRef;
+@@ -128,8 +143,11 @@ static std::optional<std::string> readHeadCached(const Settings & settings, cons
+     }
+ 
+     auto ref = readHead(actualUrl);
+-    if (ref)
++    if (ref) {
++        if (st)
++            storeCachedHead(actualUrl, shallow, *ref);
+         return ref;
++    }
+ 
+     if (cachedRef) {
+         // If the cached git ref is expired in fetch() below, and the 'git fetch'
+-- 
+2.55.0
+

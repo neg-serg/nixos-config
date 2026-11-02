@@ -20,6 +20,13 @@ in
   # and their discharge can be checked without a compositor in the way.
   nixie = call (pkg "nixie") { };
 
+  # Candidate Nix build: nixpkgs' 2.35 + upstream #16244 + the nine
+  # evaluation-speedup patches (see packages/nix-eval-patched/default.nix).
+  # Deliberately not wired into `nix.package` — it is a measurement/candidate
+  # artifact, and it lacks Determinate's lazy-trees (the caveat is in the
+  # package's header comment).
+  nix-eval-patched = call (pkg "nix-eval-patched") { };
+
   # Reserved for development/toolchain overlays
 
   # Patch pre-commit to add a space before "Skipped" message
