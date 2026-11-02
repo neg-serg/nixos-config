@@ -1,0 +1,16 @@
+[package]
+name = "hypr-rearrange"
+version = "0.1.0"
+edition = "2021"
+description = "Move Hyprland windows to the workspaces the config routes them to"
+license = "MIT"
+
+[[bin]]
+name = "hypr-rearrange"
+path = "src/main.rs"
+
+[dependencies]
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]
