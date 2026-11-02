@@ -49,11 +49,12 @@ Rules the file obeys, so PH2 writers can rely on them:
 | `skin.coal`         | darkest wallpaper tone (`colors.background` role) | darkest of four Oklab k-means clusters            |
 | `skin.surface`      | raised surface (`colors.surfaceVariant` role)     | second-darkest cluster                            |
 | `skin.ink`          | text (`colors.text.primary` role)                 | lightest cluster, readability-clamped (see below) |
-| `skin.ink.dim`      | secondary text (`colors.text.secondary` role)     | `mix(skin.ink, skin.surface, 35%)`                |
+| `skin.ink.dim`      | secondary text (`colors.text.secondary` role)     | the static `#AEB9C8` / `#4B5464` (see below)       |
 | `skin.accent`       | accent (`colors.accent.primary` role)             | wallpaper mean hue, QS saturation/lightness       |
 | `skin.accent.hover` | `Theme.accentHover`                               | `mix(skin.accent, #ffffff, 20%)`                  |
 | `skin.accent.deep`  | `Theme.accentDarkStrong`                          | `mix(skin.accent, skin.coal, 80%)`                |
 | `skin.on.accent`    | `colors.onAccent`                                 | constant `#ffffff`, as in the legacy theme        |
+| `skin.light`        | is this the light palette?                       | wallpaper mean WCAG luminance, or `--mode`        |
 
 `theme.sh` writes one comment above each name saying where that name's value came from — the sampled
 wallpaper, `--accent`, `--from-json`, or the QS base-palette fallback.
@@ -67,7 +68,8 @@ files/pleamar/scripts/theme/theme.sh
 ```
 
 ```
-Usage: theme.sh [--wallpaper FILE] [--accent '#RRGGBB'] [--from-json FILE] [--help]
+Usage: theme.sh [--wallpaper FILE] [--accent '#RRGGBB'] [--from-json FILE]
+                [--mode auto|light|dark] [--help]
 
 --wallpaper FILE   sample this image instead of the cache's current wallpaper
 --accent '#RGB'    force the accent (wins over --from-json and the sampler)
@@ -162,9 +164,10 @@ numbers in `lib/palette.plm`) stay scene-side: `skin.*` carries tones, the drawi
 - **Readability clamp** — `skin.ink` is pushed from the lightest (or, on a light palette, darkest)
   centre toward white (black) until it contrasts with `skin.surface` at 4.5:1, or reaches the
   extreme. QS used a fixed `text.primary`; a wallpaper-derived text tone needs its own floor.
-- **Secondary text** — `skin.ink.dim` is always the `mix(skin.ink, skin.surface, 35%)` expression,
-  so it follows whatever `ink`/`surface` the run produced (including `--from-json` overrides). QS's
-  flat `colors.text.secondary` `#AEB9C8` is not copied: a fixed grey would not follow the wallpaper.
+- **Secondary text** — `skin.ink.dim` is a static value per mode, `#AEB9C8` on a dark palette and
+  `#4B5464` on a light one: the QS `colors.text.secondary` for that mode. It used to be the
+  `mix(skin.ink, skin.surface, 35%)` expression, which on a sampled surface landed beside the
+  reference rather than on it, and the bar's own design is tuned against those two greys.
 - The samplers are numeric ports, not the pixel-exact originals: the sample is a resample of the
   image and the mean/grid rounding differs from Qt's.
 
