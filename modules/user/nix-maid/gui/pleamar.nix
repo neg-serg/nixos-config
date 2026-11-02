@@ -187,9 +187,6 @@ let
   # the scene runs them to completion, and `pleamar-picker current` is what the theme pipeline's
   # producer path already holds.
   pleamarPickerHelperLinks = {
-    ".local/bin/pleamar-wallpaper-palettes" = {
-      source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/wallpaper-palettes.py";
-    };
     ".local/bin/pleamar-wallpaper-apply" = {
       source = "${config.lib.neg.live "files/pleamar/scripts/helpers"}/wallpaper-apply";
     };
@@ -216,6 +213,12 @@ let
   pleamarThemeLinks =
     neg.mkDirLinks ".local/lib/pleamar" "${config.lib.neg.live "files/pleamar/scripts"}"
       [ "theme" ];
+
+  # `pleamar-wallpaper-palettes` is a Rust package now; the rest of the helper
+  # links stay plain files (apply/still/picker are shell).
+  pleamarPaletteBin = {
+    ".local/bin/pleamar-wallpaper-palettes".source = lib.getExe pkgs.neg.wallpaper-palettes;
+  };
 
   pleamarHomeFiles =
     neg.mkDirLinks ".config/pleamar/shells" pleamarShellsLive pleamarShellNames
