@@ -105,9 +105,9 @@ So plain CPU contention alone did not reproduce anything, and the absence could 
 quota. The one positive sample remains the 22:26 window: 25 lines, 23-39 ms, at load 19.4 with a
 from-source NixOS build and a full-monitor 240 fps overlay up.
 
-What would actually settle it: `libinput debug-events` (root, or the `input` group) to see whether an
-event is late or missing, or the A/B above with `systemctl --user stop neru` — neither was run here:
-the first needs privileges, the second stops the owner's tool while they are asleep.
+What would actually settle it: `libinput debug-events` (root, or the `input` group) to see whether
+an event is late or missing, or the A/B above with `systemctl --user stop neru` — neither was run
+here: the first needs privileges, the second stops the owner's tool while they are asleep.
 
 ## Open questions
 
