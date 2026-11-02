@@ -236,14 +236,46 @@ local function watchLevel()
     local script = "f=\"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/genlc-volume\"\nlast=\"\"\nwhile :; do\n  v=$(cat \"$f\" 2>/dev/null)\n  if [ -n \"$v\" ] && [ \"$v\" != \"$last\" ]; then printf \"%s\n\" \"$v\"; last=\"$v\"; fi\n  sleep 0.15\ndone"
     spawn("bash", { "-c", script }, function(line)
         local value = tonumber((line or ""):match("-?%d+"))
-        -- The guard the header promises: a level that arrives while the wheel is still moving, or
-        -- while muted, is somebody else's (the file is a shared knob) and must not fight the
-        -- gesture in flight.
-        if value and quiet and not muted and clampDb(value) ~= target then setVolume(value) end
+        if not value then return end
+        -- A level that arrives while the wheel is still moving is somebody else's and must not
+        -- fight the gesture in flight. One that arrives while the plugin thinks it is muted is the
+        -- knob being turned, and the reference unmutes on that; `genlc-media` steps the file but
+        -- never unmutes, so the flag is cleared here. The plugin only adopts the number: the sender
+        -- has already put it on the wire, and sending it again would double the CC20 burst.
+        if not quiet then return end
+        local v = clampDb(value)
+        if v == target then return end
+        if muted then
+            muted = false
+            fact.muted = false
+            persist()
+        end
+        setVolume(v)
+    end)
+end
+
+-- The level a fresh scene starts from. Nothing in the plugin could tell it before: `restore()`
+-- brings back the mute pair, `probe()` only decides which path is live, and `fact.volume` kept the
+-- scene's own -40 while the monitors stood where the last shell left them — so the tile showed a
+-- number nobody had set and the first wheel notch jumped the monitors to it. `glm-vol read` is the
+-- same answer the reference widget used (its state file, then the old shell's cache); it asks the
+-- monitors nothing, because `glm-midi` has no read and `genlc` only answers with the adapter on
+-- this host.
+local function adoptLevel()
+    run("glm-vol", { "read" }, function(out, code)
+        if code ~= 0 then return end
+        local value = tonumber((out or ""):match("-?%d+"))
+        if not value then return end
+        -- A muted adapter keeps the level it will come back to; adopting one would unmute it by
+        -- proxy on the next wheel notch.
+        if muted then return end
+        local v = clampDb(value)
+        if v ~= target then setVolume(v) end
     end)
 end
 
 restore()
+adoptLevel()
 probe()
 watchLevel()
 every(PROBE_MS, probe)
