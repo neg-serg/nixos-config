@@ -161,6 +161,6 @@ in
     '')
     # hypr-start script (fixes race conditions)
     (pkgs.writeShellScriptBin "hypr-start" (r.readFile "modules/user/nix-maid/hyprland/hypr-start.sh"))
-    pkgs.neg.hypr-rearrange
+    pkgs.neg.hypr-rearrange # move windows to the workspaces the config routes them to
   ];
 }
