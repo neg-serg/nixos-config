@@ -49,7 +49,10 @@ fn props(
         out.insert("type".to_string(), Value::from(kind.to_string()));
     }
     if let Some(toggle_type) = toggle_type {
-        out.insert("toggle-type".to_string(), Value::from(toggle_type.to_string()));
+        out.insert(
+            "toggle-type".to_string(),
+            Value::from(toggle_type.to_string()),
+        );
     }
     if let Some(toggle_state) = toggle_state {
         out.insert("toggle-state".to_string(), Value::from(toggle_state));
@@ -64,7 +67,10 @@ fn props(
 fn node(id: i32) -> MenuNode {
     let (props, children): (HashMap<String, Value<'static>>, Vec<i32>) = match id {
         0 => (props("", None, None, None), vec![1, 2, 3]),
-        1 => (props("Nested parent", None, None, None), vec![11, 12, 13, 14]),
+        1 => (
+            props("Nested parent", None, None, None),
+            vec![11, 12, 13, 14],
+        ),
         2 => (props("", Some("separator"), None, None), Vec::new()),
         3 => (props("Plain action", None, None, None), Vec::new()),
         11 => (props("Leaf one", None, None, None), Vec::new()),
@@ -79,7 +85,10 @@ fn node(id: i32) -> MenuNode {
     MenuNode(
         id,
         props,
-        children.into_iter().map(|child| node(child).into()).collect(),
+        children
+            .into_iter()
+            .map(|child| node(child).into())
+            .collect(),
     )
 }
 
