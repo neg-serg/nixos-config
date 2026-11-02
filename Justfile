@@ -359,6 +359,34 @@ music-apply-tags *ARGS:
 flag flag-path="features.cli.broot.enable":
     nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false
 
+# Memoized `nix eval` in two tiers, keyed on a content hash of the files the
+# evaluation reads. Nix's own eval cache cannot help here: a dirty worktree
+# changes its fingerprint on every call, so it never hits.
+#   just eval-gate        tier A — `config.system.nixos.label`, ~1.3 s cold, ~70 ms
+#                         on a hit. The "it still evaluates" signal: the module
+#                         tree without instantiating pkgs. Call it after every edit.
+#                         Key: the EVALUATION INPUT SET — every *.nix, flake.lock and
+#                         the non-Nix files a .nix file names literally (udev rules,
+#                         zellij config, sops paths, …), discovered per run. Editing
+#                         a doc, a QML or a .plm scene is a HIT; editing any *.nix is
+#                         a miss.
+#   just eval-gate --drv  tier B — the toplevel drvPath: ~10 s cold (2232
+#                         instantiated derivations), ~40 ms on a hit. What a
+#                         rollout needs. Key: the WHOLE tree (HEAD, status, full
+#                         diff with binary blobs, untracked content), because the
+#                         toplevel embeds the flake source — preserve-flake pins
+#                         self.outPath — so any content change moves the drvPath.
+# A hit is the stored output of a live eval of exactly that state, never a guess;
+# scripts/dev/nixos-eval-gate.test.sh proves it against `nix eval` per state.
+# Anything unhashable (unreadable input, unknown file type, unwritable cache dir)
+# falls through to a real eval with a notice. Entries live in
+# $XDG_CACHE_HOME/nixos-eval-gate/<key>, or in the repo-local .agent/tmp-nix-cache
+# when $HOME is not writable (the same fallback `just update` has).
+# `--no-cache` forces a real eval, `--verbose` shows tier, key and hit/miss.
+# Two memoized eval tiers: label (fast) and toplevel drvPath (--drv)
+eval-gate *ARGS:
+    bash "{{repo_root}}/scripts/dev/nixos-eval-gate.sh" {{ARGS}}
+
 # Regenerate hosts/trantor/unbound-hosts.nix from its sources
 # (unbound-local.txt + files/sources/malw-hosts.txt, minus malw-hosts-allow.txt)
 unbound-hosts:
