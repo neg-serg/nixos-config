@@ -639,7 +639,9 @@ scene bar {
         body { color: skin.coal; opacity: 4%
             box { from: 0, 0; size: barcatcher.width, barcatcher.height }
         }
-        zone box anywhere { from: 0, 0; size: barcatcher.width, barcatcher.height; cursor: pointer; label: "Close"; role: button }
+        // `role: region`, like the overlay scene's own catcher: it is a dismissal surface the size of
+        // the monitor, not a button, and `describe` was calling the whole screen one.
+        zone box anywhere { from: 0, 0; size: barcatcher.width, barcatcher.height; cursor: pointer; label: "Close"; role: region }
         // Either button: a menu is dismissed by the first press anywhere else, whatever it is.
         on press anywhere { emit tray_close }
         on press right anywhere { emit tray_close }
@@ -1307,6 +1309,10 @@ scene bar {
         on enter trayhit { tip_title = r.title; emit tip(12); emit tray_icons(1) }
         on leave trayhit { emit tip_hide; emit tray_icons(0) }
         on press trayhit { emit tray_press(r.index) }
+        // A zone that goes away takes its pointer with it and `leave` never comes (the rule the
+        // audio capsules and the build badge carry): a tray that collapses under the cursor used to
+        // leave the item's title hanging and `trayOverIcons` set in the logic.
+        on change tray.expanded while not tray.expanded { emit tip_hide; emit tray_icons(0) }
         // The item's own menu. A scene that uses the right button is never closed by one
         // (`press right`, language reference §14), which is why this trigger is also what
         // keeps a stray right click from closing the bar.
@@ -1652,9 +1658,15 @@ scene bar {
                         tint: pick(media.can_go_next, ink.off, pick(media.hot, skin.ink, skin.accent)) }
                 }
             }
-            // The capsule itself: hovering it asks for the media card (title and metadata).
-            zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: region }
-            on enter z_media { emit tip(6) }
+            // The capsule itself: hovering it asks for the media card (title and metadata) and keeps
+            // the transport out. The second emit is what makes the pill reachable at all: the eight
+            // pixels of backing between the capsule and the play button are this zone, and
+            // `z_track`'s leave clears `media.hot` the moment the cursor crosses — so the transport
+            // row (shown on `media.hot`) vanished from under the pointer before it arrived, and its
+            // own `leave` never fired. The row does not act on a press here, so the pointer is not
+            // told otherwise.
+            zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: default; label: "Now playing"; role: region }
+            on enter z_media { emit tip(6); emit media_hover(true) }
             on leave z_media { emit tip_hide }
 
             // The zones sit on the buttons they name — the reason the old ones missed is
