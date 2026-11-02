@@ -10,10 +10,10 @@ keyboard volume keys drive it.
 
 ## Before deleting
 
-- `glm5d` has run a while without lease failures and its volume/mute were checked by ear. The
-  mute is confirmed on hardware now (2026-11-02): the adapter frame `01 2B 01/00` alone did
-  nothing, the monitors act on the per-session `2B 03` (mute) / `2B 04` (unmute) rounds that GLM
-  sends after it, and `glm5d` now sends them to every leased session.
+- `glm5d` has run a while without lease failures and its volume/mute were checked by ear. The mute
+  is confirmed on hardware now (2026-11-02): the adapter frame `01 2B 01/00` alone did nothing, the
+  monitors act on the per-session `2B 03` (mute) / `2B 04` (unmute) rounds that GLM sends after it,
+  and `glm5d` now sends them to every leased session.
 - The plugin is on the daemon path (`Genelec.daemon=true`) and the keyboard volume keys reach it
   (`XF86Audio*` binds in `files/gui/hypr/hyprland.lua`).
 - Nothing uses the OSC API (`127.0.0.1:9000`) or the four virtual MIDI slots.
