@@ -71,8 +71,6 @@
 
         # Python library paths for special scripts
         sp = pkgs.python3.sitePackages; # High-level dynamically-typed programming language
-        libpp = "${pkgs.neg.pretty_printer}/${sp}";
-        libcolored = "${pkgs.python3Packages.colored}/${sp}";
 
         # 1. Scripts from packages/local-bin/bin
         # We filter for regular files.
@@ -85,6 +83,11 @@
         # Scripts to skip automatic generation for (handled specially below)
         autoSkip = [
           "kitty-scrollback-nvim"
+          "glm-midi-relay"
+          "surfingkeys-server"
+          "window-activate"
+          "paths"
+          "menu-search"
         ];
 
         autoEntries =
@@ -117,14 +120,6 @@
 
         # 3. Special cases (Substitutions)
 
-        # ren (Python) - Needs library paths
-        renTpl = subst (builtins.readFile (scriptsDir + "/ren"));
-        renText = lib.replaceStrings [ "@LIBPP@" "@LIBCOLORED@" ] [ libpp libcolored ] renTpl;
-
-        # vid-info.py (Python) - Needs library paths.
-        vidInfoTpl = subst (builtins.readFile (scriptsDir + "/vid-info.py"));
-        vidInfoText = lib.replaceStrings [ "@LIBPP@" "@LIBCOLORED@" ] [ libpp libcolored ] vidInfoTpl;
-
         # kitty-scrollback-nvim substitution
         nixKsbPath = "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py";
         ksbTpl = subst (builtins.readFile (binDir + "/kitty-scrollback-nvim"));
@@ -133,14 +128,18 @@
       autoEntries
       // scriptEntries
       // {
-        ".local/bin/ren" = {
-          executable = true;
-          text = renText;
-        };
-        ".local/bin/vid-info" = {
-          executable = true;
-          text = vidInfoText;
-        };
+        # Rust port (packages/local-bin-tools): no interpreter, no PYTHONPATH.
+        ".local/bin/ren".source = lib.getExe' pkgs.neg.local-bin-tools "ren";
+        # Rust port (packages/pretty-printer): no interpreter, no PYTHONPATH.
+        ".local/bin/vid-info".source = lib.getExe' pkgs.neg.pretty_printer "vid-info";
+        # Rust ports of two former scripts (packages/local-bin-tools).
+        ".local/bin/menu-search".source = lib.getExe' pkgs.neg.local-bin-tools "menu-search";
+        ".local/bin/paths".source = lib.getExe' pkgs.neg.local-bin-tools "paths";
+        ".local/bin/window-activate".source = lib.getExe' pkgs.neg.local-bin-tools "window-activate";
+        ".local/bin/surfingkeys-server".source = lib.getExe' pkgs.neg.local-bin-tools "surfingkeys-server";
+        ".local/bin/glm-midi-relay".source = lib.getExe' pkgs.neg.local-bin-tools "glm-midi-relay";
+        ".local/bin/fetch-covers".source = lib.getExe' pkgs.neg.local-bin-tools "fetch-covers";
+        ".local/bin/gen-unbound-hosts".source = lib.getExe' pkgs.neg.local-bin-tools "gen-unbound-hosts";
         ".local/bin/kitty-scrollback-nvim" = {
           executable = true;
           text = ksbText;

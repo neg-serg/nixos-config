@@ -35,6 +35,8 @@
   renoise-osc = pkgs.neg.renoise-osc; # OSC client for Renoise: Lua eval, transport, mixer, recording
   wineapps = pkgs.neg.wineapps; # declarative Wine app manager (list/install/uninstall/run)
   minibbs = pkgs.neg.minibbs; # tiny BBS-style message board (SQLite + HTTP)
+  gen-unbound-hosts = pkgs.neg.local-bin-tools; # regenerate hosts/trantor/unbound-hosts.nix
+  fetch-covers = pkgs.neg.local-bin-tools; # album covers for ~/music via sacad
 
   # pleamar scene runtime (the shell port's compiler and the plugin render gate).
   # `nix run .#pleamar -- --scene …` works without enabling features.gui.pleamar,
