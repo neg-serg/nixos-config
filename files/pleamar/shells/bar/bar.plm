@@ -173,14 +173,16 @@ scene bar {
     //   corner `shape.cornerRadiusSmall` = 6.
     let seam = 7
     let tray.slot = 22
-    // The corner that reveals the tray, in design px: QS's `panelHotzoneWidth` 16 and
-    // `panelHotzoneHeight` 9 (Settings/Theme.qml:687-688), a hover target of its own over the
-    // panel's bottom-right corner (`Bar.qml:1246-1260`) and nothing else. The reference insets it
-    // from the panel's right edge by `width * panelHotzoneRightShift` (:689, 1.15); the port keeps
-    // it flush against the surface's edge instead, because here the corner is the one place a hand
-    // reaching for it actually lands.
-    let tray.reveal.w = 16 * ui * user_scale
-    let tray.reveal.h = 9 * ui * user_scale
+    // The corner that reveals the tray: QS's `panelHotzoneWidth` 16 and `panelHotzoneHeight` 9
+    // (Settings/Theme.qml:687-688), a hover target of its own over the panel's bottom-right corner
+    // (`Bar.qml:1246-1260`) and nothing else. Two things forced a different shape here. The
+    // reference's 16 x 9 box lands on the Genelec tile — measured with `pleamar --say bar describe`
+    // on 2026-11-02 the tile ends at x 1916 and the box began at 1904, so 108 px² were the tile's —
+    // and a widget above the corner takes the hover, which left a strip four pixels wide to hit. So
+    // the corner is that strip: the bar's whole height, the last four design px of the surface,
+    // flush against the edge where a hand reaching for the corner actually lands, and over nothing.
+    let tray.reveal.w = 4 * ui * user_scale
+    let tray.reveal.h = 25 * ui * user_scale
     let sysmon.pairs = 1 + 1 + if(has.gpu, 1, 0) + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
     // The user's settings, merged by bar.luau: `scale` multiplies ui and the
     // per-monitor fit; `widget.*` decide which widgets of this slice are there.
@@ -1837,12 +1839,10 @@ scene bar {
     // so the widgets stay above it: a press in its box still reaches the capsule drawn over it
     // (Genelec), and its hover fires where a hand reaching for the bottom-right corner lands.
     // Only while there is a tray to reveal: nothing is drawn for an empty one, and the state
-    // machine has nothing to expand. The corner does lie over the last 8 design px of the Genelec
-    // tile's plate, so a hand reaching for the very corner reveals the tray while the rest of the
-    // tile stays the tile's — which is what the reference's hand does too (`Bar.qml:1246-1260`
-    // hangs the same 16 x 9 zone over the same corner). It is no longer gated on `tray_trigger`:
-    // that flag is off by default and nothing sets it, so the corner was a dead zone and the tray
-    // could not be reached with the mouse at all.
+    // machine has nothing to expand. It is not gated on `tray_trigger` either — that flag is off by
+    // default and nothing sets it, which is how the corner came to be a dead zone and the tray
+    // unreachable with the mouse. The box is the four-pixel strip at the surface's right edge (see
+    // `tray.reveal` above): `pleamar --say bar describe` shows it clear of the Genelec tile.
     zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region; show: widget.systray and icons.count > 0 }
     on enter tray_reveal { emit tray_hot(1) }
     on leave tray_reveal { emit tray_hot(0) }
