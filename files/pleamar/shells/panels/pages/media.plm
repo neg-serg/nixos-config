@@ -112,7 +112,7 @@ part NowPlaying {
                 // player has to jump inside a track did nothing. `local.x` carries the zone's own
                 // `from:` (12), so the fraction is the distance from it over the 396 the band is
                 // wide; `drag` keeps seeking while the button is held, as the reference's does.
-                zone box scrub { from: 12, 296; size: 396, 16; cursor: pick(media.can_seek, default, pointer)
+                zone box scrub { from: 12, 296; size: 396, 16; cursor: pick(media.can_seek, not_allowed, pointer)
                                  label: pick(media.can_seek, "Seek (this player cannot seek)", "Seek")
                                  role: slider; value: "{media.pos, 0} s" }
                 // The cursor already says `default` when the player cannot seek; the press used to
