@@ -541,8 +541,14 @@ local function weather_apply(d, topic)
         local label = "--"
         if y then label = WDAY[weekday(y, m, dd) + 1] end
         local dcode = tonumber(day.weather_code)
+        local hi = tonumber(day.tmax_c)
+        local lo = tonumber(day.tmin_c)
+        if fact.use_fahrenheit == true then
+            if hi then hi = hi * 9 / 5 + 32 end
+            if lo then lo = lo * 9 / 5 + 32 end
+        end
         days[i] = { day = label, cond = cond_short(dcode), glyph = cond_glyph(dcode),
-                    hi = fmt0(tonumber(day.tmax_c)) .. "°", lo = fmt0(tonumber(day.tmin_c)) .. "°" }
+                    hi = fmt0(hi) .. "°", lo = fmt0(lo) .. "°" }
     end
     model.forecast = days
 end
@@ -997,10 +1003,16 @@ on("cal_next", function()
 end)
 
 -- The pill tracker published (`Pill.rev` moved): a toggle in the bar, the midnight rollover, or
--- the state file written by the other instance of the plugin. Only the grid changes, so the
--- workers are left alone — this is not a month navigation.
+-- the state file written by the other instance of the plugin. Only the grid changes, but a
+-- running calendar worker is asked for a fresh sample so a toggle does not wait for its tick.
 on("pill_sync", function()
     cal_rebuild()
+    -- The grid is rebuilt from the last sample; while the drawer is open the worker is alive,
+    -- so ask it for a fresh one instead of waiting for the 300 s tick.
+    local h = H.calendar
+    if h.id then
+        write(h.id, '{"cmd":"sample","month":"' .. tostring(fact.cal_year) .. "-" .. pad2(fact.cal_month) .. '"}\n')
+    end
 end)
 
 -- ==================== link, internet and the tunnel ====================
