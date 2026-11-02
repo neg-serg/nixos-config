@@ -2177,11 +2177,16 @@ local function watch_layout()
             return
         end
         if head ~= "activelayout" and head ~= "activelayoutv2" then return end
-        -- `activelayout>>device,Layout`: a helper's own chatter is not the layout in force, so an
-        -- event from a device the poll did not choose is left to the two-second pass, which asks
-        -- `hyprctl` for the whole list and knows which one counts.
+        -- `activelayout>>device,Layout`. The device that announces the change is the one being
+        -- typed on, so it becomes the pin: it used to be chosen once from `main` (false on every
+        -- board here) and the first name in the list, and a switch on the keyboard actually in
+        -- use — Alt+Shift, or the compositor's own bind — was dropped by the filter below, so the
+        -- capsule stood still while the layout changed. The two-second poll then asks this device.
         local device, name = payload:match("^([^,]*),%s*(.+)$")
-        if text.kb_device ~= "" and device ~= nil and device ~= text.kb_device then return end
+        if device and device ~= "" and device ~= text.kb_device then
+            text.kb_device = device
+            kb_pin = device
+        end
         local short = shorten(name)
         if short and short ~= text.kb_layout then text.kb_layout = short end
     end, function()
