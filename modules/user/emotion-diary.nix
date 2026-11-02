@@ -11,7 +11,7 @@ let
   # served over HTTP rather than opened as a file because localStorage is scoped
   # to the page origin: file://, 127.0.0.1 and localhost are three different
   # storages, and a changing address looks like an empty diary.
-  diaryDir = "${config.lib.neg.homeDir}/src/emotion-diary";
+  diaryDir = "${config.lib.neg.homeDir}/src/@main/@projects/emotion-diary";
 
   serve = pkgs.writeShellScript "aura-diary-serve" ''
     # Bind only to the loopback interface: the diary never leaves this host.
