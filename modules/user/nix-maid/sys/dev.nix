@@ -71,6 +71,12 @@ in
           CARGO_HOME = "${home}/.local/share/cargo";
           RUSTUP_HOME = "${home}/.local/share/rustup";
           RUSTC_WRAPPER = "sccache"; # cargo routes every rustc call through the cache
+          # sccache refuses to cache a rustc invocation that carries `-C incremental`
+          # ("CannotCache(incremental)" in its debug log), and cargo enables that by
+          # default in the dev profile — so the cache silently did nothing for Rust.
+          # With it off, a library crate goes miss -> hit. Bin crates stay uncacheable
+          # ("CannotCache(crate-type, bin)"), which is a sccache limitation, not a bug.
+          CARGO_INCREMENTAL = "0";
           SCCACHE_DIR = "/cache/sccache";
           SCCACHE_CACHE_SIZE = "50G";
 
