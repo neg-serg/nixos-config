@@ -214,6 +214,52 @@ linting, flake update checks and `--option` plumbing. Give agents a single fast 
 (`nix eval --raw .#…drvPath`) and keep `nh os switch` for humans; measure both to see how much the
 wrappers cost on top.
 
+## Validating the data structures we are tempted to change (2026-11-03)
+
+The speedups that remain are in the evaluator's own structures, and there the failure class is a
+**silently different `drvPath`**: the build succeeds and the artifact is not what the config says.
+So the question is not "is it faster" but "can a wrong answer get through".
+
+### Patch 0006 (`derivationStrict` memoised by a masked-derivation hash) — reviewed line by line
+
+The key hashes `name`, `platform`, `builder`, `args` (with count and lengths), `env` (count, keys,
+values), output *names* plus count, `inputSrcs`, `inputDrvs` (path, count, output names) and
+`structuredAttrs` (`unparse()` JSON). It returns `nullopt` — i.e. no memoisation — for fixed-output
+derivations and for any `inputDrvs` entry with a non-empty `childMap`, and the memo is only
+consulted when `repair == NoRepair`.
+
+Verdict: **the key is complete for the `Derivation` fields that exist in 2.35.3**, so an equal key
+implies an equal derivation implies an equal store path. The risk is not today's fields, it is the
+next ones: the key is hand-written next to the struct it mirrors, so a new `Derivation` field added
+upstream (or a change in what `unparse()` emits) would silently stop being covered. Two smaller
+observations: the memo hit skips `writeDerivation` entirely (safe only because the first
+instantiation in the same process wrote the file), and `structuredAttrs` keying depends on
+`unparse()` being deterministic (a false *miss* if it is not — cost, not correctness).
+
+### The three tests that would catch a bad key, cheapest first
+
+1. **Key-completeness unit test** (`src/libexpr/tests`, a day of work): build one `Derivation`, take
+   the key, then mutate exactly one field at a time — name, platform, builder, one arg, one env key,
+   one env value, one output name, output count, one `inputSrcs` path, one `inputDrvs` output name —
+   and assert the key changes every time; plus assert `nullopt` for fixed-output and `childMap`
+   cases. This is the only test that fails when a future field is forgotten, i.e. the one that
+   catches the real hazard. A `Derivation`-field visitor (or a `static_assert`-style field count)
+   makes it self-checking: the test fails to compile when the struct grows.
+1. **Corpus differential** (hours): for a set of real configurations, compare the `drvPath` of every
+   derivation reachable from `system.build.toplevel` (`nix derivation show -r` gives 28,811 for this
+   host) between the patched and the unpatched binary. A wrong memo hit shows up as a mismatched
+   path for one of them. Already partially done — the toplevel path matched — but that compares one
+   value, not the closure.
+1. **Store-write regression** (hours): instantiate the same derivation twice in one process (two
+   `builtins.derivation` calls with identical attrs) and assert the `.drv` exists in the store and
+   both values are equal — this pins the `writeDerivation`-skipped-on-hit behaviour, which is the
+   one place where "faster" could mean "not done".
+
+What none of these can prove: that the *masking* is semantically intended (that two derivations
+which differ only in a field deliberately excluded from the key really do produce the same outputs).
+That remains a design decision, and the patch's own guard — refusing fixed-output and `childMap`
+cases — is the honest form of it.
+
 ## Guardrails
 
 - A faster eval must produce the **same `drvPath`** for the same tree; record it before and after
