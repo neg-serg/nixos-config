@@ -1,6 +1,6 @@
 // theme.plm — the wallpaper palette a scene opts into.
 //
-// The live file is generated: `scripts/theme/theme.sh` writes
+// The live file is generated: `packages/pleamar-theme` writes
 // ~/.config/pleamar/theme.plm from the current wallpaper and rewrites it when the
 // wallpaper changes. A scene is loaded from that directory, so its
 // `import "../../theme.plm"` there reads the generated palette — the roles are
@@ -53,6 +53,6 @@ library Skin strict {
     // Is the wallpaper light? Its mean WCAG luminance over the reference's own
     // `ui.textShadow.lightThreshold` (0.5), which is what decides whether the ink on a
     // plate of `coal` at 69..96 % still reads. The generator computes it
-    // (scripts/theme/theme-extract.awk, `light=`); this default says "dark wallpaper".
+    // (the crate's extractor, `light=`); this default says "dark wallpaper".
     let skin.light = false
 }

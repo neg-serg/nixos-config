@@ -22,14 +22,11 @@ let
   pleamarLoginTree = config.lib.neg.path "files/pleamar";
   # The lock scene spawns its keyboard worker by name
   # (`permissions { run: "pleamar-kbdlayout" }`): ~/.local/bin, where nix-maid
-  # puts it for the session, is not there yet at login, so the same script
-  # (files/pleamar/scripts/helpers/kbd.sh) is carried in the store under the name
-  # the scene asks for, with its `#!` pointed at the store's bash.
+  # puts it for the session, is not there yet at login, so the compiled worker
+  # is carried in the store under the name the scene asks for.
   pleamarLoginHelpers = pkgs.runCommand "pleamar-login-helpers" { } ''
     mkdir -p $out/bin
-    cp ${config.lib.neg.path "files/pleamar/scripts/helpers/kbd.sh"} $out/bin/pleamar-kbdlayout
-    chmod +x $out/bin/pleamar-kbdlayout
-    patchShebangs $out/bin
+    ln -s ${lib.getExe pkgs.neg.pleamar-kbdlayout} $out/bin/pleamar-kbdlayout
   '';
   # Called from hyprland.lua during the login phase; it launches the pleamar lock
   # scene (files/pleamar/shells/lock/lock.plm) from the tree deployed at

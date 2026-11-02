@@ -2,9 +2,9 @@
 //
 // The module (or the user, once) copies this to ~/.config/pleamar/theme.plm so
 // scenes that `import "../../theme.plm"` compile before the first wallpaper
-// run; theme.sh rewrites the live file on every wallpaper change and this one
+// run; pleamar-theme rewrites the live file on every wallpaper change and this one
 // stays where it is. The values are the QS base palette (INTERFACES.md §3.3) —
-// exactly the fallbacks theme.sh emits when it has neither a wallpaper nor an
+// exactly the fallbacks pleamar-theme emits when it has neither a wallpaper nor an
 // explicit colour — so a fresh session looks like the legacy shell until the
 // first palette is written.
 

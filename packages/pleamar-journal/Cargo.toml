@@ -1,0 +1,33 @@
+[package]
+name = "pleamar-journal"
+version = "0.1.0"
+edition = "2021"
+description = "pleamar journal snapshot worker (journalctl, one JSON line per call)"
+license = "MIT"
+
+[[bin]]
+name = "pleamar-journal"
+path = "src/main.rs"
+
+[dependencies]
+# Reading journalctl's JSON stream and writing the snapshot with the same
+# compact bytes jq produced. `arbitrary_precision` keeps a number literal
+# (jq 1.8's decNumber does too), `preserve_order` keeps object keys in input
+# order; both are needed by src/jq.rs to render `tostring` like jq.
+serde_json = { version = "1", features = [
+  "arbitrary_precision",
+  "preserve_order",
+] }
+# The shell's `strflocaltime("%H:%M")`: epoch seconds in the host timezone.
+# chrono's Local uses the same libc localtime_r, so `TZ` and DST agree.
+chrono = { version = "0.4", default-features = false, features = [
+  "clock",
+  "std",
+] }
+# SIGTERM/SIGINT: the shell died by the signal and left its pipeline children
+# behind; the worker kills and reaps them, then dies by the same signal.
+signal-hook = "0.3"
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]

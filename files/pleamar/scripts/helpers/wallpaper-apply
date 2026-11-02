@@ -5,7 +5,7 @@
 #     wallpaper-apply FILE [COMMAND]
 #
 #   ~/.cache/pleamar/wallpaper-path       -> the still, the producer path pleamar's theme
-#                                            pipeline watches (scripts/theme/theme.sh reads it
+#                                            pipeline watches (packages/pleamar-theme reads it
 #                                            first and falls back to the legacy one below)
 #   ~/.cache/quickshell-wallpaper-path    -> the same still, for the legacy readers still alive
 #                                            in the session: the bar accent and wl-greeter-sync,

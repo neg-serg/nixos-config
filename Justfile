@@ -214,12 +214,10 @@ plm-theme:
 scene-events:
     bash "{{repo_root}}/scripts/dev/check-scene-events.sh" "{{repo_root}}"
 
-# The theme pipeline's own suite: hermetic, runs theme.sh against image fixtures in a
-# throwaway HOME and pins the extractor's goldens. A recipe of its own because nothing ran
-# it and it rotted: seven of its checks were red on 2026-10-26, all of them stale
-# expectations from before the shell's tones became the reference's own tokens.
+# The theme pipeline's own suite: the crate's hermetic cargo tests (fixtures, extractor
+# goldens, CLI/error paths) run in the Nix build's checkPhase.
 theme-test:
-    bash "{{repo_root}}/files/pleamar/scripts/theme/test.sh"
+    nix build --no-link ".#pleamar-theme"
 
 # The hostile-plugin gate: an unapproved plugin must be refused (and touch
 # nothing), the same plugin must run once approved. Runs in `lint` too.

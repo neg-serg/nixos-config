@@ -33,7 +33,7 @@ let
     }"
     state_file="$HOME/.local/state/wl/state.json"
     notify_file="$HOME/.cache/quickshell-wallpaper-path"
-    # The pleamar theme reads THIS one (theme.sh: the canonical path; the file above is its legacy
+    # The pleamar theme reads THIS one (pleamar-theme: the canonical path; the file above is its legacy
     # fallback), and until now only the picker wrote it. On 2026-11-02 the theme had been built from
     # k8dp3m.jpg while wl was painting exk2zr.png — the shell's colours came from a wallpaper that
     # was not on screen. Written from wl's own state, so the two cannot drift again.

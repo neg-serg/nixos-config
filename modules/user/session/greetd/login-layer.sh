@@ -76,7 +76,7 @@ fi
 # The scene spawns its helpers by name: `cat` for /etc/hostname and
 # `pleamar-kbdlayout` for the layout chip (permissions in lock.plm). ~/.local/bin,
 # where nix-maid puts that worker for the session, does not exist yet at login, so
-# the same script is carried in the store here. /run/wrappers/bin first: it holds
+# the compiled worker is carried in the store here. /run/wrappers/bin first: it holds
 # the setuid wrappers (unix_chkpwd, which the PAM password check reaches through
 # the system profile) — see the note in greetd/session-wrapper.sh.
 PATH="/run/wrappers/bin:$KBD/bin:/run/current-system/sw/bin:${PATH:-}"

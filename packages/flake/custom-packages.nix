@@ -47,6 +47,9 @@
   # measurer the A1..A7 acceptance criteria are stated in.
   nixie = pkgs.nixie;
 
+  # Theme pipeline (cargo tests run in the package checkPhase).
+  pleamar-theme = pkgs.neg.pleamar-theme;
+
   # D-Bus fixtures for the pleamar engine tests (MPRIS player, nested tray item).
   pleamar-fixtures = pkgs.neg.pleamar-fixtures;
 

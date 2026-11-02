@@ -10,13 +10,14 @@ without QML or PyQt anywhere.
 
 Files in this directory:
 
-| file                | what it is                                                                       |
-| ------------------- | -------------------------------------------------------------------------------- |
-| `theme.sh`          | the generator: resolves the wallpaper, writes `theme.plm` atomically             |
-| `theme-extract.awk` | the two samplers (accent mean + Oklab k-means), a port of the legacy JS/QML      |
-| `theme.default.plm` | the seed copy for a fresh session; `theme.sh` overwrites the live file, not it   |
-| `test.sh`           | hermetic proof: temp HOME/XDG, fixtures, assertions, optional `--check` consumer |
-| `README.md`         | this file                                                                        |
+| file                | what it is                                                                        |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `theme.default.plm` | the seed copy for a fresh session; the generator overwrites the live file, not it |
+| `README.md`         | this file                                                                         |
+
+The generator and both samplers (accent mean + Oklab k-means) are the Rust crate
+`packages/pleamar-theme` (binary `pleamar-theme`); its cargo tests in `tests/` are the hermetic
+proof that used to be `test.sh`.
 
 ## The contract
 
@@ -56,19 +57,19 @@ Rules the file obeys, so PH2 writers can rely on them:
 | `skin.on.accent`    | `colors.onAccent`                                 | constant `#ffffff`, as in the legacy theme        |
 | `skin.light`        | is this the light palette?                        | wallpaper mean WCAG luminance, or `--mode`        |
 
-`theme.sh` writes one comment above each name saying where that name's value came from — the sampled
-wallpaper, `--accent`, `--from-json`, or the QS base-palette fallback.
+The generator writes one comment above each name saying where that name's value came from — the
+sampled wallpaper, `--accent`, `--from-json`, or the QS base-palette fallback.
 
 ## The command
 
 ```sh
-~/.config/pleamar/scripts/theme/theme.sh            # or wherever the module deploys it
+pleamar-theme                                      # installed in ~/.local/bin by the module
 # or, from the repo during development:
-files/pleamar/scripts/theme/theme.sh
+cargo run --manifest-path packages/pleamar-theme/Cargo.toml --
 ```
 
 ```
-Usage: theme.sh [--wallpaper FILE] [--accent '#RRGGBB'] [--from-json FILE]
+Usage: pleamar-theme [--wallpaper FILE] [--accent '#RRGGBB'] [--from-json FILE]
                 [--mode auto|light|dark] [--help]
 
 --wallpaper FILE   sample this image instead of the cache's current wallpaper
@@ -149,9 +150,9 @@ numbers in `lib/palette.plm`) stay scene-side: `skin.*` carries tones, the drawi
 
 ### How the samplers mirror the legacy code, and the deviations
 
-- **Tones** — `theme-extract.awk` ports `BackgroundImage.qml`'s `paintPalette()`: Oklab, k=4, pixel
-  weight `0.25 + saturation × 1.75`, seeds spread over the lightness range, 16 iterations, centres
-  sorted darkest to lightest, chroma ×1.35 (`greeter.posterizeChroma`).
+- **Tones** — the crate's extractor ports `BackgroundImage.qml`'s `paintPalette()`: Oklab, k=4,
+  pixel weight `0.25 + saturation × 1.75`, seeds spread over the lightness range, 16 iterations,
+  centres sorted darkest to lightest, chroma ×1.35 (`greeter.posterizeChroma`).
 - **Accent** — ports `AccentSampler.sampleAccent()`: the mean of pixels with chroma ≥ 10 and mean
   brightness 20..235, then the relaxed pass (≥ 8, 20..240), then every pixel; the mean is
   hue-matched the way `Color.matchHue(mean, "#006FCC")` does for `Theme.accentPrimary` (wallpaper
@@ -173,25 +174,23 @@ numbers in `lib/palette.plm`) stay scene-side: `skin.*` carries tones, the drawi
 
 ## Tests
 
-`test.sh` is hermetic: it draws its own fixtures with ImageMagick into a fresh `mktemp -d`, and
-never reads or writes the real `~/.config`. It asserts the legacy-cache and `pleamar/wallpaper-path`
-resolution (including precedence), the golden palette of a fixture, the readability clamp on a light
-fixture, `--accent` and `--from-json` overrides, the fallback values, the missing-input error with
-no file written, the atomic write (a failed run leaves the previous file and no temp behind), and
-`theme.default.plm` agreeing with the script's fallbacks. With the compiler available it also writes
-a `/tmp` consumer scene (a capsule plus text and accent bars built from `skin.*`, scale through
-`group { scale: ui }` per D9), imports the generated `theme.plm` next to `lib/palette.plm`, and runs
-`pleamar --check` on it:
+The crate's tests are hermetic: they draw their own fixtures with ImageMagick into a fresh
+`mktemp -d`, and never read or write the real `~/.config`. They assert the legacy-cache and
+`pleamar/wallpaper-path` resolution (including precedence), the golden palette of a fixture, the
+readability clamp on a light fixture, `--accent` and `--from-json` overrides, the fallback values,
+the missing-input error with no file written, the atomic write (a failed run leaves the previous
+file and no temp behind), and `theme.default.plm` agreeing with the script's fallbacks. With the
+compiler available it also writes a `/tmp` consumer scene (a capsule plus text and accent bars built
+from `skin.*`, scale through `group { scale: ui }` per D9), imports the generated `theme.plm` next
+to `lib/palette.plm`, and runs `pleamar --check` on it:
 
 ```sh
-PLEAMAR_BIN=/path/to/pleamar files/pleamar/scripts/theme/test.sh
-# ok: …
-# ok: consumer with the generated theme.plm compiles:
-#   /tmp/…/theme_proof.plm: ok · 9 properties, 17 instructions, 0 layers, …
-# theme-test: all checks passed
+cargo test --manifest-path packages/pleamar-theme/Cargo.toml --locked
+# tests: Oklab/k-means, extractor goldens, CLI/error paths, generated theme.plm,
+#        and the consumer --check when PLEAMAR_BIN is on PATH
 ```
 
-Without a binary on `PATH` the consumer steps are a skip notice, not a failure. `test.sh` does not
+Without a binary on `PATH` the consumer steps are a skip notice, not a failure. The tests do not
 render (no `pleamar-wm` headless here): `--check` proves the file compiles, and the harness'
 `smoke.sh` owns the PNGs. The live-restyle claim is the compiler's documented hot reload of an
 imported file, not a claim proved by a screenshot in this task.
@@ -207,11 +206,9 @@ The module task owns this (PH1-T2 does not edit `modules/`); the requirements ar
 1. **A seed.** Copy `scripts/theme/theme.default.plm` to `~/.config/pleamar/theme.plm` **only when
    it does not exist**, so the scenes that import `../../theme.plm` compile on a fresh login.
 
-1. **The script.** Deploy `theme.sh` *with* `theme-extract.awk` in the same directory (the script
-   finds its sibling and resolves symlinks, so a link to the directory is fine). A store wrapper
-   (`writeShellApplication` style) works if both files sit next to each other; put `imagemagick`,
-   `gawk`, `jq` and `coreutils` on its `PATH`, or point `MAGICK_BIN`/`AWK_BIN`/`JQ_BIN` at the store
-   paths.
+1. **The binary.** Deploy the compiled `pleamar-theme` (the module uses `lib.getExe` from the
+   crate); put `imagemagick`, `jq` and `coreutils` on its `PATH`, or point `MAGICK_BIN`/`JQ_BIN` at
+   the store paths.
 
 1. **The trigger.** Something must run the script whenever the wallpaper changes. Today
    `wl-state-sync.service` already runs on every change and publishes
@@ -227,7 +224,7 @@ The module task owns this (PH1-T2 does not edit `modules/`); the requirements ar
      partOf = [ "graphical-session.target" ];
      wantedBy = [ "graphical-session.target" ];
      serviceConfig.Type = "oneshot";
-     serviceConfig.ExecStart = "${pleamarTheme}";      # theme.sh + awk + its PATH
+     serviceConfig.ExecStart = "${lib.getExe pkgs.neg.pleamar-theme}"; # compiled pipeline
      unitConfig.StartLimitIntervalSec = 0;             # changes arrive in bursts
    };
    systemd.user.paths."pleamar-theme" = {
