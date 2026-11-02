@@ -272,7 +272,11 @@ in
 
   # Host-specific feature toggles
   features.dev.ai.herdr.enable = true; # Herdr — agent runtime: workspaces/panes for dsh sessions, state sidebar
+  features.dev.pkgs.joern = false; # Joern (2.9 GB JVM stack) off: not used on this host
   features.llm.enable = true; # Local LLM stack: Ollama (ROCm, models on /zero/ai/ollama), voxinput
+  # vLLM pulls an 11 GB ROCm Python env into the profile and is never auto-started; the module
+  # stays (start it there when wanted), the host keeps the package out of the system.
+  services.vllm.enable = false;
   features.cli.broot.enable = true;
   features.text.wordcraft.enable = true; # WordCraft — Word-style word processor, replaces LibreOffice
   features.hardware.usbAutomount.enable = true;
