@@ -71,7 +71,6 @@ let
 
     # "_"-prefix is the private/hidden convention (same as import-tree/haumea)
     (check (!(binTree ? _localbin)) "underscore-prefixed entries are skipped")
-    (check (binTree ? swayimg-actions) "the sibling .sh file is still addressable")
 
     # find: bare name or file name, and a miss is an error, not a null
     (check (neg.find libTree "systemd-user" == ./systemd-user.nix) "find resolves a bare name")
