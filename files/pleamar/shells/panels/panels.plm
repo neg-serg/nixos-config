@@ -128,10 +128,11 @@ scene panels {
     // not eyeballed. The units matter and cost a round: a surface's `size:`/`margin:`
     // are LITERAL logical pixels (bar.plm says the same in its own header — its surface
     // height is spelled out as 25, the scaled value of QS' 22), while what a page draws
-    // inside is design pixels times its `scale`. So a surface here is the QS rectangle at
-    // the theme's scale (dp * 1.15 on this monitor), not the dp number: a surface declared
-    // in design pixels clips the plate by 15 %, which is what "LIV" instead of "LIVE" at
-    // the right edge of the flow card was.
+    // inside is design pixels times its `scale`. Since `palette.plm` sets `ui = 1` (not the
+    // reference's 1.15), a page draws at exactly its design size and a surface has to say that
+    // same number: the five plates that still carried `design * 1.15` left a 15 % band of empty
+    // window on the right and bottom, and the weather card's own label sat below its plate.
+    // (`media` and `build` were already equal; the rest now are.)
     //
     // What each popup anchors with — top, right, bottom, left:
     //   media    420 x 320   right 4 (sidePanelPopupOuterMargin), bottom 1
@@ -139,7 +140,10 @@ scene panels {
     //   volume   340 x 320   no popup in the reference; aligned with media
     //   weather  300 x 196   centred across the monitor, bottom 40
     //                        ((panelModuleHeight 36 + 4) * scale)
-    //   system  1040 x 1020  min(1040, 0.92 W) x max(480, H - 60), centred
+    //   system  1040 x 887  the reference popup is min(1040, 0.92 W) x max(480, H - 60); the page's
+    //                        own content sits on the 1040-wide grid (its divider runs 14…1026, the
+    //                        third card starts at 698), so the plate is 1040 wide and a little
+    //                        shorter than the reference's 1020 — its last row is at 584
     //   calendar 380 x 500   left 2, bottom 2 (calendarPopupMargin); the QS popup is 480 and
     //                        grows to 520 with the pill overlay on — the streak row takes 20 here
     // Radius is 0 everywhere: panelOverlayRadius and cornerRadiusLarge are both
@@ -150,17 +154,17 @@ scene panels {
                          open: drawer == media or page == 5
         include "pages/media.plm"
     }
-    surface network_card { size: 540, 389; anchor: bottom_left; margin: 0, 0, 41, 5
+    surface network_card { size: 470, 338; anchor: bottom_left; margin: 0, 0, 41, 5
                            level: overlay; reserve: 0; screens: each; keyboard: on_demand
                            open: drawer == network
         include "pages/network.plm"
     }
-    surface volume_card { size: 391, 368; anchor: bottom_right; margin: 0, 5, 1, 0
+    surface volume_card { size: 340, 320; anchor: bottom_right; margin: 0, 5, 1, 0
                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
                           open: drawer == volume
         include "pages/volume.plm"
     }
-    surface weather_card { size: 345, 225; anchor: bottom; margin: 0, 0, 46, 0
+    surface weather_card { size: 300, 196; anchor: bottom; margin: 0, 0, 46, 0
                            level: overlay; reserve: 0; screens: each; keyboard: on_demand
                            open: drawer == weather
         include "pages/weather.plm"
@@ -170,12 +174,12 @@ scene panels {
                          open: drawer == build
         include "pages/build.plm"
     }
-    surface system_card { size: 1040, 1020; anchor: center; margin: 0
+    surface system_card { size: 1040, 887; anchor: center; margin: 0
                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
                           open: drawer == system
         include "pages/system.plm"
     }
-    surface calendar_card { size: 437, 575; anchor: bottom_left; margin: 0, 0, 2, 2
+    surface calendar_card { size: 380, 500; anchor: bottom_left; margin: 0, 0, 2, 2
                             level: overlay; reserve: 0; screens: each; keyboard: on_demand
                             open: drawer == calendar
         include "pages/calendar.plm"

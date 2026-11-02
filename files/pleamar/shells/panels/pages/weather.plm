@@ -110,8 +110,8 @@ part Weather {
                 }
             }
 
-            text "Loading the weather…" { at: 168, 196; anchor: left center; family: "Iosevka"; size: 10; color: ink.off; show: weather.loading }
-            text weather.err { at: 150, 196; anchor: center; family: "Iosevka"; size: 10; color: warn }
+            text "Loading the weather…" { at: 168, 184; anchor: left center; family: "Iosevka"; size: 10; color: ink.off; show: weather.loading }
+            text weather.err { at: 150, 184; anchor: center; family: "Iosevka"; size: 10; color: warn }
         }
     }
 
