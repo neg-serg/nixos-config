@@ -79,6 +79,12 @@ with rec {
     # See also: https://github.com/bus1/dbus-broker/wiki/Policy#credentials
     system.nssDatabases.group = [ "files" ];
 
+    # accounts-daemon opendir()s /etc/tcb (the libxcrypt TCB shadow layout) on
+    # every user-cache rebuild and warns when the directory is absent. Nothing
+    # here uses TCB shadow files; an empty directory turns the probe into a
+    # no-op instead of "Unable to open /etc/tcb: No such file or directory".
+    systemd.tmpfiles.rules = [ "d /etc/tcb 0700 root root -" ];
+
     users = {
       users.root.hashedPassword = lib.mkDefault "*"; # lock root account
       users.${mainName} = {
