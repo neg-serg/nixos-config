@@ -43,9 +43,11 @@ const HIDIOCGRDESC: c_ulong = 0x9004_4802;
 /// `O_NONBLOCK` on Linux.
 const O_NONBLOCK: c_int = 0o4000;
 const POLLIN: i16 = 0x0001;
+const SIGPIPE: c_int = 13;
 
 extern "C" {
     fn ioctl(fd: c_int, request: c_ulong, ...) -> c_int;
+    fn signal(signum: c_int, handler: *const std::ffi::c_void) -> *const std::ffi::c_void;
     fn poll(fds: *mut PollFd, nfds: c_ulong, timeout: c_int) -> c_int;
     fn localtime_r(timep: *const i64, result: *mut Tm) -> *mut Tm;
     fn strerror(errnum: c_int) -> *mut c_char;
@@ -75,6 +77,11 @@ struct Tm {
 }
 
 fn main() {
+    // Die quietly when the reader closes the pipe (`questyle-ctl info | head`):
+    // Rust's default SIGPIPE handling turns the failed write into a panic.
+    unsafe {
+        signal(SIGPIPE, std::ptr::null());
+    }
     let args: Vec<String> = std::env::args().skip(1).collect();
     let code = match parse_args(&args) {
         Ok(Some(cmd)) => run(cmd),
