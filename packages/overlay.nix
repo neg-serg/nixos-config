@@ -110,6 +110,12 @@ in
       scratchpad-geometry = final.callPackage ./scratchpad-geometry { }; # persist Hyprland scratchpad rects across show/hide
       hypr-rearrange = final.callPackage ./hypr-rearrange { }; # move windows to the workspaces the config routes them to
       hypr-win-list = final.callPackage ./hypr-win-list { }; # Hyprland window picker for vicinae dmenu
+      minibbs = final.callPackage ./minibbs { }; # tiny BBS-style message board (SQLite + HTTP)
+      telegram-notify = final.callPackage ./telegram-notify { }; # Telegram notifications: calendar digest, pill reminder, crash-loop alerts
+      zalgo = final.callPackage ./zalgo { }; # cursed-text generator (combining marks on stdin)
+      vivaldi-prefs = final.callPackage ./vivaldi-prefs { }; # re-assert managed Vivaldi preferences
+      wallpaper-palettes = final.callPackage ./wallpaper-palettes { }; # matugen schemes per wallpaper (picker cards)
+      local-bin-tools = final.callPackage ./local-bin-tools { }; # small $PATH helpers (fetch-covers, gen-unbound-hosts, menu-search, ren, …)
     };
 
   jack-keyboard = final.callPackage ./jack-keyboard { }; # virtual MIDI keyboard for JACK/PipeWire synth hosts
