@@ -173,6 +173,11 @@ local function scheduleCommit()
 end
 
 -- --------------------------------------------------------------- gestures
+-- A high-resolution wheel reports fractions of a notch (libinput sends e.g. 0.4 per detent),
+-- while the monitors take whole dB. The remainder is carried to the next event instead of being
+-- rounded away: three 0.4 detents used to be three no-ops, so the tile's number stood still while
+-- the wheel was turning.
+local wheelAcc = 0
 on("turn", function(notches)
     if type(notches) ~= "number" then return end
     markInput()
@@ -181,7 +186,23 @@ on("turn", function(notches)
     local wasMuted = muted
     muted = false
     fact.muted = false
-    setVolume(target + notches)
+    wheelAcc = wheelAcc + notches
+    local steps = 0
+    if wheelAcc >= 1 then
+        steps = math.floor(wheelAcc)
+    elseif wheelAcc <= -1 then
+        steps = math.ceil(wheelAcc)
+    end
+    if steps == 0 then
+        if wasMuted then persist() end
+        return
+    end
+    wheelAcc = wheelAcc - steps
+    local before = target
+    setVolume(target + steps)
+    -- The clamp ate the step (the wheel is already at the top or the floor): drop the carried
+    -- remainder too, or the wheel would have to unwind a backlog before the number moves again.
+    if target == before then wheelAcc = 0 end
     if wasMuted then persist() end
     scheduleCommit()
 end)
