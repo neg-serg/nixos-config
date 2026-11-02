@@ -105,6 +105,52 @@ in
     };
   };
 
+  # A dataset of its own for the compiler caches. They grow on their own schedule
+  # (ccache alone can reach tens of gigabytes), so keeping them on the root dataset
+  # means cache churn writes into the OS dataset; here they get their own quota,
+  # zstd, no atime and sync=disabled — every byte in /cache is rebuilt from source
+  # after a crash, so there is nothing to lose by not syncing it.
+  systemd.services.zfs-cache-dataset = {
+    description = "Create tank/cache for the compiler caches (ccache, sccache)";
+    wantedBy = [ "zfs.target" ];
+    after = [ "zfs-import.target" ];
+    before = [ "zfs-mount.service" ];
+    serviceConfig.Type = "oneshot";
+    serviceConfig.RemainAfterExit = true;
+    path = [ pkgs.zfs ]; # ZFS filesystem utilities
+    script = ''
+      if mountpoint -q /cache; then
+        exit 0
+      fi
+      if ! zfs list tank/cache >/dev/null 2>&1; then
+        # A plain directory on the root dataset cannot be covered by a mount unless it
+        # is empty. Rather than deleting what is there, move it aside once and say so:
+        # the caches rebuild themselves, but a silent rm on a path we do not own would
+        # not be recoverable if /cache ever meant something else.
+        if [ -n "$(ls -A /cache 2>/dev/null)" ]; then
+          mv /cache "/cache.pre-dataset.$(date +%s)"
+        fi
+        mkdir -p /cache
+        zfs create -o mountpoint=/cache tank/cache
+      fi
+      zfs set compression=zstd tank/cache
+      zfs set recordsize=128K tank/cache
+      zfs set atime=off tank/cache
+      zfs set sync=disabled tank/cache
+      zfs set primarycache=all tank/cache
+      zfs set quota=50G tank/cache
+      zfs mount tank/cache 2>/dev/null || true
+      # tmpfiles creates /cache/user and /cache/sccache during activation, which runs
+      # before this unit and therefore lands inside the directory the dataset later
+      # covers — after the mount those dirs are gone. Create them here, after the
+      # mount, so the compiler caches have somewhere to write on the first boot.
+      install -d -o neg -g users -m 0755 /cache/user
+      install -d -o neg -g users -m 0700 /cache/sccache
+      chown root:nixbld /cache
+      chmod 0775 /cache
+    '';
+  };
+
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
   # and repeated builds read the same store paths.
   systemd.services.zfs-store-props = {
