@@ -231,7 +231,19 @@ hl.config({
     --   hyprctl eval 'hl.config({ decoration = { blur = { variant = "acrylic" } } })'
     -- (the animated ones — drops, water, fluid_jar, aurora, heat_shimmer,
     -- ripple — recompute the blur every frame).
-    blur = { enabled = true, variant = "prism", size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
+    -- OFF since 2026-11-02: on 0.57 every presented frame re-blurs the areas of
+    -- every blurred layer, and the shell keeps ~18 of them mapped (its closed
+    -- catchers, cards and menus included, which the engine does not unmap). At 4K
+    -- that was the lag: measured on the live session with the shell at its idle
+    -- paces, `decoration:blur:enabled = false` took Hyprland from 75-87 % of a
+    -- core to 36 % and its socket round-trip (the compositor's own responsiveness,
+    -- a proxy for input) from 17-25 ms to 8 ms. Cached blur (new_optimizations +
+    -- xray) did not help. The cost of the look: the bar is a flat translucent
+    -- strip now — the scene's own glass is off too (bar.plm `strip.glass = 0%`),
+    -- so nothing frosts it. Re-enable with the line below when the engine stops
+    -- mapping closed surfaces (then only the open ones pay) or the compositor's
+    -- per-frame cost is fixed upstream.
+    blur = { enabled = false, variant = "prism", size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
     -- motion blur: adds a smear while anything on screen is moving — the
     -- scrolling tape and dragged windows are where it reads. 24 samples is the
     -- tuning knob (higher = smoother, more GPU); `hyprctl eval 'hl.config({
@@ -279,10 +291,17 @@ hl.config({
     -- how to test it again without a reload.
     no_hardware_cursors = 2,
   },
-  -- new_render_scheduling: 0.56's alternative frame scheduler (the old one is
-  -- still the default). Reverting needs no reload — in a live session
-  -- `hyprctl keyword render:new_render_scheduling false` is enough.
-  render = { direct_scanout = 2, new_render_scheduling = true },
+  -- new_render_scheduling: 0.56's experimental frame scheduler, OFF because on
+  -- 0.57 it starves the pleamar layer surfaces. Measured 2026-11-02: with it on,
+  -- a scene painting at 30 fps gets no frame notice for three periods, prints
+  -- "the compositor is not showing this surface: painting once a second" and the
+  -- whole shell falls to 1 fps (Hyprland then idles at 2-5 % of a core while the
+  -- bar stops updating; only a scene restart clears it). With it off the same
+  -- scenes hold their 30 fps. Upstream's default is false as well.
+  -- Live in Lua mode it is changed with `hl.config`, not `hyprctl keyword`
+  -- (keyword does not apply options here):
+  -- `hyprctl eval 'hl.config({ render = { new_render_scheduling = false } })'`.
+  render = { direct_scanout = 2, new_render_scheduling = false },
   xwayland = { force_zero_scaling = true, use_nearest_neighbor = true },
   -- master and scrolling below are the core fallbacks: dormant while hy3 owns every workspace
   master = { new_status = "master", mfact = 0.6, orientation = "left", allow_small_split = true, smart_resizing = true },
