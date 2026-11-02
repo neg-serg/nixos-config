@@ -26,14 +26,26 @@ let
   # back to a random image.
   wlStateSync = pkgs.writeShellScript "wl-state-sync" ''
     set -euo pipefail
+    export PATH="${
+      lib.makeBinPath [
+        pkgs.coreutils # mkdir, dirname
+      ]
+    }"
     state_file="$HOME/.local/state/wl/state.json"
     notify_file="$HOME/.cache/quickshell-wallpaper-path"
+    # The pleamar theme reads THIS one (theme.sh: the canonical path; the file above is its legacy
+    # fallback), and until now only the picker wrote it. On 2026-11-02 the theme had been built from
+    # k8dp3m.jpg while wl was painting exk2zr.png — the shell's colours came from a wallpaper that
+    # was not on screen. Written from wl's own state, so the two cannot drift again.
+    pleamar_file="$HOME/.cache/pleamar/wallpaper-path"
 
     if [ -f "$state_file" ]; then
       wallpaper_path="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state_file" 2>/dev/null || true)"
       if [ -n "$wallpaper_path" ] && [ -f "$wallpaper_path" ]; then
         echo "$wallpaper_path" > "$notify_file"
         echo "$wallpaper_path" > "$HOME/.local/state/wl/last-good"
+        mkdir -p "$(dirname "$pleamar_file")" 2> /dev/null || true
+        echo "$wallpaper_path" > "$pleamar_file" 2> /dev/null || true
       fi
     fi
   '';
@@ -119,8 +131,23 @@ let
     state_file="$HOME/.local/state/wl/state.json"
     current="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state_file" 2> /dev/null || true)"
 
+    # This script is `ExecStartPost` of a `Type=simple` daemon, so it runs the moment the process is
+    # forked, not when its socket answers. On 2026-11-02 the first two `wl restore` calls came 0.3 s
+    # apart and both said "daemon is not running"; the five tries ran out in 1.5 s, the script exited
+    # 0, and the desktop stayed black behind every window. Wait for the daemon to answer first, and
+    # say so loudly when it does not — a unit that fails here would be restarted by `restartAlways`
+    # for the same reason, so the exit stays 0 and the message carries the news.
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40; do
+      wl query > /dev/null 2>&1 && break
+      sleep 0.25
+    done
+    if ! wl query > /dev/null 2>&1; then
+      echo "wl-restore-retry: the daemon did not answer within 10 s; the desktop stays without a wallpaper" >&2
+      exit 0
+    fi
+
     if [ -n "$current" ] && [ -r "$current" ]; then
-      for i in 1 2 3 4 5; do
+      for _ in 1 2 3 4 5; do
         wl restore && exit 0
         sleep 0.3
       done
@@ -147,7 +174,7 @@ let
       exit 0
     fi
     echo "wl-restore-retry: state names a missing wallpaper ('$current'); applying $candidate" >&2
-    for i in 1 2 3 4 5; do
+    for _ in 1 2 3 4 5; do
       if wl img "$candidate"; then
         printf '%s\n' "$candidate" > "$HOME/.local/state/wl/last-good"
         exit 0
