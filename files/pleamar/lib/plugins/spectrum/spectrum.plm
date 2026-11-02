@@ -108,17 +108,22 @@ library Spectrum strict {
         // The same rule as `Bars`: the LED columns share the width they were given.
         let pitch = width / max(1, values.count)
         let bw = max(0.3, pitch - gap)
-        let seg = max(2, (height - 9) / 10)
+        // Ten rows fill one half, gap included: `seg` used to be measured against the WHOLE height
+        // while the rows are stacked inside `height / 2`, so a mirrored column ran to twice its box
+        // (and the first one started above the component). The row pitch is what the offsets use,
+        // and the gap gives way when the half is too short to hold it.
         let half = if(mirror, height / 2, height)
+        let row = half / 10
+        let seg = max(0.5, row - min(gap, row / 2))
         for v in values {
             let t = if(values.count > 1, v.index / (values.count - 1), 0)
             let base = mix(tone, end, if(gradient, t, 0))
             let c = mix(mix(base, coal, 65%), base, v.lit)
             let x = v.index * pitch
             repeat s in 0..10 {
-                box { from: x, height / 2 - (s + 1) * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
-                box { from: x, height / 2 + s * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
-                box { from: x, height - (s + 1) * (seg + 1); size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: not mirror and v.level * 10 > s }
+                box { from: x, height / 2 - (s + 1) * row; size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
+                box { from: x, height / 2 + s * row; size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: mirror and v.level * 10 > s }
+                box { from: x, height - (s + 1) * row; size: bw, seg; corner: 1; color: c; opacity: spectrum.fill.alpha; show: not mirror and v.level * 10 > s }
             }
             box { from: x, height / 2 - clamp(v.peak, 0, 1) * half - spectrum.peak.height; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: mirror and peaks and v.peak > 0.01 }
             box { from: x, height / 2 + clamp(v.peak, 0, 1) * half; size: bw, spectrum.peak.height; color: c; opacity: spectrum.peak.alpha; show: mirror and peaks and v.peak > 0.01 }
