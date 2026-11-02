@@ -71,10 +71,16 @@ in
       nssmdns4 = true; # Needed for mDNS (IPv4)
       nssmdns6 = true; # Enable mDNS for IPv6
       openFirewall = true;
-      publish = {
-        enable = true;
-        userServices = true;
-        workstation = true;
+      # Avahi 0.9-era option names: `publish.enable`/`publish.userServices` are obsolete and
+      # `publish.workstation` was renamed. The new keys are the daemon's own, in yes/no form, and
+      # two of them are inverted here (the old switches said what to publish, these say what to
+      # withhold). `publish-addresses` came along with `userServices` in the old mapping, so a host
+      # that resolved by name over mDNS keeps doing it.
+      settings.publish = {
+        "disable-publishing" = false;
+        "disable-user-service-publishing" = false;
+        "publish-addresses" = true;
+        "publish-workstation" = true;
       };
     };
 
