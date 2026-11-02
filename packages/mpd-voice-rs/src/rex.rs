@@ -215,6 +215,47 @@ impl Regex {
         None
     }
 
+    /// Leftmost match at or after `start` (`re.search` with a position).
+    pub fn search_from(&self, text: &str, start: usize) -> Option<Match> {
+        let chars: Vec<char> = text.chars().collect();
+        for offset in start..=chars.len() {
+            if let Some(caps) = self.match_at(&chars, offset) {
+                return Some(self.build_match(&chars, caps));
+            }
+        }
+        None
+    }
+
+    /// Replace every match with `replacement` (`re.sub`).
+    ///
+    /// An empty match advances one character, so the scan always terminates.
+    pub fn replace_all(&self, text: &str, replacement: &str) -> String {
+        let chars: Vec<char> = text.chars().collect();
+        let mut out = String::new();
+        let mut position = 0;
+        while position <= chars.len() {
+            let Some(matched) = self.search_from(&text[char_to_byte(&chars, position)..], 0) else {
+                break;
+            };
+            let start = position + matched.start;
+            let end = position + matched.end;
+            out.extend(&chars[position..start]);
+            out.push_str(replacement);
+            if end == start {
+                if start < chars.len() {
+                    out.push(chars[start]);
+                }
+                position = start + 1;
+            } else {
+                position = end;
+            }
+        }
+        if position < chars.len() {
+            out.extend(&chars[position..]);
+        }
+        out
+    }
+
     /// Match the whole text (`re.fullmatch`).
     pub fn fullmatch(&self, text: &str) -> Option<Match> {
         let chars: Vec<char> = text.chars().collect();
@@ -402,6 +443,13 @@ impl Regex {
         }
         None
     }
+}
+
+fn char_to_byte(chars: &[char], index: usize) -> usize {
+    chars[..index.min(chars.len())]
+        .iter()
+        .map(|ch| ch.len_utf8())
+        .sum()
 }
 
 fn is_boundary(chars: &[char], pos: usize) -> bool {

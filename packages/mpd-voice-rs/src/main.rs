@@ -7,6 +7,7 @@
 //! for exactly that reason — it is not the installed `mpd-voice` yet.
 
 mod config;
+mod intents;
 mod mpd;
 mod rex;
 mod song;
@@ -26,6 +27,8 @@ Usage:
   mpd-voice [--config PATH] [--json] <command>
 
 Commands:
+  parse TEXT...     the intent a phrase maps to (JSON)
+  phrases           every supported phrase, both languages
   status [--json]   what MPD is playing, or `stopped`
   doctor            MPD reachability plus the config files in effect
   ping              connect, greet, disconnect
@@ -81,6 +84,8 @@ fn run(argv: &[String]) -> u8 {
             println!("{}", cfg.as_toml());
             EXIT_OK
         }
+        "parse" => cmd_parse(&rest[1..]),
+        "phrases" => cmd_phrases(),
         // Hidden helper for the parity harness: print what the engine matched.
         "rex" if rest.len() >= 3 => cmd_rex(&rest[1], &rest[2]),
         other => {
@@ -185,6 +190,35 @@ fn cmd_doctor(cfg: &Config, sources: &[PathBuf]) -> u8 {
     } else {
         EXIT_ERROR
     }
+}
+
+fn cmd_parse(words: &[String]) -> u8 {
+    let intent = intents::parse(&words.join(" "));
+    let number = match intent.number {
+        Some(number) => number.to_string(),
+        None => "null".to_string(),
+    };
+    println!(
+        "{{\n  \"name\": {},\n  \"value\": {},\n  \"tag\": {},\n  \"number\": {},\n  \"lang\": {},\n  \"raw\": {}\n}}",
+        json_string(&intent.name),
+        json_string(&intent.value),
+        json_string(&intent.tag),
+        number,
+        json_string(&intent.lang),
+        json_string(&intent.raw)
+    );
+    if intent.understood() {
+        EXIT_OK
+    } else {
+        EXIT_UNKNOWN
+    }
+}
+
+fn cmd_phrases() -> u8 {
+    for (name, examples) in intents::EXAMPLES {
+        println!("{name:16} {}", examples.join(" | "));
+    }
+    EXIT_OK
 }
 
 fn cmd_rex(pattern: &str, text: &str) -> u8 {

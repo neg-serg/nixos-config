@@ -63,6 +63,13 @@ die() {
   exit 2
 }
 
+# A scene that came up but never answered is a failed run, not bad usage: the contract at the top of
+# this file says 1 for it, and `die` (2) is for a missing tool or a nonsense flag.
+fail() {
+  printf 'describe-snap: %s\n' "$*" >&2
+  exit 1
+}
+
 usage() {
   cat << 'EOF'
 describe-snap.sh - commit and verify `pleamar --say NAME describe`
@@ -340,14 +347,29 @@ start_runner() {
     # The scene keeps the sandbox's runtime dir (its socket lives there); systemd-run itself is told
     # to find the user manager where the real one is, hence the prefix on the call below.
     local scene_runtime="$XDG_RUNTIME_DIR"
+    # Everything the hermetic environment exported has to be handed over explicitly: `systemd-run`
+    # starts the scene with the user manager's environment, not this shell's. `--soft` was quietly a
+    # no-op under `--systemd` for exactly that reason, and the sandbox's scene folder went with it.
+    local -a env_args=(
+      --setenv=HOME="$HOME"
+      --setenv=XDG_CONFIG_HOME="$XDG_CONFIG_HOME"
+      --setenv=XDG_DATA_HOME="$XDG_DATA_HOME"
+      --setenv=XDG_CACHE_HOME="$XDG_CACHE_HOME"
+      --setenv=XDG_STATE_HOME="$XDG_STATE_HOME"
+      --setenv=XDG_RUNTIME_DIR="$scene_runtime"
+      --setenv=WAYLAND_DISPLAY="$WAYLAND_DISPLAY"
+    )
+    if [ -n "${PLEAMAR_CONFIG:-}" ]; then
+      env_args+=(--setenv=PLEAMAR_CONFIG="$PLEAMAR_CONFIG")
+    fi
+    if [ -n "${VK_ICD_FILENAMES:-}" ]; then
+      env_args+=(--setenv=VK_ICD_FILENAMES="$VK_ICD_FILENAMES")
+    fi
     say "starting the scene as $RUNNER_UNIT (systemd-run --user)"
     XDG_RUNTIME_DIR="$LIVE_RUNTIME" systemd-run --user --unit="$RUNNER_UNIT" --collect --quiet \
       --property=StandardOutput="append:$SCENE_LOG" \
       --property=StandardError="append:$SCENE_LOG" \
-      --setenv=HOME="$HOME" --setenv=XDG_CONFIG_HOME="$XDG_CONFIG_HOME" \
-      --setenv=XDG_DATA_HOME="$XDG_DATA_HOME" --setenv=XDG_CACHE_HOME="$XDG_CACHE_HOME" \
-      --setenv=XDG_STATE_HOME="$XDG_STATE_HOME" --setenv=XDG_RUNTIME_DIR="$scene_runtime" \
-      --setenv=WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
+      "${env_args[@]}" \
       "$PLEAMAR" --scene "$file" --no-hud --seconds "$budget" >> "$SCENE_LOG" 2>&1 || return 1
     return 0
   fi
@@ -568,12 +590,12 @@ wait_for_socket "$SCENE_NAME" "$TIMEOUT" || wait_rc=$?
 if [ "$wait_rc" -eq 2 ]; then
   say "the runner exited before the scene answered"
   show_log_tail
-  die "scene '$SCENE_NAME' never came up (see log above; --keep-tmp keeps the sandbox)"
+  fail "scene '$SCENE_NAME' never came up (see log above; --keep-tmp keeps the sandbox)"
 fi
 if [ "$wait_rc" -ne 0 ]; then
   say "the scene did not answer 'describe' within ${TIMEOUT}s"
   show_log_tail
-  die "scene '$SCENE_NAME' never answered (see log above; --keep-tmp keeps the sandbox)"
+  fail "scene '$SCENE_NAME' never answered (see log above; --keep-tmp keeps the sandbox)"
 fi
 
 RAW="$TEMPROOT/describe.raw"

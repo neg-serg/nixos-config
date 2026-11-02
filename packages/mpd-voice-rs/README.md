@@ -13,7 +13,11 @@ What is already Rust (`nix build .#mpd-voice-rs` runs the unit tests):
 | `src/song.rs`   | `session.py` helpers           | `song_title`, `song_artist`, `song_duration`, `duration_to_clock`, `describe`.                                                                         |
 | `src/main.rs`   | `status`, `doctor`, `ping`     | `status` output is byte-identical to the Python CLI, JSON included; `doctor` prints the MPD and config sections, the backend probes are still Python.  |
 
-Still Python: capture, VAD, STT/TTS backends, the intent parser, the session/controller logic.
+Still Python: capture, VAD, STT/TTS backends and the session/controller logic.
+
+Parity for the parser is checked the same way as for `status`: every phrase from the Python test
+suite and every documented example, plus generated utterances (2200+ cases), give identical JSON
+and exit codes; the engine itself was diffed against Python's `re` over 8946 pattern/text pairs.
 
 ## Checks
 

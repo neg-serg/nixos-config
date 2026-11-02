@@ -68,6 +68,13 @@ die() {
   exit 2
 }
 
+# "The scene died or the report failed" is 1 in the contract at the top of this file; 2 is bad usage
+# or a missing tool.
+fail() {
+  printf 'measure: %s\n' "$*" >&2
+  exit 1
+}
+
 usage() {
   cat << 'EOF'
 measure.sh - run one scene for N seconds and collect a budget table
@@ -585,7 +592,7 @@ else
   fi
   if [ "$wait_rc" -ne 0 ]; then
     show_log_tail
-    die "scene '$SCENE_NAME' did not answer within $((SECONDS_TO_RUN + 15))s (see log above; --keep-tmp keeps the sandbox)"
+    fail "scene '$SCENE_NAME' did not answer within $((SECONDS_TO_RUN + 15))s (see log above; --keep-tmp keeps the sandbox)"
   fi
   SCENE_PID="$(resolve_scene_pid "$SCENE_NAME" || true)"
   if [ -z "$SCENE_PID" ]; then
