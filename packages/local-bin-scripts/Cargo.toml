@@ -1,0 +1,29 @@
+[package]
+name = "local-bin-scripts"
+version = "0.1.0"
+edition = "2021"
+description = "Rust ports of the small packages/local-bin/scripts helpers"
+license = "MIT"
+
+[[bin]]
+name = "pass-2col"
+path = "src/pass_2col.rs"
+
+[[bin]]
+name = "punzip"
+path = "src/punzip.rs"
+
+[[bin]]
+name = "tty-log"
+path = "src/tty_log.rs"
+
+[[bin]]
+name = "journal-clean"
+path = "src/journal_clean.rs"
+
+
+[[bin]]
+name = "music-highlevel"
+path = "src/music_highlevel.rs"
+
+[workspace]
