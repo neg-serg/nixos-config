@@ -121,13 +121,54 @@ The host could not capture USB traffic at all; the following is now in the tree 
   gain), `crossover_message()` (`3B`, Hz), `routing_message()` (`40`, input/source/pair/channel) in
   `packages/genlc-rs/src/protocol.rs`. Every one is pinned by a golden test built from GLM's own
   bytes in the third capture (delay 282 samples, level `6A B6 0F`, crossover 85 Hz, both routings, a
-  flat slot and a real 5-coefficient band re-encoded byte-for-byte). What is still missing for T6
-  proper: taking leases (so frames have a live session to land on), applying a whole block
-  atomically, and reading the settings back to verify.
-- `glm-usbmon-priv` no longer fails silently- `glm-usbmon-priv` no longer fails silently: if tshark
-  dies within half a second of starting, the helper unmounts debugfs, prints the tail of its log and
-  exits non-zero. The capture directory is 0755 so the pcap it hands to the caller is actually
-  reachable (0700 made the chown useless).
+  flat slot and a real 5-coefficient band re-encoded byte-for-byte). Leases are implemented too:
+  `take_leases()` probes until the adapter says nobody is left, allocates sessions from `02` upward
+  (skipping `7D`/`7E`/`F0`, `next_session()` is unit-tested), sends `F0 02 <hwid> <session>` per
+  monitor and checks the `09 <session>` ack. It is safe by construction — a monitor still leased by
+  GLM does not answer the probe, so this call never steals a running GLM's monitors, it only picks
+  up speakers nobody controls — and the CLI keeps the safe default (`genlc lease` reports,
+  `genlc lease --take` acts). Still missing for T6 proper: applying a whole block atomically, and
+  reading settings back (the spec shows no read path; settings look write-only, so verification has
+  to be behavioural).
+- **`genlc apply <plan> [--commit --take]`** — the write orchestration. The plan is a small line
+  format (`session <hex> <delay_samples> <level_word> <crossover_hz> [r1,r2,r3,r4]`,
+  `peq <hex session> <slot> <b0,b1,b2,-a1,-a2>`), chosen over JSON because it needs no new
+  dependency and diffs in git. A dry run is a pure computation — it prints the 27 frames of a block
+  (opener, delay, level, companion, 20 PEQ slots, crossover, `3D`, routing) with CRCs and needs no
+  adapter; `--commit` refuses to run without `--take` and refuses to write into any session this run
+  did not lease, so a plan can never land on a monitor another host is controlling. Plans cannot
+  name the broadcast, the adapter or the lease multicast at all (the parser rejects `FF`, `01`,
+  `F0`). 26 tests.
+- **The write path ran on real hardware (2026-11-02).** With the adapter moved back to the host
+  (`glm-adapter host` cannot do it while QEMU holds the fd — the `glm-adapter-auto` timer had to be
+  stopped, then the container, and only then did usbfs release the interface and usbhid bind it),
+  the full chain worked: `genlc lease --take` probed, leased three monitors (`12 75 29` → session
+  `03`, `12 20 08` → `04`, `12 75 30` → `05`) and got the `09 <session>` acks;
+  `genlc apply --commit --take` wrote a block of 27 frames to session `03`; a simultaneous usbmon
+  capture shows all 27 frames on the bus with **33 acks** (`27/27 acknowledged`). Two defects only
+  hardware could reveal, both fixed:
+  - blasting 27 frames back to back got **8** acks, not 27 — the bus allows one request in flight
+    and a monitor answers in ~7 ms, so `apply` now paces frames 12 ms apart and counts replies;
+  - the first probe of a session read a **stale 10-byte telemetry frame** as a probe answer
+    (`a probe answer carries 3 hardware-id bytes, got 10`), so `take_leases()` now drains the buffer
+    first and re-reads up to three times before deciding. Note also that a lease lapses ~2.5 s after
+    the monitor's last answer, so a host that stops polling loses its sessions — a daemon must keep
+    the ~0.57 s cycle going.
+- **`glm5d` — the adapter owner (T7).** `packages/genlc-rs/src/bin/glm5d.rs`, built as a second
+  binary next to `genlc` (the framing moved into a `lib` target so both share it). It keeps GLM's
+  own cycle — lease, poll every session, poll the adapter status — about every 560 ms, which is what
+  stops the monitors dropping their sessions, and serves state over a Unix socket (`status`,
+  `volume <dB>`, `mute on|off`, `lease`, `quit`). Verified on hardware 2026-11-02: three monitors
+  leased and held (`12 75 29`/`03`, `12 20 08`/`04`, `12 75 30`/`05`), telemetry collected per
+  session, `mute on` / `mute off` accepted. One bug the hardware showed: the adapter's own status
+  reply was being filed as a monitor's telemetry (it arrived as `32 34 DE …`, the mic tags), fixed
+  by reading that reply right after sending the adapter poll. The unit lives in
+  `modules/user/nix-maid/sys/user-services/glm-monitoring.nix` and is deliberately **not**
+  auto-started: the adapter normally sits inside the Windows VM, so it is started by hand after
+  `glm-adapter host`.
+- `glm-usbmon-priv` no longer fails silently: if tshark dies within half a second of starting, the
+  helper unmounts debugfs, prints the tail of its log and exits non-zero. The capture directory is
+  0755 so the pcap it hands to the caller is actually reachable (0700 made the chown useless).
 - `hidraw` access to the adapter — `files/hardware/udev/trantor-host.rules`: the node was root-only
   (kernel default 0600, and the stock `uaccess` rules only tag AV/wallet-class devices), so no
   hidraw backend could open it as a user. `MODE=0660 GROUP=users TAG+=uaccess` fixes exactly that
@@ -168,9 +209,8 @@ fallback; nothing in this plan reimplements it.
 
 ## Gates
 
-- **D1 (after T0)** — does GLM 5.2 run under Wine well enough to *calibrate* (text rendering +
-  adapter via the `hidraw` `uaccess` rule)? Yes → ship P1, keep the VM only as a rollback; No → the
-  VM stays the calibration host and P2 still proceeds for control/config.
+- **D1 (after T0)** — **answered 2026-11-02: no** (see "T0 result" below). The VM stays the
+  calibration host and P2 proceeds for control/config.
 - **D2 (after T3)** — how much of the configuration surface is really writable over the wire? Sets
   P2's scope; the published specs shorten this to gap-filling.
 - **D3 (after T8)** — parity review: native path covers X% of documented GLM operations; decide what
@@ -258,6 +298,35 @@ is blocked on another session's in-flight port (`packages/hypr-rearrange` broke 
 AGENTS says not to switch a tree with foreign edits). A 1 MB capture with mute toggles and a 16-step
 volume sweep is therefore sitting in `/var/log/glm-usbmon/capture-20261102-065930.pcap`, waiting for
 the next activation.
+
+## T0 result — GLM 5.2 under Wine (2026-11-02, wine 11.0)
+
+The installer the user downloaded (`~/dw/GLM_5_2_0_Setup_May12.2025.exe`, 40 MB, PE32 i386, Inno
+Setup by its log format) installs cleanly into a throwaway prefix
+(`WINEPREFIX=/home/neg/.cache/glm5-wine`, `wineboot -i`, then `/VERYSILENT`): its own log ends with
+"Installation process succeeded" and the files land in `C:\Program Files (x86)\Genelec\GLMv5`
+(`GLMv5.exe`, `hidapi.dll`, the MSVC 14x runtime — GLM ships its own hidapi, as the research said).
+
+`GLMv5.exe` then **starts**: the process runs, several `glmv5.exe` windows appear, one titled
+"Welcome to my app!" — the **Dear ImGui** example's default title, the strongest evidence yet that
+GLM's UI is an immediate-mode ImGui app, not Qt/.NET as nothing could confirm before.
+
+But it is **unusable**, and Wine's log says why:
+
+```
+err:ole:com_get_class_object class {aa509086-5ca9-4c25-8f95-589d3c07b48a} not registered
+```
+
+That GUID is DirectWrite's factory. Wine's implementation never registers it, so text has nothing to
+render with; the windows come up as degenerate rectangles (243x20, 20x228, 243x216) with black
+contents, and forcing software GL (`LIBGL_ALWAYS_SOFTWARE=1`) changes nothing. That matches the
+community report ("GLM 5.2 might work OK, but the UI is practically unusable since the text fields
+do not render correctly") and pins the cause to DirectWrite rather than fonts.
+
+**Consequence: P1 is dead as a calibration route.** The VM stays for AutoCal/GRADE, and P2 (native
+control + configuration) is the path that removes the dependency. A future attempt could try a
+native `dwrite.dll` override, but that is a Wine-research project of its own, not a step in this
+plan.
 
 **Third capture (2026-11-02, 12.9 s, 1209 frames, 0 CRC errors) — the group-preset switch, driven
 headlessly.** The Windows guest can be driven without a GUI session: QEMU's HMP socket
