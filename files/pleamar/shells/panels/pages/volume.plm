@@ -131,8 +131,8 @@ part Volume {
                         text "{s.volume * 100, 0} %" { at: 258 * scale, 16 * scale; anchor: right center; width: 34 * scale; family: "Iosevka"; size: 12; color: skin.ink.dim }
                         zone box app_vol { from: 104 * scale, 4 * scale; size: 96 * scale, 26 * scale; corner: 13 * scale
                             label: "Volume {s.name} {s.index, 0}"; role: slider; value: "{s.volume * 100, 0} %" }
-                        on press app_vol { emit app_set(s.index * 1000 + round(clamp((local.x - 104 * scale) / (96 * scale), 0, 1) * 1000)) }
-                        on drag app_vol { emit app_set(s.index * 1000 + round(clamp((local.x - 104 * scale) / (96 * scale), 0, 1) * 1000)) }
+                        on press app_vol { emit app_set(s.index * 1001 + round(clamp((local.x - 104 * scale) / (96 * scale), 0, 1) * 1000)) }
+                        on drag app_vol { emit app_set(s.index * 1001 + round(clamp((local.x - 104 * scale) / (96 * scale), 0, 1) * 1000)) }
 
                         group { move: 266 * scale, 7 * scale
                             Capsule(46, 18, fill: skin.surface, alpha: pick(s.muted, 60%, 100%), radius: 9, scale: scale)
