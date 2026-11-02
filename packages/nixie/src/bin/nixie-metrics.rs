@@ -12,11 +12,11 @@
 use std::process::ExitCode;
 
 const LIMITS: Limits = Limits {
-    wire_white_px: 8,   // A2: the white-hot zone of the lit wire, device px
-    wire_hot_px: 16,    // A2: R > 200
+    wire_white_px: 8,      // A2: the white-hot zone of the lit wire, device px
+    wire_hot_px: 16,       // A2: R > 200
     glass_mid_ratio: 0.40, // A3: the unlit tube is darker than bare glass
-    cathodes_min: 1,    // A6: the wires are thin and low-contrast, a weak proxy
-    cage_contrast: 0.03, // A5
+    cathodes_min: 1,       // A6: the wires are thin and low-contrast, a weak proxy
+    cage_contrast: 0.03,   // A5
 };
 
 struct Limits {
@@ -204,9 +204,17 @@ fn measure(
             white_mask.push(r > 240);
             hot_mask.push(r > 200);
         }
-        let w = runs(&white_mask).into_iter().map(|(_, w)| w).max().unwrap_or(0);
+        let w = runs(&white_mask)
+            .into_iter()
+            .map(|(_, w)| w)
+            .max()
+            .unwrap_or(0);
         white.push(w as f64);
-        let h = runs(&hot_mask).into_iter().map(|(_, w)| w).max().unwrap_or(0);
+        let h = runs(&hot_mask)
+            .into_iter()
+            .map(|(_, w)| w)
+            .max()
+            .unwrap_or(0);
         hotw.push(h as f64);
     }
     measured.wire_white_px = median(&mut white) as i64;
@@ -310,11 +318,13 @@ fn orientation(shot: &Shot, x0: usize, x1: usize, digit: usize) -> Option<String
     let y1 = *ys.iter().max().unwrap();
     let mid = (y0 + y1) as f64 / 2.0;
     match digit {
-        7 => Some(if (ys.iter().sum::<usize>() as f64 / ys.len() as f64) < mid {
-            "pass".to_string()
-        } else {
-            "FAIL (mass below the middle)".to_string()
-        }),
+        7 => Some(
+            if (ys.iter().sum::<usize>() as f64 / ys.len() as f64) < mid {
+                "pass".to_string()
+            } else {
+                "FAIL (mass below the middle)".to_string()
+            },
+        ),
         2 => {
             let start = (y1 as f64 - 0.2 * (y1 - y0) as f64) as usize;
             let mut band = vec![false; x1 - x0];
@@ -358,10 +368,7 @@ fn main() -> ExitCode {
     let shot = Shot {
         width: image.width() as usize,
         height: image.height() as usize,
-        pixels: image
-            .pixels()
-            .map(|p| [p[0], p[1], p[2]])
-            .collect(),
+        pixels: image.pixels().map(|p| [p[0], p[1], p[2]]).collect(),
     };
     let clusters = tubes(&shot);
     if clusters.is_empty() {

@@ -80,9 +80,10 @@ fn parse_args() -> Result<Args, String> {
             None => (arg.clone(), None),
         };
         let mut take = |name: &str| -> Result<String, String> {
-            value.clone().or_else(|| argv.next()).ok_or_else(|| {
-                format!("argument {name}: expected one argument")
-            })
+            value
+                .clone()
+                .or_else(|| argv.next())
+                .ok_or_else(|| format!("argument {name}: expected one argument"))
         };
         match option.as_str() {
             "--name" => args.name = take("--name")?,
@@ -97,12 +98,8 @@ fn parse_args() -> Result<Args, String> {
             "--can-go-prev" => {
                 args.can_go_previous = parse_bool("--can-go-prev", &take("--can-go-prev")?)?
             }
-            "--can-play" => {
-                args.can_play = parse_bool("--can-play", &take("--can-play")?)?
-            }
-            "--can-pause" => {
-                args.can_pause = parse_bool("--can-pause", &take("--can-pause")?)?
-            }
+            "--can-play" => args.can_play = parse_bool("--can-play", &take("--can-play")?)?,
+            "--can-pause" => args.can_pause = parse_bool("--can-pause", &take("--can-pause")?)?,
             other => return Err(format!("unrecognized arguments: {other}")),
         }
     }
