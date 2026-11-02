@@ -36,7 +36,7 @@ library Genelec strict {
     // restart does not lose it (the QS service kept the same pair in its StateCache).
     // `glm5ctl` is the daemon client: when `glm5d` owns the adapter it is the only path that can
     // hold monitor sessions, so the logic prefers it and falls back to the two below.
-    permissions { run: "glm5ctl", "genlc", "glm-vol", "glm-midi", "bash"; services: "files", "files.write" }
+    permissions { run: "glm5ctl", "genlc", "glm-vol", "glm-midi"; services: "files", "files.write" }
 
     // ------------------------------------------------------------- boundary
     // The target volume, whole dB (the QS displayDb/volume). The logic owns the
