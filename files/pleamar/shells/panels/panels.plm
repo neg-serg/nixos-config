@@ -288,8 +288,9 @@ scene panels {
     // instance): the grid's markers and the streak header are rebuilt from it. Nothing in this
     // scene can see the tracker — it is another scene's plugin — so the bar's logic sends this over
     // `sys.call("say", "panels", "emit pill_sync")` when its `pill.*` mirror moves, and
-    // `pleamar --say panels "emit pill_sync"` does the same by hand.
-    event pill_sync
+    // `pleamar --say panels "emit pill_sync"` does the same by hand. `->` makes it reach
+    // panels.luau; the handler rebuilds the grid from the last worker sample.
+    event pill_sync ->
 
     // Mixer (the logic carries them to sys.call("audio.…")).
     event set_out ->

@@ -1694,7 +1694,7 @@ scene bar {
             // told otherwise.
             zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: region }
             on enter z_media { emit tip(6); emit media_hover(true) }
-            on leave z_media { emit tip_hide }
+            on leave z_media { emit tip_hide; emit media_hover(false) }
 
             // The zones sit on the buttons they name — the reason the old ones missed is
             // that they were placed past the capsule's width while the buttons were drawn

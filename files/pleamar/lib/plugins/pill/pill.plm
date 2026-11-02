@@ -13,9 +13,11 @@ language 0.4
 // folder of its own (`$XDG_DATA_HOME/pleamar/<scene>/` through the files
 // service) — so the state is `state.json` in that folder, and only the
 // calendar event stays outside, in the directory vdirsyncer syncs (written
-// with `tee`, removed with `rm`, both through `run`). The bridge's copy now
-// lives in $XDG_STATE_HOME/pleamar/pill-tracker.json; it falls back to the
-// quickshell one until the new file exists (telegram-units.nix).
+// with `tee`, removed with `rm`, both through `run`). The bridge the Telegram
+// reminder reads (and the bot rewrites) lives in
+// $XDG_STATE_HOME/pleamar/pill-tracker.json: the plugin writes it on every
+// persist, and the telegram scripts keep the legacy quickshell path as the
+// fallback for marks recorded before the port.
 //
 //     import "../../lib/plugins/pill/pill.plm" as pill
 //     pill.Mark()

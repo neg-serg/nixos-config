@@ -666,8 +666,8 @@ hl.bind(M4 .. "+" .. C .. "+minus", hl.dsp.exec_cmd('timeout 3 pleamar --say bar
 -- the names the old overlay fallback used.
 local function dismiss_shell()
   return hl.dsp.exec_cmd(
-    'pleamar --say notifications "emit dismiss_all" >/dev/null 2>&1; '
-      .. 'pleamar --say panels "fact drawer none" >/dev/null 2>&1; true'
+    'timeout 3 pleamar --say notifications "emit dismiss_all" >/dev/null 2>&1; '
+      .. 'timeout 3 pleamar --say panels "fact drawer none" >/dev/null 2>&1; true'
   )
 end
 hl.bind(M4 .. "+space", dismiss_shell(), { locked = true })

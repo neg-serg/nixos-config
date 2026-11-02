@@ -153,8 +153,10 @@ scene launcher {
     // Escape and the keyboard-driven selection. Up/Down are the primary keys;
     // Ctrl+p/Ctrl+n repeat them because a single-line input may keep the arrow
     // keys for its caret. `results.count` is the slice's length, so the selection
-    // cannot leave the list.
-    on key Escape while open { open = false }
+    // cannot leave the list. The Escape rule checks `armed`: the runtime sends an
+    // Escape of its own when the surface takes the keyboard, and the logic arms
+    // the fact after ARM_MS, so that phantom key finds the rule closed.
+    on key Escape while open and armed { open = false }
     on key Down while open { selected = max(0, min(selected + 1, results.count - 1)) }
     on key Up while open { selected = max(0, selected - 1) }
     on key Ctrl+n while open { selected = max(0, min(selected + 1, results.count - 1)) }

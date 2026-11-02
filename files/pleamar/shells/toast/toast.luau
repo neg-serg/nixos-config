@@ -117,7 +117,7 @@ end
 -- The legacy showed the path with HOME as `~`; the scene cannot rewrite a
 -- string, so the short form is made here.
 local function short(p)
-    if HOME ~= "" and p:sub(1, #HOME) == HOME then
+    if HOME and HOME ~= "" and p:sub(1, #HOME) == HOME then
         return "~" .. p:sub(#HOME + 1)
     end
     return p

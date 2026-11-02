@@ -31,16 +31,16 @@ part Calendar {
     // 500, not the reference's 480: the card carries the pill tracker's streak row under the month
     // (Calendar.qml:186-197), and the QS popup grew the same way when its pill overlay was on
     // (480 -> 520). The 20 design px are the streak row and the extra line in the day list.
-    component CalendarDrawer(surface.h: number = 575,
+    component CalendarDrawer(surface.h: number = 500,
                              scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
         size: 380 * scale, 500 * scale
 
         group {
             // Bottom-left, like the legacy calendar popup (calendar.popupMargin), and pinned to
             // the bottom of the surface it lives in: `panels.plm` declares that surface as
-            // 437 x 575 — the 380 x 500 card at the `ui` 1.15 the literals were written against —
-            // while the card here is 500 * `scale` (500 at `ui` 1), so drawing it from the top left
-            // 75 px of empty plate under it and a gap above the bar. `surface.h` is that literal.
+            // 380 x 500, the 380 x 500 card at the `ui` 1 the literals are written against, so at
+            // `scale` 1 the card fills it and `move` is 0. `surface.h` is that literal (the call
+            // below passes 500); a mismatch clipped the card's bottom row before.
             move: 0, (surface.h - 500 * scale) + (1 - lift) * 500 * scale
 
             // ----***----------------------------- the card
@@ -186,7 +186,9 @@ part Calendar {
     on key Up while drawer == calendar { emit cal_step(-7) }
     on key Down while drawer == calendar { emit cal_step(7) }
 
-    // `surface.h` is the surface's own literal in `panels.plm`: passed here so the two numbers
-    // cannot drift apart the way they did (575 against a card drawn at the `ui` 1.15 scale).
-    CalendarDrawer(surface.h: 575) { show: drawer == calendar }
+    // `surface.h` is the surface's own literal in `panels.plm` (380 x 500, see the surface in
+    // panels.plm): passed here so the two numbers cannot drift apart the way they did — 575 was
+    // the old height at the `ui` 1.15 scale, and the card drew 75 px past the bottom of a
+    // 500-high surface, clipping its last row.
+    CalendarDrawer(surface.h: 500) { show: drawer == calendar }
 }

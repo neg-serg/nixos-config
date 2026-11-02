@@ -380,6 +380,12 @@ scene picker {
     on toggle_picker { toggle open }
     on close_picker { open = false; settings = false }
 
+    // A closed deck is done: the unit is on-demand, and a 1x1 keeper surface with nothing on
+    // screen is a resident process for nothing (the helper's stop path exists for the same
+    // reason). `on change`, not `on open == false`: the scene is born closed, and that must not
+    // quit it before the first `open_picker`.
+    on change open while open == false { quit }
+
     Panel() { show: open }
 
     // The settings screen: declared after the panel, so it paints over the deck and its catcher

@@ -377,7 +377,7 @@ scene notifications {
 
         line { from: 319 * scale, 15 * scale; to: 327 * scale, 23 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
         line { from: 327 * scale, 15 * scale; to: 319 * scale, 23 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
-        zone box close_zone { from: 314 * scale, 10 * scale; size: 18 * scale, 18 * scale; corner: 5 * scale; cursor: pointer; label: "Dismiss notification"; role: button }
+        zone box close_zone { from: 314 * scale, 10 * scale; size: 18 * scale, 18 * scale; corner: 5 * scale; cursor: pointer; label: "Dismiss {t.app}: {t.title}"; role: button }
         on press close_zone { emit drop(t.slot) }
     }
 
