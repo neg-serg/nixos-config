@@ -346,30 +346,30 @@ hits and 3.7 s cold without touching the evaluator.
 ## Where the host stands (2026-11-02, after adopting route 1)
 
 `nix.package` is now `packages/nix-det-pgo`: Determinate 3.23.3's own source, PGO-trained, with the
-five patches its tree accepts (`0001/0003/0004/0005/0009`). Verified on the running system: `nix
-(Determinate Nix 3.23.3) 2.35.3+5`, `lazy-trees = true`, `nix-daemon` active, `nix build` round-trips
-through it, and the toplevel `drvPath` equals the stock binary's.
+five patches its tree accepts (`0001/0003/0004/0005/0009`). Verified on the running system:
+`nix (Determinate Nix 3.23.3) 2.35.3+5`, `lazy-trees = true`, `nix-daemon` active, `nix build`
+round-trips through it, and the toplevel `drvPath` equals the stock binary's.
 
-| Measurement | Stock Determinate | PGO + 5 patches |
-| --- | --- | --- |
+| Measurement                         | Stock Determinate    | PGO + 5 patches                         |
+| ----------------------------------- | -------------------- | --------------------------------------- |
 | toplevel eval, interleaved 3 rounds | 8.73 / 8.24 / 8.21 s | **7.60 / 7.05 / 7.63 s** (−13 % median) |
-| `just eval-gate --drv`, cold | 3.7–3.9 s | **3.24 s** |
-| `just eval-gate --drv`, hit | 35–38 ms | 46 ms |
-| `just eval-gate` (tier A), cold | ~0.9 s | **0.49 s** |
+| `just eval-gate --drv`, cold        | 3.7–3.9 s            | **3.24 s**                              |
+| `just eval-gate --drv`, hit         | 35–38 ms             | 46 ms                                   |
+| `just eval-gate` (tier A), cold     | ~0.9 s               | **0.49 s**                              |
 
 `doCheck` is off for this package and the reason is recorded in it: Determinate's suite gates on
-`nix-*-tests-run` inputs and one of them (IPv6 zone-id URL parsing) fails on their tree regardless of
-our patches. Acceptance is by behaviour instead — identical `drvPath`, plus a six-case differential
-battery (any/all, structuredAttrs drvPath, `nix hash path`, fromJSON, path canonicalisation, flake
-metadata) that compares this build against stock byte for byte.
+`nix-*-tests-run` inputs and one of them (IPv6 zone-id URL parsing) fails on their tree regardless
+of our patches. Acceptance is by behaviour instead — identical `drvPath`, plus a six-case
+differential battery (any/all, structuredAttrs drvPath, `nix hash path`, fromJSON, path
+canonicalisation, flake metadata) that compares this build against stock byte for byte.
 
-The four patches still missing are `0002`, `0006`, `0007` (and `0008`, which cannot help: it targets a
-`writeDerivation` path Determinate bypasses via `AsyncPathWriter`). Getting them means rebasing onto
-Determinate's APIs — `addTempRoots()`, `devirtualize()`, `writeDerivation(*asyncPathWriter, …)` — one
-at a time, easiest first, with the memo harness as the acceptance test for `0006`. A backport of
-`lazy-trees` to upstream was measured and rejected: 446 changed lines in 12 files that *replace* an
-existing mechanism (`ensureLazyPathCopied` at `paths.cc:25` upstream) rather than add to it, so every
-store path escaping without devirtualising becomes a bug class.
+The four patches still missing are `0002`, `0006`, `0007` (and `0008`, which cannot help: it targets
+a `writeDerivation` path Determinate bypasses via `AsyncPathWriter`). Getting them means rebasing
+onto Determinate's APIs — `addTempRoots()`, `devirtualize()`, `writeDerivation(*asyncPathWriter, …)`
+— one at a time, easiest first, with the memo harness as the acceptance test for `0006`. A backport
+of `lazy-trees` to upstream was measured and rejected: 446 changed lines in 12 files that *replace*
+an existing mechanism (`ensureLazyPathCopied` at `paths.cc:25` upstream) rather than add to it, so
+every store path escaping without devirtualising becomes a bug class.
 
 ## Guardrails
 
