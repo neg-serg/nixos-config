@@ -1,0 +1,26 @@
+From 2f9184dc2e511c488d7f76bfd3fe1f978ce7d519 Mon Sep 17 00:00:00 2001
+From: ElXreno <elxreno@gmail.com>
+Date: Sun, 4 Oct 2026 15:38:25 +0300
+Subject: [PATCH] libexpr: reuse the memoized derivation hash for a repeated
+ drvPath
+
+---
+ src/libexpr/primops.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/libexpr/primops.cc b/src/libexpr/primops.cc
+index 46ef49a36..58c6304c3 100644
+--- a/src/libexpr/primops.cc
++++ b/src/libexpr/primops.cc
+@@ -1865,7 +1865,7 @@ static void derivationStrictInternal(EvalState & state, std::string_view drvName
+     /* Optimisation, but required in read-only mode! because in that
+        case we don't actually write store derivations, so we can't
+        read them later. */
+-    {
++    if (!drvHashes.contains(drvPath)) {
+         auto h = hashDerivationModulo(*state.store, drv, false);
+         drvHashes.insert_or_assign(drvPath, std::move(h));
+     }
+-- 
+2.55.0
+
