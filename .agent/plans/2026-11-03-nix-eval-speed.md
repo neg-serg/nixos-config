@@ -268,6 +268,20 @@ built to avoid by hashing untracked content explicitly.
 Residual risk that no technique removes: all of them cover only *enumerable* fields, so a new
 `Derivation` field stays invisible until a human adds it. This buys review discipline, not proof.
 
+### What Nix's own suite can and cannot catch (read from the pinned 2.35.3 sources)
+
+| Layer | Size | What it asserts |
+| --- | --- | --- |
+| unit (`src/lib*-tests`, gtest) | 47+43+20+8+3 files | C++ object equality. The **only** `drvPath` assertion is `nix_api_expr.cc:112-125`, and it checks a name suffix plus `isValidPath` — a wrong-but-self-consistent path passes |
+| lang golden (`tests/functional/lang.sh`) | 468 cases, 6.7 s with our binary | exact values, and because it runs under `NIX_REMOTE=dummy://` with `NIX_STORE_DIR=/nix/store`, **store paths are deterministic and assertable as literals** (`lang/eval-okay-derivation-legacy.exp`) |
+| shell functional | 155 scripts, 193 cases | mostly run-and-grep; real equality only where a test compares two derivations (`impure-derivations.sh:16-19`) |
+| eval-cache (`tests/functional/flakes/eval-cache.sh:41-50`) | — | only that errors and stack overflows are *not* cached; never cached-vs-recomputed, so it cannot catch a bad memo key |
+| fuzzing | **none** (no libFuzzer/AFL, no fuzz dir) | RapidCheck properties only (`libexpr-tests/value/context.cc:123`, `derived-path.cc`) |
+| sanitizers | packaging has `withASan`/`withUBSan`/`withTSan` (`packaging/components.nix:219-240,305-325`); CI runs ASan+UBSan with GC off (`ci/gha/tests/default.nix:9-57`) | TSan is packaged but unused — the gap that matters if the maps ever go concurrent |
+
+Three gaps follow, each closable in a few lines: no `drvPath` literal for `derivationStrict`; the eval
+cache is never diffed against a recomputation; and there is no memo-on/off A/B anywhere.
+
 ### The three tests that would catch a bad key, cheapest first
 
 1. **Key-completeness unit test** (`src/libexpr/tests`, a day of work): build one `Derivation`, take
