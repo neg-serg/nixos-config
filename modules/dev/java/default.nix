@@ -1,6 +1,6 @@
 ##
 # Module: dev/java
-# Purpose: Java/JVM development tooling (JDK, Maven, PraxisLIVE IDE)
+# Purpose: Java/JVM development tooling (Apache Maven; it brings its own JDK)
 # Feature flag: features.dev.java.enable
 {
   lib,
@@ -13,9 +13,6 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [
-      pkgs.jdk21 # Java 21 LTS (current default in nixpkgs)
-    ]
-    ++ lib.optionals cfg.maven [ pkgs.maven ];
+    environment.systemPackages = lib.optionals cfg.maven [ pkgs.maven ];
   };
 }
