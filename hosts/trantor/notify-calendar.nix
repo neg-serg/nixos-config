@@ -26,34 +26,22 @@ in
     let
       systemdUser = neg.systemdUser lib;
 
-      # Extracted to ./notify/telegram-calendar-reminder.py (linted as Python);
-      # the shared sender path is substituted at build time.
-      calendarScript = pkgs.replaceVars ./notify/telegram-calendar-reminder.py {
-        sender = config.trantor.telegram.sender;
-      };
-
-      # Runs khal as the user that owns the calendars (neg) and posts a
-      # Telegram message through the sing-box socks proxy when today has
-      # events. Telegram/network hiccups must not fail the unit, so any
-      # delivery problem exits 0 after the retry window.
-      script = pkgs.writeShellApplication {
-        name = "telegram-calendar-reminder";
-        runtimeInputs = [
-          pkgs.python3 # event parsing / JSON handling
-          pkgs.coreutils # runuser environment
-        ];
-        text = ''
-          # khal/config discovered config, calendar files and cache live in the
-          # neg home; run khal under that uid so it may read/write them.
-          exec python3 ${calendarScript}
-        '';
-      };
+      # The reminder is a Rust package: it runs khal as the user that owns the
+      # calendars (neg), formats today's events and hands the message to the
+      # shared socks-proxy sender. Telegram/network hiccups must not fail the
+      # unit, so any delivery problem exits 0 after the retry window.
+      # The sender path is handed over in the environment (the binary has no
+      # build-time substitution), which the wrapper supplies.
+      script = pkgs.writeShellScript "telegram-calendar-reminder" ''
+        export TELEGRAM_SENDER=${lib.getExe config.trantor.telegram.sender}
+        exec ${lib.getExe' pkgs.neg.telegram-notify "telegram-calendar-reminder"} "$@"
+      '';
     in
     systemdUser.mkOneshotTimer {
       name = "telegram-calendar-reminder";
       description = "Send today's khal calendar events to Telegram in the morning";
       timerDescription = "Daily 07:30 morning calendar reminder";
-      script = "${lib.getExe script}";
+      script = "${script}";
       onCalendar = "*-*-* 07:30:00";
     }
   );

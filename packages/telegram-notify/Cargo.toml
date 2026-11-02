@@ -1,0 +1,40 @@
+[package]
+name = "telegram-notify"
+version = "0.1.0"
+edition = "2021"
+description = "Telegram notifications for trantor (calendar digest, pill reminder, crash-loop alerts)"
+license = "MIT"
+
+[[bin]]
+name = "telegram-calendar-reminder"
+path = "src/calendar.rs"
+
+[[bin]]
+name = "telegram-pill-reminder"
+path = "src/pill.rs"
+
+[[bin]]
+name = "telegram-crashloop"
+path = "src/crashloop.rs"
+
+[[bin]]
+name = "telegram-alert-scanner"
+path = "src/alert_scanner.rs"
+
+[[bin]]
+name = "telegram-pill-bot"
+path = "src/pill_bot.rs"
+
+[[bin]]
+name = "telegram-alert-bridge"
+path = "src/alert_bridge.rs"
+
+[[bin]]
+name = "telegram-zfs-watch"
+path = "src/zfs_watch.rs"
+
+[dependencies]
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]

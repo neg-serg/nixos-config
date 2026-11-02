@@ -35,21 +35,25 @@ let
     lib.attrNames config.services.sanoid.datasets
   );
 
-  watchScript = pkgs.replaceVars ./notify/telegram-zfs-watch.py {
-    sender = config.trantor.telegram.sender;
-    inherit stateDir stateFile;
+  # Rust watcher (pkgs.neg.telegram-notify): the thresholds, the sanoid
+  # datasets and the tool paths come from the environment this wrapper exports.
+  # NVMe health: smartd stays off on this host, so the watcher reads the
+  # drives' SMART log itself; thresholds are deliberately drive-agnostic.
+  watchScript = pkgs.writeShellScript "telegram-zfs-watch" ''
+    export ZFS_WATCH_SENDER=${lib.getExe config.trantor.telegram.sender}
+    export ZFS_WATCH_STATE_DIR=${stateDir}
+    export ZFS_WATCH_STATE_FILE=${stateFile}
     # Hourly cadence + slack for one missed run.
-    snapshotDatasets = lib.concatStringsSep " " snapshotDatasets;
-    snapshotMaxAgeHours = "3";
-    snapshotUsedSnapPercent = "20";
-    # NVMe health: smartd stays off on this host, so the watcher reads the
-    # drives' SMART log itself. Thresholds are deliberately drive-agnostic.
-    nvmeCli = lib.getExe pkgs.nvme-cli;
-    nvmeGlob = "/dev/nvme*n1";
-    nvmeMaxTempC = "75";
-    nvmeMinSpare = "10";
-    nvmeMaxUsed = "90";
-  };
+    export ZFS_WATCH_SNAPSHOT_DATASETS="${lib.concatStringsSep " " snapshotDatasets}"
+    export ZFS_WATCH_SNAPSHOT_MAX_AGE_HOURS=3
+    export ZFS_WATCH_USEDSNAP_PERCENT=20
+    export ZFS_WATCH_NVME=${lib.getExe pkgs.nvme-cli}
+    export ZFS_WATCH_NVME_GLOB="/dev/nvme*n1"
+    export ZFS_WATCH_NVME_MAX_TEMP_C=75
+    export ZFS_WATCH_NVME_MIN_SPARE=10
+    export ZFS_WATCH_NVME_MAX_USED=90
+    exec ${lib.getExe' pkgs.neg.telegram-notify "telegram-zfs-watch"} "$@"
+  '';
 
 in
 # Telegram is gated on config.trantor.telegram.enable (see hosts/trantor/telegram.nix).
@@ -58,7 +62,7 @@ in
     name = "telegram-zfs-watch";
     description = "Watch ZFS pools, snapshots and NVMe SMART, alert to Telegram";
     timerDescription = "Check ZFS pools, snapshots and NVMe health every 10 minutes";
-    script = "${pkgs.python3}/bin/python3 ${watchScript}";
+    script = "${watchScript}";
     onCalendar = "*-*-* *:0/10:00";
     restartSec = 30;
     stateDirectory = "telegram-zfs-watch";
