@@ -591,21 +591,17 @@ local function open_drawer(name)
     })
 end
 
-on("open_media_panel", function() open_drawer("media") end)
-on("open_network_panel", function() open_drawer("network") end)
--- The rest of the reference's pressable capsules, each with the drawer QS opened from it:
--- the clock its calendar, the weather capsule its card, the system cluster the monitoring
--- dashboard, the build badge the list of what is building. The drawer names are the ones
--- `panels` declares (`panels.plm`'s `drawer` enum), so nothing here invents a name.
-on("open_calendar_panel", function() open_drawer("calendar") end)
-on("open_weather_panel", function() open_drawer("weather") end)
-
--- What the compositor binds call (M4+SH+u/x): the same drawer a second time closes
--- it, the way the legacy `toggleCalendar`/`toggleWeather` did. The drawer's current
--- name comes back from the panels scene in one `--say` — a fact is readable, which a
--- press is not — so nothing here has to remember what is on screen. A closed scene
--- answers nothing, which reads as "not open" and takes the `open_drawer` path.
+-- A capsule's press toggles the drawer it owns: every one of them is QS's
+-- `OverlayToggleCapsule` with `autoToggleOnTap: true` (ClockWidget.qml:32's
+-- `calendar.toggle()`, WeatherButton.qml, SystemMonitorCapsule.qml:22, BuildStatus.qml:53,
+-- and Media.qml's `toggleSidePanel`), so the press that opened a drawer closes it, and a
+-- press on another capsule swaps it. The compositor binds (M4+SH+u/x) call the same
+-- function. The drawer's current name comes back from the panels scene in one `--say` — a
+-- fact is readable, which a press is not — so nothing here has to remember what is on
+-- screen. A closed scene answers nothing, which reads as "not open" and takes the
+-- `open_drawer` path.
 local function toggle_drawer(name)
+    if close_tray_menu then close_tray_menu() end
     local said = '"' .. PLEAMAR .. '" --say panels \'get drawer\' 2>/dev/null'
     run("dash", {
         "-c",
@@ -620,10 +616,23 @@ local function toggle_drawer(name)
     })
 end
 
-on("toggle_calendar_panel", function() toggle_drawer("calendar") end)
-on("toggle_weather_panel", function() toggle_drawer("weather") end)
+-- The open-only events stay for callers that want a drawer shown regardless of what is on
+-- screen (IPC, or a rule in another scene); the bar's own presses use the toggles below.
+on("open_media_panel", function() open_drawer("media") end)
+on("open_network_panel", function() open_drawer("network") end)
+on("open_calendar_panel", function() open_drawer("calendar") end)
+on("open_weather_panel", function() open_drawer("weather") end)
 on("open_system_panel", function() open_drawer("system") end)
 on("open_build_panel", function() open_drawer("build") end)
+
+-- Each pressable capsule's drawer, by the name `panels` declares (`panels.plm`'s `drawer`
+-- enum) — nothing here invents a name.
+on("toggle_media_panel", function() toggle_drawer("media") end)
+on("toggle_network_panel", function() toggle_drawer("network") end)
+on("toggle_calendar_panel", function() toggle_drawer("calendar") end)
+on("toggle_weather_panel", function() toggle_drawer("weather") end)
+on("toggle_system_panel", function() toggle_drawer("system") end)
+on("toggle_build_panel", function() toggle_drawer("build") end)
 
 -- The workspace capsule's press: QS's WsIndicator calls `Expo.toggle()`, which is the
 -- `hypr-expo` helper this host's hyprexpo is loaded and configured by. The capsule shows the
