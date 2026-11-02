@@ -42,6 +42,7 @@ in
           pkgs.direnv # Extension for your shell to load/unload env vars
           pkgs.nix-direnv # A fast, persistent use_nix implementation for direnv
           pkgs.nh # Yet another nix helper (CLI for NixOS/Home Manager)
+          pkgs.sccache # Compiler cache for Rust and C/C++ (RUSTC_WRAPPER), shared by cargo builds
         ]
         ++ lib.optionals enableJoern [ pkgs.neg.joern ]
         ++ lib.optionals enableCpp [
@@ -56,7 +57,10 @@ in
         # Environment Variables
         environment.variables = {
           # C/C++ compilation cache
-          CCACHE_DIR = "/cache";
+          # /cache itself is root:nixbld (sandboxed builds); the user's own cache lives
+          # in a subdirectory it owns, or ccache cannot create its lock file and
+          # silently stops caching.
+          CCACHE_DIR = "/cache/user";
           CCACHE_COMPRESS = "1";
           CCACHE_MAXSIZE = "50G";
           CCACHE_SLOPPINESS = "file_macro,time_macros,include_file_ctime,include_file_mtime";
@@ -66,6 +70,9 @@ in
           # Rust
           CARGO_HOME = "${home}/.local/share/cargo";
           RUSTUP_HOME = "${home}/.local/share/rustup";
+          RUSTC_WRAPPER = "sccache"; # cargo routes every rustc call through the cache
+          SCCACHE_DIR = "/cache/sccache";
+          SCCACHE_CACHE_SIZE = "50G";
 
           # Haskell
           GHCUP_USE_XDG_DIRS = "1";

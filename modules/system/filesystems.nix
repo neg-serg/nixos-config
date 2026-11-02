@@ -202,5 +202,10 @@ in
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
     "d /cache 0775 root nixbld -" # ccache for sandboxed Nix builds
+    # The two below exist because /cache itself belongs to root:nixbld: a user-level
+    # compiler cache there fails to create its lock directory ("Failed to create
+    # directory /cache/lock: Permission denied") and silently compiles without caching.
+    "d /cache/user 0755 neg users -" # ccache for the user's own C/C++ builds
+    "d /cache/sccache 0700 neg users -" # sccache for the user's own Rust/C++ builds
   ];
 }
