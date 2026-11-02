@@ -6,27 +6,26 @@
 --   - whole dB only (GLM CC20 is an integer), clamped to [-95, maxVolume];
 --   - commits coalesce: 150 ms after the last wheel notch, never closer than
 --     400 ms to the previous send (GLM drops messages that arrive in a burst);
---   - the VM path sends the absolute CC20 once 400 ms after the commit, and is
---     re-anchored at 2 s and 8 s (the QS self-heal / confirmation / late
---     confirmation one-shots), never periodically;
---   - the adapter's placement is probed every 30 s with `genlc discover`
---     (host path) — no answer means the adapter is in the VM and the MIDI
---     bridge is the only way in;
---   - the target is read back with `glm-vol read`, six looks a second, adopted only after
---     the wheel has been quiet for 2.5 s and never while muted (the port of the
---     QS FileView watch and its user-input guard).
+--   - one transport: `genlc volume <dB>` owns the write. It stores the target in
+--     $XDG_RUNTIME_DIR/genlc-volume and routes it itself — to the daemon's
+--     socket when the daemon holds the adapter, straight to the HID adapter
+--     otherwise — so the plugin names the absolute target and does not care
+--     which path is live;
+--   - the target is read back from that same state file with
+--     `genlc volume --show`, watched with `genlc volume --watch`, adopted only
+--     after the wheel has been quiet for 2.5 s and never while muted (the port
+--     of the QS FileView watch and its user-input guard);
+--   - mute is `genlc mute on|off`, routed by genlc the same way.
 --
 -- Timing is kept in one-shot timers and flags: the sandbox closes `os`, so the
 -- logic has no clock of its own.
 --
--- Permissions are the plugin's own: genlc, glm-vol, glm-midi.
+-- Permissions are the plugin's own: genlc, files, files.write.
 
 local MIN_DB = -95
 local USER_IDLE_MS = 2500
 local COMMIT_MS = 150
 local MIN_SEND_GAP_MS = 400
-local ANCHORS_MS = { 400, 2000, 8000 }
-local PROBE_MS = 30000
 
 local target = fact.volume or -40
 local muted = false
@@ -34,23 +33,18 @@ local muted = false
 -- is restarted whenever its scene reloads — and the next unmute would push -40 dB instead of what
 -- was playing. QS keeps the same pair in its StateCache (`genelecPreMuteVolume`,
 -- Services/Genelec.qml:55-73); here it is the plugin's own `state.json`. The mute flag itself
--- rides along: the monitors keep their state across the restart (the mute went to the adapter or
--- to the host), so a plugin that came back unmuted would mute again on the first press.
+-- rides along: the monitors keep their state across the restart (the mute went to the adapter),
+-- so a plugin that came back unmuted would mute again on the first press.
 local STATE = "state.json"
 local preMute = target
 local busy = false
 local cooling = false
 local quiet = true
--- Whether `probe` has decided which transport is live. The level watcher below must not adopt
--- the legacy file before that: on load the file's first value can arrive ahead of `glm5ctl status`,
--- and with the daemon owning the adapter it is another session's number.
-local daemonKnown = false
 local commitTimer = nil
 -- How many times the coalescing timer has come back for a send the busy slot ate; bounded so a
 -- command that never answers cannot leave a timer spinning every 150 ms.
 local commitRetries = 0
 local quietTimer = nil
-local anchors = {}
 
 local function persist()
     local ok, err = pcall(sys.call, "files.write", STATE, { preMute = preMute, target = target, muted = muted })
@@ -104,66 +98,12 @@ local function markSent()
     after(MIN_SEND_GAP_MS, function() cooling = false end)
 end
 
-local function sendAnchor()
-    if busy then return end
-    busy = true
-    run("glm-midi", { "volume", tostring(target) .. "dB" }, function(_, code)
-        busy = false
-        if code ~= 0 then log("genelec: glm-midi volume exited with " .. tostring(code)) end
-    end)
-end
-
-local function cancelAnchors()
-    for _, id in ipairs(anchors) do cancel(id) end
-    anchors = {}
-end
-
--- The VM path (the adapter inside the dockur VM): the state file first (glm-vol
--- owns it), then the CC20 anchors. This branch can be deleted with that VM:
--- .agent/notes/2026-11-02-glm-vm-removal-backlog.md.
-local function commitMidi()
-    run("glm-vol", { tostring(target) }, function(_, code)
-        if code ~= 0 then log("genelec: glm-vol exited with " .. tostring(code)) end
-    end)
-    cancelAnchors()
-    for _, ms in ipairs(ANCHORS_MS) do
-        anchors[#anchors + 1] = after(ms, sendAnchor)
-    end
-end
-
-local function commitHost()
-    if busy then return end
-    busy = true
-    markSent()
-    run("genlc", { "set-volume", "--volume", tostring(target) .. "dB" }, function(_, code)
-        busy = false
-        fact.available = code == 0
-    end)
-end
-
--- The daemon path is the same absolute target, handed to the process that already owns
--- the adapter: no state file, no MIDI anchor, and the write is paced by glm5d itself.
-local function commitDaemon()
-    if busy then return end
-    busy = true
-    markSent()
-    run("glm5ctl", { "volume", tostring(target) }, function(_, code)
-        busy = false
-        if code ~= 0 then log("genelec: glm5ctl volume exited with " .. tostring(code)) end
-    end)
-    -- The daemon keeps its volume only for its own run ("nothing sent this run" after a
-    -- restart), and this plugin's adoptLevel falls back to `glm-vol read` then. Write the same
-    -- target to that file so the first notch of the next session starts from where this one
-    -- ended instead of jumping to a stale number.
-    run("glm-vol", { tostring(target) }, function(_, code)
-        if code ~= 0 then log("genelec: glm-vol exited with " .. tostring(code)) end
-    end)
-end
-
+-- The one write: genlc sends the absolute target and writes the state file the widget reads, so
+-- a failed command is the only thing that can take the tile's ink away.
 local function commit()
-    -- `busy` is the probe or a send already on the wire; each transport returns early then, and
-    -- the last notch used to be dropped with it — measured 2026-11-02: the tile read -50 while
-    -- `glm5ctl status` still said -49, so the monitors lagged a keypress behind. Come back for it.
+    -- `busy` is a send already on the wire. The last notch used to be dropped with it — measured
+    -- 2026-11-02: the tile read -50 while the daemon still said -49, so the monitors lagged a
+    -- keypress behind. Come back for it.
     if busy then
         if commitRetries >= 8 then
             commitRetries = 0
@@ -178,13 +118,12 @@ local function commit()
         return
     end
     commitRetries = 0
-    if fact.daemon then
-        commitDaemon()
-    elseif fact.midi then
-        commitMidi()
-    else
-        commitHost()
-    end
+    busy = true
+    markSent()
+    run("genlc", { "volume", tostring(target) }, function(_, code)
+        busy = false
+        fact.available = code == 0
+    end)
 end
 
 -- The coalescing timer: one absolute target per burst of notches (QS 150 ms),
@@ -201,7 +140,7 @@ local function scheduleCommit()
     end)
 end
 
--- --------------------------------------------------------------- gestures
+-- ------***------------------------ gestures
 -- A high-resolution wheel reports fractions of a notch (libinput sends e.g. 0.4 per detent),
 -- while the monitors take whole dB. The remainder is carried to the next event instead of being
 -- rounded away: three 0.4 detents used to be three no-ops, so the tile's number stood still while
@@ -238,133 +177,39 @@ end)
 
 on("toggle", function()
     markInput()
-    if fact.daemon then
-        muted = not muted
-        fact.muted = muted
-        if not muted then setVolume(preMute) else preMute = target end
-        persist()
-        -- The daemon's command queue is sequential, so a mute does not need the `busy`
-        -- slot the volume commits coalesce through. Guarding on it dropped the command
-        -- whenever a wheel burst or the 30 s probe held the flag, and the fact flipped
-        -- over monitors that never muted.
-        run("glm5ctl", { "mute", muted and "on" or "off" }, function(_, code)
-            if code ~= 0 then log("genelec: glm5ctl mute exited with " .. tostring(code)) end
-        end)
-        return
-    end
-    if fact.midi then
-        if not busy then
-            busy = true
-            run("glm-midi", { "mute" }, function(_, code)
-                busy = false
-                if code ~= 0 then log("genelec: glm-midi mute exited with " .. tostring(code)) end
-            end)
-        end
-        -- The MIDI path mutes at the adapter, so the volume never leaves the monitor: what has to
-        -- survive a restart is the same pair as on the host path (`preMute` above all), and this
-        -- branch returned before either was written.
-        if not muted then preMute = target end
-        muted = not muted
-        fact.muted = muted
-        persist()
-        return
-    end
-    if muted then
-        muted = false
-        fact.muted = false
-        setVolume(preMute)
-        persist()
-        commitHost()
-        return
-    end
-    preMute = target
+    muted = not muted
+    fact.muted = muted
+    if not muted then setVolume(preMute) else preMute = target end
     persist()
-    muted = true
-    fact.muted = true
-    if busy then return end
-    busy = true
-    run("genlc", { "mute" }, function(_, code)
-        busy = false
+    -- A mute must not wait for the `busy` slot: a coalesced commit can hold it, and the flag has
+    -- already flipped on the tile — a dropped command would leave monitors that never muted. The
+    -- daemon serializes its own queue, and the direct path is one command, so the mute goes out
+    -- without the guard.
+    run("genlc", { "mute", muted and "on" or "off" }, function(_, code)
         if code ~= 0 then log("genelec: genlc mute exited with " .. tostring(code)) end
     end)
 end)
 
--- ------------------------------------------------------------------ probe
--- `glm5d` first: when the daemon owns the adapter it is the only path that can hold the
--- sessions (a lease lapses ~2.5 s after the monitor's last answer, which is why the daemon
--- exists at all), so it wins over both older transports. `glm5ctl status` exits 0 only when
--- the socket answers.
--- Fallback, unchanged: the adapter on the host answers `genlc discover`; silence means the
--- VM path.
--- Forward-declared: `probe`'s callback calls the legacy probe, and the success branch re-reads
--- the level from the daemon; both are written below. A `local function` written after `probe`
--- would leave `probe`'s body looking at a global, which is nil when the callback runs — that is
--- the "attempt to call a nil value" line 256 used to die on every 30 s while `glm5d` was down.
-local probeLegacy
-local adoptLevel
-
-local function probe()
-    if busy then return end
-    busy = true
-    run("glm5ctl", { "status" }, function(_, code)
-        busy = false
-        if code == 0 then
-            fact.daemon = true
-            fact.midi = false
-            fact.available = true
-            daemonKnown = true
-            -- The daemon may have come up after this scene loaded, when `adoptLevel` ran and
-            -- had to fall back to the legacy file; once it answers, its own last broadcast is
-            -- the level the monitors actually stand at, so the first notch starts from it.
-            adoptLevel()
-            return
-        end
-        fact.daemon = false
-        daemonKnown = true
-        probeLegacy()
-    end)
-end
-
-function probeLegacy()
-    if busy then return end
-    busy = true
-    run("genlc", { "discover" }, function(_, code)
-        busy = false
-        local onHost = code == 0
-        fact.midi = not onHost
-        -- `available` is `adapterOnHost ? genlcOk : true` in the reference (Services/Genelec.qml:50):
-        -- through the bridge the tile is never dimmed, because an adapter inside the dockur VM is this
-        -- host's normal arrangement, not a failure. On the host path `onHost` *is* genlcOk, and a write
-        -- that fails there still takes the tile's ink away (`commitHost`).
-        fact.available = true
-    end)
-end
-
--- --------------------------------------------------------------- read back
--- The level lives in a state file anything may write (`glm-vol -43` in a terminal, this
--- plugin, another shell), and the reference *watched* it: its `FileView` reported a change the
--- moment it happened. Reading it with a fresh process every two seconds was both late — the
--- number stood still while somebody turned the knob — and a fork each time.
+-- ------***------------------------ read back
+-- The level lives in $XDG_RUNTIME_DIR/genlc-volume, which `genlc volume` owns and anything may
+-- write (a terminal, this plugin, the media keys). The reference *watched* that file: its
+-- `FileView` reported a change the moment it happened. Reading it with a fresh process every two
+-- seconds was both late — the number stood still while somebody turned the knob — and a fork each
+-- time.
 --
--- One process for the life of the scene, six looks a second, printing only what
--- changed: the immediacy of a watch without a process per look. The watch lives
--- in `genlc volume-watch` now, so no interpreter is involved.
+-- One process for the life of the scene, printing only what changed: the immediacy of a watch
+-- without a process per look. `genlc volume --watch` is that process, so no interpreter is
+-- involved.
 local function watchLevel()
-    spawn("genlc", { "volume-watch" }, function(line)
-        local value = tonumber((line or ""):match("-?%d+"))
+    spawn("genlc", { "volume", "--watch" }, function(line)
+        local value = tonumber((line or ""):match("-?%d+%.?%d*"))
         if not value then return end
         -- A level that arrives while the wheel is still moving is somebody else's and must not
         -- fight the gesture in flight. One that arrives while the plugin thinks it is muted is the
-        -- knob being turned, and the reference unmutes on that; `genlc-media` steps the file but
-        -- never unmutes, so the flag is cleared here. The plugin only adopts the number: the sender
-        -- has already put it on the wire, and sending it again would double the CC20 burst.
+        -- knob being turned, and the reference unmutes on that; the writer has already put the
+        -- level on the wire, so the plugin only adopts the number — sending it again would double
+        -- the CC20 burst.
         if not quiet then return end
-        -- With `glm5d` owning the adapter this file is the VM path's history, not this session's:
-        -- the daemon's own broadcast is the truth (`adoptLevel`). Adopting the file here overwrote
-        -- it on load — measured 2026-11-02: file -60, daemon -30, the fact came up -60 and the
-        -- first notch collapsed the monitors into the file's stale number.
-        if not daemonKnown then return end
-        if fact.daemon then return end
         local v = clampDb(value)
         if v == target then return end
         if muted then
@@ -377,45 +222,26 @@ local function watchLevel()
 end
 
 -- The level a fresh scene starts from. Nothing in the plugin could tell it before: `restore()`
--- brings back the mute pair, `probe()` only decides which path is live, and `fact.volume` kept the
--- scene's own -40 while the monitors stood where the last shell left them — so the tile showed a
--- number nobody had set and the first wheel notch jumped the monitors to it. `glm-vol read` is the
--- same answer the reference widget used (its state file, then the old shell's cache); it asks the
--- monitors nothing, because `glm-midi` has no read and `genlc` only answers with the adapter on
--- this host.
---
--- The daemon answers first when it owns the adapter: `glm5ctl status` reports the level it last
--- broadcast, while the legacy file is written by the VM path alone and can hold another session's
--- target — on 2026-11-02 the file said -56 while the monitors stood at the level GLM had left
--- them, and the first notch collapsed them to the file's number.
+-- brings back the mute pair, `fact.volume` kept the scene's own -40 while the monitors stood where
+-- the last shell left them — so the tile showed a number nobody had set and the first wheel notch
+-- jumped the monitors to it. `genlc volume --show` answers from the state file every writer
+-- maintains, and asks the monitors nothing.
 function adoptLevel()
-    -- Not while a gesture is in flight: the daemon's answer is the last thing sent, and it must
-    -- not pull the target back from under the wheel.
+    -- Not while a gesture is in flight: the file holds the last thing sent, and it must not pull
+    -- the target back from under the wheel.
     if not quiet then return end
-    run("glm5ctl", { "status" }, function(out, code)
-        if code == 0 then
-            local db = tonumber(tostring(out or ""):match("volume%s+(-?%d+%.?%d*)%s*dB"))
-            if db and not muted then
-                local v = clampDb(db)
-                if v ~= target then setVolume(v) end
-                return
-            end
-        end
-        run("glm-vol", { "read" }, function(out2, code2)
-            if code2 ~= 0 then return end
-            local value = tonumber((out2 or ""):match("-?%d+"))
-            if not value then return end
-            -- A muted adapter keeps the level it will come back to; adopting one would unmute it by
-            -- proxy on the next wheel notch.
-            if muted then return end
-            local v = clampDb(value)
-            if v ~= target then setVolume(v) end
-        end)
+    run("genlc", { "volume", "--show" }, function(out, code)
+        if code ~= 0 then return end
+        local value = tonumber((out or ""):match("-?%d+%.?%d*"))
+        if not value then return end
+        -- A muted adapter keeps the level it will come back to; adopting one would unmute it by
+        -- proxy on the next wheel notch.
+        if muted then return end
+        local v = clampDb(value)
+        if v ~= target then setVolume(v) end
     end)
 end
 
 restore()
 adoptLevel()
-probe()
 watchLevel()
-every(PROBE_MS, probe)

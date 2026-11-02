@@ -553,16 +553,17 @@ hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Ob
 -- DDC hangs even in `detect` here — decide on that separately.
 --
 -- --
--- The Genelec keys drive the same state machine the bar's tile does: the plugin's logic
--- probes where the adapter is, coalesces a burst of notches and commits through the transport
--- that is live (`glm5ctl` when the daemon owns the adapter, `genlc` on the host, CC20 over the
--- relay in the VM). `genlc-media` was that path before the daemon existed; it writes the legacy
--- state file and sends through genlc/MIDI on its own, and with `glm5d` owning the adapter both
--- of those collide (2026-11-02: the wheel turned, the monitors did not). `pleamar --say bar
--- "emit Genelec.turn 1"` reaches the plugin's own handler — measured here, -50 -> -49 -> -50.
+-- The Genelec keys drive the monitors through `genlc` directly: `volume --by ±1` steps the
+-- state file genlc owns and genlc routes the write itself — the daemon's socket when the daemon
+-- holds the adapter, the HID adapter otherwise. The bar's tile watches that same state file, so
+-- it follows these keys without an IPC round trip. Mute stays on the plugin's event: the muted
+-- flag and the pre-mute level live there, and the plugin runs `genlc mute on|off`; a bare
+-- `genlc mute` has no state to toggle from (2026-11-02: the wheel turned, the monitors did not,
+-- when two writers fought over the adapter — one writer now).
 -- Keys the wheel sends as Next/Prev are the same volume steps, not track skips, as before.
-local GENELEC_UP = 'timeout 3 pleamar --say bar "emit Genelec.turn 1"'
-local GENELEC_DOWN = 'timeout 3 pleamar --say bar "emit Genelec.turn -1"'
+-- `--by=-1`, not `--by -1`: the attached form keeps the parser from reading `-1` as a flag.
+local GENELEC_UP = "genlc volume --by=1"
+local GENELEC_DOWN = "genlc volume --by=-1"
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd(GENELEC_UP), { repeating = true, locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd(GENELEC_DOWN), { repeating = true, locked = true })
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(GENELEC_UP), { repeating = true })

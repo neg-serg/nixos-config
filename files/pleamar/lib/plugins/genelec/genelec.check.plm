@@ -14,7 +14,6 @@ scene genelec_check {
     on demo {
         Genelec.maxVolume = -30
         Genelec.minVolume = -95
-        Genelec.midi = true
         Genelec.muted = false
         emit Genelec.turn(1)
         emit Genelec.toggle
