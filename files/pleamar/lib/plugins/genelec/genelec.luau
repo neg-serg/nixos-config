@@ -41,6 +41,10 @@ local preMute = target
 local busy = false
 local cooling = false
 local quiet = true
+-- Whether `probe` has decided which transport is live. The level watcher below must not adopt
+-- the legacy file before that: on load the file's first value can arrive ahead of `glm5ctl status`,
+-- and with the daemon owning the adapter it is another session's number.
+local daemonKnown = false
 local commitTimer = nil
 local quietTimer = nil
 local anchors = {}
@@ -241,6 +245,13 @@ end)
 -- the socket answers.
 -- Fallback, unchanged: the adapter on the host answers `genlc discover`; silence means the
 -- VM path.
+-- Forward-declared: `probe`'s callback calls the legacy probe, and the success branch re-reads
+-- the level from the daemon; both are written below. A `local function` written after `probe`
+-- would leave `probe`'s body looking at a global, which is nil when the callback runs — that is
+-- the "attempt to call a nil value" line 256 used to die on every 30 s while `glm5d` was down.
+local probeLegacy
+local adoptLevel
+
 local function probe()
     if busy then return end
     busy = true
@@ -250,14 +261,20 @@ local function probe()
             fact.daemon = true
             fact.midi = false
             fact.available = true
+            daemonKnown = true
+            -- The daemon may have come up after this scene loaded, when `adoptLevel` ran and
+            -- had to fall back to the legacy file; once it answers, its own last broadcast is
+            -- the level the monitors actually stand at, so the first notch starts from it.
+            adoptLevel()
             return
         end
         fact.daemon = false
+        daemonKnown = true
         probeLegacy()
     end)
 end
 
-local function probeLegacy()
+function probeLegacy()
     if busy then return end
     busy = true
     run("genlc", { "discover" }, function(_, code)
@@ -291,6 +308,12 @@ local function watchLevel()
         -- never unmutes, so the flag is cleared here. The plugin only adopts the number: the sender
         -- has already put it on the wire, and sending it again would double the CC20 burst.
         if not quiet then return end
+        -- With `glm5d` owning the adapter this file is the VM path's history, not this session's:
+        -- the daemon's own broadcast is the truth (`adoptLevel`). Adopting the file here overwrote
+        -- it on load — measured 2026-11-02: file -60, daemon -30, the fact came up -60 and the
+        -- first notch collapsed the monitors into the file's stale number.
+        if not daemonKnown then return end
+        if fact.daemon then return end
         local v = clampDb(value)
         if v == target then return end
         if muted then
@@ -309,16 +332,34 @@ end
 -- same answer the reference widget used (its state file, then the old shell's cache); it asks the
 -- monitors nothing, because `glm-midi` has no read and `genlc` only answers with the adapter on
 -- this host.
-local function adoptLevel()
-    run("glm-vol", { "read" }, function(out, code)
-        if code ~= 0 then return end
-        local value = tonumber((out or ""):match("-?%d+"))
-        if not value then return end
-        -- A muted adapter keeps the level it will come back to; adopting one would unmute it by
-        -- proxy on the next wheel notch.
-        if muted then return end
-        local v = clampDb(value)
-        if v ~= target then setVolume(v) end
+--
+-- The daemon answers first when it owns the adapter: `glm5ctl status` reports the level it last
+-- broadcast, while the legacy file is written by the VM path alone and can hold another session's
+-- target — on 2026-11-02 the file said -56 while the monitors stood at the level GLM had left
+-- them, and the first notch collapsed them to the file's number.
+function adoptLevel()
+    -- Not while a gesture is in flight: the daemon's answer is the last thing sent, and it must
+    -- not pull the target back from under the wheel.
+    if not quiet then return end
+    run("glm5ctl", { "status" }, function(out, code)
+        if code == 0 then
+            local db = tonumber(tostring(out or ""):match("volume%s+(-?%d+%.?%d*)%s*dB"))
+            if db and not muted then
+                local v = clampDb(db)
+                if v ~= target then setVolume(v) end
+                return
+            end
+        end
+        run("glm-vol", { "read" }, function(out2, code2)
+            if code2 ~= 0 then return end
+            local value = tonumber((out2 or ""):match("-?%d+"))
+            if not value then return end
+            -- A muted adapter keeps the level it will come back to; adopting one would unmute it by
+            -- proxy on the next wheel notch.
+            if muted then return end
+            local v = clampDb(value)
+            if v ~= target then setVolume(v) end
+        end)
     end)
 end
 
