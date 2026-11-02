@@ -248,8 +248,10 @@
 #
 # - **Build**: `modules/user/nix-maid/hyprland/overlay.nix` — nixpkgs has no
 #   `hyprlandPlugins.hyprwinwrap`, so it is built with nixpkgs' `mkHyprlandPlugin` helper. The rev is
-#   the commit upstream's `hyprpm.toml` pins for Hyprland 0.56.2 (`3b6e337b9e…`, 2026-09-10), so
-#   plugin and compositor stay in one commit family. hyprpm builds it with CMake and
+#   the commit upstream's `hyprpm.toml` pins for Hyprland 0.56.2 (`3b6e337b9e…`, 2026-09-10);
+#   `hyprwinwrap-hyprland-057.patch` carries the 0.57 port (window header moved, fields behind
+#   accessors, render context in `render.stage`, `commitWindow` gained `initialCommit`). hyprpm
+#   builds it with CMake and
 #   `install(TARGETS)` drops `libhyprwinwrap.so` into `$out/lib`, so no custom install phase is
 #   needed; Lua headers come from `lua5_5` (the interpreter Hyprland links — its `lua55.pc` is what
 #   the plugin's `pkg_search_module(lua55 …)` matches).
@@ -268,12 +270,13 @@
 #   `files/gui/hypr/hyprwinwrap.lua` carries one active declaration — the looped waterfall window
 #   played by `wallpaper-video.service` (`features.gui.wallpaperVideo`, off by default: wl-daemon owns
 #   the background layer and a pinned window would cover its still image).
-# - **Patch** (`hyprwinwrap-lua-window-merge.patch`): upstream's `luaWindow()` only appends the spec
+# - **Patches**: `hyprwinwrap-lua-window-merge.patch` — upstream's `luaWindow()` only appends the spec
 #   to `gLuaSpecs` and leaves the merge into `gMergedSpecs` to the `config.reloaded` event — which a
 #   runtime `hyprctl eval` never fires; a real reload would not save it either, because the
 #   `config.preReload` handler clears `gLuaSpecs` before the merge runs. The patch calls
 #   `onConfigReloaded()` right after the append, which is what makes the pushed declarations take
-#   effect at all. Bump this patch together with the rev.
+#   effect at all. `hyprwinwrap-hyprland-057.patch` is the 0.57 port; rebase both together with the
+#   rev.
 # - **Verified** (nested 0.56.2, patched build): the load + eval sequence adopted a
 #   `kitty --class window-bg` spawned after the eval — the client jumped from its default float (21,21
 #   486×486) to 0,0 on the full logical monitor, and `focus("window-bg")` toggled it without the "no
