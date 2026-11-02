@@ -1189,11 +1189,13 @@ scene bar {
             text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
             // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
             // layout of the device in force (`switchKeyboardLayout()`), and the label follows
-            // from the event socket a moment later.
+            // from the event socket a moment later. The wheel does the same here: a capsule that
+            // reads as a knob should answer the hand that turns it, not only the one that clicks.
             zone box kb { from: 0, 0; size: 54, strip; corner: corner; cursor: pointer; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { emit tip(2) }
             on leave kb { emit tip_hide }
             on press kb { emit next_layout }
+            on scroll kb { emit next_layout }
         }
     }
 

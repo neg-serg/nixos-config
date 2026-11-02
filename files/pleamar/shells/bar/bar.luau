@@ -1139,11 +1139,12 @@ local function tip_line(i)
             .. "\nClick — workspace overview"
     elseif i == 2 then
         -- `compose("Layout", layout, ["Device: <name>", "Mode: <submap>", "Click — next layout"])`,
-        -- the reference's own three hints (KeyboardLayoutHypr.qml:12-18).
+        -- the reference's own three hints (KeyboardLayoutHypr.qml:12-18); the wheel was added on
+        -- this bar and the hint says so.
         local lines = { "Layout: " .. (text.kb_layout ~= "" and text.kb_layout or "?") }
         if text.kb_device ~= "" then lines[#lines + 1] = "Device: " .. text.kb_device end
         if text.kb_mode ~= "" then lines[#lines + 1] = "Mode: " .. text.kb_mode end
-        lines[#lines + 1] = "Click — next layout"
+        lines[#lines + 1] = "Click or scroll — next layout"
         return table.concat(lines, "\n")
     elseif i == 3 then
         -- ConnUi prints the pair as "<rx> / <tx>"; the tooltip says both, and under them the
