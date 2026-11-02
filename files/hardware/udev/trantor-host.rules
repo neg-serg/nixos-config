@@ -7,6 +7,13 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0108", MODE="0666"
 # QEMU (user-namespaced container, root -> host nobody) can open the node
 # for usb-host passthrough. Default 0644 root:root blocks it with EPERM.
 SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="0e39", MODE="0666"
+# hidraw node of the GLM adapter: the kernel default for hidraw is 0600 root:root
+# and the stock uaccess rules only tag AV/wallet-class devices, so the hidraw
+# backend — genlc's, and the hidapi.dll the official GLM loads — cannot open the
+# node as a user. Same device as the usb rule above; uaccess adds an ACL for the
+# seated user instead of widening the mode for everyone.
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1781", ATTRS{idProduct}=="0e39", MODE="0660", GROUP="users", TAG+="uaccess", TAG+="udev-acl"
+
 # Bind usbhid to the GLM adapter so a /dev/hidraw node exists (genlc's
 # hidraw backend needs it; the adapter does not auto-bind to usbhid).
 # NB: no DEVTYPE key — udevadm verify rejects it as an invalid match key.

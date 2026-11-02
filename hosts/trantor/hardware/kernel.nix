@@ -80,6 +80,7 @@ in
     "uhid" # Userspace HID — HID over GATT via bluez (modern BT gamepads)
     "rfcomm" # Bluetooth SPP (RFCOMM) — GalaxyBudsClient talks to the Buds over SPP; pre-loaded before lockKernelModules
     "uvcvideo" # USB webcams (UVC) — module pre-loaded before lockKernelModules; media core is modular so this cannot be built-in
+    "usbmon" # USB traffic monitor (CONFIG_USB_MON, overlay.config H23) — pre-loaded before lockKernelModules for the GLM/GNet protocol captures
     # snd-usb-audio is NOT pre-loaded: with features.security.lockKernelModules
     # off, modalias autoload brings it in for real gear (the Osmose), while a
     # preload makes systemd-modules-load wait for the onboard ASUS "USB Audio"
