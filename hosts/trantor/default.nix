@@ -177,6 +177,11 @@ in
 
   # Host-specific overrides (above profile defaults)
   # Obsidian installed via Flatpak (to avoid Electron in Nix closure)
+  # PGO build of Determinate Nix (packages/nix-det-pgo): -18 % on the toplevel eval,
+  # lazy-trees intact, same drvPath. The rebuild restarts nix-daemon; if it ever breaks,
+  # the way back is `nixos-rebuild switch --rollback` from a TTY.
+  features.nix.pgoNix.enable = true;
+
   features.web.vivaldi.enable = true;
   features.web.default = "vivaldi";
   features.mail.vdirsyncer.enable = false; # Disabled: no Google OAuth credentials (missing secrets/home/vdirsyncer/google.sops.yaml)
