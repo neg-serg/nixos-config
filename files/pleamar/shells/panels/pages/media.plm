@@ -115,7 +115,9 @@ part NowPlaying {
                 zone box scrub { from: 12, 296; size: 396, 16; cursor: pick(media.can_seek, default, pointer)
                                  label: pick(media.can_seek, "Seek (this player cannot seek)", "Seek")
                                  role: slider; value: "{media.pos, 0} s" }
-                on press scrub { emit seek(clamp((local.x - 12) / 396, 0, 1)) }
+                // The cursor already says `default` when the player cannot seek; the press used to
+                // seek anyway, so the band did what the pointer promised it would not.
+                on press scrub while media.can_seek { emit seek(clamp((local.x - 12) / 396, 0, 1)) }
                 on drag scrub { emit seek(clamp((local.x - 12) / 396, 0, 1)) }
 
                 // ----***---------------- nothing playing

@@ -95,9 +95,14 @@ scene overlay {
     }
 
     // ------***----------------------- catcher
-    // It draws nothing: the whole surface is one zone with the shell's
-    // standard wording. A press — or Escape, unless the setting says no —
-    // asks the logic for the relay.
+    // The whole surface is one zone with the shell's standard wording; a press — or Escape, unless
+    // the setting says no — asks the logic for the relay.
+    //
+    // The 2 % veil is what makes a stuck overlay visible. `active` is a fact another scene sets over
+    // IPC, so a launcher or picker that dies before clearing it leaves this surface up with nothing
+    // drawn on it: the desktop then takes no clicks and nothing on screen explains why. Two per
+    // cent is below noticing while the overlay behaves, and a grey rectangle when it does not.
+    box { from: 0, 0; size: screen.width, screen.height; color: coal; opacity: 2% }
     zone box catcher { from: 0, 0; size: screen.width, screen.height; label: "Dismiss overlay"; role: region; agent: no }
     on press catcher { emit dismiss }
     on key Escape while dismiss_on_escape { emit dismiss }

@@ -57,14 +57,14 @@ part Calendar {
             group { move: 14 * scale, 8 * scale
                 Capsule(24, 20, fill: skin.surface, alpha: 60%, radius: 10, scale: scale)
                 text "chevron_left" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink }
-                zone box prev { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
+                zone box prev { cursor: pointer; from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
                     label: "Previous month"; role: button }
                 on press prev { emit cal_prev }
             }
             group { move: 342 * scale, 8 * scale
                 Capsule(24, 20, fill: skin.surface, alpha: 60%, radius: 10, scale: scale)
                 text "chevron_right" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink }
-                zone box next { from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
+                zone box next { cursor: pointer; from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
                     label: "Next month"; role: button }
                 on press next { emit cal_next }
             }
@@ -137,7 +137,7 @@ part Calendar {
                         text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: skin.ink; show: c.this and not c.today and c.pill == 0 }
                         text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink.off; show: c.this and c.pill == 4 }
                         text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink.off; show: not c.this }
-                        zone box day { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; active: c.this
+                        zone box day { cursor: pointer; from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; active: c.this
                             label: c.label; role: button; selected: c.this and c.day == sel_day }
                         on press day { sel_day = c.day }
                     }
