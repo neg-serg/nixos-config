@@ -1,0 +1,31 @@
+[package]
+name = "shtoy"
+version = "0.1.0"
+edition = "2021"
+description = "Run Shadertoy shaders fullscreen in esshader (Rust port of the local-bin helper)"
+license = "MIT"
+
+[[bin]]
+name = "shtoy"
+path = "src/main.rs"
+
+[lib]
+name = "shtoy"
+path = "src/lib.rs"
+
+[dependencies]
+# HTTP is needed for the two network modes only (API import, mirror search).
+# - blocking + socks: the shell used curl -x with a socks5h:// URL; reqwest's
+#   socks feature understands socks5h (hostname resolution on the proxy side).
+# - rustls-tls: no OpenSSL at build or run time; the default webpki roots are
+#   enough for the three public hosts this tool talks to.
+# - default-features = false drops cookies, gzip and native-tls, none of which
+#   the curl calls used.
+reqwest = { version = "0.12", default-features = false, features = [
+  "blocking",
+  "socks",
+  "rustls-tls",
+] }
+serde_json = "1"
+
+[workspace]

@@ -1,0 +1,50 @@
+shtoy — open Shadertoy shaders fullscreen in esshader (no browser).
+
+  shtoy FILE                 run a local Shadertoy-style fragment shader
+  shtoy URL|ID               run a cached copy of https://www.shadertoy.com/view/<ID>
+  shtoy --import URL|ID      cache the source from the clipboard (copy it on the
+                             site) and run it
+  shtoy --mirror URL|ID      cache a community mirror copy of the source
+                             (Sourcegraph search + raw.githubusercontent.com,
+                             both through the sing-box SOCKS proxy)
+  shtoy -                    read the shader source from stdin
+
+Options:
+  --channel N FILE           bind FILE as iChannelN (repeatable, N = 0..3)
+  --keyboard N               bind the live keyboard atlas as iChannelN
+  --legacy                   force GLES2/GLSL 100 instead of the default GLES3
+  --save                     cache the source, print its path, do not open the viewer
+  --list                     list cached shaders
+  -h, --help                 this help
+
+esshader is Shadertoy-compatible on its own — it prepends iResolution, iTime,
+iMouse, iDate and iChannel0-3, and calls mainImage() from its own main() — so
+nothing is rewritten except what it cannot supply: `#version` lines are
+dropped (esshader prepends its own) and iFrame/iTimeDelta/iFrameRate become
+defines when the shader uses them. GLES3 (GLSL 300 es) is the default;
+--legacy switches to GLES2/GLSL 100 for sources that still call texture2D()
+(also picked automatically when a source has texture2D and no texture()).
+
+Only the Image pass runs: multi-pass shaders (Buffer A-D) are not supported.
+iChannelResolution, iChannelTime and iDate are declared but never filled by
+esshader, and iMouse carries press flags in .zw instead of Shadertoy's click
+position. Quit with ESC or q. esshader loads channels through SOIL, which
+rejects progressive JPEGs — convert those to baseline or PNG first.
+
+Cached sources live at $XDG_CACHE_HOME/shtoy/<id>.frag as copied from the
+site; sources shipped with this config live in $XDG_CONFIG_HOME/shtoy/shaders
+(<id>.frag, used when the cache has no copy — --list marks them). Sources
+that need rewriting go through a temp copy whose path is printed on stderr.
+
+The API path needs an app key (SHADERTOY_API_KEY, or
+$XDG_CONFIG_HOME/shtoy/api_key). Cloudflare fronts shadertoy.com, so keyed
+curl calls from this host are challenged as well — --import is the reliable
+way to get a shader in.
+
+--mirror does not touch shadertoy.com: it asks Sourcegraph for files citing
+the view URL, downloads the candidates over the same SOCKS proxy and caches
+the first one that has a mainImage() entry point. The proxy defaults to
+socks5h://127.0.0.1:10808; set SHTOY_PROXY to another value or to the empty
+string for a direct connection. Mirrors are third-party copies, and only a
+single-pass source is cached — multi-pass (Buffer A-D) originals are not
+fetched.

@@ -1,0 +1,14 @@
+event: filters
+data: [{"value":"archived:yes","label":"Include archived repos","count":30404,"exhaustive":false}]
+
+event: progress
+data: {"done":false,"matchCount":2,"durationMs":206}
+
+event: matches
+data: [{"type":"content","repository":"github.com/ports/early","commit":"aaa111","path":"shaders/port.frag","lineMatches":[{"line":"https://www.shadertoy.com/view/AbCd12","lineNumber":40}]},{"type":"content","repository":"github.com/owner/repo","commit":"bbb222","path":"shaders/main.frag","lineMatches":[{"line":"// https://shadertoy.com/view/AbCd12","lineNumber":10}]},{"type":"content","repository":"github.com/owner/repo","commit":"ccc333","path":"buffer_a.glsl","lineMatches":[{"line":"// ported from shadertoy.com/view/AbCd12","lineNumber":10}]},{"type":"content","repository":"github.com/owner/repo","commit":"ddd444","path":"notes.md","lineMatches":[{"line":"shadertoy.com/view/AbCd12","lineNumber":2}]},{"type":"content","repository":"github.com/owner/repo","commit":"eee555","path":"shaders/main.frag","lineMatches":[{"line":"SHADERTOY.COM/VIEW/ABCD12","lineNumber":2}]},{"type":"content","repository":"github.com/other/repo","commit":"fff666","path":"shaders/Shader.FS","lineMatches":[{"line":"see shadertoy.com/view/AbCd12","lineNumber":9},{"line":"again shadertoy.com/view/AbCd12","lineNumber":3}]},{"type":"content","repository":null,"path":"x.frag","lineMatches":[{"line":"shadertoy.com/view/AbCd12","lineNumber":1}]},{"type":"content","repository":"github.com/other/repo","commit":"ggg777","path":"wrong.frag","lineMatches":[{"line":"shadertoy.com/view/ZzZz99","lineNumber":1}]},{"type":"path","repository":"github.com/other/repo","path":"ignored.frag","lineMatches":[{"line":"shadertoy.com/view/AbCd12","lineNumber":1}]},{"type":"content","repository":"github.com/other/repo","commit":"hhh888","path":"Makefile","lineMatches":[{"line":"shadertoy.com/view/AbCd12","lineNumber":1}]},{"type":"content","repository":"gitlab.com/some/repo","commit":"iii999","path":"low.frag","lineMatches":[{"line":"shadertoy.com/view/AbCd12","lineNumber":5}]},{"type":"content","repository":"github.com/space/repo","commit":"jjj000","path":"shaders/with space.frag","lineMatches":[{"line":"shadertoy.com/view/AbCd12","lineNumber":60}]}]
+
+event: matches
+data: [{"type":"content","repository":"github.com/batch/repo","commit":"","path":"late.frag","lineMatches":[{"line":"shadertoy.com/view/AbCd12","lineNumber":50}]}]
+
+event: done
+data: {"done":true,"matchCount":12}
