@@ -84,7 +84,7 @@ let
       is_gaming() {
         # Match on the full command line (argv[0] may be a wrapper or a
         # renamed binary); patterns are anchored to a path separator or space.
-        if pgrep -f '(^|/)(gamescope|wine|wine64|wineserver|wine-preloader|wine64-preloader|pressure-vessel-wrap|srt-bwrap|lutris|heroic|bottles)( |$)' >/dev/null 2>&1; then
+        if pgrep -f '(^|/)(gamescope|wine|wine64|wineserver|wine-preloader|wine64-preloader|pressure-vessel-wrap|srt-bwrap|lutris|heroic)( |$)' >/dev/null 2>&1; then
           return 0
         fi
         pgrep -f 'steamapps/common/|steam-launch-wrapper|\.exe' >/dev/null 2>&1
