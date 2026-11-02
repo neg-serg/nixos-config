@@ -188,23 +188,32 @@ local function save_settings()
     pcall(sys.call, "files.write", FILE, raw)
 end
 
+-- The file is rewritten whole, and `notifications.keep(true)` tells the server to keep every
+-- record, so a chatty application arrives in bursts: one scheduled write instead of one per
+-- arrival. `files.write` is atomic, and a record the server still keeps is re-announced to the
+-- next shell anyway, so the window costs at most the last half second of history.
+local hist_timer = nil
 local function save_hist()
-    local items = {}
-    for i, r in ipairs(nt_hist) do
-        items[i] = {
-            id = r.id,
-            app = r.app,
-            title = r.title,
-            body = r.body,
-            icon = r.icon,
-            image = r.image,
-            urgency = r.urgency,
-            time = r.time,
-            actions = r.actions,
-        }
-    end
-    hist_raw.items = items
-    pcall(sys.call, "files.write", HIST, hist_raw)
+    if hist_timer then return end
+    hist_timer = after(500, function()
+        hist_timer = nil
+        local items = {}
+        for i, r in ipairs(nt_hist) do
+            items[i] = {
+                id = r.id,
+                app = r.app,
+                title = r.title,
+                body = r.body,
+                icon = r.icon,
+                image = r.image,
+                urgency = r.urgency,
+                time = r.time,
+                actions = r.actions,
+            }
+        end
+        hist_raw.items = items
+        pcall(sys.call, "files.write", HIST, hist_raw)
+    end)
 end
 
 -- ----- models ----------------------------------------------------------------
@@ -411,15 +420,23 @@ local function hide_toast(id)
 end
 
 -- `historyMax` caps what is REMEMBERED — the records the server no longer
--- keeps. The ones it still keeps are never dropped here: the legacy centre
--- showed every active notification and then its history on top of that.
+-- keeps. The ones it still keeps are not capped by it: the legacy centre
+-- showed every active notification and then its history on top of that. They
+-- do get a ceiling of their own, because the centre draws 200 rows and an
+-- application the server is told to keep everything for would otherwise grow
+-- this list for as long as the session lasts.
+local LIVE_CEILING = 300
 local function trim_history()
     local kept = {}
     local old_kept = 0
+    local live_kept = 0
     for _, r in ipairs(nt_hist) do
-        if r.on or old_kept < settings.historyMax then
+        if r.on and live_kept < LIVE_CEILING then
             kept[#kept + 1] = r
-            if not r.on then old_kept = old_kept + 1 end
+            live_kept = live_kept + 1
+        elseif not r.on and old_kept < settings.historyMax then
+            kept[#kept + 1] = r
+            old_kept = old_kept + 1
         else
             if nt_live[r.id] == r then nt_live[r.id] = nil end
             hide_toast(r.id)
