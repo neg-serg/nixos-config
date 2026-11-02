@@ -1,0 +1,14 @@
+[package]
+name = "zalgo"
+version = "0.1.0"
+edition = "2021"
+description = "Zalgo text generator (stdin to stdout)"
+license = "MIT"
+
+[[bin]]
+name = "zalgo"
+path = "src/main.rs"
+
+[dependencies]
+
+[workspace]

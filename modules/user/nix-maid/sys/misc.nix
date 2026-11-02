@@ -21,7 +21,6 @@ let
     "skullmono.sh" = files "art/fun-art/skullmono.sh";
     "skulls.sh" = files "art/fun-art/skulls.sh";
     "skull.txt" = files "art/fun-art/skull.txt";
-    "zalgo.py" = files "art/fun-art/zalgo.py";
     "gandalf.txt" = files "art/fun-art/gandalf.txt";
     "helmet.txt" = files "art/fun-art/helmet.txt";
     "hydra.txt" = files "art/fun-art/hydra.txt";
@@ -38,6 +37,11 @@ in
       environment.systemPackages = [
         pkgs.wineWow64Packages.stable # Open-source implementation of the Windows API
       ];
+    })
+    (lib.mkIf (cfg.fun.enable or false) {
+      # Cursed-text generator: a Rust package now (packages/zalgo), so the
+      # executable comes from the overlay instead of a script in hack-art.
+      users.users.neg.packages = [ pkgs.neg.zalgo ];
     })
     (lib.mkIf (cfg.fun.enable or false) (
       neg.mkHomeFiles (
@@ -68,5 +72,6 @@ in
         ]
       )
     ))
+
   ];
 }

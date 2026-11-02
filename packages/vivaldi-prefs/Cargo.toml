@@ -1,0 +1,14 @@
+[package]
+name = "vivaldi-prefs"
+version = "0.1.0"
+edition = "2021"
+description = "Re-assert Vivaldi preferences before the browser starts"
+license = "MIT"
+
+[[bin]]
+name = "vivaldi-prefs"
+path = "src/main.rs"
+
+[dependencies]
+
+[workspace]
