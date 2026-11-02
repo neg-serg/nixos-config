@@ -149,6 +149,13 @@ local function commitDaemon()
         busy = false
         if code ~= 0 then log("genelec: glm5ctl volume exited with " .. tostring(code)) end
     end)
+    -- The daemon keeps its volume only for its own run ("nothing sent this run" after a
+    -- restart), and this plugin's adoptLevel falls back to `glm-vol read` then. Write the same
+    -- target to that file so the first notch of the next session starts from where this one
+    -- ended instead of jumping to a stale number.
+    run("glm-vol", { tostring(target) }, function(_, code)
+        if code ~= 0 then log("genelec: glm-vol exited with " .. tostring(code)) end
+    end)
 end
 
 local function commit()
