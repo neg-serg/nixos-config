@@ -16,6 +16,7 @@
 //! ```
 
 use anyhow::{Context, Result};
+use genlc::plan::{parse_plan, plan_frames};
 use genlc::protocol;
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::{UnixListener, UnixStream};
@@ -77,6 +78,9 @@ enum Cmd {
     Volume(f64),
     Mute(bool),
     LeaseNow,
+    /// Apply a plan file; the daemon answers through the channel once the block is on
+    /// the bus, because only the loop thread owns the transport.
+    Apply(std::path::PathBuf, Sender<String>),
     Quit,
 }
 
@@ -126,6 +130,10 @@ fn main() -> Result<()> {
                     Err(e) => eprintln!("glm5d: mute failed: {e}"),
                 },
                 Cmd::LeaseNow => last_lease = Instant::now() - LEASE_GRACE,
+                Cmd::Apply(path, reply) => {
+                    let summary = apply_plan(&group, &state, &path);
+                    let _ = reply.send(summary);
+                }
             }
         }
 
@@ -156,29 +164,26 @@ fn main() -> Result<()> {
             .map(|l| l.session)
             .collect();
         for session in sessions {
-            if group
-                .send(&protocol::GNetMessage::new(session, 0x08))
-                .is_err()
-            {
-                continue;
-            }
-            if let Some(raw) = group.try_receive() {
-                if let Ok(frame) = protocol::decode_frame(&raw) {
-                    if frame.opcode == 0x09 && !frame.data.is_empty() {
-                        state
-                            .lock()
-                            .unwrap()
-                            .telemetry
-                            .insert(session, frame.data.clone());
-                    }
+            // Strict one reply per request: a poll left unanswered would be consumed by
+            // the next request and shift every answer by one (seen in the 2026-11-02
+            // capture: a probe answered by the adapter's status frame).
+            match group.send_and_receive(&protocol::GNetMessage::new(session, 0x08)) {
+                Ok(frame) if frame.opcode == 0x09 && !frame.data.is_empty() => {
+                    state
+                        .lock()
+                        .unwrap()
+                        .telemetry
+                        .insert(session, frame.data.clone());
                 }
+                _ => {}
             }
         }
         // The adapter answers its own status poll; read that reply here so it cannot be
         // mistaken for the next cycle's first monitor report (it arrives as `32 34 DE …`,
         // the mic/knob tags, and used to be filed under a monitor's session).
-        let _ = group.send(&protocol::GNetMessage::new(0x01, 0x08));
-        let _ = group.try_receive();
+        // The adapter answers its own status poll; read that reply here so it cannot be
+        // mistaken for the next cycle's first monitor report.
+        let _ = group.send_and_receive(&protocol::GNetMessage::new(0x01, 0x08));
 
         {
             let mut st = state.lock().unwrap();
@@ -187,6 +192,68 @@ fn main() -> Result<()> {
         }
         std::thread::sleep(CYCLE);
     }
+}
+
+/// Write one plan file to the monitors this daemon holds leases on.
+///
+/// Refuses any session the daemon does not hold: those frames would land on whatever
+/// monitor currently owns it. Frames are paced because the bus allows one request in
+/// flight and a monitor answers in ~7 ms — blasting a block lost most of the
+/// acknowledgements in the 2026-11-02 hardware test.
+fn apply_plan(
+    group: &protocol::SamGroup,
+    state: &Arc<Mutex<State>>,
+    path: &std::path::Path,
+) -> String {
+    let text = match std::fs::read_to_string(path) {
+        Ok(text) => text,
+        Err(e) => return format!("error reading plan {}: {e}", path.display()),
+    };
+    let plans = match parse_plan(&text) {
+        Ok(plans) => plans,
+        Err(e) => return format!("error in plan: {e}"),
+    };
+    let leased: Vec<u8> = state
+        .lock()
+        .unwrap()
+        .leases
+        .iter()
+        .map(|l| l.session)
+        .collect();
+    let mut out = Vec::new();
+    for monitor_plan in &plans {
+        if !leased.contains(&monitor_plan.session) {
+            out.push(format!(
+                "error session {:02X} is not leased by glm5d (held: {:02X?})",
+                monitor_plan.session, leased
+            ));
+            continue;
+        }
+        let frames = plan_frames(monitor_plan);
+        let mut acks = 0usize;
+        let mut failed = None;
+        for frame in &frames {
+            if let Err(e) = group.send(frame) {
+                failed = Some(format!("error send failed: {e}"));
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(12));
+            if let Some(reply) = group.try_receive() {
+                if reply.get(1) == Some(&0x09) {
+                    acks += 1;
+                }
+            }
+        }
+        match failed {
+            Some(e) => out.push(e),
+            None => out.push(format!(
+                "ok applied {} frames to session {:02X} ({acks} acknowledged)",
+                frames.len(),
+                monitor_plan.session
+            )),
+        }
+    }
+    out.join("; ")
 }
 
 fn runtime_dir() -> String {
@@ -227,6 +294,16 @@ fn serve(stream: UnixStream, tx: Sender<Cmd>, state: Arc<Mutex<State>>) -> Resul
             "lease" => {
                 tx.send(Cmd::LeaseNow)?;
                 writeln!(out, "ok queued")?;
+            }
+            "apply" => {
+                let path =
+                    std::path::PathBuf::from(parts.next().context("apply needs a plan path")?);
+                let (reply_tx, reply_rx) = mpsc::channel::<String>();
+                tx.send(Cmd::Apply(path, reply_tx))?;
+                match reply_rx.recv_timeout(Duration::from_secs(60)) {
+                    Ok(summary) => writeln!(out, "{summary}")?,
+                    Err(_) => writeln!(out, "error apply timed out")?,
+                }
             }
             "quit" => {
                 tx.send(Cmd::Quit)?;
