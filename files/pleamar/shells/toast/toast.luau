@@ -218,5 +218,7 @@ on("hover_in", function()
     if timer then cancel(timer); timer = nil end
 end)
 on("hover_out", function()
-    if fact.shown then arm() end
+    -- `away` over the card's zones is a predicate, so this can arrive more than once for one
+    -- departure; arming again each time would push the hide out for ever.
+    if fact.shown and not timer then arm() end
 end)

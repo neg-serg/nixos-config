@@ -152,8 +152,6 @@ scene toast {
                 // The card swallows the clicks that land on it — it is a card,
                 // not a hole. Not pressable, so no label; hidden from agents.
                 zone box card { from: 0, 0; size: w, h; corner: 4; role: region; agent: hidden }
-                on enter card { emit hover_in }
-                on leave card { emit hover_out }
 
                 // The box: translucent coal (the legacy 85%) with the outline
                 // hairline the legacy border drew.
@@ -173,8 +171,6 @@ scene toast {
                 }
                 zone box preview { from: 16, 16; size: 428, 280; corner: 4; cursor: pointer; label: "Open screenshot"; role: button }
                 on press preview { emit open_shot }
-                on enter preview { emit hover_in }
-                on leave preview { emit hover_out }
 
                 // ------***----------- title and close
                 text "Screenshot captured" { family: "Iosevka"; at: 16, 318; anchor: left center; size: 14; weight: 500; color: skin.ink }
@@ -183,8 +179,6 @@ scene toast {
                 line { from: 448, 312; to: 436, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
                 zone box close_zone { from: 426, 302; size: 32, 32; corner: 6; cursor: pointer; label: "Dismiss screenshot"; role: button }
                 on press close_zone { emit hide }
-                on enter close_zone { emit hover_in }
-                on leave close_zone { emit hover_out }
 
                 // ------***----------- path row (private)
                 text shot_short { at: 16, 372; anchor: left center; width: 330; lines: 1; size: 11; family: "Iosevka"; color: ink.off }
@@ -211,24 +205,22 @@ scene toast {
 
                 zone box ocr_zone { from: 16, 404; size: 211, 36; corner: 6; cursor: pointer; label: "OCR"; role: button }
                 on press ocr_zone { emit ocr_tess }
-                on enter ocr_zone { emit hover_in }
-                on leave ocr_zone { emit hover_out }
                 zone box ocr_nn_zone { from: 233, 404; size: 211, 36; corner: 6; cursor: pointer; label: "OCR NN"; role: button }
                 on press ocr_nn_zone { emit ocr_nn }
-                on enter ocr_nn_zone { emit hover_in }
-                on leave ocr_nn_zone { emit hover_out }
                 zone box copy_zone { from: 16, 452; size: 138, 36; corner: 6; cursor: pointer; label: "Copy"; role: button }
                 on press copy_zone { emit copy_path }
-                on enter copy_zone { emit hover_in }
-                on leave copy_zone { emit hover_out }
                 zone box open_zone { from: 160, 452; size: 140, 36; corner: 6; cursor: pointer; label: "Open"; role: button }
                 on press open_zone { emit open_shot }
-                on enter open_zone { emit hover_in }
-                on leave open_zone { emit hover_out }
+                // Hovering anywhere on the card keeps it, and the buttons count as the card: `hover`
+                // and `away` over several zones read "over any of them" as "over". The three separate
+                // `on enter`/`on leave` pairs did not — moving from the card onto Dismiss emitted
+                // `leave card`, which re-armed the 8 s hide while the pointer was still on the card,
+                // so the toast vanished from under the hand.
+                on hover card, preview, close_zone, path_row, ocr_zone, ocr_nn_zone, copy_zone, open_zone, dismiss_zone for 1ms { emit hover_in }
+                on away card, preview, close_zone, path_row, ocr_zone, ocr_nn_zone, copy_zone, open_zone, dismiss_zone for 120ms { emit hover_out }
+
                 zone box dismiss_zone { from: 306, 452; size: 138, 36; corner: 6; cursor: pointer; label: "Dismiss"; role: button }
                 on press dismiss_zone { emit hide }
-                on enter dismiss_zone { emit hover_in }
-                on leave dismiss_zone { emit hover_out }
             }
         }
     }
