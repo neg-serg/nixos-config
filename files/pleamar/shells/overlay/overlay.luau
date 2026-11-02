@@ -46,13 +46,16 @@ end)
 
 -- ------***------------------------- the semaphores
 local HOME = "/tmp"
-local CACHE = "/tmp/.cache"
+local CACHE = nil
 
 local ok_home, home = pcall(function() return sys.ask("env", "HOME") end)
 if ok_home and type(home) == "string" and home ~= "" then HOME = home end
 
 local ok_cache, cache = pcall(function() return sys.ask("env", "XDG_CACHE_HOME") end)
 if ok_cache and type(cache) == "string" and cache ~= "" then CACHE = cache end
+-- Without `XDG_CACHE_HOME` the XDG base spec's answer is `$HOME/.cache`, which is the directory the
+-- binds touch (`~/.cache/pleamar/dismiss-overlay`); `/tmp/.cache` was a path nothing wrote.
+if not CACHE then CACHE = HOME .. "/.cache" end
 
 local DIR = CACHE .. "/pleamar"
 local DISMISS = DIR .. "/dismiss-overlay"

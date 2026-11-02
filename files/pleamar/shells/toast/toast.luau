@@ -63,7 +63,7 @@ end)
 
 -- ------***------------------------- where the event is
 local HOME = "/tmp"
-local CACHE = "/tmp/.cache"
+local CACHE = nil
 
 local ok_home, home = pcall(function() return sys.ask("env", "HOME") end)
 if ok_home and type(home) == "string" and home ~= "" then HOME = home end
@@ -72,6 +72,10 @@ if HOME:sub(-1) == "/" then HOME = HOME:sub(1, -2) end
 
 local ok_cache, cache = pcall(function() return sys.ask("env", "XDG_CACHE_HOME") end)
 if ok_cache and type(cache) == "string" and cache ~= "" then CACHE = cache end
+-- Without `XDG_CACHE_HOME` the XDG base spec's answer is `$HOME/.cache`, which is where the program
+-- that writes the event (`pic-notify`) puts it — `/tmp/.cache` was a directory nothing writes and
+-- no toast could ever find.
+if not CACHE then CACHE = HOME .. "/.cache" end
 
 local EVENT = CACHE .. "/pleamar/screenshot-event.json"
 
