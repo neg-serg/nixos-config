@@ -1,0 +1,16 @@
+[package]
+name = "hypr-win-list"
+version = "0.1.0"
+edition = "2021"
+description = "List Hyprland windows in a vicinae dmenu picker"
+license = "MIT"
+
+[[bin]]
+name = "hypr-win-list"
+path = "src/main.rs"
+
+[dependencies]
+
+# Standalone: its own workspace root, so this Cargo.lock is the one the nix
+# build uses (`src = ./.` copies just this directory).
+[workspace]

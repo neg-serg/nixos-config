@@ -107,6 +107,9 @@ in
       virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
       renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)
+      scratchpad-geometry = final.callPackage ./scratchpad-geometry { }; # persist Hyprland scratchpad rects across show/hide
+      hypr-rearrange = final.callPackage ./hypr-rearrange { }; # move windows to the workspaces the config routes them to
+      hypr-win-list = final.callPackage ./hypr-win-list { }; # Hyprland window picker for vicinae dmenu
     };
 
   jack-keyboard = final.callPackage ./jack-keyboard { }; # virtual MIDI keyboard for JACK/PipeWire synth hosts

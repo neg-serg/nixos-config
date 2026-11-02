@@ -9,45 +9,15 @@
 let
   r = neg.rooted repoRoot;
 
-  # Hyprland window list via vicinae (moved here from the old user-session
-  # Hyprland module)
-  hyprWinList = pkgs.writeShellApplication {
-    name = "hypr-win-list"; # Hyprland window list via vicinae
-    runtimeInputs = [
-      pkgs.python3 # Python interpreter
-      pkgs.wl-clipboard # clipboard manager for Wayland
-      pkgs.hyprland # dynamic tiling Wayland compositor
-    ];
-    text =
-      let
-        tpl = builtins.readFile (
-          inputs.self # flake self-reference
-          + "/modules/user/nix-maid/scripts/hypr/hypr-win-list.py" # hypr-win-list script
-        );
-      in
-      ''
-                     exec python3 <<'PY'
-        ${tpl}
-        PY
-      '';
-  };
+  # Hyprland window picker (Rust): reads the client list and focuses the entry
+  # chosen in vicinae's dmenu; the package wrapper puts hyprctl and vicinae on
+  # PATH.
+  hyprWinList = pkgs.neg.hypr-win-list;
 
-  # Scratchpad geometry persistence daemon (python)
-  scratchpadGeometry = pkgs.writers.writePython3Bin "scratchpad-geometry" {
-    flakeIgnore = [
-      "E203"
-      "E501"
-      "W503"
-    ];
-    # hyprctl (from pkgs.hyprland) must be on PATH: systemd user services
-    # run with a minimal PATH, so the daemon could never call hyprctl.
-    makeWrapperArgs = [
-      "--prefix"
-      "PATH"
-      ":"
-      (pkgs.lib.makeBinPath [ pkgs.hyprland ])
-    ];
-  } (builtins.readFile (inputs.self + "/packages/scratchpad-geometry/scratchpad-geometry.py"));
+  # Scratchpad geometry persistence daemon (Rust). The package wrapper puts
+  # hyprctl on PATH: systemd user services run with a minimal PATH, so the
+  # daemon could never call it otherwise.
+  scratchpadGeometry = pkgs.neg.scratchpad-geometry;
   # Fallback frost for a scratchpad pane (see kitty-glass-frost.sh): a heavily
   # blurred, darkened slice of the current wallpaper pushed into the pane as kitty's
   # background image. The launcher no longer uses it — the rmpc pane is translucent
@@ -191,12 +161,6 @@ in
     '')
     # hypr-start script (fixes race conditions)
     (pkgs.writeShellScriptBin "hypr-start" (r.readFile "modules/user/nix-maid/hyprland/hypr-start.sh"))
-    (pkgs.writers.writePython3Bin "hypr-rearrange" {
-      flakeIgnore = [
-        "E203"
-        "E501"
-        "W503"
-      ];
-    } (r.readFile "modules/user/nix-maid/scripts/hypr/hypr-rearrange.py"))
+    pkgs.neg.hypr-rearrange
   ];
 }
