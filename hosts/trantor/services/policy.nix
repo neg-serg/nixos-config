@@ -405,7 +405,4 @@ lib.mkMerge [
 
     };
   }
-  (lib.mkIf (config.lib.neg.enabled "virt.docker") {
-    environment.systemPackages = [ pkgs.docker-compose ]; # container orchestration CLI (Docker Compose)
-  })
 ]
