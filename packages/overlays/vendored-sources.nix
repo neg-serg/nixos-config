@@ -1,14 +1,17 @@
 # Vendored-source overrides: the upstream fetch is unreachable from this
 # host/region (RKN-blocked host, forced 403, re-pushed tag, unresolvable
-# mirror), so the tarball/patch is committed under files/sources/ (or
+# mirror), so a small tarball/patch is committed under files/sources/ (or
 # files/patches/) and referenced through the root resolver
 # (`paths.path "files/sources/..."`, handed in by packages/overlay.nix). Being a path, Nix copies it into the store and
 # tracks it as a closure dependency — the same behavior as a remote fetch.
-# Exception: files >100 MB (the licensed Renoise installers) cannot be
-# committed (GitHub rejects them), and relocating them inside the tree does not
-# work either (the flake source is tracked-files-only; absolute paths are
-# forbidden in pure evaluation). They live outside the repo and arrive as the
-# `renoise-src` path input (flake.nix); see the renoise block below.
+# Build inputs above a few megabytes are published instead of committed: they
+# are assets of the public `neg-serg/nixos-sources` v1 release, fetched with
+# `fetchurl` under a pinned SHA-256 (dpkg below, packages/{vstplugin,sc-faust,
+# lsfg-vk}, and mprime in overlays/tools.nix). Keeping them out of the tree
+# keeps clones small; the release lives on GitHub, which a clone needs anyway.
+# Exception: the licensed Renoise installers are never published — they live
+# outside the repo and arrive as the `renoise-src` path input (flake.nix); see
+# the renoise block below.
 # Other overlays refer to this as "the vendored-tarball note in
 # overlays/vendored-sources.nix".
 { inputs, paths }: final: finalPrev: {
@@ -43,11 +46,14 @@
   });
 
   # dpkg: nixpkgs fetches the source from git.launchpad.net (unreachable from
-  # this region); vendor the official Debian release tarball (has .dist-version,
-  # which get-version needs) instead. dpkg is needed by ocenaudio and
-  # cloudflare-warp to unpack .debs.
+  # this region); use the official Debian release tarball (has .dist-version,
+  # which get-version needs), republished in the nixos-sources v1 release.
+  # dpkg is needed by ocenaudio and cloudflare-warp to unpack .debs.
   dpkg = finalPrev.dpkg.overrideAttrs (_: {
-    src = paths.path "files/sources/dpkg-1.23.7.tar.xz";
+    src = finalPrev.fetchurl {
+      url = "https://github.com/neg-serg/nixos-sources/releases/download/v1/dpkg-1.23.7.tar.xz";
+      hash = "sha256-YP4r5y5fCkuwrHuv87Fpfrxc+qwYhfZmSVIVcal0QK0=";
+    };
   });
 
   # renoise: full licensed release tarball (user's own Renoise 3.5.4 build,

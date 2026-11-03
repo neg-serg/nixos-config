@@ -1,6 +1,6 @@
 {
   lib,
-  paths,
+  fetchurl,
   stdenv,
   glibc,
   libGL,
@@ -13,12 +13,16 @@ stdenv.mkDerivation rec {
   pname = "lsfg-vk";
   version = "2.0.0-rc1";
 
-  # Official prebuilt release from builds.lsfg-vk.dev (2026-08-27). Vendored:
+  # Official prebuilt release from builds.lsfg-vk.dev (2026-08-27).
   # builds.lsfg-vk.dev and git.lsfg-vk.dev are unreachable from this region
-  # (direct git pack download hangs, cgit snapshots disabled), same pattern as
-  # mprime below. License CC BY-NC-ND 4.0 — binaries shipped unmodified;
-  # only the ELF interpreter/rpath are rewritten for the Nix store.
-  src = paths.path "files/sources/lsfg-vk-2.0.0-rc1.tar";
+  # (direct git pack download hangs, cgit snapshots disabled), so the tarball
+  # is republished in the neg-serg/nixos-sources v1 release and pinned by hash.
+  # License CC BY-NC-ND 4.0 — binaries shipped unmodified; only the ELF
+  # interpreter/rpath are rewritten for the Nix store.
+  src = fetchurl {
+    url = "https://github.com/neg-serg/nixos-sources/releases/download/v1/lsfg-vk-2.0.0-rc1.tar";
+    hash = "sha256-y+fJYXbvzDBYW54sAQxisILbsUp/zzp6pqxy61Pjstk=";
+  };
 
   nativeBuildInputs = [
     patchelf

@@ -2,19 +2,20 @@
 # Package: vstplugin
 # Purpose: VSTPlugin — host VST2/VST3 plugins directly inside scsynth
 #   (Spacechild1). Includes the SC UGen (VSTPlugin.so), plugin bridge host
-#   binary, SC classes and help. VST2 SDK (Steinberg 3.6.10) is vendored from
-#   files/sources (web.archive.org, region-blocked); VST3 SDK pluginterfaces
-#   come from the steinbergmedia/vst3_pluginterfaces repo (open).
+#   binary, SC classes and help. VST2 SDK (Steinberg 3.6.10) is republished in
+#   the neg-serg/nixos-sources v1 release and pinned by hash (the archive.org
+#   copy is region-blocked); VST3 SDK pluginterfaces come from the
+#   steinbergmedia/vst3_pluginterfaces repo (open).
 # Source: https://github.com/Spacechild1/vstplugin
 {
   lib,
   stdenv,
   cmake,
+  fetchurl,
   fetchFromGitHub,
   libx11,
   python3,
   scPluginFarm,
-  paths,
 }:
 stdenv.mkDerivation rec {
   pname = "vstplugin";
@@ -45,7 +46,10 @@ stdenv.mkDerivation rec {
     cp -r ${vst3Pluginterfaces} "$sourceRoot/vst/VST_SDK/VST3_SDK/pluginterfaces"
   '';
 
-  sdkZip = paths.path "files/sources/vst2sdk-3.6.10.zip";
+  sdkZip = fetchurl {
+    url = "https://github.com/neg-serg/nixos-sources/releases/download/v1/vst2sdk-3.6.10.zip";
+    hash = "sha256-Pl0eA5VWNvpBdEhogvdbvLwxiqsqBWzK3ra9ph7J1Jw=";
+  };
 
   nativeBuildInputs = [
     cmake
