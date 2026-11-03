@@ -200,6 +200,13 @@ lint:
 pleamar-check:
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}"
 
+# A read-only check-up of the running shell: one process per scene (with its fds,
+# threads and RSS), helpers that should appear once, Hyprland bindings registered
+# twice, and pleamar's panics and core dumps since boot. Needs the live session;
+# not part of `lint`.
+health:
+    bash "{{repo_root}}/scripts/dev/check-pleamar-health.sh" "{{repo_root}}"
+
 # The live bar's geometry, read from `pleamar --say bar describe`: the 25 px
 # strip band, the symmetric 4 px side insets, the 7 px gaps and the absence of
 # overlaps. Widths are deliberately not asserted — they are content-sized now
