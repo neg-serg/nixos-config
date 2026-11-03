@@ -1,0 +1,130 @@
+language 0.4
+
+// osd.plm — the volume / brightness OSD (scene `osd`).
+//
+// Legacy: dhrruvsharma/shell's Osd/ (OsdWindow.qml, OsdPill.qml, SpeakerGlyph.qml,
+// WaveMeter.qml, SunGlyph.qml): a small click-through pill that appears on a
+// volume or brightness change and fades away by itself. Before this scene the
+// port had none — the swayosd-client binds were removed together with the old
+// shell (hyprland.lua says so), and the only feedback for a volume step was the
+// bar's capsule, which is under the windows.
+//
+// How it is opened: nothing calls it. The scene watches the `audio` and
+// `brightness` services and decides for itself, which is what makes it work for
+// every source of a volume change — the bar's capsule, a wheel over it, an
+// application's own mixer, `wpctl` from a terminal. `muted` and a change of the
+// sink's volume are what raise it; the same volume reported twice is not a
+// change. It hides 1.4 s after the last one.
+//
+// The pill: the speaker (or the sun) in the accent, the reading at 20 px, and a
+// level-driven wave — the reference's WaveMeter. The wave is the `audio.level`
+// service (the loudest sample right now), shaped by a fixed envelope: the
+// language cannot run a spectrum out of one number, and a level-driven wave is
+// what the reference's own meter is.
+//
+// On this host the volume keys move the Genelec monitors through `genlc`
+// (hyprland.lua), not the PipeWire sink, so the keys do not raise this pill;
+// the bar's capsule and every application do. Showing the Genelec dB here is a
+// second source for the same pill, and it needs the bar's plugin facts over
+// IPC — not invented here.
+//
+// The surface is click-through by nature: it has no zones at all, and a surface
+// with no zones passes every press to what is behind it.
+
+import "../../lib/palette.plm"
+import "../../lib/palette-live.plm"
+
+scene osd {
+
+    // 260 x 72 for a 240 x 52 pill plus its shadow room, 44 px above the monitor's
+    // bottom edge so it clears the bar. `open: shown` — a closed surface is not
+    // drawn and not painted.
+    surface {
+        size: 260, 72
+        anchor: bottom
+        margin: 0, 0, 44, 0
+        level: overlay
+        keyboard: none
+        open: shown
+        rate: 30, 5 while not shown
+    }
+
+    permissions { services: "audio", "brightness" }
+
+    // The live palette (lib/palette-live.plm), as every scene that draws with it.
+    fact pal_coal_r = 0.0000
+    fact pal_coal_g = 0.0000
+    fact pal_coal_b = 0.0000
+    fact pal_surface_r = 0.1412
+    fact pal_surface_g = 0.1647
+    fact pal_surface_b = 0.2078
+    fact pal_ink_r = 0.7961
+    fact pal_ink_g = 0.8392
+    fact pal_ink_b = 0.8980
+    fact pal_ink_dim_r = 0.6824
+    fact pal_ink_dim_g = 0.7255
+    fact pal_ink_dim_b = 0.7843
+    fact pal_accent_r = 0.0000
+    fact pal_accent_g = 0.4353
+    fact pal_accent_b = 0.8000
+    fact pal_on_accent_r = 1.0000
+    fact pal_on_accent_g = 1.0000
+    fact pal_on_accent_b = 1.0000
+    fact pal_light = 0
+
+    // What the pill is showing. `mode` picks the glyph's family and the tone; `level`
+    // is the 0..1 the wave is drawn from; the reading is a text the logic composes
+    // (the language cannot put a `%` on a number it did not shape).
+    fact shown = false
+    fact muted = false
+    fact mode: volume | brightness = volume
+    fact level = 0
+    text percent = "--"
+    text glyph = "volume_up"
+
+    // The sample the wave is drawn from, and the two services the logic watches.
+    service audio.level as vu { level: number }
+
+    // ---- the pill: nothing here takes the mouse (no zones).
+    group pill {
+        move: 10, 10
+        body {
+            color: live.coal
+            opacity: 92%
+            border: 1, mix(live.coal, live.ink, 12%)
+            rim: 0.07
+            shadow: 0, 10, 28, 45%
+            box { from: 0, 0; size: 240, 52; corner: 26 }
+        }
+        // A mute is the one state that is not the accent: the shell's warning tone.
+        box { from: 0, 0; size: 240, 52; corner: 26; color: live.coal; opacity: 0% }
+
+        text glyph { at: 30, 26; anchor: center; family: "Material Symbols Outlined"; size: 22
+            color: if(muted, live.warn, live.accent) }
+        text percent { at: 52, 26; anchor: left center; family: "Iosevka"; size: 20; weight: 600
+            color: live.ink }
+
+        // ---- the wave: twelve bars, a fixed envelope shaped by the level.
+        group wave {
+            move: 150, 26
+            repeat i in 0..12 {
+                // The volume pill waves with the sound itself (`audio.level`, the loudest
+                // sample right now — the reference's WaveMeter); the brightness one has no
+                // sound to draw, so it shows the level the slider was moved to.
+                let sample = if(mode == brightness, level, vu.level)
+                let env = 0.28 + 0.72 * abs(sin(i * 0.85 + 0.4))
+                let h = clamp(sample, 0, 1) * 34 * env
+                box {
+                    from: i * 7, -h / 2
+                    size: 4, h
+                    corner: 2
+                    color: if(muted, live.warn, live.highlight)
+                    opacity: 75%
+                    show: not muted
+                }
+            }
+            // A muted sink gets a flat line, which is what silence looks like.
+            box { from: 0, -1; size: 84, 2; corner: 1; color: live.warn; opacity: 70%; show: muted }
+        }
+    }
+}
