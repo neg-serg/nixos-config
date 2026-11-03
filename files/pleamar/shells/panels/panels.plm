@@ -287,6 +287,13 @@ scene panels {
         include "pages/github.plm"
     }
 
+    surface wifi_card { size: full, full
+                        level: overlay; reserve: 0; screens: each
+                        keyboard: exclusive while drawer == wifi and wifi_ask
+                        open: drawer == wifi
+        include "pages/wifi.plm"
+    }
+
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*). `ip` and `ping` are the connection's
     // own two probes while the network drawer is open — the same commands QS's
@@ -325,8 +332,25 @@ scene panels {
     // The radio states come from the services the rest of the shell already trusts; the Wi-Fi
     // switch commands `network.wifi`, the Bluetooth one `bluetooth.power`, and do-not-disturb is
     // the notifications scene's own fact, read back through `--say` and set through it.
-    service network as net { wifi: bool; online: bool; name: text }
+    model nets max 9 {
+        ssid: text
+        strength: number
+        secure: bool = false
+        known: bool = false
+        active: bool = false
+    }
+    service network as net { wifi: bool; online: bool; name: text; networks: nets }
     fact dnd = false
+
+    // The Wi-Fi page's own state: whether the password band is up, which network it is asking
+    // about, the typed password (cleared after a join) and what the last attempt said.
+    fact wifi_ask = false
+    fact wifi_failed = false
+    text wifi_ssid = ""
+    text wifi_pass = ""
+    text wifi_err = ""
+    // The pairing band's field (`pin` and `passkey` ask for a code).
+    text pair_code = ""
 
     // ----***--------------- the key binds (`keys`)
     // Filled by panels.luau from `hyprctl binds -j` when the drawer opens and re-filtered as the
@@ -350,7 +374,7 @@ scene panels {
     text timer_text = "0:00"
 
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell | power | bluetooth | toggles | keys | notes | timer | github = none
+    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell | power | bluetooth | toggles | keys | notes | timer | github | wifi = none
     // The socket takes the enum's value names (`--say panels "fact drawer weather"`), which is how
     // the bar opens a drawer; a separate numeric mirror was declared here and never written, and
     // its only reader opened the media card without the catcher, so the card could not be closed.
@@ -467,6 +491,13 @@ scene panels {
     event timer_add ->
     event timer_toggle ->
     event timer_reset ->
+    // The Wi-Fi page's: power, scan, a row by index, forget by index, and the password band.
+    event wifi_power ->
+    event wifi_scan ->
+    event wifi_pick ->
+    event wifi_forget ->
+    event wifi_connect ->
+    event wifi_cancel ->
     event bt_cancel ->
 
     // Calendar navigation (panels.luau re-asks the worker for the month).

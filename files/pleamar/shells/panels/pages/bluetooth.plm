@@ -27,7 +27,7 @@ part Bluetooth {
 
         // The list starts under the header, and moves down while a pairing prompt
         // is up: pick() of a number, so the rows never land on the band.
-        let list.y = pick(bt.pairing == none, 64, 140)
+        let list.y = pick(bt.pairing == none, 64, 172)
 
         group {
             move: (screen.width - 400 * scale) / 2, (screen.height - 420 * scale) / 2 + (1 - lift) * 18 * scale
@@ -55,24 +55,32 @@ part Bluetooth {
             box { from: 16, 56; size: 368, 1; color: live.ink; opacity: ink.subtle }
 
             // ----***------------------------- what bluetoothd is asking
+            // `pin` and `passkey` are the kinds that need a code typed in; the field is theirs,
+            // and Enter answers — the shell did not have a field here before, which is why the
+            // page used to say it could not finish those two.
             group pair_band {
                 move: 16, 64
                 show: bt.pairing != none
                 body { color: live.accent; opacity: 10%
-                       box { from: 0, 0; size: 368, 64; corner: 10 } }
+                       box { from: 0, 0; size: 368, 96; corner: 10 } }
                 text "pairing {bt.pairing_name}" { at: 12, 18; anchor: left center; family: "Iosevka"; size: 11; weight: 600; color: live.ink }
-                text pick(bt.pairing, "", "the device shows a code; the page cannot type it yet", "the device shows a code; the page cannot type it yet", "confirm this code on this computer", "shown on this device", "allow this device") { at: 12, 34; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.dim }
-                text "{bt.pairing_code}" { at: 12, 51; anchor: left center; family: "Iosevka"; size: 14; weight: 700; color: live.accent }
-                text "no field yet" { at: 300, 51; anchor: right center; family: "Iosevka"; size: 8; color: live.ink.off; show: bt.pairing == pin or bt.pairing == passkey }
-
-                zone box pair_yes { from: 244, 10; size: 58, 24; corner: 12; cursor: pointer; label: "Confirm pairing"; role: button
-                show: bt.pairing == confirm or bt.pairing == authorize }
-                zone box pair_no { from: 308, 10; size: 52, 24; corner: 12; cursor: pointer; label: "Cancel pairing"; role: button }
-                text "yes" { at: 273, 22; anchor: center; family: "Iosevka"; size: 9; weight: 700; color: live.on.accent
-                show: bt.pairing == confirm or bt.pairing == authorize }
-                text "no" { at: 334, 22; anchor: center; family: "Iosevka"; size: 9; weight: 700; color: live.ink }
+                text pick(bt.pairing, "", "type the code the device shows", "type the code the device shows", "confirm this code on this computer", "shown on this device", "allow this device") { at: 12, 34; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.dim }
+                text "{bt.pairing_code}" { at: 12, 58; anchor: left center; family: "Iosevka"; size: 14; weight: 700; color: live.accent; show: bt.pairing == display or bt.pairing == pin or bt.pairing == passkey }
+                input pair_code {
+                    at: 12, 46; width: 160
+                    size: 13; color: live.ink; family: "Iosevka"; selection: live.accent_deep
+                    placeholder: "code"
+                    label: "Pairing code"
+                    show: bt.pairing == pin or bt.pairing == passkey
+                }
+                text "yes" { at: 273, 76; anchor: center; family: "Iosevka"; size: 9; weight: 700; color: live.on.accent; show: bt.pairing == confirm or bt.pairing == authorize or bt.pairing == pin or bt.pairing == passkey }
+                text "no" { at: 334, 76; anchor: center; family: "Iosevka"; size: 9; weight: 700; color: live.ink }
+                zone box pair_yes { from: 244, 64; size: 58, 24; corner: 12; cursor: pointer; label: "Answer pairing"; role: button
+                    show: bt.pairing == confirm or bt.pairing == authorize or bt.pairing == pin or bt.pairing == passkey }
+                zone box pair_no { from: 308, 64; size: 52, 24; corner: 12; cursor: pointer; label: "Cancel pairing"; role: button }
                 on press pair_yes { emit bt_confirm }
                 on press pair_no { emit bt_cancel }
+                on change bt.pairing while bt.pairing == pin or bt.pairing == passkey { focus pair_code }
             }
 
             // ----***------------------------- the devices
