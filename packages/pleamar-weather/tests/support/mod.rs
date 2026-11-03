@@ -475,18 +475,19 @@ pub const METNO: &str = concat!(
 
 pub const WTTR: &str = "Partly cloudy|+3°C|81%|↑8km/h|Partly cloudy|1009|29.80|0";
 
-/// Mock server answer that routes the four provider paths.
+/// Mock server answer for the geocoding path and a healthy Open-Meteo.
+///
+/// The fallback pair answers `503` on purpose: the two providers are raced
+/// (`Worker::fetch_providers`), so a mock where both succeed hands the test
+/// whichever payload the scheduler ran first — and the two documents are not
+/// interchangeable. A test that wants the fallback passes its own handler.
 pub fn provider_response(request: &Request) -> Response {
     if request.path().starts_with("/geo/v1/search?") {
         Response::json(GEOCODE)
     } else if request.path().starts_with("/v1/forecast?") {
         Response::json(FORECAST)
-    } else if request.path().starts_with("/metno/compact?") {
-        Response::json(METNO)
-    } else if request.path().starts_with("/wttr/") {
-        Response::text(WTTR)
     } else {
-        Response::error(404)
+        Response::error(503)
     }
 }
 

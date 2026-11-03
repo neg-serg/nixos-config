@@ -56,7 +56,9 @@ use reqwest::redirect::Policy;
 /// How often the waiting thread notices SIGTERM/SIGINT while a request runs.
 /// `reqwest` cannot cancel a blocking socket read, so the request lives on a
 /// helper thread and the process exits (killing it) as soon as the flag flips.
-const INTERRUPT_POLL: Duration = Duration::from_millis(20);
+/// The provider race in `worker` waits on the same interval, so both places
+/// notice a signal within one poll.
+pub(crate) const INTERRUPT_POLL: Duration = Duration::from_millis(20);
 
 #[derive(Debug)]
 pub enum FetchError {
@@ -66,6 +68,9 @@ pub enum FetchError {
     Interrupted,
 }
 
+/// One handle per attempt: the provider race runs two requests at once, and a
+/// `Client` is the only part that has to be shared (its pool, its deadline).
+#[derive(Clone)]
 pub struct Http {
     client: Result<Client, String>,
     timeout_secs: u64,
@@ -93,6 +98,13 @@ impl Http {
             timeout_secs,
             interrupt,
         }
+    }
+
+    /// Whether SIGTERM/SIGINT has arrived. A request in flight notices on its
+    /// own (`INTERRUPT_POLL`); this is for the provider race, which also has to
+    /// stop waiting for the attempt that has not answered yet.
+    pub fn interrupted(&self) -> bool {
+        self.interrupt.load(Ordering::Relaxed)
     }
 
     /// One GET. The body is returned as text (curl wrote bytes, bash then held

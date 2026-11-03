@@ -110,17 +110,30 @@ fn once_prints_the_handshake_and_a_fresh_payload() {
         lines[1]
     );
 
-    // The request bytes: the geocoding query and the forecast query.
+    // The request bytes: the geocoding query and the forecast query. The
+    // providers are raced, so the forecast is found by its prefix — the
+    // fallback's requests may sit in front of it in the log.
     let paths = mock.paths();
-    assert!(
-        paths.contains(
-            &"/geo/v1/search?name=Saint%20Petersburg&count=1&language=en&format=json".to_string()
-        ),
-        "{paths:?}"
+    let geocoding = paths
+        .iter()
+        .position(|path| path.starts_with("/geo/v1/search?"))
+        .expect("geocoding request");
+    assert_eq!(
+        paths[geocoding],
+        "/geo/v1/search?name=Saint%20Petersburg&count=1&language=en&format=json"
+    );
+    let forecast_index = paths
+        .iter()
+        .position(|path| path.starts_with("/v1/forecast?"))
+        .expect("forecast request");
+    assert_eq!(
+        paths[forecast_index],
+        "/v1/forecast?latitude=59.93863&longitude=30.31413&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,is_day,relative_humidity_2m,surface_pressure&daily=temperature_2m_max,temperature_2m_min,weathercode&wind_speed_unit=ms&timezone=auto&forecast_days=5"
     );
     assert_eq!(
-        paths[1],
-        "/v1/forecast?latitude=59.93863&longitude=30.31413&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,is_day,relative_humidity_2m,surface_pressure&daily=temperature_2m_max,temperature_2m_min,weathercode&wind_speed_unit=ms&timezone=auto&forecast_days=5"
+        mock.count("/v1/forecast?"),
+        1,
+        "one attempt at the primary: {paths:?}"
     );
     let forecast = mock
         .requests()
@@ -170,9 +183,12 @@ fn explicit_coordinates_skip_geocoding() {
     assert_eq!(data["longitude"].as_f64(), Some(30.7));
     assert_eq!(mock.count("/geo/"), 0, "geocoding must be skipped");
     assert_eq!(mock.count("/v1/forecast?"), 1);
-    assert_eq!(
-        mock.paths()[0].starts_with("/v1/forecast?latitude=59.9&longitude=30.7&"),
-        true
+    assert!(
+        mock.paths()
+            .iter()
+            .any(|path| path.starts_with("/v1/forecast?latitude=59.9&longitude=30.7&")),
+        "{:?}",
+        mock.paths()
     );
 }
 
@@ -235,6 +251,44 @@ fn openmeteo_failure_falls_back_to_wttr_current_and_metno_daily() {
     assert_eq!(
         wttr.path(),
         format!("/wttr/59.9,30.7?format={}", "%c|%t|%h|%w|%C|%p|%P|%u")
+    );
+}
+
+#[test]
+fn a_blackholed_primary_does_not_hold_the_card_for_its_deadline() {
+    let directory = TempDir::new("race");
+    let cache = directory.cache_file();
+    let mock = Mock::start(|request| {
+        let path = request.path();
+        if path.starts_with("/v1/forecast?") {
+            // What this host sees on api.open-meteo.com: the connection is
+            // accepted and then nothing arrives, so only the worker's deadline
+            // ends the request. Longer than --timeout on purpose.
+            std::thread::sleep(Duration::from_secs(5));
+            Response::json(FORECAST)
+        } else if path.starts_with("/wttr/") {
+            Response::text(WTTR)
+        } else if path.starts_with("/metno/compact?") {
+            Response::json(METNO)
+        } else {
+            Response::error(404)
+        }
+    });
+    let started = Instant::now();
+    let output = run(
+        &once_args(&cache, mock.base(), &["--lat", "59.9", "--lon", "30.7"]),
+        &[],
+    );
+    let elapsed = started.elapsed();
+    assert_eq!(output.status.code(), Some(0));
+    let data = &parse_line(&lines(&output)[1])["data"];
+    assert_eq!(data["provider"], "wttr.in");
+    assert_eq!(mock.count("/wttr/"), 1, "the fallback must be dialled");
+    // The point of the race: the sample lands on the fallback's time, not after
+    // the primary's deadline.
+    assert!(
+        elapsed < Duration::from_millis(1_500),
+        "the dead primary held the sample for {elapsed:?}"
     );
 }
 
@@ -377,9 +431,12 @@ fn geocoding_is_reused_for_a_day() {
     let output = run(&once_args(&cache, mock.base(), &["--city", "Oslo"]), &[]);
     assert_eq!(output.status.code(), Some(0));
     assert_eq!(mock.count("/geo/"), 0, "coordinates reused");
-    assert_eq!(
-        mock.paths()[0].starts_with("/v1/forecast?latitude=59.9&longitude=10.7&"),
-        true
+    assert!(
+        mock.paths()
+            .iter()
+            .any(|path| path.starts_with("/v1/forecast?latitude=59.9&longitude=10.7&")),
+        "{:?}",
+        mock.paths()
     );
 
     // Older than a day: the geocoder is asked again.

@@ -9,22 +9,25 @@
 //!    with `cached:true` and the age recomputed;
 //! 3. coordinates come from `--lat/--lon`, the cache's `geocoded_at` (reused
 //!    for 24 hours), or the geocoding API;
-//! 4. Open-Meteo first; on failure the wttr.in current conditions (unless
-//!    `--no-fallback`), whose `daily` is MET Norway's;
+//! 4. Open-Meteo and the wttr.in current conditions (whose `daily` is MET
+//!    Norway's) are dialled at once and the first payload wins; with
+//!    `--no-fallback` only Open-Meteo is asked, as the shell did;
 //! 5. a successful payload is written to the cache and `FORCE` is cleared; a
 //!    failed one leaves the last good cache in place and returns the error
-//!    text (the two provider errors joined with `"; "` when the fallback also
-//!    failed).
+//!    text (the two provider errors joined with `"; "`, Open-Meteo first, when
+//!    both failed).
 
 use std::io::{self, Write};
 use std::sync::atomic::AtomicBool;
+use std::sync::mpsc::{self, RecvTimeoutError};
 use std::sync::Arc;
+use std::thread;
 
 use crate::cache::{self, Cache};
 use crate::cli::Options;
 use crate::failure::Failure;
 use crate::geo::{self, Coords};
-use crate::http::Http;
+use crate::http::{Http, INTERRUPT_POLL};
 use crate::openmeteo;
 use crate::payload::Payload;
 use crate::protocol;
@@ -37,6 +40,15 @@ pub enum Outcome {
     Continue,
     /// SIGTERM/SIGINT arrived while a request was in flight.
     Interrupted,
+}
+
+/// Which attempt of the provider race an arrival belongs to. It is what keeps
+/// the joined error text in the shell's order (`open-meteo; fallback`) instead
+/// of the order the two happened to fail in.
+#[derive(Clone, Copy)]
+enum Slot {
+    Primary,
+    Fallback,
 }
 
 pub struct Worker {
@@ -96,43 +108,110 @@ impl Worker {
             .clone()
             .expect("resolve_coords sets coordinates");
 
-        match openmeteo::fetch(
-            &self.http,
-            &self.options.api_base,
-            &coords,
-            self.options.forecast_days,
-            &self.options.city,
-            now,
-        ) {
-            Ok(payload) => {
-                self.store(&payload, now);
-                Ok(payload.to_json(false, 0))
-            }
-            Err(Failure::Interrupted) => Err(Failure::Interrupted),
-            Err(Failure::Message(primary)) => {
-                if !self.options.fallback {
-                    return Err(Failure::Message(primary));
-                }
-                match wttr::fetch(
-                    &self.http,
-                    &self.options.wttr_base,
-                    &self.options.metno_base,
+        let payload = self.fetch_providers(&coords, now)?;
+        self.store(&payload, now);
+        Ok(payload.to_json(false, 0))
+    }
+
+    /// One payload from whichever provider answers first.
+    ///
+    /// The two providers are independent services, and one of them can be
+    /// unreachable without the other noticing: `api.open-meteo.com` accepts no
+    /// TCP connection from this host at all, so a serial attempt spends its
+    /// whole deadline before the fallback is even dialled — 3.0 s of a 3.4 s
+    /// cold card, measured 2026-11-04, and the card draws nothing until the
+    /// sample lands. Both are therefore dialled together and the first payload
+    /// wins.
+    ///
+    /// The price is one fallback attempt per sample even when Open-Meteo
+    /// answers: the loser is abandoned, not cancelled. The gain is that a
+    /// blackholed provider cannot hold the card for its whole `--timeout`.
+    ///
+    /// A failure is still reported as `open-meteo; fallback`, in that order,
+    /// whatever order the two gave up in: the text a user reads must not depend
+    /// on which provider was slower to fail.
+    fn fetch_providers(&self, coords: &Coords, now: i64) -> Result<Payload, Failure> {
+        if !self.options.fallback {
+            return openmeteo::fetch(
+                &self.http,
+                &self.options.api_base,
+                coords,
+                self.options.forecast_days,
+                &self.options.city,
+                now,
+            );
+        }
+
+        let (sender, receiver) = mpsc::channel();
+        {
+            let sender = sender.clone();
+            let http = self.http.clone();
+            let api_base = self.options.api_base.clone();
+            let city = self.options.city.clone();
+            let forecast_days = self.options.forecast_days;
+            let coords = coords.clone();
+            thread::spawn(move || {
+                let result = openmeteo::fetch(&http, &api_base, &coords, forecast_days, &city, now);
+                let _ = sender.send((Slot::Primary, result));
+            });
+        }
+        {
+            let sender = sender.clone();
+            let http = self.http.clone();
+            let wttr_base = self.options.wttr_base.clone();
+            let metno_base = self.options.metno_base.clone();
+            let city = self.options.city.clone();
+            let forecast_days = self.options.forecast_days;
+            let coords = coords.clone();
+            thread::spawn(move || {
+                let result = wttr::fetch(
+                    &http,
+                    &wttr_base,
+                    &metno_base,
                     &coords,
-                    &self.options.city,
+                    &city,
                     now,
-                    self.options.forecast_days,
-                ) {
-                    Ok(payload) => {
-                        self.store(&payload, now);
-                        Ok(payload.to_json(false, 0))
+                    forecast_days,
+                );
+                let _ = sender.send((Slot::Fallback, result));
+            });
+        }
+        drop(sender);
+
+        let mut primary_error: Option<String> = None;
+        let mut fallback_error: Option<String> = None;
+        // Two answers are expected. A poll timeout is not one of them, so it
+        // does not move the loop on — only a signal may cut the wait short.
+        while primary_error.is_none() || fallback_error.is_none() {
+            let (slot, result) = match receiver.recv_timeout(INTERRUPT_POLL) {
+                Ok(arrival) => arrival,
+                Err(RecvTimeoutError::Timeout) => {
+                    if self.http.interrupted() {
+                        return Err(Failure::Interrupted);
                     }
-                    Err(Failure::Interrupted) => Err(Failure::Interrupted),
-                    Err(Failure::Message(second)) => {
-                        Err(Failure::Message(format!("{primary}; {second}")))
-                    }
+                    continue;
                 }
+                // Both attempts ended without sending: a helper thread that
+                // cannot report a provider failure. Nothing to quote, so the
+                // sample says that much instead of inventing a provider error.
+                Err(RecvTimeoutError::Disconnected) => break,
+            };
+            match result {
+                Ok(payload) => return Ok(payload),
+                Err(Failure::Interrupted) => return Err(Failure::Interrupted),
+                Err(Failure::Message(message)) => match slot {
+                    Slot::Primary => primary_error = Some(message),
+                    Slot::Fallback => fallback_error = Some(message),
+                },
             }
         }
+
+        Err(Failure::Message(match (primary_error, fallback_error) {
+            (Some(primary), Some(fallback)) => format!("{primary}; {fallback}"),
+            (Some(primary), None) => primary,
+            (None, Some(fallback)) => fallback,
+            (None, None) => "no weather provider answered".to_string(),
+        }))
     }
 
     fn cache_hit(&self, now: i64) -> bool {

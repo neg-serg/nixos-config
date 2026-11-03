@@ -40,6 +40,10 @@ fn http_proxy_is_used_for_plain_http_targets() {
         "30.7".to_string(),
         "--api-base".to_string(),
         "http://api.example/v1".to_string(),
+        // One provider only: the fallback would dial the real wttr.in and
+        // api.met.no (its bases are not overridden here) and this test is about
+        // the proxy variable, not about the race between providers.
+        "--no-fallback".to_string(),
         "--timeout".to_string(),
         "5".to_string(),
     ];
@@ -160,6 +164,9 @@ fn socks5h_all_proxy_resolves_the_host_on_the_proxy() {
         // A name that does not resolve locally: only the proxy can reach it.
         "--api-base".to_string(),
         "http://api.example/v1".to_string(),
+        // As above, and for a second reason: this SOCKS server serves exactly
+        // one connection, so a concurrent fallback attempt would claim it.
+        "--no-fallback".to_string(),
         "--timeout".to_string(),
         "5".to_string(),
     ];
