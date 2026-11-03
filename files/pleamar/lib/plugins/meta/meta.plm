@@ -69,8 +69,8 @@ library Meta strict {
     // cannot read the scene's facts, so the multiplier comes in as a parameter.
     component Line(scale: number = ui, type_scale: number = 1) {
         let w = 118
-        let h = capsule.height
-        size: 118 * scale, capsule.height * scale
+        let h = bar.plate
+        size: 118 * scale, bar.plate * scale
         group zoom {
             scale: scale
             Capsule(w, h, scale: 1) {

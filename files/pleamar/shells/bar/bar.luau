@@ -164,8 +164,10 @@ local function read_file()
 end
 
 -- Composed by the audio block below; `apply` runs before it is defined (the settings are merged
--- at load), so this is a forward declaration rather than a local defined in place.
+-- at load), so this is a forward declaration rather than a local defined in place. The weather's
+-- width is the same story one section further down.
 local resize_audio = nil
+local resize_weather = nil
 
 local function apply(raw)
     local edge = raw.edge
@@ -218,6 +220,7 @@ local function apply(raw)
     -- where the audio block below is not defined yet — the scene ships defaults for both widths
     -- and the first sample fills them.
     if resize_audio then resize_audio() end
+    if resize_weather then resize_weather() end
 end
 
 -- The table as it was read: `apply` does not keep it, but a write must (INTERFACES §6.1 — mutate
@@ -2013,6 +2016,23 @@ local function moon_phase(epoch)
     return frac
 end
 
+-- The weather capsule is as wide as the icons and the three readings it holds: 4 px of pad, the
+-- 14 px glyph, 4 px between, then temperature, drop glyph, humidity, arrow glyph, wind and the
+-- moon, and the slanted right end costs the last 8 px (the cut runs `w` -> `w - 8`). `bar.plm`
+-- positions the same runs from their measured widths; this is that arithmetic with Iosevka's
+-- half-em advance, so the plate can be sized from the reading that is about to be printed — the
+-- fixed 156 the scene used to carry was already 28 px short of a winter's `-35°C 100% 12.3`.
+local WEATHER_ICON, WEATHER_GAP, WEATHER_PAD, WEATHER_MOON = 14, 4, 4, 13.5
+local function weather_width(temp, hum, wind)
+    local ts = tonumber(fact.text_scale) or 1
+    local function w(s) return (utf8.len(s) or #s) * 7 * ts end
+    local x = WEATHER_PAD + WEATHER_ICON + WEATHER_GAP           -- 22: the sun glyph's slot
+    x = x + w(temp) + WEATHER_GAP + WEATHER_ICON + WEATHER_GAP   -- the drop glyph
+    x = x + w(hum) + WEATHER_GAP + WEATHER_ICON + WEATHER_GAP    -- the wind arrow
+    x = x + w(wind) + WEATHER_GAP                                -- up to the moon
+    return math.floor(x + WEATHER_MOON + 9.5 + 0.5) + 1
+end
+
 local function show_weather(w)
     if type(w) ~= "table" then return end
     local code = tonumber(w.code)
@@ -2029,12 +2049,21 @@ local function show_weather(w)
     if wind then text["weather.wind"] = string.format("%.1f", wind) end
     -- The arrow points where the wind goes, the reading says where it comes from:
     fact["weather.dir"] = ((tonumber(w.dir) or 0) + 180) % 360
+    -- The plate is sized from the very strings it prints: an answer that arrives with a longer
+    -- reading grows the capsule instead of spilling past its slanted end.
+    fact["weather.w"] = weather_width(text["weather.temp"], text["weather.hum"], text["weather.wind"])
     fact["weather.have"] = true
 end
 
 local function weather_cached()
     local ok, got = pcall(function() return sys.ask("files.read", WEATHER_CACHE, "json") end)
     if ok then show_weather(got) end
+end
+
+-- The same widths from the current strings; a `fontScale` merge re-runs it so the plate follows
+-- the type it was measured for.
+resize_weather = function()
+    fact["weather.w"] = weather_width(text["weather.temp"], text["weather.hum"], text["weather.wind"])
 end
 
 -- `%c|%t|%h|%w|%C|%p|%P`: an arrow, the temperature, the humidity, the wind, the sky in words,

@@ -66,7 +66,7 @@ library Build strict {
         let size.icon = 14
         let label.w = 150
         let w = 2 * capsule.pad + size.icon + capsule.gap + label.w
-        let h = capsule.height
+        let h = bar.plate
         size: w * scale, h * scale
         group zoom {
             scale: scale
