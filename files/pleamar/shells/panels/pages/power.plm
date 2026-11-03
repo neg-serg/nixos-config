@@ -1,0 +1,107 @@
+// pages/power.plm — the session menu (`drawer == power`).
+//
+// Legacy: dhrruvsharma/shell's modules/power (PowerMenu.qml + its fifteen theme
+// faces, bound to M4+P there, five tiles: lock, sleep, log out, restart, shut
+// down). This page is the same five actions with one plate instead of a theme
+// each, in the drawer family's own language: it hangs off `panels`, so the
+// outside press, Escape and the catcher are the family's already.
+//
+// Safety, and where the reference and this shell differ:
+//   · restart and shut down are HOLD, not press (600 ms): the engine fires `on
+//     hold zone for …` only after the button has stayed down, and both carry
+//     `agent: no` — an agent must not power the machine off through a describe
+//     press. The reference's own tile grows to fill the screen and says what it
+//     is doing; the honest port of that is the hold, which cannot be done by a
+//     reflexive double click.
+//   · lock starts the shell's own lock scene through its unit, which is the
+//     documented way to bring it up (`systemctl --user start pleamar-lock.service`,
+//     modules/user/nix-maid/gui/pleamar.nix). `session.lock` would ask logind,
+//     and nothing in this session answers that request with the pleamar lock.
+//   · sleep, log out, restart and shut down are `sys.call("session.…")`, the
+//     engine's own commands (reference §17: behind `services: "session.*"`).
+//
+// The five actions are events, not commands in the page: panels.luau runs them
+// and closes the drawer for the one that does not end the session.
+
+part Power {
+    component PowerDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 460 * scale, 250 * scale
+
+        group {
+            // A modal, not a drawer: centred on the monitor, and the lift slides it
+            // a few pixels up out of nothing rather than the whole card height.
+            move: (screen.width - 460 * scale) / 2, (screen.height - 250 * scale) / 2 + (1 - lift) * 18 * scale
+            opacity: lift
+
+            // ----***----------------------------- the card
+            body {
+                color: live.coal
+                opacity: 92%
+                border: 1, mix(live.coal, live.ink, 12%)
+                rim: 0.07
+                shadow: 0, 18, 44, 45%
+                box { from: 0, 0; size: 460, 250; corner: 14 }
+            }
+            box { from: 18, 0; size: 34, 1; color: live.accent; opacity: 70% }
+
+            text "power" { at: 18, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
+            text "hold restart or shut down · escape closes" { at: 18, 38; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            box { from: 18, 52; size: 424, 1; color: live.ink; opacity: ink.subtle }
+
+            // The five tiles: 76 wide, 10 apart, 5 of them starting 20 px in.
+            group tile_lock {
+                move: 20, 64
+                body { color: live.ink; opacity: ink.hover; border: 1, mix(live.coal, live.ink, 12%)
+                       box { from: 0, 0; size: 76, 150; corner: 12 } }
+                text "lock" { at: 38, 52; anchor: center; family: "Material Symbols Outlined"; size: 26; color: live.accent }
+                text "Lock" { at: 38, 96; anchor: center; family: "Iosevka"; size: 10; color: live.ink }
+            }
+            group tile_sleep {
+                move: 106, 64
+                body { color: live.ink; opacity: ink.hover; border: 1, mix(live.coal, live.ink, 12%)
+                       box { from: 0, 0; size: 76, 150; corner: 12 } }
+                text "bedtime" { at: 38, 52; anchor: center; family: "Material Symbols Outlined"; size: 26; color: live.accent }
+                text "Sleep" { at: 38, 96; anchor: center; family: "Iosevka"; size: 10; color: live.ink }
+            }
+            group tile_logout {
+                move: 192, 64
+                body { color: live.ink; opacity: ink.hover; border: 1, mix(live.coal, live.ink, 12%)
+                       box { from: 0, 0; size: 76, 150; corner: 12 } }
+                text "logout" { at: 38, 52; anchor: center; family: "Material Symbols Outlined"; size: 26; color: live.accent }
+                text "Log out" { at: 38, 96; anchor: center; family: "Iosevka"; size: 10; color: live.ink }
+            }
+            group tile_restart {
+                move: 278, 64
+                body { color: live.ink; opacity: ink.hover; border: 1, mix(live.coal, live.ink, 12%)
+                       box { from: 0, 0; size: 76, 150; corner: 12 } }
+                text "restart_alt" { at: 38, 52; anchor: center; family: "Material Symbols Outlined"; size: 26; color: live.amber }
+                text "Restart" { at: 38, 96; anchor: center; family: "Iosevka"; size: 10; color: live.ink }
+                text "hold" { at: 38, 112; anchor: center; family: "Iosevka"; size: 8; color: live.ink.off }
+            }
+            group tile_off {
+                move: 364, 64
+                body { color: live.ink; opacity: ink.hover; border: 1, mix(live.coal, live.ink, 12%)
+                       box { from: 0, 0; size: 76, 150; corner: 12 } }
+                text "power_settings_new" { at: 38, 52; anchor: center; family: "Material Symbols Outlined"; size: 26; color: live.warn }
+                text "Shut down" { at: 38, 96; anchor: center; family: "Iosevka"; size: 10; color: live.ink }
+                text "hold" { at: 38, 112; anchor: center; family: "Iosevka"; size: 8; color: live.ink.off }
+            }
+
+            // The actions. Declared after the tiles so their presses win, and the two
+            // destructive ones are hold-only and hidden from an agent.
+            zone box act_lock { from: 20, 64; size: 76, 150; corner: 12; cursor: pointer; label: "Lock the session"; role: button }
+            zone box act_sleep { from: 106, 64; size: 76, 150; corner: 12; cursor: pointer; label: "Suspend"; role: button }
+            zone box act_logout { from: 192, 64; size: 76, 150; corner: 12; cursor: pointer; label: "Log out"; role: button }
+            zone box act_restart { from: 278, 64; size: 76, 150; corner: 12; cursor: pointer; label: "Hold to restart"; role: button; agent: no }
+            zone box act_off { from: 364, 64; size: 76, 150; corner: 12; cursor: pointer; label: "Hold to shut down"; role: button; agent: no }
+
+            on press act_lock { emit power_lock }
+            on press act_sleep { emit power_suspend }
+            on press act_logout { emit power_logout }
+            on hold act_restart for 600ms { emit power_reboot }
+            on hold act_off for 600ms { emit power_poweroff }
+        }
+    }
+
+    PowerDrawer()
+}

@@ -242,17 +242,27 @@ scene panels {
         include "pages/calendar.plm"
     }
 
+    // The session menu is a modal opened by a key bind, so it asks for the keyboard
+    // itself: Escape must close it without a click first (a surface with no field of
+    // its own gets the keys, and its rules see Escape).
+    surface power_card { size: full, full
+                         level: overlay; reserve: 0; screens: each
+                         keyboard: exclusive while drawer == power
+                         open: drawer == power
+        include "pages/power.plm"
+    }
+
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*). `ip` and `ping` are the connection's
     // own two probes while the network drawer is open — the same commands QS's
     // Connectivity.qml runs.
     // `wl-copy` is the reference's clipboard copy of the journal's problems (SystemMonitorPopup.qml:17-40
     // runs it every time the dashboard opens, so a paste into a chat carries the lines).
-    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "pleamar-themes", "flow", "ip", "ping", "pleamar", "wl-copy"
-                  services: "audio", "audio.*", "files", "files.write", "media", "media.*" }
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "pleamar-themes", "flow", "ip", "ping", "pleamar", "wl-copy", "systemctl"
+                  services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*" }
 
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell = none
+    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell | power = none
     // The socket takes the enum's value names (`--say panels "fact drawer weather"`), which is how
     // the bar opens a drawer; a separate numeric mirror was declared here and never written, and
     // its only reader opened the media card without the catcher, so the card could not be closed.
@@ -346,6 +356,13 @@ scene panels {
     // A press or a drag on the media card's progress band: how far along the track, 0..1.
     event seek ->
     event close_drawer
+    // The session menu's five actions (pages/power.plm). panels.luau runs them; the
+    // two destructive ones are hold-only in the page and `agent: no`.
+    event power_lock
+    event power_suspend
+    event power_logout
+    event power_reboot
+    event power_poweroff
 
     // Calendar navigation (panels.luau re-asks the worker for the month).
     event cal_prev ->

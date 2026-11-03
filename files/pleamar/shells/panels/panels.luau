@@ -473,6 +473,32 @@ on("seek", function(frac)
     fact["media.pos"] = mediaPos
 end)
 
+-- ==================== the session menu ====================
+
+-- The five actions of pages/power.plm. Four are the engine's own commands; lock lifts the shell's
+-- lock scene through its unit (the documented way to raise it — `session.lock` asks logind, and
+-- nothing in this session answers that request with the pleamar lock). Lock closes the drawer
+-- itself: the lock surface covers the monitor, and a drawer left open behind it would come back
+-- when the screen is unlocked.
+local function session_call(command)
+    local ok, err = pcall(function() sys.call(command) end)
+    if not ok then log("panels: " .. command .. " failed: " .. tostring(err)) end
+end
+
+on("power_suspend", function() session_call("session.suspend") end)
+on("power_logout", function() session_call("session.logout") end)
+on("power_reboot", function() session_call("session.reboot") end)
+on("power_poweroff", function() session_call("session.poweroff") end)
+on("power_lock", function()
+    hide_drawer()
+    local ok, err = pcall(function()
+        run("systemctl", { "--user", "start", "pleamar-lock.service" }, function(_, code)
+            if code ~= 0 then log("panels: the lock unit did not start (" .. tostring(code) .. ")") end
+        end)
+    end)
+    if not ok then log("panels: the lock unit did not start: " .. tostring(err)) end
+end)
+
 -- ==================== samples into the drawing ====================
 
 -- ---- sysmon: one `tiles` record per metric -------------------------------
