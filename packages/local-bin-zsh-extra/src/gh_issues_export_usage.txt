@@ -1,0 +1,19 @@
+Usage: gh-issues-export [OPTIONS] <owner/repo | github-url>
+
+Export GitHub issues as Markdown files with YAML frontmatter for RAG ingestion.
+
+Arguments:
+  repository    GitHub repo as owner/repo or full URL
+
+Options:
+  --output DIR   Output directory (default: ./gh-issues/<owner>-<repo>/)
+  --state STATE  Filter by issue state: open, closed, all (default: all)
+  --full         Force full re-export, ignore previous timestamp
+  --help         Show this help and exit
+
+Exit codes:
+  0  Success
+  1  Invalid arguments or missing repository
+  2  gh CLI not found or not authenticated
+  3  Repository not found or access denied
+  4  Network/API error

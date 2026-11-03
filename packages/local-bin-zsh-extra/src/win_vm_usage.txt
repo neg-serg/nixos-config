@@ -1,0 +1,56 @@
+win-vm — Windows 11 VM lifecycle manager for libvirt/QEMU/KVM
+
+Provides a declarative, config-driven interface on top of virt-install and
+virsh. The idea is to capture all VM customization (RAM, CPU topology, ISOs,
+GPU passthrough, Looking Glass, CPU pinning, USB devices, hugepages) in a
+single shell config file and let this script generate the right libvirt XML.
+
+Why not just use virt-manager?
+  virt-manager is fine for one-off setup but gives no reproducibility — if
+  you need to recreate the VM after a disk failure, reinstall, or a machine
+  change, you start from scratch. This script lets you redefine the VM from
+  config with one command.
+
+Workflow:
+
+  1. win-vm init              # create ~/.config/win-vm/config.sh
+  2. <edit config, set ISO paths>
+  3. win-vm check             # verify prerequisites (packages, groups, OVMF)
+  4. win-vm prepare           # download virtio-win ISO, create disk image
+  5. win-vm define            # create libvirt VM from config
+  6. win-vm start             # start VM
+  7. <install Windows via virt-viewer>
+  8. win-vm eject-install     # remove install ISOs from CD drives
+
+Optional extras (after Windows is installed):
+
+  win-vm gpu-add              # add GPU via PCI passthrough
+  win-vm lg-enable            # add IVSHMEM device for Looking Glass
+  win-vm cpupin               # pin vCPUs to host cores (avoids X3D CCD)
+  win-vm hugepages            # enable hugepages-backed memory
+  win-vm usb-add 0951:16ae    # hot-attach a USB device
+  win-vm looking-glass        # run looking-glass-client against the VM
+
+Lifecycle:
+
+  win-vm status               # show state
+  win-vm stop                 # ACPI shutdown (graceful)
+  win-vm kill                 # force off (like unplugging power)
+  win-vm edit                 # open virsh edit $VM_NAME
+  win-vm undefine             # remove from libvirt (keeps disk and nvram)
+  win-vm destroy-all          # remove VM + disk + nvram (DESTRUCTIVE, prompts)
+
+Configuration:
+
+  All knobs are shell variables sourced from $XDG_CONFIG_HOME/win-vm/config.sh
+  (defaults to ~/.config/win-vm/config.sh). Any value not set there falls
+  back to the default baked into this script — see the "Configuration" block
+  below for the full list.
+
+Prerequisites on NixOS:
+  Enable virtualisation.libvirtd, add OVMF to environment.systemPackages,
+  and install Looking Glass client if needed.
+
+Dependencies: virt-install, virt-xml, virsh, qemu-img, curl
+
+─────────────────────────────────────────────────────────────────────────────

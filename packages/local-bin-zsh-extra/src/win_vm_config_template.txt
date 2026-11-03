@@ -1,0 +1,58 @@
+# Windows VM configuration — sourced by ~/.local/bin/win-vm
+#
+# All values are optional. Uncomment to override the defaults baked into the
+# script. After changes, run `win-vm define` (if not yet defined) or re-apply
+# individual pieces via `win-vm gpu-add`, `win-vm cpupin`, etc.
+
+# ─── Identity ───
+# VM_NAME="win11"
+# VM_OS_VARIANT="win11"          # see: osinfo-query os
+
+# ─── Resources ───
+# VM_RAM_MB=16384
+# VM_CPU_SOCKETS=1
+# VM_CPU_CORES=4
+# VM_CPU_THREADS=2
+
+# ─── Storage ───
+# VM_DISK_PATH="/var/lib/libvirt/images/win11.qcow2"
+# VM_DISK_SIZE_GB=80
+
+# ─── ISOs ───
+# Put your Windows 11 ISO path here. virtio-win is auto-downloaded.
+VM_WINDOWS_ISO="${HOME}/Downloads/Win11.iso"
+# VM_VIRTIO_ISO="/var/lib/libvirt/images/virtio-win.iso"
+
+# ─── Network ───
+# "default"  = libvirt NAT (virbr0)
+# "br0"      = host bridge (set VM_NETWORK_TYPE="bridge")
+# VM_NETWORK="default"
+# VM_NETWORK_TYPE="network"
+
+# ─── Firmware (UEFI Secure Boot) ───
+# NixOS default paths use /run/libvirt/nix-ovmf/ (created by libvirtd module).
+# Override if using manually installed OVMF.
+# VM_OVMF_CODE="/run/libvirt/nix-ovmf/OVMF_CODE.secboot.fd"
+# VM_OVMF_VARS_TEMPLATE="/run/libvirt/nix-ovmf/OVMF_VARS.fd"
+
+# ─── GPU Passthrough (optional) ───
+# Find BDFs with: iommu-info
+# VM_GPU_PCI_BDF="0000:03:00.0"    # VGA function
+# VM_GPU_AUDIO_BDF="0000:03:00.1"  # HDMI audio function
+
+# ─── Looking Glass (requires GPU passthrough) ───
+# After `win-vm gpu-add`, run `win-vm lg-enable` and set:
+# VM_GRAPHICS="none"
+# VM_LOOKING_GLASS_SIZE_MB=128     # w * h * 4 * 2, rounded up to power of 2
+
+# ─── CPU pinning (9950X3D: non-V-cache CCD) ───
+# Check which cores to pin: lscpu --all --extended
+# VM_CPU_PIN_SET="16 17 18 19 20 21 22 23"
+
+# ─── Hugepages ───
+# VM_HUGEPAGES="yes"
+# Pre-allocate on host: echo 8192 | sudo tee /proc/sys/vm/nr_hugepages
+
+# ─── USB passthrough ───
+# Space-separated vendor:product IDs (find via lsusb)
+# VM_USB_DEVICES="0951:16ae 046d:c52b"
