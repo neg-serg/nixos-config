@@ -6,7 +6,10 @@
 #   scenes    one process per scene, and what each holds: fds, threads, RSS
 #   helpers   the helpers a live scene keeps appear once (a leaked second copy is
 #             the usual cause of a scene that "answered twice")
-#   bindings  Hyprland bindings registered twice (same modmask, key and submap)
+#   bindings  Hyprland bindings that would run the same action twice, and keys
+#             that carry several actions by design (a one-shot plus the submap
+#             reset, or a press and a release — Hyprland's own "multiple binds
+#             to one key")
 #   journal   panics from pleamar since boot, and core dumps for it
 #
 # Usage: check-pleamar-health.sh [REPO_ROOT]   (default: two levels up from here)
@@ -93,19 +96,27 @@ done
 # ---- duplicate composer bindings -----------------------------------------
 echo "pleamar-health: bindings"
 if command -v hyprctl > /dev/null 2>&1 && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && command -v jq > /dev/null 2>&1; then
-    duplicates=$(hyprctl binds -j 2> /dev/null | jq -r '.[] | "\(.modmask) \(.key) \(.submap // "")"' | sort | uniq -d || true)
-    if [ -n "$duplicates" ]; then
-        count=$(printf '%s\n' "$duplicates" | wc -l)
-        warn "$count binding(s) with the same modmask and key (submaps included; a submap may mean them)"
-        printf '%s\n' "$duplicates" | awk '
-            { group[$3] = group[$3] " " $2 }
-            END {
-                for (name in group)
-                    printf "       %-14s %s\n", (name == "" ? "global" : "submap " name), group[name]
-            }
-        ' | sort
+    entries=$(hyprctl binds -j 2> /dev/null | jq -r '.[] | "\(.modmask)\t\(.key)\t\(.submap // "")\t\(.release)\t\(.dispatcher)"' || true)
+    # The same bind twice (same modifiers, key, submap, release *and* dispatcher)
+    # would run one action twice — that is a mistake.
+    exact=$(printf '%s\n' "$entries" | sort | uniq -d)
+    if [ -n "$exact" ]; then
+        warn "$(printf '%s\n' "$exact" | wc -l) binding(s) registered twice with the same dispatcher (both would run)"
+        printf '%s\n' "$exact" | awk -F'\t' '{ printf "       key %s (mods %s%s) %s\n", $2, $1, ($3 == "" ? "" : " in " $3), $5 }'
     else
-        echo "  ok   no duplicate bindings"
+        # Several binds on one key with different dispatchers is Hyprland's
+        # supported "multiple binds to one key": this config's one-shots are the
+        # action plus `submap reset` (`binde_reset`), and M1+GRAVE is a press and
+        # a release. Worth a line, not a warning.
+        repeated=$(printf '%s\n' "$entries" | awk -F'\t' '
+            { key = $1 FS $2 FS $3 FS $4; count[key]++ }
+            END { for (k in count) if (count[k] > 1) print k }
+        ')
+        if [ -n "$repeated" ]; then
+            echo "  note $(printf '%s\n' "$repeated" | wc -l) key(s) carry more than one action by design (one-shot + submap reset, or press + release)"
+        else
+            echo "  ok   no duplicate bindings"
+        fi
     fi
 else
     echo "  skip no Hyprland session (HYPRLAND_INSTANCE_SIGNATURE)"
