@@ -1,0 +1,151 @@
+// pages/volume.plm — the mixer drawer (`drawer == volume`).
+//
+// Output and microphone volume/mute and the per-application streams, straight
+// from the `audio` service (INTERFACES.md §17: volume, muted, input,
+// input_muted, outputs, inputs, apps). No worker: the service is live while the
+// drawer is on screen. The logic carries every press/drag to sys.call:
+//   set_out/set_in        audio.volume / audio.input          (0..1)
+//   toggle_out/toggle_in  audio.mute / audio.input_mute       (flips)
+//   set_default_out/in    audio.default(id)                   (device switch)
+//   app_set               audio.app_volume(id, v)             (packed payload)
+//   app_mute              audio.app_mute(id)
+//
+// A repeated row has no name of its own, so an application's label and its
+// payload both carry the record index (s.index): `app_set` is packed as
+// index * 1000 + volume * 1000 (panels.luau unpacks it). Labels are unique
+// inside the surface, which is what makes `--say press` unambiguous.
+//
+// The per-monitor scale expression is the frozen one from INTERFACES.md §3.2,
+// read per copy through the component's parameter default; every design length
+// is multiplied by it inline and every text size additionally by `text_scale`.
+
+part Volume {
+    component VolumeDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 340 * scale, 320 * scale
+
+        group {
+            // The bar is bottom-anchored: the drawer rests bar.height + bar.gap
+            // above the monitor's bottom edge and slides the rest of the way out.
+            move: 0, (1 - lift) * 320 * scale
+
+            // ----***----------------------------- the card
+            body {
+                color: coal
+                opacity: 75%
+                box { from: 0, 0; size: 340 * scale, 320 * scale; corner: 0; opacity: 0% }
+            }
+
+            // ----***----------------------- output volume
+            text "Output" { at: 14 * scale, 16 * scale; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim }
+            for o in sinks {
+                text "{o.name}" { at: 76 * scale, 16 * scale; anchor: left center; width: 160 * scale; lines: 1; family: "Iosevka"; size: 12; color: skin.ink; show: o.default }
+            }
+
+            box { from: 14 * scale, 38 * scale; size: 216 * scale, 6 * scale; corner: 3 * scale; color: skin.ink; opacity: ink.active }
+            box { from: 14 * scale, 38 * scale; size: 216 * audio.volume * scale, 6 * scale; corner: 3 * scale
+                color: pick(audio.muted, volume.high, skin.accent); opacity: pick(audio.muted, 40%, 90%) }
+            ellipse { at: 14 * scale + 216 * audio.volume * scale, 41 * scale; radius: 6 * scale; color: skin.ink }
+            text "{audio.volume * 100, 0} %" { at: 240 * scale, 41 * scale; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink }
+            zone box vol_out { cursor: pointer; from: 14 * scale, 28 * scale; size: 216 * scale, 26 * scale; corner: 13 * scale
+                label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
+            on press vol_out { emit set_out(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
+            on drag vol_out { emit set_out(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
+
+            group { move: 274 * scale, 30 * scale
+                Capsule(52, 22, fill: skin.surface, alpha: pick(audio.muted, 60%, 100%), radius: 11, scale: scale)
+                text pick(audio.muted, "Mute", "Unmute") { at: 26 * scale, 11 * scale; anchor: center; family: "Iosevka"; size: 12; color: pick(audio.muted, skin.ink, skin.on.accent) }
+                zone box mute_out { cursor: pointer; from: 0, 0; size: 52 * scale, 22 * scale; corner: 11 * scale
+                    label: pick(audio.muted, "Mute output", "Unmute output"); role: toggle; checked: audio.muted }
+                on press mute_out { emit toggle_out }
+            }
+
+            // Output devices, when there is more than one.
+            for o in sinks {
+                group { show: sinks.total > 1 and o.index < 3
+                    move: (14 + o.index * 92) * scale, 62 * scale
+                    Capsule(88, 16, fill: skin.surface, alpha: pick(o.default, 55%, 100%), radius: 8, scale: scale)
+                    text "{o.name}" { at: 44 * scale, 8 * scale; anchor: center; width: 80 * scale; lines: 1; family: "Iosevka"; size: 12; color: pick(o.default, skin.ink.dim, skin.ink) }
+                    zone box out_chip { cursor: pointer; from: 0, 0; size: 88 * scale, 16 * scale; corner: 8 * scale
+                        label: "Output device {o.name}"; role: button; checked: o.default }
+                    on press out_chip { emit set_default_out(o.index) }
+                }
+            }
+
+            box { from: 12 * scale, 88 * scale; size: 316 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
+
+            // ----***-------------------- microphone
+            text "Microphone" { at: 14 * scale, 104 * scale; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim }
+            for i in sources {
+                text "{i.name}" { at: 92 * scale, 104 * scale; anchor: left center; width: 144 * scale; lines: 1; family: "Iosevka"; size: 12; color: skin.ink; show: i.default }
+            }
+
+            box { from: 14 * scale, 126 * scale; size: 216 * scale, 6 * scale; corner: 3 * scale; color: skin.ink; opacity: ink.active }
+            box { from: 14 * scale, 126 * scale; size: 216 * audio.input * scale, 6 * scale; corner: 3 * scale
+                color: pick(audio.input_muted, volume.high, skin.accent); opacity: pick(audio.input_muted, 40%, 90%) }
+            ellipse { at: 14 * scale + 216 * audio.input * scale, 129 * scale; radius: 6 * scale; color: skin.ink }
+            text "{audio.input * 100, 0} %" { at: 240 * scale, 129 * scale; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink }
+            zone box vol_in { cursor: pointer; from: 14 * scale, 116 * scale; size: 216 * scale, 26 * scale; corner: 13 * scale
+                label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
+            on press vol_in { emit set_in(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
+            on drag vol_in { emit set_in(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
+
+            group { move: 274 * scale, 118 * scale
+                Capsule(52, 22, fill: skin.surface, alpha: pick(audio.input_muted, 60%, 100%), radius: 11, scale: scale)
+                text pick(audio.input_muted, "Mute", "Unmute") { at: 26 * scale, 11 * scale; anchor: center; family: "Iosevka"; size: 12; color: pick(audio.input_muted, skin.ink, skin.on.accent) }
+                zone box mute_in { cursor: pointer; from: 0, 0; size: 52 * scale, 22 * scale; corner: 11 * scale
+                    label: pick(audio.input_muted, "Mute microphone", "Unmute microphone"); role: toggle; checked: audio.input_muted }
+                on press mute_in { emit toggle_in }
+            }
+
+            for i in sources {
+                group { show: sources.total > 1 and i.index < 3
+                    move: (14 + i.index * 92) * scale, 150 * scale
+                    Capsule(88, 16, fill: skin.surface, alpha: pick(i.default, 55%, 100%), radius: 8, scale: scale)
+                    text "{i.name}" { at: 44 * scale, 8 * scale; anchor: center; width: 80 * scale; lines: 1; family: "Iosevka"; size: 12; color: pick(i.default, skin.ink.dim, skin.ink) }
+                    zone box in_chip { cursor: pointer; from: 0, 0; size: 88 * scale, 16 * scale; corner: 8 * scale
+                        label: "Input device {i.name}"; role: button; checked: i.default }
+                    on press in_chip { emit set_default_in(i.index) }
+                }
+            }
+
+            box { from: 12 * scale, 176 * scale; size: 316 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
+
+            // ----***----------------- application streams
+            text "Applications" { at: 14 * scale, 192 * scale; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim }
+            text "Nothing is playing" { at: 170 * scale, 264 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.off; show: streams.total == 0 }
+
+            column apps {
+                at: 14 * scale, 208 * scale
+                view: 312 * scale, 62 * scale
+                gap: 4 * scale
+                for s in streams {
+                    group {
+                        size: 312 * scale, 30 * scale
+                        text "{s.name}" { at: 2 * scale, 9 * scale; anchor: left center; width: 96 * scale; lines: 1; family: "Iosevka"; size: 11 * text_scale * scale; color: skin.ink }
+                        text "{s.title}" { at: 2 * scale, 22 * scale; anchor: left center; width: 96 * scale; lines: 1; family: "Iosevka"; size: 9 * text_scale * scale; color: skin.ink.dim }
+
+                        box { from: 104 * scale, 14 * scale; size: 96 * scale, 4 * scale; corner: 2 * scale; color: skin.ink; opacity: ink.active }
+                        box { from: 104 * scale, 14 * scale; size: 96 * s.volume * scale, 4 * scale; corner: 2 * scale
+                            color: pick(s.muted, ink.off, skin.accent); opacity: pick(s.muted, 60%, 90%) }
+                        ellipse { at: 104 * scale + 96 * s.volume * scale, 16 * scale; radius: 4 * scale; color: skin.ink }
+                        text "{s.volume * 100, 0} %" { at: 258 * scale, 16 * scale; anchor: right center; width: 34 * scale; family: "Iosevka"; size: 12; color: skin.ink.dim }
+                        zone box app_vol { cursor: pointer; from: 104 * scale, 4 * scale; size: 96 * scale, 26 * scale; corner: 13 * scale
+                            label: "Volume {s.name} {s.index, 0}"; role: slider; value: "{s.volume * 100, 0} %" }
+                        on press app_vol { emit app_set(s.index * 1001 + round(clamp((local.x - 104 * scale) / (96 * scale), 0, 1) * 1000)) }
+                        on drag app_vol { emit app_set(s.index * 1001 + round(clamp((local.x - 104 * scale) / (96 * scale), 0, 1) * 1000)) }
+
+                        group { move: 266 * scale, 7 * scale
+                            Capsule(46, 18, fill: skin.surface, alpha: pick(s.muted, 60%, 100%), radius: 9, scale: scale)
+                            text pick(s.muted, "Mute", "Unmute") { at: 23 * scale, 9 * scale; anchor: center; family: "Iosevka"; size: 9 * text_scale * scale; color: pick(s.muted, skin.ink, skin.on.accent) }
+                            zone box mute_row { cursor: pointer; from: 0, 0; size: 46 * scale, 18 * scale; corner: 9 * scale
+                                label: "Mute {s.name} {s.index, 0}"; role: toggle; checked: s.muted }
+                            on press mute_row { emit app_mute(s.index) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    VolumeDrawer() { show: drawer == volume }
+}

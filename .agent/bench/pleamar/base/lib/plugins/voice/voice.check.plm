@@ -1,0 +1,19 @@
+language 0.4
+
+// voice.check.plm — the compile proof of the voice badge (INTERFACES §10.2).
+
+import "../../palette.plm"
+import "./voice.plm" as voice
+
+scene voice_check {
+    surface { size: 200, 60; anchor: top; level: overlay; agent: hidden }
+
+    voice.Tile()
+    voice.Tile(scale: 1.5)
+
+    on demo {
+        Voice.active = true
+        Voice.glyph = "mic"
+        Voice.summary = "VOICE"
+    }
+}

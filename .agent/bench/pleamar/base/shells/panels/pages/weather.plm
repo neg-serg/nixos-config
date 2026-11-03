@@ -1,0 +1,119 @@
+// pages/weather.plm — the weather drawer (`drawer == weather`).
+//
+// Current conditions and a short daily forecast from the pleamar-weather
+// worker (Open-Meteo, MET Norway, wttr.in fallback; scripts/helpers/README.md): the
+// worker reports numbers and WMO codes, panels.luau turns them into the
+// formatted live texts this part draws (`weather.temp`, `weather.cond`,
+// `weather.wind`, `weather.humidity`, `weather.pressure`, `weather.city`) and
+// fills `forecast` with one record per day. Nothing here is invented: with no
+// worker or a failed fetch the texts say "--" and `weather.err` explains.
+//
+// The card hangs centred above the bar, like the legacy weather popup
+// (WeatherButton.qml anchors it to the bar's centre with panelModuleHeight + 4).
+
+part Weather {
+    component WeatherDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 300 * scale, 196 * scale
+
+        group {
+            move: 0, (1 - lift) * 196 * scale
+
+            // ----***----------------------------- the card
+            // Widgets/SidePanel/Weather.qml: `Color.withAlpha(Theme.surface, 0.85)`,
+            // `borderWidth: 0`, `radius: 0`, and one 1 px line of the accent at
+            // 0.25 across the top edge.
+            body {
+                color: coal
+                opacity: 85%
+                box { from: 0, 0; size: 300 * scale, 196 * scale; corner: 0; opacity: 0% }
+            }
+            box { from: 0, 0; size: 300, 1; color: skin.accent; opacity: 25% }
+
+            // What the reference draws with a canvas of clouds, rain, snow or a bolt at 25 % over
+            // the whole card (`Weather.qml` `weatherDecor`): here it is the condition's own glyph,
+            // large and faint in the corner, because a picture is one ligature in this language and
+            // forty hand-placed raindrops are not worth the frame. Declared before the readings so
+            // it stays behind them, and only once a sample has landed.
+            //
+            // The sun is the exception, and it is drawn: `lib/sun.plm` is the reference's
+            // `SunIcon` — glow, core and 72 shimmering rays — in the corner the decor glyph used
+            // (84 px centred on 258, 66), one to one, so no reading moves. Faint, like the decor it
+            // replaces: it sits behind the numbers, not in front of them.
+            // 72 px centred on (262, 52): the moon row is at y 100 and the readings above it are
+            // left alone, so the sun sits in the empty corner the decor glyph used. Faint — 22 %,
+            // where the glyph it replaces was 8 % — because it is behind the numbers, not over them.
+            // One occupant for one slot: the sun for a clear sky (WMO 0-2), the condition's glyph
+            // for everything else. The card has one corner here, the reference has a whole decor
+            // canvas behind the readings — so what it draws faintly behind them is whichever of the
+            // two says the most about the sky.
+            group sun_decor { move: 226, 16; opacity: 22%
+                              show: weather.have and (weather.code == 0 or weather.code == 1 or weather.code == 2)
+                sun.Sun(72) { }
+            }
+            text weather.glyph { at: 258, 66; anchor: center; family: "Material Symbols Outlined"
+                                 size: 84; color: skin.accent; opacity: 8%; show: weather.have and not (weather.code == 0 or weather.code == 1 or weather.code == 2) }
+
+            // ----***--------------------- current conditions
+            text weather.city { at: 14, 16; anchor: left center; width: 200; lines: 1; family: "Iosevka"; weight: 700; size: 12; color: skin.ink }
+            text weather.temp { at: 14, 50; anchor: left center; family: "Iosevka"; size: 32; weight: 700; color: skin.ink }
+            text weather.unit { at: 84, 54; anchor: left center; family: "Iosevka"; size: 14; color: skin.ink.dim }
+            text weather.cond { at: 132, 50; anchor: left center; width: 154; lines: 2; family: "Iosevka"; size: 12; color: skin.ink.dim }
+            // The reference's Material icon beside the condition (Weather.qml `_wicon`).
+            text weather.glyph { at: 116, 50; anchor: center; family: "Material Symbols Outlined"; size: 16; color: skin.ink; opacity: 80%; show: weather.have }
+
+            // ----***-------------------------- metrics
+            // The details row (Weather.qml's second card): an arrow turned by the wind's angle, a
+            // drop with the humidity, and the moon with its name and illumination.
+            // `RotateBehavior` of the reference: the arrow turns to the new angle over
+            // `ui.anim.rotateMs` 220 ms instead of jumping (`~220ms` is that time, as a spring that
+            // does not overshoot; reduced motion settles it at once).
+            prop wind_angle = 0 ~220ms
+            follow wind_angle = weather.dir
+            group wind_arrow { pivot: 14, 100; rotate: wind_angle * 1deg
+                text "navigation" { at: 14, 100; anchor: center; family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+            }
+
+            // The reference's Spinner while the card waits (`Components/Spinner.qml`: a 270° arc,
+            // one turn per `ui.spinner.durationMs` 1000 ms, the gap carrying round). `spin` is the
+            // language's own per-second rotation and it freezes under `--reduced-motion`, so the
+            // spinner stops being a spinner exactly when it should.
+            prop spin_angle = 0
+            spin spin_angle by 360
+            arc { at: 158, 40; radius: 9; span: 270deg; width: 2; color: skin.accent
+                  rotate: spin_angle * 1deg; show: weather.loading }
+            text weather.wind { at: 25, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+            text "water_drop" { at: 104, 100; anchor: center; family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+            text weather.humidity { at: 115, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+            // The phase, drawn: QS puts `MoonPhaseIcon` here, not a static crescent — the disc
+            // with the terminator stippled (`Components/MoonPhaseIcon.qml`). 11 x 11 centred on the
+            // (166, 100) the glyph had, in the tones of the name printed beside it.
+            shader moon_face { at: 160.5, 94.5; size: 11, 11; values: weather.moonphase; colors: skin.ink.dim, skin.coal }
+            text weather.moon { at: 177, 100; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+            text "{weather.moonpct}%" { at: 286, 100; anchor: right center; family: "Iosevka"; size: 9; color: ink.off }
+
+            box { from: 14, 110; size: 272, 1; color: skin.ink; opacity: ink.subtle }
+
+            // ----***--------------------------- forecast
+            // One column per day, nothing stacked on anything: the day above,
+            // the high and the low under it, 54 wide each.
+            row days { at: 14, 120; gap: 0
+                for f in forecast {
+                    group {
+                        size: 54, 68
+                        text f.day { at: 27, 7; anchor: center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+                        // The day's own glyph, as the reference's forecast column draws one
+                        // (`materialSymbolForCode` on that day's code).
+                        text f.glyph { at: 27, 24; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink; opacity: 85% }
+                        text f.hi { at: 27, 42; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: skin.ink }
+                        text f.lo { at: 27, 58; anchor: center; family: "Iosevka"; size: 10; color: ink.off }
+                    }
+                }
+            }
+
+            text "Loading the weather…" { at: 168, 184; anchor: left center; family: "Iosevka"; size: 10; color: ink.off; show: weather.loading }
+            text weather.err { at: 150, 184; anchor: center; family: "Iosevka"; size: 10; color: warn }
+        }
+    }
+
+    WeatherDrawer() { show: drawer == weather }
+}

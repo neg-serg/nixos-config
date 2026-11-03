@@ -1,0 +1,134 @@
+// pages/network.plm — the flow dashboard (`drawer == network`).
+//
+// Legacy: files/quickshell/Bar/Modules/NetFlowPopup.qml (470 x 338 dp). What
+// that card actually draws, and this port follows it rather than an idea of a
+// network graph:
+//   `flow` at 17 bold, the interface in a pill at 11, LIVE/IDLE/OFF at 10;
+//   two readouts — the arrow caption at 10 bold in the disabled tone, the value
+//   at 20 bold, the peak at 10 — one per direction;
+//   a plot with three horizontal grid rules, each labelled on the right with a
+//   compact value (`1.2K`), and two series as an area under a bright line,
+//   upload first (1.4 wide) and download over it (2.0 wide);
+//   a footer line, `flow — see your network breathe · ~4 Hz · 60 s window`.
+// The earlier version of this file drew a three-dimensional waterfall of
+// columns; the reference has no such thing.
+//
+// The series are drawn as the stream gives them: one `line` per pair of samples, so what is on
+// screen is the traffic's own curve and not a column built out of a second of it. The reference
+// also fills the area under each line; this card does not — a fill needs the whole silhouette of
+// the curve, which a scene cannot address while it moves (one `path` carries at most 64 written
+// points, and the curve is 240 short segments).
+//
+// The data is the stream the reference reads — `flow -json-stream`, one JSON
+// record a line, at 250 ms a record (the counters the kernel gives it move about
+// that often; at the program's own 100 ms the samples blink to zero between
+// reads — see panels.luau) — spawned while this drawer is open and killed when
+// it closes. Colours: the reference chains blue to cyan for download
+// and green to lime for upload; this palette has no green, so download is
+// `highlight` and upload `amber`.
+//
+// Every length is a design-pixel literal inside `group zoom { scale }`: `size:`
+// and `weight:` take ONE number and drop the rest (INTERFACES §9.2).
+//
+// The part is `NetPanel`, not `Network`: identifiers are case-insensitive here,
+// so a part named after the drawer's enum value shadows it and `show: drawer ==
+// network` never fires.
+//
+part NetPanel {
+    component NetPanelDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 470 * scale, 338 * scale
+
+        // The plot: 14..414 across, 116..296 down, so the compact axis labels
+        // have room on the right where the reference puts them.
+        // flow's palette, which the reference hard-codes rather than taking
+        // from the theme: download blue to cyan, upload green to lime.
+        let down.a = #3B82F6
+        let down.b = #00F5D4
+        let up.a = #10B981
+        let up.b = #A3E635
+
+        let plot.x = 14
+        let plot.w = 400
+        let plot.y = 116
+        let plot.h = 180
+
+        group {
+            move: 0, (1 - lift) * 338 * scale
+
+            group zoom {
+                scale: scale
+
+                // ----***------------------------- the card
+                body {
+                    color: coal
+                    opacity: 92%
+                        box { from: 0, 0; size: 470, 338; corner: 0; opacity: 0% }
+                }
+
+                // ----***------------------------ header
+                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: skin.ink }
+
+                group { move: 62, 9
+                    Capsule(96, 22, fill: skin.accent, alpha: 15%, edge: 1, edge_tone: skin.accent, edge_alpha: 35%, radius: 9, scale: 1)
+                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; family: "Iosevka"; size: 11; color: skin.ink }
+                }
+
+                ellipse { at: 404, 20; radius: 3.5; color: pick(net_live, down.b, ink.off) }
+
+                text pick(net_live, "IDLE", "LIVE") { at: 414, 20; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+
+                // ----***--------------- connection detail row
+                // The reference keeps the link/internet/tunnel state in the capsule's tooltip
+                // (NetClusterCapsule.qml:229-245) and this drawer has nothing of the kind — it
+                // draws the stream. The words are the reference's own, the ink is the same
+                // three-way as the link glyph (NetClusterCapsule.qml:41-43): status.error with
+                // no link, status.warning with a link but no internet, the accent with both.
+                // panels.luau asks the two questions while this drawer is open.
+                ellipse { at: 16, 38; radius: 3; color: if(net.link, if(net.internet, skin.accent, amber), warn) }
+                text "{net.state}" { at: 24, 38; anchor: left center; width: 420; lines: 1; family: "Iosevka"; size: 9.5; color: ink.off }
+
+                // ----***----------------------- readouts
+                text "↓ DOWN" { at: 14, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }
+                text "{net.rx}" { at: 14, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: down.b }
+                text "peak {net.peak_rx}" { at: 14, 96; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+
+                text "↑ UP" { at: 240, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }
+                text "{net.tx}" { at: 240, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: up.b }
+                text "peak {net.peak_tx}" { at: 240, 96; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+
+                // ----***--------------------------- plot
+                // Three rules at the thirds, each labelled to the right.
+                repeat g in 0..3 {
+                    box { from: plot.x, plot.y + plot.h - g * plot.h / 3; size: plot.w, 1; color: skin.ink; opacity: 18% }
+                }
+                text "{net.ax1}" { at: 422, plot.y + plot.h - plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
+                text "{net.ax2}" { at: 422, plot.y + plot.h - 2 * plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
+                text "{net.ax3}" { at: 422, plot.y + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
+
+                // Upload first, download over it, the way the reference stacks the two series, and
+                // one `line` per segment: the point `v.t0, v.rx0` is where the sample before this
+                // one sat in the window. Colours run along the window (blue to cyan, green to
+                // lime), as the reference's gradient does.
+                for v in flow {
+                    line { from: plot.x + v.t0 * plot.w, plot.y + plot.h - v.tx0 * plot.h
+                        to: plot.x + v.t1 * plot.w, plot.y + plot.h - v.tx1 * plot.h
+                        width: 1.4; color: mix(up.a, up.b, v.t1) }
+                }
+                for v in flow {
+                    line { from: plot.x + v.t0 * plot.w, plot.y + plot.h - v.rx0 * plot.h
+                        to: plot.x + v.t1 * plot.w, plot.y + plot.h - v.rx1 * plot.h
+                        width: 2; color: mix(down.a, down.b, v.t1) }
+                }
+
+                text "waiting for flow…" { at: 214, 206; anchor: center; family: "Iosevka"; size: 11; color: ink.off
+                    show: flow.total == 0 }
+                text "{net.err}" { at: 214, 214; anchor: center; family: "Iosevka"; size: 10; color: warn }
+
+                // ----***------------------------- footer
+                text "flow — see your network breathe   ·   ~4 Hz   ·   60 s window" { at: 14, 318; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
+            }
+        }
+    }
+
+    NetPanelDrawer() { show: drawer == network }
+}

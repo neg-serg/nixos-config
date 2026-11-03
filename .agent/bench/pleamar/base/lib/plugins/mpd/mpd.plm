@@ -1,0 +1,84 @@
+language 0.4
+
+// mpd.plm — the MPD flags capsule as a plugin: the state MPD reports and the
+// badge row that shows it.
+//
+// Legacy: files/quickshell/Bar/Modules/MpdFlags.qml (the `mpc status` parser,
+// the idle watch, the 2500 ms fallback poll) and the QS token
+// `media.mpd.flags.fallbackMs` -> palette `mpd.flags`.
+//
+// The badges are text, not icons: `lib/icons.plm` is not written yet
+// (INTERFACES §5.3), and a plugin that reached into the scene's icon names
+// would break the moment one moved. The short keys are the QS tooltip's names.
+//
+//     import "../../lib/plugins/mpd/mpd.plm" as mpd
+//     mpd.Flags()
+//
+// Compile proof: mpd.check.plm.
+
+import "../../../theme.plm"
+import "../../palette.plm"
+import "../../capsule.plm"
+
+library Mpd strict {
+
+    // mpc only: the QS fallback `rmpc status` is a second binary for a second
+    // client library, and this shell talks to MPD, not to a wrapper.
+    permissions { run: "mpc" }
+
+    // ------------------------------------------------------------- boundary
+    fact state: playing | paused | stopped | unknown = unknown
+    fact repeat = false
+    fact random = false
+    fact single = false
+    fact consume = false
+    fact xfade = false
+    // mpc could not reach MPD (no socket, no server): the scene hides the tile.
+    fact available = true
+    // The cursor is on the capsule. The tooltip card is the bar's surface, not the plugin's (a
+    // plugin has none), so the scene watches this fact and asks the logic for the line — the same
+    // arrangement the Genelec tile uses.
+    fact hot = false
+
+    // ----------------------------------------------------------------- flags
+    // The QS capsule is as wide as its content (`horizontalPadding * 2 +
+    // content.implicitWidth`), so the width follows the number of flags that are
+    // on: bools add, and an empty capsule is not drawn at all (the scene hides
+    // it). The glyphs are the Material Symbols names QS passed to MaterialIcon
+    // (`repeat`, `shuffle`, `repeat_one`, `auto_delete`, `blur_linear`), drawn
+    // from the same font with its ligatures, at the QS size
+    // (fontSizeSmall * capsuleScale = 14) and its emphasis opacity.
+    // The badges are the reference's ink and its colour: MpdFlags.qml draws them in
+    // `Theme.textPrimary` (not the "playing" highlight) at
+    // `Theme.uiIconEmphasisOpacity`, whether or not anything is playing. Measured on the
+    // two bars: the reference's shuffle badge is #804060, the port's was ink.dim grey.
+    // `type_scale` is the scene's `fontScale` (the bar's `text_scale` fact): a strict library
+    // cannot read the scene's facts, so the multiplier comes in as a parameter.
+    component Flags(scale: number = ui, type_scale: number = 1) {
+        let glyph.gap = 2
+        let glyph.size = 14
+        let shown = repeat + random + single + consume + xfade
+        // No capsule around the badges: MpdFlags.qml wraps them in a WidgetCapsule that draws
+        // nothing, and the plate this port added was the whole difference — measured, the
+        // reference's shuffle badge is 11 logical px of ink, the port's 25, because the 25 was
+        // the capsule's rim, not the glyph.
+        let w = shown * glyph.size + max(0, shown - 1) * glyph.gap
+        let h = capsule.height
+        size: ((repeat + random + single + consume + xfade) * 14 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, capsule.height * scale
+        group zoom {
+            scale: scale
+            row flags {
+                    gap: 2
+                    align: center
+                    text "repeat" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: repeat }
+                    text "shuffle" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: random }
+                    text "repeat_one" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: single }
+                    text "auto_delete" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: consume }
+                    text "blur_linear" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: xfade }
+            }
+            zone box flags { from: 0, 0; size: w, h; corner: corner; label: "MPD"; role: region; value: "{state}" }
+            on enter flags { hot = true }
+            on leave flags { hot = false }
+        }
+    }
+}

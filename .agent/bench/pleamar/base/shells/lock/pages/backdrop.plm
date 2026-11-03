@@ -1,0 +1,54 @@
+// pages/backdrop.plm — the wallpaper: posterised, dithered, run through the tube.
+//
+// Drawn inside the scene's surface, below everything else. One group shader
+// carries both QML passes (shaders/paper.wgsl): the picture is pushed to four
+// levels through an ordered Bayer dither, then the tube's barrel curve,
+// chromatic aberration, bloom, scanlines and vignette are applied over it. The
+// shader draws the legacy dot-grid fallback itself when no wallpaper path was
+// published, so the scene needs no second shader for that case.
+//
+// The picture is drawn at the whole surface and `fit: cover`: it keeps its own
+// proportions and the screen crops it, which is the reference's
+// `Image.PreserveAspectCrop` (background/BackgroundImage.qml:300-310). The cell it
+// comes from is declared with the picture's own shape (`image wall = from wallpaper,
+// 0, 0`), so nothing letterboxes it on the way to the atlas — a fixed 16:9 cell put
+// black bands over a panorama, and the login screen showed a strip between them.
+// `screen.*` inside the surface belongs to its own copy (INTERFACES.md §3.2), so the
+// arithmetic lives here and not in a `let` the copies would share.
+
+part Backdrop {
+
+    group deck {
+        // barrel, aberration, scanlines, grille, bloom, vignette, dither
+        // amount, dither cell (paper.wgsl)
+        shader: paper, 0.008, 0.6, 0.13, 0.05, 0.35, 0.35, 0.55, 2
+
+        image wall {
+            at: 0, 0
+            size: screen.width, screen.height
+            fit: cover
+            show: wall_ok
+        }
+    }
+
+    // The scrim of LockContent.qml: 18 % of the theme's darkest tone over the tube, so the eye
+    // lands on the clock and the card. It is `skin.coal` — the wallpaper's colors.background
+    // role, the same tone the drawers and the launcher lay under themselves — so a light wallpaper
+    // veils with its own light tone instead of frozen black. The vignette lives in paper.wgsl.
+    //
+    // It covers three screens' worth, centred on the scene's origin, because `size:` on a
+    // `kind: lock` surface is "the box that gets centred on each monitor" and the runtime's own
+    // reference says to paint the backdrop large, "what lies around it shows too" (pleamar --docs
+    // reference, the lock-screen section; its example draws its backdrop from -4000). A box
+    // written `full` is the monitor itself (`pleamar-lock-full.patch`: a zero box was centred on
+    // the monitor, which put the scene's origin at the monitor's centre and painted the whole
+    // login screen half a panel away — the card in a corner, the rest black, no error anywhere),
+    // so with one monitor this is a plain full-screen pane; with several it is what keeps every
+    // face covered, since the scene sees the largest one and each face shows its own part.
+    box scrim {
+        from: -screen.width, -screen.height
+        size: screen.width * 3, screen.height * 3
+        color: skin.coal
+        opacity: 18%
+    }
+}
