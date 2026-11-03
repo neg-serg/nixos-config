@@ -36,7 +36,15 @@ in
       # Optimize initrd compression (smaller image, slower rebuilds)
       optimizeInitrdCompression = true;
       quietBoot = true; # Reduce boot verbosity to speed kernel + userspace stage slightly
-      thpMode = "madvise"; # Prefer THP on madvise only to reduce jitter
+      # 2 MiB pages for the Nix evaluator's ~3 GiB bdwgc heap: measured on a toplevel
+      # eval, minor faults drop 802k -> 50k (-93.8 %) and wall clock 8.50 -> 7.63 s
+      # (-10.3 %) with instructions unchanged, so the win is kernel-side page handling
+      # rather than fewer computations. `madvise` was the old value, chosen to reduce
+      # jitter, and it left the heap on 4 KiB pages because bdwgc never asks for huge
+      # ones. Cost: eval RSS +2.15 % and the host's AnonHugePages peak roughly doubles.
+      # modules/system/kernel/thp-policy.nix writes the same policy at activation, so a
+      # switch applies it without waiting for a reboot.
+      thpMode = "always";
       # Dial back aggressive defaults for desktop security/stability
       disableMitigations = false;
       disableAudit = false;
