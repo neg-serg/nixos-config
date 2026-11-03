@@ -40,12 +40,16 @@ part Cava {
                 on press cava_grab {
                     cava.gx = cava.nx
                     cava.gy = cava.ny
+                    busy = true
                 }
                 on drag cava_grab {
                     cava.nx = clamp(cava.gx + drag.dx / screen.width, 0, max(0, 1 - 320 * scale / screen.width))
                     cava.ny = clamp(cava.gy + drag.dy / screen.height, 0, max(0, 1 - 118 * scale / screen.height))
                 }
-                on release cava_grab { emit cava_moved }
+                on release cava_grab {
+                    busy = false
+                    emit cava_moved
+                }
             }
         }
     }
