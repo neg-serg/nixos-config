@@ -46,17 +46,17 @@ let
   # builtins.attrNames, so the section comments are organizational only.
   aliases = {
     # Core eza/ls aliases
-    "ls" = "eza --icons=auto --hyperlink";
-    "l" = "eza --icons=auto --hyperlink -lbF --git";
-    "ll" = "eza --icons=auto --hyperlink -lbGF --git";
-    "llm" = "eza --icons=auto --hyperlink -lbGF --git --sort=modified";
-    "la" = "eza --icons=auto --hyperlink -lbhHigUmuSa --time-style=long-iso --git --color-scale";
-    "lx" = "eza --icons=auto --hyperlink -lbhHigUmuSa@ --time-style=long-iso --git --color-scale";
-    "lt" = "eza --icons=auto --hyperlink --tree --level=2";
-    "eza" = "${mkCmd "eza"} --icons=auto --hyperlink";
-    "lS" = "eza --icons=auto --hyperlink -1"; # One entry per line
-    "lcr" = "eza --icons=auto --hyperlink -al --sort=created --color=always";
-    "lsd" = "eza --icons=auto --hyperlink -alD --sort=created --color=always";
+    "ls" = "eza --icons=auto --hyperlink=auto";
+    "l" = "eza --icons=auto --hyperlink=auto -lbF --git";
+    "ll" = "eza --icons=auto --hyperlink=auto -lbGF --git";
+    "llm" = "eza --icons=auto --hyperlink=auto -lbGF --git --sort=modified";
+    "la" = "eza --icons=auto --hyperlink=auto -lbhHigUmuSa --time-style=long-iso --git --color-scale";
+    "lx" = "eza --icons=auto --hyperlink=auto -lbhHigUmuSa@ --time-style=long-iso --git --color-scale";
+    "lt" = "eza --icons=auto --hyperlink=auto --tree --level=2";
+    "eza" = "${mkCmd "eza"} --icons=auto --hyperlink=auto";
+    "lS" = "eza --icons=auto --hyperlink=auto -1"; # One entry per line
+    "lcr" = "eza --icons=auto --hyperlink=auto -al --sort=created --color=always";
+    "lsd" = "eza --icons=auto --hyperlink=auto -alD --sort=created --color=always";
     # Core tools
     "cat" = "bat -pp";
     "g" = "git";
