@@ -46,8 +46,8 @@ language 0.4
 //
 // What the reference is, measured off its own strip (DP-2, 3840x2160 @2x; the
 // bar occupies the last 50 physical rows, the gate's crop starts 20 above it):
-//   · one surface 25 logical px tall, reserving 25 — QS draws panelHeight 22 at
-//     Theme.scale() 1.15, and 22 * 1.15 rounds to 25;
+//   · one surface 25 logical px tall, reserving 25 — QS draws its panelHeight 22 at
+//     panel.scale 1.15, which lands on 25 logical px on this monitor;
 //   · a full-width face of coal at ~84 % (rgb(12,14,16) over bright wallpaper,
 //     rgb(6,7,8) over dark), no rim, no shadow;
 //   · each widget on its own WidgetCapsule face: 53 % coal, radius 6, ~14
@@ -141,20 +141,19 @@ scene bar {
     fact bar_edge: top | bottom = bottom
     fact shown = true
     fact startup = false
-    // The gap between two capsules, QS panel.widgetSpacing 4 at the 1.35
-    // interWidgetRatio: round(4 * 1.15) = 5 logical, times 1.35 rounds to 7 —
-    // 6.1 design px, six here.
-    // 7, not 6: the reference's plates sit at 5, 72, 158, 223 with gaps of 9 then 7,
-    // and a uniform 6 left every capsule after the clock 3 logical px short.
+    // The gap between two capsules: the reference's panel.widgetSpacing 4 at the
+    // interWidgetRatio 1.35 is 5.4 logical px, and its plates sit at 5, 72, 158, 223 with gaps
+    // of 9 then 7. A uniform 6 left every capsule after the clock 3 logical px short, so this
+    // bar draws the 7 its own measurement gives.
     let row.gap = 7
     // How many of the six monitor pairs are there at all: the reference's own
     // rule (SystemMonitorCapsule._vis*), the GPU only on a machine that has
     // one, swap only above systemMonitorSwapShowThreshold. A `let` INSIDE the
     // component would not do: a component's `size:` is read in the caller's
     // scope, and there the name `shown` is the scene's own fact.
-    // The tray's slot, in design px: 22 = max(CapsuleMetrics.inner 16,
-    // panelHeight 22) * 1.15 rounded, which is QS's trayIconSlot. A scene-level
-    // let because a component's `size:` is read in the caller's scope.
+    // The tray's slot: QS's trayIconSlot is 22 logical px (max(CapsuleMetrics.inner 16,
+    // panelHeight 22)), its icon 20 inside a 21 px frame. A scene-level let because a
+    // component's `size:` is read in the caller's scope.
     // The seam between the halves is 8 logical px wide and slanted
     // (`BarLayout.wedgeWidthNorm` caps the wedge at the same 8): tried as a gap
     // of 7 design px between two leaning paths, and the centre of the strip got
@@ -164,9 +163,8 @@ scene bar {
     // right triangle (`capsule.rightTriangleVisible`, width factor 0.75,
     // highlight `max(2, 3 * s)` in a darkened accent), not a seam.
     // Every capsule face, from WidgetCapsule.qml + this theme:
-    //   height `uniformCapsuleHeight` = max(CapsuleMetrics.height = inner 16 +
-    //   2 * pad 5, round(panelHeight 22 * 0.55 * 1.15)) = 26 logical px = 23
-    //   design, centred in the 25 design strip (y = 1);
+    //   height: the reference's uniformCapsuleHeight is 26 logical px at its 1.15 scale; this
+    //   strip is 25, so its plates are 23 at y 1 — the same 1 px of air above and below —
     //   fill `WidgetBg.color(settings, key, fallback)` -> widgetBackgrounds.default
     //   `#000000b0` = 69 %, which is what this bar runs (colors.surface's 53 %
     //   would only apply with no widgetBackgrounds entry);
@@ -478,32 +476,26 @@ scene bar {
     event next_layout ->
 
     // --------------------------------------------------------------- surface
-    // 25, not QS's `panelHeight` of 22: the reference draws that 22 at
-    // `Theme.scale(screen)` = panel.scale 1.15 (drawn on a 2x monitor it lands
-    // at 2.3 physical px per design px, a 25-logical-px surface). pleamar's
-    // `screen.width`/`height` are the SURFACE's, not the monitor's, so the
-    // per-monitor fit of palette rule 2 reads 22/1080 here and clamps to
-    // fit.min — the port drew everything at 0.92 instead of 1.15, 20% small.
-    // A bar surface has one scale, so it is `ui` and the surface is 22 * 1.15
-    // rounded: 25. The reserve is the same 25, so windows stop at the bar
-    // exactly where they do under Quickshell (measured: hyprctl reports the QS
-    // panel at 0,1055 1920x25).
-    // The hotzone: QS's `panel.hotzone.width` is 9 design px (10 logical at panel.scale
-    // 1.15), carried by the surface *above* the strip and reserved by nothing — it is the
-    // band a tooltip lives in and the pointer enters from. Without it the scene could not
-    // hold one: the tooltip's own surface needs room above the strip, and the renderer
-    // said so itself — "a drawing is cut: it needs 2 px above more than this 1920 x 25
-    // surface has".
+    // The strip is 25 logical px. That is the reference's screen height, not its design
+    // number: QS draws `panelHeight` 22 at panel.scale 1.15, which is 25 on this monitor, and
+    // hyprctl reported its panel at 0,1055 1920x25. This scene runs `ui = 1` (palette.plm says
+    // why: whole pixels instead of 16.1 px type), so the 25 is a plain number here and every
+    // number below it is logical — design px and logical px are the same unit in this file.
+    // The reserve is the same 25, so windows stop at the bar exactly where they do under
+    // Quickshell.
+    // The hotzone: QS's `panel.hotzone.width` is 9 design px at its scale — 10 logical here —
+    // carried by the surface *above* the strip and reserved by nothing: it is the band a
+    // tooltip lives in and the pointer enters from. Without it the scene could not hold one:
+    // the tooltip's own surface needs room above the strip, and the renderer said so itself —
+    // "a drawing is cut: it needs 2 px above more than this 1920 x 25 surface has".
     let hot = 10
-    // How tall the strip is inside the surface: 25 design px drawn at `ui` 1.15. The
-    // coordinates at this level are logical (a row's `at:` is not multiplied by the scale;
-    // only a component's `size:` is), which is why this one number is written in logical px
-    // and the design numbers below it are not.
+    // How tall the strip is inside the surface: 25 logical px. The coordinates at this level
+    // are logical too (a row's `at:` is not multiplied by any scale), which is why the band
+    // is written as one number and nothing below it needs converting.
     let band = 25
     surface {
-        // 25 design px of content are 28.75 logical at `ui` 1.15, plus 10 of hotzone. A
-        // surface's `size:` takes a literal (header, line 23), so the arithmetic is here and
-        // not in the language: 29 + 10.
+        // The 25 px strip plus the 10 px hotzone. A surface's `size:` takes a literal (header,
+        // line 23), so the arithmetic is written out here and not in the language: 25 + 10.
         size: full, 35
         anchor: bar_edge
         level: top
@@ -546,8 +538,9 @@ scene bar {
     // The moon's own shader: the phase terminator, stippled (moon.wgsl).
     shader moon_face = file "moon.wgsl"
 
-    // Icons as SVG, not as a glyph font: a text glyph is rasterised at 14 * 1.15 = 16.1 logical px
-    // and the fraction is what blurs it, while a vector is drawn at the device pixel grid. The
+    // Icons as SVG, not as a glyph font: a text glyph is rasterised at its font size and the
+    // fraction (16.1 px back when the scene drew at 1.15) is what blurred it, while a vector is
+    // drawn at the device pixel grid. The
     // Material-shaped files are the font's own outlines, so the pictures do not change — only
     // their edges: resvg rasterises them at the surface's scale instead of hinting a 14 px font.
     image icon_keyboard = file "icons/keyboard.svg", 14, 14
@@ -595,10 +588,10 @@ scene bar {
     // (`tip_open`): a card that took its size from a text has to be measured where it is drawn,
     // so the room is there for a frame before the card is.
     //
-    // It used to be impossible to show at all: pleamar sizes surfaces in LOGICAL px while their
-    // content is drawn at `ui` 1.15, so a surface 25 px tall held only 21.7 design px and the
-    // card was cut ("a drawing is cut: it needs 2 px above more than this 1920 x 25 surface
-    // has"). The bar's own surface pays for the hotzone now, and this one is 104 tall.
+    // It used to be impossible to show at all: while the scene drew at 1.15, a surface 25 px
+    // tall held only 21.7 design px of content and the card was cut ("a drawing is cut: it needs
+    // 2 px above more than this 1920 x 25 surface has"). With `ui = 1` the arithmetic is plain,
+    // the bar's own surface pays for the hotzone, and this one is 104 tall.
     // Renamed away from `tip`: the engine build on this host hands a rectangle to `tip` and
     // `tray_menu`, which swallows the pointer. This name is nobody's rule, and the catcher
     // (the one surface that needs the rectangle) keeps its own.
@@ -880,11 +873,11 @@ scene bar {
     // The service writes time and date itself; no slot here pads numbers, so
     // neither is composed from hour/minute.
     component Clock(dip: number = 0, scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        // QS's ClockWidget prints the time at round(fontSizeSmall 14 * timeFontScale
-        // 0.7 * capsuleScale 1.15) = 11 logical px. 14 design px here is 16.1 over
-        // the group's scale and measured 34 px of ink against the reference's 28;
-        // 11.5 is 13.2 and lines up. (An earlier note claimed 14 "agrees" — it was
-        // measuring width against a different face.)
+        // QS's ClockWidget prints the time at round(fontSizeSmall 14 * timeFontScale 0.7 * its
+        // 1.15 scale) = 11 logical px. This bar draws 14: measured on the raster that is 34 px
+        // of ink against the reference's 28, and the 11.5 the port's own note asked for was
+        // never taken — the size is a known divergence, kept because the 47 px plate and the
+        // left row were tuned around it.
         // As wide as the time it prints, plus the capsule's 6 px of padding on each side: 50 held a
         // fixed 38 px of text and left the rest as dead plate.
         // 47 = 6 + 35 (five glyphs of Iosevka at 14 are 7 px each) + 6. A `measure` on the text
@@ -1036,7 +1029,7 @@ scene bar {
                 align: center
                 // 0, not `strip / 2 - 12`: the pairs are `strip` tall and already centred by the
                 // row's own `align`, and each one carries its own `scale` — inside this `group zoom`
-                // that made every pair 1.15² and the row taller than the strip.
+                // that made every pair scale twice and the row taller than the strip.
                 at: 6, 0
                 SysmonPair(icon_cpu, cpu, true, cpu < 0.03, 0.5, 0.8, scale: 1)
                 SysmonPair(icon_ram, ram, true, ram < 0.03, 0.5, 0.8, scale: 1)
@@ -1334,10 +1327,9 @@ scene bar {
     // collapsed trigger and the tray's own menu. All of them reach bar.luau as events, and
     // `tray.expanded` is what comes back: this file draws, the logic counts the milliseconds.
     //
-    // Geometry from SystemTray.qml: a slot of `trayIconSlot` = max(inner 16,
-    // panelHeight 22) * 1.15 = 25 logical px, the icon `trayIconSize` = 20 inside
-    // a 21 px frame, slots 2 logical px apart. At 2.3 physical px per design that
-    // is a 22 design slot and an 18 design icon, with no capsule padding
+    // Geometry from SystemTray.qml: a slot of `trayIconSlot` = 22 logical px (max(inner 16,
+    // panelHeight 22)), the icon `trayIconSize` = 20 inside a 21 px frame, slots 2 logical px
+    // apart — a 22 px slot and an 18 px icon here, with no capsule padding
     // (`horizontalPadding` is 0 while the spacing is tight).
     // One icon: its frame, the picture and the hit zone. A component taking the
     // record, because that is how a list is walked here (notifications does the
@@ -1665,10 +1657,10 @@ scene bar {
     // The playback controls, as QS's `MediaTransport` under a `SlideReveal`: their own
     // pill to the LEFT of the media capsule, which slides aside while it is up.
     //
-    // Sizes from the reference (Theme.fontSizeSmall 14, capsuleScale 1.15): a button is
-    // round(round(14 * 1.15 * 1.1) * 1.6) = 29 logical px, the row's spacing is
-    // round(6 * 1.15) = 7, and the pill's padding is 1.5 * 6 = 9. In this scene's design
-    // pixels that is 25, 5 and 8, and 101 wide with the two gaps.
+    // Sizes from the reference (Theme.fontSizeSmall 14 at its 1.15 scale): a button is
+    // round(round(14 * 1.15 * 1.1) * 1.6) = 29 logical px, the row's spacing 7, the pill's
+    // padding 1.5 * 6 = 9 — drawn here as 25, 5 and 8, the numbers this strip's own measurement
+    // gives, and 101 wide with the two gaps.
     component Transport(prev: event, toggle: event, next: event,
                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         let btn = 25
