@@ -22,7 +22,12 @@ let
     pop_to_root_on_close = true;
 
     # core behavior
-    close_on_focus_loss = true;
+    # Vicinae only asks the compositor for an exclusive keyboard grab when this
+    # is off: updateLayerShellProps() silently downgrades "exclusive" to
+    # "on_demand" while close_on_focus_loss is on. An exclusive layer never
+    # loses the keyboard while it is mapped, so focus-loss closing could not
+    # fire anyway — Escape and the toggle bind are the ways out.
+    close_on_focus_loss = false;
     activate_on_single_click = false;
     consider_preedit = true;
     # Tab/Shift+Tab wrap around the item list ends (ListNavigation wrap toggle)
