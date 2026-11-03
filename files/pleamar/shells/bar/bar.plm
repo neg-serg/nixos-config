@@ -1195,7 +1195,9 @@ scene bar {
             // component sizes), so a capsule that grew and shrank again would not reflow — the mode
             // is drawn in the 20 px the icon already owns, and the layout keeps its place.
             image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim; show: not kb_badge_on }
-            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18 * text_scale; color: skin.accent; show: kb_badge_on }
+            // The badge is 18 px, below WCAG's large-text threshold, so the plain accent (4.09:1 on
+            // the plate) is not enough for it; `accent.hover` is the text-safe tone at 5.79:1.
+            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18 * text_scale; color: skin.accent.hover; show: kb_badge_on }
             // The layout is a two-letter, lower-case word, so its ink is x-height only; anchored
             // on the line box it reads 1.25 px low against the digits around it (measured on the
             // raster), and the plate is the only place where that is visible. One px up is the
@@ -1271,15 +1273,21 @@ scene bar {
             image vpn_tray { at: 8, strip / 2 - 5; size: 10, 10; show: net.vpn and net.hiddify }
             // The weight is 700 because that is the face QS gets: it asks for Font.Black and
             // fontconfig answers with Iosevka Bold (`fc-match Iosevka:weight=black`), while
-            // 600 lands on Medium — a visibly lighter readout. 9.6 design px is the
-            // reference's 11 logical px (round(round(14 * 1.0) * 0.7)) divided by this
-            // scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel too tall.
-            // The reference also sets letterSpacing 0.5, which the scene language has no
+            // 600 lands on Medium — a visibly lighter readout. 9.6 is what makes the readout's
+            // fixed 24 px slot hold three digits, a dot and a decimal at Iosevka's half-em
+            // advance (5 * 4.8); at 10 the fifth glyph would not fit and the engine would elide
+            // it. The reference also sets letterSpacing 0.5, which the scene language has no
             // property for (its `letter_*` effects move glyphs without opening the line).
-            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
-            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 5; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
-            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 3; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
+            // Leading zeros are dimmed rather than dropped (QS `_dimLeadingZeros`), but at 45 %
+            // they measured 3.33:1 on the plate — below AA for 19 px type — so the dim is the
+            // lightest one that still reads: 60 % is 5.29:1 on the dark plate and 5.05:1 over a
+            // bright wallpaper, and still a clear step down from the digits' 14:1.
+            // The unit letters use `accent.hover`, not `accent`: at 9.6 px the plain accent is
+            // 4.09:1, and 5.79:1 is the text-safe tone of the same hue.
+            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 60%, 100%) }
+            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent.hover; family: "Iosevka"; show: net_rx_show_unit }
+            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 60%, 100%) }
+            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent.hover; family: "Iosevka"; show: net_tx_show_unit }
             // The capsule's own press zone starts after the VPN slot, so the two never overlap:
             // the left part is the Hiddify item's (QS puts a MouseArea over the slot), the rest
             // opens the flow drawer and carries the capsule's tooltip.
