@@ -59,6 +59,25 @@ pub struct ThemeFile {
 }
 
 impl ThemeFile {
+    /// The `theme.plm` this file describes, with the light side's whites worked
+    /// out from `kelvin` (`warm_palette`): only the accent comes from the file.
+    pub fn to_theme_at(&self, path: &Path, palette: &LivePalette, kelvin: f64) -> Theme {
+        let mut theme = self.to_theme(path);
+        theme.coal = hex_of(palette.coal);
+        theme.surface = hex_of(palette.surface);
+        theme.ink = hex_of(palette.ink);
+        theme.ink_dim = hex_of(palette.ink_dim);
+        theme.accent = hex_of(palette.accent);
+        theme.light = true;
+        theme.mode = "light";
+        theme.mode_note = format!("the light theme at {kelvin:.0} K");
+        theme.generated_by = format!(
+            "pleamar-themes from {} (light, {kelvin:.0} K)",
+            path.display()
+        );
+        theme
+    }
+
     /// The `theme.plm` this file describes, ready for
     /// [`Theme::render`](crate::render::Theme::render).
     ///
@@ -333,6 +352,35 @@ library Skin strict {
     }
 
     #[test]
+    fn a_warm_paper_is_warmer_than_a_cool_one() {
+        let warm = super::warm_palette(2700.0, "#b4541e");
+        let cool = super::warm_palette(6500.0, "#b4541e");
+        assert!(warm.coal.0 >= warm.coal.2, "warm paper leans red: {warm:?}");
+        assert!(
+            cool.coal.2 >= warm.coal.2,
+            "cool paper keeps more blue: {cool:?} vs {warm:?}"
+        );
+        assert!(
+            warm.coal.0 > 0.95 && warm.coal.1 > 0.85,
+            "paper is bright: {warm:?}"
+        );
+        assert!(warm.ink.0 < 0.25, "ink stays dark: {warm:?}");
+        assert!(warm.light);
+        assert_eq!(warm.temperature, Some(2700.0));
+        // The accent is the theme's own, in both.
+        assert!((warm.accent.0 - 0.7059).abs() < 0.001, "{warm:?}");
+    }
+
+    #[test]
+    fn the_white_point_is_normalized() {
+        for kelvin in [2000.0, 2700.0, 4300.0, 6500.0, 10000.0] {
+            let (r, g, b) = super::temperature_rgb(kelvin);
+            let peak = r.max(g).max(b);
+            assert!((peak - 1.0).abs() < 0.001, "{kelvin} K peak {peak}");
+        }
+    }
+
+    #[test]
     fn a_theme_without_a_palette_role_says_which() {
         let error = super::palette_from_text("let skin.coal = #000000\n").expect_err("must fail");
         assert!(error.contains("skin.surface"), "{error}");
@@ -352,6 +400,69 @@ library Skin strict {
 // tool that writes the theme also leaves the numbers where a scene may find
 // them: `<data>/pleamar/<scene>/palette.json`, one entry per colour channel.
 
+/// The warmth a light theme's paper can be given, in kelvin: the range the
+/// theme drawer's slider covers, and what it starts at.
+pub const WARMTH_MIN: f64 = 2700.0;
+pub const WARMTH_MAX: f64 = 6500.0;
+pub const WARMTH_DEFAULT: f64 = 4300.0;
+
+/// A black-body white for `kelvin`, the usual Tanner Helland approximation
+/// (2000–10000 K), normalized so its brightest channel is 1.
+pub fn temperature_rgb(kelvin: f64) -> (f64, f64, f64) {
+    let k = kelvin.clamp(2000.0, 10000.0) / 100.0;
+    let (mut red, mut green, mut blue);
+    if k <= 66.0 {
+        red = 255.0;
+        green = 99.470_802_586_1 * k.ln() - 161.119_568_166_1;
+        blue = if k <= 19.0 {
+            0.0
+        } else {
+            138.517_731_223_1 * (k - 10.0).ln() - 305.044_792_730_7
+        };
+    } else {
+        red = 329.698_727_446 * (k - 60.0).powf(-0.133_204_759_2);
+        green = 288.122_169_528_3 * (k - 60.0).powf(-0.075_514_849_2);
+        blue = 255.0;
+    }
+    red = (red / 255.0).clamp(0.0, 1.0);
+    green = (green / 255.0).clamp(0.0, 1.0);
+    blue = (blue / 255.0).clamp(0.0, 1.0);
+    let peak = red.max(green).max(blue).max(0.0001);
+    (red / peak, green / peak, blue / peak)
+}
+
+fn mix(a: (f64, f64, f64), b: (f64, f64, f64), amount: f64) -> (f64, f64, f64) {
+    (
+        a.0 + (b.0 - a.0) * amount,
+        a.1 + (b.1 - a.1) * amount,
+        a.2 + (b.2 - a.2) * amount,
+    )
+}
+
+/// A light theme's palette at `kelvin`: the paper (and the surface under it) comes
+/// from the temperature, the ink is its dark counterpart, and only the accent is
+/// the theme's own — a theme file for the light side names its accent and its
+/// warmth, and the whites are worked out from that number.
+pub fn warm_palette(kelvin: f64, accent: &str) -> LivePalette {
+    let white = (1.0, 1.0, 1.0);
+    let tone = temperature_rgb(kelvin);
+    let paper = mix(white, tone, 0.28);
+    let surface = (paper.0 * 0.94, paper.1 * 0.94, paper.2 * 0.94);
+    let dark = (0.078, 0.078, 0.078);
+    let ink = mix(dark, tone, 0.06);
+    let ink_dim = mix(ink, paper, 0.55);
+    LivePalette {
+        coal: paper,
+        surface,
+        ink,
+        ink_dim,
+        accent: channels(accent).unwrap_or((0.0, 0.435, 0.8)),
+        on_accent: (1.0, 1.0, 1.0),
+        light: true,
+        temperature: Some(kelvin),
+    }
+}
+
 /// The palette a converted scene draws with: five colours and `light`, as the
 /// channels a `fact` takes (0..1).
 #[derive(Clone, Debug, PartialEq)]
@@ -363,6 +474,9 @@ pub struct LivePalette {
     pub accent: (f64, f64, f64),
     pub on_accent: (f64, f64, f64),
     pub light: bool,
+    /// The warmth the palette was worked out at (kelvin), for the drawer's
+    /// slider; `None` for a palette that did not come from a temperature.
+    pub temperature: Option<f64>,
 }
 
 impl LivePalette {
@@ -388,9 +502,23 @@ impl LivePalette {
             }
         }
         out.push_str(&format!(",\"light\":{}", if self.light { 1 } else { 0 }));
+        if let Some(kelvin) = self.temperature {
+            out.push_str(&format!(",\"temperature\":{kelvin:.0}"));
+        }
         out.push('}');
         out
     }
+}
+
+/// Three channels (0..1) as the `#rrggbb` a `theme.plm` carries.
+pub fn hex_of(colour: (f64, f64, f64)) -> String {
+    let byte = |value: f64| (value.clamp(0.0, 1.0) * 255.0).round() as u8;
+    format!(
+        "#{:02x}{:02x}{:02x}",
+        byte(colour.0),
+        byte(colour.1),
+        byte(colour.2)
+    )
 }
 
 /// `#rrggbb` as the three channels a `fact` takes (0..1), or `None` when it is
@@ -456,5 +584,6 @@ pub fn palette_from_text(text: &str) -> Result<LivePalette, String> {
         accent,
         on_accent,
         light,
+        temperature: None,
     })
 }

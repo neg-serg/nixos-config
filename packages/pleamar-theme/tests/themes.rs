@@ -119,16 +119,20 @@ accent = \"#06C\"
     assert!(text.contains("// pleamar-themes from "), "{text}");
     assert!(text.contains("retro.toml"), "{text}");
     assert!(
-        text.contains("// mode:    light (the theme file says so)"),
+        text.contains("// mode:    light (the light theme at 4300 K)"),
         "{text}"
     );
     assert!(text.contains("library Skin strict {"), "{text}");
-    assert!(text.contains("let skin.coal = #101418"), "{text}");
+    // A light theme's whites are the warmth (4300 K by default), not the file's
+    // `coal`: only the accent is the theme's own.
+    assert!(text.contains("let skin.coal = #fff3ea"), "{text}");
+    assert!(text.contains("let skin.surface = #f0e5dc"), "{text}");
     assert!(text.contains("let skin.accent = #0066cc"), "{text}");
     assert!(text.contains("let skin.light = true"), "{text}");
-    // The keys this file left out keep the stock palette.
-    assert!(text.contains("let skin.surface = #242A35"), "{text}");
-    assert!(text.contains("let skin.ink.dim = #AEB9C8"), "{text}");
+    assert!(
+        !text.contains("#101418"),
+        "the file's coal is not used: {text}"
+    );
 
     let mode = fs::metadata(case.output())
         .expect("theme.plm metadata")

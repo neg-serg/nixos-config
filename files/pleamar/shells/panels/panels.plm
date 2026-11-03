@@ -106,6 +106,9 @@ scene panels {
     fact pal_on_accent_g = 1.0000
     fact pal_on_accent_b = 1.0000
     fact pal_light = 0
+    // The light theme's warmth, for the drawer's slider: 0 is 2700 K (warm), 1 is
+    // 6500 K (neutral). `pleamar-themes warm` takes kelvin and rebuilds the paper.
+    fact warm = 0.4211
 
     // The fit divisor is the work area, not the monitor. Inside a scene `screen.height` is
     // what the surfaces get (1080 minus the bar's 25 px reserve = 1055 here), while palette's
@@ -290,6 +293,8 @@ scene panels {
     // and `lib/` file by file (`modules/user/nix-maid/gui/pleamar.nix`), so a shader shared
     // through `lib/` would only reach the live tree at the next switch.
     shader moon_face = file "shaders/moon.wgsl"
+    // The theme drawer's page, for the light theme (shaders/paper.wgsl).
+    shader paper_sheet = file "shaders/paper.wgsl"
 
     // The shared slide: every drawer leaves and arrives with the same motion.
     // A loose prop in a `screens: each` scene is shared by the copies on purpose:
@@ -314,6 +319,8 @@ scene panels {
     // A row of the theme card was pressed: its index in `model.themes` (an event
     // payload is a number, so the logic keeps the paths).
     event theme_apply ->
+    // The warmth slider: 0 warm (2700 K) to 1 neutral (6500 K).
+    event theme_warm ->
 
     // A press or a drag on the media card's progress band: how far along the track, 0..1.
     event seek ->
@@ -346,6 +353,7 @@ scene panels {
     // ----***----------------------- live texts
     text sysmon.err = ""
     text theme.err = ""
+    text theme.warm = "4300 K"
     text weather.city = ""
     text weather.temp = ""
     // Published together with the value, not read from the flag at draw time:
@@ -431,7 +439,7 @@ scene panels {
     model sinks max 8 { id: text; name: text; default: bool }
     model sources max 8 { id: text; name: text; default: bool }
     model media_rows max 8 { glyph: text; value: text }
-    model themes max 8 { idx: number; name: text; detail: text; selected: bool; accent_r: number; accent_g: number; accent_b: number }
+    model themes max 6 { idx: number; name: text; detail: text; selected: bool; accent_r: number; accent_g: number; accent_b: number }
 
     // ----***------------------- audio (no worker)
     // Volume, microphone and the per-stream mixers come from the service; the
