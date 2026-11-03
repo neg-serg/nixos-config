@@ -6,11 +6,12 @@
 name: global
 theme: neg
 
-# Key bindings (patched lazytail: upstream 0.10.0 hard-codes every chord; see
-# packages/lazytail/keymap.patch). A list replaces the built-in chords for that
-# action, an empty list unbinds it, and `lazytail config validate` reports
-# unknown actions and chords bound twice. Style: vim/less — j/k/g/G stay as-is,
-# plus the tail -f / less aliases below. The `?` overlay renders live chords.
+# Key bindings (lazytail fork: upstream 0.10.0 hard-codes every chord, the
+# keymap commit lives in github.com/neg-serg/lazytail). A list replaces the
+# built-in chords for that action, an empty list unbinds it, and
+# `lazytail config validate` reports unknown actions and chords bound twice.
+# Style: vim/less — j/k/g/G stay as-is, plus the tail -f / less aliases below.
+# The `?` overlay renders live chords.
 keys:
   follow: ["f", "F"]                # F: tail -f / less habit
   help: ["?", "h"]
@@ -27,7 +28,7 @@ keys:
 
 # Rendering presets for the log formats these sources actually write (regex
 # parser with named captures, compiled once at startup). Two upstream gaps are
-# patched in packages/lazytail: presets load from this global config too
+# closed in the lazytail fork: presets load from this global config too
 # (upstream reads `renderers:` from a project lazytail.yaml only) and
 # `lazytail config validate` compiles them.
 #
