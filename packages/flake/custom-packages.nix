@@ -78,6 +78,7 @@
   npins = pkgs.npins;
   nix-init = pkgs.nix-init;
   tshark = pkgs.tshark;
+  strace-tui = pkgs.strace-tui; # syscall-trace explorer (TUI/JSON) for strace output
   galaxy-buds-client = pkgs.galaxy-buds-client;
   vial = pkgs.vial;
   ddcui = pkgs.ddcui;
