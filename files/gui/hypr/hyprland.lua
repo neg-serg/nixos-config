@@ -742,6 +742,10 @@ local function submap_resets()
 end
 
 
+-- Two binds on purpose: Hyprland runs every bind that matches one press
+-- (wiki.hypr.land, "Multiple binds to one key"), so the action fires and the
+-- submap returns to reset in the same press. `just health` reports such a pair as
+-- a note, not a duplicate, and warns only when one dispatcher is bound twice.
 local function binde_reset(key, fn)
   hl.bind(key, fn, { repeating = true })
   hl.bind(key, hl.dsp.submap("reset"), { repeating = true })
