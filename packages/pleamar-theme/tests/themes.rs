@@ -57,8 +57,19 @@ impl Case {
             .args(args)
             .env("HOME", self.root.join("home"))
             .env("XDG_CONFIG_HOME", self.config())
+            .env("XDG_DATA_HOME", self.root.join("data"))
             .output()
             .expect("run pleamar-themes")
+    }
+
+    fn palette(&self, scene: &str) -> String {
+        fs::read_to_string(
+            self.root
+                .join("data/pleamar")
+                .join(scene)
+                .join("palette.json"),
+        )
+        .expect("a palette.json for the scene")
     }
 }
 
@@ -269,4 +280,53 @@ fn plain_lists_one_row_per_theme_and_marks_the_applied_one() {
             assert_eq!(selected, "0", "{line}");
         }
     }
+}
+
+#[test]
+fn apply_leaves_the_live_palette_where_a_scene_reads_it() {
+    let case = Case::new("palette");
+    case.theme(
+        "amber",
+        "name = \"Amber\"\n[palette]\ncoal = \"#101418\"\naccent = \"#ffb347\"\nink = \"#ffffff\"\n",
+    );
+    let output = case.run(&["apply", "amber"]);
+    assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
+    for scene in ["bar", "panels"] {
+        let json = case.palette(scene);
+        assert!(json.contains("\"coal_r\":"), "{scene}: {json}");
+        assert!(json.contains("\"accent_r\":1.0000"), "{scene}: {json}");
+        assert!(json.contains("\"accent_g\":0.7020"), "{scene}: {json}");
+        assert!(json.contains("\"light\":0"), "{scene}: {json}");
+    }
+    let directory = case.root.join("data/pleamar/bar");
+    let mode = fs::metadata(&directory)
+        .expect("scene folder")
+        .permissions()
+        .mode()
+        & 0o777;
+    assert_eq!(mode, 0o700, "a scene folder is private");
+}
+
+#[test]
+fn push_reads_the_theme_in_place() {
+    let case = Case::new("push");
+    let output = case.run(&["push"]);
+    assert_eq!(output.status.code(), Some(1), "no theme.plm yet");
+    assert!(
+        stderr(&output).contains("cannot read"),
+        "{}",
+        stderr(&output)
+    );
+
+    fs::create_dir_all(case.config().join("pleamar")).expect("config dir");
+    fs::write(
+        case.config().join("pleamar/theme.plm"),
+        "library Skin strict {\n    let skin.coal = #000000\n    let skin.surface = #242A35\n    let skin.ink = #CBD6E5\n    let skin.ink.dim = #AEB9C8\n    let skin.accent = #00CC74\n    let skin.on.accent = #ffffff\n    let skin.light = false\n}\n",
+    )
+    .expect("theme.plm");
+    let output = case.run(&["push"]);
+    assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
+    assert!(stdout(&output).contains("pushed the palette to 2 scene(s)"));
+    let json = case.palette("panels");
+    assert!(json.contains("\"accent_g\":0.8000"), "{json}");
 }

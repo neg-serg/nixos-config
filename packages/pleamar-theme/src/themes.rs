@@ -28,6 +28,7 @@
 //! and decimal integers. A mistake is a `line N: …` error and the file is
 //! skipped; nothing is written.
 
+use std::fs;
 use std::path::Path;
 
 use crate::hex;
@@ -321,8 +322,158 @@ accent = \"#06C\"
     }
 
     #[test]
+    fn a_palette_is_read_out_of_the_generated_file() {
+        let text = "\
+library Skin strict {
+    let skin.coal = #101418
+    let skin.surface = #242a35
+    let skin.ink = #cbd6e5
+    let skin.ink.dim = #aeb9c8
+    let skin.accent = #0066cc
+    let skin.accent.hover = mix(skin.accent, #ffffff, 20%)
+    let skin.on.accent = #ffffff
+    let skin.light = true
+}
+";
+        let palette = super::palette_from_text(text).expect("parse");
+        assert_eq!(
+            palette.coal,
+            (
+                0x10 as f64 / 255.0,
+                0x14 as f64 / 255.0,
+                0x18 as f64 / 255.0
+            )
+        );
+        assert_eq!(
+            palette.accent,
+            (0.0, 0x66 as f64 / 255.0, 0xcc as f64 / 255.0)
+        );
+        assert_eq!(palette.on_accent, (1.0, 1.0, 1.0));
+        assert!(palette.light);
+        let json = palette.json();
+        assert!(json.starts_with("{\"coal_r\":0.0627,"), "{json}");
+        assert!(json.contains("\"accent_g\":0.4000"), "{json}");
+        assert!(json.ends_with(",\"light\":1}"), "{json}");
+    }
+
+    #[test]
+    fn a_theme_without_a_palette_role_says_which() {
+        let error = super::palette_from_text("let skin.coal = #000000\n").expect_err("must fail");
+        assert!(error.contains("skin.surface"), "{error}");
+    }
+
+    #[test]
     fn a_light_theme_is_not_true_by_words() {
         let error = parse("light = yes\n").expect_err("must fail");
         assert!(error.contains("light is true or false"), "{error}");
     }
+}
+
+// ======================= the live palette =======================
+//
+// The scenes that draw with `lib/palette-live.plm` cannot read
+// `~/.config/pleamar/theme.plm` — a scene reads only its own data folder — so the
+// tool that writes the theme also leaves the numbers where a scene may find
+// them: `<data>/pleamar/<scene>/palette.json`, one entry per colour channel.
+
+/// The palette a converted scene draws with: five colours and `light`, as the
+/// channels a `fact` takes (0..1).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LivePalette {
+    pub coal: (f64, f64, f64),
+    pub surface: (f64, f64, f64),
+    pub ink: (f64, f64, f64),
+    pub ink_dim: (f64, f64, f64),
+    pub accent: (f64, f64, f64),
+    pub on_accent: (f64, f64, f64),
+    pub light: bool,
+}
+
+impl LivePalette {
+    /// The JSON a scene reads with `sys.ask("files.read", "palette.json", "json")`.
+    pub fn json(&self) -> String {
+        let mut out = String::with_capacity(1024);
+        out.push('{');
+        let mut first = true;
+        for (name, channels) in [
+            ("coal", self.coal),
+            ("surface", self.surface),
+            ("ink", self.ink),
+            ("ink_dim", self.ink_dim),
+            ("accent", self.accent),
+            ("on_accent", self.on_accent),
+        ] {
+            for (channel, value) in [("r", channels.0), ("g", channels.1), ("b", channels.2)] {
+                if !first {
+                    out.push(',');
+                }
+                first = false;
+                out.push_str(&format!("\"{name}_{channel}\":{value:.4}"));
+            }
+        }
+        out.push_str(&format!(",\"light\":{}", if self.light { 1 } else { 0 }));
+        out.push('}');
+        out
+    }
+}
+
+/// Read the palette out of a generated `theme.plm` (`let skin.<role> = <value>`).
+pub fn palette_from_theme_file(path: &Path) -> Result<LivePalette, String> {
+    let text = fs::read_to_string(path)
+        .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+    palette_from_text(&text).map_err(|error| format!("{}: {error}", path.display()))
+}
+
+/// The parse itself, split out so a test can hand it a string.
+pub fn palette_from_text(text: &str) -> Result<LivePalette, String> {
+    let mut values: Vec<(&str, &str)> = Vec::new();
+    for line in text.lines() {
+        let line = line.trim();
+        let Some(rest) = line.strip_prefix("let ") else {
+            continue;
+        };
+        let Some((key, value)) = rest.split_once('=') else {
+            continue;
+        };
+        values.push((key.trim(), value.trim()));
+    }
+    let get = |role: &str| -> Result<&str, String> {
+        values
+            .iter()
+            .find_map(|(key, value)| (*key == role).then_some(*value))
+            .ok_or_else(|| format!("theme.plm has no `{role}`"))
+    };
+    let colour = |role: &str| -> Result<(f64, f64, f64), String> {
+        let raw = get(role)?;
+        let hex = hex::normalize(raw)
+            .ok_or_else(|| format!("theme.plm's `{role}` is not a hex colour: {raw}"))?;
+        let number = |range: std::ops::Range<usize>| -> f64 {
+            u8::from_str_radix(&hex[range], 16).unwrap_or(0) as f64 / 255.0
+        };
+        Ok((number(1..3), number(3..5), number(5..7)))
+    };
+    let coal = colour("skin.coal")?;
+    let surface = colour("skin.surface")?;
+    let ink = colour("skin.ink")?;
+    let ink_dim = colour("skin.ink.dim")?;
+    let accent = colour("skin.accent")?;
+    let on_accent = colour("skin.on.accent")?;
+    let light = match get("skin.light")? {
+        "true" => true,
+        "false" => false,
+        other => {
+            return Err(format!(
+                "theme.plm's `skin.light` is not true/false: {other}"
+            ))
+        }
+    };
+    Ok(LivePalette {
+        coal,
+        surface,
+        ink,
+        ink_dim,
+        accent,
+        on_accent,
+        light,
+    })
 }

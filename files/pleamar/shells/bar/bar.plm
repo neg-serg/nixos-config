@@ -48,11 +48,11 @@ language 0.4
 // bar occupies the last 50 physical rows, the gate's crop starts 20 above it):
 //   · one surface 25 logical px tall, reserving 25 — QS draws its panelHeight 22 at
 //     panel.scale 1.15, which lands on 25 logical px on this monitor;
-//   · a full-width face of coal at ~84 % (rgb(12,14,16) over bright wallpaper,
+//   · a full-width face of live.coal at ~84 % (rgb(12,14,16) over bright wallpaper,
 //     rgb(6,7,8) over dark), no rim, no shadow;
-//   · each widget on its own WidgetCapsule face: 53 % coal, radius 6, ~14
+//   · each widget on its own WidgetCapsule face: 53 % live.coal, radius 6, ~14
 //     design px tall;
-//   · left cluster order and ink spans: clock · workspace · keyboard · network ·
+//   · left cluster order and live.ink spans: clock · workspace · keyboard · network ·
 //     sysmon · weather.
 //
 // Two pleamar rules this file learned the hard way:
@@ -121,7 +121,7 @@ language 0.4
 //                 login gate, which lives in the deployment, not in a scene
 
 import "../../lib/palette.plm"
-import "../../theme.plm"
+import "../../lib/palette-live.plm"
 import "../../art.plm" as artacc
 import "../../lib/capsule.plm"
 import "../../lib/plugins/pill/pill.plm" as pill
@@ -133,6 +133,31 @@ import "../../lib/plugins/build/build.plm" as build
 import "../../lib/plugins/voice/voice.plm" as voice
 
 scene bar {
+
+    // The live palette (lib/palette-live.plm): the theme handed over as facts, so a
+    // new theme repaints this scene without a reload. bar.luau reads them out of the
+    // scene's own `palette.json` (`pleamar-themes push` writes it, and every apply
+    // and wallpaper run calls that); the defaults are the repository's theme.plm,
+    // so the first frame before that read looks as it always did.
+    fact pal_coal_r = 0.0000
+    fact pal_coal_g = 0.0000
+    fact pal_coal_b = 0.0000
+    fact pal_surface_r = 0.1412
+    fact pal_surface_g = 0.1647
+    fact pal_surface_b = 0.2078
+    fact pal_ink_r = 0.7961
+    fact pal_ink_g = 0.8392
+    fact pal_ink_b = 0.8980
+    fact pal_ink_dim_r = 0.6824
+    fact pal_ink_dim_g = 0.7255
+    fact pal_ink_dim_b = 0.7843
+    fact pal_accent_r = 0.0000
+    fact pal_accent_g = 0.4353
+    fact pal_accent_b = 0.8000
+    fact pal_on_accent_r = 1.0000
+    fact pal_on_accent_g = 1.0000
+    fact pal_on_accent_b = 1.0000
+    fact pal_light = 0
 
     // ------------------------------------------------- facts the interface fixes
     // `bar_edge` is the surface anchor; `shown` gates surface and reserve (tests
@@ -161,7 +186,7 @@ scene bar {
     // not match the reference's window: on this wallpaper neither shows, and
     // what looks like a diagonal in the reference is the WEATHER capsule's own
     // right triangle (`capsule.rightTriangleVisible`, width factor 0.75,
-    // highlight `max(2, 3 * s)` in a darkened accent), not a seam.
+    // live.highlight `max(2, 3 * s)` in a darkened live.accent), not a seam.
     // Every capsule face, from WidgetCapsule.qml + this theme:
     //   height: the reference's uniformCapsuleHeight is 26 logical px at its 1.15 scale; this
     //   strip is 25, so its plates are 23 at y 1 — the same 1 px of air above and below —
@@ -315,7 +340,7 @@ scene bar {
     // before — the bar, always up, has, so the menu opens on a width it already knows.
     measure tmw
     text tm_widest = ""
-    text "{tm_widest}" { measure: tmw; show: false; at: 0, 0; anchor: left top; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; lines: 1 }
+    text "{tm_widest}" { measure: tmw; show: false; at: 0, 0; anchor: left top; size: 14 * text_scale; color: live.ink; family: "Iosevka"; lines: 1 }
     fact tm.panel_h = 0
     // How deep the deepest drawn row sits: the plate has to be wide enough for its indent.
     fact tm.indent = 0
@@ -331,7 +356,7 @@ scene bar {
     text ws_lead = ""
     text ws_label = ""
     // The plate's width, composed by bar.luau from the very strings above (see the arithmetic
-    // there): 70 design px for the reference's ":term" (69) rounded up so the label's own ink fits.
+    // there): 70 design px for the reference's ":term" (69) rounded up so the label's own live.ink fits.
     fact ws.w = 70
     // The two halves of the network readout, as QS prints them.
     // The two readouts, without their unit letter — the capsule draws the number
@@ -355,7 +380,7 @@ scene bar {
     text net_rx_unit = ""
     text net_tx_unit = ""
     // How many leading zeros the readout starts with (QS dims them in textDisabled);
-    // the letter of the unit is drawn in the accent, and "K" is not drawn at all.
+    // the letter of the unit is drawn in the live.accent, and "K" is not drawn at all.
     fact net_rx_zeros = 0
     fact net_tx_zeros = 0
     fact net_rx_show_unit = false
@@ -533,7 +558,7 @@ scene bar {
     // the compositor's `decoration:blur` on the `pleamar` namespace was the next
     // layer of the same cost (it re-blurs all ~18 mapped shell layers on every
     // presented frame, closed ones included) and is off too — hyprland.lua has the
-    // numbers. The strip keeps its `opacity: 60 %` coal over the desktop, which is
+    // numbers. The strip keeps its `opacity: 60 %` live.coal over the desktop, which is
     // the look: flat, still translucent, no frost. `lens` is off as well: `lens: true`
     // kept taking screencopies even at `strip.glass = 0%` (measured 2026-11-02: 74 %
     // of a core with it against 62 % without, and every capture is a 4K readback that
@@ -551,7 +576,7 @@ scene bar {
     // their edges: resvg rasterises them at the surface's scale instead of hinting a 14 px font.
     image icon_keyboard = file "icons/keyboard.svg", 14, 14
     image icon_network = file "icons/network.svg", 14, 14
-    // The Material `verified_user` outline NetClusterCapsule.qml:91 asks for as `"verified_user"`
+    // The Material `verified_user` live.outline NetClusterCapsule.qml:91 asks for as `"verified_user"`
     // (its `mode: "material"` slot), cut to the same 24-unit grid as the icons above.
     image icon_vpn = file "icons/vpn.svg", 14, 14
     // The Hiddify item's own picture when the host runs one (NetClusterCapsule.qml:96-108 draws
@@ -634,19 +659,19 @@ scene bar {
         let card.left = clamp(tip.x - card.w / 2, 8, screen.width - (card.w + 8))
         let card.top = 104 - card.h - 4
         body {
-            color: skin.coal
+            color: live.coal
             opacity: 96%
             show: tip_open
-            border: 1, mix(skin.coal, skin.ink, 12%)
+            border: 1, mix(live.coal, live.ink, 12%)
             box { from: card.left, card.top; size: card.w, card.h; corner: 5 }
         }
         // The measure of the widest line: the body's own words, the same font, no `width:` of its
         // own, and never seen.
-        text "{tip_body}" { measure: tipw; show: false; at: 0, 0; anchor: left top; size: 12 * text_scale; line_height: 1.25; color: skin.ink; family: "Iosevka"; lines: 6 }
+        text "{tip_body}" { measure: tipw; show: false; at: 0, 0; anchor: left top; size: 12 * text_scale; line_height: 1.25; color: live.ink; family: "Iosevka"; lines: 6 }
         // Up to six lines, which is the reference's tallest (`TooltipText.compose`: a title with
         // its value, then the hints, one per line — the monitoring capsule's title, four hints and
         // a click line). The logic writes the newlines; the card takes the size they measure.
-        text "{tip_body}" { measure: tiph; show: tip_open; at: card.left + 9, card.top + 5; anchor: left top; size: 12 * text_scale; line_height: 1.25; color: skin.ink; family: "Iosevka"; width: card.w - 18; lines: 6 }
+        text "{tip_body}" { measure: tiph; show: tip_open; at: card.left + 9, card.top + 5; anchor: left top; size: 12 * text_scale; line_height: 1.25; color: live.ink; family: "Iosevka"; width: card.w - 18; lines: 6 }
     }
 
     // The catcher comes *before* the menu: two surfaces at the same level stack in the order
@@ -671,7 +696,7 @@ scene bar {
         // patch hands this surface —and only this one— its own rectangle. The zone is the whole
         // monitor because a press is matched to a zone: it has to land in `anywhere` for the menu
         // to be dismissed.
-        body { color: skin.coal; opacity: 4%
+        body { color: live.coal; opacity: 4%
             box { from: 0, 0; size: barcatcher.width, barcatcher.height }
         }
         // `role: region`, like the overlay scene's own catcher: it is a dismissal surface the size of
@@ -713,16 +738,16 @@ scene bar {
         let menu.h = 300
         let menu.top = menu.h - tm.panel_h
         body {
-            // The plate the bar's capsules wear, not a lonely grey slab: the same coal at the
-            // same 69 %, a faint rim, and the accent hairline down the left edge that the
+            // The plate the bar's capsules wear, not a lonely grey slab: the same live.coal at the
+            // same 69 %, a faint rim, and the live.accent hairline down the left edge that the
             // reference's menus carry.
-            color: skin.coal
+            color: live.coal
             opacity: 69%
-            border: 1, mix(skin.coal, skin.ink, 8%)
+            border: 1, mix(live.coal, live.ink, 8%)
             // The surface is the ceiling; the plate hangs from its bottom, against the bar. Drawing
             // it from the top left a gap between the menu and the strip it came out of.
             box { from: menu.left, menu.top; size: menu.w, tm.panel_h; corner: 8 }
-            box { from: menu.left, menu.top + 6; size: 2, tm.panel_h - 12; corner: 1; color: skin.accent }
+            box { from: menu.left, menu.top + 6; size: 2, tm.panel_h - 12; corner: 1; color: live.accent }
         }
         // `view:` is the window the rows are seen through and `content:` the whole list, so a menu
         // longer than 14 rows is scrolled with the wheel (a layout with `view:` is dragged and
@@ -734,12 +759,12 @@ scene bar {
             // the zone used to land 284 px to the right of the line it was meant to catch).
             for m in tray_menu {
                 group line { size: menu.w - 16, 20
-                    box { from: 0, 0; size: menu.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == m.index + 1 }
-                    text m.label { at: 10 + m.depth * 12, 10; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; width: menu.w - 36 - m.depth * 12; lines: 1; show: not m.sep }
-                    box { from: 10, 10; size: menu.w - 36, 1; color: skin.ink; opacity: 12%; show: m.sep }
+                    box { from: 0, 0; size: menu.w - 16, 20; corner: 4; color: live.ink; opacity: 6%; show: tm.hot == m.index + 1 }
+                    text m.label { at: 10 + m.depth * 12, 10; anchor: left center; size: 14 * text_scale; color: live.ink; family: "Iosevka"; width: menu.w - 36 - m.depth * 12; lines: 1; show: not m.sep }
+                    box { from: 10, 10; size: menu.w - 36, 1; color: live.ink; opacity: 12%; show: m.sep }
                     // A line with children under it: the reference's own chevron, and no action of
                     // its own — a dbusmenu parent is a container, not something to click.
-                    text "›" { at: menu.w - 30, 10; anchor: right center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka"; show: m.sub }
+                    text "›" { at: menu.w - 30, 10; anchor: right center; size: 14 * text_scale; color: live.ink.dim; family: "Iosevka"; show: m.sub }
                     // A separator is a hairline, not a button: the row's zone is not drawn for it,
                     // so it is neither described as a pressable line nor wired to `tray.menu_click`
                     // with a dbusmenu separator's id.
@@ -890,7 +915,7 @@ scene bar {
     component Clock(dip: number = 0, scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         // QS's ClockWidget prints the time at round(fontSizeSmall 14 * timeFontScale 0.7 * its
         // 1.15 scale) = 11 logical px. This bar draws 14: measured on the raster that is 34 px
-        // of ink against the reference's 28, and the 11.5 the port's own note asked for was
+        // of live.ink against the reference's 28, and the 11.5 the port's own note asked for was
         // never taken — the size is a known divergence, kept because the 47 px plate and the
         // left row were tuned around it.
         // As wide as the time it prints, plus the capsule's 6 px of padding on each side: 50 held a
@@ -902,13 +927,13 @@ scene bar {
         group zoom {
             scale: scale
             body {
-                color: skin.coal
+                color: live.coal
                 opacity: 69%
                 // Flat, as the reference's capsules are: QS's WidgetCapsule is a
                 // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                border: 1, mix(live.coal, live.ink, 8%)
                 box { from: 0, 1; size: w.card, 23; corner: 6 }
             }
             // QS rolls its numbers (`NumberFadeBehavior` in `Components/`), which a language that
@@ -918,9 +943,9 @@ scene bar {
             // reference's roll, in this language's own terms.
             group tick_zone { move: 0, -clamp(dip, 0, 3); opacity: 1 - clamp(dip, 0, 3) * 0.22
                 // `time.tone` is the palette's role for this glyph and it is the frozen
-                // `ink`; the clock has to follow the theme like every other label, so it takes
-                // the wallpaper's ink — the same token `time.text.color` names in the reference.
-                text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 35; lines: 1 }
+                // `live.ink`; the clock has to follow the theme like every other label, so it takes
+                // the wallpaper's live.ink — the same token `time.text.color` names in the reference.
+                text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: live.ink; family: "Iosevka"; width: 35; lines: 1 }
             }
             // Pressable, as in the reference: ClockWidget's TapHandler is `calendar.toggle()`,
             // so the capsule is a button and not a label.
@@ -933,7 +958,7 @@ scene bar {
 
     // ------------------------------------------------- left: the workspace
     // QS's WsIndicator is ONE capsule for the workspace that is focused — the
-    // icon in the accent, the name beside it in the text colour — and not a row
+    // icon in the live.accent, the name beside it in the text colour — and not a row
     // of tabs per workspace. The port drew a tab per record (four of them here),
     // each a filled capsule with a triangle, which is what made the left end
     // read far brighter than the reference.
@@ -956,13 +981,13 @@ scene bar {
         group zoom {
             scale: scale
             body {
-                color: skin.coal
+                color: live.coal
                 opacity: 69%
                 // Flat, as the reference's capsules are: QS's WidgetCapsule is a
                 // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                border: 1, mix(live.coal, live.ink, 8%)
                 box { from: 0, 1; size: ws.w, 23; corner: 6 }
             }
             // The glyphs this reads are Nerd Font code points (`WS_GLYPH` in the logic), and the
@@ -971,16 +996,16 @@ scene bar {
             // Symbols: different pictures at these code points, and a different advance per glyph,
             // so the icon was wrong and the label moved whenever the workspace changed. Iosevka is
             // the installed Nerd-patched build and carries the same code points.
-            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.accent.hover; family: "Iosevka" }
-            text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka" }
+            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14 * text_scale; color: live.accent_hover; family: "Iosevka" }
+            text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: live.ink; family: "Iosevka" }
             // `width:` and one line: a long name runs over the plate and onto the keyboard capsule
             // beside it, so the box stops 6 px short of the plate's edge — the same air the label
             // starts with — and the plate itself stops growing at the logic's clamp (180): past
             // that the name elides instead of eating the row.
-            // The name is what the owner typed — lower-case on this host, so its ink is x-height
+            // The name is what the owner typed — lower-case on this host, so its live.ink is x-height
             // and reads 1.25 px low on a line-box anchor (measured); one px up centres the common
             // case. A capitalised name would sit 1 px high, which is the smaller error of the two.
-            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2 - 1; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: ws.w - 12 - (glyph.width + 5 + lead.width); lines: 1 }
+            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2 - 1; anchor: left center; size: 14 * text_scale; weight: 500; color: live.ink; family: "Iosevka"; width: ws.w - 12 - (glyph.width + 5 + lead.width); lines: 1 }
             // The capsule shows the workspace that is already in force, so it is always the
             // selected tab: `selected:` is what a reader of `--say bar describe` needs to know it.
             zone box ws { from: 0, 0; size: ws.w, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab; selected: true }
@@ -1011,10 +1036,10 @@ scene bar {
         size: (glyph.w + gap + bar.w + 2) * scale, strip * scale
         group zoom {
             scale: scale
-            image glyph { at: 0, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); show: shown }
+            image glyph { at: 0, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: if(idle, live.ink.off, if(value >= crit, live.warn, if(value >= warn, live.amber, live.ink.dim))); show: shown }
             // MonitorBar draws the fill and nothing else: no track behind it, so
             // a 5 % metric is a short dash, not a dot on a rail.
-            box { from: glyph.w + gap, strip / 2 + bh / 2 - value * bh; size: bar.w, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
+            box { from: glyph.w + gap, strip / 2 + bh / 2 - value * bh; size: bar.w, value * bh; corner: 1.5; color: if(value >= crit, live.warn, if(value >= warn, live.amber, live.ink.dim)); show: shown }
         }
     }
 
@@ -1030,13 +1055,13 @@ scene bar {
             // faces written that way never appeared); the face starts at 0 and
             // the content is inset by the capsule's padding instead.
             body {
-                color: skin.coal
+                color: live.coal
                 opacity: 69%
                 // Flat, as the reference's capsules are: QS's WidgetCapsule is a
                 // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                border: 1, mix(live.coal, live.ink, 8%)
                 box { from: 0, 1; size: inner + 12, 23; corner: 6 }
             }
             row metrics {
@@ -1070,12 +1095,12 @@ scene bar {
     }
 
     // ------------------------------------------------------- left: the weather
-    // QS WeatherButton: one row of pieces — the code's glyph in the accent, the
+    // QS WeatherButton: one row of pieces — the code's glyph in the live.accent, the
     // temperature, water_drop and the humidity, the navigation arrow turned by
     // the wind with its speed beside it, and the moon — inside one
     // WidgetCapsule whose width is `horizontalPadding * 2 + content`.
     //
-    // The offsets are the reference's ink, measured again against its bar with
+    // The offsets are the reference's live.ink, measured again against its bar with
     // both strips in one screenshot (the earlier set came from a single strip and
     // had drifted: by the wind the port was 6 design px right of the reference and
     // by the moon 19). Relative to the glyph, QS places temp +19.6, water_drop
@@ -1102,12 +1127,12 @@ scene bar {
             // px, the hairline is `triangleHighlightWidth` = 3 logical px.
             //
             // The face is an ordinary capsule — the `body` and the hairline border of its
-            // neighbours, skin.coal at 69 % — and a `clip` of the trapezoid does the
+            // neighbours, live.coal at 69 % — and a `clip` of the trapezoid does the
             // cutting, so the fill and the border stop ON the slant instead of the slant
             // being a slash laid over a rounded rectangle. The clip reaches the plate's own
             // end, `weather.w`, so the slant follows the reading that sizes it. A `clip`
             // reaches to the end of the group it is in, so the face has a group of its own:
-            // the ink, the moon and the zone below must not be clipped along with the plate.
+            // the live.ink, the moon and the zone below must not be clipped along with the plate.
             group face {
                 clip path {
                     at: 0, 1
@@ -1118,22 +1143,22 @@ scene bar {
                     close
                 }
                 body {
-                    color: skin.coal
+                    color: live.coal
                     opacity: 69%
-                    border: 1, mix(skin.coal, skin.ink, 8%)
+                    border: 1, mix(live.coal, live.ink, 8%)
                     // The box reaches the clip's far edge; the cut runs `weather.w` -> `weather.w
                     // - 8`, which is the 8 px the reference's own wedge takes off the face.
                     box { from: 0, 1; size: weather.w, 23; corner: corner }
                 }
             }
             // The cut carries no hairline. QS draws one there (`triangleHighlightColor`, the
-            // accent put through black twice) and the port followed it, but on this bar it read
+            // live.accent put through black twice) and the port followed it, but on this bar it read
             // as a coloured slash laid across the capsule's end rather than as the cut itself —
             // the clip's own edge, with the plate's border on it, is where the shape ends.
             // Laid out after their own widths, not at fixed offsets: the offsets were read
             // off the reference once and then the port's glyphs turned out wider, so the
             // temperature ran into the water drop ("11°C◯67%") and the capsule measured 114
-            // logical px of ink where the reference's is 155. `measure` is what fixes that —
+            // logical px of live.ink where the reference's is 155. `measure` is what fixes that —
             // the same mechanism the workspace capsule uses for its glyph.
             let gap.g = 4
             let icon.w = 14
@@ -1150,23 +1175,23 @@ scene bar {
             // One picture of seven: the logic turns the WMO code into this number, because a
             // component cannot choose a different image from an `if`.
             group weather_face { move: 4, strip / 2 - icon.w / 2
-                image icon_weather_sunny { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 0 }
-                image icon_weather_partly { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 1 }
-                image icon_weather_cloud { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 2 }
-                image icon_weather_fog { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 3 }
-                image icon_weather_rain { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 4 }
-                image icon_weather_snow { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 5 }
-                image icon_weather_thunder { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 6 }
+                image icon_weather_sunny { at: 0, 0; size: icon.w, icon.w; tint: live.accent; show: weather.kind == 0 }
+                image icon_weather_partly { at: 0, 0; size: icon.w, icon.w; tint: live.accent; show: weather.kind == 1 }
+                image icon_weather_cloud { at: 0, 0; size: icon.w, icon.w; tint: live.accent; show: weather.kind == 2 }
+                image icon_weather_fog { at: 0, 0; size: icon.w, icon.w; tint: live.accent; show: weather.kind == 3 }
+                image icon_weather_rain { at: 0, 0; size: icon.w, icon.w; tint: live.accent; show: weather.kind == 4 }
+                image icon_weather_snow { at: 0, 0; size: icon.w, icon.w; tint: live.accent; show: weather.kind == 5 }
+                image icon_weather_thunder { at: 0, 0; size: icon.w, icon.w; tint: live.accent; show: weather.kind == 6 }
             }
-            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka" }
-            image icon_weather_drop { at: x.drop, strip / 2 - drop.w / 2; size: drop.w, drop.w; tint: skin.ink.dim }
-            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14 * text_scale; color: live.ink; family: "Iosevka" }
+            image icon_weather_drop { at: x.drop, strip / 2 - drop.w / 2; size: drop.w, drop.w; tint: live.ink.dim }
+            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14 * text_scale; color: live.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre.
             group arrow { pivot: x.arrow + arrow.w / 2, strip / 2; rotate: weather.dir
-                image icon_weather_wind { at: x.arrow, strip / 2 - arrow.w / 2; size: arrow.w, arrow.w; tint: skin.ink.dim }
+                image icon_weather_wind { at: x.arrow, strip / 2 - arrow.w / 2; size: arrow.w, arrow.w; tint: live.ink.dim }
             }
-            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka" }
+            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14 * text_scale; color: live.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
             // the phase — at new moon it sits on the disc, at full moon clear of
             // it. The shadow is the face's own colour, as in the reference.
@@ -1178,7 +1203,7 @@ scene bar {
             // disc over a full moon.
             // The moon: dithered by its own shader (moon.wgsl), which takes the phase
             // QS's MoonPhaseIcon takes and stipples the terminator the same way.
-            shader moon_face { at: x.moon, 6; size: 13.5, 13.5; values: weather.moon; colors: skin.ink.dim, skin.coal }
+            shader moon_face { at: x.moon, 6; size: 13.5, 13.5; values: weather.moon; colors: live.ink.dim, live.coal }
             zone box weather { from: 0, 0; size: weather.w, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
             on enter weather { emit tip(5) }
             on leave weather { emit tip_hide }
@@ -1194,16 +1219,16 @@ scene bar {
         group zoom {
             scale: scale
             body {
-                color: skin.coal
+                color: live.coal
                 opacity: 69%
                 // Flat, as the reference's capsules are: QS's WidgetCapsule is a
                 // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                border: 1, mix(live.coal, live.ink, 8%)
                 box { from: 0, 1; size: 54, 23; corner: 6 }
             }
-            // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
+            // 10 and 32, not 6 and 28: the reference insets this capsule's live.ink 12 logical px
             // from its own edge (its glyph measures at 170 inside a plate at 158), while the
             // other capsules inset 6 — measured, not guessed.
             // While a submap is in force its glyph takes the keyboard picture's place (`✦` special,
@@ -1212,15 +1237,15 @@ scene bar {
             // row reads its child's `size:` once, when it lays the row out (bar.plm's own note on
             // component sizes), so a capsule that grew and shrank again would not reflow — the mode
             // is drawn in the 20 px the icon already owns, and the layout keeps its place.
-            image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim; show: not kb_badge_on }
-            // The badge is 18 px, below WCAG's large-text threshold, so the plain accent (4.09:1 on
-            // the plate) is not enough for it; `accent.hover` is the text-safe tone at 5.79:1.
-            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18 * text_scale; color: skin.accent.hover; show: kb_badge_on }
-            // The layout is a two-letter, lower-case word, so its ink is x-height only; anchored
+            image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: live.ink.dim; show: not kb_badge_on }
+            // The badge is 18 px, below WCAG's large-text threshold, so the plain live.accent (4.09:1 on
+            // the plate) is not enough for it; `live.accent_hover` is the text-safe tone at 5.79:1.
+            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18 * text_scale; color: live.accent_hover; show: kb_badge_on }
+            // The layout is a two-letter, lower-case word, so its live.ink is x-height only; anchored
             // on the line box it reads 1.25 px low against the digits around it (measured on the
             // raster), and the plate is the only place where that is visible. One px up is the
             // optical centre for this one string — a digit set does not need it.
-            text "{kb_layout}" { at: 34, strip / 2 - 1; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
+            text "{kb_layout}" { at: 34, strip / 2 - 1; anchor: left center; size: 14 * text_scale; color: live.ink; family: "Iosevka"; width: 14; lines: 1 }
             // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
             // layout of the device in force (`switchKeyboardLayout()`), and the label follows
             // from the event socket a moment later. The wheel does the same here: a capsule that
@@ -1234,7 +1259,7 @@ scene bar {
     }
 
     // -------------------------------------------------------- left: network
-    // QS NetFlowCapsule -> NetClusterCapsule: the link glyph in the accent and,
+    // QS NetFlowCapsule -> NetClusterCapsule: the link glyph in the live.accent and,
     // beside it, the two-row throughput readout — receive over transmit, small
     // type, three digits and a decimal (ConnUi.formatRxText/formatTxText).
     // The port drew `wired net1 1 %` in a capsule instead: a different widget
@@ -1260,30 +1285,30 @@ scene bar {
         group zoom {
             scale: scale
             body {
-                color: skin.coal
+                color: live.coal
                 opacity: 69%
                 // Flat, as the reference's capsules are: QS's WidgetCapsule is a
                 // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                border: 1, mix(live.coal, live.ink, 8%)
                 box { from: 0, 1; size: 50 + vpn.w, 23; corner: 6 }
             }
             // NetClusterCapsule.qml:41-43 asks the link glyph three inks: status.error with no
-            // link at all, status.warning with a link but no internet, the accent with both. The
-            // accent is `accentColor`, QS's Color.desaturate(accentPrimary, vpn.desaturateAmount
-            // 0.45) — the accent mixed 45 % toward its own luminance grey. The scene language has
+            // link at all, status.warning with a link but no internet, the live.accent with both. The
+            // live.accent is `accentColor`, QS's Color.desaturate(accentPrimary, vpn.desaturateAmount
+            // 0.45) — the live.accent mixed 45 % toward its own luminance grey. The scene language has
             // no luminance, and the group's own `saturation` is exactly that mix on the GPU: 0.55
-            // of the accent's saturation is what 45 % of grey leaves. The two warning tones are
+            // of the live.accent's saturation is what 45 % of grey leaves. The two warning tones are
             // the theme's own (ConnUi.errorColor / warningColor, colors.status.*), never
             // desaturated, so they are drawn outside that group.
-            image icon_network { at: 6 + vpn.w, strip / 2 - icon / 2; size: icon, icon; tint: warn; show: not net.link }
-            image icon_network { at: 6 + vpn.w, strip / 2 - icon / 2; size: icon, icon; tint: amber; show: net.link and not net.internet }
+            image icon_network { at: 6 + vpn.w, strip / 2 - icon / 2; size: icon, icon; tint: live.warn; show: not net.link }
+            image icon_network { at: 6 + vpn.w, strip / 2 - icon / 2; size: icon, icon; tint: live.amber; show: net.link and not net.internet }
             group lan_tone { saturation: 0.55
-                image icon_network { at: 6 + vpn.w, strip / 2 - icon / 2; size: icon, icon; tint: skin.accent; show: net.internet }
-                // The tunnel's shield, in `vpnIconColor` — the same desaturated accent, and the
+                image icon_network { at: 6 + vpn.w, strip / 2 - icon / 2; size: icon, icon; tint: live.accent; show: net.internet }
+                // The tunnel's shield, in `vpnIconColor` — the same desaturated live.accent, and the
                 // slot is only there while the tunnel is (NetClusterCapsule.qml:83, 87-95).
-                image icon_vpn { at: 6, strip / 2 - icon / 2; size: icon, icon; tint: skin.accent; show: net.vpn and not net.hiddify }
+                image icon_vpn { at: 6, strip / 2 - icon / 2; size: icon, icon; tint: live.accent; show: net.vpn and not net.hiddify }
             }
             // QS paints the Hiddify item's own icon on top of the slot and makes the shield
             // underneath transparent (NetClusterCapsule.qml:95, 100-108): the app's real picture,
@@ -1300,12 +1325,12 @@ scene bar {
             // they measured 3.33:1 on the plate — below AA for 19 px type — so the dim is the
             // lightest one that still reads: 60 % is 5.29:1 on the dark plate and 5.05:1 over a
             // bright wallpaper, and still a clear step down from the digits' 14:1.
-            // The unit letters use `accent.hover`, not `accent`: at 9.6 px the plain accent is
+            // The unit letters use `live.accent_hover`, not `live.accent`: at 9.6 px the plain live.accent is
             // 4.09:1, and 5.79:1 is the text-safe tone of the same hue.
-            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 60%, 100%) }
-            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent.hover; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 60%, 100%) }
-            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent.hover; family: "Iosevka"; show: net_tx_show_unit }
+            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 60%, 100%) }
+            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.accent_hover; family: "Iosevka"; show: net_rx_show_unit }
+            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 60%, 100%) }
+            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.accent_hover; family: "Iosevka"; show: net_tx_show_unit }
             // The capsule's own press zone starts after the VPN slot, so the two never overlap:
             // the left part is the Hiddify item's (QS puts a MouseArea over the slot), the rest
             // opens the flow drawer and carries the capsule's tooltip.
@@ -1355,9 +1380,9 @@ scene bar {
         // strip, which read as a hole between the network cluster and the microphone; QS draws
         // the tray inside `InlineTrayCapsule`, whose fill is the same as its neighbours'.
         body {
-            color: skin.coal
+            color: live.coal
             opacity: 69%
-            border: 1, mix(skin.coal, skin.ink, 8%)
+            border: 1, mix(live.coal, live.ink, 8%)
             box { from: 1 * scale, 1 * scale; size: (tray.slot - 2) * scale, 23 * scale; corner: 6 * scale }
         }
         // The item's own picture, or the stand-in QS puts in its place: an item that brings no icon
@@ -1366,7 +1391,7 @@ scene bar {
         // (:30 `fallbackColor`). A picture that fails to load cannot be seen from the scene, so what
         // is caught is the item that brings none.
         image r.icon { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale; show: not r.no_icon }
-        image icon_tray_broken { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale; tint: skin.ink.dim; show: r.no_icon }
+        image icon_tray_broken { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale; tint: live.ink.dim; show: r.no_icon }
         zone box trayhit { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: "{r.title}"; role: button }
         // The item's title is the record's, so the scene hands it over and the logic prints it. The
         // icons hold the tray out while the pointer is on them (SystemTray.qml:129-132), so the same
@@ -1393,9 +1418,9 @@ scene bar {
     component TrayTrigger(scale: number) {
         size: tray.slot * scale, strip * scale
         body {
-            color: skin.coal
+            color: live.coal
             opacity: 69%
-            border: 1, mix(skin.coal, skin.ink, 8%)
+            border: 1, mix(live.coal, live.ink, 8%)
             box { from: 1 * scale, 1 * scale; size: (tray.slot - 2) * scale, 23 * scale; corner: 6 * scale }
         }
         // A group, because `image` has no rotation of its own: the arrow turns about its centre.
@@ -1404,7 +1429,7 @@ scene bar {
         prop turn.deg = 0 ~220ms
         follow turn.deg = pick(tray.expanded, 0, 90)
         group turn { pivot: (tray.slot / 2) * scale, (strip / 2) * scale; rotate: turn.deg * 1deg
-            image icon_tray_expand { at: (tray.slot - 14) / 2 * scale, (strip - 14) / 2 * scale; size: 14 * scale, 14 * scale; tint: skin.ink }
+            image icon_tray_expand { at: (tray.slot - 14) / 2 * scale, (strip - 14) / 2 * scale; size: 14 * scale, 14 * scale; tint: live.ink }
         }
         zone box tray_trigger { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: pick(tray.expanded, "Show the system tray", "Hide the system tray"); role: button }
         // Hovering it is the hot corner's own job (:38-42): it brings the tray out.
@@ -1442,9 +1467,9 @@ scene bar {
         group zoom {
             scale: scale
             body {
-                color: skin.coal
+                color: live.coal
                 opacity: 69%
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                border: 1, mix(live.coal, live.ink, 8%)
                 box { from: 0, 1; size: w, 23; corner: corner }
             }
             // The icon keeps the right end of the plate, the reading grows to its left. One of
@@ -1463,7 +1488,7 @@ scene bar {
                 lines: 1
                 size: 14 * text_scale
                 weight: 500
-                color: skin.ink
+                color: live.ink
                 family: "Iosevka"
             }
         }
@@ -1523,7 +1548,7 @@ scene bar {
             // 2 px apart in a group of their own, but a hidden pill still cost that group its
             // gap, which is why the first space measured 9 while every other one was 7.
             Clock(tick.dip) { show: widget.clock }
-            row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark(plate: skin.coal, tone.on: skin.accent.hover, tone.off: skin.ink.dim, plate.h: 23, plate.top: 1) }
+            row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark(plate: live.coal, tone.on: live.accent_hover, tone.off: live.ink.dim, plate.h: 23, plate.top: 1) }
             WsCapsule(open_overview) { show: widget.workspaces }
 
             // QS KeyboardLayoutHypr: the keyboard glyph and the active layout,
@@ -1601,13 +1626,13 @@ scene bar {
             // two layers, the dark one under the faint light one. The port drew no plate
             // at all here, which read as the track floating on the strip.
             body {
-                color: skin.coal
+                color: live.coal
                 opacity: 69%
                 // Flat, as the reference's capsules are: QS's WidgetCapsule is a
                 // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                border: 1, mix(live.coal, live.ink, 8%)
                 box { from: 0, 1.5; size: w, h; corner: corner }
             }
 
@@ -1622,13 +1647,13 @@ scene bar {
                 art.Art(w: 22, h: 22)
                 // The reference leaves 8 logical px between the art and the track; the row's
                 // own gap is 6, and measured they were flush (the art and the first word came
-                // out as one run of ink).
+                // out as one run of live.ink).
                 space 2
                 // The fact's width, not a measurement: it is the string's own width until 420,
                 // and past that the engine cuts it with an ellipsis instead of growing the plate.
-                text "{media.artist} — {media.title}" { width: text.w; lines: 1; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka" }
+                text "{media.artist} — {media.title}" { width: text.w; lines: 1; size: 14 * text_scale; weight: 500; color: live.ink; family: "Iosevka" }
                 // The time, in the two colours QS uses: the brackets and the slash wear
-                // the cover's accent (MusicManager.accentColor, sampled from the art), the
+                // the cover's live.accent (MusicManager.accentColor, sampled from the art), the
                 // digits wear textPrimary while playing and textSecondary while paused, at
                 // media.time.alpha.playing 1.0 / .paused 0.8.
                 row time_row {
@@ -1638,9 +1663,9 @@ scene bar {
                     // reports that one on a change and never polls it, so it stood still while the
                     // track played (measured: 149 for three minutes against MPD's 5:37). The logic
                     // ticks it every second and resyncs on every media event.
-                    text "{media.pos, time}" { measure: tp; size: 14 * text_scale; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
+                    text "{media.pos, time}" { measure: tp; size: 14 * text_scale; weight: 500; color: pick(media.playing, live.ink.dim, live.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
                     text "/" { size: 14 * text_scale; weight: 500; color: cover_accent; family: "Iosevka" }
-                    text "{media.length, time}" { measure: tl; size: 14 * text_scale; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
+                    text "{media.length, time}" { measure: tl; size: 14 * text_scale; weight: 500; color: pick(media.playing, live.ink.dim, live.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
                     text ")" { size: 14 * text_scale; weight: 500; color: cover_accent; family: "Iosevka" }
                 }
                 // The analyser, revealed with the transport: QS keeps it inside the
@@ -1690,9 +1715,9 @@ scene bar {
             // The same plate as the capsule: `backgroundKey: "media"` in the reference,
             // so the two pills read as one family when the strip is up.
             body {
-                color: skin.coal
+                color: live.coal
                 opacity: 69%
-                border: 1, mix(skin.coal, skin.ink, 8%)
+                border: 1, mix(live.coal, live.ink, 8%)
                 box { from: 0, 1; size: w, 23; corner: corner }
             }
             row controls { at: pad, strip / 2; anchor: left middle; gap: gap
@@ -1703,7 +1728,7 @@ scene bar {
                 // (`enabled: MusicManager.canGoPrevious`, MediaTransport.qml:71).
                 row btn_prev { size: btn, strip; align: center
                     image icon_prev { size: 14, 14
-                        tint: pick(media.can_go_prev, ink.off, pick(media.hot, skin.ink, skin.accent)) }
+                        tint: pick(media.can_go_prev, live.ink.off, pick(media.hot, live.ink, live.accent)) }
                 }
                 // The glyph is the *action*, not the state (`MediaTransport.qml:73`:
                 // `isPlaying ? "pause" : "play_arrow"`). Drawn the other way round the two were
@@ -1712,20 +1737,20 @@ scene bar {
                 // nor pause keeps the button dimmed, as `enabled: canPlay || canPause` does there.
                 row btn_play { size: btn, strip; align: center
                     image icon_play { size: 14, 14
-                        tint: pick(media.can_play or media.can_pause, ink.off, pick(media.hot, skin.ink, skin.accent))
+                        tint: pick(media.can_play or media.can_pause, live.ink.off, pick(media.hot, live.ink, live.accent))
                         show: not media.playing }
                     image icon_pause { size: 14, 14
-                        tint: pick(media.can_play or media.can_pause, ink.off, pick(media.hot, skin.ink, skin.accent))
+                        tint: pick(media.can_play or media.can_pause, live.ink.off, pick(media.hot, live.ink, live.accent))
                         show: media.playing }
                 }
-                // A player with nothing after this song keeps the button and loses its ink:
+                // A player with nothing after this song keeps the button and loses its live.ink:
                 // the reference paints `Color.withAlpha(textPrimary, 0.35)` there
                 // (`MediaTransport.qml:111-113`), and the port's own `text.disabled` says the
                 // same thing without an alpha at the drawing site. `pick` is by place, so the
                 // first argument is the one a false condition takes.
                 row btn_next { size: btn, strip; align: center
                     image icon_next { size: 14, 14
-                        tint: pick(media.can_go_next, ink.off, pick(media.hot, skin.ink, skin.accent)) }
+                        tint: pick(media.can_go_next, live.ink.off, pick(media.hot, live.ink, live.accent)) }
                 }
             }
             // The capsule itself: hovering it asks for the media card (title and metadata) and keeps
@@ -1825,9 +1850,9 @@ scene bar {
             // hidden. The plate is a hover thing inside the tile; the silhouette and the level
             // are always there, as the microphone's glyph is.
             // The tile's own tones are the theme's: the plugin is a library and cannot read
-            // `skin.*`, so the plate, the ink and the accent are handed to it here.
+            // `skin.*`, so the plate, the live.ink and the live.accent are handed to it here.
             row genelec_slot { show: widget.genelec
-                gen.Tile(row: strip, type_scale: text_scale, plate: skin.coal, tone: skin.ink, tone.dim: skin.ink.dim, loud: skin.accent) }
+                gen.Tile(row: strip, type_scale: text_scale, plate: live.coal, tone: live.ink, tone.dim: live.ink.dim, loud: live.accent) }
         }
     }
 
@@ -1842,16 +1867,16 @@ scene bar {
     // wallpaper through unbroken). No rim and no shadow: QS paints neither
     // (`panel.capsule.borderWidth` is 0 and WidgetCapsule has no drop shadow).
     body {
-        color: skin.coal
+        color: live.coal
         // `panel.seam.opacity` is 0.88 in the reference, where the blur is the compositor's; here
         // the surface does the blur, so a flat 0.88 hid the glass and 0.62 let a light
         // wallpaper's own colour through as a slab. The dark theme needs the lower number and the
-        // light one does not: `skin.coal` is #000000 there, so 0.84 of it is a black wall with
+        // light one does not: `live.coal` is #000000 there, so 0.84 of it is a black wall with
         // nothing behind it to bend, and the glass reads as paint.
-        opacity: if(skin.light, 84%, 60%)
+        opacity: if(live.light, 84%, 60%)
         // No blur anywhere at the moment: the compositor's `decoration:blur` is off
         // (hyprland.lua has the measurement) and `strip.glass` is 0, so this body is
-        // just its `opacity` coal over the desktop. `lens: false` because the lens
+        // just its `opacity` live.coal over the desktop. `lens: false` because the lens
         // kept taking screencopies at 0 % glass too — each one a 4K readback that
         // held the compositor (and input) for 10-20 ms; 74 % of a core against 62 %
         // without, measured 2026-11-02. The scene's own lens is the alternative look
@@ -1865,15 +1890,15 @@ scene bar {
         // more, its colour kept — so a window under the bar stops competing with the strip's own
         // words instead of being covered up. The light theme keeps none: there `milk` is the
         // counterpart, and it is not asked for yet.
-        smoke: if(skin.light, 0%, 90%)
+        smoke: if(live.light, 0%, 90%)
         // `auto` leaves a bare wallpaper clear, which is what let the pink through unblurred;
         // the strip wants the frosted reading everywhere, it is 25 px tall.
         frost: 100%
         // No rim. The bevel is a band the glass leaves open at the silhouette: it either catches
         // the light — the lit border that had to go — or shows what is behind it, which with no
-        // `highlight` and no `mirror` measured 15.6 against an interior of 50.9, a dark line of
+        // `live.highlight` and no `mirror` measured 15.6 against an interior of 50.9, a dark line of
         // its own. So the band is capped with the plate's own colour: a 1 px `border` in
-        // `skin.coal` closes it at the surface's tone, and what is left bends without ever
+        // `live.coal` closes it at the surface's tone, and what is left bends without ever
         // catching anything.
         // `refraction` is how thick the glass is — how far its edge pulls what is behind it in;
         // 200 % is the thick lens of the language's own example. 180 % on a 25 px strip bends
@@ -1885,7 +1910,7 @@ scene bar {
         dome: 8%
         mirror: 0%
         highlight: 0%
-        border: 1, skin.coal
+        border: 1, live.coal
         // The shape, not a second coat of paint: a body fills its own extent, and a box
         // inside it with no colour of its own inherits the body's and fills it again. The
         // two coats are what a measurement of the strip shows — QS' #1D1E21 for a plate at

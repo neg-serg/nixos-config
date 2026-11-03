@@ -31,6 +31,7 @@ pleamar-themes — themes as files for ~/.config/pleamar/theme.plm
   pleamar-themes list                 themes in $XDG_CONFIG_HOME/pleamar/themes
   pleamar-themes apply FILE|NAME      write theme.plm from that theme
   pleamar-themes show FILE|NAME       print the theme.plm it would write
+  pleamar-themes push                 hand the palette to the scenes that draw it
   pleamar-themes -h | --help
 
 A bare NAME reads <config>/pleamar/themes/<NAME>.toml; a value with a slash is
@@ -75,6 +76,7 @@ fn run() -> ExitCode {
         "list" => list(&args[1..]),
         "apply" => write_theme(&args[1..], true),
         "show" => write_theme(&args[1..], false),
+        "push" => push(),
         other => usage_fail(format!("unknown command '{other}'")),
     }
 }
@@ -166,6 +168,11 @@ fn write_theme(args: &[String], write: bool) -> ExitCode {
         .clone()
         .unwrap_or_else(|| stem(&path).to_string());
     println!("{TOOL}: theme {name}");
+    // The converted scenes read their own `palette.json`; a theme still applies
+    // when that hand-off fails, and the failure is said rather than hidden.
+    if let Err(error) = push_palette() {
+        eprintln!("{TOOL}: warning: {error}");
+    }
     ExitCode::SUCCESS
 }
 
@@ -187,6 +194,52 @@ fn same_file(left: &str, right: &str) -> bool {
     match (fs::canonicalize(left), fs::canonicalize(right)) {
         (Ok(left), Ok(right)) => left == right,
         _ => false,
+    }
+}
+
+/// The scenes that draw with `lib/palette-live.plm`, by scene name (the folder
+/// under `~/.local/share/pleamar/` they read their own files from).
+const PALETTE_SCENES: [&str; 2] = ["bar", "panels"];
+
+fn data_home() -> Result<PathBuf, String> {
+    if let Some(value) = env::var_os("XDG_DATA_HOME") {
+        if !value.is_empty() {
+            return Ok(PathBuf::from(value));
+        }
+    }
+    match env::var_os("HOME") {
+        Some(value) if !value.is_empty() => Ok(PathBuf::from(value).join(".local/share")),
+        _ => Err("HOME is not set — nothing to write".to_string()),
+    }
+}
+
+/// Write the palette into each converted scene's data folder, where its logic
+/// reads it (`files.read` never leaves the scene's own directory).
+fn push_palette() -> Result<usize, String> {
+    let output = output_file()?;
+    let palette = themes::palette_from_theme_file(&output)?;
+    let data = data_home()?;
+    let json = palette.json();
+    let mut written = 0;
+    for scene in PALETTE_SCENES {
+        let directory = data.join("pleamar").join(scene);
+        fs::create_dir_all(&directory)
+            .map_err(|error| format!("cannot create {}: {error}", directory.display()))?;
+        let _ = fs::set_permissions(&directory, fs::Permissions::from_mode(0o700));
+        write_atomic(&directory.join("palette.json"), &json)
+            .map_err(|error| format!("cannot write the palette for {scene}: {error}"))?;
+        written += 1;
+    }
+    Ok(written)
+}
+
+fn push() -> ExitCode {
+    match push_palette() {
+        Ok(written) => {
+            println!("{TOOL}: pushed the palette to {written} scene(s)");
+            ExitCode::SUCCESS
+        }
+        Err(error) => fail(error),
     }
 }
 

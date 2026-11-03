@@ -1,8 +1,8 @@
 language 0.4
 
 import "../../lib/palette.plm"
-import "../../theme.plm"
-// The accent the album art gives (rewritten by the bar on every track change). The media card
+import "../../lib/palette-live.plm"
+// The live.accent the album art gives (rewritten by the bar on every track change). The media card
 // tints its analyser and scrub line with it, the way Music.qml takes
 // `MusicManager.accentColor` over the wallpaper palette.
 import "../../art.plm" as artacc
@@ -80,6 +80,31 @@ import "../../lib/sun.plm" as sun
 // and every text size additionally times the `text_scale` fact (fontScale).
 
 scene panels {
+
+    // The live palette (lib/palette-live.plm): the theme handed over as facts, so a
+    // new theme repaints this scene without a reload. panels.luau reads them out of the
+    // scene's own `palette.json` (`pleamar-themes push` writes it, and every apply
+    // and wallpaper run calls that); the defaults are the repository's theme.plm,
+    // so the first frame before that read looks as it always did.
+    fact pal_coal_r = 0.0000
+    fact pal_coal_g = 0.0000
+    fact pal_coal_b = 0.0000
+    fact pal_surface_r = 0.1412
+    fact pal_surface_g = 0.1647
+    fact pal_surface_b = 0.2078
+    fact pal_ink_r = 0.7961
+    fact pal_ink_g = 0.8392
+    fact pal_ink_b = 0.8980
+    fact pal_ink_dim_r = 0.6824
+    fact pal_ink_dim_g = 0.7255
+    fact pal_ink_dim_b = 0.7843
+    fact pal_accent_r = 0.0000
+    fact pal_accent_g = 0.4353
+    fact pal_accent_b = 0.8000
+    fact pal_on_accent_r = 1.0000
+    fact pal_on_accent_g = 1.0000
+    fact pal_on_accent_b = 1.0000
+    fact pal_light = 0
 
     // The fit divisor is the work area, not the monitor. Inside a scene `screen.height` is
     // what the surfaces get (1080 minus the bar's 25 px reserve = 1055 here), while palette's
@@ -438,7 +463,7 @@ scene panels {
     // the fact that opens a drawer would then have to land in a window of
     // milliseconds. One design pixel at 2 % keeps the scene resident without
     // being visible; the cards are the only thing the eye sees.
-    box { from: 0, 0; size: 1, 1; color: skin.coal; opacity: 2% }
+    box { from: 0, 0; size: 1, 1; color: live.coal; opacity: 2% }
 
     zone box catcher { from: 0, 0; size: screen.width, screen.height
         label: "Dismiss drawer"; role: region; show: drawer != none }

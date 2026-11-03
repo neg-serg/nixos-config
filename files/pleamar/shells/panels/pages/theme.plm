@@ -21,20 +21,20 @@ part Theme {
             scale: scale
 
             box wash { from: 0, 0; size: w, h; corner: menu.item.corner
-                color: mix(skin.surface, skin.accent, 0.18)
+                color: mix(live.slate, live.accent, 0.18)
                 opacity: max(0.35, hit.hover * 0.65) }
 
-            // The applied theme: an accent bar down the row's left edge.
+            // The applied theme: an live.accent bar down the row's left edge.
             // Arithmetic, not `pick(t.selected, …)`: a model's bool arrives as 0/1,
             // and `pick` reads a number as an index — 0 is its first choice, so both
             // rows lit up (measured on 0.7.7).
-            box mark { from: 0, 6; size: 2, h - 12; color: skin.accent
+            box mark { from: 0, 6; size: 2, h - 12; color: live.accent
                 opacity: t.selected * 100% }
 
             text "{t.name}" { at: 12, 12; anchor: left center
-                family: "Iosevka"; size: 12; weight: 500; color: skin.ink }
+                family: "Iosevka"; size: 12; weight: 500; color: live.ink }
             text "{t.detail}" { at: 12, 24; anchor: left center
-                family: "Iosevka"; size: 9; color: skin.ink.dim }
+                family: "Iosevka"; size: 9; color: live.ink.dim }
 
             // The row zone: `role: item` and `selected:` so the machine tree says
             // which theme is the one in place (INTERFACES.md §8.1).
@@ -55,16 +55,16 @@ part Theme {
 
                 // ----***----------------------------- the card
                 body {
-                    color: coal
+                    color: live.coal
                     opacity: 85%
                     box { from: 0, 0; size: 360, 330; corner: 0; opacity: 0% }
                 }
-                box { from: 0, 0; size: 360, 1; color: skin.accent; opacity: 25% }
+                box { from: 0, 0; size: 360, 1; color: live.accent; opacity: 25% }
 
                 // ----***------------------------------ the title
-                text "theme" { at: 14, 18; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: skin.ink }
-                text "~/.config/pleamar/themes" { at: 14, 32; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
-                box { from: 14, 40; size: 332, 1; color: skin.ink; opacity: ink.subtle }
+                text "theme" { at: 14, 18; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink }
+                text "~/.config/pleamar/themes" { at: 14, 32; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+                box { from: 14, 40; size: 332, 1; color: live.ink; opacity: ink.subtle }
 
                 // ----***------------------------------- the list
                 column list { at: 14, 46
@@ -73,11 +73,11 @@ part Theme {
                     }
                 }
 
-                text "no themes yet — put a .toml in ~/.config/pleamar/themes" { at: 180, 170; anchor: center; family: "Iosevka"; size: 10; color: ink.off
+                text "no themes yet — put a .toml in ~/.config/pleamar/themes" { at: 180, 170; anchor: center; family: "Iosevka"; size: 10; color: live.ink.off
                     show: themes.total == 0 }
                 // An empty text draws nothing, so the error line needs no `show:`
                 // (a text fact cannot be compared inside a scene expression).
-                text "{theme.err}" { at: 180, 190; anchor: center; family: "Iosevka"; size: 10; color: warn }
+                text "{theme.err}" { at: 180, 190; anchor: center; family: "Iosevka"; size: 10; color: live.warn }
             }
         }
     }

@@ -500,7 +500,10 @@ let
 
   # Seed ~/.config/pleamar/theme.plm once from the default, then let the compiled
   # pipeline rewrite it from the wallpaper. A failing run leaves the previous
-  # file intact.
+  # file intact. After a write the palette is handed to the scenes that draw it
+  # live (`palette.json` in each one's data folder, `pleamar-themes push`), so a
+  # converted scene re-themes without a reload; a failing push is not a failing
+  # theme run, and the scenes catch up on their next start or push.
   pleamarThemeRun = pkgs.writeShellScript "pleamar-theme" ''
     set -eu
     theme_dir="$HOME/.local/lib/pleamar/theme"
@@ -508,7 +511,8 @@ let
     if [ ! -e "$dst" ]; then
       install -Dm644 "$theme_dir/theme.default.plm" "$dst"
     fi
-    exec ${lib.getExe pkgs.neg.pleamar-theme}
+    ${lib.getExe pkgs.neg.pleamar-theme}
+    ${lib.getExe' pkgs.neg.pleamar-theme "pleamar-themes"} push || true
   '';
 in
 lib.mkIf pleamarEnabled (
