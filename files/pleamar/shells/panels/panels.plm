@@ -7,6 +7,7 @@ import "../../lib/palette-live.plm"
 // `MusicManager.accentColor` over the wallpaper palette.
 import "../../art.plm" as artacc
 import "../../lib/capsule.plm"
+import "../../lib/controls.plm"
 import "../../lib/plugins/cover/cover.plm" as Cover
 import "../../lib/plugins/meta/meta.plm" as Meta
 import "../../lib/plugins/spectrum/spectrum.plm" as spec
