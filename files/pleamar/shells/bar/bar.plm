@@ -237,6 +237,13 @@ scene bar {
     fact vol.hot = false
     fact mic.shown = false
     fact mic.hot = false
+    // The tiles' widths: `bar.luau` composes each one from the very string the tile prints
+    // (7 px per glyph at 14 * fontScale, plus 4 + 2 + 14 + 4 for the capsule's edges, the icon
+    // gap and the glyph). The scene cannot measure a text into its own `size:` — that slot is
+    // read in the caller's scope — so the width travels as a fact, the way `media_w` does.
+    // The values here are what the scene draws before the first audio sample lands.
+    fact vol.w = 45
+    fact mic.w = 52
     // The cursor is anywhere on the strip: QS's `panelHovering`, which is what
     // brings the Genelec tile (idle-hidden) back. (Not `bar.hot`: the palette
     // already has a `bar.hot` — panel.hotzone.width.)
@@ -1387,22 +1394,18 @@ scene bar {
     //     dropped on 2026-11-02: entering the bar anywhere re-laid the whole right row out from
     //     under the hand, which is worse than a wider plate. `vol.shown`/`mic.shown` are still
     //     published by bar.luau and nothing here reads them — the capsules are always there.
-    component AudioTile(glyph: number, slot: number, readout: text, hot: bool, fill: color,
+    component AudioTile(glyph: number, slot: number, readout: text, fill: color,
                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        let icon = pill.icon
         let glyph.w = 14
-        // One plate, as wide as it needs to be: the icon alone at rest, the icon and its reading
-        // while the pointer is on it. Drawn as two boxes before — a fixed 30 px capsule with a
-        // second pill sliding out to its left — which left black plate sticking out to the right
-        // of the glyph and put the number outside the capsule it belongs to.
-        // The plate *is* the slot, and the slot shrinks with the tile: a plate drawn wider than what
-        // it holds is the empty pill that sat to the right of the microphone.
-        // The plate is the slot, always: it used to be `pick(hot, icon-only, slot)`, so the two
-        // audio capsules grew by 20 px each the moment the pointer touched the bar anywhere — the
-        // whole right row slid out from under the hand. A fixed plate cannot jump; the reading is
-        // always in it, and hovering only raises the tip.
+        // One plate, as wide as the string it prints: `slot` is `vol.w`/`mic.w`, composed by the
+        // logic from the same reading the tile draws, so a route name or a percentage cannot
+        // outgrow the plate it belongs to. The glyph keeps the right end at the capsule's own
+        // pad and never moves — the hover reveal that used to slide it to the plate's centre was
+        // dropped with the two-capsule design, and a glyph that moves under the pointer reads as
+        // a fault. The reading is right-anchored in the space that is left: its box is exactly
+        // the text's own width, so a longer string elides instead of spilling onto the strip.
         let w = slot
-        let gx = pick(hot, w / 2, w - capsule.pad - icon / 2)
+        let gx = w - capsule.pad - glyph.w / 2
         size: w * scale, strip * scale
         group zoom {
             scale: scale
@@ -1414,7 +1417,7 @@ scene bar {
             }
             // The icon keeps the right end of the plate, the reading grows to its left. One of
             // five pictures, chosen by the logic's number: 0 up, 1 down, 2 off, 3 live mic,
-            // 4 muted mic. The glyph stays 14 px inside the pill's 22 px icon cell.
+            // 4 muted mic. The glyph is 14 px, the plate's edge is the capsule's 4.
             image icon_vol_up { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 0 }
             image icon_vol_down { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 1 }
             image icon_vol_off { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 2 }
@@ -1422,8 +1425,10 @@ scene bar {
             image icon_mic_off { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 4 }
             text "{readout}" {
                 measure w.out
-                at: w - 2 * capsule.pad - icon, strip / 2
+                at: w - capsule.pad - glyph.w - capsule.gap, strip / 2
                 anchor: right center
+                width: w - 2 * capsule.pad - glyph.w - capsule.gap
+                lines: 1
                 size: 14 * text_scale
                 weight: 500
                 color: skin.ink
@@ -1434,13 +1439,14 @@ scene bar {
 
     component VolCapsule(step: event, route: event,
                          scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        let slot = 46
+        // The slot is the reading's own width, composed by the logic from that same string.
+        let slot = vol.w
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
             // The reading arrives ready-made from the logic — the route's name on a pro sink, the
             // percentage otherwise (QS prints `labelText`, the route's short label, there).
-            AudioTile(vol.kind, slot, vol.readout, vol.hot, mix(volume.low, volume.high, level), scale: 1)
+            AudioTile(vol.kind, slot, vol.readout, mix(volume.low, volume.high, level), scale: 1)
             // On a pro sink the capsule is a route switch, not a fader: QS's `wheelEnabled` is
             // `!isProAudioSink` there (`Volume.qml`), because a pro-audio output's level is the
             // hardware's (here the Genelec capsule's) and the software fader moves nothing audible.
@@ -1455,11 +1461,12 @@ scene bar {
 
     component MicCapsule(mute: event, step: event,
                          scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        let slot = 46
+        // Same rule as the sink's tile: the plate is as wide as the percentage it prints.
+        let slot = mic.w
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
-            AudioTile(mic.kind + 3, slot, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level), scale: 1)
+            AudioTile(mic.kind + 3, slot, "{audio.input * 100, 0}%", mix(volume.low, volume.high, mic.level), scale: 1)
             zone box mic { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
             on enter mic { mic.hot = true; emit tip(8) }
             on leave mic { mic.hot = false; emit tip_hide }

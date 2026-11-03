@@ -72,6 +72,18 @@ local function num(v, lo, hi, def)
     return math.max(lo, math.min(hi, v))
 end
 
+-- The two audio tiles are as wide as the string they print, and no wider: Iosevka's advance is
+-- half an em, so at the bar's 14 design px one character is 7 * fontScale, and the plate is that
+-- text plus the capsule's 4 px on each side, the 2 px icon gap and the 14 px glyph — the same
+-- layout `AudioTile` draws. The scene cannot turn a measured text into its own `size:` (that slot
+-- is read in the caller's scope), so the width is a fact here, the way `media_w` is.
+local AUDIO_EDGE, AUDIO_GAP, AUDIO_GLYPH = 4, 2, 14
+local function audio_width(s)
+    local ts = tonumber(fact.text_scale) or 1
+    local n = utf8.len(s) or #s
+    return math.floor(2 * AUDIO_EDGE + AUDIO_GAP + AUDIO_GLYPH + n * 7 * ts + 0.5)
+end
+
 -- ---------------------------------------------------------------- player policy
 -- QS picks the bar's player itself (Services/MusicPlayers.qml) and everything that shows or
 -- commands music reads that pick. The service here picks one too — the one playing, else the one
@@ -151,6 +163,10 @@ local function read_file()
     return {}
 end
 
+-- Composed by the audio block below; `apply` runs before it is defined (the settings are merged
+-- at load), so this is a forward declaration rather than a local defined in place.
+local resize_audio = nil
+
 local function apply(raw)
     local edge = raw.edge
     if edge ~= "top" and edge ~= "bottom" then edge = D.edge end
@@ -196,6 +212,12 @@ local function apply(raw)
         mediaStack = id_list(raw.mediaRecent, 5)
         mediaStackLoaded = true
     end
+
+    -- A moved type scale resizes the two audio tiles: their plates are composed from the very
+    -- string they print, so `fontScale` has to re-run that composition. Nil on the first merge,
+    -- where the audio block below is not defined yet — the scene ships defaults for both widths
+    -- and the first sample fills them.
+    if resize_audio then resize_audio() end
 end
 
 -- The table as it was read: `apply` does not keep it, but a write must (INTERFACES §6.1 — mutate
@@ -725,10 +747,21 @@ local function vol_readout()
     local route = ROUTE_SHORT[routeNow]
     if route then
         text["vol.readout"] = route
+        fact["vol.w"] = audio_width(route)
         return
     end
     local pct = math.floor((tonumber(audioNow.volume) or 0) * 100 + 0.5)
-    text["vol.readout"] = string.format("%d%%", pct)
+    local s = string.format("%d%%", pct)
+    text["vol.readout"] = s
+    fact["vol.w"] = audio_width(s)
+end
+
+-- Both tiles, from the current reading: the route read asks for the sink's string, the audio
+-- watch for the microphone's. Kept as one function so a settings merge can re-run it.
+resize_audio = function()
+    local input = tonumber(audioNow.input) or 0
+    fact["mic.w"] = audio_width(string.format("%d%%", math.floor(input * 100 + 0.5)))
+    vol_readout()
 end
 
 local function route_read()
@@ -749,6 +782,9 @@ local function audioChanged(a)
     -- thing that should say "muted". The scene cannot choose an image from an `if`, so
     -- it gets a number: 0 up, 1 down, 2 off for the sink; 0 live, 1 muted for the source.
     fact["mic.kind"] = (a.input_muted == true) and 1 or 0
+    -- The microphone's plate is sized from the percentage it prints, exactly as the sink's is
+    -- from its route: a digit count that moves has to move the plate with it.
+    fact["mic.w"] = audio_width(string.format("%d%%", math.floor((tonumber(a.input) or 0) * 100 + 0.5)))
     local lvl = tonumber(a.volume) or 0
     fact["vol.kind"] = (a.muted == true) and 2 or (lvl < 0.5 and 1 or 0)
     fact["mic.shown"] = a.input_muted ~= true
