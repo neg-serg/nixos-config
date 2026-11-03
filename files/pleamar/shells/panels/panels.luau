@@ -854,10 +854,10 @@ local function worker_args(name)
     if name == "sysmon" then
         return {}
     elseif name == "weather" then
-        -- `--timeout 3`, not the helper's 8: Open-Meteo cannot be reached from this host, so every
-        -- sample spends the whole timeout there before falling back to wttr.in — 8.6 s for the first
-        -- one, measured 2026-10-25, and the card says nothing until it lands. Three seconds is
-        -- still ample for an API that answers in a fraction of one when it is reachable.
+        -- `--timeout 3`, not the helper's 8: it is one attempt's deadline, and eight seconds is a
+        -- long time to wait for a failure. The worker dials both providers at once and takes the
+        -- first payload, so this no longer decides what the card waits for — a reachable provider
+        -- answers in ~0.4 s (measured 2026-11-04) and only a fetch where both fail reaches 3 s.
         local args = { "--forecast-days", "5", "--timeout", "3" }
         if conf.weatherCity ~= "" then
             table.insert(args, "--city")
