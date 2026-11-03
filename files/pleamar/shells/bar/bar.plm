@@ -1471,8 +1471,10 @@ scene bar {
         size: slot * scale, strip * scale
         group zoom {
             scale: scale
-            // The reading arrives ready-made from the logic — the route's name on a pro sink, the
-            // percentage otherwise (QS prints `labelText`, the route's short label, there).
+            // The reading arrives ready-made from the logic: the percentage, on every sink. QS
+            // prints the route's short label on a pro sink (`labelText`), but the Genelec capsule
+            // already carries the hardware level here and the route is set on the speakers
+            // themselves — "AES/EBU" on the fader was noise.
             AudioTile(vol.kind, slot, vol.readout, mix(volume.low, volume.high, level), scale: 1)
             // On a pro sink the capsule is a route switch, not a fader: QS's `wheelEnabled` is
             // `!isProAudioSink` there (`Volume.qml`), because a pro-audio output's level is the
@@ -1654,8 +1656,8 @@ scene bar {
             // transport pill: the controls live outside this capsule, so the capsule is the only
             // zone that can report the cursor arriving (a zone inside a row that `media.hot`
             // hides never exists, and could never report it).
-            on enter z_track { emit tip(6); emit media_hover(true) }
-            on leave z_track { emit tip_hide; emit media_hover(false) }
+            on enter z_track { emit tip(6); emit media_hover(1) }
+            on leave z_track { emit tip_hide; emit media_hover(0) }
 
             // The transport is not in here: it is its own pill, to the left of this
             // capsule (`Transport` below), which is where QS's `MediaTransport` rides out
@@ -1729,8 +1731,8 @@ scene bar {
             // own `leave` never fired. The row does not act on a press here, so the pointer is not
             // told otherwise.
             zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: region }
-            on enter z_media { emit tip(6); emit media_hover(true) }
-            on leave z_media { emit tip_hide; emit media_hover(false) }
+            on enter z_media { emit tip(6); emit media_hover(1) }
+            on leave z_media { emit tip_hide; emit media_hover(0) }
 
             // The zones sit on the buttons they name — the reason the old ones missed is
             // that they were placed past the capsule's width while the buttons were drawn
@@ -1749,12 +1751,12 @@ scene bar {
                 role: button }
             // Entering the strip keeps it up: the cursor has to be able to walk from the
             // capsule onto the controls without the pill vanishing under it.
-            on enter z_prev { emit media_hover(true) }
-            on enter z_play { emit media_hover(true) }
-            on enter z_next { emit media_hover(true) }
-            on leave z_prev { emit media_hover(false) }
-            on leave z_play { emit media_hover(false) }
-            on leave z_next { emit media_hover(false) }
+            on enter z_prev { emit media_hover(1) }
+            on enter z_play { emit media_hover(1) }
+            on enter z_next { emit media_hover(1) }
+            on leave z_prev { emit media_hover(0) }
+            on leave z_play { emit media_hover(0) }
+            on leave z_next { emit media_hover(0) }
             // The reference's MouseAreas are `enabled:` on the same two answers, so a dimmed
             // button does nothing rather than asking a player that will refuse.
             on press z_prev while media.can_go_prev { emit prev }
@@ -1806,9 +1808,12 @@ scene bar {
             }
             // `or strip.hot`: the reference brings a muted (or 100 %) capsule back while the
             // pointer is on the panel, and without that there is nothing on the bar to press to
-            // unmute — the control vanished exactly when it was needed.
-            MicCapsule(toggle_mic, mic_step) { show: widget.mic }
-            VolCapsule(wheel_volume, toggle_route) { show: widget.volume }
+            // unmute or to pull the level down — the control vanished exactly when it was needed.
+            // The sink's 100 % has the same rule as the microphone's: QS's `fullHideTimer` drops
+            // the capsule once the level has been at the top for 800 ms (`vol.shown` in the
+            // logic), and a level below the top brings it straight back.
+            MicCapsule(toggle_mic, mic_step) { show: widget.mic and (mic.shown or strip.hot) }
+            VolCapsule(wheel_volume, toggle_route) { show: widget.volume and (vol.shown or strip.hot) }
             // Genelec, the rightmost module, as in the legacy bar. The reference hides it until
             // `panelHovering` (the strip's hover) — but this slot was gated on the tile's own
             // hover, and a tile that is not drawn cannot be hovered: once hidden it stayed
@@ -1915,7 +1920,7 @@ scene bar {
     // `tray_panel` is the same moment told to the logic: the tray machine needs to know when the
     // strip is *left* (`panelHover`, SystemTray.qml:14), which a fact cannot say.
     on enter strip_hover { strip.hot = true; emit tray_panel(1) }
-    on leave strip_hover { strip.hot = false; emit tip_hide; emit tray_panel(0) }
+    on leave strip_hover { strip.hot = false; emit tip_hide; emit tray_panel(0); emit media_hover(0) }
 
     // The corner the tray is revealed from: QS's hot zone (`Bar.qml:1246-1260`) — a hover target of
     // its own over the bottom right of the panel, 16 by 9 design px (`Settings/Theme.qml:687-688`),
