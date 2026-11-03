@@ -863,6 +863,15 @@ scene bar {
     // and a 600 px/s shove (the reading rose and faded), because 120 ms is not photogenic.
     on change now.minute { impulse tick.dip 34 }
 
+    // The analyser is only drawn while the pointer is on the media capsule (its 29 px of room
+    // are reserved in that capsule's own width), and the plugin spawns cava only while its
+    // `active` fact holds — a plugin that decided for itself would keep the process and the
+    // decay timer alive in a scene that draws nothing. Nothing on this side ever set it, so
+    // hovering the capsule reserved the room and painted an empty band. The scene owns the
+    // fact here, exactly as the panels scene does for its own band; both files import the
+    // library as `spec`, and the library's facts answer to its own name.
+    on change media.hot { Spectrum.active = media.hot }
+
     event wheel_volume ->
     // The volume capsule's press: QS's `toggleRoute()` — `pwroute toggle`, the RME's AES/Analog pair.
     // The mute it used to be is what bar.luau falls back to when there is no RME sink to move.
