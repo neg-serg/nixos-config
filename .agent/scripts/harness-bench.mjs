@@ -10,8 +10,8 @@
  * retries; a step whose usage is incomplete is reported, not guessed.
  *
  * Modes:
- *   run     --suite FILE [--out FILE] [--trials N] [--profile P] [--keep]
- *   report  RUN.json
+ *   run     --suite FILE [--out FILE] [--trials N] [--profile P] [--keep] [--allow-failures]
+ *   verify  --suite FILE        prove each case is red before the fix and green after it
  *   compare A.json B.json
  *
  * Suite format (JSON; relative paths resolve against the suite file):
@@ -24,19 +24,20 @@
  *                  "cacheWriteUsdPerMTokens": 0.27, "outputUsdPerMTokens": 1.10 },
  *     "cases": [
  *       { "id": "x", "prompt": "...", "workspace": "./fixtures/x",
+ *         "gold": "./fixes/x", "frozen": ["test.mjs"],
  *         "setup": "optional command", "check": "node check.mjs" }
- *     ]
  *   }
  *
  * A case passes when `check` exits 0. No `check` means no pass/fail signal, so
  * such a case is refused: a benchmark without a success criterion is a demo.
- *
+ * `gold` is the known-good tree for `verify` only; `frozen` files are hashed
+ * before and after the run so a case cannot be won by editing its own test.
  * Metrics are paired by case in `compare`, so per-case variance cancels; the
- * sign test and the bootstrap interval are there because a 40-session sample
  * shows steps/turn with sd ~= mean (66 +/- 66), which makes unpaired "it felt
  * better" comparisons noise.
  */
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -172,6 +173,21 @@ function tail(text, lines) {
   return text.trim().split('\n').slice(-lines).join('\n')
 }
 
+function frozenHashes(workspace, testCase) {
+  const hashes = {}
+  for (const relative of testCase.frozen ?? []) {
+    const path = join(workspace, relative)
+    hashes[relative] = existsSync(path) ? createHash('sha256').update(readFileSync(path)).digest('hex') : 'missing'
+  }
+  return hashes
+}
+
+/** Overlay the case's known-good tree (its `gold` directory) on a workspace. */
+function applyGold(workspace, suitePath, testCase) {
+  if (!testCase.gold) throw new Error('case ' + testCase.id + ' has no gold overlay')
+  cpSync(resolve(dirname(suitePath), testCase.gold), workspace, { recursive: true })
+}
+
 async function runTrial(suite, suitePath, testCase, trial, opts) {
   const workspace = mkdtempSync(join(tmpdir(), 'dsh-bench-'))
   const timeoutMs = Number(testCase.timeoutMs ?? suite.timeoutMs ?? 300000)
@@ -183,6 +199,7 @@ async function runTrial(suite, suitePath, testCase, trial, opts) {
       const setup = await exec('bash', ['-lc', testCase.setup], { cwd: workspace, timeoutMs })
       if (setup.code !== 0) throw new Error('setup failed for ' + testCase.id + ': ' + tail(setup.stderr || setup.stdout, 5))
     }
+    const before = frozenHashes(workspace, testCase)
     const bin = opts.bin
     const profile = testCase.profile ?? opts.profile ?? suite.profile ?? 'headless'
     const run = await exec(bin, ['--profile', profile, 'headless', '--json', testCase.prompt], { cwd: workspace, timeoutMs })
@@ -193,13 +210,16 @@ async function runTrial(suite, suitePath, testCase, trial, opts) {
     } else {
       check = { code: null, output: '', skipped: true }
     }
+    const after = frozenHashes(workspace, testCase)
+    const frozenChanged = Object.keys(before).filter((relative) => before[relative] !== after[relative])
     const result = summarize(run.stdout, {
       case: testCase.id,
       trial,
       exitCode: run.code,
       timedOut: run.timedOut,
       wallMs: run.wallMs,
-      pass: check.skipped ? null : check.code === 0,
+      pass: check.skipped ? null : check.code === 0 && frozenChanged.length === 0,
+      frozenChanged,
       checkOutput: check.output,
       stderrTail: tail(run.stderr, 5),
     })
@@ -325,6 +345,52 @@ function printReport(run) {
   }
 }
 
+/**
+* Prove a suite can discriminate: every case must fail its check on the
+* untouched workspace and pass it once the `gold` overlay is applied. A case
+* that is green before the fix measures nothing, and a case that stays red
+* after it has a broken check or a stale gold tree.
+*/
+async function modeVerify(flags, positional) {
+  if (!flags.suite || typeof flags.suite !== 'string') throw new Error('verify needs --suite FILE')
+  const suitePath = resolve(flags.suite)
+  const suite = readJson(suitePath, 'suite')
+  const cases = (suite.cases ?? []).filter((testCase) => testCase.workspace)
+  if (cases.length === 0) throw new Error('verify needs cases with a workspace and a gold overlay')
+  let failures = 0
+  console.log('\ncase                       red    green  verdict')
+  for (const testCase of cases) {
+    const workspace = mkdtempSync(join(tmpdir(), 'dsh-verify-'))
+    const timeoutMs = Number(testCase.timeoutMs ?? suite.timeoutMs ?? 300000)
+    try {
+      cpSync(resolve(dirname(suitePath), testCase.workspace), workspace, { recursive: true })
+      if (testCase.setup) {
+        const setup = await exec('bash', ['-lc', testCase.setup], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000) })
+        if (setup.code !== 0) throw new Error('setup failed for ' + testCase.id + ': ' + tail(setup.stderr || setup.stdout, 5))
+      }
+      const red = await exec('bash', ['-lc', testCase.check], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000) })
+      applyGold(workspace, suitePath, testCase)
+      const green = await exec('bash', ['-lc', testCase.check], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000) })
+      const ok = red.code !== 0 && green.code === 0
+      if (!ok) failures += 1
+      console.log(
+        testCase.id.padEnd(26)
+        + (red.code !== 0 ? 'fail' : 'PASS').padStart(6)
+        + (green.code === 0 ? ' pass' : ' FAIL').padStart(10)
+        + ('  ' + (ok ? 'ok' : 'not discriminating'))
+      )
+      if (!ok) {
+        console.log('  red:   ' + tail(red.stdout + '\n' + red.stderr, 3))
+        console.log('  green: ' + tail(green.stdout + '\n' + green.stderr, 3))
+      }
+    } finally {
+      rmSync(workspace, { recursive: true, force: true })
+    }
+  }
+  console.log('\n' + (cases.length - failures) + '/' + cases.length + ' cases discriminate')
+  if (failures > 0) process.exitCode = 1
+}
+
 async function modeRun(flags, positional) {
   if (!flags.suite || typeof flags.suite !== 'string') throw new Error('run needs --suite FILE')
   const suitePath = resolve(flags.suite)
@@ -430,9 +496,10 @@ async function main() {
   const { flags, positional } = parseArgv(process.argv.slice(2))
   const mode = positional.shift()
   if (mode === 'run') return modeRun(flags, positional)
+  if (mode === 'verify') return modeVerify(flags, positional)
   if (mode === 'report') return modeReport(flags, positional)
   if (mode === 'compare') return modeCompare(positional)
-  throw new Error('usage: harness-bench.mjs run --suite FILE | report RUN.json | compare A.json B.json')
+  throw new Error('usage: harness-bench.mjs run --suite FILE | verify --suite FILE | report RUN.json | compare A.json B.json')
 }
 
 main().catch((error) => {
