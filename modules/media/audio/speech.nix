@@ -8,6 +8,9 @@ let
   enabled = config.lib.neg.enabled "media.audio.speech";
   systemdUser = config.lib.neg.systemdUser;
   eng = "/zero/ai/speech/engines"; # speech stack location (ZFS pool, main user-owned)
+  # Inference only: nixpkgs builds piper with its training extras by default
+  # (torch + triton, ~3G); withTrain=false keeps the server identical.
+  piper = pkgs.piper-tts.override { withTrain = false; };
 
   # Shared python for the thin FastAPI wrappers (piper-server.py / whisper-server.py).
   # Chatterbox uses its own pip venv (torch ROCm wheels) — see the setup script.
@@ -39,7 +42,7 @@ in
 {
   config = lib.mkIf enabled {
     environment.systemPackages = [
-      pkgs.piper-tts # CPU TTS fallback (piper-server on :8001) — note: pkgs.piper is a GTK mouse GUI!
+      piper # CPU TTS fallback (piper-server on :8001) — note: pkgs.piper is a GTK mouse GUI!
       whisperCpp # GPU STT (whisper-cli, Vulkan backend — whisper-server on :8002)
       pkgs.sherpa-onnx # speech toolkit (ASR/TTS/VAD + speaker diarization) for local experiments
       pkgs.rocmPackages.rocm-smi # VRAM/GPU monitoring for the ROCm TTS stack (chatterbox)
@@ -62,7 +65,7 @@ in
           Type = "simple";
           RestartSec = 5;
           MemoryMax = "1G";
-          Environment = "PATH=${pkgs.piper-tts}/bin:${pkgs.ffmpeg}/bin";
+          Environment = "PATH=${piper}/bin:${pkgs.ffmpeg}/bin";
           ExecStart = "${serverPy}/bin/python ${eng}/piper-server.py --port 8001 --voices-dir ${eng}/voices";
         };
       };
