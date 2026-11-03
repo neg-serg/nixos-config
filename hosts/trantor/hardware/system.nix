@@ -130,13 +130,66 @@
       $out/lib/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin
   '';
 
-  # MediaTek MT7927 (PCI 14c3:7927) ASPM quirk, inherited from the out-of-tree
-  # mt7927 module that used to own this device: L1 ASPM has to stay off or the
-  # card drops off the bus. The module is gone (the 7.3 kernel carries mt7925e
-  # in-tree), the quirk is not.
-  services.udev.extraRules = ''
-    ACTION=="add", SUBSYSTEM=="pci", \
-      ATTR{vendor}=="0x14c3", ATTR{device}=="0x7927", \
-      ATTR{link/l1_aspm}="0"
-  '';
+  # No MT7927 ASPM quirk here. The out-of-tree mt7927 module needed L1 off to
+  # keep the card on the bus, but the in-tree mt7925e does not: L1 is already
+  # disabled for every link by "pcie_aspm=off" (hardware/kernel.nix), and with
+  # ASPM disabled the kernel creates no link/* attributes at all — all
+  # /sys/bus/pci/devices/*/link/ are empty — so the old udev rule had nothing
+  # to write (it also matched 0x7927 while the card enumerates as 14c3:6639).
+  # Keep in mind that this file is data only: named attrs are read by
+  # hardware.nix, and a `services.udev` block here would be merged into nothing.
+
+  # mt7925e hands the chip to two firmware low-power states, and waking from
+  # them is the path that ends in "driver own failed" and a card that drops off
+  # the bus. Both are debugfs knobs of the driver itself: `runtime-pm` (doze)
+  # stores pm->enable_user, `deep-sleep` stores pm->ds_enable_user; 0 pins the
+  # chip awake, which is free on a desktop PSU.
+  #
+  # Verified against the kernel this host builds (7.3.1): the files are created
+  # by mt7925_init_debugfs() right after the wiphy registers —
+  # drivers/net/wireless/mediatek/mt76/mt7925/debugfs.c:308,314, mode 0600, at
+  # /sys/kernel/debug/ieee80211/<wiphy>/mt76/ (cfg80211 creates the parent
+  # unconditionally, core.c:2083). CONFIG_MT7925E=m and CONFIG_DEBUG_FS=y, and
+  # the built mt7925-common.ko carries the names, so the code is not compiled
+  # out. MAC80211_DEBUGFS is off and irrelevant here: that gate covers
+  # mac80211's own per-phy files, not mt76's directory.
+  #
+  # The values live in driver memory, so they survive until the module is
+  # unloaded — one write per probe is enough. The systemd unit that runs this
+  # lives in hardware.nix: this file is plain data (see the header), so a
+  # `systemd.services` block here would be merged into nothing.
+  mt7925PmOff = pkgs.writeShellApplication {
+    name = "mt7925-disable-pm";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      shopt -s nullglob
+
+      # The netdev appears a few lines before the debugfs dirs do: mt7925_init()
+      # calls mt76_register_device() first and mt7925_init_debugfs() after it.
+      for _ in {1..50}; do
+        dirs=(/sys/kernel/debug/ieee80211/phy*/mt76)
+        [ "''${#dirs[@]}" -gt 0 ] && break
+        sleep 0.2
+      done
+
+      if [ "''${#dirs[@]}" -eq 0 ]; then
+        # No phy at all is a card that probe has not reached yet, and the device
+        # unit retries then; a phy without mt76 means the driver bound but its
+        # debugfs never appeared — that is worth a failed unit.
+        phys=(/sys/class/ieee80211/phy*)
+        if [ "''${#phys[@]}" -gt 0 ]; then
+          echo "mt7925-disable-pm: phy exists but no mt76 debugfs dir" >&2
+          exit 1
+        fi
+        echo "mt7925-disable-pm: no mt7925e phy yet, nothing to pin" >&2
+        exit 0
+      fi
+
+      for dir in "''${dirs[@]}"; do
+        echo 0 > "$dir/deep-sleep"
+        echo 0 > "$dir/runtime-pm"
+        echo "mt7925-disable-pm: $dir runtime-pm=$(cat "$dir/runtime-pm") deep-sleep=$(cat "$dir/deep-sleep")"
+      done
+    '';
+  };
 }

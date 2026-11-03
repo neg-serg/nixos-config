@@ -164,6 +164,26 @@ in
     ];
   };
 
+  # mt7925e: pin the chip out of runtime PM ("doze") and deep sleep — waking
+  # from them is the path to "driver own failed" and a card that drops off the
+  # bus (see the helper in hardware/system.nix for the verified debugfs
+  # contract). The device unit re-applies after a driver rebind, since re-probe
+  # resets both knobs to their defaults; multi-user covers the boot path where
+  # mt7925e is preloaded from hardware/kernel.nix. No RemainAfterExit: a oneshot
+  # that stays active would not run again on that rebind.
+  systemd.services.mt7925-disable-pm = {
+    description = "Pin MediaTek MT7925 out of runtime PM and deep sleep";
+    after = [ "sys-subsystem-net-devices-wlan0.device" ];
+    wantedBy = [
+      "multi-user.target"
+      "sys-subsystem-net-devices-wlan0.device"
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = lib.getExe systemData.mt7925PmOff;
+    };
+  };
+
   # Avoid double compression for swap
   zramSwap.enable = false;
 

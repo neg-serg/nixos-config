@@ -34,7 +34,12 @@ in
     "lru_gen.min_ttl_ms=1000" # Min TTL for multi-gen LRU
     "mem_sleep_default=deep" # Prefer deep sleep (S3) for suspend
     "8250.nr_uarts=0" # Skip legacy UART probing
-    "pcie_aspm=off" # Disable ASPM entirely — prevents NVMe D3cold wake delays on AMD/X670E
+    # Disable ASPM entirely — prevents NVMe D3cold wake delays on AMD/X670E.
+    # This is also the only ASPM lever this host needs for the MT7927: with ASPM
+    # off the kernel exposes no link/* attributes at all (aspm_ctrl_attrs_are_visible
+    # returns 0 when aspm_disabled), so the old per-device udev rule could never
+    # have written link/l1_aspm — and the card enumerates as 14c3:6639, not 0x7927.
+    "pcie_aspm=off"
     "amd_pstate=active" # AMD P-State active mode: fastest transitions, native Zen 5 support
     "pcie_port_pm=off" # Disable PCIe port power management — keeps NVMe accessible during import
     "nvme_core.io_timeout=4294967295" # Max NVMe I/O timeout
