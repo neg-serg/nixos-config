@@ -2,7 +2,7 @@
 name = "pleamar-theme"
 version = "0.1.0"
 edition = "2021"
-description = "pleamar theme pipeline: wallpaper colours to ~/.config/pleamar/theme.plm"
+description = "pleamar theme pipeline: wallpaper colours and theme files to ~/.config/pleamar/theme.plm"
 license = "MIT"
 
 [lib]
@@ -12,6 +12,10 @@ path = "src/lib.rs"
 [[bin]]
 name = "pleamar-theme"
 path = "src/main.rs"
+
+[[bin]]
+name = "pleamar-themes"
+path = "src/bin/pleamar-themes.rs"
 
 # No Rust dependencies on purpose: the only outside tools are the ones the
 # shell pipeline already required — ImageMagick for the 48x48 sample and jq

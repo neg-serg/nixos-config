@@ -11,6 +11,10 @@
 //! exactly as the shell asked it to (so pixel values cannot drift), and jq
 //! reads `--from-json` exactly as the shell did (so its string/error semantics
 //! are unchanged).
+//!
+//! Two producers write that one file: the wallpaper pipeline (`pleamar-theme`)
+//! and hand-written theme files (`pleamar-themes`, [`themes`]). Both render
+//! through [`render::Theme`], so a scene cannot tell which made the palette.
 
 #![forbid(unsafe_code)]
 
@@ -18,4 +22,5 @@ pub mod color;
 pub mod extract;
 pub mod hex;
 pub mod render;
+pub mod themes;
 pub mod time;

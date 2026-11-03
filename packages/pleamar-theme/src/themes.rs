@@ -1,0 +1,328 @@
+//! Theme files: a hand-written palette for `theme.plm`.
+//!
+//! The wallpaper pipeline derives the palette from a picture; a theme file is
+//! the other end of the same pipe — the five tones a person chose, in a small
+//! TOML subset:
+//!
+//! ```toml
+//! name   = "Retro"
+//! font   = "Iosevka"     # reported by `list`, not written into theme.plm
+//! corner_rounding = 18   # likewise: it is the compositor's setting
+//! light  = false         # skin.light, and the mode in the header
+//!
+//! [palette]
+//! coal    = "#101418"
+//! surface = "#242A35"
+//! ink     = "#CBD6E5"
+//! ink_dim = "#AEB9C8"
+//! accent  = "#006FCC"
+//! ```
+//!
+//! Every key is optional: a file that names only its accent keeps the stock
+//! palette for the rest (the same fallbacks `theme.sh` uses). What is written
+//! is the same `library Skin` the wallpaper pipeline writes, so a scene cannot
+//! tell which producer made it — [`crate::render::Theme`] renders both.
+//!
+//! The reader is deliberately small, not a TOML implementation: `key = value`
+//! lines, `#` comments outside quotes, one `[palette]` section, `true`/`false`
+//! and decimal integers. A mistake is a `line N: …` error and the file is
+//! skipped; nothing is written.
+
+use std::path::Path;
+
+use crate::hex;
+use crate::render::Theme;
+
+/// `colors.background`'s stock fallback (`theme.sh`).
+pub const STOCK_COAL: &str = "#000000";
+/// `colors.surfaceVariant`'s stock fallback.
+pub const STOCK_SURFACE: &str = "#242A35";
+/// `colors.text.primary`'s stock fallback.
+pub const STOCK_INK: &str = "#CBD6E5";
+/// `colors.text.secondary`'s stock fallback.
+pub const STOCK_INK_DIM: &str = "#AEB9C8";
+/// `colors.accent.primary`'s stock fallback.
+pub const STOCK_ACCENT: &str = "#006FCC";
+
+/// One parsed theme file.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ThemeFile {
+    /// The card's name; `None` when the file leaves it out (the caller then
+    /// uses the file stem).
+    pub name: Option<String>,
+    /// The shell's typeface, by family name.
+    pub font: Option<String>,
+    /// The compositor's window corner radius, in pixels.
+    pub corner_rounding: Option<u32>,
+    /// `skin.light`: whether the palette is a light one.
+    pub light: bool,
+    pub coal: String,
+    pub surface: String,
+    pub ink: String,
+    pub ink_dim: String,
+    pub accent: String,
+}
+
+impl ThemeFile {
+    /// The `theme.plm` this file describes, ready for
+    /// [`Theme::render`](crate::render::Theme::render).
+    ///
+    /// `path` is what the header names as the source; the notes above each
+    /// `let` say the tone came from the file rather than from a wallpaper.
+    pub fn to_theme(&self, path: &Path) -> Theme {
+        let source = path.display().to_string();
+        Theme {
+            title: "theme file's palette".to_string(),
+            generated_by: format!("pleamar-themes from {source}"),
+            source: Some(source),
+            mode: if self.light { "light" } else { "dark" },
+            mode_note: "the theme file says so".to_string(),
+            coal_note: "colors.background, from the theme file.".to_string(),
+            surface_note: "colors.surfaceVariant, from the theme file.".to_string(),
+            ink_note: "colors.text.primary, from the theme file.".to_string(),
+            accent_note: "colors.accent.primary, from the theme file.".to_string(),
+            coal: self.coal.clone(),
+            surface: self.surface.clone(),
+            ink: self.ink.clone(),
+            ink_dim: self.ink_dim.clone(),
+            accent: self.accent.clone(),
+            light: self.light,
+        }
+    }
+}
+
+/// Read a theme file. Every error starts with the 1-based line it came from.
+pub fn parse(text: &str) -> Result<ThemeFile, String> {
+    let mut name: Option<String> = None;
+    let mut font: Option<String> = None;
+    let mut corner_rounding: Option<u32> = None;
+    let mut light = false;
+    let mut palette = false;
+    let mut coal = STOCK_COAL.to_string();
+    let mut surface = STOCK_SURFACE.to_string();
+    let mut ink = STOCK_INK.to_string();
+    let mut ink_dim = STOCK_INK_DIM.to_string();
+    let mut accent = STOCK_ACCENT.to_string();
+
+    for (index, raw) in text.lines().enumerate() {
+        let line_number = index + 1;
+        let line = strip_comment(raw).trim();
+        if line.is_empty() {
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix('[') {
+            let Some(inside) = rest.strip_suffix(']') else {
+                return Err(format!(
+                    "line {line_number}: a section opens with '[' and ends with ']'"
+                ));
+            };
+            match inside.trim() {
+                "palette" => palette = true,
+                other => {
+                    return Err(format!(
+                        "line {line_number}: unknown section [{other}] (only [palette] is read)"
+                    ))
+                }
+            }
+            continue;
+        }
+        let Some((key, value)) = line.split_once('=') else {
+            return Err(format!("line {line_number}: expected key = value"));
+        };
+        let key = key.trim();
+        let value = value.trim();
+        match (palette, key) {
+            (false, "name") => name = Some(quoted(line_number, key, value)?),
+            (false, "font") => font = Some(quoted(line_number, key, value)?),
+            (false, "corner_rounding") => {
+                corner_rounding = Some(
+                    value
+                        .parse::<u32>()
+                        .map_err(|_| format!("line {line_number}: corner_rounding needs a whole number, not '{value}'"))?,
+                )
+            }
+            (false, "light") => {
+                light = match value {
+                    "true" => true,
+                    "false" => false,
+                    _ => {
+                        return Err(format!(
+                            "line {line_number}: light is true or false, not '{value}'"
+                        ))
+                    }
+                }
+            }
+            (false, other) => {
+                return Err(format!(
+                    "line {line_number}: unknown key '{other}' outside [palette] (name, font, corner_rounding, light)"
+                ))
+            }
+            (true, "coal") => coal = colour(line_number, key, value)?,
+            (true, "surface") => surface = colour(line_number, key, value)?,
+            (true, "ink") => ink = colour(line_number, key, value)?,
+            (true, "ink_dim") => ink_dim = colour(line_number, key, value)?,
+            (true, "accent") => accent = colour(line_number, key, value)?,
+            (true, other) => {
+                return Err(format!(
+                    "line {line_number}: unknown colour '{other}' (coal, surface, ink, ink_dim, accent)"
+                ))
+            }
+        }
+    }
+
+    Ok(ThemeFile {
+        name,
+        font,
+        corner_rounding,
+        light,
+        coal,
+        surface,
+        ink,
+        ink_dim,
+        accent,
+    })
+}
+
+/// Drop a `#` comment, but only outside a quoted value: `coal = "#000000"` keeps
+/// its colour.
+fn strip_comment(line: &str) -> &str {
+    let mut quoted = false;
+    for (index, character) in line.char_indices() {
+        match character {
+            '"' => quoted = !quoted,
+            '#' if !quoted => return &line[..index],
+            _ => {}
+        }
+    }
+    line
+}
+
+/// A quoted string value, with no escapes and no trailing characters.
+fn quoted(line_number: usize, key: &str, value: &str) -> Result<String, String> {
+    let unsupported = || format!("line {line_number}: {key} needs one quoted string, not {value}");
+    if value.len() < 2 || !value.starts_with('"') || !value.ends_with('"') {
+        return Err(unsupported());
+    }
+    let inner = &value[1..value.len() - 1];
+    if inner.contains('"') {
+        return Err(unsupported());
+    }
+    Ok(inner.to_string())
+}
+
+/// A colour value, normalized to the lower-case `#rrggbb` form.
+fn colour(line_number: usize, key: &str, value: &str) -> Result<String, String> {
+    let raw = quoted(line_number, key, value)?;
+    hex::normalize(&raw)
+        .ok_or_else(|| format!("line {line_number}: '{raw}' is not a hex colour (#rgb or #rrggbb)"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{parse, STOCK_ACCENT, STOCK_COAL, STOCK_INK, STOCK_INK_DIM, STOCK_SURFACE};
+
+    #[test]
+    fn a_minimal_file_is_all_stock_palette() {
+        let theme = parse("name = \"Plain\"\n").expect("parse");
+        assert_eq!(theme.name.as_deref(), Some("Plain"));
+        assert!(!theme.light);
+        assert_eq!(theme.coal, STOCK_COAL);
+        assert_eq!(theme.surface, STOCK_SURFACE);
+        assert_eq!(theme.ink, STOCK_INK);
+        assert_eq!(theme.ink_dim, STOCK_INK_DIM);
+        assert_eq!(theme.accent, STOCK_ACCENT);
+    }
+
+    #[test]
+    fn an_empty_file_is_a_valid_stock_theme() {
+        let theme = parse("").expect("parse");
+        assert_eq!(
+            theme,
+            super::ThemeFile {
+                name: None,
+                font: None,
+                corner_rounding: None,
+                light: false,
+                coal: STOCK_COAL.to_string(),
+                surface: STOCK_SURFACE.to_string(),
+                ink: STOCK_INK.to_string(),
+                ink_dim: STOCK_INK_DIM.to_string(),
+                accent: STOCK_ACCENT.to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn a_full_file_reads_every_key() {
+        let text = "\
+# a comment line
+name = \"Retro\"
+font = \"Iosevka\"
+corner_rounding = 18
+light = true
+
+[palette]
+coal = \"#101418\"   # the frame
+surface = \"#242A35\"
+ink = \"#CBD6E5\"
+ink_dim = \"#AEB9C8\"
+accent = \"#06C\"
+";
+        let theme = parse(text).expect("parse");
+        assert_eq!(theme.name.as_deref(), Some("Retro"));
+        assert_eq!(theme.font.as_deref(), Some("Iosevka"));
+        assert_eq!(theme.corner_rounding, Some(18));
+        assert!(theme.light);
+        assert_eq!(theme.coal, "#101418");
+        assert_eq!(theme.accent, "#0066cc", "short hex is expanded and lowered");
+    }
+
+    #[test]
+    fn a_hash_inside_a_value_is_not_a_comment() {
+        let theme = parse("[palette]\ncoal = \"#000000\"\n").expect("parse");
+        assert_eq!(theme.coal, "#000000");
+    }
+
+    #[test]
+    fn an_unknown_key_names_its_line() {
+        let error = parse("name = \"x\"\nmode = \"fast\"\n").expect_err("must fail");
+        assert!(error.starts_with("line 2:"), "{error}");
+        assert!(error.contains("unknown key 'mode'"), "{error}");
+    }
+
+    #[test]
+    fn an_unknown_section_is_refused() {
+        let error = parse("[colours]\nink = \"#ffffff\"\n").expect_err("must fail");
+        assert!(error.starts_with("line 1:"), "{error}");
+        assert!(error.contains("[colours]"), "{error}");
+    }
+
+    #[test]
+    fn a_palette_typo_names_the_valid_colours() {
+        let error = parse("[palette]\ninkey = \"#ffffff\"\n").expect_err("must fail");
+        assert!(error.starts_with("line 2:"), "{error}");
+        assert!(
+            error.contains("coal, surface, ink, ink_dim, accent"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn a_bad_colour_names_its_value() {
+        let error = parse("[palette]\nink = \"white\"\n").expect_err("must fail");
+        assert!(error.starts_with("line 2:"), "{error}");
+        assert!(error.contains("'white' is not a hex colour"), "{error}");
+    }
+
+    #[test]
+    fn a_value_must_be_quoted() {
+        let error = parse("name = Retro\n").expect_err("must fail");
+        assert!(error.contains("needs one quoted string"), "{error}");
+    }
+
+    #[test]
+    fn a_light_theme_is_not_true_by_words() {
+        let error = parse("light = yes\n").expect_err("must fail");
+        assert!(error.contains("light is true or false"), "{error}");
+    }
+}
