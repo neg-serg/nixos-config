@@ -8,6 +8,10 @@
     # no list entry. `vic/import-tree` is the pattern's walker — deps-free, no
     # inputs of its own, MIT — pinned by flake.lock.
     import-tree.url = "github:vic/import-tree";
+    # Dendritic parts layer: every file under `flake/parts/` declares its
+    # outputs; flake-parts gives `flake.*`/`perSystem` their shape. Pinned to
+    # the rev the prototype was measured at.
+    flake-parts.url = "github:hercules-ci/flake-parts/ea2630b7470978622c7689a1ff75d2b389175399";
     # Determinate Nix 3.23.3 (determinate + nix-src share the release tag on
     # purpose — the module installs the determinate-nixd binary that pairs with
     # the nix build, so bump both together). Bumped from 3.21.7: on that rev
@@ -176,53 +180,11 @@
     };
   };
 
-  outputs =
-    inputs@{ self, nixpkgs, ... }:
-    let
-      inherit (nixpkgs) lib;
-      flakeLib = import ./flake/lib.nix {
-        inputs = inputs // {
-          inherit self;
-        };
-        inherit nixpkgs;
-      };
-      supportedSystems = [ "x86_64-linux" ];
-      sharedPackages = lib.genAttrs supportedSystems (system: flakeLib.mkPkgs system);
-
-      # NixOS configuration builder: `nixosOut.configurations` is the pure
-      # machine set (flake-schemas), `nixosOut.mkTestHost` serves flake/checks.nix.
-      nixosOut = import ./flake/nixos.nix {
-        inherit inputs nixpkgs self;
-        pkgs = sharedPackages.x86_64-linux;
-        filteredSource = lib.cleanSourceWith {
-          filter = name: _type: !(lib.hasSuffix ".md" (builtins.baseNameOf name));
-          src = lib.cleanSource ./.;
-        };
-      };
-
-      # Dendritic per-system output: each output imports from its own file.
-      # mkPerSystem is a thin closure-builder — each invocation creates an
-      # independent eval unit for nix-eval-jobs parallelism.
-      mkPerSystem =
-        path: system:
-        import path {
-          inherit
-            self
-            inputs
-            nixpkgs
-            flakeLib
-            ;
-          mkTestHost = nixosOut.mkTestHost;
-          mkSpecialArgs = nixosOut.mkSpecialArgs;
-          pkgs = sharedPackages.${system};
-        } system;
-    in
-    {
-      packages = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/per-system.nix s).packages);
-      formatter = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/per-system.nix s).formatter);
-      checks = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/per-system.nix s).checks);
-      devShells = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/devshells.nix s).devShells);
-      apps = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/apps.nix s).apps);
-      nixosConfigurations = nixosOut.configurations;
+  outputs = inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" ];
+      # Dendritic layout: every file under flake/parts declares its outputs and
+      # is imported automatically; there is no hand-kept import list.
+      imports = [ (inputs.import-tree ./flake/parts) ];
     };
 }
