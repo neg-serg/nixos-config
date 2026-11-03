@@ -200,6 +200,15 @@ lint:
 pleamar-check:
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}"
 
+# The live bar's geometry, read from `pleamar --say bar describe`: the 25 px
+# strip band, the symmetric 4 px side insets, the 7 px gaps and the absence of
+# overlaps. Widths are deliberately not asserted — they are content-sized now
+# (audio route, weather reading, workspace name), so only the invariants are
+# stable. A session gate, not part of `lint`: it skips with a notice when the
+# bar is not running.
+pleamar-geometry:
+    bash "{{repo_root}}/scripts/dev/check-pleamar-geometry.sh"
+
 # What each layer of this session calls a size: the panel's device px, the compositor's
 # scale, the logical px a scene draws its lengths in, and the shape of the wallpaper it
 # would be handed. Run it before writing a size into a scene, and when a log line's

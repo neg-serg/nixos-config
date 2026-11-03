@@ -36,11 +36,18 @@ settings are read from `~/.local/share/pleamar/<scene>/` — never from this rep
 ```sh
 pleamar --check files/pleamar/shells/bar/bar.plm   # one scene
 just pleamar-check                                 # every tracked .plm file
+just pleamar-geometry                              # the running bar's rects, against its invariants
 ```
 
 `pleamar --check` is the compiler and the only authority on valid scene syntax: run it after every
 edit (see `AGENTS.md`). `just lint` runs the same gate repo-wide via `scripts/dev/check-plm.sh`;
 while the pleamar binary is not in `PATH`, the gate prints a skip notice and exits 0.
+
+`just pleamar-geometry` reads `pleamar --say bar describe` and holds the live strip to the rules the
+scenes are written by — the 25 px band, the symmetric 4 px side insets, the 7 px gaps, no overlaps —
+without asserting any width: widths are content-sized (`vol.w`, `mic.w`, `ws.w`, `weather.w`), so a
+table of numbers would be stale within a day. It skips with a notice when the bar is not running,
+and `scripts/dev/check-pleamar-geometry.sh --describe FILE` checks a saved run instead.
 
 ## Preview and measure
 
