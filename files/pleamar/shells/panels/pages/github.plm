@@ -1,0 +1,66 @@
+// pages/github.plm — the contributions calendar (`drawer == github`).
+//
+// Legacy: dhrruvsharma/shell's modules/github (GhCalendar.qml, GhPopout.qml): the
+// last year of contributions as a wall of small squares, the total beside it.
+//
+// The data is the GitHub API through the `gh` CLI, which is the one client on this
+// host that already holds the token (`gh auth status`: neg-serg). panels.luau asks
+// the `viewer` query once — the calendar changes at most daily, so a second call
+// while the scene runs would buy nothing but rate limit. No answer, no squares:
+// the page says what happened instead of drawing an empty year that looks like a
+// quiet one.
+//
+// The grid is weeks across, days down, as GitHub draws it: the API answers weeks
+// of seven days, and the model is that flattened list — `d.index` is the cell,
+// column `index / 7`, row `index % 7`.
+
+part Github {
+    component GithubDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 400 * scale, 240 * scale
+
+        group {
+            move: (screen.width - 400 * scale) / 2, (screen.height - 240 * scale) / 2 + (1 - lift) * 18 * scale
+            opacity: lift
+
+            body {
+                color: live.coal
+                opacity: 92%
+                border: 1, mix(live.coal, live.ink, 12%)
+                rim: 0.07
+                shadow: 0, 18, 44, 45%
+                box { from: 0, 0; size: 400, 240; corner: 14 }
+            }
+            box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
+            text "contributions" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
+            text gh_total { at: 384, 22; anchor: right center; family: "Iosevka"; size: 10; color: live.ink; show: gh_days.total > 0 }
+
+            text "the last year" { at: 16, 52; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            text gh_status { at: 384, 52; anchor: right center; family: "Iosevka"; size: 9; color: live.ink.off; show: gh_days.total == 0 }
+
+            // 53 columns of 5 px with a 1 px gutter: 318 wide, 7 rows of 6 = 42 tall.
+            for d in gh_days {
+                let col = floor(d.index / 7)
+                let row = mod(d.index, 7)
+                box {
+                    from: 20 + col * 6, 84 + row * 6
+                    size: 5, 5
+                    corner: 1
+                    color: mix(mix(live.coal, live.accent, 22%), live.accent, d.level / 4)
+                    opacity: pick(d.level > 0, 45%, 100%)
+                }
+            }
+
+            // The scale of the squares, as GitHub's own legend: less · more.
+            text "less" { at: 250, 200; anchor: right center; family: "Iosevka"; size: 8; color: live.ink.off; show: gh_days.total > 0 }
+            text "more" { at: 300, 200; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off; show: gh_days.total > 0 }
+            repeat k in 0..5 {
+                box { from: 262 + k * 8, 197; size: 6, 6; corner: 1
+                    color: mix(mix(live.coal, live.accent, 22%), live.accent, k / 4)
+                    opacity: pick(k > 0, 45%, 100%); show: gh_days.total > 0 }
+            }
+            text "gh api graphql · viewer" { at: 16, 220; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
+        }
+    }
+
+    GithubDrawer()
+}

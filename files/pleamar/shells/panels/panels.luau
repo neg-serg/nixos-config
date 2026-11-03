@@ -773,6 +773,52 @@ every(1000, function()
     end
 end)
 
+-- ==================== the contributions ====================
+
+-- One GraphQL query through `gh`, once per scene run: the calendar changes at most daily, and the
+-- token is already in `gh` (the shell must not keep a second one). `viewer` needs no login in the
+-- query, so nothing here is pinned to an account. 53 weeks of 7 days arrive as nested tables and
+-- land flattened in the model, which is the grid the page draws.
+local gh_loaded = false
+
+local function gh_level(count)
+    if count <= 0 then return 0 end
+    if count <= 2 then return 1 end
+    if count <= 5 then return 2 end
+    if count <= 9 then return 3 end
+    return 4
+end
+
+local function gh_load()
+    if gh_loaded then return end
+    local query = "{ viewer { contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { contributionCount } } } } } }"
+    run("gh", { "api", "graphql", "-f", "query=" .. query }, function(out)
+        local ok, decoded = pcall(json.decode, out or "")
+        if not ok or type(decoded) ~= "table" then
+            text.gh_status = "gh did not answer"
+            return
+        end
+        local data = decoded.data
+        local calendar = type(data) == "table" and data.viewer and data.viewer.contributionsCollection
+            and data.viewer.contributionsCollection.contributionCalendar
+        if type(calendar) ~= "table" or type(calendar.weeks) ~= "table" then
+            text.gh_status = "no calendar in the answer"
+            return
+        end
+        local rows = {}
+        for _, week in ipairs(calendar.weeks) do
+            for _, day in ipairs(week.contributionDays or {}) do
+                local count = tonumber(day.contributionCount) or 0
+                rows[#rows + 1] = { level = gh_level(count) }
+            end
+        end
+        model.gh_days = rows
+        text.gh_total = string.format("%d in a year", tonumber(calendar.totalContributions) or 0)
+        text.gh_status = ""
+        gh_loaded = true
+    end)
+end
+
 -- The drawers that need something done when they open: the binds are read fresh (the compositor's
 -- list may have changed since last time), the notes are re-read (a hand edit is honoured), and the
 -- do-not-disturb switch is asked what the notifications scene says now.
@@ -780,6 +826,7 @@ on("fact:drawer", function(value)
     if value == "keys" then keys_load() end
     if value == "notes" then notes_load() end
     if value == "toggles" then refresh_dnd() end
+    if value == "github" then gh_load() end
 end)
 
 notes_load()

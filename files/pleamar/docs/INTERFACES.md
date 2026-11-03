@@ -219,7 +219,7 @@ order.
 and all of them live in the one `panels` process:
 
 `volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`, `shell`, `power`,
-`bluetooth`, `toggles`, `keys`, `notes`, `timer`.
+`bluetooth`, `toggles`, `keys`, `notes`, `timer`, `github`.
 
 That is the whole list: the `drawer` fact names exactly the drawers that have a page behind them.
 `microphone`, `keyboard`, `tray` and `settings` were reserved names with no part, so a press on them
