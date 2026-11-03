@@ -26,11 +26,14 @@ import "../../lib/sun.plm" as sun
 // The drawers themselves are parts under pages/, which the scene imports for;
 // a part has no name of its own and is not checked alone (INTERFACES.md §1.3).
 // The drawers: volume, network, media (the now-playing card the bar's cover
-// opens), calendar, weather, build and system — one part each under pages/. The
-// `drawer` fact names exactly those and nothing else: a name with no page behind
-// it is a press that opens an empty window. There is no settings drawer and none
-// is planned: the shell's settings are the JSON files described below, edited by
-// hand.
+// opens), calendar, weather, build, system and theme — one part each under
+// pages/. The `drawer` fact names exactly those and nothing else: a name with no
+// page behind it is a press that opens an empty window. There is no settings
+// drawer and none is planned: the shell's settings are the JSON files described
+// below, edited by hand. The theme drawer is not a settings page either: it
+// lists the theme files under ~/.config/pleamar/themes and applies one
+// (`pleamar-themes`, packages/pleamar-theme), which rewrites theme.plm the way a
+// wallpaper change does.
 //
 // Opening and closing
 // -------------------
@@ -171,6 +174,11 @@ scene panels {
                           open: drawer == volume
         include "pages/volume.plm"
     }
+    surface theme_card { size: 360, 330; anchor: bottom_right; margin: 0, 5, 1, 0
+                         level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                         open: drawer == theme
+        include "pages/theme.plm"
+    }
     surface weather_card { size: 300, 196; anchor: bottom; margin: 0, 0, 46, 0
                            level: overlay; reserve: 0; screens: each; keyboard: on_demand
                            open: drawer == weather
@@ -198,11 +206,11 @@ scene panels {
     // Connectivity.qml runs.
     // `wl-copy` is the reference's clipboard copy of the journal's problems (SystemMonitorPopup.qml:17-40
     // runs it every time the dashboard opens, so a paste into a chat carries the lines).
-    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "flow", "ip", "ping", "pleamar", "wl-copy"
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "pleamar-themes", "flow", "ip", "ping", "pleamar", "wl-copy"
                   services: "audio", "audio.*", "files", "files.write", "media", "media.*" }
 
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | network | media | calendar | weather | build | system = none
+    fact drawer: none | volume | network | media | calendar | weather | build | system | theme = none
     // The socket takes the enum's value names (`--say panels "fact drawer weather"`), which is how
     // the bar opens a drawer; a separate numeric mirror was declared here and never written, and
     // its only reader opened the media card without the catcher, so the card could not be closed.
@@ -276,6 +284,11 @@ scene panels {
     event open_system
     event open_media
     event open_network
+    event open_theme
+    // A row of the theme card was pressed: its index in `model.themes` (an event
+    // payload is a number, so the logic keeps the paths).
+    event theme_apply ->
+
     // A press or a drag on the media card's progress band: how far along the track, 0..1.
     event seek ->
     event close_drawer
@@ -306,6 +319,7 @@ scene panels {
 
     // ----***----------------------- live texts
     text sysmon.err = ""
+    text theme.err = ""
     text weather.city = ""
     text weather.temp = ""
     // Published together with the value, not read from the flag at draw time:
@@ -391,6 +405,7 @@ scene panels {
     model sinks max 8 { id: text; name: text; default: bool }
     model sources max 8 { id: text; name: text; default: bool }
     model media_rows max 8 { glyph: text; value: text }
+    model themes max 8 { idx: number; name: text; detail: text; selected: bool }
 
     // ----***------------------- audio (no worker)
     // Volume, microphone and the per-stream mixers come from the service; the

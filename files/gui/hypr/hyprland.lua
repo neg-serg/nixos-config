@@ -656,6 +656,9 @@ hl.bind(M4 .. "+n", hl.dsp.exec_cmd('timeout 3 pleamar --say notifications "emit
 hl.bind(M4 .. "+" .. SH .. "+u", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit toggle_calendar_panel"'))
 hl.bind(M4 .. "+" .. SH .. "+x", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit toggle_weather_panel"'))
 hl.bind(M4 .. "+" .. SH .. "+j", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit media_toggle"'))
+-- The theme picker: a drawer of the panels scene, opened by the bar like the rest.
+-- (`t` is sc-live's, so this one takes the free `g`.)
+hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit toggle_theme_panel"'))
 -- The rest of the transport and the volume steps: M4+C+period/comma mimic the >
 -- and < keys, equal/minus stand in for the volume rocker (the XF86 keys stay on
 -- the Genelec path). The bar's `wheel_volume` takes notches and steps in 5 %

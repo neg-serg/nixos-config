@@ -72,7 +72,7 @@ fn run() -> ExitCode {
             print!("{USAGE}");
             ExitCode::SUCCESS
         }
-        "list" => list(),
+        "list" => list(&args[1..]),
         "apply" => write_theme(&args[1..], true),
         "show" => write_theme(&args[1..], false),
         other => usage_fail(format!("unknown command '{other}'")),
@@ -169,7 +169,29 @@ fn write_theme(args: &[String], write: bool) -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn list() -> ExitCode {
+/// The source line of the `theme.plm` in place, if it names one.
+fn applied_source() -> Option<String> {
+    let text = fs::read_to_string(output_file().ok()?).ok()?;
+    text.lines().find_map(|line| {
+        line.strip_prefix("// source:")
+            .map(|rest| rest.trim().to_string())
+    })
+}
+
+/// Whether two path spellings name the same file (a theme applied by a relative
+/// path still matches the directory entry `list` found).
+fn same_file(left: &str, right: &str) -> bool {
+    if left == right {
+        return true;
+    }
+    match (fs::canonicalize(left), fs::canonicalize(right)) {
+        (Ok(left), Ok(right)) => left == right,
+        _ => false,
+    }
+}
+
+fn list(args: &[String]) -> ExitCode {
+    let plain = args.iter().any(|argument| argument == "--plain");
     let directory = match themes_dir() {
         Ok(directory) => directory,
         Err(error) => return fail(error),
@@ -215,8 +237,31 @@ fn list() -> ExitCode {
     }
 
     if rows.is_empty() {
-        if !failed {
+        if !failed && !plain {
             println!("{TOOL}: no themes in {}", directory.display());
+        }
+        return if failed {
+            ExitCode::from(1)
+        } else {
+            ExitCode::SUCCESS
+        };
+    }
+    if plain {
+        // One line per theme, for the scene's logic: name, font, corners, the
+        // file, and 1 when it is the theme `theme.plm` was made from.
+        let applied = applied_source();
+        for row in &rows {
+            let selected = applied
+                .as_deref()
+                .is_some_and(|source| same_file(source, &row.3));
+            println!(
+                "{}\t{}\t{}\t{}\t{}",
+                row.0,
+                row.1,
+                row.2,
+                row.3,
+                if selected { "1" } else { "0" }
+            );
         }
         return if failed {
             ExitCode::from(1)
