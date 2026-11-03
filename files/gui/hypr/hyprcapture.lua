@@ -11,7 +11,7 @@
 -- so the pic-* helpers and the existing habits keep working. Keep the values in
 -- sync with the guarded re-apply in hyprland.lua.
 --
--- The plugin's own feedback is off: screenshots get the fast quickshell
+-- The plugin's own feedback is off: screenshots get the shell's own
 -- ScreenshotToast instead (pic-info, fired by the screenshot-toast.path unit in
 -- main.nix) — the plugin notification and the result thumbnail would only
 -- double the feedback the grim flow used to give instantly. Recordings keep

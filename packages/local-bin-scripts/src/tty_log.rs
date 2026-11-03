@@ -38,7 +38,9 @@ fn main() {
     };
 
     let mut log_dir = home.as_bytes().to_vec();
-    log_dir.extend_from_slice(b"/.cache/quickshell/tty-logs");
+    // The shell that named this directory is gone (2026-11-02); the logs belong to
+    // this helper, so they live under the shell that is here.
+    log_dir.extend_from_slice(b"/.cache/pleamar/tty-logs");
 
     let mut mkdir = Command::new("mkdir");
     mkdir
