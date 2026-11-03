@@ -8,10 +8,10 @@ cost. Everything here is a decision for the owner or a multi-week project, not a
 
 `nh os switch --dry` after an edit: **10.8 s** (stock Determinate 12.2 s). Of that:
 
-- ~0.75–1.0 s is parsing `.nix` files (10 %; 7762 files, 55.46 MiB, of which 98.2 % is three copies of
-  nixpkgs and only 0.96 MiB is this repo);
-- **~6.6 s is the evaluator core** — allocation, GC, symbol interning
-  (`SymbolTable::create` 4.4 %, `mi_theap_alloc_new` 3.5 %, `BumpMemoryResource::do_allocate` 2.1 %);
+- ~0.75–1.0 s is parsing `.nix` files (10 %; 7762 files, 55.46 MiB, of which 98.2 % is three copies
+  of nixpkgs and only 0.96 MiB is this repo);
+- **~6.6 s is the evaluator core** — allocation, GC, symbol interning (`SymbolTable::create` 4.4 %,
+  `mi_theap_alloc_new` 3.5 %, `BumpMemoryResource::do_allocate` 2.1 %);
 - the rest is the module system and the 2232 derivations at ~0.34 ms each.
 
 ## 1. One nixpkgs instead of three (~0.25 s parse, unknown eval)
@@ -27,8 +27,8 @@ have to be re-validated against the main nixpkgs, and a broken ROCm torch is a w
 ## 2. The second nixpkgs instance in the FHS overlay (0.15–0.25 s)
 
 `flake/lib.nix:128` does `import inputs.nixpkgs { config.allowUnfree = true; }` inside an overlay to
-rebuild `buildFHSEnv` from stock nixpkgs, because the composed one was broken for Steam's RT3 runtime.
-A second full nixpkgs fixpoint is evaluated whenever `buildFHSEnv` is touched.
+rebuild `buildFHSEnv` from stock nixpkgs, because the composed one was broken for Steam's RT3
+runtime. A second full nixpkgs fixpoint is evaluated whenever `buildFHSEnv` is touched.
 
 **Why not done**: the file comment records that this split from the stock package is deliberate; the
 cheap replacement (bind `_prev.buildFHSEnv` plus a narrow unfree allowance) risks bringing back the
@@ -39,7 +39,8 @@ cheap replacement (bind `_prev.buildFHSEnv` plus a narrow unfree allowance) risk
 Not a patch: GC and allocation dominate because evaluation is pointer-chasing and thunk-forcing, not
 arithmetic. The concrete directions, if this host ever justifies the work:
 
-- intern symbols with a faster path (the table is already concurrent, but `create` shows up at 4.4 %);
+- intern symbols with a faster path (the table is already concurrent, but `create` shows up at 4.4
+  %);
 - reduce allocation churn in `BumpMemoryResource` / move AST nodes out of the hot allocator;
 - a persistent AST cache needs a serialiser that does not exist (21 `Expr` node types plus
   SymbolTable, StaticEnv, PosTable, DocComment map) — measured floor ~0.62 s of saving, ~7x cheaper
@@ -52,7 +53,7 @@ is Ok 201 / Fail 1 — measured baselines in the package comments).
 
 ## Lines that are closed, for the record
 
-BOLT (<1 %, `instructions:u` +0.07 %), `-O3 -march=znver5` (no change), `MIMALLOC_*` and
+BOLT (\<1 %, `instructions:u` +0.07 %), `-O3 -march=znver5` (no change), `MIMALLOC_*` and
 `GC_INITIAL_HEAP_SIZE` (worse or noise), removing packages (no safe removals; duplicates cost zero
 derivations), patches 0002/0006/0007/0008 (neutral or inapplicable), a fork for parallel evaluation
 (ceiling 4.5 s, realistic 6.0 s), an incremental eval server (zero locality). Numbers and reasoning
