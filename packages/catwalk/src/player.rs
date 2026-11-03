@@ -26,6 +26,13 @@ const HALF_W: f32 = 22.0;
 const HEIGHT: f32 = 90.0;
 
 #[derive(Default, Clone, Copy)]
+pub struct Rules {
+    pub double_jump: bool,
+    pub glide: bool,
+    pub air_jump: f32,
+}
+
+#[derive(Default, Clone, Copy)]
 pub struct Input {
     pub left: bool,
     pub right: bool,
@@ -57,6 +64,8 @@ pub struct Player {
     pub jump_mult: f32,
     pub magnet: bool,
     pub shield: bool,
+    pub rules: Rules,
+    air_jumps: u8,
     squash: f32,
     coyote: f32,
     buffer: f32,
@@ -76,6 +85,8 @@ impl Player {
             jump_mult: 1.0,
             magnet: false,
             shield: false,
+            rules: Rules::default(),
+            air_jumps: 0,
             squash: 1.0,
             coyote: 0.0,
             buffer: 0.0,
@@ -141,6 +152,9 @@ impl Player {
         // Timers.
         if self.on_ground {
             self.coyote = COYOTE_TIME;
+            if self.rules.double_jump {
+                self.air_jumps = 1;
+            }
         } else {
             self.coyote = (self.coyote - dt).max(0.0);
         }
@@ -174,10 +188,21 @@ impl Player {
                 self.on_ground = false;
                 events.jumped = true;
                 self.squash = 1.14;
+            } else if self.buffer > 0.0 && self.rules.double_jump && self.air_jumps > 0 {
+                // Generated mechanic: an extra push in mid-air.
+                self.vel.y = -self.rules.air_jump;
+                self.air_jumps -= 1;
+                self.buffer = 0.0;
+                events.jumped = true;
+                self.squash = 1.14;
             }
             // Variable jump: releasing early cuts the ascent.
             if !input.jump_held && self.vel.y < 0.0 {
                 self.vel.y += GRAVITY * 2.1 * dt;
+            }
+            // Generated mechanic: holding jump while falling glides.
+            if self.rules.glide && input.jump_held && self.vel.y > 0.0 {
+                self.vel.y -= GRAVITY * 0.62 * dt;
             }
         }
 
@@ -442,6 +467,49 @@ mod tests {
             level.goal,
         );
         assert!(dist < 96.0, "closest approach to goal: {dist}");
+    }
+
+    #[test]
+    fn generated_double_jump_goes_higher() {
+        let level = Level::waterfall();
+        let mut player = Player::new(crate::level::SPAWN);
+        player.rules.double_jump = true;
+        player.rules.air_jump = 900.0;
+        step(&mut player, &level, Input::default(), 0.2);
+        let mut input = Input {
+            jump_pressed: true,
+            jump_held: true,
+            ..Default::default()
+        };
+        player.update(&input, 1.0 / 240.0, &level);
+        input.jump_pressed = false;
+        for _ in 0..40 {
+            player.update(&input, 1.0 / 240.0, &level);
+        }
+        let before = player.pos.y;
+        player.update(
+            &Input {
+                jump_pressed: true,
+                jump_held: true,
+                ..Default::default()
+            },
+            1.0 / 240.0,
+            &level,
+        );
+        let held = Input {
+            jump_held: true,
+            ..Default::default()
+        };
+        let mut peak = before;
+        for _ in 0..60 {
+            player.update(&held, 1.0 / 240.0, &level);
+            peak = peak.min(player.pos.y);
+        }
+        assert!(
+            before - peak > 60.0,
+            "air jump only added {} px",
+            before - peak
+        );
     }
 
     #[test]

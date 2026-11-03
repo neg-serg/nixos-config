@@ -54,6 +54,24 @@ on.
 The scenario name (chaos, ambush, chase, …) is derived from the mix the critic picked, so the toast
 also reports what kind of screen you walked into.
 
+## Mechanics generator
+
+Every run draws a **mechanic set** from `src/mechanics.rs`: a pair of executable effects with a
+magnitude. The same critic pattern as the content director picks it — novelty against the last sets,
+pair synergy, balance of the magnitude, category variety:
+
+- `DoubleJump` — one extra push in mid-air (magnitude scales the impulse);
+- `Glide` — holding jump while falling cuts gravity by 62%;
+- `TripleShot` — the furball becomes a three-way fan;
+- `Shockwave` — a stomp kills every badnik within 240 px;
+- `Magnet` — rings are pulled in from 190 px;
+- `Bounce` — hard landings bounce the cat back up.
+
+The chosen pair is printed at startup and shown in the HUD as a `MECHANICS:` line. `--mechanics N`
+runs the generator lab headlessly (1M sets in 0.27 s) and reports the best combinations;
+`--mechanics-json` saves them. The lab currently favours `double_jump + glide` (0.875),
+`bounce + shockwave` (0.869) and `triple_shot + magnet` (0.808).
+
 ## Weapons and structures
 
 - **Furball** (`J`/`X`): arcs under gravity, bounces once off the lake, pops a badnik in one hit and
