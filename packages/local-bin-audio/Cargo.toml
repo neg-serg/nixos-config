@@ -1,0 +1,56 @@
+[package]
+name = "local-bin-audio"
+version = "0.1.0"
+edition = "2021"
+description = "Rust ports of the audio helpers from packages/local-bin/bin"
+license = "MIT"
+
+[[bin]]
+name = "audio-diag"
+path = "src/bin/audio_diag.rs"
+
+[[bin]]
+name = "jam"
+path = "src/bin/jam.rs"
+
+[[bin]]
+name = "shabda"
+path = "src/bin/shabda.rs"
+
+[[bin]]
+name = "synth"
+path = "src/bin/synth.rs"
+
+[[bin]]
+name = "midi-bridge"
+path = "src/bin/midi_bridge.rs"
+
+[[bin]]
+name = "renoise-osc-config"
+path = "src/bin/renoise_osc_config.rs"
+
+[[bin]]
+name = "sc-live"
+path = "src/bin/sc_live.rs"
+
+[[bin]]
+name = "sc-record"
+path = "src/bin/sc_record.rs"
+
+[[bin]]
+name = "flacspec"
+path = "src/bin/flacspec.rs"
+
+[[bin]]
+name = "mp"
+path = "src/bin/mp.rs"
+
+[[bin]]
+name = "nb"
+path = "src/bin/nb.rs"
+
+[[bin]]
+name = "qe"
+path = "src/bin/qe.rs"
+
+[workspace]

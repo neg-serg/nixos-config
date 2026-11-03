@@ -2,15 +2,15 @@
 
 Harness v0 for the pleamar shell (superplan PH0-T3). Everything here is produced by the three
 scripts in `files/pleamar/scripts/`; nothing is hand-edited except the committed `*.describe.txt`
-snapshots, which are only rewritten through `describe-snap.sh --update`.
+snapshots, which are only rewritten through `pleamar-describe-snap --update`.
 
-While `pleamar-wm` is not installed, `smoke.sh` still runs its compile matrix and
-`describe-snap.sh`/`measure.sh` refuse a hermetic scene run with a clear message (exit 2) instead of
-touching the live session.
+While `pleamar-wm` is not installed, `pleamar-smoke` still runs its compile matrix and
+`pleamar-describe-snap`/`pleamar-measure` refuse a hermetic scene run with a clear message (exit 2)
+instead of touching the live session.
 
 ## Scripts
 
-### `scripts/smoke.sh` — headless render matrix
+### `pleamar-smoke` — headless render matrix
 
 Compiles every scene under `shells/*/*.plm` with `pleamar --check` and renders one PNG per scene
 without using the live session: `pleamar-wm headless` when available, otherwise a nested headless
@@ -18,10 +18,10 @@ wlroots compositor (`sway` or `cage`) with `grim`. Files whose first lines decla
 includes and are skipped.
 
 ```sh
-files/pleamar/scripts/smoke.sh                    # every scene
-files/pleamar/scripts/smoke.sh --scene proof      # one scene
-files/pleamar/scripts/smoke.sh --require-render --seconds 8
-files/pleamar/scripts/smoke.sh --out /tmp/shots --min-bytes 2048
+pleamar-smoke                    # every scene
+pleamar-smoke --scene proof      # one scene
+pleamar-smoke --require-render --seconds 8
+pleamar-smoke --out /tmp/shots --min-bytes 2048
 ```
 
 Flags: `--scene NAME`, `--seconds N` (headless session length, default 8), `--out DIR`,
@@ -36,9 +36,9 @@ shot.
 
 ### What an empty shot looks like (measured 2026-11-01)
 
-`smoke.sh` counts a PNG above `--min-bytes` (1024 by default) as a render, so a scene that draws
-nothing at rest passes exactly like one that draws its bar. The empty frame on this host is **2759
-B, 1280x720, one colour** — worth knowing before reading a green matrix.
+`pleamar-smoke` counts a PNG above `--min-bytes` (1024 by default) as a render, so a scene that
+draws nothing at rest passes exactly like one that draws its bar. The empty frame on this host is
+**2759 B, 1280x720, one colour** — worth knowing before reading a green matrix.
 
 Run on 2026-11-01 with `sway` from the store on `PATH`, `--require-render --seconds 6`: 10 scenes
 checked, 10 rendered, and the sizes split cleanly in two.
@@ -59,9 +59,9 @@ is that the matrix cannot tell you either way.
 
 ### Shooting a drawer without the live session (verified 2026-10-31)
 
-`smoke.sh` renders each scene in its default state, so a drawer — the thing most pixel work is about
-— never appears in its shots. One can be shot the same way by hand: a headless wlroots compositor,
-the scene on it, the drawer opened through IPC, `grim` of that display.
+`pleamar-smoke` renders each scene in its default state, so a drawer — the thing most pixel work is
+about — never appears in its shots. One can be shot the same way by hand: a headless wlroots
+compositor, the scene on it, the drawer opened through IPC, `grim` of that display.
 
 - **`sway` works; `cage` cannot.** cage 0.3.1 has no layer-shell and the scene exits with
   `panicked at src/platform/wayland.rs:1590: the compositor has no layer-shell: NotPresent`. Neither
@@ -80,7 +80,7 @@ the scene on it, the drawer opened through IPC, `grim` of that display.
 - A light background for the compositor makes glass legible in the shot:
   `printf 'output * bg #ffffff solid_color\n' > sway.conf` and `sway -c sway.conf`.
 
-### `scripts/describe-snap.sh` — agent-tree snapshots
+### `pleamar-describe-snap` — agent-tree snapshots
 
 Starts one scene hermetically, waits until its socket answers `pleamar --say NAME describe` (retry
 until `--timeout`, default 15 s), reads the tree until two reads agree (the socket answers before
@@ -90,9 +90,9 @@ tree against the committed snapshot and fails with a human-readable drift summar
 keys plus the first changed lines).
 
 ```sh
-files/pleamar/scripts/describe-snap.sh proof            # verify
-files/pleamar/scripts/describe-snap.sh --update proof   # rewrite snapshot
-files/pleamar/scripts/describe-snap.sh --scene proof --timeout 30
+pleamar-describe-snap proof            # verify
+pleamar-describe-snap --update proof   # rewrite snapshot
+pleamar-describe-snap --scene proof --timeout 30
 ```
 
 `SCENE` is a scene name (`shells/<name>/<name>.plm`) or a `.plm` path; with no SCENE and exactly one
@@ -101,7 +101,7 @@ output is JSON and `jq` is available, so committed and fresh output are compared
 Missing snapshot or drift is exit 1. Other flags: `--update`, `--timeout N` (socket wait, default 15
 s), `--live`, `--keep-tmp`, `--soft`, `-h/--help`.
 
-Flags of `describe-snap.sh`: `--update`, `--scene NAME`, `--timeout N`, `--live`, `--systemd`,
+Flags of `pleamar-describe-snap`: `--update`, `--scene NAME`, `--timeout N`, `--live`, `--systemd`,
 `--keep-tmp`, `--soft`, `-h/--help`.
 
 `--systemd` runs the scene as a transient `--user` unit (`systemd-run`) with the same hermetic
@@ -114,7 +114,7 @@ A snapshot is the tree, not the content the labels hold: the clock's minute, the
 playing, the weather, the speakers' level and the media capsule's width follow the host, so
 `canonicalize` masks them (`HH:MM`, `«Media: …»`, `«Weather …»`, `"-NN dB"`, `at …,NN …×NN`).
 
-### `scripts/measure.sh` — budget table
+### `pleamar-measure` — budget table
 
 Runs one scene for N seconds and collects, into a TSV: `ps`-based RSS/CPU/ threads, instantaneous
 CPU from `/proc/<pid>/stat` deltas, PSS from `smaps_rollup`, and cgroup
@@ -122,10 +122,10 @@ CPU from `/proc/<pid>/stat` deltas, PSS from `smaps_rollup`, and cgroup
 scene. In the same window it runs `pleamar --report <scene> --seconds N --out <date>-<scene>.md`.
 
 ```sh
-files/pleamar/scripts/measure.sh proof --seconds 30
-files/pleamar/scripts/measure.sh --scene proof --seconds 60 --interval 2
-files/pleamar/scripts/measure.sh --scene bar --unit pleamar-bar.service --seconds 60
-files/pleamar/scripts/measure.sh --scene proof --out /tmp/evidence
+pleamar-measure proof --seconds 30
+pleamar-measure --scene proof --seconds 60 --interval 2
+pleamar-measure --scene bar --unit pleamar-bar.service --seconds 60
+pleamar-measure --scene proof --out /tmp/evidence
 ```
 
 Flags: `--scene NAME`, `--seconds N` (default 20), `--interval N` (default 1), `--unit NAME`,
@@ -140,9 +140,9 @@ failed `--report` is exit 1; the partial table is kept.
 | Path | Kind | | ----------------------------- |
 \------------------------------------------------------------------------------------------------------
 | | `tests/<scene>.describe.txt` | committed agent-tree snapshot; regenerate with `--update`, review
-the diff as a behaviour change | | `tests/shots/**` | generated by `smoke.sh`, date-stamped; promote
-a reviewed shot deliberately if a golden file is wanted | | `tests/evidence/**` | generated by
-`measure.sh`, date-stamped; commit only a reviewed baseline, not every run |
+the diff as a behaviour change | | `tests/shots/**` | generated by `pleamar-smoke`, date-stamped;
+promote a reviewed shot deliberately if a golden file is wanted | | `tests/evidence/**` | generated
+by `pleamar-measure`, date-stamped; commit only a reviewed baseline, not every run |
 
 ## Hermetic environment
 
@@ -153,10 +153,10 @@ By default each script creates a per-run sandbox under `/tmp`
 nothing lands under `~/.cache`, `~/.local/share` or the developer's session. The sandbox is removed
 on exit (`--keep-tmp` keeps it for debugging).
 
-`--live` opts out and keeps the ambient environment. For `describe-snap.sh` and `measure.sh` that
-can start a real surface in the current session (killed afterwards); `smoke.sh` stays headless
-either way. `measure.sh --unit NAME` necessarily uses the ambient session to reach the unit's
-`pleamar --say` socket and never starts or stops the unit.
+`--live` opts out and keeps the ambient environment. For `pleamar-describe-snap` and
+`pleamar-measure` that can start a real surface in the current session (killed afterwards);
+`pleamar-smoke` stays headless either way. `pleamar-measure --unit NAME` necessarily uses the
+ambient session to reach the unit's `pleamar --say` socket and never starts or stops the unit.
 
 Only `--out`/`--live` targets outside the sandbox are written: the scripts otherwise write inside
 `files/pleamar/tests/` and the temp dir only.
@@ -174,12 +174,12 @@ opt-in, so the developer's real sessions keep using the GPU driver. The path can
 
 - `pleamar` missing: every script exits 2 with a message naming `PLEAMAR_BIN`. The harness never
   builds or installs anything.
-- `pleamar-wm` missing: `smoke.sh` falls back to headless `sway`/`cage` with `grim`; if neither
-  exists the render columns are `no-renderer` and `--require-render` fails. `describe-snap.sh` and
-  `measure.sh` exit 2 for a hermetic run; use `--live` (current session) or, for `measure.sh`,
-  `--unit NAME` (already-running unit).
+- `pleamar-wm` missing: `pleamar-smoke` falls back to headless `sway`/`cage` with `grim`; if neither
+  exists the render columns are `no-renderer` and `--require-render` fails. `pleamar-describe-snap`
+  and `pleamar-measure` exit 2 for a hermetic run; use `--live` (current session) or, for
+  `pleamar-measure`, `--unit NAME` (already-running unit).
 - In this agent sandbox the built binary needs a wrapper, not a plain path:
-  `PLEAMAR_BIN=/tmp/plm-recon/run-pleamar.sh scripts/smoke.sh`.
+  `PLEAMAR_BIN=/tmp/plm-recon/run-pleamar.sh scripts/pleamar-smoke`.
 
 Exit codes, all three scripts: `0` success, `1` a check/render/drift/report failure, `2` bad usage
 or a missing required tool/renderer.

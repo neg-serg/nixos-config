@@ -28,17 +28,6 @@
           "@GCC_LIB_DIR@" = "${pkgs.gcc.cc.lib}/lib"; # libstdc++/libgomp for the torch wheels
           "@ZLIB_LIB_DIR@" = "${pkgs.zlib}/lib"; # libz
           "@ZSTD_LIB_DIR@" = "${pkgs.zstd.out}/lib"; # libzstd (torch >= 2.13 links it)
-          # docling (drives the pdf2md wrapper): the CLI ships inside a python
-          # env, not as a top-level attribute — pin that env's bin/docling here.
-          # Same env as modules/cli/ocr.nix, with the docling/docling-slim
-          # bin/docling-tools collision ignored there (see the note on
-          # doclingEnv); the two expressions must stay identical so both sites
-          # resolve to one store path.
-          "@DOCLING_BIN@" = "${
-            (pkgs.python3.withPackages (ps: [ ps.docling ])).overrideAttrs (_: {
-              ignoreCollisions = true;
-            })
-          }/bin/docling";
           # The music-AI venv tree lives outside the repo; the scripts used to
           # spell the path out 19 times. Rendered output is unchanged (the
           # substitution is the same string), so this only moves the one place
@@ -88,6 +77,43 @@
           "shtoy"
           "proxy"
           "swayimg-actions.sh"
+          "steam-cloud-fix"
+          "dsh-statusline"
+          "sw"
+          "shade"
+          "main-menu"
+          "surfingkeys-extension-patch"
+          "dsh-url"
+          "qr"
+          "pdf2md"
+          "upstream-radar"
+          "vsmlrt-models"
+          "nix-updates"
+          "audio-diag"
+          "jam"
+          "shabda"
+          "synth"
+          "midi-bridge"
+          "renoise-osc-config"
+          "sc-live"
+          "sc-record"
+          "flacspec"
+          "mp"
+          "nb"
+          "qe"
+          "pic-notify"
+          "screenrec"
+          "clip"
+          "screenshot-toast"
+          "pic-info"
+          "pic-ocr"
+          "pic-dirs-list"
+          "wl-restore"
+          "unlock"
+          "kitty-font-zoom"
+          "cursor-stretch"
+          "pngoptim"
+          "hypr-resize-proportional"
         ];
 
         autoEntries =
@@ -149,6 +175,50 @@
         ".local/bin/tty-log".source = lib.getExe' pkgs.neg.local-bin-scripts "tty-log";
         ".local/bin/journal-clean.sh".source = lib.getExe' pkgs.neg.local-bin-scripts "journal-clean";
         ".local/bin/music-highlevel".source = lib.getExe' pkgs.neg.local-bin-scripts "music-highlevel";
+        # Rust ports of the system-level helpers (packages/local-bin-system).
+        ".local/bin/steam-cloud-fix".source = lib.getExe' pkgs.neg.local-bin-system "steam-cloud-fix";
+        ".local/bin/dsh-statusline".source = lib.getExe' pkgs.neg.local-bin-system "dsh-statusline";
+        ".local/bin/sw".source = lib.getExe' pkgs.neg.local-bin-system "sw";
+        ".local/bin/shade".source = lib.getExe' pkgs.neg.local-bin-system "shade";
+        ".local/bin/main-menu".source = lib.getExe' pkgs.neg.local-bin-system "main-menu";
+        ".local/bin/surfingkeys-extension-patch".source =
+          lib.getExe' pkgs.neg.local-bin-system "surfingkeys-extension-patch";
+        ".local/bin/dsh-url".source = lib.getExe' pkgs.neg.local-bin-system "dsh-url";
+        ".local/bin/qr".source = lib.getExe' pkgs.neg.local-bin-system "qr";
+        ".local/bin/pdf2md".source = lib.getExe' pkgs.neg.local-bin-system "pdf2md";
+        ".local/bin/upstream-radar".source = lib.getExe' pkgs.neg.local-bin-system "upstream-radar";
+        ".local/bin/vsmlrt-models".source = lib.getExe' pkgs.neg.local-bin-system "vsmlrt-models";
+        ".local/bin/nix-updates".source = lib.getExe' pkgs.neg.local-bin-system "nix-updates";
+        # Rust ports of the audio helpers (packages/local-bin-audio).
+        ".local/bin/audio-diag".source = lib.getExe' pkgs.neg.local-bin-audio "audio-diag";
+        ".local/bin/jam".source = lib.getExe' pkgs.neg.local-bin-audio "jam";
+        ".local/bin/shabda".source = lib.getExe' pkgs.neg.local-bin-audio "shabda";
+        ".local/bin/synth".source = lib.getExe' pkgs.neg.local-bin-audio "synth";
+        ".local/bin/midi-bridge".source = lib.getExe' pkgs.neg.local-bin-audio "midi-bridge";
+        ".local/bin/renoise-osc-config".source = lib.getExe' pkgs.neg.local-bin-audio "renoise-osc-config";
+        ".local/bin/sc-live".source = lib.getExe' pkgs.neg.local-bin-audio "sc-live";
+        ".local/bin/sc-record".source = lib.getExe' pkgs.neg.local-bin-audio "sc-record";
+        ".local/bin/flacspec".source = lib.getExe' pkgs.neg.local-bin-audio "flacspec";
+        ".local/bin/mp".source = lib.getExe' pkgs.neg.local-bin-audio "mp";
+        ".local/bin/nb".source = lib.getExe' pkgs.neg.local-bin-audio "nb";
+        ".local/bin/qe".source = lib.getExe' pkgs.neg.local-bin-audio "qe";
+
+        # Rust ports of the desktop/media helpers (packages/local-bin-desktop).
+        ".local/bin/pic-notify".source = lib.getExe' pkgs.neg.local-bin-desktop "pic-notify";
+        ".local/bin/screenrec".source = lib.getExe' pkgs.neg.local-bin-desktop "screenrec";
+        ".local/bin/clip".source = lib.getExe' pkgs.neg.local-bin-desktop "clip";
+        ".local/bin/screenshot-toast".source = lib.getExe' pkgs.neg.local-bin-desktop "screenshot-toast";
+        ".local/bin/pic-info".source = lib.getExe' pkgs.neg.local-bin-desktop "pic-info";
+        ".local/bin/pic-ocr".source = lib.getExe' pkgs.neg.local-bin-desktop "pic-ocr";
+        ".local/bin/pic-dirs-list".source = lib.getExe' pkgs.neg.local-bin-desktop "pic-dirs-list";
+        ".local/bin/wl-restore".source = lib.getExe' pkgs.neg.local-bin-desktop "wl-restore";
+        ".local/bin/unlock".source = lib.getExe' pkgs.neg.local-bin-desktop "unlock";
+        ".local/bin/kitty-font-zoom".source = lib.getExe' pkgs.neg.local-bin-desktop "kitty-font-zoom";
+        ".local/bin/cursor-stretch".source = lib.getExe' pkgs.neg.local-bin-desktop "cursor-stretch";
+        ".local/bin/pngoptim".source = lib.getExe' pkgs.neg.local-bin-desktop "pngoptim";
+        ".local/bin/hypr-resize-proportional".source =
+          lib.getExe' pkgs.neg.local-bin-desktop "hypr-resize-proportional";
+
         # Rust port of the former shell helper (packages/local-bin-tools).
         ".local/bin/dsh-worktree".source = lib.getExe' pkgs.neg.local-bin-tools "dsh-worktree";
         # Rust port of the former shell helper (packages/shtoy).

@@ -84,7 +84,7 @@ rec {
     # textual entry point. Injects tools + commands + subprocess.
     "dsh-diff"
     # status line in the terminal title. The TUI renders its own in-frame status
-    # line, so this drives OSC 1/2 from packages/local-bin/bin/dsh-statusline,
+    # line, so this drives OSC 1/2 from packages/local-bin-system (dsh-statusline),
     # which speaks the Claude-Code-compatible protocol (session JSON on stdin,
     # first stdout line is the line). Injects subprocess only.
     "dsh-statusline"

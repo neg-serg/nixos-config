@@ -125,7 +125,29 @@ fn pair(
 fn normalise(text: &str, case: &Case) -> String {
     let text = text.replace(&case.project.display().to_string(), "<PROJECT>");
     let text = text.replace(&case.dir.display().to_string(), "<CASE>");
-    normalise_unit_pids(&text)
+    strip_job_control(&normalise_unit_pids(&text))
+}
+
+/// Bash prints a job-control line (`Terminated`, `Killed`, …) when the script
+/// waits on a child it had to kill; whether the line appears depends on the
+/// shell's job-control state (interactive vs non-interactive, sandbox vs host),
+/// so it is bookkeeping, not the harness's output.
+fn strip_job_control(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for line in text.lines() {
+        if matches!(
+            line.trim(),
+            "Terminated" | "Killed" | "Segmentation fault" | "Aborted" | "Hangup"
+        ) {
+            continue;
+        }
+        out.push_str(line);
+        out.push('\n');
+    }
+    if !text.ends_with('\n') && out.ends_with('\n') {
+        out.pop();
+    }
+    out
 }
 
 /// `--systemd` names the transient unit with the harness's own pid (`$$` in

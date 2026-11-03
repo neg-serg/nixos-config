@@ -1188,8 +1188,8 @@ and neither the scene's logic nor its permissions grow by a line.
   calls every component, and sets every fact from a rule. `scripts/dev/check-plm.sh`
   (`just pleamar-check`, `just lint`) compiles every tracked scene, so the plugin is checked in CI
   without any change to the gate.
-- The check scene is not deployed and not rendered by the smoke matrix (`smoke.sh` walks `shells/`
-  only). Its numbers are labels, not a layout contract.
+- The check scene is not deployed and not rendered by the smoke matrix (`pleamar-smoke` walks
+  `shells/` only). Its numbers are labels, not a layout contract.
 - Palette tokens are the only place a plugin takes lengths, times and colours from
   (`spectrum.decay`, `spectrum.gap`, …); a literal in a plugin needs the reason written next to it.
 - A plugin is not a scene: no surface, no IPC name, no unit, no settings file of its own beyond the

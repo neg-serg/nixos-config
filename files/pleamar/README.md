@@ -50,7 +50,7 @@ while the pleamar binary is not in `PATH`, the gate prints a skip notice and exi
 - Headless rendering uses `PLEAMAR_WM_AUTOSTART` plus `PLEAMAR_HEADLESS_AT`, `PLEAMAR_HEADLESS_PNG`
   and `PLEAMAR_HEADLESS_INPUT` (synthetic input), so a scene can be previewed and screenshotted
   without a session.
-- `files/pleamar/scripts/smoke.sh` (PNG matrix), `describe-snap.sh` (`pleamar --say NAME describe`
-  snapshots) and `measure.sh` (`--report` + cgroup numbers into `tests/evidence/`) wrap this. They
-  are hermetic by default (temp HOME/XDG sandbox); `--soft` renders on Mesa lavapipe when the GPU is
-  not reachable (agent sandboxes).
+- `pleamar-smoke` (PNG matrix), `pleamar-describe-snap` (`pleamar --say NAME describe` snapshots)
+  and `pleamar-measure` (`--report` + cgroup numbers into `tests/evidence/`) wrap this. They are
+  hermetic by default (temp HOME/XDG sandbox); `--soft` renders on Mesa lavapipe when the GPU is not
+  reachable (agent sandboxes).

@@ -50,6 +50,9 @@
   # Theme pipeline (cargo tests run in the package checkPhase).
   pleamar-theme = pkgs.neg.pleamar-theme;
 
+  # Developer harnesses (measure, describe-snap, smoke).
+  pleamar-harness = pkgs.neg.pleamar-harness;
+
   # D-Bus fixtures for the pleamar engine tests (MPRIS player, nested tray item).
   pleamar-fixtures = pkgs.neg.pleamar-fixtures;
 

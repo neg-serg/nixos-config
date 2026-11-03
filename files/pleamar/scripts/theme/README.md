@@ -192,7 +192,7 @@ cargo test --manifest-path packages/pleamar-theme/Cargo.toml --locked
 
 Without a binary on `PATH` the consumer steps are a skip notice, not a failure. The tests do not
 render (no `pleamar-wm` headless here): `--check` proves the file compiles, and the harness'
-`smoke.sh` owns the PNGs. The live-restyle claim is the compiler's documented hot reload of an
+`pleamar-smoke` owns the PNGs. The live-restyle claim is the compiler's documented hot reload of an
 imported file, not a claim proved by a screenshot in this task.
 
 ## What the Nix module must deploy, and what must call the script
