@@ -554,7 +554,11 @@ local HOVER_HOLD_MS = 300
 local hoverTimer = nil
 
 on("media_hover", function(hot)
-    if hot then
+    -- `event media_hover ->` carries a number, and the scene emits `true`/`false`: the payload
+    -- arrives as 1/0, and in Lua 0 is true, so `if hot` read every leave as an enter. That is why
+    -- the transport pill stayed up after the pointer had gone: `media.hot` was never cleared.
+    local on = (hot == true) or (type(hot) == "number" and hot ~= 0)
+    if on then
         if hoverTimer then cancel(hoverTimer) end
         hoverTimer = nil
         fact["media.hot"] = true
@@ -740,21 +744,13 @@ end
 -- `unknown` — which is the same statement from the hardware's side: there is an RME sink and it
 -- has an active output pair.
 local ROUTE_LABEL = { an = "Analog", aes = "AES/EBU", spdif = "SPDIF", phones = "Phones" }
--- QS's `routeShortLabels`, the ones its capsule prints: the plate is 46 px wide at most and
--- "AES/EBU" does not fit in it, which is why the reference keeps two sets of names.
-local ROUTE_SHORT = { an = "AN", aes = "AES", spdif = "SPDIF", phones = "HP" }
 local routeNow = "unknown"
 
--- What the capsule prints while the pointer is on it: the route on a pro sink, the software
--- percentage everywhere else (QS: `labelText` + `labelSuffix`). One live text, because a scene
--- cannot choose between two strings from an `if` and the tile wants a `text`.
+-- What the capsule prints: the software percentage, on every sink. QS prints the route's short
+-- label on a pro sink (`labelText`), but this bar already carries the hardware level in the Genelec
+-- capsule and the route is set on the speakers themselves, so "AES/EBU" on the fader was noise. One
+-- live text, because a scene cannot choose between two strings from an `if`.
 local function vol_readout()
-    local route = ROUTE_SHORT[routeNow]
-    if route then
-        text["vol.readout"] = route
-        fact["vol.w"] = audio_width(route)
-        return
-    end
     local pct = math.floor((tonumber(audioNow.volume) or 0) * 100 + 0.5)
     local s = string.format("%d%%", pct)
     text["vol.readout"] = s
@@ -792,7 +788,11 @@ local function audioChanged(a)
     fact["mic.w"] = audio_width(string.format("%d%%", math.floor((tonumber(a.input) or 0) * 100 + 0.5)))
     local lvl = tonumber(a.volume) or 0
     fact["vol.kind"] = (a.muted == true) and 2 or (lvl < 0.5 and 1 or 0)
-    fact["mic.shown"] = a.input_muted ~= true
+    -- The microphone capsule hides at rest while its level is 100 %: a full microphone is the
+    -- default and the plate was noise. Muted stays visible — the mic-off glyph is the one state
+    -- there that always means something. The scene brings the capsule back while the pointer is on
+    -- the strip, so the click-to-mute control is never gone when a hand looks for it.
+    fact["mic.shown"] = (a.input_muted == true) or ((tonumber(a.input) or 0) < 0.995)
     if a.muted == true then
         if fullHide then cancel(fullHide) end
         hideVolume()
@@ -1248,14 +1248,11 @@ local function tip_line(i)
         if #meta > 0 then return l1 .. "\n" .. table.concat(meta, " · ") end
         return l1
     elseif i == 7 then
-        -- The volume capsule: the mixer's own numbers, as the capsule prints them, and the RME
-        -- route beside them when there is one — QS's Volume.qml prints the route through
-        -- `tooltipValue` and its "Left click to toggle AES / Analog." hint on a pro-audio sink.
+        -- The volume capsule: the mixer's own number, as the capsule prints it. The RME route is
+        -- not named here any more: the Genelec capsule carries the hardware level, and the route is
+        -- set on the speakers themselves — a line that repeated it was noise.
         local pct = math.floor((tonumber(audioNow.volume) or 0) * 100 + 0.5)
-        local line = string.format("Volume %d %%%s", pct, audioNow.muted == true and " (muted)" or "")
-        local route = ROUTE_LABEL[routeNow]
-        if route then line = line .. " · " .. route .. " (click toggles)" end
-        return line
+        return string.format("Volume %d %%%s", pct, audioNow.muted == true and " (muted)" or "")
     elseif i == 8 then
         local pct = math.floor((tonumber(audioNow.input) or 0) * 100 + 0.5)
         return string.format("Microphone %d %%%s", pct, audioNow.input_muted == true and " (muted)" or "")
