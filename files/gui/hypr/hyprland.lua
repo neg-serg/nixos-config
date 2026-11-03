@@ -1551,18 +1551,16 @@ hl.on("hyprland.start", function()
     -- "session" into the marker and releases the lock scene, then the login
     -- shell starts the session target and runs hl.session_start().
     --
-    -- Wallpaper first, so it is painted *behind* the login screen: wl-daemon
-    -- paints the desktop's wallpaper, and the layer publishes the same file to
-    -- the lock scene (`wallpaper.path` in its data folder), so releasing the lock
-    -- reveals an already-painted desktop instead of a bare compositor background.
-    -- Doing it here also moves the daemon's ~1 s Vulkan init off the post-login
-    -- path (before this, the daemon started only with the session target, i.e.
-    -- ~2.4 s after the lock was gone — the "hyprland without wallpaper" flash).
-    -- import-environment first: the unit inherits the *user manager's*
-    -- environment, and WAYLAND_DISPLAY only exists in this compositor.
-    hl.exec_cmd(
-      "sh -c 'systemctl --user import-environment WAYLAND_DISPLAY XDG_RUNTIME_DIR; systemctl --user start wl-daemon.service'"
-    )
+    -- The wallpaper behind the login screen is started by the layer itself
+    -- (pleamar-login-layer, its "wallpaper behind the login screen" block), not
+    -- from here. An exec dispatched while this file is parsed reaches the user
+    -- manager before WAYLAND_DISPLAY can be imported into it, so a wl-daemon
+    -- started from this branch dies with "Could not find wayland compositor" and
+    -- stays down until the session target comes up after the password — the
+    -- desktop then appeared on the bare compositor background (2026-11-04
+    -- 00:38:11-21). The layer runs with the compositor's environment and
+    -- publishes the same file into the lock scene's data folder, so the login
+    -- draws the picture the desktop behind it is painted with.
 
     -- hyprctl dispatch exec returns immediately (the command is backgrounded),
     -- so this never blocks the config load.

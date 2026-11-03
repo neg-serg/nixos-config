@@ -85,11 +85,37 @@ export PATH
 STATE_DIR="${PLEAMAR_LOGIN_STATE_DIR:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/pleamar-login}"
 mkdir -p "$STATE_DIR" 2> /dev/null || true
 
+LOG=/tmp/pleamar-login-layer.log
+
+# The wallpaper behind the login screen. The daemon has to be painting before the
+# lock is released, or the desktop appears on the compositor's own background for
+# the ~2 s a cold Vulkan start takes. It cannot be started from hyprland.lua's
+# login branch: an exec dispatched while the compositor parses its config reaches
+# the user manager before WAYLAND_DISPLAY is in it, so the unit dies with "Could
+# not find wayland compositor" and is only restarted by the session target after
+# the password (2026-11-04 00:38:11-21 — the desktop came up without its
+# wallpaper). This script runs with the compositor's own environment (the scene
+# below connects with it), so the import and the start are done here, while the
+# login screen still covers the desktop.
+if command -v systemctl > /dev/null 2>&1 && command -v wl > /dev/null 2>&1; then
+  systemctl --user import-environment WAYLAND_DISPLAY XDG_RUNTIME_DIR > /dev/null 2>&1 || true
+  if ! wl query > /dev/null 2>&1; then
+    # `reset-failed` first: the early start left the unit failed, and a failed
+    # unit is not picked up by a plain `start` in the same transaction.
+    # `--no-block`: the unit's ExecStartPost (`wl-restore-retry`) waits for the
+    # daemon and restores the picture, and that must not hold the login screen
+    # back — the lock is not even drawn yet.
+    systemctl --user reset-failed wl-daemon.service > /dev/null 2>&1 || true
+    systemctl --user restart --no-block wl-daemon.service > /dev/null 2>&1 || true
+  fi
+  printf 'login layer: wl-daemon "%s"\n' "$(systemctl --user is-active wl-daemon.service 2> /dev/null || true)" >> "$LOG"
+fi
+
 # The picture behind the card. The lock reads `wallpaper.path` — one absolute
 # path — from its own data folder ($XDG_DATA_HOME/pleamar/lock, the integration
 # slot of INTERFACES.md §1.2) and draws the shader's dot grid when there is none.
 # Sources, freshest first: the path the theme pipeline watches, then wl-daemon's
-# state — the image the compositor already paints behind the lock surface, so
+# state — the image the daemon started above paints behind the lock surface, so
 # releasing the lock reveals the same picture. Nothing is published when neither
 # names an existing file: a stale path is worse than the dot grid.
 data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/pleamar/lock"
@@ -111,8 +137,6 @@ fi
 # was Russian). Index 0 is `us`, the first entry of hyprland.lua's kb_layout; the
 # scene's layout chip switches it from inside the lock surface afterwards.
 hyprctl switchxkblayout all 0 > /dev/null 2>&1 || true
-
-LOG=/tmp/pleamar-login-layer.log
 
 # The lock face is engaged once and keeps the box the scene had at that moment
 # (`pleamar-lock-engage.patch`: a later request finds `engaged` and answers true),
@@ -187,7 +211,14 @@ alive() { kill -0 "$scene_pid" 2> /dev/null; }
 # A login screen with a shifted face is still usable, and nothing here can block it.
 #
 # What it reads, once per configured face (the engine's own line):
-#   lock   · DP-2: box 1920x1080, face 1920x1080, from 0,0
+#   lock   · DP-2: box 1920x1080, face 1920x1080, from 0,10000
+# `from` is where the scene's own plane starts for this face, and a named surface
+# (the lock's `surface screen_lock`) is placed on a piece of that plane 10000 px
+# below the one before it — the compiler does that so two surfaces never overlap,
+# and the renderer draws the face from the same corner, so (0, 10000) is the
+# normal reading, not a shift. What must equal the face is the BOX: a box smaller
+# than the face is the centring difference that moved the login off screen before
+# `pleamar-lock-full.patch`.
 painted() {
   tail -n "+$((started_at + 1))" "$LOG" 2> /dev/null \
     | sed -n 's/^lock [^:]*: box \([0-9][0-9]*x[0-9][0-9]*\), face \([0-9][0-9]*x[0-9][0-9]*\), from \(.*\)$/\1 \2 \3/p' \
@@ -234,9 +265,9 @@ fi
 printf 'login layer: lock.held "%s" after %d ms; compositor "%s"; box "%s"; face "%s" logical; device "%s"; from "%s"\n' \
   "${held:-none}" "$((polls * 100))" "${HYPRLAND_INSTANCE_SIGNATURE:+hyprland}" \
   "${box:-none}" "${face_size:-none}" "${device:-unknown}" "${from:-none}" >> "$LOG"
-if [ -n "$from" ] && { [ "$from" != "0,0" ] || [ "$box" != "$face_size" ]; }; then
-  printf 'login layer: WARNING the login face paints from "%s" (box "%s" on a "%s" logical face, "%s" device): the screen is shifted by that much; NOT restarted on purpose, a locker killed while it holds the lock leaves the session locked with nothing to type into\n' \
-    "$from" "$box" "$face_size" "${device:-unknown}" >> "$LOG"
+if [ -n "$from" ] && [ "$box" != "$face_size" ]; then
+  printf 'login layer: WARNING the login face paints a "%s" box on a "%s" logical face (from "%s", "%s" device): the screen is shifted by half the difference; NOT restarted on purpose, a locker killed while it holds the lock leaves the session locked with nothing to type into\n' \
+    "$box" "$face_size" "$from" "${device:-unknown}" >> "$LOG"
 fi
 
 while alive; do
