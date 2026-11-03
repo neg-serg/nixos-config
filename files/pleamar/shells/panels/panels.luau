@@ -552,11 +552,32 @@ end)
 
 -- Only the two questions that are answered with a yes are answered here. `pin` and `passkey` need a
 -- field to type into, and `display` needs no answer: the page says so and offers only Cancel.
+-- `confirm` and `authorize` are answered with a yes; `pin` and `passkey` with the code typed into
+-- the band's field. `display` needs no answer, and the page offers only Cancel for it.
 on("bt_confirm", function()
     touch_drawer()
     local id = bt_raw.pairing_id
     if type(id) ~= "string" or id == "" then return end
-    bt_call("bluetooth.confirm", id)
+    local kind = tostring(bt_raw.pairing or "none")
+    if kind == "pin" or kind == "passkey" then
+        local code = tostring(text.pair_code or ""):match("^%s*(.-)%s*$")
+        if code == "" then return end
+        text.pair_code = ""
+        local ok, err = pcall(function() sys.call("bluetooth.answer", id, code) end)
+        if not ok then log("panels: bluetooth.answer failed: " .. tostring(err)) end
+    else
+        bt_call("bluetooth.confirm", id)
+    end
+end)
+
+on("submit:pair_code", function()
+    local id = bt_raw.pairing_id
+    if type(id) ~= "string" or id == "" then return end
+    local code = tostring(text.pair_code or ""):match("^%s*(.-)%s*$")
+    if code == "" then return end
+    text.pair_code = ""
+    local ok, err = pcall(function() sys.call("bluetooth.answer", id, code) end)
+    if not ok then log("panels: bluetooth.answer failed: " .. tostring(err)) end
 end)
 
 on("bt_cancel", function()
@@ -575,7 +596,83 @@ end)
 local net_state = {}
 
 sys.watch("network", function(n)
-    if type(n) == "table" then net_state = n end
+    if type(n) ~= "table" then return end
+    net_state = n
+    -- `error` is why the last join did not get in (reference §17: none, password, timeout,
+    -- unsupported, busy, failed). The page shows it instead of pretending the press worked.
+    local err = tostring(n.error or "none")
+    if err ~= "none" then
+        fact.wifi_failed = true
+        text.wifi_err = "cannot join: " .. err
+    else
+        fact.wifi_failed = false
+        text.wifi_err = ""
+    end
+end)
+
+-- ---- the Wi-Fi page (pages/wifi.plm)
+local function wifi_call(command, arg)
+    local ok, err = pcall(function() sys.call(command, arg) end)
+    if not ok then log("panels: " .. command .. " failed: " .. tostring(err)) end
+end
+
+local function wifi_net(index)
+    local list = type(net_state.networks) == "table" and net_state.networks or {}
+    return list[index + 1]
+end
+
+local function wifi_join()
+    local ssid = tostring(text.wifi_ssid or "")
+    if ssid == "" then return end
+    local password = tostring(text.wifi_pass or "")
+    fact.wifi_ask = false
+    text.wifi_pass = ""
+    local ok, err = pcall(function() sys.call("network.connect", ssid, password) end)
+    if not ok then log("panels: network.connect failed: " .. tostring(err)) end
+end
+
+on("wifi_power", function()
+    touch_drawer()
+    wifi_call("network.wifi", not (net_state.wifi == true))
+end)
+
+on("wifi_scan", function()
+    touch_drawer()
+    local ok, err = pcall(function() sys.call("network.scan") end)
+    if not ok then log("panels: network.scan failed: " .. tostring(err)) end
+end)
+
+on("wifi_pick", function(index)
+    touch_drawer()
+    local n = wifi_net(index)
+    if type(n) ~= "table" then return end
+    if n.active == true then
+        local ok, err = pcall(function() sys.call("network.disconnect") end)
+        if not ok then log("panels: network.disconnect failed: " .. tostring(err)) end
+    elseif n.secure == true and n.known ~= true then
+        fact.wifi_ask = true
+        fact.wifi_failed = false
+        text.wifi_ssid = tostring(n.ssid or "")
+        text.wifi_pass = ""
+    else
+        local ok, err = pcall(function() sys.call("network.connect", n.ssid) end)
+        if not ok then log("panels: network.connect failed: " .. tostring(err)) end
+    end
+end)
+
+on("wifi_forget", function(index)
+    touch_drawer()
+    local n = wifi_net(index)
+    if type(n) ~= "table" or type(n.ssid) ~= "string" then return end
+    local ok, err = pcall(function() sys.call("network.forget", n.ssid) end)
+    if not ok then log("panels: network.forget failed: " .. tostring(err)) end
+end)
+
+on("wifi_connect", wifi_join)
+on("submit:wifi_pass", wifi_join)
+on("wifi_cancel", function()
+    fact.wifi_ask = false
+    text.wifi_pass = ""
 end)
 
 on("toggle_wifi", function()

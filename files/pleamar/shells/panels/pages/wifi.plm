@@ -1,0 +1,98 @@
+// pages/wifi.plm — the Wi-Fi networks (`drawer == wifi`).
+//
+// Legacy: dhrruvsharma/shell's network/WifiPanel.qml + WifiFan.qml: the radio, a
+// scan, the networks by strength, a press to join one, and a password for the
+// ones that need it. The flow graph (`drawer == network`) is the other, older
+// page and stays what it is.
+//
+// The list is the `network` service's own (`networks`: ssid, strength, secure,
+// known, active), so nothing is polled here. The password is a field that only
+// appears for a secured network the machine has never joined; a saved one is
+// joined as it was saved, which is what NetworkManager does and what the
+// reference does too. Connect/disconnect/forget/scan are `network.*` commands in
+// panels.luau.
+
+part Wifi {
+    component WifiDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 420 * scale, 470 * scale
+
+        group {
+            move: (screen.width - 420 * scale) / 2, (screen.height - 470 * scale) / 2 + (1 - lift) * 18 * scale
+            opacity: lift
+
+            body {
+                color: live.coal
+                opacity: 92%
+                border: 1, mix(live.coal, live.ink, 12%)
+                rim: 0.07
+                shadow: 0, 18, 44, 45%
+                box { from: 0, 0; size: 420, 470; corner: 14 }
+            }
+            box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
+            text "wifi" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
+            text pick(net.wifi, "radio off", "scanning…") { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: not (net.wifi and net.online) }
+            text "{net.name} · {nets.total} network(s)" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: net.wifi and net.online }
+            group { move: 356, 9
+                Switch(toggle: wifi_power, on: net.wifi, label: "Wi-Fi", fill: live.slate, lit: live.accent, off: live.ink.off, on_tone: live.coal, scale: 1)
+            }
+            text "scan" { at: 404, 42; anchor: right center; family: "Iosevka"; size: 9; weight: 700; color: pick(net.wifi, live.ink.off, live.accent) }
+            zone box scan { from: 366, 30; size: 44, 24; corner: 12; cursor: pointer; label: "Scan for networks"; role: button; active: net.wifi }
+            on press scan { emit wifi_scan }
+
+            box { from: 16, 58; size: 388, 1; color: live.ink; opacity: ink.subtle }
+
+            // ---- the networks, strongest first as the service sends them
+            group list { show: not wifi_ask
+                for n in nets {
+                    let y = 66 + n.index * 40
+                    // A connected network is lit; the rest are flat.
+                    body { color: live.accent; opacity: pick(n.active, 8%, 0%)
+                           box { from: 16, y; size: 388, 36; corner: 8 } }
+                    text n.ssid { at: 28, y + 13; anchor: left center; width: 250; lines: 1; family: "Iosevka"; size: 12; color: live.ink }
+                    text "saved" { at: 28, y + 27; anchor: left center; family: "Iosevka"; size: 8; color: live.accent; show: n.active }
+                    text "secured" { at: 28, y + 27; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off; show: not n.active and n.secure }
+                    text "open" { at: 28, y + 27; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off; show: not n.active and not n.secure }
+                    text "lock" { at: 300, y + 18; anchor: center; family: "Material Symbols Outlined"; size: 12; color: live.ink.off; show: n.secure }
+                    // Three bars: the strength, in the shell's own idiom.
+                    box { from: 330, y + 24; size: 4, 6; corner: 1; color: pick(n.strength > 10, live.accent, live.ink.off) }
+                    box { from: 336, y + 19; size: 4, 11; corner: 1; color: pick(n.strength > 40, live.accent, live.ink.off) }
+                    box { from: 342, y + 14; size: 4, 16; corner: 1; color: pick(n.strength > 70, live.accent, live.ink.off) }
+                    text "×" { at: 400, y + 18; anchor: right center; family: "Iosevka"; size: 13; color: live.ink.off; show: n.known }
+                    zone box pick { from: 16, y; size: 306, 34; corner: 8; cursor: pointer; active: net.wifi
+                        label: pick(n.active, "Disconnect {n.ssid}", "Connect {n.ssid}"); role: button }
+                    zone box forget { from: 356, y + 4; size: 40, 28; corner: 8; cursor: pointer; active: net.wifi and n.known
+                        label: "Forget {n.ssid}"; role: button }
+                    on press pick { emit wifi_pick(n.index) }
+                    on press forget { emit wifi_forget(n.index) }
+                }
+                text "no networks — press scan" { at: 210, 240; anchor: center; family: "Iosevka"; size: 10; color: live.ink.off; show: nets.total == 0 }
+            }
+
+            // ---- the password, for a secure network never joined here
+            group ask { show: wifi_ask
+                body { color: live.accent; opacity: 10%
+                       box { from: 16, 70; size: 388, 96; corner: 10 } }
+                text "join {wifi_ssid}" { at: 28, 88; anchor: left center; family: "Iosevka"; size: 12; weight: 600; color: live.ink }
+                input wifi_pass {
+                    at: 28, 104; width: 250
+                    size: 12; color: live.ink; family: "Iosevka"; selection: live.accent_deep
+                    placeholder: "password"
+                    label: "Wi-Fi password"
+                    secret: true
+                }
+                text "connect" { at: 300, 116; anchor: center; family: "Iosevka"; size: 10; weight: 700; color: live.on.accent }
+                text "cancel" { at: 366, 116; anchor: center; family: "Iosevka"; size: 10; color: live.ink }
+                zone box do_connect { from: 272, 102; size: 56, 26; corner: 13; cursor: pointer; label: "Connect to {wifi_ssid}"; role: button }
+                zone box do_cancel { from: 336, 102; size: 58, 26; corner: 13; cursor: pointer; label: "Cancel"; role: button }
+                on press do_connect { emit wifi_connect }
+                on press do_cancel { emit wifi_cancel }
+                text "enter joins · the password is not read back" { at: 28, 146; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
+            }
+
+            text wifi_err { at: 16, 440; anchor: left center; family: "Iosevka"; size: 9; color: live.warn; show: wifi_failed }
+            text "network.connect · network.scan · network.forget" { at: 404, 452; anchor: right center; family: "Iosevka"; size: 8; color: live.ink.off }
+        }
+    }
+
+    WifiDrawer()
+}
