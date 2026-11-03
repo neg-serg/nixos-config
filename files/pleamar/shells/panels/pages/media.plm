@@ -53,7 +53,7 @@ part NowPlaying {
 
                 // ----***------------------------- the card
                 body {
-                    color: coal
+                    color: live.coal
                     opacity: 75%
                         box { from: 0, 0; size: 420, 320; corner: 0; opacity: 0% }
                 }
@@ -71,22 +71,22 @@ part NowPlaying {
                 // service's own, and the whole block ends before the band.
                 for r in media_rows {
                     text r.glyph { at: 216, 12 + r.index * 18 + 13; anchor: left bottom
-                        family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+                        family: "Material Symbols Outlined"; size: 11; color: live.ink.dim }
                     text r.value { at: 234, 12 + r.index * 18 + 13; anchor: left bottom; width: 174; lines: 1
-                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink }
+                        family: "Iosevka"; weight: 700; size: 11; color: live.ink }
                 }
                 for r in Meta.rows {
                     text r.glyph { at: 216, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom
-                        family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+                        family: "Material Symbols Outlined"; size: 11; color: live.ink.dim }
                     text r.value { at: 234, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom; width: 174; lines: 1
-                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink }
+                        family: "Iosevka"; weight: 700; size: 11; color: live.ink }
                 }
 
                 // ----***---------- analyser band
                 // QS draws IPhoneSpectrum here, one-sided, with the scrub line
                 // under it; panels.plm sets `Spectrum.mirror`. Its colour is the cover's
                 // (`Music.qml`'s `accentColor: detailsCol.musicAccent`), not the wallpaper
-                // palette's accent — the card follows the album, the shell follows the wall.
+                // palette's live.accent — the card follows the album, the shell follows the wall.
                 group { move: 12, 224
                     spec.Bars(width: 396, height: 76, tone: cover_accent, end: cover_accent, gap: 0)
                 }
@@ -99,7 +99,7 @@ part NowPlaying {
                 // fill colour at 0.14, the played part at full strength under it,
                 // and a vertical bloom rising 30 % of the band behind the fill
                 // (a gradient from nothing to 0.38 there; one box at a fifth
-                // here, since a box carries one colour). The fill is the cover accent
+                // here, since a box carries one colour). The fill is the cover live.accent
                 // (`_progressFillColor`, the reference's `musicAccent`).
                 box { from: 12, 305; size: 396, 3; corner: 1.5; color: cover_accent; opacity: 14% }
                 box { from: 12, 280; corner: 3
@@ -126,9 +126,9 @@ part NowPlaying {
                 // ----***---------------- nothing playing
                 group { show: media_rows.total == 0
                     text "music_note" { at: 210, 146; anchor: center
-                        family: "Material Symbols Outlined"; size: 28; color: skin.ink.dim }
+                        family: "Material Symbols Outlined"; size: 28; color: live.ink.dim }
                     text "No music player detected" { at: 210, 178; anchor: center
-                        family: "Iosevka"; size: 11; color: ink.off }
+                        family: "Iosevka"; size: 11; color: live.ink.off }
                 }
             }
         }

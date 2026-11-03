@@ -12,49 +12,35 @@ import "../../lib/palette-live.plm"
 //   pleamar --say palette "fact pal_accent_r 0.2" "fact pal_accent_g 0.9" "fact pal_accent_b 0.35"
 //
 // The second command repaints the right-hand swatches and leaves the scene as it
-// was; `log` shows no reload. A theme producer (the logic of a real shell) sets
-// these 33 facts from the wallpaper; nothing here writes them.
+// was; `log` shows no reload. In the shell the logic sets these facts from its own
+// `palette.json`; nothing here writes them.
 
 scene palette {
 
     surface { size: 420, 210; anchor: top; level: top }
 
-    // What a theme producer would set: one triple per colour. The defaults are
-    // palette.plm's, so a scene that starts before the logic has spoken looks
-    // as it always did.
+    // What a theme producer would set: one triple per role a theme drives, and
+    // `light`. The defaults are palette.plm's, so a scene that starts before the
+    // first push looks as it always did.
     fact pal_coal_r = 0.0000
     fact pal_coal_g = 0.0000
     fact pal_coal_b = 0.0000
-    fact pal_slate_r = 0.1412
-    fact pal_slate_g = 0.1647
-    fact pal_slate_b = 0.2078
-    fact pal_outline_r = 0.2314
-    fact pal_outline_g = 0.2980
-    fact pal_outline_b = 0.3608
+    fact pal_surface_r = 0.1412
+    fact pal_surface_g = 0.1647
+    fact pal_surface_b = 0.2078
     fact pal_ink_r = 0.7961
     fact pal_ink_g = 0.8392
     fact pal_ink_b = 0.8980
     fact pal_ink_dim_r = 0.6824
     fact pal_ink_dim_g = 0.7255
     fact pal_ink_dim_b = 0.7843
-    fact pal_ink_off_r = 0.4196
-    fact pal_ink_off_g = 0.4431
-    fact pal_ink_off_b = 0.5412
-    fact pal_warn_r = 1.0000
-    fact pal_warn_g = 0.4196
-    fact pal_warn_b = 0.5059
-    fact pal_amber_r = 1.0000
-    fact pal_amber_g = 0.7020
-    fact pal_amber_b = 0.2784
-    fact pal_highlight_r = 0.5804
-    fact pal_highlight_g = 0.8824
-    fact pal_highlight_b = 0.9765
     fact pal_accent_r = 0.0000
     fact pal_accent_g = 0.4353
     fact pal_accent_b = 0.8000
     fact pal_on_accent_r = 1.0000
     fact pal_on_accent_g = 1.0000
     fact pal_on_accent_b = 1.0000
+    fact pal_light = 0
 
     body {
         color: live.coal

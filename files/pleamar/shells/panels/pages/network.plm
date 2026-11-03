@@ -25,7 +25,7 @@
 // reads — see panels.luau) — spawned while this drawer is open and killed when
 // it closes. Colours: the reference chains blue to cyan for download
 // and green to lime for upload; this palette has no green, so download is
-// `highlight` and upload `amber`.
+// `live.highlight` and upload `live.amber`.
 //
 // Every length is a design-pixel literal inside `group zoom { scale }`: `size:`
 // and `weight:` take ONE number and drop the rest (INTERFACES §9.2).
@@ -60,50 +60,50 @@ part NetPanel {
 
                 // ----***------------------------- the card
                 body {
-                    color: coal
+                    color: live.coal
                     opacity: 92%
                         box { from: 0, 0; size: 470, 338; corner: 0; opacity: 0% }
                 }
 
                 // ----***------------------------ header
-                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: skin.ink }
+                text "flow" { at: 14, 20; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: live.ink }
 
                 group { move: 62, 9
-                    Capsule(96, 22, fill: skin.accent, alpha: 15%, edge: 1, edge_tone: skin.accent, edge_alpha: 35%, radius: 9, scale: 1)
-                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; family: "Iosevka"; size: 11; color: skin.ink }
+                    Capsule(96, 22, fill: live.accent, alpha: 15%, edge: 1, edge_tone: live.accent, edge_alpha: 35%, radius: 9, scale: 1)
+                    text "{net.iface}" { at: 48, 11; anchor: center; width: 88; lines: 1; align: center; family: "Iosevka"; size: 11; color: live.ink }
                 }
 
-                ellipse { at: 404, 20; radius: 3.5; color: pick(net_live, down.b, ink.off) }
+                ellipse { at: 404, 20; radius: 3.5; color: pick(net_live, down.b, live.ink.off) }
 
-                text pick(net_live, "IDLE", "LIVE") { at: 414, 20; anchor: left center; family: "Iosevka"; size: 10; color: skin.ink.dim }
+                text pick(net_live, "IDLE", "LIVE") { at: 414, 20; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.dim }
 
                 // ----***--------------- connection detail row
                 // The reference keeps the link/internet/tunnel state in the capsule's tooltip
                 // (NetClusterCapsule.qml:229-245) and this drawer has nothing of the kind — it
-                // draws the stream. The words are the reference's own, the ink is the same
+                // draws the stream. The words are the reference's own, the live.ink is the same
                 // three-way as the link glyph (NetClusterCapsule.qml:41-43): status.error with
-                // no link, status.warning with a link but no internet, the accent with both.
+                // no link, status.warning with a link but no internet, the live.accent with both.
                 // panels.luau asks the two questions while this drawer is open.
-                ellipse { at: 16, 38; radius: 3; color: if(net.link, if(net.internet, skin.accent, amber), warn) }
-                text "{net.state}" { at: 24, 38; anchor: left center; width: 420; lines: 1; family: "Iosevka"; size: 9.5; color: ink.off }
+                ellipse { at: 16, 38; radius: 3; color: if(net.link, if(net.internet, live.accent, live.amber), live.warn) }
+                text "{net.state}" { at: 24, 38; anchor: left center; width: 420; lines: 1; family: "Iosevka"; size: 9.5; color: live.ink.off }
 
                 // ----***----------------------- readouts
-                text "↓ DOWN" { at: 14, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }
+                text "↓ DOWN" { at: 14, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: live.ink.off }
                 text "{net.rx}" { at: 14, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: down.b }
-                text "peak {net.peak_rx}" { at: 14, 96; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+                text "peak {net.peak_rx}" { at: 14, 96; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.off }
 
-                text "↑ UP" { at: 240, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: ink.off }
+                text "↑ UP" { at: 240, 52; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: live.ink.off }
                 text "{net.tx}" { at: 240, 78; anchor: left center; family: "Iosevka"; size: 20; weight: 700; color: up.b }
-                text "peak {net.peak_tx}" { at: 240, 96; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+                text "peak {net.peak_tx}" { at: 240, 96; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.off }
 
                 // ----***--------------------------- plot
                 // Three rules at the thirds, each labelled to the right.
                 repeat g in 0..3 {
-                    box { from: plot.x, plot.y + plot.h - g * plot.h / 3; size: plot.w, 1; color: skin.ink; opacity: 18% }
+                    box { from: plot.x, plot.y + plot.h - g * plot.h / 3; size: plot.w, 1; color: live.ink; opacity: 18% }
                 }
-                text "{net.ax1}" { at: 422, plot.y + plot.h - plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
-                text "{net.ax2}" { at: 422, plot.y + plot.h - 2 * plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
-                text "{net.ax3}" { at: 422, plot.y + 3; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
+                text "{net.ax1}" { at: 422, plot.y + plot.h - plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+                text "{net.ax2}" { at: 422, plot.y + plot.h - 2 * plot.h / 3 + 3; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+                text "{net.ax3}" { at: 422, plot.y + 3; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
 
                 // Upload first, download over it, the way the reference stacks the two series, and
                 // one `line` per segment: the point `v.t0, v.rx0` is where the sample before this
@@ -120,12 +120,12 @@ part NetPanel {
                         width: 2; color: mix(down.a, down.b, v.t1) }
                 }
 
-                text "waiting for flow…" { at: 214, 206; anchor: center; family: "Iosevka"; size: 11; color: ink.off
+                text "waiting for flow…" { at: 214, 206; anchor: center; family: "Iosevka"; size: 11; color: live.ink.off
                     show: flow.total == 0 }
-                text "{net.err}" { at: 214, 214; anchor: center; family: "Iosevka"; size: 10; color: warn }
+                text "{net.err}" { at: 214, 214; anchor: center; family: "Iosevka"; size: 10; color: live.warn }
 
                 // ----***------------------------- footer
-                text "flow — see your network breathe   ·   ~4 Hz   ·   60 s window" { at: 14, 318; anchor: left center; family: "Iosevka"; size: 9; color: ink.off }
+                text "flow — see your network breathe   ·   ~4 Hz   ·   60 s window" { at: 14, 318; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
             }
         }
     }

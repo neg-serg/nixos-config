@@ -33,6 +33,37 @@
 
 local FILE = "settings.json"
 
+-- ======================= the live palette =======================
+-- `pleamar-themes push` leaves the theme's channels in this scene's own folder
+-- (a scene reads only its own), and the scene draws lib/palette-live.plm's
+-- `live.*` colours from the facts named here. A theme change is then a change of
+-- facts: no file is rewritten and nothing reloads. The poll is one small read
+-- every two seconds; a value that has not moved is not written again.
+local PALETTE_ROLES = { "coal", "surface", "ink", "ink_dim", "accent", "on_accent" }
+
+local function palette_load()
+    local ok, palette = pcall(function()
+        return sys.ask("files.read", "palette.json", "json")
+    end)
+    if not ok or type(palette) ~= "table" then return end
+    for _, role in ipairs(PALETTE_ROLES) do
+        for _, channel in ipairs({ "r", "g", "b" }) do
+            local value = palette[role .. "_" .. channel]
+            local name = "pal_" .. role .. "_" .. channel
+            if type(value) == "number" and fact[name] ~= value then
+                fact[name] = value
+            end
+        end
+    end
+    if type(palette.light) == "number" and fact.pal_light ~= palette.light then
+        fact.pal_light = palette.light
+    end
+end
+
+palette_load()
+every(2000, palette_load)
+
+
 -- Defaults live here; the file holds only what the user changed.
 local D = {
     closeOnEscape = true,

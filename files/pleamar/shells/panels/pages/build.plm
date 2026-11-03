@@ -12,7 +12,7 @@
 // a left-row capsule.
 //
 // The plate is the weather card's: `Theme.surface` at 85%, no radius, one 1 px line of
-// the accent along the top edge.
+// the live.accent along the top edge.
 
 part Build {
     component BuildDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
@@ -23,15 +23,15 @@ part Build {
 
             // ----***----------------------------- the card
             body {
-                color: coal
+                color: live.coal
                 opacity: 85%
                 box { from: 0, 0; size: 384 * scale, 214 * scale; corner: 0; opacity: 0% }
             }
-            box { from: 0, 0; size: 384, 1; color: skin.accent; opacity: 25% }
+            box { from: 0, 0; size: 384, 1; color: live.accent; opacity: 25% }
 
             // ----***------------------------------ the title
-            text "nix build" { at: 14, 18; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: skin.ink }
-            box { from: 14, 32; size: 356, 1; color: skin.ink; opacity: ink.subtle }
+            text "nix build" { at: 14, 18; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink }
+            box { from: 14, 32; size: 356, 1; color: live.ink; opacity: ink.subtle }
 
             // ----***------------------------------- the list
             group list { move: 14, 42
