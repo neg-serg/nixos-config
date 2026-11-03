@@ -50,19 +50,19 @@ part Shell {
 
                 // ----***------------------------------ the switches
                 text "Escape closes" { at: 14, 156; anchor: left center; family: "Iosevka"; size: 11; color: live.ink }
-                group { move: 328, 145
+                group { move: 336, 148
                     Switch(toggle: shell_toggle_escape, on: close_on_escape, label: "Escape closes",
                         fill: live.slate, lit: live.accent, off: live.ink.dim, on_tone: live.on.accent, scale: 1)
                 }
 
                 text "Press outside closes" { at: 14, 188; anchor: left center; family: "Iosevka"; size: 11; color: live.ink }
-                group { move: 328, 177
+                group { move: 336, 180
                     Switch(toggle: shell_toggle_outside, on: close_on_outside, label: "Press outside closes",
                         fill: live.slate, lit: live.accent, off: live.ink.dim, on_tone: live.on.accent, scale: 1)
                 }
 
                 text "Weather in Fahrenheit" { at: 14, 220; anchor: left center; family: "Iosevka"; size: 11; color: live.ink }
-                group { move: 328, 209
+                group { move: 336, 212
                     Switch(toggle: shell_toggle_fahrenheit, on: use_fahrenheit, label: "Weather in Fahrenheit",
                         fill: live.slate, lit: live.accent, off: live.ink.dim, on_tone: live.on.accent, scale: 1)
                 }
