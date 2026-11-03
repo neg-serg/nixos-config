@@ -227,9 +227,9 @@ scene panels {
 
     // Worker state, read by the drawers.
     fact sysmon_online = 0
-    // Whether the sample has a real GPU and temperature reading; the history hides those
-    // series rather than drawing a flat line at zero.
-    fact sysmon_gpu = 0
+    // Whether the sample has a real temperature reading; the history hides that series rather than
+    // drawing a flat line at zero. There is no GPU flag: the worker's `gpu_busy_percent` reads
+    // 99-100 % while the card is idle, so the metric is out of the dashboard.
     fact sysmon_temp = 0
     // The flow dashboard: whether there is traffic right now. The curve itself needs no fact — the
     // model carries the values already normalised by the window's peak (panels.luau keeps the ring).
@@ -374,9 +374,10 @@ scene panels {
     // The system drawer's history: one record per pair of neighbour samples, oldest first, each
     // carrying the segment's two ends (the flow card's shape: a scene can loop over a model but
     // cannot build a path or remember the previous point). `t` runs over the whole 60-slot window,
-    // so the curve grows in from the left. `gpu_ok`/`temp_ok`: both ends had a real reading, so a
-    // missing one breaks the line instead of drawing a dip.
-    model sys_hist max 60 { t0: number; t1: number; cpu0: number; cpu1: number; ram0: number; ram1: number; gpu0: number; gpu1: number; temp0: number; temp1: number; gpu_ok: bool; temp_ok: bool }
+    // so the curve grows in from the left. `temp_ok`: both ends had a real reading, so a missing
+    // one breaks the line instead of drawing a dip. There is no GPU series — see the note above the
+    // `sysmon_temp` fact: the reading cannot be trusted on this card.
+    model sys_hist max 60 { t0: number; t1: number; cpu0: number; cpu1: number; ram0: number; ram1: number; temp0: number; temp1: number; temp_ok: bool }
     // `mark`: 1 a day with an event, 2 a public holiday. `pill`: 0 nothing known, 1 taken,
     // 2 missed, 3 still pending (today), 4 a past day with no record — the QS statuses.
     // `dayoff` is a day off as the production calendar has it (isdayoff.ru: a weekend, a holiday or a
