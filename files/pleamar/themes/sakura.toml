@@ -1,0 +1,11 @@
+# Sakura — a plum-dark ground with a cherry accent, for a warmer evening than the
+# blue ones.
+name = "Sakura"
+light = false
+
+[palette]
+coal = "#17121A"
+surface = "#241C2B"
+ink = "#EADDF0"
+ink_dim = "#A995B5"
+accent = "#E58FA8"

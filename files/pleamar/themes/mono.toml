@@ -1,0 +1,11 @@
+# Mono — no colour at all: a black ground, white ink, and an accent that is the
+# ink itself. The strict one, for a wallpaper that is already loud.
+name = "Mono"
+light = false
+
+[palette]
+coal = "#000000"
+surface = "#141414"
+ink = "#F2F2F2"
+ink_dim = "#9A9A9A"
+accent = "#FFFFFF"

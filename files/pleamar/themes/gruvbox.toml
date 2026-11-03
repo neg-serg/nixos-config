@@ -1,0 +1,10 @@
+# Gruvbox — warm retro: brown-black paper, cream ink, the amber of old terminals.
+name = "Gruvbox"
+light = false
+
+[palette]
+coal = "#1D2021"
+surface = "#32302F"
+ink = "#EBDBB2"
+ink_dim = "#A89984"
+accent = "#D79921"
