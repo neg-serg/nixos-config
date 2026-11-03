@@ -10,8 +10,6 @@ excludes = [
   "nix/**",
   # Vendored kitty kittens (scroll_mark/search/tab_bar + kittens/)
   "files/kitty/**/*.py",
-  # ASCII-art scripts — shfmt/black would mangle the layout
-  "files/art/fun-art/*.sh",
   # Personal Obsidian vault — tracked, but prose-only: kept out of formatting
   "files/obsidian-vault/**",
   # Vendored Chaldea widget exports — kept byte-identical to the upstream

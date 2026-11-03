@@ -3,8 +3,8 @@
 # parser from Oils, https://oils.pub). Keeps the shell corpus runnable as a
 # drop-in under osh: a syntax-level bashism that osh rejects fails the lint
 # suite. Runtime-only incompatibilities are NOT caught by -n (e.g. bare
-# associative-array keys, OILS-ERR-101) — keep those out by convention; see
-# the quoted-key fix in files/art/fun-art/bonsai.sh.
+# associative-array keys, OILS-ERR-101) — keep those out by convention and
+# quote associative-array keys (`assoc["$key"]`).
 #
 # Usage: bash scripts/dev/check-osh-syntax.sh [REPO_ROOT]
 
