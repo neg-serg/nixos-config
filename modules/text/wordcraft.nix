@@ -11,12 +11,46 @@
 }:
 let
   enabled = config.lib.neg.enabled "text.wordcraft";
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 in
 {
   config = lib.mkMerge [
     (lib.mkIf enabled {
       environment.systemPackages = lib.mkAfter [
-        pkgs.wordcraft # WordCraft: desktop word processor + wordcraft-cli converter (docx/pdf/odt/rtf/md/…)
+        (onDemand {
+          name = "wordcraft";
+          attr = "wordcraft";
+        }) # WordCraft desktop word processor, built on first use
+        (onDemand {
+          name = "wordcraft-cli";
+          attr = "wordcraft";
+          binary = "wordcraft-cli";
+        }) # document converter shipped in the same package
+        (pkgs.makeDesktopItem {
+          name = "ai.storyteller.wordcraft";
+          desktopName = "WordCraft";
+          exec = "wordcraft %F";
+          icon = "ai.storyteller.wordcraft";
+          categories = [
+            "Office"
+            "WordProcessor"
+          ];
+          mimeTypes = [
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "application/vnd.ms-word.document.macroEnabled.12"
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.template"
+            "application/vnd.ms-word.template.macroEnabled.12"
+            "application/msword"
+            "application/msword-template"
+            "application/vnd.oasis.opendocument.text"
+            "application/rtf"
+            "text/rtf"
+            "text/markdown"
+            "text/x-tex"
+            "text/html"
+            "text/plain"
+          ];
+        })
       ];
     })
 
