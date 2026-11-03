@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  config,
   ...
 }:
 let
@@ -27,6 +28,7 @@ let
     '';
   });
   hishtoryPkg = pkgs.hishtory or null; # Your shell history: synced, queryable, and in context
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 in
 {
   environment.shellAliases = {
@@ -41,7 +43,10 @@ in
 
     # Diff tools
     pkgs.delta # better diff tool
-    pkgs.difftastic # structural diff that understands syntax (complements delta)
+    (onDemand {
+      name = "difft";
+      attr = "difftastic";
+    }) # structural diff that understands syntax; built on first use
     pkgs.diffutils # classic diff utils
 
     # File management
