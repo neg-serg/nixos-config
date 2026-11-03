@@ -1,18 +1,21 @@
-// pages/toggles.plm — the quick toggles (`drawer == toggles`).
+// pages/toggles.plm — the quick toggles and the way into the rest (`drawer == toggles`).
 //
-// Legacy: dhrruvsharma/shell's control/Toggles.qml — the switches at the top of
-// the control centre (Wi-Fi, Bluetooth, do not disturb). The night light and the
-// power profile of the reference are not here: the shell has no night-light
-// daemon (wlsunset is not installed) and no power-profiles-daemon on this host,
-// so a switch for either would be a lie. The session menu is a row of its own,
-// because the quickest way to reach "log out" is not a drawer of its own.
+// Legacy: dhrruvsharma/shell's control/Toggles.qml (the switches at the top of the
+// control centre) plus the control centre itself as a door: the pages this shell
+// grew — key binds, notes, the timer, the contributions — are opened from here,
+// which is what makes them reachable without a bind each. One bind of its own,
+// `M4+SH+Y`, opens this drawer.
+//
+// The night light and the power profile of the reference are not here: the shell
+// has no night-light daemon (wlsunset is not installed) and no power-profiles
+// daemon on this host, so a switch for either would be a lie.
 
 part Toggles {
     component TogglesDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
-        size: 400 * scale, 300 * scale
+        size: 400 * scale, 430 * scale
 
         group {
-            move: (screen.width - 400 * scale) / 2, (screen.height - 300 * scale) / 2 + (1 - lift) * 18 * scale
+            move: (screen.width - 400 * scale) / 2, (screen.height - 430 * scale) / 2 + (1 - lift) * 18 * scale
             opacity: lift
 
             body {
@@ -21,7 +24,7 @@ part Toggles {
                 border: 1, mix(live.coal, live.ink, 12%)
                 rim: 0.07
                 shadow: 0, 18, 44, 45%
-                box { from: 0, 0; size: 400, 300; corner: 14 }
+                box { from: 0, 0; size: 400, 430; corner: 14 }
             }
             box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
             text "toggles" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
@@ -49,13 +52,39 @@ part Toggles {
             }
 
             box { from: 16, 212; size: 368, 1; color: live.ink; opacity: ink.subtle }
+            text "shell pages" { at: 16, 228; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
 
-            // ---- the way out
-            text "session menu" { at: 16, 240; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
-            text "lock · sleep · log out · restart · shut down" { at: 16, 256; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
-            text "›" { at: 384, 240; anchor: right center; family: "Iosevka"; size: 18; color: live.accent }
-            zone box open_power { from: 16, 226; size: 368, 46; corner: 8; cursor: pointer; label: "Session menu"; role: button }
+            // ---- the door to the pages this shell grew
+            text "key binds" { at: 16, 258; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text "every bind the compositor knows" { at: 16, 274; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            text "notes" { at: 16, 302; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text "short notes, kept in the shell's folder" { at: 16, 318; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            text "timer" { at: 16, 346; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text "a countdown that rings" { at: 16, 362; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            text "contributions" { at: 16, 390; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+
+            text "›" { at: 384, 258; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
+            text "›" { at: 384, 302; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
+            text "›" { at: 384, 346; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
+            text "›" { at: 384, 390; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
+
+            zone box open_keys { from: 16, 244; size: 368, 44; corner: 8; cursor: pointer; label: "Key binds"; role: button }
+            zone box open_notes { from: 16, 288; size: 368, 44; corner: 8; cursor: pointer; label: "Notes"; role: button }
+            zone box open_timer { from: 16, 332; size: 368, 44; corner: 8; cursor: pointer; label: "Timer"; role: button }
+            zone box open_github { from: 16, 376; size: 368, 26; corner: 8; cursor: pointer; label: "Contributions"; role: button }
+            zone box open_power { from: 16, 404; size: 368, 22; corner: 8; cursor: pointer; label: "Session menu"; role: button }
+
+            on press open_keys { drawer = keys }
+            on press open_notes { drawer = notes }
+            on press open_timer { drawer = timer }
+            on press open_github { drawer = github }
             on press open_power { drawer = power }
+
+            text "M4+SH+Y opens this page" { at: 384, 22; anchor: right center; family: "Iosevka"; size: 8; color: live.ink.off }
+
+            // The session menu is the last door: one row, no description.
+            text "session menu" { at: 16, 418; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text "›" { at: 384, 418; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
         }
     }
 
