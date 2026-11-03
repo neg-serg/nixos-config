@@ -17,12 +17,12 @@ where they conflict.
 
 ## Engine facts that bite
 
-Each one is from the engine's own reference (`pleamar --docs reference`) or was measured on this host
-(pleamar 0.7.7). They are here so a scene does not rediscover them.
+Each one is from the engine's own reference (`pleamar --docs reference`) or was measured on this
+host (pleamar 0.7.7). They are here so a scene does not rediscover them.
 
 - **Naming `time` keeps the scene awake.** `time` exists only if a scene names it, and while it does
-  the scene never rests (`--report` shows it animating). A scene that has to sleep runs a `prop` or a
-  `spin` only while it is shown, not `time`.
+  the scene never rests (`--report` shows it animating). A scene that has to sleep runs a `prop` or
+  a `spin` only while it is shown, not `time`.
 - **Zone roles are a closed list**: `button` `toggle` `slider` `tab` `link` `item` `list` `region`.
   A typo (`tabs`) does not fail the compile: the zone is dropped from `--say <scene> describe`.
 - **A closed surface is not seen and cannot be pressed.** Gate every zone on the condition that
@@ -30,8 +30,9 @@ Each one is from the engine's own reference (`pleamar --docs reference`) or was 
 - **The file is read in four passes** (declarations; `let`; drawing; rules): a rule may name a shape
   written after it, but a `let` must come before its use, and things paint in the order they are
   written — of two zones, the later one is on top.
-- **An inactive zone is left out of `describe`** (0.7.7) unless it is a button; a disabled control is
-  still drawn but an agent cannot see it. Keep `active:` for a control that must stay describable.
+- **An inactive zone is left out of `describe`** (0.7.7) unless it is a button; a disabled control
+  is still drawn but an agent cannot see it. Keep `active:` for a control that must stay
+  describable.
 - **`--say <scene> describe` is the accessibility contract**: `label:`, `value:` (and `checked:` /
   `selected:`) on zones and fields, `agent: no` for a hand-only zone, `agent: hidden` for anything
   that must not be described. A zone that can be pressed and says nothing is named in the log.
