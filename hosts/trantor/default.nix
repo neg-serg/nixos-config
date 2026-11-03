@@ -194,6 +194,8 @@ in
   features.virt.docker.enable = true; # Podman + docker-compat stack (for the Ceno/Ouinet container)
   features.dev.ai.rocm.enable = true; # ROCm PyTorch (gfx1201) for GPU fine-tuning (kernel side: features.hardware.amdgpu.rocm)
   features.dev.unity.enable = true; # unityhub-proxy / unity-proxy: Unity Hub + `unity` CLI through the SOCKS5 proxy
+  features.dev.java.enable = false; # no Java work here — keeps the ~630M Maven/JDK stack out of the closure
+  services.speechd.enable = false; # no screen reader — drops speech-dispatcher + MBROLA voices (~650M)
   features.virt.libvirtd.enable = true;
   features.apps.winapps.enable = true;
   features.apps.winapps.desktopApps = [

@@ -87,6 +87,14 @@ in
       vivaldi-fixed # Vivaldi browser (Chromium-based, with Wayland flags, patched libffmpeg.so rpath)
     ];
 
+    # Point BROWSER/DEFAULT_BROWSER at the same patched build. nix-maid's
+    # browser table selects plain pkgs.vivaldi, so the closure used to carry
+    # two builds of the same browser (454M each).
+    environment.sessionVariables = {
+      BROWSER = lib.mkForce (lib.getExe vivaldi-fixed);
+      DEFAULT_BROWSER = lib.mkForce (lib.getExe vivaldi-fixed);
+    };
+
     # Chromium managed policies — most Chromium-based browsers read from here.
     # Vivaldi may or may not pick them up depending on the version (8.x sometimes ignores it).
     programs.chromium = {
