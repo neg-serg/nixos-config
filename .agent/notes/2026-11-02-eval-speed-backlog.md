@@ -113,3 +113,33 @@ in one function reappear in cache misses elsewhere. What is left is the allocato
 is, rewriting the evaluator's memory layout, which is a project rather than a patch, and would need
 a validation harness (which exists: `scripts/dev/nix-memo-diff.sh` plus the four-patch build whose
 suite is Ok 201 / Fail 1).
+
+## 5. Allocator and GC: one win, and it was the page policy (2026-11-02)
+
+**The win.** `transparent_hugepage/enabled` was `madvise`, and the evaluator's ~3 GiB bdwgc heap sat
+on 4 KiB pages because bdwgc never asks for huge ones. Setting the policy to `always` — through
+`profiles.performance.thpMode` for the kernel command line plus
+`modules/system/kernel/thp-policy.nix` for the running system — gave **minor faults 802k → 50k
+(−93.8 %) and wall clock 8.50 → 7.63 s (−10.3 %)** with instructions unchanged (−0.02 %). Sixteen
+interleaved pairs, p < 1e-4. Cost: eval RSS +2.15 % (3.14 → 3.21 GiB) and the host's `AnonHugePages`
+peak roughly doubles. This is the only change in the whole pass that moves the wall clock, and it
+moves it on the memory side — which is the side the evaluator is actually bound by.
+
+**The GC is not a lever.** `GC_PRINT_STATS` shows exactly one collection, inside `GC_INIT()`, with 0
+bytes allocated; `NIX_SHOW_STATS` agrees (`gc.cycles = 1`). Nothing marks during an eval, so every
+`GC_*` knob has nothing to act on, and the shipped bdwgc already has `PARALLEL_MARK` and
+`THREAD_LOCAL_ALLOC` on, assertions off, and no huge-page option at all.
+
+**The allocator is already the best of the three.** Built variants, 8 interleaved pairs each,
+against a harness control with no drift (+98 ms, 2/8, p = 0.29): bdwgc patched to
+`madvise(MADV_HUGEPAGE)` its own segments −0.05 % (reject); **mimalloc → glibc +11.0 %** (0/8, p =
+0.008 — this is the number that says the C++ heap is worth ~1 s); mimalloc → jemalloc 5.4 −0.2 %
+(neutral); **mimalloc with `MI_ALLOW_THP=OFF` +5.9 %** (0/8, p = 0.008, faults 47.5k → 801k).
+
+That last one matters as a warning: THP on mimalloc's arenas is worth ~0.42 s and the shipped build
+already has it (3.5.3 defaults to `MI_ALLOW_THP=FULL`; Determinate's `-DMI_EXTRA_CPPDEFS=MI_NO_THP`
+is a no-op on that version). Nobody should "fix" numerics by rebuilding mimalloc with THP off.
+
+**Also closed**: a full runtime sweep of 19 environment knobs found nothing — instruction counts
+stayed invariant (CV 0.07 %) and the best fault delta was −0.1 %; `PURGE_DELAY=0` is a real
+regression (+9.2 % faults).
