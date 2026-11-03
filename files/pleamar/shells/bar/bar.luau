@@ -1221,11 +1221,12 @@ local function tip_line(i)
             .. " down, " .. (text.net_tx ~= "" and (text.net_tx .. text.net_tx_unit) or "--") .. " up"
             .. "\n" .. net_state_line()
     elseif i == 4 then
-        -- The monitoring capsule is a CPU sparkline now; the card carries the numbers behind the
-        -- curve (CPU, RAM with the pair, the temperature) and the click line. The GPU line went
-        -- with its pair: the worker's `gpu_busy_percent` is not a reading this card can stand by.
+        -- SystemMonitorCapsule.qml:22-35, `TooltipText.compose("Monitoring", "", hints)`: CPU, RAM
+        -- with the pair, the temperature, and the click line. The GPU line is dropped with its
+        -- pair: the worker's `gpu_busy_percent` reads 99-100 % on this card while it is idle, so
+        -- the bar has nothing it can stand by to show.
         local lines = { "Monitoring" }
-        lines[#lines + 1] = string.format("CPU: %d%% (last minute)", math.floor((fact.cpu or 0) * 100 + 0.5))
+        lines[#lines + 1] = string.format("CPU: %d%%", math.floor((fact.cpu or 0) * 100 + 0.5))
         lines[#lines + 1] = string.format("RAM: %d%% (%.1f / %d GiB)",
             math.floor((fact.ram or 0) * 100 + 0.5), tonumber(fact.ram_used_gib) or 0,
             tonumber(fact.ram_total_gib) or 0)
@@ -2297,7 +2298,8 @@ run("hyprctl", { "submap" }, function(out) set_submap(out) end)
 -- The worker does the arithmetic now (packages/pleamar-sysmon, the same one the
 -- panels subscribe to): one JSON object per line with the ratios already scaled,
 -- and an unavailable GPU/temperature carried as `{ err = ... }`. The bar keeps
--- its thresholds and the idle rule (panel: systemMonitorHideIdle, 3%).
+-- its thresholds and the idle rule (panel: systemMonitorHideIdle, 3%) and reads CPU, RAM and the
+-- temperature; the GPU is ignored — the pair is dropped in bar.plm, the reading cannot be trusted.
 local SYS_INTERVAL_MS = 2000
 local sysmon_handle = nil
 local sysmon_restart = nil
@@ -2309,40 +2311,12 @@ local function clamp01(v)
     return v
 end
 
--- The cluster's sparkline: the CPU share of the last SPARK samples, published as segments because a
--- scene can loop over a model but cannot hold the previous point — the same shape the panels chart
--- and the flow card use. The worker ticks every two seconds, so 30 samples are the last minute.
---
--- The six `icon + bar` pairs are gone with it: each pair showed one instant and nothing of how it
--- got there, the GPU pair drew a reading the worker cannot trust (`gpu_busy_percent` reports
--- 99-100 % at idle on this card), and the I/O and swap pairs were rarely up. The tooltip still
--- carries RAM and the temperature.
-local SPARK_LEN = 30
-local spark_ring = {}
-
-local function spark_publish()
-    local n = #spark_ring
-    local span = math.max(SPARK_LEN - 1, 1)
-    local rows = {}
-    for k = 2, n do
-        rows[#rows + 1] = {
-            t0 = (k - 2) / span, t1 = (k - 1) / span,
-            v0 = spark_ring[k - 1], v1 = spark_ring[k],
-        }
-    end
-    model.sys_spark = rows
-end
-
 local function applySample(data)
     if type(data) ~= "table" then return end
 
     local cpu = data.cpu
     if type(cpu) == "table" and type(cpu.percent) == "number" then
         fact.cpu = clamp01(cpu.percent / 100)
-        -- One point of the sparkline per worker tick, so the plot is the last minute.
-        spark_ring[#spark_ring + 1] = fact.cpu
-        if #spark_ring > SPARK_LEN then table.remove(spark_ring, 1) end
-        spark_publish()
     end
 
     local mem = data.mem
@@ -2351,6 +2325,17 @@ local function applySample(data)
         -- The tooltip prints the pair beside the share, as the reference does ("7.2 / 16 GiB").
         fact.ram_total_gib = math.floor((mem.total_gib or 0) + 0.5)
         fact.ram_used_gib = math.floor((mem.used_gib or 0) * 10 + 0.5) / 10
+    end
+
+    local swap = data.swap
+    if type(swap) == "table" then
+        fact["has.swap"] = swap.available == true
+        fact.swap = swap.available == true and clamp01((swap.percent or 0) / 100) or 0
+    end
+
+    local disk = data.disk
+    if type(disk) == "table" and type(disk.percent) == "number" then
+        fact.io = clamp01(disk.percent / 100)
     end
 
     local temp = data.temp
