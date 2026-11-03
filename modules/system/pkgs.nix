@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
+let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+in
 {
   environment.systemPackages = [
     # -- Disk / Filesystem --
@@ -19,7 +22,10 @@
     # usbmon dumps land in pcap, tshark decodes the HID reports, tcpdump covers the
     # VM's network flows when a cloud step has to be traced.
     pkgs.tcpdump # packet capture CLI (usbmon pcap writing, VM network flows)
-    pkgs.tshark # Wireshark CLI — decodes USB HID reports from usbmon captures
+    (onDemand {
+      name = "tshark";
+      attr = "tshark";
+    }) # Wireshark CLI for USB HID/usbmon captures (on demand)
 
     # -- Scheduling --
     pkgs.schedtool # Query and set CPU scheduling policies

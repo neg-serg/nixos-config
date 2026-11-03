@@ -67,6 +67,36 @@
       ${pkgs.telegram-desktop}/bin/Telegram "$@"
   '';
 
+  # Wave 1 on-demand apps: aliases so the launchers in the system modules can
+  # `nix build .#<attr>` without pulling the app into system-path.
+  waylandar = pkgs.waylandar;
+  tshark = pkgs.tshark;
+  galaxy-buds-client = pkgs.galaxy-buds-client;
+  vial = pkgs.vial;
+  ddcui = pkgs.ddcui;
+  virt-manager = pkgs.virt-manager;
+  stable-diffusion-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
+
+  ocrmypdf =
+    let
+      tesseract = pkgs.tesseract.override {
+        enableLanguages = [
+          "eng"
+          "rus"
+          "osd"
+        ];
+      };
+      unpaper = pkgs.unpaper.overrideAttrs {
+        src = pkgs.fetchurl {
+          url = "https://github.com/unpaper/unpaper/releases/download/unpaper-7.0.0/unpaper-7.0.0.tar.xz";
+          hash = "sha256-JXX7vybCJxnRy4grWWAsmQDH90cRisEwiD9jQZvkaoA=";
+        };
+      };
+    in
+    pkgs.python3.pkgs.toPythonApplication (
+      pkgs.python3.pkgs.ocrmypdf.override { inherit tesseract unpaper; }
+    );
+
   # MERT similarity index tooling (Rust; embeddings come from music-embed).
   music-index-tools = pkgs.neg.music-index-tools;
 

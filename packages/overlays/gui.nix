@@ -15,6 +15,9 @@ in
   # same five binaries (hyprland-dialog, -donate-screen, -update-screen,
   # -welcome, -run), so installing both would collide in the system profile.
   hyprland-guiutils = callPkg (pkg "hyprland-guiutils") { };
+  # Waylandar is a standalone Quickshell calendar/dashboard; exposed as a flake
+  # package so the system only carries an on-demand launcher.
+  waylandar = callPkg (pkg "waylandar") { };
   # hypr-kdeconnect-fix — RemoteDesktop portal backend bridging KDE Connect /
   # Deskflow input to the wlroots virtual-input protocols Hyprland exposes.
   hypr-kdeconnect-fix = callPkg (pkg "hypr-kdeconnect-fix") { };

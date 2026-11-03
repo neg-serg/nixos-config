@@ -2,8 +2,12 @@
   lib,
   neg,
   pkgs,
+  config,
   ...
 }:
+let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+in
 {
   config = lib.mkMerge [
     {
@@ -13,7 +17,17 @@
         # The buds are normally handed to the Questyle dongle; this app needs
         # them paired with the PC's own adapter (see modules/system/kernel for
         # CONFIG_BT_RFCOMM, which this app depends on).
-        pkgs.galaxy-buds-client # unofficial Galaxy Buds manager (ANC/EQ/touchpad)
+        (onDemand {
+          name = "GalaxyBudsClient";
+          attr = "galaxy-buds-client";
+        }) # unofficial Galaxy Buds manager (ANC/EQ/touchpad), on demand
+        (pkgs.makeDesktopItem {
+          name = "GalaxyBudsClient";
+          desktopName = "Galaxy Buds Client";
+          exec = "GalaxyBudsClient";
+          icon = "galaxy-buds-client";
+          categories = [ "Settings" ];
+        })
         # Chromium-family apps (Vivaldi) shell out to zenity/kdialog/xmessage
         # for the "profile is in use" dialog. With none of them installed the
         # dialog cannot be shown and the browser just exits silently on a stale

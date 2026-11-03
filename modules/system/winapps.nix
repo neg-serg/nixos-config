@@ -8,6 +8,7 @@ let
   winappsCfg = config.features.apps.winapps or { };
   enabled = winappsCfg.enable or false;
   vmProfile = (config.profiles.vm or { enable = false; }).enable;
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 
   # App configs from local files
   appDir = config.lib.neg.path "files/winapps/apps";
@@ -106,7 +107,17 @@ in
         ))
         pkgs.freerdp # RDP client for WinApps
         pkgs.qemu_kvm # KVM virtual machines for WinApps
-        pkgs.virt-manager # VM management GUI
+        (onDemand {
+          name = "virt-manager";
+          attr = "virt-manager";
+        }) # VM management GUI, built on demand
+        (pkgs.makeDesktopItem {
+          name = "virt-manager";
+          desktopName = "Virtual Machine Manager";
+          exec = "virt-manager";
+          icon = "virt-manager";
+          categories = [ "System" ];
+        })
         pkgs.virt-viewer # SPICE/VNC client for VMs
       ]
       ++ lib.optional (desktopApps != [ ]) desktopFiles

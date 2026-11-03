@@ -20,6 +20,7 @@ let
   enabled = config.lib.neg.enabled "media.audio.musicTagging";
   user = config.lib.neg.mainUser;
   autoIndex = cfg.autoIndex;
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
   # Per-user unit constructor (lib/systemd-user.nix, see modules/AGENTS.md).
   systemdUser = config.lib.neg.systemdUser;
 
@@ -59,7 +60,10 @@ in
         # Builds/queries the MERT similarity index. Embeddings still come from
         # the Python `music-embed` (torch); the index, cache and ranking are Rust.
         pkgs.neg.music-index-tools # music-index / music-similar (index math, npy, ranking)
-        pkgs.audio-cpp # ggml audio runtime: Audio Flamingo Next on Vulkan (the only 8B path that fits the GPU)
+        (onDemand {
+          name = "audiocpp_cli";
+          attr = "audio-cpp";
+        }) # ggml audio runtime: Audio Flamingo Next on Vulkan (only 8B path fitting the GPU)
       ];
 
       # Model cache for CLAP/MERT and the MTG tagger's EffNet/head models:
