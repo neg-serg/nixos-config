@@ -75,7 +75,8 @@ lib.mkIf devEnabled (
         pkgs.marksman # Markdown
         pkgs.texlab # LaTeX (VimTeX); the toolchain itself lives in the `latex` devshell
         pkgs.lua-language-server # Lua
-        pkgs.clang-tools # C/C++ (provides clangd + clang-format)
+        # C/C++ clangd/clang-format live in the `cpp` devshell: open a C/C++
+        # project from `nix develop .#cpp` (or direnv) to get them.
         pkgs.lemminx # XML
         pkgs.bash-language-server # Bash
         pkgs.pyright # Python
@@ -88,7 +89,7 @@ lib.mkIf devEnabled (
         pkgs.yaml-language-server # YAML
         pkgs.nil # Nix (fast LSP with built-in nixpkgs docs)
         pkgs.docker-language-server # Dockerfile LSP
-        pkgs.cmake-language-server # CMake LSP
+        # CMake LSP/formatter live in the `cpp` devshell together with CMake.
         pkgs.systemd-lsp # Systemd unit LSP
         pkgs.rust-analyzer # Rust LSP (for rustaceanvim)
 
@@ -107,14 +108,14 @@ lib.mkIf devEnabled (
         pkgs.hadolint # Dockerfile linter
         pkgs.vale # Prose linter
         pkgs.yamllint # YAML linter
-        pkgs.cmake-format # CMake formatter
         pkgs.black # Python formatter (conform.nvim + just lint)
         pkgs.luajit # Lua syntax checker (just lint)
         pkgs.qt6.qtdeclarative # qmlformat: QML syntax checker (just lint)
         pkgs.mypy # Optional static typing for Python (nvim-lint)
 
         # DAP debug adapters (nvim-dap) + lazygit (Snacks.lazygit)
-        pkgs.lldb # LLDB with lldb-dap DAP adapter for Rust/C/C++ (nvim-dap)
+        # lldb/lldb-dap live in the `cpp` devshell; Rust work already uses
+        # codelldb from the `rust` devshell.
         pkgs.delve # Go DAP adapter (nvim-dap)
         ((pkgs.python3.withPackages (ps: [ ps.debugpy ])).overrideAttrs (o: {
           meta = (o.meta or { }) // {

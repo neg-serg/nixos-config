@@ -22,7 +22,7 @@ stdenv.mkDerivation rec {
 
   buildPhase = ''
     export GOCACHE=$TMPDIR/go-cache
-    go build -o brrtfetch ./go/main.go
+    go build -trimpath -o brrtfetch ./go/main.go
   '';
 
   installPhase = ''
