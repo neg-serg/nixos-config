@@ -1,0 +1,105 @@
+// pages/shell.plm — the shell drawer (`drawer == shell`): the settings that can be
+// changed while the shell runs.
+//
+// Everything here is the `settings.json` of §6 — window scale, type scale, the
+// two closing rules, Fahrenheit, the weather city and the holiday country — with
+// the light theme's paper warmth beside them. A control writes the fact at once
+// (the drawer repaints as it is dragged) and the logic persists the value
+// (`files.write`), so `settings.json` stays the one place the defaults live and
+// the next start reads them back.
+//
+// The page is a plate like the others: no radius, one accent hairline on top.
+
+part Shell {
+
+    component ShellDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 380 * scale, 420 * scale
+
+        group place {
+            move: 0, (1 - lift) * 420 * scale
+
+            group zoom {
+                scale: scale
+
+                // ----***----------------------------- the card
+                body {
+                    color: live.coal
+                    opacity: 85%
+                    box { from: 0, 0; size: 380, 420; corner: 0; opacity: 0% }
+                }
+                box { from: 0, 0; size: 380, 1; color: live.accent; opacity: 25% }
+
+                text "shell" { at: 14, 18; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink }
+                text "changed live, kept in settings.json" { at: 14, 32; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+                box { from: 14, 40; size: 352, 1; color: live.ink; opacity: ink.subtle }
+
+                // ----***--------------------------- the two scales
+                text "window scale" { at: 14, 54; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.dim }
+                text "{zoom * 100, 0} %" { at: 366, 54; anchor: right center; family: "Iosevka"; size: 10; color: live.ink }
+                group { move: 14, 64
+                    Slider(change: shell_zoom, value: (zoom - 0.5) / 1.5, label: "Window scale",
+                        tone: live.accent, track: live.ink, knob: live.ink, w: 352, scale: 1)
+                }
+
+                text "type scale" { at: 14, 100; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.dim }
+                text "{text_scale * 100, 0} %" { at: 366, 100; anchor: right center; family: "Iosevka"; size: 10; color: live.ink }
+                group { move: 14, 110
+                    Slider(change: shell_type, value: (text_scale - 0.5) / 1.5, label: "Type scale",
+                        tone: live.accent, track: live.ink, knob: live.ink, w: 352, scale: 1)
+                }
+
+                // ----***------------------------------ the switches
+                text "Escape closes" { at: 14, 156; anchor: left center; family: "Iosevka"; size: 11; color: live.ink }
+                group { move: 328, 145
+                    Switch(toggle: shell_toggle_escape, on: close_on_escape, label: "Escape closes",
+                        fill: live.slate, lit: live.accent, off: live.ink.dim, on_tone: live.on.accent, scale: 1)
+                }
+
+                text "Press outside closes" { at: 14, 188; anchor: left center; family: "Iosevka"; size: 11; color: live.ink }
+                group { move: 328, 177
+                    Switch(toggle: shell_toggle_outside, on: close_on_outside, label: "Press outside closes",
+                        fill: live.slate, lit: live.accent, off: live.ink.dim, on_tone: live.on.accent, scale: 1)
+                }
+
+                text "Weather in Fahrenheit" { at: 14, 220; anchor: left center; family: "Iosevka"; size: 11; color: live.ink }
+                group { move: 328, 209
+                    Switch(toggle: shell_toggle_fahrenheit, on: use_fahrenheit, label: "Weather in Fahrenheit",
+                        fill: live.slate, lit: live.accent, off: live.ink.dim, on_tone: live.on.accent, scale: 1)
+                }
+
+                box { from: 14, 244; size: 352, 1; color: live.ink; opacity: ink.subtle }
+
+                // ----***----------------------------- the two texts
+                text "weather city" { at: 14, 256; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.dim }
+                box { from: 14, 264; size: 352, 30; corner: 6; color: live.slate; opacity: 55% }
+                input city { at: 22, 272; width: 336; size: 12; family: "Iosevka"
+                    color: live.ink; selection: live.accent_hover
+                    placeholder: "Saint Petersburg"; label: "Weather city" }
+
+                text "holiday country" { at: 14, 306; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.dim }
+                box { from: 14, 314; size: 352, 30; corner: 6; color: live.slate; opacity: 55% }
+                input country { at: 22, 322; width: 336; size: 12; family: "Iosevka"
+                    color: live.ink; selection: live.accent_hover
+                    placeholder: "ru"; label: "Holiday country" }
+
+                // ----***--------------------------- the paper's warmth
+                // The same number the theme drawer shows; a light theme only (a dark
+                // one has no paper to tint).
+                box { from: 14, 354; size: 352, 1; color: live.ink; opacity: ink.subtle; show: live.light }
+                text "paper warmth" { at: 14, 364; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.dim; show: live.light }
+                text "{theme.warm}" { at: 366, 364; anchor: right center; family: "Iosevka"; size: 10; color: live.ink; show: live.light }
+                group { move: 14, 374; show: live.light
+                    Slider(change: theme_warm, value: warm, label: "Paper warmth",
+                        tone: live.accent, track: live.ink, knob: live.ink, w: 352, scale: 1)
+                }
+            }
+        }
+    }
+
+    // The surface is the monitor (see `panels.plm`), so the card is placed against
+    // its screen corner here: the `let` below is the component's own fit, times the user's zoom.
+    let shell.s = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+    group { move: screen.width - 380 * shell.s - 5, screen.height - 420 * shell.s - 1
+        ShellDrawer(scale: shell.s) { show: drawer == shell }
+    }
+}

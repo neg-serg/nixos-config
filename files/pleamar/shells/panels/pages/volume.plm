@@ -144,5 +144,10 @@ part Volume {
         }
     }
 
-    VolumeDrawer() { show: drawer == volume }
+    // The surface is the monitor (see `panels.plm`), so the card is placed against
+    // its screen corner here: the `let` below is the component's own fit, times the user's zoom.
+    let volume.s = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+    group { move: screen.width - 340 * volume.s - 5, screen.height - 320 * volume.s - 1
+        VolumeDrawer(scale: volume.s) { show: drawer == volume }
+    }
 }

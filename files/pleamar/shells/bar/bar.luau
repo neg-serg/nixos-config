@@ -696,6 +696,7 @@ on("toggle_weather_panel", function() toggle_drawer("weather") end)
 on("toggle_system_panel", function() toggle_drawer("system") end)
 on("toggle_build_panel", function() toggle_drawer("build") end)
 on("toggle_theme_panel", function() toggle_drawer("theme") end)
+on("toggle_shell_panel", function() toggle_drawer("shell") end)
 
 -- The workspace capsule's press: QS's WsIndicator calls `Expo.toggle()`, which is the
 -- `hypr-expo` helper this host's hyprexpo is loaded and configured by. The capsule shows the

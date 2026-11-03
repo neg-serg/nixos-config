@@ -50,9 +50,19 @@ library Controls strict {
     // wide and `switch.h` high; the knob is a circle at the left while off and
     // the right while on (it moves with `on`, so a spring on the fact animates
     // it). Pressing anywhere on the pill emits `toggle`.
+    // The colours are the caller's: a scene on the live palette passes
+    // `fill: live.slate, lit: live.accent, off: live.ink.dim, on: live.on.accent`,
+    // and the stock palette below is only the fallback for a scene that still
+    // draws with `skin.*`. (Both names changed with the palette; a switch left on
+    // the stock accent came out blue in a green theme, which is exactly the kind
+    // of drift the library exists to prevent.)
     component Switch(toggle: event,
                      on: bool,
                      label: text,
+                     fill: color = mix(slate, ink, 0.16),
+                     lit: color = accent,
+                     off: color = ink.dim,
+                     on_tone: color = on.accent,
                      enabled: bool = true,
                      w: number = switch.w,
                      h: number = switch.h,
@@ -63,7 +73,7 @@ library Controls strict {
         let r = switch.knob / 2 * scale
         let pad = (h - switch.knob) / 2 * scale
         let kx = pick(on, r + pad, w * scale - r - pad)
-        let track = pick(on, mix(slate, ink, 0.16), accent)
+        let track = pick(on, fill, lit)
         let tone = mix(track, ink, 0.10 + 0.10 * hit.hover)
 
         body {
@@ -75,7 +85,7 @@ library Controls strict {
         }
 
         ellipse { at: kx, h / 2 * scale; radius: r
-            color: pick(on, ink.dim, on.accent); opacity: pick(enabled, 60%, 100%) }
+            color: pick(on, off, on_tone); opacity: pick(enabled, 60%, 100%) }
 
         zone box hit { from: 0, 0; size: w * scale, h * scale; corner: h / 2 * scale
             cursor: pointer; label: label; role: toggle; checked: on; active: enabled }
