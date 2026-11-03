@@ -238,8 +238,12 @@ hl.config({
     --   hyprctl eval 'hl.config({ decoration = { blur = { variant = "acrylic" } } })'
     -- (the animated ones — drops, water, fluid_jar, aurora, heat_shimmer,
     -- ripple — recompute the blur every frame).
-    -- ON again since 2026-11-06 at the owner's call, with `variant = "frost"`:
-    -- the frost is the point of the material, and the shell's own glass stays off
+    -- ON again since 2026-11-06 at the owner's call, now with `variant = "haze"`.
+    -- The eleven materials were compared on this host that day under a 60 fps
+    -- backdrop (bar and an open drawer): haze is the cheapest of the static ones
+    -- (+11 GPU points against frost's +14.5, prism +13, acrylic +15), while drops
+    -- costs +48 and the animated aurora/fluid_jar/heat_shimmer about +24..28 GPU
+    -- and 3 % CPU even when nothing moves. The shell's own glass stays off
     -- (`bar.plm strip.glass = 0%`) so the compositor does the blur through the
     -- `pleamar` layer rule below — one implementation, not two.
     --
@@ -254,7 +258,7 @@ hl.config({
     -- 7.5 % with blur off, so the cost now tracks what is actually blurred.
     -- Turn it off live with `hyprctl eval 'hl.config({ decoration = { blur = {
     -- enabled = false } } })'` if it starts costing the input latency again.
-    blur = { enabled = true, variant = "frost", size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
+    blur = { enabled = true, variant = "haze", size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
     -- motion blur: adds a smear while anything on screen is moving — the
     -- scrolling tape and dragged windows are where it reads. 24 samples is the
     -- tuning knob (higher = smoother, more GPU); `hyprctl eval 'hl.config({
