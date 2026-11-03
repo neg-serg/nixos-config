@@ -223,7 +223,7 @@ return {
     opts = {
       boot = {
         tidal = {
-          -- Use the nix wrapper (ghc with tidal preloaded) instead of bare ghci
+          -- Use the nix wrapper (enters the haskell devshell for GHC+Tidal)
           cmd = 'tidal-ghci',
           file = vim.fn.expand '~/.config/tidal/BootTidal.hs',
         },

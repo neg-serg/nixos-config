@@ -33,14 +33,22 @@ let
     pkgs.scmir # SCMIR — music IR analysis library (onsets, pitch, chroma) + CLI tools
     pkgs.atk-sc3 # Ambisonic Toolkit — First Order Ambisonics soundfield tools (SC quark)
     pkgs.vstplugin # host VST2/VST3 plugins inside scsynth
-    pkgs.nn-ar # nn.ar — neural audio UGens (PyTorch models in scsynth)
     pkgs.flucoma # FluCoMa — corpus-based music toolkit (57 UGens: analysis, ML, transformation)
     pkgs.safetynet # SafetyNet SC quark — protect against dangerous audio signals
     pkgs.ddwplug # ddwPlug SC quark — dynamic per-note synth patching
     pkgs.miscellaneous-lib # miSCellaneous_lib SC quark — patterns, granulation, live coding
     pkgs.faust2sc # compile Faust DSP into SuperCollider UGens (faust2sc.py)
-    pkgs.haskellPackages.tidal # TidalCycles live coding environment (Haskell library)
-    pkgs.tidal-ghci # GHCi with TidalCycles preloaded (BootTidal REPL for the nvim tidal plugin)
+    # Tidal/GHC is a 3.1G Haskell env; it lives in the `haskell` devshell and
+    # this wrapper enters that shell on demand, so nvim, tidal-edit and
+    # tidalctl keep finding `tidal-ghci` from any launch context.
+    (pkgs.writeShellScriptBin "tidal-ghci" ''
+      if [ -n "''${TIDAL_GHCI_SYSTEM:-}" ]; then
+        echo "tidal-ghci: recursion guard hit — no devshell tidal-ghci on PATH" >&2
+        exit 1
+      fi
+      export TIDAL_GHCI_SYSTEM=1
+      exec ${pkgs.nix}/bin/nix develop "path:/etc/nixos#haskell" -c tidal-ghci "$@"
+    '')
     pkgs.neg.tidalctl # TidalCycles session controller — engine start/stop/status, editor, recording
     pkgs.neg.superdirt # SuperDirt — sample-based SuperCollider audio engine (TidalCycles / raw SC live coding)
     pkgs.neg.dirt-samples # SuperDirt audio sample library

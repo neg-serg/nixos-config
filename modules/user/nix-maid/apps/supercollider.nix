@@ -1,6 +1,7 @@
 ##  Module: user/nix-maid/apps/supercollider
-# Purpose: SuperCollider live-coding stack (raw SC via scnvim; the TidalCycles
-# client stack — tidalctl, tidal-ghci, nvim tidal plugin — runs alongside).
+# Purpose: SuperCollider live-coding stack (raw SC via scnvim; tidalctl and the
+# nvim tidal plugin run alongside, the Tidal/GHCi toolchain itself lives in the
+# `haskell` devshell and is entered through the system `tidal-ghci` wrapper).
 {
   lib,
   config,
@@ -57,7 +58,6 @@ let
     "${pkgs.my-ugens}/lib/SuperCollider/plugins"
     "${pkgs.softcut-sc}/lib/SuperCollider/plugins"
     "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin/plugins"
-    "${pkgs.nn-ar}/lib/SuperCollider/plugins" # nn.ar: neural audio UGens (PyTorch)
     "${pkgs.flucoma}/lib/SuperCollider/plugins" # FluCoMa: corpus manipulation UGens
     "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
     "${pkgs.mdugens}/lib/SuperCollider/plugins" # MDUGens: TPTFilter/SOSBank UGens (PlateReverb etc.)
@@ -189,8 +189,6 @@ in
       "${ext}/ddwPlug".source = scExt pkgs.ddwplug "ddwPlug";
       "${ext}/miSCellaneous_lib".source = scExt pkgs.miscellaneous-lib "miSCellaneous_lib";
       "${ext}/ixiQuarks".source = scExt pkgs.ixiquarks "ixiQuarks";
-      # nn.ar — neural audio UGens (PyTorch models loaded at runtime)
-      "${ext}/nn.ar".source = scExt pkgs.nn-ar "nn.ar";
       "${ext}/FluCoMa".source = scExt pkgs.flucoma "FluCoMa";
     };
   };
