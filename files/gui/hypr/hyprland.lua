@@ -101,7 +101,10 @@ local m = {
   telegram_wrapped   = "^(.telegram-desktop-wrapped)$",
   telegram_org       = "^(org\\.telegram.desktop)$",
   utility            = "^(wine|steamwebhelper|sun-awt-X11-XFramePeer|xdg-desktop-portal-gtk)$",
-  steam_app          = "^(steam_app)",
+  -- Hyprland matches class/title regexes against the whole string, so a class
+  -- prefix needs `.*` before the closing anchor — the old `^(steam_app)` never
+  -- fired and every Steam game stayed on the workspace that launched it.
+  steam_app          = "^(steam_app_.*)$",
   xwaylandvideobridge = "^(xwaylandvideobridge)$",
   -- scratchpad classes
   im_scratchpad      = "^(KotatogramDesktop|Skype|Slack|TelegramDesktop|org\\.telegram\\.desktop|zoom)$",
@@ -119,7 +122,7 @@ local cls = {
   web         = "^([Vv]ivaldi-stable|[Vv]ivaldi)$",
   dev         = "^(nwim)$",
   games       = "^(steam|Steam)$",
-  steam_app   = "^(steam_app)", -- Steam games (steam_app_*); keep in sync with m.steam_app
+  steam_app   = "^(steam_app_.*)$", -- Steam games (steam_app_*); keep in sync with m.steam_app
   doc         = "^(sioyek)$",
   vid         = "^(mpv)$",
   obs         = "^(obs)$",
