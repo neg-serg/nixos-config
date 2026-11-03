@@ -5,6 +5,7 @@
 // wallpaper itself; only the crab, the drops and the water overlays move.
 
 mod assets;
+mod daynight;
 mod director;
 mod effects;
 mod font;
@@ -84,6 +85,8 @@ struct Game<'a> {
     seed: u32,
     mechanics: Mechanic,
     bounce_cooldown: f32,
+    phase: f32,
+    slow_mo: f32,
     drops: usize,
     state: State,
     hint: f32,
@@ -143,6 +146,8 @@ impl<'a> Game<'a> {
                 lab.next(seed).mechanic
             },
             bounce_cooldown: 0.0,
+            phase: (seed % 1000) as f32 / 1000.0,
+            slow_mo: 0.0,
             drops: 0,
             state: State::Title,
             hint: 0.0,
@@ -207,6 +212,8 @@ impl<'a> Game<'a> {
             lab.next(self.seed).mechanic
         };
         self.bounce_cooldown = 0.0;
+        self.phase = (self.seed % 1000) as f32 / 1000.0;
+        self.slow_mo = 0.0;
         self.apply_mechanics();
     }
 
@@ -302,9 +309,19 @@ impl<'a> Game<'a> {
 
     fn update_encounter(&mut self, dt: f32, fire: bool) {
         let chunk_x0 = self.current_chunk as f32 * CHUNK_W;
+        let mut enemy_dt = dt * daynight::enemy_scale(self.phase);
+        if self.slow_mo > 0.0 {
+            enemy_dt *= 0.5;
+        }
         for badnik in &mut self.badniks {
             if badnik.alive {
-                badnik.update(dt, &self.player, &self.level, chunk_x0, &mut self.shots);
+                badnik.update(
+                    enemy_dt,
+                    &self.player,
+                    &self.level,
+                    chunk_x0,
+                    &mut self.shots,
+                );
             }
         }
 
@@ -511,7 +528,14 @@ impl<'a> Game<'a> {
         }
         let from = self.player.pos.x;
         self.hits_taken += 1;
-        self.invuln = 1.35;
+        self.invuln = if self.mechanics.has(Effect::Ghost) {
+            2.6
+        } else {
+            1.35
+        };
+        if self.mechanics.has(Effect::SlowMo) {
+            self.slow_mo = 3.0;
+        }
         self.particles
             .sparkle(self.player.pos + Vec2::new(0.0, -40.0));
         if self.player.shield {
@@ -605,6 +629,8 @@ impl<'a> Game<'a> {
 
     fn update(&mut self, dt: f32, input: &Input, start_pressed: bool) {
         self.time += dt;
+        self.phase = (self.phase + dt / 240.0).rem_euclid(1.0);
+        self.slow_mo = (self.slow_mo - dt).max(0.0);
         self.particles.update(dt);
         self.hint = (self.hint - dt).max(0.0);
         self.toast = (self.toast - dt).max(0.0);
@@ -786,6 +812,16 @@ impl<'a> Game<'a> {
         self.draw_drops(canvas, cam, scale)?;
         self.draw_player(canvas, cam, scale)?;
         self.draw_particles(canvas, cam, scale)?;
+        let (tr, tg, tb, ta) = daynight::tint(self.phase);
+        if ta > 0 {
+            render::fill_rect(
+                canvas,
+                Cam::default(),
+                scale,
+                Rect::new(0.0, 0.0, VIEW_W, VIEW_H),
+                Color::RGBA(tr, tg, tb, ta),
+            )?;
+        }
         if self.debug {
             self.draw_debug(canvas, cam, scale)?;
         }
@@ -1538,7 +1574,11 @@ impl<'a> Game<'a> {
             scale,
             48.0,
             VIEW_H - 42.0,
-            &format!("МЕХАНИКА: {}", self.mechanics.label()),
+            &format!(
+                "МЕХАНИКА: {} · {}",
+                self.mechanics.label(),
+                daynight::phase(self.phase).label()
+            ),
             2,
             Color::RGBA(246, 238, 212, 200),
             palette.ink,
@@ -1824,6 +1864,7 @@ fn main() -> Result<(), String> {
              \x20 --state S        title | play | won (for --shot)\n\
              \x20 --pos X,Y        spawn position (QA)\n\
              \x20 --frame N        force sprite-sheet frame 0..8 (QA)\n\
+             \x20 --phase P        day/night phase 0..1 for --shot (QA)\n\
              \x20 --warmup SECS    simulate before a --shot (QA)\n\
              \x20 --seed N         director seed (default 0x5EED)\n\
              \x20 --metrics PATH   write the run's fun metrics as JSON\n\
@@ -1945,6 +1986,9 @@ fn main() -> Result<(), String> {
             game.won_t = 2.0;
         }
         _ => {}
+    }
+    if let Some(phase) = value("--phase").and_then(|v| v.parse::<f32>().ok()) {
+        game.phase = phase.rem_euclid(1.0);
     }
     if let Some(frame) = value("--frame") {
         game.frame_override = frame.parse::<usize>().ok().map(|f| f.min(8));

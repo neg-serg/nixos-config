@@ -20,10 +20,12 @@ pub enum Effect {
     Shockwave,
     Magnet,
     Bounce,
+    SlowMo,
+    Ghost,
 }
 
 impl Effect {
-    pub fn all() -> [Effect; 6] {
+    pub fn all() -> [Effect; 8] {
         [
             Effect::DoubleJump,
             Effect::Glide,
@@ -31,6 +33,8 @@ impl Effect {
             Effect::Shockwave,
             Effect::Magnet,
             Effect::Bounce,
+            Effect::SlowMo,
+            Effect::Ghost,
         ]
     }
 
@@ -42,6 +46,8 @@ impl Effect {
             Effect::Shockwave => 3,
             Effect::Magnet => 4,
             Effect::Bounce => 5,
+            Effect::SlowMo => 6,
+            Effect::Ghost => 7,
         }
     }
 
@@ -53,6 +59,8 @@ impl Effect {
             Effect::Shockwave => "shockwave",
             Effect::Magnet => "magnet",
             Effect::Bounce => "bounce",
+            Effect::SlowMo => "slowmo",
+            Effect::Ghost => "ghost",
         }
     }
 
@@ -64,6 +72,8 @@ impl Effect {
             Effect::Shockwave => "УДАРНАЯ ВОЛНА",
             Effect::Magnet => "МАГНИТ",
             Effect::Bounce => "БАТУТ",
+            Effect::SlowMo => "ЗАМЕДЛЕНИЕ",
+            Effect::Ghost => "ПРИЗРАК",
         }
     }
 
@@ -72,6 +82,7 @@ impl Effect {
             Effect::DoubleJump | Effect::Glide | Effect::Bounce => 0, // movement
             Effect::TripleShot | Effect::Shockwave => 1,              // offence
             Effect::Magnet => 2,                                      // utility
+            Effect::SlowMo | Effect::Ghost => 2,
         }
     }
 }
@@ -155,9 +166,24 @@ pub struct Scored {
     pub fun: f32,
 }
 
+const BINS: usize = 27;
+
+fn bin_of(m: &Mechanic) -> usize {
+    let bucket = if m.magnitude < 0.9 {
+        0
+    } else if m.magnitude < 1.1 {
+        1
+    } else {
+        2
+    };
+    m.primary.category() * 9 + m.secondary.category() * 3 + bucket
+}
+
 pub struct Lab {
-    history: Vec<[f32; 6]>,
+    history: Vec<[f32; 8]>,
     seed: u32,
+    /// MAP-Elites archive: one elite per (category pair, magnitude bucket).
+    archive: Vec<Option<Scored>>,
 }
 
 impl Lab {
@@ -165,6 +191,7 @@ impl Lab {
         Self {
             history: Vec::new(),
             seed,
+            archive: vec![None; BINS],
         }
     }
 
@@ -176,10 +203,10 @@ impl Lab {
             (h >> 16) % k
         };
         let effects = Effect::all();
-        let primary = effects[n(6) as usize];
-        let mut secondary = effects[n(6) as usize];
+        let primary = effects[n(8) as usize];
+        let mut secondary = effects[n(8) as usize];
         if secondary == primary {
-            secondary = effects[((primary.index() + 1 + n(5) as usize) % 6) as usize];
+            secondary = effects[((primary.index() + 1 + n(7) as usize) % 8) as usize];
         }
         let magnitude = 0.65 + hash01(h) * 0.7;
         Mechanic {
@@ -191,7 +218,7 @@ impl Lab {
 
     fn score(&self, m: &Mechanic) -> Scored {
         // Novelty: how different the effect histogram is from the recent sets.
-        let mut sig = [0.0f32; 6];
+        let mut sig = [0.0f32; 8];
         sig[m.primary.index()] += 0.5;
         sig[m.secondary.index()] += 0.5;
         let novelty = if self.history.is_empty() {
@@ -236,22 +263,38 @@ impl Lab {
         }
     }
 
-    /// Invent one mechanic: sample 8 candidates, keep the best, remember it.
+    /// Invent one mechanic: sample 8 candidates, keep the best that improves a
+    /// MAP-Elites cell, remember it. Filling empty cells first is what keeps
+    /// the run from repeating the same strong pair.
     pub fn next(&mut self, attempt: u32) -> Scored {
-        let mut best: Option<Scored> = None;
+        let mut best: Option<(usize, Scored)> = None;
+        let mut fallback: Option<Scored> = None;
         for k in 0..8 {
             let m = self.sample(attempt * 8 + k);
             let s = self.score(&m);
-            if best.as_ref().map(|b| s.fun > b.fun).unwrap_or(true) {
-                best = Some(s);
+            if fallback.map(|f| s.fun > f.fun).unwrap_or(true) {
+                fallback = Some(s);
+            }
+            let bin = bin_of(&m);
+            let improves = self.archive[bin].map(|e| s.fun > e.fun).unwrap_or(true);
+            if improves && best.as_ref().map(|(_, b)| s.fun > b.fun).unwrap_or(true) {
+                best = Some((bin, s));
             }
         }
-        let chosen = best.expect("at least one candidate");
+        let chosen = match best {
+            Some((bin, s)) => {
+                self.archive[bin] = Some(s);
+                s
+            }
+            // All sampled cells were already good: keep the best proposal
+            // anyway as this step's mechanic, without weakening the archive.
+            None => fallback.expect("at least one sampled candidate"),
+        };
         let mut sig = [0.0f32; 4];
         sig[chosen.mechanic.primary.category()] += 0.5;
         sig[chosen.mechanic.secondary.category()] += 0.5;
         // History keeps the effect histogram for novelty.
-        let mut h = [0.0f32; 6];
+        let mut h = [0.0f32; 8];
         h[chosen.mechanic.primary.index()] += 0.5;
         h[chosen.mechanic.secondary.index()] += 0.5;
         self.history.push(h);
@@ -260,6 +303,14 @@ impl Lab {
         }
         let _ = sig;
         chosen
+    }
+
+    pub fn coverage(&self) -> (usize, usize) {
+        (self.archive.iter().filter(|e| e.is_some()).count(), BINS)
+    }
+
+    pub fn elites(&self) -> Vec<Scored> {
+        self.archive.iter().flatten().copied().collect()
     }
 }
 
@@ -273,7 +324,9 @@ pub struct LabReport {
     pub runs: u64,
     pub elapsed: f32,
     pub best: Vec<Scored>,
-    pub frequency: [u64; 6],
+    pub coverage: usize,
+    pub bins: usize,
+    pub frequency: [u64; 8],
     pub mean_fun: f64,
     pub mean_novelty: f64,
     pub mean_synergy: f64,
@@ -284,8 +337,7 @@ pub fn run_lab(runs: u64, seed: u32) -> LabReport {
     use std::time::Instant;
     let started = Instant::now();
     let mut lab = Lab::new(seed);
-    let mut best: Vec<Scored> = Vec::new();
-    let mut frequency = [0u64; 6];
+    let mut frequency = [0u64; 8];
     let (mut sf, mut sn, mut ss, mut sb) = (0.0f64, 0.0f64, 0.0f64, 0.0f64);
     for i in 0..runs {
         let s = lab.next(i as u32);
@@ -295,19 +347,33 @@ pub fn run_lab(runs: u64, seed: u32) -> LabReport {
         sn += s.novelty as f64;
         ss += s.synergy as f64;
         sb += s.balance as f64;
-        if best.len() < 5 {
-            best.push(s);
-            best.sort_by(|a, b| b.fun.total_cmp(&a.fun));
-        } else if s.fun > best.last().unwrap().fun {
-            best[4] = s;
-            best.sort_by(|a, b| b.fun.total_cmp(&a.fun));
+    }
+    let mut elites = lab.elites();
+    elites.sort_by(|a, b| b.fun.total_cmp(&a.fun));
+    // One representative per effect pair: the archive itself still holds all
+    // 27 cells, but the report should show different ideas, not magnitudes.
+    let mut seen: Vec<(usize, usize)> = Vec::new();
+    let mut best: Vec<Scored> = Vec::new();
+    for e in &elites {
+        let a = e.mechanic.primary.index();
+        let b = e.mechanic.secondary.index();
+        let key = (a.min(b), a.max(b));
+        if !seen.contains(&key) {
+            seen.push(key);
+            best.push(*e);
+        }
+        if best.len() == 5 {
+            break;
         }
     }
+    let (coverage, bins) = lab.coverage();
     let n = runs.max(1) as f64;
     LabReport {
         runs,
         elapsed: started.elapsed().as_secs_f32(),
         best,
+        coverage,
+        bins,
         frequency,
         mean_fun: sf / n,
         mean_novelty: sn / n,
@@ -326,8 +392,13 @@ impl LabReport {
             self.runs as f64 / self.elapsed.max(1e-6) as f64
         ));
         out.push_str(&format!(
-            "fun {:.3} | novelty {:.3} synergy {:.3} balance {:.3}\n",
-            self.mean_fun, self.mean_novelty, self.mean_synergy, self.mean_balance
+            "archive {}/{} cells | fun {:.3} | novelty {:.3} synergy {:.3} balance {:.3}\n",
+            self.coverage,
+            self.bins,
+            self.mean_fun,
+            self.mean_novelty,
+            self.mean_synergy,
+            self.mean_balance
         ));
         out.push_str("effects: ");
         for e in Effect::all() {
@@ -368,9 +439,11 @@ impl LabReport {
             })
             .collect();
         format!(
-            "{{\"runs\":{},\"elapsed\":{:.2},\"mean_fun\":{:.4},\"mean_novelty\":{:.4},\"mean_synergy\":{:.4},\"mean_balance\":{:.4},\"best\":[{}]}}",
+            "{{\"runs\":{},\"elapsed\":{:.2},\"coverage\":{},\"bins\":{},\"mean_fun\":{:.4},\"mean_novelty\":{:.4},\"mean_synergy\":{:.4},\"mean_balance\":{:.4},\"best\":[{}]}}",
             self.runs,
             self.elapsed,
+            self.coverage,
+            self.bins,
             self.mean_fun,
             self.mean_novelty,
             self.mean_synergy,
@@ -395,6 +468,18 @@ mod tests {
             assert_eq!(x.mechanic.secondary, y.mechanic.secondary);
             assert!((x.mechanic.magnitude - y.mechanic.magnitude).abs() < 1e-6);
         }
+    }
+
+    #[test]
+    fn archive_fills_and_stays_bounded() {
+        let mut lab = Lab::new(9);
+        for i in 0..400 {
+            lab.next(i);
+        }
+        let (filled, bins) = lab.coverage();
+        assert_eq!(bins, BINS);
+        assert!(filled > 6, "only {filled} cells filled");
+        assert!(filled <= bins);
     }
 
     #[test]
