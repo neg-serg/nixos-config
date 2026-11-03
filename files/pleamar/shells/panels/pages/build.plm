@@ -34,9 +34,14 @@ part Build {
             box { from: 14, 32; size: 356, 1; color: skin.ink; opacity: ink.subtle }
 
             // ----***------------------------------- the list
-            group list { at: 14, 42
+            group list { move: 14, 42
                 build.Rows(width: 356, type_scale: text_scale)
             }
         }
     }
+
+    // Every part prints its drawer at the end, and this one did not: the surface opened on
+    // `drawer == build` and painted nothing — the empty window the scene's own header warns
+    // about, and the only reason this card was ever blank.
+    BuildDrawer() { show: drawer == build }
 }
