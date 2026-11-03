@@ -146,10 +146,10 @@ scene bar {
     // of 9 then 7. A uniform 6 left every capsule after the clock 3 logical px short, so this
     // bar draws the 7 its own measurement gives.
     let row.gap = 7
-    // How many of the six monitor pairs are there at all: the reference's own
-    // rule (SystemMonitorCapsule._vis*), the GPU only on a machine that has
-    // one, swap only above systemMonitorSwapShowThreshold. A `let` INSIDE the
-    // component would not do: a component's `size:` is read in the caller's
+    // How many of the monitor pairs are there at all: the reference's own rule
+    // (SystemMonitorCapsule._vis*), swap only above systemMonitorSwapShowThreshold.
+    // The GPU pair is not in the count: it is dropped on this host (see SysmonCluster). A `let`
+    // INSIDE the component would not do: a component's `size:` is read in the caller's
     // scope, and there the name `shown` is the scene's own fact.
     // The tray's slot: QS's trayIconSlot is 22 logical px (max(CapsuleMetrics.inner 16,
     // panelHeight 22)), its icon 20 inside a 21 px frame. A scene-level let because a
@@ -181,6 +181,7 @@ scene bar {
     // flush against the edge where a hand reaching for the corner actually lands, and over nothing.
     let tray.reveal.w = 4 * ui * user_scale
     let tray.reveal.h = 25 * ui * user_scale
+    let sysmon.pairs = 1 + 1 + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
     // The user's settings, merged by bar.luau: `scale` multiplies ui and the
     // per-monitor fit; `widget.*` decide which widgets of this slice are there.
     fact user_scale = 1.0
@@ -410,9 +411,8 @@ scene bar {
     text tip_body = ""
     // The tray item's own title, for the tooltip: a record's field, so the scene copies it out.
     text tip_title = ""
-    // The cluster is a CPU sparkline now: `cpu` is the current share it plots, `ram` with its pair
-    // and `temp` feed the tooltip. The GPU, I/O and swap facts went with the six pairs that drew
-    // them (the GPU reading is the worker's broken `gpu_busy_percent`).
+    // QS Services/SystemMonitor: the 0..1 metrics the pairs draw, and whether the swap is on at all.
+    // There is no GPU fact: the pair is dropped on this host (see SysmonCluster).
     fact cpu = 0
     fact ram = 0
     // The reference's RAM hint prints the pair as well as the share ("7.2 / 16 GiB"), so the probe
@@ -420,9 +420,9 @@ scene bar {
     fact ram_used_gib = 0
     fact ram_total_gib = 0
     fact temp = 0
-    // One record per pair of neighbour samples of the CPU share, `t` over the whole 30-sample
-    // window: a scene can loop over a model but cannot hold the previous point of a series.
-    model sys_spark max 29 { t0: number; t1: number; v0: number; v1: number }
+    fact io = 0
+    fact swap = 0
+    fact has.swap = false
 
     // The transport's three commands, handled by bar.luau through the `media`
     // service (QS calls MusicManager.toggle/next/previous).
@@ -563,7 +563,6 @@ scene bar {
     image icon_next = file "icons/transport-next.svg", 14, 14
     image icon_cpu = file "icons/sysmon-cpu.svg", 13, 13
     image icon_ram = file "icons/sysmon-ram.svg", 13, 13
-    image icon_gpu = file "icons/sysmon-gpu.svg", 13, 13
     image icon_temp = file "icons/sysmon-temp.svg", 13, 13
     image icon_io = file "icons/sysmon-io.svg", 13, 13
     image icon_swap = file "icons/sysmon-swap.svg", 13, 13
@@ -986,18 +985,41 @@ scene bar {
     }
 
     // ---------------------------------------------------- left: system monitor
-    // The cluster is a CPU sparkline: the last minute of the CPU share as one polyline, the CPU
-    // glyph at its left, the plate pressable, and the tooltip carrying the numbers behind the curve
-    // (CPU, RAM with its pair, the temperature). The reference drew six `icon + vertical bar`
-    // pairs; each showed one instant and nothing of how it got there, and the GPU pair drew a
-    // reading the worker cannot trust (`gpu_busy_percent` reports 99-100 % at idle on this card).
+    // QS SystemMonitorCapsule: `icon + vertical bar` pairs in one capsule, in the fixed order
+    // CPU · RAM · GPU · temperature · I/O · swap. Each pair is `panel.icons.iconSizeSmall`-ish glyph
+    // and a `systemMonitorBarWidth` bar as tall as `panelHeight * 0.55` (palette bar.height / 2),
+    // filled from the bottom and coloured by the metric's own thresholds
+    // (SystemMonitorUi.thresholdColor). A metric under the idle threshold
+    // (systemMonitorHideIdle, 3 %) keeps its place but dims to textDisabled,
+    // and I/O disappears outright — that is the reference's own rule, and it is
+    // why the cluster is often narrower than six pairs.
+    // The GPU pair is dropped on this host: `gpu_busy_percent` reads 99-100 % on the card while it
+    // is idle, so the pair would draw a full bar every second and lie.
+    component SysmonPair(glyph: image, value: number, shown: bool, idle: bool,
+                         warn: number, crit: number,
+                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        // One pair, laid out once: the glyph 13 wide, three of air, the bar 3 — 21 in all. The
+        // cluster's step is written with the same numbers, so the four pairs read as one row.
+        let bh = 12
+        let glyph.w = 13
+        let gap = 3
+        let bar.w = 3
+        size: (glyph.w + gap + bar.w + 2) * scale, strip * scale
+        group zoom {
+            scale: scale
+            image glyph { at: 0, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); show: shown }
+            // MonitorBar draws the fill and nothing else: no track behind it, so
+            // a 5 % metric is a short dash, not a dot on a rail.
+            box { from: glyph.w + gap, strip / 2 + bh / 2 - value * bh; size: bar.w, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
+        }
+    }
+
     component SysmonCluster(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        // 6 of air, the 13 px glyph, 6 between it and the plot, the plot's 72, 6 of air — 103, near
-        // the 108 the six pairs took with the idle rule on this machine.
-        let spark.w = 72
-        let spark.h = 12
-        let inner = 6 + 13 + 6 + spark.w + 6
-        size: inner * scale, strip * scale
+        // The box is as wide as the pairs that show: QS's capsule is
+        // `horizontalPadding * 2 + metricsRow.implicitWidth`, and a metric the
+        // idle rule took away takes its width with it.
+        let inner = sysmon.pairs * 21 + (sysmon.pairs - 1) * 4
+        size: (sysmon.pairs * 21 + (sysmon.pairs - 1) * 4 + 12) * scale, strip * scale
         group zoom {
             scale: scale
             // A `box` placed at a NEGATIVE `from:` draws nothing at all (five
@@ -1011,23 +1033,31 @@ scene bar {
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
                 border: 1, mix(skin.coal, skin.ink, 8%)
-                box { from: 0, 1; size: inner, 23; corner: 6 }
+                box { from: 0, 1; size: inner + 12, 23; corner: 6 }
             }
-            // The glyph takes the metric's own threshold colour, as the pair's did; an idle CPU
-            // dims it to textDisabled instead of hiding it.
-            image icon_cpu { at: 6, strip / 2 - 6.5; size: 13, 13
-                tint: if(cpu < 0.03, ink.off, if(cpu >= 0.8, warn, if(cpu >= 0.5, amber, skin.ink.dim))) }
-            // One `line` per segment; a segment takes the colour of the value it ends on, so the
-            // curve itself carries the thresholds. The idle line is not dimmed away — seeing a low
-            // line is what the plot is for.
-            for h in sys_spark {
-                line { from: 6 + 13 + 6 + h.t0 * spark.w, strip / 2 + spark.h / 2 - h.v0 * spark.h
-                    to: 6 + 13 + 6 + h.t1 * spark.w, strip / 2 + spark.h / 2 - h.v1 * spark.h
-                    width: 1.4; color: if(h.v1 >= 0.8, warn, if(h.v1 >= 0.5, amber, skin.ink.dim)) }
+            row metrics {
+                gap: 4
+                align: center
+                // 0, not `strip / 2 - 12`: the pairs are `strip` tall and already centred by the
+                // row's own `align`, and each one carries its own `scale` — inside this `group zoom`
+                // that made every pair scale twice and the row taller than the strip.
+                at: 6, 0
+                SysmonPair(icon_cpu, cpu, true, cpu < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_ram, ram, true, ram < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_temp, temp, true, temp < 0.03, 0.43, 0.71, scale: 1)
+                // I/O is the one metric the reference takes away outright when
+                // it is idle (`_visIo = showIoMonitor && !_idleIo`), where the
+                // others stay and only dim: it is worth 44 physical px of the
+                // row, and a cluster that keeps it pushes everything after it
+                // (the weather) to the right.
+                SysmonPair(icon_io, io, io >= 0.03, io < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_swap, swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8, scale: 1)
             }
-            // The plate is the pressable area, as on every other capsule, and the press toggles the
+            // The cluster had no zone at all, so a hand could not hover it and the line
+            // `tip_line` already writes for it (case 4) never reached the screen. The plate is
+            // the pressable area, as on every other capsule, and the press toggles the
             // monitoring dashboard (QS: `autoToggleOnTap` on SystemMonitorCapsule).
-            zone box sysmon { from: 0, 0; size: inner, strip; corner: corner; cursor: pointer; label: "System monitor"; role: button }
+            zone box sysmon { from: 0, 0; size: inner + 12, strip; corner: corner; cursor: pointer; label: "System monitor"; role: button }
             on enter sysmon { emit tip(4) }
             on leave sysmon { emit tip_hide }
             on press sysmon { emit toggle_system_panel }
