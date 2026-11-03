@@ -13,7 +13,6 @@ let
 
   # Fun Art Scripts
   artFiles = {
-    "bonsai.sh" = files "art/fun-art/bonsai.sh";
     "chess.sh" = files "art/fun-art/chess.sh";
     "nvim-logo.sh" = files "art/fun-art/nvim-logo.sh";
     "rain.sh" = files "art/fun-art/rain.sh";
