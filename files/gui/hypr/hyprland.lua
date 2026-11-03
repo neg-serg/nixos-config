@@ -414,6 +414,9 @@ hl.bind(M4 .. "+Escape", hl.dsp.window.close())
 -- `power` drawer, so the outside press and Escape are the drawer family's own. The two
 -- destructive tiles want the button held, and are `agent: no` toward a described press.
 hl.bind(M4 .. "+" .. SH .. "+Escape", hl.dsp.exec_cmd('pleamar --say panels "fact drawer power"'))
+-- The quick toggles page: the switches, and the door to the shell's own pages (key binds, notes,
+-- timer, contributions). The session menu above is its sibling.
+hl.bind(M4 .. "+" .. SH .. "+y", hl.dsp.exec_cmd('pleamar --say panels "fact drawer toggles"'))
 hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 -- Pseudo-fullscreen (maximize) toggle: fills the work area but stays a normal
 -- window (bar stays on top) — the same state swayimg gets from the
