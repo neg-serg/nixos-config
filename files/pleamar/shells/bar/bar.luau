@@ -163,11 +163,12 @@ local function read_file()
     return {}
 end
 
--- Composed by the audio block below; `apply` runs before it is defined (the settings are merged
--- at load), so this is a forward declaration rather than a local defined in place. The weather's
--- width is the same story one section further down.
+-- Composed by the audio, weather and workspace blocks below; `apply` runs before they are
+-- defined (the settings are merged at load), so these are forward declarations rather than
+-- locals defined in place.
 local resize_audio = nil
 local resize_weather = nil
+local resize_ws = nil
 
 local function apply(raw)
     local edge = raw.edge
@@ -215,12 +216,13 @@ local function apply(raw)
         mediaStackLoaded = true
     end
 
-    -- A moved type scale resizes the two audio tiles: their plates are composed from the very
-    -- string they print, so `fontScale` has to re-run that composition. Nil on the first merge,
-    -- where the audio block below is not defined yet — the scene ships defaults for both widths
-    -- and the first sample fills them.
+    -- A moved type scale resizes the audio tiles, the weather plate and the workspace plate:
+    -- their widths are composed from the very strings they print, so `fontScale` has to re-run
+    -- that composition. Nil on the first merge, where those blocks are not defined yet — the
+    -- scene ships defaults for the three widths and the first sample fills them.
     if resize_audio then resize_audio() end
     if resize_weather then resize_weather() end
+    if resize_ws then resize_ws() end
 end
 
 -- The table as it was read: `apply` does not keep it, but a write must (INTERFACES §6.1 — mutate
@@ -917,23 +919,48 @@ local function split_lead(name)
     return "", name
 end
 
+-- The workspace plate is as wide as what it holds, not a constant: 6 px of air, the Nerd glyph
+-- (7 px in the mono face at 14), the 5 px gap the scene draws before the letter, the Old Italic
+-- letter (Code2001 at 14: 10.1 for U+10330/31, 10.5 for U+10332 — 10.5 covers this set), the
+-- name at 7 px per glyph, and 6 px of air. Composed here, from the same strings the plate prints,
+-- for the reason `weather.w` is: a measure lands in its property only after the frame that shaped
+-- the text, so a plate sized from `measure` would draw one frame at the old workspace's width and
+-- take the row with it. Past WS_MAX design px the label elides instead of eating the row.
+local WS_PAD, WS_ICON, WS_GAP, WS_LEAD, WS_CHAR, WS_MAX = 6, 7, 5, 10.5, 7, 180
+local function ws_width()
+    local ts = tonumber(fact.text_scale) or 1
+    local n = 0
+    if type(text.ws_label) == "string" and text.ws_label ~= "" then
+        n = utf8.len(text.ws_label) or #text.ws_label
+    end
+    local w = 2 * WS_PAD + WS_GAP + n * WS_CHAR
+    if text.ws_icon ~= "" then w = w + WS_ICON end
+    if text.ws_lead ~= "" then w = w + WS_LEAD end
+    return math.min(WS_MAX, math.floor(w * ts + 0.5))
+end
+
 local function workspacesChanged(w)
     if type(w) ~= "table" or type(w.list) ~= "table" then return end
+    local lead, label, icon = "", "", ""
     for _, ws in ipairs(w.list) do
         if type(ws) == "table" and ws.active == true then
-            local lead, rest = split_lead(label_of(ws.name))
+            lead, label = split_lead(label_of(ws.name))
             -- A workspace with no name (or a name that is only a private-use glyph) drew an
             -- empty plate; the reference falls back to the number, and so does this.
-            if rest == "" then rest = tostring(ws.id) end
-            text.ws_lead = lead
-            text.ws_label = rest
-            text.ws_icon = WS_GLYPH[tonumber(ws.id) or -1] or ""
-            return
+            if label == "" then label = tostring(ws.id) end
+            icon = WS_GLYPH[tonumber(ws.id) or -1] or ""
+            break
         end
     end
-    text.ws_lead = ""
-    text.ws_label = ""
-    text.ws_icon = ""
+    text.ws_lead = lead
+    text.ws_label = label
+    text.ws_icon = icon
+    fact["ws.w"] = ws_width()
+end
+
+-- The same width from the strings at hand; a `fontScale` merge re-runs it (see `apply`).
+resize_ws = function()
+    fact["ws.w"] = ws_width()
 end
 
 sys.watch("workspaces", workspacesChanged)

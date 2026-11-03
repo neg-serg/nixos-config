@@ -330,6 +330,9 @@ scene bar {
     // Code2001 has U+10330 among the faces here, and the label's Iosevka does not.
     text ws_lead = ""
     text ws_label = ""
+    // The plate's width, composed by bar.luau from the very strings above (see the arithmetic
+    // there): 70 design px for the reference's ":term" (69) rounded up so the label's own ink fits.
+    fact ws.w = 70
     // The two halves of the network readout, as QS prints them.
     // The two readouts, without their unit letter — the capsule draws the number
     // beside a link glyph and the tooltip appends the letter (measured against the
@@ -931,13 +934,13 @@ scene bar {
         // a width is only known once the text is shaped, so both are measured.
         measure glyph
         measure lead
-        // 75, not 38: the reference's plate for this workspace is 69 (the plates sit at 8, 72,
-        // 158, 223, 287 and are 54, 79, 58, 57, 95 logical px wide, which is 47, 69, 50, 50, 83
-        // in this scene's design px), and at 38 the label was cut to "λ:te": a capsule sized for
-        // the glyph and nothing else. Six more than the reference: the label's box now stops at
-        // the 6 px of air it starts with, and at exactly 69 that last subtraction left "term"
-        // with a box the width of its own ink, which the engine elided.
-        size: 75 * scale, strip * scale
+        // The plate is as wide as what it holds: `ws.w`, composed by the logic from the very
+        // strings it prints (6 px of air, the glyph, the 5 px gap, the Old Italic letter, the
+        // name at 7 px per glyph, 6 px of air) — the same arithmetic the audio and weather plates
+        // use. A `measure` cannot size it: a measure reaches its property only after the frame
+        // that shaped the text, so the plate would draw one frame at the old workspace's width
+        // and take the row with it. For this host's ":term" it comes out 70; the reference drew 69.
+        size: ws.w * scale, strip * scale
         group zoom {
             scale: scale
             body {
@@ -948,7 +951,7 @@ scene bar {
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
                 border: 1, mix(skin.coal, skin.ink, 8%)
-                box { from: 0, 1; size: 75, 23; corner: 6 }
+                box { from: 0, 1; size: ws.w, 23; corner: 6 }
             }
             // The glyphs this reads are Nerd Font code points (`WS_GLYPH` in the logic), and the
             // face has to be a Nerd-patched one that is actually installed. Asking for "FiraCode
@@ -958,16 +961,17 @@ scene bar {
             // the installed Nerd-patched build and carries the same code points.
             text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.accent.hover; family: "Iosevka" }
             text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka" }
-            // `width:` and one line: a long name used to run over the plate and onto the keyboard
-            // capsule beside it, which is what the fixed 69 design px are there to prevent. The
-            // box stops 6 px short of the plate's edge, the same air the label starts with.
+            // `width:` and one line: a long name runs over the plate and onto the keyboard capsule
+            // beside it, so the box stops 6 px short of the plate's edge — the same air the label
+            // starts with — and the plate itself stops growing at the logic's clamp (180): past
+            // that the name elides instead of eating the row.
             // The name is what the owner typed — lower-case on this host, so its ink is x-height
             // and reads 1.25 px low on a line-box anchor (measured); one px up centres the common
             // case. A capitalised name would sit 1 px high, which is the smaller error of the two.
-            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2 - 1; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 75 - 12 - (glyph.width + 5 + lead.width); lines: 1 }
+            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2 - 1; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: ws.w - 12 - (glyph.width + 5 + lead.width); lines: 1 }
             // The capsule shows the workspace that is already in force, so it is always the
             // selected tab: `selected:` is what a reader of `--say bar describe` needs to know it.
-            zone box ws { from: 0, 0; size: 75, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab; selected: true }
+            zone box ws { from: 0, 0; size: ws.w, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab; selected: true }
             on enter ws { emit tip(1) }
             on leave ws { emit tip_hide }
             on press ws { emit overview }
