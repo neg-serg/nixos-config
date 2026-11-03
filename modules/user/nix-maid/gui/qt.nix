@@ -24,7 +24,6 @@ in
         environment.systemPackages = [
           pkgs.kdePackages.qt6ct # Qt6 configuration tool
           pkgs.kdePackages.qtwayland # Qt6 Wayland platform plugin
-          pkgs.kdePackages.svgpart # SVG viewer KPart
         ];
         environment.sessionVariables = {
           QT_QPA_PLATFORMTHEME = "hyprqt6engine";
