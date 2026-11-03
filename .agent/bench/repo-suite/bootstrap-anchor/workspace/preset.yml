@@ -1,0 +1,3 @@
+name: neg
+description: "The neg preset — a LiangShen fork (anchored-standard) maintained in /etc/nixos: phase 1 is a minimal surface (bash + str_replace_editor, a persona with thinking discipline); after the anchor it is promoted to Code Mode (PTC) with the full tool catalogue."
+order: 5
