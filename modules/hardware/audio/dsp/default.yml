@@ -1,0 +1,28 @@
+# CamillaDSP insert: PipeWire in, PipeWire out.
+#
+# Both ends are the ALSA `pipewire` PCM, i.e. two ordinary PipeWire streams.
+# `camilladsp-route` wires those streams between the game-stereo loopback and
+# the RME AES pair (see modules/hardware/audio/dsp.nix), so the two device
+# names below are the contract the router matches on: point either end at
+# another device and the insert stops carrying audio while the router falls
+# back to the direct loopback -> RME path.
+#
+# The main fader needs no filter: CamillaDSP 4 applies it to the whole pipeline
+# (`SetVolume` from camillagui or aurora's camilla tab), so this passthrough is
+# already level-controllable. Room correction and crossovers are added under
+# `filters:` and `pipeline:`; FIR coefficients live in ~/camilladsp/coeffs.
+devices:
+  samplerate: 48000
+  # One graph quantum: files/media/pipewire/pipewire.conf.d/clock-rate.conf
+  # locks PipeWire to 256-frame periods, and the ALSA `pipewire` plugin hands
+  # out periods of exactly that size — any other chunksize makes CamillaDSP log
+  # a short-read warning per chunk. Change both together.
+  chunksize: 256
+  capture:
+    type: Alsa
+    channels: 2
+    device: "pipewire"
+  playback:
+    type: Alsa
+    channels: 2
+    device: "pipewire"

@@ -1,30 +1,39 @@
 #
-# CamillaDSP: the DSP engine and its websocket control plane.
+# CamillaDSP: the DSP engine, its websocket control plane, and the insert that
+# puts it in the signal path.
 #
-# The packages are always installed; `hardware.audio.dsp.camilladsp.enable`
-# additionally runs the daemon as a user service. It starts with `--wait`,
-# i.e. it claims no audio device at login and serves the websocket on
-# 127.0.0.1:1234 until a config is applied from one of the control surfaces
-# (aurora's `camilla` tab, `camillagui`, pycamilladsp). Applying a config is
-# what opens the devices, so a broken chain cannot take the sound card down
-# with the session, and `Stop` from a surface only costs a 2 s restart.
+# The chain is real, not a control plane only:
 #
-# Working tree: ~/camilladsp/{configs,coeffs} plus ~/camilladsp/statefile.yml.
-# These are exactly the paths the packaged camillagui bakes into its own
-# config (`$out/lib/camillagui/config/camillagui.yml`, which is read-only and
-# not overridable without patching the package), while aurora's camilla tab
+#     apps -> game-stereo (the default PipeWire sink) -> camilladsp -> RME AES
+#
+# Both ends of the DSP config are the ALSA `pipewire` PCM, so the insert is two
+# PipeWire streams and needs no ALSA loopback (this kernel has none): the
+# `camilladsp-route` unit moves the links when the streams appear and restores
+# the direct loopback -> RME path when they vanish (daemon down, config reload),
+# so a broken DSP cannot cost the machine its sound. The device names in the
+# config are therefore a contract — point an end at another device and the DSP
+# stops carrying audio while the direct path takes over.
+#
+# The daemon starts with ~/camilladsp/configs/default.yml rather than `--wait`:
+# the insert has to be up before anything is played. Configs are user state
+# (the surfaces save and apply them), so default.yml is seeded once from
+# ./dsp/default.yml and never replaced afterwards; the statefile keeps the
+# active config across restarts. `Stop` from a surface exits the daemon and the
+# unit restarts it, i.e. the insert recovers by itself.
+#
+# The config's chunksize follows the PipeWire graph quantum (256 frames, see
+# ./dsp/default.yml): the ALSA `pipewire` plugin refuses to hand out any other
+# period size, so a mismatched chunksize only buys jitter and a warning per
+# chunk.
+#
+# Working tree: ~/camilladsp/{configs,coeffs} plus statefile.yml. These are
+# exactly the paths the packaged camillagui bakes into its own config
+# (`$out/lib/camillagui/config/camillagui.yml`, which is read-only and not
+# overridable without patching the package), while aurora's camilla tab
 # resolves $XDG_CONFIG_HOME/camilladsp first and falls back to
 # ~/camilladsp/configs — so one tree serves both. The directories are
 # user-writable on purpose: both surfaces save configs and coefficients there,
 # so they cannot be read-only store symlinks.
-#
-# Signal path: a CamillaDSP chain is capture -> filter -> playback. Playback to
-# the ALSA `pipewire` device works (PipeWire mixes it into its default sink,
-# the RME HDSPe). Capture has no source yet: PipeWire owns the HDSPe device
-# exclusively, and the custom kernel has no ALSA loopback (CONFIG_SND_ALOOP is
-# not set), so room correction / crossovers need snd-aloop enabled plus the
-# matching PipeWire routing into that loopback before a config can pull audio
-# through the DSP.
 #
 {
   config,
@@ -39,10 +48,35 @@ let
 
   # Kept in one place: the camillagui config above hardcodes this layout.
   dspHome = "${homeDir}/camilladsp";
+  dspConfig = "${dspHome}/configs/default.yml";
+
+  # First start only: the surfaces own the files afterwards, so a rebuilt
+  # system must not overwrite a config the user tuned.
+  seedConfig = pkgs.writeShellScript "camilladsp-seed" ''
+    set -eu
+    install -d -m 0755 ${dspHome}/configs ${dspHome}/coeffs
+    if [ ! -e ${dspConfig} ]; then
+      install -m 0644 ${./dsp/default.yml} ${dspConfig}
+    fi
+  '';
+
+  # Absolute tool paths: the user unit's PATH carries coreutils and systemd
+  # only, not awk (see the ExecStartPre note in the service).
+  routeScript = pkgs.writeShellScript "camilladsp-route" (
+    builtins.readFile (
+      pkgs.replaceVars ./dsp/route.sh {
+        pwLink = pkgs.pipewire;
+        awk = pkgs.gawk;
+        grep = pkgs.gnugrep;
+        sleep = pkgs.coreutils;
+        date = pkgs.coreutils;
+      }
+    )
+  );
 in
 {
   options.hardware.audio.dsp.camilladsp = {
-    enable = lib.mkEnableOption "CamillaDSP daemon (websocket control plane on loopback)";
+    enable = lib.mkEnableOption "CamillaDSP daemon and the PipeWire <-> RME insert it feeds";
 
     address = lib.mkOption {
       type = lib.types.str;
@@ -81,16 +115,15 @@ in
       type = lib.types.listOf lib.types.str;
       default = [ ];
       example = [ "--multithreaded" ];
-      description = "Extra command line arguments appended to the daemon's ExecStart.";
+      description = "Extra command line arguments appended to the daemon's ExecStart (before the config path).";
     };
   };
 
   config = lib.mkMerge [
     {
-      # Enabled by default like the RNNoise virtual mic: the control plane is
-      # harmless (loopback socket, no device until a config is applied) and
-      # every surface that talks to it assumes it is there. Hosts that want the
-      # packages without the daemon set this to false.
+      # Enabled by default like the RNNoise virtual mic: this is the machine's
+      # playback chain, and every surface that talks to the DSP assumes it is
+      # there. Hosts without the insert set this to false — the packages stay.
       hardware.audio.dsp.camilladsp.enable = lib.mkDefault true;
 
       environment.systemPackages = [
@@ -114,13 +147,14 @@ in
       ];
 
       systemd.user.services.camilladsp = systemdUser.mkUserService {
-        description = "CamillaDSP audio DSP engine (websocket control plane)";
+        description = "CamillaDSP audio DSP engine (control plane + insert)";
         presets = [
           "defaultWanted"
           "audioGraph"
           "restartAlways"
         ];
         serviceConfig = {
+          ExecStartPre = seedConfig;
           ExecStart = lib.concatStringsSep " " (
             [
               (lib.getExe pkgs.camilladsp)
@@ -128,14 +162,28 @@ in
               cfg.address
               "--port"
               (toString cfg.port)
-              "--wait"
               "--statefile"
               "${dspHome}/statefile.yml"
               "--loglevel"
               cfg.logLevel
             ]
             ++ cfg.extraArgs
+            ++ [ dspConfig ]
           );
+          RestartSec = "2s";
+        };
+      };
+
+      systemd.user.services.camilladsp-route = systemdUser.mkUserService {
+        description = "CamillaDSP insert router (game-stereo -> DSP -> RME AES)";
+        presets = [
+          "defaultWanted"
+          "audioGraph"
+          "restartAlways"
+        ];
+        after = [ "camilladsp.service" ];
+        serviceConfig = {
+          ExecStart = routeScript;
           RestartSec = "2s";
         };
       };
