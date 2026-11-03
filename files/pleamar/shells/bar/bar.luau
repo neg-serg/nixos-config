@@ -95,7 +95,7 @@ local weatherCity = ""
 local weatherLat, weatherLon = 59.9375, 30.3086
 local useFahrenheit = false
 
-local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "sysmon", "weather", "media", "mpd", "volume", "mic", "genelec", "systray", "build" }
+local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "bluetooth", "sysmon", "weather", "media", "mpd", "volume", "mic", "genelec", "systray", "build" }
 
 -- The canonical clamp of INTERFACES §6.1: a wrong type and NaN keep the default.
 local function num(v, lo, hi, def)
@@ -691,6 +691,12 @@ on("open_build_panel", function() open_drawer("build") end)
 -- enum) — nothing here invents a name.
 on("toggle_media_panel", function() toggle_drawer("media") end)
 on("toggle_network_panel", function() toggle_drawer("network") end)
+-- The Bluetooth capsule's press: the drawer is the panels family's, and the bar only asks for it
+-- (the network capsule takes the same road). The panels unit is resident.
+on("open_bluetooth", function()
+    pcall(sys.call, "say", "panels", "fact drawer bluetooth")
+end)
+
 on("toggle_calendar_panel", function() toggle_drawer("calendar") end)
 on("toggle_weather_panel", function() toggle_drawer("weather") end)
 on("toggle_system_panel", function() toggle_drawer("system") end)

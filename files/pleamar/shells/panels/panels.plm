@@ -252,6 +252,12 @@ scene panels {
         include "pages/power.plm"
     }
 
+    surface bluetooth_card { size: full, full
+                             level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                             open: drawer == bluetooth
+        include "pages/bluetooth.plm"
+    }
+
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*). `ip` and `ping` are the connection's
     // own two probes while the network drawer is open — the same commands QS's
@@ -259,10 +265,35 @@ scene panels {
     // `wl-copy` is the reference's clipboard copy of the journal's problems (SystemMonitorPopup.qml:17-40
     // runs it every time the dashboard opens, so a paste into a chat carries the lines).
     permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "pleamar-themes", "flow", "ip", "ping", "pleamar", "wl-copy", "systemctl"
-                  services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*" }
+                  services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*", "bluetooth", "bluetooth.*" }
+
+    // ----***--------------- bluetooth (the `bluetooth` drawer)
+    // The adapter's state, the devices and what bluetoothd is asking, straight from the
+    // service: `devices` lands in the model by field name (reference, "Lists, into a
+    // model, with no logic"), so the page needs neither a worker nor a poll. The
+    // commands are panels.luau's: they take the ADDRESS, and a row press carries only
+    // its index, so the logic keeps its own table from the same watch.
+    model bt_devices max 8 {
+        name: text
+        address: text
+        paired: bool = false
+        connected: bool = false
+        battery: number = 0
+        icon: image 16, 16
+    }
+    service bluetooth as bt {
+        present: bool
+        powered: bool
+        discovering: bool
+        pairing: none | pin | passkey | confirm | display | authorize
+        pairing_id: text
+        pairing_code: text
+        pairing_name: text
+        devices: bt_devices
+    }
 
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell | power = none
+    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell | power | bluetooth = none
     // The socket takes the enum's value names (`--say panels "fact drawer weather"`), which is how
     // the bar opens a drawer; a separate numeric mirror was declared here and never written, and
     // its only reader opened the media card without the catcher, so the card could not be closed.
@@ -363,6 +394,14 @@ scene panels {
     event power_logout
     event power_reboot
     event power_poweroff
+    // The Bluetooth drawer: the adapter, a scan, a device by its row index, a paired
+    // device to forget, and the answer to a pairing prompt.
+    event bt_power
+    event bt_scan
+    event bt_device ->
+    event bt_forget ->
+    event bt_confirm
+    event bt_cancel
 
     // Calendar navigation (panels.luau re-asks the worker for the month).
     event cal_prev ->

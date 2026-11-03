@@ -226,6 +226,7 @@ scene bar {
     fact widget.workspaces = true
     fact widget.pill = true
     fact widget.network = true
+    fact widget.bluetooth = true
     fact widget.keyboard = true
     fact widget.sysmon = true
     fact widget.weather = true
@@ -797,7 +798,7 @@ scene bar {
     // capsule's route toggle (the RME's AES/Analog pair); `ip` reads the interfaces — the
     // link, and the tunnel's name — and `ping` is the internet's own probe, exactly the two
     // commands QS's Connectivity.qml runs for the same two questions.
-    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pleamar-sysmon", "pwroute", "systemctl", "window-activate", "nixbuild-status", "mpc", "genlc", "playerctl", "ffprobe"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write", "say:panels", "nixbuild-status" }
+    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pleamar-sysmon", "pwroute", "systemctl", "window-activate", "nixbuild-status", "mpc", "genlc", "playerctl", "ffprobe"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "bluetooth", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write", "say:panels", "nixbuild-status" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -825,6 +826,8 @@ scene bar {
     // `can_go_prev`, `can_play` and `can_pause` are the rest of what the reference's transport is
     // gated on (`MediaTransport.qml:71-76`), carried by `pleamar-transport-flags.patch`.
     service media { playing: bool; paused: bool; title: text; artist: text; album: text; player: text; position: number; length: number; can_go_next: bool; can_go_prev: bool; can_play: bool; can_pause: bool }
+    // The radio's own two: the capsule hides with no adapter and lights with the power.
+    service bluetooth as bt { present: bool; powered: bool }
     service workspaces { list: spaces }
     service audio { volume: number; muted: bool; input: number; input_muted: bool }
     service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
@@ -904,6 +907,7 @@ scene bar {
     // library as `spec`, and the library's facts answer to its own name.
     on change media.hot { Spectrum.active = media.hot }
 
+    event open_bluetooth ->
     event wheel_volume ->
     // The volume capsule's press: QS's `toggleRoute()` — `pwroute toggle`, the RME's AES/Analog pair.
     // The mute it used to be is what bar.luau falls back to when there is no RME sink to move.
@@ -1269,6 +1273,31 @@ scene bar {
     // The port drew `wired net1 1 %` in a capsule instead: a different widget
     // with a different width, and the biggest single difference in the left
     // cluster after the tabs.
+    // The Bluetooth capsule (dhrruvsharma/shell Bar/components/Bluetooth.qml): the adapter's glyph,
+    // lit while the radio is on, and a press that opens the `panels` bluetooth drawer — the same
+    // path the network capsule takes for its own. Hidden with no adapter (`bt.present`), which is
+    // what the reference does too. The device name and the tooltip are the reference's; the plate
+    // carries the glyph and `--say bar describe` carries the state, and the drawer is one press
+    // away, which is where the names belong.
+    component BtCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        let w.card = 34
+        size: w.card * scale, strip * scale
+        group zoom {
+            scale: scale
+            body {
+                color: live.coal
+                opacity: 69%
+                border: 1, mix(live.coal, live.ink, 8%)
+                box { from: 0, 1; size: w.card, 23; corner: 6 }
+            }
+            text pick(bt.powered, "bluetooth_disabled", "bluetooth") { at: w.card / 2, strip / 2; anchor: center
+                family: "Material Symbols Outlined"; size: 14; color: pick(bt.powered, live.ink.off, live.accent) }
+            zone box bt { from: 0, 0; size: w.card, strip; corner: corner; cursor: pointer
+                label: pick(bt.powered, "Bluetooth: off", "Bluetooth: on"); role: button }
+            on press bt { emit open_bluetooth }
+        }
+    }
+
     component NetCluster(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
         measure w.rx
         measure w.tx
@@ -1569,6 +1598,7 @@ scene bar {
             // The overdue half is the half that matters: `reminder` keeps the pill up
             // while nothing is taken, and a taken one still shows while the strip is hot.
             NetCluster() { show: widget.network }
+            BtCapsule() { show: widget.bluetooth and bt.present }
             SysmonCluster() { show: widget.sysmon }
             // No `weather.have`: the reference keeps the capsule at `--°C` until an answer arrives,
             // and the left row used to shift the moment the first one did.

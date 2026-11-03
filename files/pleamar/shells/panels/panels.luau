@@ -499,6 +499,73 @@ on("power_lock", function()
     if not ok then log("panels: the lock unit did not start: " .. tostring(err)) end
 end)
 
+-- ==================== bluetooth ====================
+
+-- The `bluetooth` drawer's commands. The page carries a row INDEX — the model is filled by the
+-- service, not by this logic — so the addresses live here, from the same watch: `sys.call` takes the
+-- address, and `devices` is the list the rows were drawn from.
+local bt_raw = { devices = {} }
+
+sys.watch("bluetooth", function(b)
+    if type(b) == "table" then bt_raw = b end
+end)
+
+local function bt_device(index)
+    local list = type(bt_raw.devices) == "table" and bt_raw.devices or {}
+    return list[index + 1]
+end
+
+-- One argument, which is all a bluetooth command takes: `...` cannot be used inside the
+-- closure Luau's pcall wants.
+local function bt_call(command, arg)
+    local ok, err = pcall(function() sys.call(command, arg) end)
+    if not ok then log("panels: " .. command .. " failed: " .. tostring(err)) end
+end
+
+on("bt_power", function()
+    touch_drawer()
+    bt_call("bluetooth.power", not (bt_raw.powered == true))
+end)
+
+on("bt_scan", function()
+    touch_drawer()
+    bt_call("bluetooth.scan", not (bt_raw.discovering == true))
+end)
+
+on("bt_device", function(index)
+    touch_drawer()
+    local d = bt_device(index)
+    if type(d) ~= "table" or type(d.address) ~= "string" then return end
+    if d.connected == true then
+        bt_call("bluetooth.disconnect", d.address)
+    else
+        bt_call("bluetooth.connect", d.address)
+    end
+end)
+
+on("bt_forget", function(index)
+    touch_drawer()
+    local d = bt_device(index)
+    if type(d) ~= "table" or type(d.address) ~= "string" then return end
+    bt_call("bluetooth.forget", d.address)
+end)
+
+-- Only the two questions that are answered with a yes are answered here. `pin` and `passkey` need a
+-- field to type into, and `display` needs no answer: the page says so and offers only Cancel.
+on("bt_confirm", function()
+    touch_drawer()
+    local id = bt_raw.pairing_id
+    if type(id) ~= "string" or id == "" then return end
+    bt_call("bluetooth.confirm", id)
+end)
+
+on("bt_cancel", function()
+    touch_drawer()
+    local id = bt_raw.pairing_id
+    if type(id) ~= "string" or id == "" then return end
+    bt_call("bluetooth.cancel", id)
+end)
+
 -- ==================== samples into the drawing ====================
 
 -- ---- sysmon: one `tiles` record per metric -------------------------------

@@ -1,0 +1,111 @@
+// pages/bluetooth.plm — the Bluetooth drawer (`drawer == bluetooth`).
+//
+// Legacy: dhrruvsharma/shell's network/BluetoothPanel.qml + Bar/components/
+// Bluetooth.qml: the adapter's power, a scan, the devices by how they stand
+// (connected, paired, nearby), press a device to pair/connect/disconnect, and
+// what bluetoothd is asking (a passkey, a confirmation).
+//
+// The data is the `bluetooth` service, declarative and live while the drawer is
+// open: `devices` lands in the `bt_devices` model by field name (reference,
+// "Lists, into a model, with no logic"), so the page needs no worker and no
+// polling. The commands are panels.luau's, because a rule cannot call a service;
+// they need the address, so the logic watches the same service into a table and
+// a row press sends its index (`bt_device`, `bt_forget`).
+//
+// The pairing prompt: `pairing` is `none`, `pin`, `passkey`, `confirm`,
+// `display` or `authorize`; the band shows the kind, the device and the code,
+// with Confirm (answer/confirm) and Cancel. `pin` — the code the device shows
+// and this computer must be told — needs a field, and there is none yet: that
+// kind is the one the page cannot finish, and it says so instead of pretending.
+//
+// Every length is a design-pixel literal inside `group zoom { scale }`
+// (INTERFACES §9.2); the scale is the component parameter's default, per copy.
+
+part Bluetooth {
+    component BluetoothDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 400 * scale, 420 * scale
+
+        // The list starts under the header, and moves down while a pairing prompt
+        // is up: pick() of a number, so the rows never land on the band.
+        let list.y = pick(bt.pairing == none, 64, 140)
+
+        group {
+            move: (screen.width - 400 * scale) / 2, (screen.height - 420 * scale) / 2 + (1 - lift) * 18 * scale
+            opacity: lift
+
+            body {
+                color: live.coal
+                opacity: 92%
+                border: 1, mix(live.coal, live.ink, 12%)
+                rim: 0.07
+                shadow: 0, 18, 44, 45%
+                box { from: 0, 0; size: 400, 420; corner: 14 }
+            }
+            box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
+
+            text "bluetooth" { at: 16, 20; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
+            group { move: 338, 9
+                Switch(toggle: bt_power, on: bt.powered, label: pick(bt.powered, "Turn Bluetooth off", "Turn Bluetooth on"),
+                    fill: live.slate, lit: live.accent, off: live.ink.off, on_tone: live.coal, scale: 1)
+            }
+
+            text "adapter off" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: not bt.powered }
+            text "scanning…" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.accent; show: bt.powered and bt.discovering }
+            text "{bt_devices.total} known device(s)" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: bt.powered and not bt.discovering }
+            box { from: 16, 56; size: 368, 1; color: live.ink; opacity: ink.subtle }
+
+            // ----***------------------------- what bluetoothd is asking
+            group pair_band {
+                move: 16, 64
+                show: bt.pairing != none
+                body { color: live.accent; opacity: 10%
+                       box { from: 0, 0; size: 368, 64; corner: 10 } }
+                text "pairing {bt.pairing_name}" { at: 12, 18; anchor: left center; family: "Iosevka"; size: 11; weight: 600; color: live.ink }
+                text pick(bt.pairing, "", "the device shows a code; the page cannot type it yet", "the device shows a code; the page cannot type it yet", "confirm this code on this computer", "shown on this device", "allow this device") { at: 12, 34; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.dim }
+                text "{bt.pairing_code}" { at: 12, 51; anchor: left center; family: "Iosevka"; size: 14; weight: 700; color: live.accent }
+                text "no field yet" { at: 300, 51; anchor: right center; family: "Iosevka"; size: 8; color: live.ink.off; show: bt.pairing == pin or bt.pairing == passkey }
+
+                zone box pair_yes { from: 244, 10; size: 58, 24; corner: 12; cursor: pointer; label: "Confirm pairing"; role: button
+                show: bt.pairing == confirm or bt.pairing == authorize }
+                zone box pair_no { from: 308, 10; size: 52, 24; corner: 12; cursor: pointer; label: "Cancel pairing"; role: button }
+                text "yes" { at: 273, 22; anchor: center; family: "Iosevka"; size: 9; weight: 700; color: live.on.accent
+                show: bt.pairing == confirm or bt.pairing == authorize }
+                text "no" { at: 334, 22; anchor: center; family: "Iosevka"; size: 9; weight: 700; color: live.ink }
+                on press pair_yes { emit bt_confirm }
+                on press pair_no { emit bt_cancel }
+            }
+
+            // ----***------------------------- the devices
+            group list {
+                move: 0, list.y
+                for d in bt_devices {
+                    // The row's own band: a connected device is lit, a paired one is
+                    // flat, a nearby one is dim — the reference's three groups, read as
+                    // one line per device.
+                    body { color: pick(d.connected, live.accent, live.ink); opacity: pick(d.connected, 8%, 0%)
+                           box { from: 16, d.index * 34; size: 368, 30; corner: 8 } }
+                    image d.icon { at: 24, d.index * 34 + 9; size: 16, 16; tint: pick(d.connected, live.accent, live.ink.dim) }
+                    text d.name { at: 48, d.index * 34 + 9; anchor: left center; width: 230; lines: 1; family: "Iosevka"; size: 11; color: live.ink }
+                    text d.address { at: 48, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
+                    text pick(d.connected, "connected", "paired", "nearby") { at: 286, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; color: pick(d.connected, live.accent, live.ink.off) }
+                    text number(d.battery, 0, " %") { at: 376, d.index * 34 + 9; anchor: right center; family: "Iosevka"; size: 9; color: live.ink.dim; show: d.battery > 0 }
+
+                    zone box row { from: 16, d.index * 34; size: 320, 30; corner: 8; cursor: pointer; active: bt.powered
+                        label: pick(d.connected, "Disconnect {d.name}", "Connect {d.name}"); role: button }
+                    zone box forget { from: 344, d.index * 34; size: 40, 30; corner: 8; cursor: pointer; active: bt.powered and d.paired
+                        label: "Forget {d.name}"; role: button }
+                    on press row { emit bt_device(d.index) }
+                    on press forget { emit bt_forget(d.index) }
+                }
+            }
+
+            // ----***------------------------- the footer
+            text "press a device to connect · the × forgets a paired one" { at: 16, 400; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
+            text "scan" { at: 384, 400; anchor: right center; family: "Iosevka"; size: 9; weight: 700; color: pick(bt.discovering, live.accent, live.ink.dim); show: bt.powered }
+            zone box scan { from: 340, 388; size: 48, 24; corner: 12; cursor: pointer; label: pick(bt.discovering, "Stop scanning", "Scan for devices"); role: button; active: bt.powered }
+            on press scan { emit bt_scan }
+        }
+    }
+
+    BluetoothDrawer()
+}
