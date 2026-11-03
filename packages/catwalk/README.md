@@ -83,6 +83,33 @@ Monitor capsules grant a build: speed, jump, magnet or shield.
 - The waterfall streaks and lake highlights are generated at startup from the pixels: only bright
   bluish pixels inside the falls become moving streaks, only blue pixels in the lake become shimmer.
 
+## Fun study
+
+`--study N` runs N simulated campaigns (four screens each) through the exact director in parallel
+and reports what the fun metric actually rewards:
+
+```
+catwalk --study 2000000 --study-json /tmp/study.json
+```
+
+2M campaigns take about 3.5 s on this machine (32 threads, ~555k runs/s). Findings from that run:
+
+- the score is dominated by `situation` (r = +0.96 against fun); `surprise` is anti-correlated at
+  campaign level (r = -0.43) because the first screen always scores 1.0 and later screens cannot
+  recover it;
+- `build` saturates at ln(4) after four capsules and `fairness` is a constant 1.0, so neither
+  discriminates runs;
+- novelty decays 1.00 -> 0.11 -> 0.08 across the route, which is the real limit of a four-screen
+  campaign;
+- a sweep over 12 random weightings found the most varied campaigns at
+  `build 0.35 + situation 0.34 + surprise 0.15 + fairness 0.16` (variety 4.60 against the default
+  4.19);
+- pure scenarios (patrol/chase/shoot) are rare unless the generator proposes them deliberately, so
+  half of its proposals now use one shared behaviour.
+
+This measures a proxy: surprise, build entropy and situation variety are properties of generated
+screens, not a human rating.
+
 ## Verification
 
 Unit tests (no display needed):
