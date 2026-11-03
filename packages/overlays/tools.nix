@@ -6,13 +6,16 @@ let
 in
 {
   # mprime (Prime95): the source zip on download.mersenne.ca / mersenne.org is
-  # region-blocked (the fetcher gets a stub page instead of the zip). Vendored
-  # tarball (relative-path pattern, see the vendored-tarball note in
-  # overlays/vendored-sources.nix).
+  # region-blocked (the fetcher gets a stub page instead of the zip), so it is
+  # republished in the public nixos-sources v1 release and pinned by hash (see
+  # the vendored-tarball note in overlays/vendored-sources.nix).
   mprime = prev.mprime.overrideAttrs (old: {
     # The stock package uses fetchzip (which unpacks during fetch); with a
-    # vendored zip the generic unpackPhase needs unzip in nativeBuildInputs.
-    src = paths.path "files/sources/mprime-31.04b02.source.zip";
+    # plain zip fetch the generic unpackPhase needs unzip in nativeBuildInputs.
+    src = prev.fetchurl {
+      url = "https://github.com/neg-serg/nixos-sources/releases/download/v1/mprime-31.04b02.source.zip";
+      hash = "sha256-9raQlbY7CRybXQA/GBUK4Pat6mlzUV8+o9m7ErP/Tr0=";
+    };
     nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.unzip ];
     # The zip has files at its root (no single top dir); build from the root.
     sourceRoot = ".";

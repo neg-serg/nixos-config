@@ -8,6 +8,7 @@
   lib,
   stdenv,
   stdenvNoCC,
+  fetchurl,
   unzip,
   patchelf,
   zlib,
@@ -17,11 +18,14 @@ stdenvNoCC.mkDerivation rec {
   pname = "sc-faust";
   version = "0.1.2";
 
-  # GitHub is blocked on this host — release archive staged locally.
-  # Upstream release: sc_faust-0.1.2-linux-x86-64.zip (119 MB .so, statically
-  # linked libfaustwithllvm + faustlibs).
-  # In-repo copy so pure evaluation works (absolute paths outside the flake are forbidden).
-  src = ./sc_faust.zip;
+  # Release asset of capital-G/sc_faust v0.1.2 (sc_faust-0.1.2-linux-x86-64.zip,
+  # 119 MB .so statically linked with libfaustwithllvm + faustlibs), republished
+  # in the neg-serg/nixos-sources v1 release and pinned by hash: GitHub release
+  # downloads are unreliable from this host, and the flake must stay pure.
+  src = fetchurl {
+    url = "https://github.com/neg-serg/nixos-sources/releases/download/v1/sc_faust.zip";
+    hash = "sha256-TwGvP4SZoWhHaxemyzxgPU+JFPWl9GqeiGqlcN1y9Dk=";
+  };
 
   nativeBuildInputs = [
     unzip
