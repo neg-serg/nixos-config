@@ -556,12 +556,12 @@ scene bar {
 
     // Who blurs the bar: nobody, for now. The scene's own glass was measured on
     // 2026-11-02 at 69 % of a core for the bar alone against 27 % without (every
-    // capture is a screencopy the compositor paints and reads back), so it is off;
-    // the compositor's `decoration:blur` on the `pleamar` namespace was the next
-    // layer of the same cost (it re-blurs all ~18 mapped shell layers on every
-    // presented frame, closed ones included) and is off too — hyprland.lua has the
-    // numbers. The strip keeps its `opacity: 60 %` live.coal over the desktop, which is
-    // the look: flat, still translucent, no frost. `lens` is off as well: `lens: true`
+    // capture is a screencopy the compositor paints and reads back), so it stays
+    // off: the compositor's `decoration:blur` on the `pleamar` namespace does the
+    // frost instead (on again since 2026-11-06, `variant = "frost"`;
+    // hyprland.lua has the numbers and the way to turn it off). The strip keeps
+    // its `opacity: 60 %` live.coal over the desktop, and the layer rule frosts
+    // what is behind it. `lens` is off as well: `lens: true`
     // kept taking screencopies even at `strip.glass = 0%` (measured 2026-11-02: 74 %
     // of a core with it against 62 % without, and every capture is a 4K readback that
     // holds the compositor — and therefore input — for 10-20 ms, which is what made
