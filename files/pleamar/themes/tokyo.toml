@@ -1,0 +1,11 @@
+# Tokyo — deep indigo night with a periwinkle accent; the neon of the city rather
+# than of a monitor.
+name = "Tokyo"
+light = false
+
+[palette]
+coal = "#1A1B26"
+surface = "#24283B"
+ink = "#C0CAF5"
+ink_dim = "#9AA5CE"
+accent = "#7AA2F7"

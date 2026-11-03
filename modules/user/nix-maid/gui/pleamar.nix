@@ -243,14 +243,21 @@ let
 
   # The themes the shell ships: `files/pleamar/themes/*.toml` linked into
   # ~/.config/pleamar/themes, where `pleamar-themes list` finds them. A theme the
-  # user writes there under a name of their own is not touched; these three are
-  # Nix-owned and a local edit to one is replaced on activation.
+  # user writes there under a name of their own is not touched; the ones listed
+  # here are Nix-owned and a local edit to one is replaced on activation.
   pleamarThemeFiles =
     neg.mkDirLinks ".config/pleamar/themes" (config.lib.neg.live "files/pleamar/themes")
       [
         "amber.toml"
         "graphite.toml"
         "paper.toml"
+        "nord.toml"
+        "gruvbox.toml"
+        "tokyo.toml"
+        "sakura.toml"
+        "forest.toml"
+        "mono.toml"
+        "sand.toml"
       ];
 
   pleamarHomeFiles =

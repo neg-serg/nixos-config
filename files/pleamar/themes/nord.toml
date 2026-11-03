@@ -1,0 +1,11 @@
+# Nord — cool polar blue-grey, the frost accent. The quiet one: all the tones sit
+# within a few steps of each other, so the shell reads as one slab of ice.
+name = "Nord"
+light = false
+
+[palette]
+coal = "#2E3440"
+surface = "#3B4252"
+ink = "#ECEFF4"
+ink_dim = "#A3ABB8"
+accent = "#88C0D0"

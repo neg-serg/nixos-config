@@ -1,0 +1,11 @@
+# Forest — the old shell's green: a mossy ground and the mint accent the legacy
+# tree carried (#9ed6bd is in its history).
+name = "Forest"
+light = false
+
+[palette]
+coal = "#0E1512"
+surface = "#17211C"
+ink = "#DDE7DF"
+ink_dim = "#9AB0A0"
+accent = "#6FCF97"

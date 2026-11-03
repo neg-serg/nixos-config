@@ -1,0 +1,11 @@
+# Sand — the second light theme: warm paper and a burnt ink, for daylight without
+# Paper's red accent.
+name = "Sand"
+light = true
+
+[palette]
+coal = "#EFE7D8"
+surface = "#E3D8C4"
+ink = "#241E16"
+ink_dim = "#6B5F4E"
+accent = "#8A5A2B"
