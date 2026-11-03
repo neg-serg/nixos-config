@@ -226,14 +226,14 @@ part, so a press on them opened an empty window; the owner dropped them on 2026-
 no settings drawer to come — the shell's settings are the per-scene JSON files (§6). `shell` is the
 one page that edits them while the shell runs: window scale, type scale, the two closing rules,
 Fahrenheit, the weather city and the holiday country (`settings.json`) and the light theme's paper
-warmth, each written at once and saved through `files.write`.
-`theme` is not a settings page either: it lists the theme files under `~/.config/pleamar/themes` and
-applies one through `pleamar-themes` (`packages/pleamar-theme`), which rewrites `theme.plm` the way
-the wallpaper pipeline does (§1.4). The bar's `toggle_theme_panel` opens it (`M4+SH+g`); no capsule
-carries it. A light theme (`light = true` in its file) names its accent and nothing else about its
-whites: the paper, the surface under it and the ink come from one warmth in kelvin, which the drawer
-shows as a slider while that theme is in place (`pleamar-themes warm K`: 2700 warm, 6500 neutral,
-4300 unless set). `build` was added when its page landed and was missing from this list.
+warmth, each written at once and saved through `files.write`. `theme` is not a settings page either:
+it lists the theme files under `~/.config/pleamar/themes` and applies one through `pleamar-themes`
+(`packages/pleamar-theme`), which rewrites `theme.plm` the way the wallpaper pipeline does (§1.4).
+The bar's `toggle_theme_panel` opens it (`M4+SH+g`); no capsule carries it. A light theme
+(`light = true` in its file) names its accent and nothing else about its whites: the paper, the
+surface under it and the ink come from one warmth in kelvin, which the drawer shows as a slider
+while that theme is in place (`pleamar-themes warm K`: 2700 warm, 6500 neutral, 4300 unless set).
+`build` was added when its page landed and was missing from this list.
 
 A drawer's surface is the whole monitor (`size: full, full`) and the card is placed in `screen`
 coordinates by its page: a surface's `size:` takes a literal and never follows `zoom`, so a card
