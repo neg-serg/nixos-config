@@ -46,7 +46,7 @@
   # Animated nixie-tube renderer; also ships `nixie-metrics`, the screenshot
   # measurer the A1..A7 acceptance criteria are stated in.
   nixie = pkgs.nixie;
-  crabwalk = pkgs.neg.crabwalk; # miniature platformer over the wallpaper
+  sonicwalk = pkgs.neg.sonicwalk; # Sonic platformer over the wallpaper
 
   # Theme pipeline (cargo tests run in the package checkPhase).
   pleamar-theme = pkgs.neg.pleamar-theme;
@@ -74,6 +74,7 @@
   renoise = pkgs.renoise;
   sioyek = pkgs.sioyek;
   vivaldi = pkgs.vivaldi-fixed;
+  linux-firmware-minimal = pkgs.linux-firmware-minimal;
   difftastic = pkgs.difftastic;
   npins = pkgs.npins;
   nix-init = pkgs.nix-init;
