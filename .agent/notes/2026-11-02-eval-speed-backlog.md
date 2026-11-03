@@ -151,3 +151,33 @@ regression (+9.2 % faults).
 runs and 197 in one `always` run** (with `thp_fault_fallback` 77, +62 % faults and the slowest wall
 of its block). `always` buys nothing and adds a host-wide synchronous-compaction tail risk, so the
 policy stays `enabled=always, defrag=defer+madvise`.
+
+## 6. Tvix and Snix: not applicable, now or soon (checked 2026-11-02)
+
+They are not the same project and the difference matters. **Tvix** is the Rust re-implementation of
+Nix born in The Virus Lounge, led by Florian Klink; its last status post is 2024-08-09. **Snix is a
+fork**, announced 2025-03-16 ("The fork will: …"), with its own infrastructure (Gerrit
+`cl.snix.dev`, Forgejo `git.snix.dev`, IRC), the same founder, and a 2026 contributor roster. There
+are no tags, the crates.io `snix-eval` is `0.0.0-pre` and unpublished since the fork, and the blog
+has been silent since 2025-03-21.
+
+Why it cannot help this host, from their own docs:
+
+- **92 of 111 builtins implemented**; `derivation`, `derivationStrict`, `fetchurl`, `fetchGit`,
+  `toFile` and `storePath` are *blocked on the store* integration, and `getFlake` does not even have
+  a row. Without `derivation` there is no nixpkgs evaluation, without flakes there is no flake, and
+  there is no NixOS module system, `nixos-rebuild` or activation story at all. Their own "about"
+  page says there is "no full-featured drop-in replacement for Nix on your machine yet".
+- **No published comparison against C++ Nix.** Their performance guide describes macrobenchmarks
+  that evaluate nixpkgs attr paths and store local JSON; their own optimisation page lists
+  unimplemented wins (open upvalues, avoiding thunks, interning literals) and states they "lack the
+  infrastructure to adequately track their impact". Tvix's 2024 position was to not focus on
+  performance before the language is complete.
+- **Not even runnable here**: there is no `tvix-eval` or `snix` attribute in nixpkgs (checked
+  nixos-24.11 and current master), and upstream is not publicly obtainable —
+  `git ls-remote https://git.snix.dev/snix/snix` asks for credentials and the archive URL returns a
+  login page. crates.io has only the `0.0.0-pre` library crate.
+
+**Condition to revisit**: a packaged evaluator binary that can instantiate nixpkgs (needs
+`derivation`, IFD and store glue) together with a published benchmark beating `nix eval` on nixpkgs.
+Until then this direction buys 0 of the 7–9 s eval and 0 of the 10.8 s switch.
