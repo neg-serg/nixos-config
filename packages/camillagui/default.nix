@@ -42,6 +42,21 @@ stdenv.mkDerivation rec {
   # keep them unpacked in-place instead of letting unpackPhase guess a sourceRoot.
   sourceRoot = ".";
 
+  # The backend reads exactly one config file, the copy bundled in $out, and
+  # upstream has no override switch: retarget it at this host's XDG layout
+  # instead of the upstream ~/camilladsp tree (modules/hardware/audio/dsp.nix
+  # keeps the daemon on the same paths). Tilde paths keep the package
+  # user-agnostic; 127.0.0.1 keeps the unauthenticated UI off the LAN.
+  postPatch = ''
+    substituteInPlace config/camillagui.yml \
+      --replace-fail 'bind_address: "0.0.0.0"' 'bind_address: "127.0.0.1"' \
+      --replace-fail 'config_dir: "~/camilladsp/configs"' 'config_dir: "~/.config/camilladsp"' \
+      --replace-fail 'coeff_dir: "~/camilladsp/coeffs"' 'coeff_dir: "~/.config/camilladsp/coeffs"' \
+      --replace-fail 'default_config: "~/camilladsp/default_config.yml"' 'default_config: "~/.config/camilladsp/default.yml"' \
+      --replace-fail 'statefile_path: "~/camilladsp/statefile.yml"' 'statefile_path: "~/.local/state/camilladsp/statefile.yml"' \
+      --replace-fail 'log_file: "~/camilladsp/camilladsp.log"' 'log_file: null'
+  '';
+
   installPhase = ''
     runHook preInstall
     mkdir -p $out/lib/camillagui $out/bin

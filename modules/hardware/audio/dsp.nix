@@ -14,7 +14,7 @@
 # config are therefore a contract — point an end at another device and the DSP
 # stops carrying audio while the direct path takes over.
 #
-# The daemon starts with ~/camilladsp/configs/default.yml rather than `--wait`:
+# The daemon starts with ~/.config/camilladsp/default.yml rather than `--wait`:
 # the insert has to be up before anything is played. Configs are user state
 # (the surfaces save and apply them), so default.yml is seeded once from
 # ./dsp/default.yml and never replaced afterwards; the statefile keeps the
@@ -26,14 +26,17 @@
 # period size, so a mismatched chunksize only buys jitter and a warning per
 # chunk.
 #
-# Working tree: ~/camilladsp/{configs,coeffs} plus statefile.yml. These are
-# exactly the paths the packaged camillagui bakes into its own config
-# (`$out/lib/camillagui/config/camillagui.yml`, which is read-only and not
-# overridable without patching the package), while aurora's camilla tab
-# resolves $XDG_CONFIG_HOME/camilladsp first and falls back to
-# ~/camilladsp/configs — so one tree serves both. The directories are
-# user-writable on purpose: both surfaces save configs and coefficients there,
-# so they cannot be read-only store symlinks.
+# Layout (XDG; the packaged camillagui is patched to the same paths and aurora's
+# camilla tab resolves $XDG_CONFIG_HOME/camilladsp first, so one tree serves
+# both):
+#
+#   ~/.config/camilladsp/             configs the surfaces list and save
+#   ~/.config/camilladsp/default.yml  the config the daemon starts with
+#   ~/.config/camilladsp/coeffs/      FIR coefficients those configs reference
+#   ~/.local/state/camilladsp/        statefile (volume, mute, active config)
+#
+# The directories are user-writable on purpose: both surfaces save configs and
+# coefficients there, so they cannot be read-only store symlinks.
 #
 {
   config,
@@ -46,15 +49,17 @@ let
   systemdUser = config.lib.neg.systemdUser;
   homeDir = config.lib.neg.homeDir;
 
-  # Kept in one place: the camillagui config above hardcodes this layout.
-  dspHome = "${homeDir}/camilladsp";
-  dspConfig = "${dspHome}/configs/default.yml";
+  # Kept in one place: the patched camillagui config above bakes in the same
+  # layout (packages/camillagui/default.nix).
+  dspHome = "${homeDir}/.config/camilladsp";
+  dspState = "${homeDir}/.local/state/camilladsp";
+  dspConfig = "${dspHome}/default.yml";
 
   # First start only: the surfaces own the files afterwards, so a rebuilt
   # system must not overwrite a config the user tuned.
   seedConfig = pkgs.writeShellScript "camilladsp-seed" ''
     set -eu
-    install -d -m 0755 ${dspHome}/configs ${dspHome}/coeffs
+    install -d -m 0755 ${dspHome} ${dspHome}/coeffs ${dspState}
     if [ ! -e ${dspConfig} ]; then
       install -m 0644 ${./dsp/default.yml} ${dspConfig}
     fi
@@ -142,8 +147,8 @@ in
       # GUI aborts on startup when its config_dir is missing).
       systemd.user.tmpfiles.rules = [
         "d ${dspHome} 0755 - - -"
-        "d ${dspHome}/configs 0755 - - -"
         "d ${dspHome}/coeffs 0755 - - -"
+        "d ${dspState} 0755 - - -"
       ];
 
       systemd.user.services.camilladsp = systemdUser.mkUserService {
@@ -163,7 +168,7 @@ in
               "--port"
               (toString cfg.port)
               "--statefile"
-              "${dspHome}/statefile.yml"
+              "${dspState}/statefile.yml"
               "--loglevel"
               cfg.logLevel
             ]

@@ -10,7 +10,8 @@
 # The main fader needs no filter: CamillaDSP 4 applies it to the whole pipeline
 # (`SetVolume` from camillagui or aurora's camilla tab), so this passthrough is
 # already level-controllable. Room correction and crossovers are added under
-# `filters:` and `pipeline:`; FIR coefficients live in ~/camilladsp/coeffs.
+# `filters:` and `pipeline:`; FIR coefficients live in
+# ~/.config/camilladsp/coeffs.
 devices:
   samplerate: 48000
   # One graph quantum: files/media/pipewire/pipewire.conf.d/clock-rate.conf
