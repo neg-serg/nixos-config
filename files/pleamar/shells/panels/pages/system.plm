@@ -20,16 +20,16 @@ part SysPanel {
         // of the CPU: the title, the journal's state beside it, three figures
         // (log lines, errors, services) and the last few entries with a time, a
         // unit and a message.
-        size: 1040 * scale, 887 * scale
+        size: 1040 * scale, 610 * scale
 
         group {
-            move: 0, (1 - lift) * 887 * scale
+            move: 0, (1 - lift) * 610 * scale
 
             body {
                 color: coal
                 opacity: 85%
 
-                box { from: 0, 0; size: 1040 * scale, 887 * scale; corner: 0; opacity: 0% }
+                box { from: 0, 0; size: 1040 * scale, 610 * scale; corner: 0; opacity: 0% }
             }
 
             // ----***---------------------------- header
