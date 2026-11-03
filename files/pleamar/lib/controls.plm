@@ -91,6 +91,8 @@ library Controls strict {
                      value: number,
                      label: text,
                      tone: color = accent,
+                     track: color = ink,
+                     knob: color = ink,
                      w: number = 216,
                      enabled: bool = true,
                      scale: number = ui) {
@@ -105,12 +107,12 @@ library Controls strict {
         let level = clamp(lv * w * scale, 0, w * scale)
 
         box { from: 0, cy - h / 2 * scale; size: w * scale, h * scale; corner: h / 2 * scale
-            color: ink; opacity: pick(enabled, ink.active * 0.4, ink.active) }
+            color: track; opacity: pick(enabled, ink.active * 0.4, ink.active) }
 
         box { from: 0, cy - h / 2 * scale; size: level, h * scale; corner: h / 2 * scale
             color: pick(enabled, mix(tone, slate, 0.55), tone); opacity: 90% }
 
-        ellipse { at: kx, cy; radius: r; color: pick(enabled, ink.dim, ink) }
+        ellipse { at: kx, cy; radius: r; color: pick(enabled, mix(knob, slate, 0.55), knob) }
 
         zone box hit { from: 0, 0; size: w * scale, slider.zone * scale; corner: 6 * scale
             cursor: pointer; label: label; role: slider

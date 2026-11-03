@@ -41,15 +41,15 @@ part Volume {
                 text "{o.name}" { at: 76 * scale, 16 * scale; anchor: left center; width: 160 * scale; lines: 1; family: "Iosevka"; size: 12; color: live.ink; show: o.default }
             }
 
-            box { from: 14 * scale, 38 * scale; size: 216 * scale, 6 * scale; corner: 3 * scale; color: live.ink; opacity: ink.active }
-            box { from: 14 * scale, 38 * scale; size: 216 * audio.volume * scale, 6 * scale; corner: 3 * scale
-                color: pick(audio.muted, volume.high, live.accent); opacity: pick(audio.muted, 40%, 90%) }
-            ellipse { at: 14 * scale + 216 * audio.volume * scale, 41 * scale; radius: 6 * scale; color: live.ink }
+            // lib/controls.plm's slider (the library's own geometry: the track at the
+            // middle of the zone, a press or a drag reading `local.x`), tinted with the
+            // live palette and the muted tone the reference gives a silenced sink.
+            group { move: 14 * scale, 28 * scale
+                Slider(change: set_out, value: audio.volume, label: "Volume",
+                    tone: pick(audio.muted, volume.high, live.accent),
+                    track: live.ink, knob: live.ink, scale: scale)
+            }
             text "{audio.volume * 100, 0} %" { at: 240 * scale, 41 * scale; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
-            zone box vol_out { cursor: pointer; from: 14 * scale, 28 * scale; size: 216 * scale, 26 * scale; corner: 13 * scale
-                label: "Volume {audio.volume * 100, 0} %"; role: slider; value: "{audio.volume * 100, 0} %" }
-            on press vol_out { emit set_out(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
-            on drag vol_out { emit set_out(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
 
             group { move: 274 * scale, 30 * scale
                 Capsule(52, 22, fill: live.slate, alpha: pick(audio.muted, 60%, 100%), radius: 11, scale: scale)
@@ -79,15 +79,12 @@ part Volume {
                 text "{i.name}" { at: 92 * scale, 104 * scale; anchor: left center; width: 144 * scale; lines: 1; family: "Iosevka"; size: 12; color: live.ink; show: i.default }
             }
 
-            box { from: 14 * scale, 126 * scale; size: 216 * scale, 6 * scale; corner: 3 * scale; color: live.ink; opacity: ink.active }
-            box { from: 14 * scale, 126 * scale; size: 216 * audio.input * scale, 6 * scale; corner: 3 * scale
-                color: pick(audio.input_muted, volume.high, live.accent); opacity: pick(audio.input_muted, 40%, 90%) }
-            ellipse { at: 14 * scale + 216 * audio.input * scale, 129 * scale; radius: 6 * scale; color: live.ink }
+            group { move: 14 * scale, 116 * scale
+                Slider(change: set_in, value: audio.input, label: "Microphone",
+                    tone: pick(audio.input_muted, volume.high, live.accent),
+                    track: live.ink, knob: live.ink, scale: scale)
+            }
             text "{audio.input * 100, 0} %" { at: 240 * scale, 129 * scale; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
-            zone box vol_in { cursor: pointer; from: 14 * scale, 116 * scale; size: 216 * scale, 26 * scale; corner: 13 * scale
-                label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
-            on press vol_in { emit set_in(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
-            on drag vol_in { emit set_in(clamp((local.x - 14 * scale) / (216 * scale), 0, 1)) }
 
             group { move: 274 * scale, 118 * scale
                 Capsule(52, 22, fill: live.slate, alpha: pick(audio.input_muted, 60%, 100%), radius: 11, scale: scale)
