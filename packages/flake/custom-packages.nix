@@ -46,7 +46,6 @@
   # Animated nixie-tube renderer; also ships `nixie-metrics`, the screenshot
   # measurer the A1..A7 acceptance criteria are stated in.
   nixie = pkgs.nixie;
-  catwalk = pkgs.neg.catwalk; # cat platformer over the wallpaper
 
   # Theme pipeline (cargo tests run in the package checkPhase).
   pleamar-theme = pkgs.neg.pleamar-theme;
