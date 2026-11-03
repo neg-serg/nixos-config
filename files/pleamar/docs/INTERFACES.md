@@ -288,9 +288,9 @@ box puts the scene's origin at the monitor's centre and paints the screen half a
 
 Every length in the palette is a **design pixel** — the number the QS theme uses (`panel.height` 22,
 `cornerRadius` 6, `type.small` 14, …). Sizes in scenes are written as `<design length> * <scale>`;
-the scale is `ui` (1.15, the QS `panel.scale`) in a single-surface scene, and a per-monitor value in
-a `screens: each` scene (§3.2). Type sizes additionally carry the user's `type.scale` / settings
-`fontScale`.
+the scale is `ui` (1 in this port — see §3.1; the QS `panel.scale` it was ported from was 1.15) in a
+single-surface scene, and a per-monitor value in a `screens: each` scene (§3.2). Type sizes
+additionally carry the user's `type.scale` / settings `fontScale`.
 
 `lib/capsule.plm` multiplies its own lengths by the `scale` parameter (default `ui`), so a capsule
 call passes design sizes:
@@ -322,10 +322,16 @@ Frozen expression — call it `scaleNow` in scene comments, write it out where i
 ui * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)
 ```
 
-- `ui` = 1.15, `design.width` = 1920, `design.height` = 1080, `fit.min` = 0.8, `fit.max` = 1.5 (the
+- `ui` = 1, `design.width` = 1920, `design.height` = 1080, `fit.min` = 0.8, `fit.max` = 1.5 (the
   logical reference is this machine's DP-2, `nx2160@240` at Hyprland scale 2).
-- On the reference monitor it is exactly 1.15 — the QS look; elsewhere it fits the UI to the monitor
-  instead of the QS `monitorScaleOverrides` map, which pleamar has no channel for.
+- `ui` is 1 and not the QS `panel.scale` 1.15: at 1.15 every size lands on a fraction (14 × 1.15 =
+  16.1) and every centred text on a half pixel, which is what the whole strip looked soft from
+  (`lib/palette.plm` says the same next to the value). The bar's own lengths are therefore logical
+  pixels — the strip is 25, the plates 23 — and the reference's screen measurements are what they
+  were tuned against.
+- On the reference monitor the per-monitor part of the expression is 1, so the whole thing is
+  exactly `ui`; elsewhere it fits the UI to the monitor instead of the QS `monitorScaleOverrides`
+  map, which pleamar has no channel for.
 - Use it **inside the repeated drawing**: as the `scale:` argument of `Capsule` and every lib
   component, and as the multiplier of every other design length and text size in the copy. In a
   single-surface scene use `ui` alone, because there `screen.width` and `screen.height` measure the
@@ -538,12 +544,12 @@ multiplies the sizes above | | `panel.computedFontScale` | `type.inline` | `0.6`
 
 | QS token | palette name | value | note | | ------------- | --------------- | ------ |
 \----------------------------------------------------------------------------------- | |
-`panel.scale` | `ui` | `1.15` | × Settings.json fontSizeMultiplier (default 1.0), clamped 0.25–2.5
-in QS | | `(new)` | `design.width` | `1920` | logical width of the reference monitor (DP-2
-nx2160@240 at scale 2 → 1920×1080) | | `(new)` | `design.height` | `1080` | logical height of the
-reference monitor | | `(new)` | `fit.min` | `0.8` | lower clamp for the per-monitor scale; replaces
-Settings.json monitorScaleOverrides | | `(new)` | `fit.max` | `1.5` | upper clamp for the
-per-monitor scale |
+`panel.scale` | `ui` | `1` | the reference's 1.15 is dropped so design px stay whole logical px
+(palette.plm), × Settings.json fontSizeMultiplier (default 1.0), clamped 0.25–2.5 in QS | | `(new)`
+| `design.width` | `1920` | logical width of the reference monitor (DP-2 nx2160@240 at scale 2 →
+1920×1080) | | `(new)` | `design.height` | `1080` | logical height of the reference monitor | |
+`(new)` | `fit.min` | `0.8` | lower clamp for the per-monitor scale; replaces Settings.json
+monitorScaleOverrides | | `(new)` | `fit.max` | `1.5` | upper clamp for the per-monitor scale |
 
 #### Springs
 
