@@ -722,6 +722,31 @@
         "type": "github"
       }
     },
+    "marea": {
+      "inputs": {
+        "nixpkgs": [
+          "pleamar-wm",
+          "nixpkgs"
+        ],
+        "pleamar": [
+          "pleamar-wm",
+          "pleamar"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791976862,
+        "narHash": "sha256-0Kw9crEPVwVuSBjOHLIEroX+QWdaAD8lSWF23ZjfyqI=",
+        "owner": "k4ditano",
+        "repo": "marea-plm",
+        "rev": "2b6a0649ec3a8d7d1122640c3f0d9b156bf56527",
+        "type": "github"
+      },
+      "original": {
+        "owner": "k4ditano",
+        "repo": "marea-plm",
+        "type": "github"
+      }
+    },
     "multiverse": {
       "locked": {
         "lastModified": 1788216404,
@@ -1238,6 +1263,30 @@
         "type": "github"
       }
     },
+    "pleamar-wm": {
+      "inputs": {
+        "marea": "marea",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "pleamar": [
+          "pleamar"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793695547,
+        "narHash": "sha256-0HG05MzkvS3gDGoWp2bswPyFC1tZEVaNSLjw5yYS5C8=",
+        "owner": "k4ditano",
+        "repo": "pleamar-wm",
+        "rev": "d421a4ff823ac337cfff6fd2f2101cc7aa473812",
+        "type": "github"
+      },
+      "original": {
+        "owner": "k4ditano",
+        "repo": "pleamar-wm",
+        "type": "github"
+      }
+    },
     "raise": {
       "inputs": {
         "flake-utils": "flake-utils_5",
@@ -1290,6 +1339,7 @@
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-torch": "nixpkgs-torch",
         "pleamar": "pleamar",
+        "pleamar-wm": "pleamar-wm",
         "raise": "raise",
         "renoise-src": "renoise-src",
         "rsmetrx": "rsmetrx",

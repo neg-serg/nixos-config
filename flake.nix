@@ -121,6 +121,16 @@
       url = "github:k4ditano/pleamar/bc710b193702d12f401cedea79541d94508861be";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # pleamar-wm — the compositor the developer harnesses run scenes in headless
+    # (`pleamar-smoke`, `check-plugin-render`, `pleamar-rig`). Its package builds
+    # the wm beside pleamar's *source* (`../pleamar`), so it follows our pleamar
+    # pin; nixpkgs follows ours too, to keep one evaluation. A bump of the wm
+    # may want a newer pleamar than the pin below — then raise both together.
+    pleamar-wm = {
+      url = "github:k4ditano/pleamar-wm";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.pleamar.follows = "pleamar";
+    };
     rsmetrx = {
       url = "github:neg-serg/rsmetrx";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -180,7 +190,8 @@
     };
   };
 
-  outputs = inputs:
+  outputs =
+    inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" ];
       # Dendritic layout: every file under flake/parts declares its outputs and

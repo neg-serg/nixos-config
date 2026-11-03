@@ -1,8 +1,8 @@
 # pleamar-harness
 
-The pleamar developer harnesses as one standalone Rust crate with four binaries. Three are ported from
-`files/pleamar/scripts/`; `pleamar-rig` is new here (the idea comes from the sibling pleamar shell
-Vitreus, which runs it as `dev/rig`):
+The pleamar developer harnesses as one standalone Rust crate with four binaries. Three are ported
+from `files/pleamar/scripts/`; `pleamar-rig` is new here (the idea comes from the sibling pleamar
+shell Vitreus, which runs it as `dev/rig`):
 
 | binary                  | original                   |
 | ----------------------- | -------------------------- |
@@ -73,9 +73,9 @@ copy runs under `pleamar-wm`'s paths; the compositor is started through `setsid`
 the whole group. `--png`/`--at`/`--input` are `PLEAMAR_HEADLESS_PNG`/`_AT`/`_INPUT`; the last one is
 inherited when the flag is not given.
 
-What the copy shares with the desktop: the fonts, the network and any program the shell runs by name.
-What it cannot show: anything that needs Hyprland (gaps, borders, the glass's blur) — there is no
-compositor to ask.
+What the copy shares with the desktop: the fonts, the network and any program the shell runs by
+name. What it cannot show: anything that needs Hyprland (gaps, borders, the glass's blur) — there is
+no compositor to ask.
 
 ## Deliberate differences
 
@@ -100,10 +100,10 @@ compositor to ask.
 cargo test --locked
 ```
 
-- `tests/measure.rs`, `tests/describe_snap.rs`, `tests/smoke.rs`, `tests/rig.rs` — end-to-end runs with fake
-  external tools (argv logged), temp repos, a zombie scene pid, temp XDG sandbox and no real
-  session/network/cgroup. They cover every flag, failure path, output format, cgroup columns (via
-  the test seam), PNG verification, renderer fallbacks and the snapshot update/diff paths.
+- `tests/measure.rs`, `tests/describe_snap.rs`, `tests/smoke.rs`, `tests/rig.rs` — end-to-end runs
+  with fake external tools (argv logged), temp repos, a zombie scene pid, temp XDG sandbox and no
+  real session/network/cgroup. They cover every flag, failure path, output format, cgroup columns
+  (via the test seam), PNG verification, renderer fallbacks and the snapshot update/diff paths.
 - `tests/parity.rs` — runs the unmodified originals in `tests/parity/original/` (see that
   directory's README) against the same fake tools and compares exit code, stdout, stderr, every
   artifact byte and the sorted argv multisets of the contract commands. It needs `bash`, `jq`,
