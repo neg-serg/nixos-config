@@ -202,7 +202,14 @@ async function runTrial(suite, suitePath, testCase, trial, opts) {
     const before = frozenHashes(workspace, testCase)
     const bin = opts.bin
     const profile = testCase.profile ?? opts.profile ?? suite.profile ?? 'headless'
-    const run = await exec(bin, ['--profile', profile, 'headless', '--json', testCase.prompt], { cwd: workspace, timeoutMs })
+    // A suite-level or CLI patch overlay travels as a launcher option before the
+    // app name; without one the --profile form keeps the old invocation.
+    const patch = testCase.patch ?? opts.patch ?? suite.patch
+    const patchPath = patch ? resolve(dirname(suitePath), patch) : null
+    const args = patchPath
+      ? [profile, '--patch', patchPath, 'headless', '--json', testCase.prompt]
+      : ['--profile', profile, 'headless', '--json', testCase.prompt]
+    const run = await exec(bin, args, { cwd: workspace, timeoutMs })
     let check = { code: null, output: '', skipped: false }
     if (testCase.check) {
       const checked = await exec('bash', ['-lc', testCase.check], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000) })
@@ -413,7 +420,7 @@ async function modeRun(flags, positional) {
       const item = queue[index]
       index += 1
       process.stderr.write('  [' + index + '/' + queue.length + '] ' + item.testCase.id + ' #' + item.trial + '\r')
-      results.push(await runTrial(suite, suitePath, item.testCase, item.trial, { bin, profile: flags.profile, keep: flags.keep === true }))
+      results.push(await runTrial(suite, suitePath, item.testCase, item.trial, { bin, profile: flags.profile, patch: typeof flags.patch === 'string' ? flags.patch : undefined, keep: flags.keep === true }))
     }
   }
   await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker))
