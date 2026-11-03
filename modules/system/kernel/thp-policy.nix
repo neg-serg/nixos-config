@@ -24,6 +24,14 @@ let
   # of synchronous compaction inside page faults, which would stall every process
   # on the host and not just the one being measured.
   defragPolicy = "defer+madvise";
+  # Measured 2026-11-03 against `always` (20 evaluator runs per arm, A-B-A-B over
+  # three switches, /tmp/gcsweep/results-defrag.jsonl): the toplevel eval's minor
+  # faults and instructions are unchanged (49.9k vs 49.8k in 39 of 40 runs; 82.40G
+  # in both arms), wall clock differs by -0.8 % with a load-confounded SEM of
+  # 0.7 %, and no `always` block reproduced its own first-block low. `always` did
+  # add direct compaction: 197 `compact_stall` events in 1 of its 20 runs, the same
+  # run where minor faults jumped +62 % and AnonHugePages fell 4 % -- the
+  # synchronous-compaction stall this comment warns about, on a host-wide knob.
 in
 {
   systemd.services.thp-policy = {
