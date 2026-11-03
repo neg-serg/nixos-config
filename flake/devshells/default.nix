@@ -2,18 +2,26 @@
   pkgs,
   lib,
   mkDevShell,
+  import-tree,
   ...
 }:
 let
-  # `base.nix` backs the `default` devshell; every other shell module maps to a
-  # devshell of the same name. The space-separated string keeps the list
-  # compact instead of one line per name.
-  shellNames = lib.splitString " " (
-    "lint tools haskell rust cpp java re infra python ai rocm android qmk radicle "
-    + "pentest elf graphics latex misc media virt text pro-audio web-archive db k8s wine"
-  );
+  # Dendritic pilot: the shells are the files of this directory, walked by
+  # import-tree instead of a hand-kept name list — a new `foo.nix` here becomes
+  # the `foo` shell with no second edit. `default.nix` is this aggregator, and
+  # importing it would recurse; `base.nix` backs the `default` shell, every
+  # other file maps to a shell of the same name.
+  files = (import-tree.filter (p: baseNameOf (toString p) != "default.nix")).leaves ./.;
+  nameOf =
+    p:
+    let
+      name = baseNameOf (toString p);
+    in
+    if name == "base.nix" then "default" else lib.removeSuffix ".nix" name;
 in
-{
-  default = mkDevShell (import ./base.nix { inherit pkgs lib; });
-}
-// lib.genAttrs shellNames (n: mkDevShell (import ./${n}.nix { inherit pkgs lib; }))
+builtins.listToAttrs (
+  map (p: {
+    name = nameOf p;
+    value = mkDevShell (import p { inherit pkgs lib; });
+  }) files
+)
