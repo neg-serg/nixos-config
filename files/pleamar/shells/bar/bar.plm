@@ -956,7 +956,10 @@ scene bar {
             text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka" }
             // `width:` and one line: a long name used to run over the plate and onto the keyboard
             // capsule beside it, which is what the fixed 69 design px are there to prevent.
-            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
+            // The name is what the owner typed — lower-case on this host, so its ink is x-height
+            // and reads 1.25 px low on a line-box anchor (measured); one px up centres the common
+            // case. A capitalised name would sit 1 px high, which is the smaller error of the two.
+            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2 - 1; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
             // The capsule shows the workspace that is already in force, so it is always the
             // selected tab: `selected:` is what a reader of `--say bar describe` needs to know it.
             zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab; selected: true }
@@ -988,7 +991,7 @@ scene bar {
         size: (glyph.w + gap + bar.w + 2) * scale, strip * scale
         group zoom {
             scale: scale
-            image glyph { at: 0, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); show: shown }
+            image glyph { at: 0, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); show: shown }
             // MonitorBar draws the fill and nothing else: no track behind it, so
             // a 5 % metric is a short dash, not a dot on a rail.
             box { from: glyph.w + gap, strip / 2 + bh / 2 - value * bh; size: bar.w, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
@@ -1128,7 +1131,7 @@ scene bar {
             let x.moon = x.wind + w.wind.width + gap.g
             // One picture of seven: the logic turns the WMO code into this number, because a
             // component cannot choose a different image from an `if`.
-            group weather_face { move: 4, strip / 2 + 1 - icon.w / 2
+            group weather_face { move: 4, strip / 2 - icon.w / 2
                 image icon_weather_sunny { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 0 }
                 image icon_weather_partly { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 1 }
                 image icon_weather_cloud { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 2 }
@@ -1138,12 +1141,12 @@ scene bar {
                 image icon_weather_thunder { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 6 }
             }
             text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka" }
-            image icon_weather_drop { at: x.drop, strip / 2 + 1 - drop.w / 2; size: drop.w, drop.w; tint: skin.ink.dim }
+            image icon_weather_drop { at: x.drop, strip / 2 - drop.w / 2; size: drop.w, drop.w; tint: skin.ink.dim }
             text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka" }
             // `text` has no `rotate`: the arrow turns inside a group whose pivot
             // is the glyph's own centre.
-            group arrow { pivot: x.arrow + arrow.w / 2, strip / 2 + 1; rotate: weather.dir
-                image icon_weather_wind { at: x.arrow, strip / 2 + 1 - arrow.w / 2; size: arrow.w, arrow.w; tint: skin.ink.dim }
+            group arrow { pivot: x.arrow + arrow.w / 2, strip / 2; rotate: weather.dir
+                image icon_weather_wind { at: x.arrow, strip / 2 - arrow.w / 2; size: arrow.w, arrow.w; tint: skin.ink.dim }
             }
             text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka" }
             // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
@@ -1193,7 +1196,11 @@ scene bar {
             // is drawn in the 20 px the icon already owns, and the layout keeps its place.
             image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim; show: not kb_badge_on }
             text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18 * text_scale; color: skin.accent; show: kb_badge_on }
-            text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
+            // The layout is a two-letter, lower-case word, so its ink is x-height only; anchored
+            // on the line box it reads 1.25 px low against the digits around it (measured on the
+            // raster), and the plate is the only place where that is visible. One px up is the
+            // optical centre for this one string — a digit set does not need it.
+            text "{kb_layout}" { at: 34, strip / 2 - 1; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
             // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
             // layout of the device in force (`switchKeyboardLayout()`), and the label follows
             // from the event socket a moment later. The wheel does the same here: a capsule that
@@ -1250,18 +1257,18 @@ scene bar {
             // of the accent's saturation is what 45 % of grey leaves. The two warning tones are
             // the theme's own (ConnUi.errorColor / warningColor, colors.status.*), never
             // desaturated, so they are drawn outside that group.
-            image icon_network { at: 6 + vpn.w, strip / 2 + 1 - icon / 2; size: icon, icon; tint: warn; show: not net.link }
-            image icon_network { at: 6 + vpn.w, strip / 2 + 1 - icon / 2; size: icon, icon; tint: amber; show: net.link and not net.internet }
+            image icon_network { at: 6 + vpn.w, strip / 2 - icon / 2; size: icon, icon; tint: warn; show: not net.link }
+            image icon_network { at: 6 + vpn.w, strip / 2 - icon / 2; size: icon, icon; tint: amber; show: net.link and not net.internet }
             group lan_tone { saturation: 0.55
-                image icon_network { at: 6 + vpn.w, strip / 2 + 1 - icon / 2; size: icon, icon; tint: skin.accent; show: net.internet }
+                image icon_network { at: 6 + vpn.w, strip / 2 - icon / 2; size: icon, icon; tint: skin.accent; show: net.internet }
                 // The tunnel's shield, in `vpnIconColor` — the same desaturated accent, and the
                 // slot is only there while the tunnel is (NetClusterCapsule.qml:83, 87-95).
-                image icon_vpn { at: 6, strip / 2 + 1 - icon / 2; size: icon, icon; tint: skin.accent; show: net.vpn and not net.hiddify }
+                image icon_vpn { at: 6, strip / 2 - icon / 2; size: icon, icon; tint: skin.accent; show: net.vpn and not net.hiddify }
             }
             // QS paints the Hiddify item's own icon on top of the slot and makes the shield
             // underneath transparent (NetClusterCapsule.qml:95, 100-108): the app's real picture,
             // four logical px smaller than the slot.
-            image vpn_tray { at: 8, strip / 2 + 1 - 5; size: 10, 10; show: net.vpn and net.hiddify }
+            image vpn_tray { at: 8, strip / 2 - 5; size: 10, 10; show: net.vpn and net.hiddify }
             // The weight is 700 because that is the face QS gets: it asks for Font.Black and
             // fontconfig answers with Iosevka Bold (`fc-match Iosevka:weight=black`), while
             // 600 lands on Medium — a visibly lighter readout. 9.6 design px is the
@@ -1269,9 +1276,9 @@ scene bar {
             // scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel too tall.
             // The reference also sets letterSpacing 0.5, which the scene language has no
             // property for (its `letter_*` effects move glyphs without opening the line).
-            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 5; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
+            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
             text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 5; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
-            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 3; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
+            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
             text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 3; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
             // The capsule's own press zone starts after the VPN slot, so the two never overlap:
             // the left part is the Hiddify item's (QS puts a MouseArea over the slot), the rest
@@ -1418,11 +1425,11 @@ scene bar {
             // The icon keeps the right end of the plate, the reading grows to its left. One of
             // five pictures, chosen by the logic's number: 0 up, 1 down, 2 off, 3 live mic,
             // 4 muted mic. The glyph is 14 px, the plate's edge is the capsule's 4.
-            image icon_vol_up { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 0 }
-            image icon_vol_down { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 1 }
-            image icon_vol_off { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 2 }
-            image icon_mic { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 3 }
-            image icon_mic_off { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 4 }
+            image icon_vol_up { at: gx - glyph.w / 2, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 0 }
+            image icon_vol_down { at: gx - glyph.w / 2, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 1 }
+            image icon_vol_off { at: gx - glyph.w / 2, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 2 }
+            image icon_mic { at: gx - glyph.w / 2, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 3 }
+            image icon_mic_off { at: gx - glyph.w / 2, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 4 }
             text "{readout}" {
                 measure w.out
                 at: w - capsule.pad - glyph.w - capsule.gap, strip / 2
