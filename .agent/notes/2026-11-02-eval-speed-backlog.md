@@ -143,3 +143,11 @@ is a no-op on that version). Nobody should "fix" numerics by rebuilding mimalloc
 **Also closed**: a full runtime sweep of 19 environment knobs found nothing — instruction counts
 stayed invariant (CV 0.07 %) and the best fault delta was −0.1 %; `PURGE_DELAY=0` is a real
 regression (+9.2 % faults).
+
+**`defrag=always` was the last page knob and it is not worth it** (A-B-A-B over three switch flips,
+10 runs per block on a pinned tree): minor faults 49.86k vs 49.82k median with 39 of 40 runs inside
+49.3–50.9k, instructions −0.002 %, wall −0.8 % ± 0.7 % SEM that did not reproduce between the two
+`always` blocks. The deciding number is elsewhere: `compact_stall` was **0 in all 20 `defer+madvise`
+runs and 197 in one `always` run** (with `thp_fault_fallback` 77, +62 % faults and the slowest wall
+of its block). `always` buys nothing and adds a host-wide synchronous-compaction tail risk, so the
+policy stays `enabled=always, defrag=defer+madvise`.
