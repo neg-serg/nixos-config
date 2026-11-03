@@ -1,0 +1,3 @@
+music-rename: rename music files/directories to a normalized scheme
+Usage: music-rename [options] PATH...
+  Renames files/dirs in-place following custom rules. Use with care.

@@ -1,0 +1,29 @@
+[package]
+name = "local-bin-zsh"
+version = "0.1.0"
+edition = "2021"
+description = "Rust ports of the last zsh helpers in packages/local-bin/bin (iommu-info, music-rename, read_documents, pl, music-tui)"
+license = "MIT"
+
+# One binary per former zsh script, installed under the script's own name.
+[[bin]]
+name = "iommu-info"
+path = "src/iommu_info.rs"
+
+[[bin]]
+name = "music-rename"
+path = "src/music_rename.rs"
+
+[[bin]]
+name = "read_documents"
+path = "src/read_documents.rs"
+
+[[bin]]
+name = "pl"
+path = "src/pl.rs"
+
+[[bin]]
+name = "music-tui"
+path = "src/music_tui.rs"
+
+[workspace]

@@ -106,6 +106,11 @@
           "v"
           "sclang-pwj"
           "renoise-pwj"
+          "iommu-info"
+          "music-rename"
+          "read_documents"
+          "pl"
+          "music-tui"
           "pic-notify"
           "screenrec"
           "clip"
@@ -213,6 +218,12 @@
         ".local/bin/v".source = lib.getExe' pkgs.neg.local-bin-misc "v";
         ".local/bin/sclang-pwj".source = lib.getExe' pkgs.neg.local-bin-misc "sclang-pwj";
         ".local/bin/renoise-pwj".source = lib.getExe' pkgs.neg.local-bin-misc "renoise-pwj";
+        # Rust ports of the last zsh helpers (packages/local-bin-zsh).
+        ".local/bin/iommu-info".source = lib.getExe' pkgs.neg.local-bin-zsh "iommu-info";
+        ".local/bin/music-rename".source = lib.getExe' pkgs.neg.local-bin-zsh "music-rename";
+        ".local/bin/read_documents".source = lib.getExe' pkgs.neg.local-bin-zsh "read_documents";
+        ".local/bin/pl".source = lib.getExe' pkgs.neg.local-bin-zsh "pl";
+        ".local/bin/music-tui".source = lib.getExe' pkgs.neg.local-bin-zsh "music-tui";
 
         # Rust ports of the desktop/media helpers (packages/local-bin-desktop).
         ".local/bin/pic-notify".source = lib.getExe' pkgs.neg.local-bin-desktop "pic-notify";

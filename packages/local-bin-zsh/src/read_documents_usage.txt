@@ -1,0 +1,2 @@
+read_documents: pick and open a document from ~/dw (vicinae dmenu -> zathura)
+Usage: read_documents

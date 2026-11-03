@@ -1,0 +1,6 @@
+music-tui: fzf-based TUI for music similarity, classification, and browsing
+Usage: music-tui [similar|classify|profile|interactive]
+  similar      Find similar tracks for current or selected track
+  classify     Run highlevel classification on a selected file
+  profile      Show music collection profile
+  interactive  Browse music files with similarity previews
