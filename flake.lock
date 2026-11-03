@@ -1311,11 +1311,11 @@
       "flake": false,
       "locked": {
         "narHash": "sha256-HIWm3X0+9k3In2jxjJTmhEjS6MeTKD3q9I7IGkurW7o=",
-        "path": "/home/neg/nixos-src/renoise",
+        "path": "/home/neg/.local/share/nixos-src/renoise",
         "type": "path"
       },
       "original": {
-        "path": "/home/neg/nixos-src/renoise",
+        "path": "/home/neg/.local/share/nixos-src/renoise",
         "type": "path"
       }
     },

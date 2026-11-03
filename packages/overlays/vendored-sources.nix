@@ -10,8 +10,8 @@
 # lsfg-vk}, and mprime in overlays/tools.nix). Keeping them out of the tree
 # keeps clones small; the release lives on GitHub, which a clone needs anyway.
 # Exception: the licensed Renoise installers are never published — they live
-# outside the repo and arrive as the `renoise-src` path input (flake.nix); see
-# the renoise block below.
+# outside the repo, under `$XDG_DATA_HOME/nixos-src/renoise`, and arrive as the
+# `renoise-src` path input (flake.nix); see the renoise block below.
 # Other overlays refer to this as "the vendored-tarball note in
 # overlays/vendored-sources.nix".
 { inputs, paths }: final: finalPrev: {
