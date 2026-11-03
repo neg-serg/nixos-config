@@ -1,13 +1,15 @@
 # pleamar-harness
 
-The three pleamar developer harnesses as one standalone Rust crate with three binaries. Ported from
-`files/pleamar/scripts/`:
+The pleamar developer harnesses as one standalone Rust crate with four binaries. Three are ported from
+`files/pleamar/scripts/`; `pleamar-rig` is new here (the idea comes from the sibling pleamar shell
+Vitreus, which runs it as `dev/rig`):
 
 | binary                  | original                   |
 | ----------------------- | -------------------------- |
 | `pleamar-measure`       | `scripts/measure.sh`       |
 | `pleamar-describe-snap` | `scripts/describe-snap.sh` |
 | `pleamar-smoke`         | `scripts/smoke.sh`         |
+| `pleamar-rig`           | — (new; see below)         |
 
 The CLI, stdout/stderr text, exit codes and artifact layout are the shell scripts' own. Usage texts
 keep the `*.sh` names for byte parity with `--help`; the binary names are the three above.
@@ -51,6 +53,30 @@ where the path is the script's hardcoded one.
 `--out`, `--keep-tmp`, `--live`, `--soft`, `--systemd` (describe), `--unit` (measure),
 `--require-render`/`--min-bytes` (smoke) keep their defaults and messages.
 
+## pleamar-rig
+
+A copy of the shell in a headless `pleamar-wm`, to look at and poke without touching the desktop in
+use:
+
+```sh
+pleamar-rig start [--scene bar] [--seconds 900] [--png shot.png] [--at 5] [--input "900,40@2000 down@2500"]
+pleamar-rig sync                 # copy the edited tree into the running copy (the shell reloads it)
+pleamar-rig say bar describe     # pleamar --say against the rig's socket
+pleamar-rig log [40]             # the end of the rig's log
+pleamar-rig stop                 # end it and remove the copy
+```
+
+The rig root is `$RIG` (default `/tmp/pleamar-rig`): its own `HOME`, `XDG_CONFIG_HOME`,
+`XDG_DATA_HOME`, `XDG_CACHE_HOME`, `XDG_STATE_HOME`, `XDG_RUNTIME_DIR`, `PLEAMAR_CONFIG` and log.
+`WAYLAND_DISPLAY`, `WAYLAND_SOCKET`, `DISPLAY` and `HYPRLAND_INSTANCE_SIGNATURE` are cleared, so the
+copy runs under `pleamar-wm`'s paths; the compositor is started through `setsid`, so `stop` can TERM
+the whole group. `--png`/`--at`/`--input` are `PLEAMAR_HEADLESS_PNG`/`_AT`/`_INPUT`; the last one is
+inherited when the flag is not given.
+
+What the copy shares with the desktop: the fonts, the network and any program the shell runs by name.
+What it cannot show: anything that needs Hyprland (gaps, borders, the glass's blur) — there is no
+compositor to ask.
+
 ## Deliberate differences
 
 - The repository root comes from `PLEAMAR_ROOT`/the flake instead of the script path (above).
@@ -74,7 +100,7 @@ where the path is the script's hardcoded one.
 cargo test --locked
 ```
 
-- `tests/measure.rs`, `tests/describe_snap.rs`, `tests/smoke.rs` — end-to-end runs with fake
+- `tests/measure.rs`, `tests/describe_snap.rs`, `tests/smoke.rs`, `tests/rig.rs` — end-to-end runs with fake
   external tools (argv logged), temp repos, a zombie scene pid, temp XDG sandbox and no real
   session/network/cgroup. They cover every flag, failure path, output format, cgroup columns (via
   the test seam), PNG verification, renderer fallbacks and the snapshot update/diff paths.

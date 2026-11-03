@@ -305,6 +305,10 @@ impl Case {
         Self::new(label, "pleamar-smoke", "smoke")
     }
 
+    pub fn rig(label: &str) -> Self {
+        Self::new(label, "pleamar-rig", "rig")
+    }
+
     fn new(label: &str, program: &str, tool: &str) -> Self {
         let dir = env::temp_dir().join(format!(
             "pleamar-harness-{}-{}-{}-{}",
@@ -360,6 +364,7 @@ impl Case {
             "pleamar-measure" => env!("CARGO_BIN_EXE_pleamar-measure"),
             "pleamar-describe-snap" => env!("CARGO_BIN_EXE_pleamar-describe-snap"),
             "pleamar-smoke" => env!("CARGO_BIN_EXE_pleamar-smoke"),
+            "pleamar-rig" => env!("CARGO_BIN_EXE_pleamar-rig"),
             other => panic!("unknown binary {other}"),
         });
         case.install_fakes();

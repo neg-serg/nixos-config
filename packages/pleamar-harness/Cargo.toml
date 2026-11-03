@@ -2,7 +2,7 @@
 name = "pleamar-harness"
 version = "0.1.0"
 edition = "2021"
-description = "The pleamar developer harnesses: measure, describe-snap and smoke"
+description = "The pleamar developer harnesses: measure, describe-snap, smoke and rig"
 license = "GPL-3.0-or-later"
 
 [lib]
@@ -20,6 +20,10 @@ path = "src/bin/pleamar-describe-snap.rs"
 [[bin]]
 name = "pleamar-smoke"
 path = "src/bin/pleamar-smoke.rs"
+
+[[bin]]
+name = "pleamar-rig"
+path = "src/bin/pleamar-rig.rs"
 
 # No Rust dependencies on purpose. The external commands the shell harnesses
 # ran stay external and keep their argv: pleamar, pleamar-wm, ps, systemctl,
