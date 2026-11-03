@@ -1,0 +1,53 @@
+// pages/keys.plm — the key binds (`drawer == keys`).
+//
+// Legacy: dhrruvsharma/shell's modules/keybinds (KeybindsPanel.qml, BindList,
+// KeyCap): every compositor bind, searchable. Here the source is the compositor
+// itself — `hyprctl binds -j` — not a hand-kept table, so the page cannot drift
+// from what is really bound. panels.luau runs it when the drawer opens, turns
+// `modmask` into names and filters the list as the field is typed.
+//
+// A row is the combo in the accent and the action beside it; the submap is shown
+// when there is one (`music`, `reset`), because the same combo means something
+// else inside it.
+
+part Keys {
+    component KeysDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 460 * scale, 460 * scale
+
+        group {
+            move: (screen.width - 460 * scale) / 2, (screen.height - 460 * scale) / 2 + (1 - lift) * 18 * scale
+            opacity: lift
+
+            body {
+                color: live.coal
+                opacity: 92%
+                border: 1, mix(live.coal, live.ink, 12%)
+                rim: 0.07
+                shadow: 0, 18, 44, 45%
+                box { from: 0, 0; size: 460, 460; corner: 14 }
+            }
+            box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
+            text "keys" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
+            text "{key_rows.total} bind(s)" { at: 444, 22; anchor: right center; family: "Iosevka"; size: 9; color: live.ink.off }
+
+            input key_query {
+                at: 16, 38; width: 428
+                size: 12; color: live.ink; family: "Iosevka"; selection: live.accent_deep
+                placeholder: "Search binds: key, action, submap"
+                label: "Search key binds"
+            }
+            box { from: 16, 68; size: 428, 1; color: live.ink; opacity: ink.subtle }
+
+            for r in key_rows {
+                text r.combo { at: 16, 86 + r.index * 28; anchor: left center; width: 190; lines: 1; family: "Iosevka"; size: 10; color: live.accent }
+                text r.action { at: 214, 86 + r.index * 28; anchor: left center; width: 230; lines: 1; family: "Iosevka"; size: 10; color: live.ink }
+                text r.submap { at: 444, 86 + r.index * 28; anchor: right center; family: "Iosevka"; size: 8; color: live.ink.off; show: r.has_submap }
+                box { from: 16, 100 + r.index * 28; size: 428, 1; color: live.ink; opacity: 6%; show: r.index < key_rows.total - 1 }
+            }
+
+            text "hyprctl binds · the compositor is the source" { at: 16, 438; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
+        }
+    }
+
+    KeysDrawer()
+}

@@ -1,0 +1,63 @@
+// pages/toggles.plm — the quick toggles (`drawer == toggles`).
+//
+// Legacy: dhrruvsharma/shell's control/Toggles.qml — the switches at the top of
+// the control centre (Wi-Fi, Bluetooth, do not disturb). The night light and the
+// power profile of the reference are not here: the shell has no night-light
+// daemon (wlsunset is not installed) and no power-profiles-daemon on this host,
+// so a switch for either would be a lie. The session menu is a row of its own,
+// because the quickest way to reach "log out" is not a drawer of its own.
+
+part Toggles {
+    component TogglesDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 400 * scale, 300 * scale
+
+        group {
+            move: (screen.width - 400 * scale) / 2, (screen.height - 300 * scale) / 2 + (1 - lift) * 18 * scale
+            opacity: lift
+
+            body {
+                color: live.coal
+                opacity: 92%
+                border: 1, mix(live.coal, live.ink, 12%)
+                rim: 0.07
+                shadow: 0, 18, 44, 45%
+                box { from: 0, 0; size: 400, 300; corner: 14 }
+            }
+            box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
+            text "toggles" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
+
+            // ---- wifi
+            text "Wi-Fi" { at: 16, 62; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text pick(net.wifi, "radio off", "no network") { at: 16, 78; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: not (net.wifi and net.online) }
+            text "{net.name}" { at: 16, 78; anchor: left center; width: 260; lines: 1; family: "Iosevka"; size: 9; color: live.ink.off; show: net.wifi and net.online }
+            group { move: 340, 56
+                Switch(toggle: toggle_wifi, on: net.wifi, label: "Wi-Fi", fill: live.slate, lit: live.accent, off: live.ink.off, on_tone: live.coal, scale: 1)
+            }
+
+            // ---- bluetooth
+            text "Bluetooth" { at: 16, 116; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text pick(bt.powered, "radio off", "radio on") { at: 16, 132; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            group { move: 340, 110
+                Switch(toggle: toggle_bt, on: bt.powered, label: "Bluetooth", fill: live.slate, lit: live.accent, off: live.ink.off, on_tone: live.coal, scale: 1)
+            }
+
+            // ---- do not disturb
+            text "Do not disturb" { at: 16, 170; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text "notifications stay in the centre" { at: 16, 186; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            group { move: 340, 164
+                Switch(toggle: toggle_dnd, on: dnd, label: "Do not disturb", fill: live.slate, lit: live.amber, off: live.ink.off, on_tone: live.coal, scale: 1)
+            }
+
+            box { from: 16, 212; size: 368, 1; color: live.ink; opacity: ink.subtle }
+
+            // ---- the way out
+            text "session menu" { at: 16, 240; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text "lock · sleep · log out · restart · shut down" { at: 16, 256; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            text "›" { at: 384, 240; anchor: right center; family: "Iosevka"; size: 18; color: live.accent }
+            zone box open_power { from: 16, 226; size: 368, 46; corner: 8; cursor: pointer; label: "Session menu"; role: button }
+            on press open_power { drawer = power }
+        }
+    }
+
+    TogglesDrawer()
+}

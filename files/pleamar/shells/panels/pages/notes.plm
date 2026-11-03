@@ -1,0 +1,54 @@
+// pages/notes.plm — the notes drawer (`drawer == notes`).
+//
+// Legacy: dhrruvsharma/shell's modules/notes/NotesDrawer.qml (categories, a
+// create dialog, a list) and modules/notepad/NotepadPanel.qml (one long text).
+// The port takes the part the shell can carry honestly: a list of short notes,
+// typed into the field and added with Enter, deleted with the × on their row,
+// kept in `notes.json` in this scene's own folder. Categories and a long
+// document are two more screens of design; the list is the one that holds the
+// thought before it is gone, which is what the drawer is for.
+
+part Notes {
+    component NotesDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 380 * scale, 420 * scale
+
+        group {
+            move: (screen.width - 380 * scale) / 2, (screen.height - 420 * scale) / 2 + (1 - lift) * 18 * scale
+            opacity: lift
+
+            body {
+                color: live.coal
+                opacity: 92%
+                border: 1, mix(live.coal, live.ink, 12%)
+                rim: 0.07
+                shadow: 0, 18, 44, 45%
+                box { from: 0, 0; size: 380, 420; corner: 14 }
+            }
+            box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
+            text "notes" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
+            text "{notes.total} saved" { at: 364, 22; anchor: right center; family: "Iosevka"; size: 9; color: live.ink.off }
+
+            input note_input {
+                at: 16, 40; width: 348
+                size: 12; color: live.ink; family: "Iosevka"; selection: live.accent_deep
+                placeholder: "Type a note, Enter adds it"
+                label: "New note"
+            }
+            box { from: 16, 70; size: 348, 1; color: live.ink; opacity: ink.subtle }
+
+            for n in notes {
+                text n.body { at: 16, 88 + n.index * 36; anchor: left top; width: 312; lines: 2; line_height: 1.2
+                    family: "Iosevka"; size: 11; color: live.ink }
+                text n.at { at: 16, 112 + n.index * 36; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
+                text "×" { at: 348, 88 + n.index * 36; anchor: right center; family: "Iosevka"; size: 14; color: live.ink.off }
+                zone box del { from: 330, 80 + n.index * 36; size: 30, 30; corner: 8; cursor: pointer; label: "Delete note {n.index + 1}"; role: button }
+                on press del { emit note_delete(n.index) }
+            }
+
+            text "no notes yet" { at: 190, 200; anchor: center; family: "Iosevka"; size: 11; color: live.ink.off; show: notes.total == 0 }
+            text "Enter adds · × deletes" { at: 16, 400; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
+        }
+    }
+
+    NotesDrawer()
+}

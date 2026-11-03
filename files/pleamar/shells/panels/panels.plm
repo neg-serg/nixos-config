@@ -258,14 +258,37 @@ scene panels {
         include "pages/bluetooth.plm"
     }
 
+    surface toggles_card { size: full, full
+                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                           open: drawer == toggles
+        include "pages/toggles.plm"
+    }
+    surface keys_card { size: full, full
+                        level: overlay; reserve: 0; screens: each
+                        keyboard: exclusive while drawer == keys
+                        open: drawer == keys
+        include "pages/keys.plm"
+    }
+    surface notes_card { size: full, full
+                         level: overlay; reserve: 0; screens: each
+                         keyboard: exclusive while drawer == notes
+                         open: drawer == notes
+        include "pages/notes.plm"
+    }
+    surface timer_card { size: full, full
+                         level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                         open: drawer == timer
+        include "pages/timer.plm"
+    }
+
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*). `ip` and `ping` are the connection's
     // own two probes while the network drawer is open — the same commands QS's
     // Connectivity.qml runs.
     // `wl-copy` is the reference's clipboard copy of the journal's problems (SystemMonitorPopup.qml:17-40
     // runs it every time the dashboard opens, so a paste into a chat carries the lines).
-    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "pleamar-themes", "flow", "ip", "ping", "pleamar", "wl-copy", "systemctl"
-                  services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*", "bluetooth", "bluetooth.*" }
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "pleamar-themes", "flow", "ip", "ping", "pleamar", "wl-copy", "systemctl", "hyprctl", "notify-send"
+                  services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*", "bluetooth", "bluetooth.*", "network.*", "say:notifications", "clock" }
 
     // ----***--------------- bluetooth (the `bluetooth` drawer)
     // The adapter's state, the devices and what bluetoothd is asking, straight from the
@@ -292,8 +315,30 @@ scene panels {
         devices: bt_devices
     }
 
+    // ----***--------------- the quick toggles (`toggles`)
+    // The radio states come from the services the rest of the shell already trusts; the Wi-Fi
+    // switch commands `network.wifi`, the Bluetooth one `bluetooth.power`, and do-not-disturb is
+    // the notifications scene's own fact, read back through `--say` and set through it.
+    service network as net { wifi: bool; online: bool; name: text }
+    fact dnd = false
+
+    // ----***--------------- the key binds (`keys`)
+    // Filled by panels.luau from `hyprctl binds -j` when the drawer opens and re-filtered as the
+    // field changes; the scene draws what the compositor reported, not a table that can drift.
+    model key_rows max 12 { combo: text; action: text; submap: text; has_submap: bool }
+    text key_query = ""
+
+    // ----***--------------- the notes (`notes`)
+    model notes max 9 { body: text; at: text }
+    text note_input = ""
+
+    // ----***--------------- the timer (`timer`)
+    fact timer_running = false
+    fact timer_seconds = 0
+    text timer_text = "0:00"
+
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell | power | bluetooth = none
+    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell | power | bluetooth | toggles | keys | notes | timer = none
     // The socket takes the enum's value names (`--say panels "fact drawer weather"`), which is how
     // the bar opens a drawer; a separate numeric mirror was declared here and never written, and
     // its only reader opened the media card without the catcher, so the card could not be closed.
@@ -389,19 +434,28 @@ scene panels {
     event close_drawer
     // The session menu's five actions (pages/power.plm). panels.luau runs them; the
     // two destructive ones are hold-only in the page and `agent: no`.
-    event power_lock
-    event power_suspend
-    event power_logout
-    event power_reboot
-    event power_poweroff
+    event power_lock ->
+    event power_suspend ->
+    event power_logout ->
+    event power_reboot ->
+    event power_poweroff ->
     // The Bluetooth drawer: the adapter, a scan, a device by its row index, a paired
     // device to forget, and the answer to a pairing prompt.
-    event bt_power
-    event bt_scan
+    event bt_power ->
+    event bt_scan ->
     event bt_device ->
     event bt_forget ->
-    event bt_confirm
-    event bt_cancel
+    event bt_confirm ->
+    // The toggles', the notes' and the timer's own actions.
+    event toggle_wifi ->
+    event toggle_bt ->
+    event toggle_dnd ->
+    event note_add ->
+    event note_delete ->
+    event timer_add ->
+    event timer_toggle ->
+    event timer_reset ->
+    event bt_cancel ->
 
     // Calendar navigation (panels.luau re-asks the worker for the month).
     event cal_prev ->
