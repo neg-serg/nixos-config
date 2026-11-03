@@ -1350,6 +1350,7 @@ local function journal_refresh()
             if not copied then log("panels: the journal was not copied") end
         end
         fact.journal_ok = true
+        fact["sys.have"] = true
     end)
     if not ok then
         text["sys.logs"], text["sys.errors"], text["sys.services"] = "--", "--", "--"

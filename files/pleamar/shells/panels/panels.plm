@@ -316,6 +316,10 @@ scene panels {
     // The system dashboard's figures (SystemMonitorPopup.qml: Log Lines,
     // Errors, Services) and its last few journal entries.
     fact journal_ok = false
+    // Whether a snapshot has landed at all: the page says "reading the journal…" until it has,
+    // so an opened dashboard does not announce that there are no entries while the worker is
+    // still answering (the first one takes a second or two).
+    fact sys.have = false
     text sys.logs = "--"
     text sys.errors = "--"
     text sys.services = "--"

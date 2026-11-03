@@ -84,8 +84,13 @@ part SysPanel {
                 text e.msg { at: 250, 168 + e.index * 20; anchor: left center; width: 770; lines: 1; family: "Iosevka"; size: 13; color: skin.ink }
             }
 
+            // Two states, not one: the worker answers a second or two after the drawer opens, and
+            // "no entries" is a claim about the world, not a loading label — `sys.have` is what
+            // tells them apart.
+            text "reading the journal…" { at: 380, 200; anchor: center; family: "Iosevka"; size: 11; color: ink.off
+                show: journal.total == 0 and not sys.have }
             text "no journal entries in the last day" { at: 380, 200; anchor: center; family: "Iosevka"; size: 11; color: ink.off
-                show: journal.total == 0 }
+                show: journal.total == 0 and sys.have }
 
             // ----***--------------------------- history
             // The worker samples while the drawer is open; panels.luau keeps the last 60
