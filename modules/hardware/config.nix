@@ -50,7 +50,10 @@ in
         # adapter sat powered down and `bluetoothctl devices` stayed empty).
         powerOnBoot = true;
         settings = {
-          General.Enable = "Source,Sink,Media,Socket";
+          # No `General.Enable`: BlueZ dropped that key and logs
+          # "Unknown key Enable for group General in /etc/bluetooth/main.conf" at
+          # every start. It enables the profiles itself; the LE Audio gates below
+          # are the ones that still matter.
           # LE Audio (LC3) lives behind two runtime gates in BlueZ, neither
           # needs a kernel rebuild: the BAP profile is only registered when
           # bluetoothd runs with experimental D-Bus interfaces on, and it
