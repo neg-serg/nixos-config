@@ -1,6 +1,5 @@
 # Graphite — a cool, low-chroma palette with a pale-cyan accent.
 name = "Graphite"
-font = "Iosevka"
 light = false
 
 [palette]

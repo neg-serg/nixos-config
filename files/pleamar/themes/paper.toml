@@ -2,7 +2,6 @@
 # scenes for (a dark ink on a bright surface, and the writing over a wallpaper
 # takes its dark tone).
 name = "Paper"
-font = "Iosevka"
 light = true
 
 [palette]
