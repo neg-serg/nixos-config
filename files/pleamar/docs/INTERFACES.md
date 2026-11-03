@@ -218,22 +218,28 @@ order.
 `panels/*` is the shell's name for the drawer family; each entry is a *drawer name*, not a scene,
 and all of them live in the one `panels` process:
 
-`volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`, `shell`, `power`.
+`volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`, `shell`, `power`,
+`bluetooth`.
 
 That is the whole list: the `drawer` fact names exactly the drawers that have a page behind them.
-`microphone`, `bluetooth`, `keyboard`, `tray` and `settings` were reserved names with no
-part, so a press on them opened an empty window; the owner dropped them on 2026-10-28, and there is
-no settings drawer to come — the shell's settings are the per-scene JSON files (§6). `shell` is the
-one page that edits them while the shell runs: window scale, type scale, the two closing rules,
-Fahrenheit, the weather city and the holiday country (`settings.json`) and the light theme's paper
-warmth, each written at once and saved through `files.write`. `theme` is not a settings page either:
-it lists the theme files under `~/.config/pleamar/themes` and applies one through `pleamar-themes`
+`microphone`, `keyboard`, `tray` and `settings` were reserved names with no part, so a
+press on them opened an empty window; the owner dropped them on 2026-10-28, and there is no settings
+drawer to come — the shell's settings are the per-scene JSON files (§6). `shell` is the one page
+that edits them while the shell runs: window scale, type scale, the two closing rules, Fahrenheit,
+the weather city and the holiday country (`settings.json`) and the light theme's paper warmth, each
+written at once and saved through `files.write`. `theme` is not a settings page either: it lists the
+theme files under `~/.config/pleamar/themes` and applies one through `pleamar-themes`
 (`packages/pleamar-theme`), which rewrites `theme.plm` the way the wallpaper pipeline does (§1.4).
 The bar's `toggle_theme_panel` opens it (`M4+SH+g`); no capsule carries it. A light theme
 (`light = true` in its file) names its accent and nothing else about its whites: the paper, the
 surface under it and the ink come from one warmth in kelvin, which the drawer shows as a slider
 while that theme is in place (`pleamar-themes warm K`: 2700 warm, 6500 neutral, 4300 unless set).
-`build` was added when its page landed and was missing from this list. `power` came back on
+`build` was added when its page landed and was missing from this list. `bluetooth` came back on
+2026-11-04 with a page and a bar capsule: the adapter's power, a scan, the devices
+(connected, paired, nearby) with connect/disconnect/forget, and the pairing prompt for
+the kinds answered with a yes (`confirm`, `authorize`); `pin` and `passkey` need a field
+the page does not have yet and say so, and `display` needs no answer. A row press carries
+the model's index; the addresses are panels.luau's. `power` came back the same day
 2026-11-04 with a page: the session menu (lock, sleep, log out, restart, shut down), opened by
 `M4+SH+Escape`; restart and shut down take a 600 ms hold and are `agent: no`.
 
