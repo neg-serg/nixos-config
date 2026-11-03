@@ -218,10 +218,10 @@ order.
 `panels/*` is the shell's name for the drawer family; each entry is a *drawer name*, not a scene,
 and all of them live in the one `panels` process:
 
-`volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`, `shell`.
+`volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`, `shell`, `power`.
 
 That is the whole list: the `drawer` fact names exactly the drawers that have a page behind them.
-`microphone`, `bluetooth`, `keyboard`, `tray`, `power` and `settings` were reserved names with no
+`microphone`, `bluetooth`, `keyboard`, `tray` and `settings` were reserved names with no
 part, so a press on them opened an empty window; the owner dropped them on 2026-10-28, and there is
 no settings drawer to come — the shell's settings are the per-scene JSON files (§6). `shell` is the
 one page that edits them while the shell runs: window scale, type scale, the two closing rules,
@@ -233,7 +233,9 @@ The bar's `toggle_theme_panel` opens it (`M4+SH+g`); no capsule carries it. A li
 (`light = true` in its file) names its accent and nothing else about its whites: the paper, the
 surface under it and the ink come from one warmth in kelvin, which the drawer shows as a slider
 while that theme is in place (`pleamar-themes warm K`: 2700 warm, 6500 neutral, 4300 unless set).
-`build` was added when its page landed and was missing from this list.
+`build` was added when its page landed and was missing from this list. `power` came back on
+2026-11-04 with a page: the session menu (lock, sleep, log out, restart, shut down), opened by
+`M4+SH+Escape`; restart and shut down take a 600 ms hold and are `agent: no`.
 
 A drawer's surface is the whole monitor (`size: full, full`) and the card is placed in `screen`
 coordinates by its page: a surface's `size:` takes a literal and never follows `zoom`, so a card
