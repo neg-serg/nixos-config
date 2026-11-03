@@ -566,6 +566,224 @@ on("bt_cancel", function()
     bt_call("bluetooth.cancel", id)
 end)
 
+-- ==================== the quick toggles ====================
+
+-- Two switches and one flag. The radios are the services' own commands (`network.wifi`,
+-- `bluetooth.power`); do not disturb is the notifications scene's fact, so it is read back with
+-- `--say … get` and written with `--say … fact` — the shell's cross-scene rule (§1.2) rather than a
+-- second copy of the state here.
+local net_state = {}
+
+sys.watch("network", function(n)
+    if type(n) == "table" then net_state = n end
+end)
+
+on("toggle_wifi", function()
+    touch_drawer()
+    local ok, err = pcall(function() sys.call("network.wifi", not (net_state.wifi == true)) end)
+    if not ok then log("panels: network.wifi failed: " .. tostring(err)) end
+end)
+
+on("toggle_bt", function()
+    touch_drawer()
+    bt_call("bluetooth.power", not (bt_raw.powered == true))
+end)
+
+local function refresh_dnd()
+    run("pleamar", { "--say", "notifications", "get", "dnd" }, function(out)
+        local value = tostring(out or ""):match("%S+")
+        fact.dnd = (value == "true")
+    end)
+end
+
+on("toggle_dnd", function()
+    touch_drawer()
+    local next_value = not fact.dnd
+    fact.dnd = next_value
+    run("pleamar", { "--say", "notifications", "fact", "dnd", (next_value and "true" or "false") }, function() end)
+end)
+
+-- ==================== the key binds ====================
+
+-- `hyprctl binds -j` is the compositor's own list: 276 binds on this host, so the drawer shows the
+-- first twelve that match the field. The modmask is a bit field (1 shift, 4 ctrl, 8 alt, 64 super),
+-- and the combo is written back in the order the reference prints it.
+local key_binds = nil
+
+local function key_combo(mods, key)
+    mods = tonumber(mods) or 0
+    local parts = {}
+    if mods >= 64 then parts[#parts + 1] = "Super"; mods = mods - 64 end
+    if mods >= 4 then parts[#parts + 1] = "Ctrl"; mods = mods - 4 end
+    if mods >= 8 then parts[#parts + 1] = "Alt"; mods = mods - 8 end
+    if mods % 2 == 1 then parts[#parts + 1] = "Shift" end
+    local combo = tostring(key or "?")
+    if #parts > 0 then combo = table.concat(parts, "+") .. "+" .. combo end
+    return combo
+end
+
+local function keys_filter()
+    local rows = {}
+    local query = tostring(text.key_query or ""):lower()
+    if key_binds then
+        for _, b in ipairs(key_binds) do
+            if query == ""
+                or b.combo_lower:find(query, 1, true)
+                or b.action_lower:find(query, 1, true)
+                or b.submap_lower:find(query, 1, true)
+            then
+                rows[#rows + 1] = { combo = b.combo, action = b.action, submap = b.submap, has_submap = b.submap ~= "" }
+                if #rows >= 12 then break end
+            end
+        end
+    end
+    model.key_rows = rows
+end
+
+local function keys_load()
+    run("hyprctl", { "binds", "-j" }, function(out)
+        local ok, list = pcall(json.decode, out or "")
+        if not ok or type(list) ~= "table" then
+            log("panels: hyprctl binds -j did not answer with a list")
+            key_binds = nil
+            keys_filter()
+            return
+        end
+        local binds = {}
+        for _, b in ipairs(list) do
+            if type(b) == "table" then
+                local combo = key_combo(b.modmask, b.key)
+                local arg = b.arg
+                local action = tostring(b.dispatcher or "")
+                if arg ~= nil and tostring(arg) ~= "" then action = action .. " " .. tostring(arg) end
+                local submap = tostring(b.submap or "")
+                binds[#binds + 1] = {
+                    combo = combo, action = action, submap = submap,
+                    combo_lower = combo:lower(), action_lower = action:lower(), submap_lower = submap:lower(),
+                }
+            end
+        end
+        key_binds = binds
+        keys_filter()
+    end)
+end
+
+on("text:key_query", function() keys_filter() end)
+
+-- ==================== the notes ====================
+
+-- `notes.json` in this scene's own folder: the newest first, and the file is the whole state (a
+-- hand edit is re-read when the drawer opens). The stamp is the clock service's, since `os` is
+-- closed in the logic's sandbox.
+local NOTES_FILE = "notes.json"
+local notes = {}
+local clock_now = { hour = 0, minute = 0 }
+
+sys.watch("clock", function(c)
+    if type(c) == "table" then clock_now = c end
+end)
+
+local function notes_publish()
+    local rows = {}
+    for _, n in ipairs(notes) do
+        rows[#rows + 1] = { body = tostring(n.body or ""), at = tostring(n.at or "") }
+    end
+    model.notes = rows
+end
+
+local function notes_save()
+    sys.call("files.write", NOTES_FILE, { notes = notes })
+end
+
+local function notes_load()
+    local ok, got = pcall(function() return sys.ask("files.read", NOTES_FILE, "json") end)
+    if ok and type(got) == "table" and type(got.notes) == "table" then
+        notes = got.notes
+    elseif not ok then
+        notes = {}
+        log("panels: notes.json is broken; starting empty")
+    else
+        notes = {}
+    end
+    notes_publish()
+end
+
+on("submit:note_input", function(value)
+    touch_drawer()
+    if type(value) ~= "string" then return end
+    local body = value:match("^%s*(.-)%s*$")
+    if body == "" then return end
+    local hour = tonumber(clock_now.hour) or 0
+    local minute = tonumber(clock_now.minute) or 0
+    table.insert(notes, 1, { body = body, at = string.format("%02d:%02d", hour, minute) })
+    text.note_input = ""
+    notes_publish()
+    notes_save()
+end)
+
+on("note_delete", function(index)
+    touch_drawer()
+    if type(index) ~= "number" then return end
+    table.remove(notes, index + 1)
+    notes_publish()
+    notes_save()
+end)
+
+-- ==================== the timer ====================
+
+local timer_left = 0
+
+local function timer_publish()
+    local minutes = math.floor(timer_left / 60)
+    local seconds = timer_left % 60
+    text.timer_text = string.format("%d:%02d", minutes, seconds)
+    fact.timer_seconds = timer_left
+end
+
+on("timer_add", function(seconds)
+    touch_drawer()
+    if type(seconds) ~= "number" then return end
+    timer_left = timer_left + seconds
+    timer_publish()
+end)
+
+on("timer_toggle", function()
+    touch_drawer()
+    if timer_left <= 0 then return end
+    fact.timer_running = not fact.timer_running
+end)
+
+on("timer_reset", function()
+    touch_drawer()
+    timer_left = 0
+    fact.timer_running = false
+    timer_publish()
+end)
+
+every(1000, function()
+    if not fact.timer_running then return end
+    if timer_left > 0 then
+        timer_left = timer_left - 1
+        timer_publish()
+    end
+    if timer_left <= 0 then
+        fact.timer_running = false
+        timer_publish()
+        run("notify-send", { "-a", "pleamar", "-u", "critical", "Timer", "Time is up" }, function() end)
+    end
+end)
+
+-- The drawers that need something done when they open: the binds are read fresh (the compositor's
+-- list may have changed since last time), the notes are re-read (a hand edit is honoured), and the
+-- do-not-disturb switch is asked what the notifications scene says now.
+on("fact:drawer", function(value)
+    if value == "keys" then keys_load() end
+    if value == "notes" then notes_load() end
+    if value == "toggles" then refresh_dnd() end
+end)
+
+notes_load()
+
 -- ==================== samples into the drawing ====================
 
 -- ---- sysmon: one `tiles` record per metric -------------------------------

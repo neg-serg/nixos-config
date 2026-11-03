@@ -1,0 +1,55 @@
+// pages/timer.plm — the countdown (`drawer == timer`).
+//
+// Legacy: dhrruvsharma/shell's modules/timer/TimerComponent.qml. A countdown the
+// shell can ring: panels.luau keeps the remaining seconds and ticks them once a
+// second while running; at zero it sends a desktop notification through the
+// shell's own server (`notify-send`), which is what the notifications scene
+// shows. The steps are the reference's idea in the plainest form: one and five
+// minutes, start/pause, reset.
+
+part Timer {
+    component TimerDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 320 * scale, 250 * scale
+
+        group {
+            move: (screen.width - 320 * scale) / 2, (screen.height - 250 * scale) / 2 + (1 - lift) * 18 * scale
+            opacity: lift
+
+            body {
+                color: live.coal
+                opacity: 92%
+                border: 1, mix(live.coal, live.ink, 12%)
+                rim: 0.07
+                shadow: 0, 18, 44, 45%
+                box { from: 0, 0; size: 320, 250; corner: 14 }
+            }
+            box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
+            text "timer" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
+            text pick(timer_running, "paused", "counting") { at: 304, 22; anchor: right center; family: "Iosevka"; size: 9; color: pick(timer_running, live.ink.off, live.accent) }
+
+            text timer_text { at: 160, 100; anchor: center; family: "Iosevka"; size: 46; weight: 600; color: live.ink }
+
+            // ---- one and five minutes
+            text "+1" { at: 96, 154; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: live.ink }
+            text "+5" { at: 136, 154; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: live.ink }
+            text "start" { at: 200, 154; anchor: center; family: "Iosevka"; size: 11; weight: 700; color: live.accent }
+            text "pause" { at: 200, 154; anchor: center; family: "Iosevka"; size: 11; weight: 700; color: live.amber; show: timer_running }
+            text "start" { at: 200, 154; anchor: center; family: "Iosevka"; size: 11; weight: 700; color: live.accent; show: not timer_running }
+            text "reset" { at: 256, 154; anchor: center; family: "Iosevka"; size: 11; color: live.ink.dim }
+
+            zone box add1 { from: 78, 140; size: 36, 28; corner: 8; cursor: pointer; label: "One more minute"; role: button }
+            zone box add5 { from: 118, 140; size: 36, 28; corner: 8; cursor: pointer; label: "Five more minutes"; role: button }
+            zone box run { from: 168, 140; size: 64, 28; corner: 8; cursor: pointer; label: pick(timer_running, "Start the timer", "Pause the timer"); role: button }
+            zone box reset { from: 238, 140; size: 44, 28; corner: 8; cursor: pointer; label: "Reset the timer"; role: button }
+
+            on press add1 { emit timer_add(60) }
+            on press add5 { emit timer_add(300) }
+            on press run { emit timer_toggle }
+            on press reset { emit timer_reset }
+
+            text "the shell rings when it reaches zero" { at: 160, 214; anchor: center; family: "Iosevka"; size: 8; color: live.ink.off }
+        }
+    }
+
+    TimerDrawer()
+}
