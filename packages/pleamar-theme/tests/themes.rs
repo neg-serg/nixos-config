@@ -255,18 +255,24 @@ fn plain_lists_one_row_per_theme_and_marks_the_applied_one() {
         .find(|line| line.contains("Amber"))
         .expect("the amber row");
     let fields: Vec<&str> = amber.split('\t').collect();
-    assert_eq!(fields.len(), 5, "{amber}");
+    assert_eq!(fields.len(), 8, "{amber}");
     assert_eq!(fields[0], "Amber");
     assert_eq!(fields[1], "Iosevka");
     assert_eq!(fields[2], "-");
     assert!(fields[3].ends_with("amber.toml"), "{amber}");
     assert_eq!(fields[4], "1", "the applied theme is marked: {amber}");
+    assert_eq!(
+        &fields[5..8],
+        ["1.0000", "0.7020", "0.2784"],
+        "the accent channels: {amber}"
+    );
 
     let cool = lines
         .iter()
         .find(|line| line.contains("Cool"))
         .expect("the cool row");
     assert_eq!(cool.split('\t').nth(4), Some("0"), "{cool}");
+    assert_eq!(cool.split('\t').nth(5), Some("0.0000"), "{cool}");
 
     // Applying the other theme moves the mark.
     let output = case.run(&["apply", "cool"]);

@@ -1452,8 +1452,8 @@ local function theme_refresh()
         local rows = {}
         theme_paths = {}
         for line in tostring(out):gmatch("[^\n]+") do
-            local name, font, corners, path, selected =
-                line:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$")
+            local name, font, corners, path, selected, accent_r, accent_g, accent_b =
+                line:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$")
             if name and #rows < THEME_ROWS then
                 local idx = #rows
                 theme_paths[idx] = path
@@ -1461,9 +1461,11 @@ local function theme_refresh()
                     idx = idx,
                     name = name,
                     detail = (font ~= "-" and font or "the shell's font")
-                        .. "  \u{00b7}  "
-                        .. (corners ~= "-" and (corners .. " px") or "square"),
+                        .. (corners ~= "-" and ("  \u{00b7}  " .. corners .. " px") or ""),
                     selected = selected == "1",
+                    accent_r = tonumber(accent_r) or 0,
+                    accent_g = tonumber(accent_g) or 0,
+                    accent_b = tonumber(accent_b) or 0,
                 }
             end
         end
