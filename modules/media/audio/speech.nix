@@ -8,9 +8,12 @@ let
   enabled = config.lib.neg.enabled "media.audio.speech";
   systemdUser = config.lib.neg.systemdUser;
   eng = "/zero/ai/speech/engines"; # speech stack location (ZFS pool, main user-owned)
-  # Inference only: nixpkgs builds piper with its training extras by default
-  # (torch + triton, ~3G); withTrain=false keeps the server identical.
-  piper = pkgs.piper-tts.override { withTrain = false; };
+  # Inference only: nixpkgs builds piper with training extras (torch + triton,
+  # ~3G) and Japanese dictionaries (~320M) by default; neither is used here.
+  piper = pkgs.piper-tts.override {
+    withTrain = false;
+    withJapanese = false;
+  };
 
   # Shared python for the thin FastAPI wrappers (piper-server.py / whisper-server.py).
   # Chatterbox uses its own pip venv (torch ROCm wheels) — see the setup script.
