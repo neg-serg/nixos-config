@@ -28,7 +28,7 @@ use sdl2::video::WindowContext;
 use assets::Assets;
 use director::{Director, Upgrade, CHUNK_W};
 use effects::Particles;
-use gameplay::{Badnik, Capsule, RingPickup, Shot};
+use gameplay::{Badnik, Capsule, Crate, CrateLoot, Hairball, RingPickup, Shot, Spring};
 use level::{DROP_COUNT, SPAWN, VIEW_H, VIEW_W, WORLD_H, WORLD_W};
 use math::{hash01, smooth, Rect, Vec2};
 use player::{Input, Player};
@@ -60,8 +60,16 @@ struct Game<'a> {
     shots: Vec<Shot>,
     rings: Vec<RingPickup>,
     capsule: Option<Capsule>,
+    crates: Vec<Crate>,
+    springs: Vec<Spring>,
+    hairballs: Vec<Hairball>,
+    weapon_cooldown: f32,
+    shots_fired: u32,
+    crates_broken: u32,
+    springs_used: u32,
     hearts: i32,
     invuln: f32,
+    landed_this_frame: bool,
     rings_taken: u32,
     stomps: u32,
     hits_taken: u32,
@@ -106,8 +114,16 @@ impl<'a> Game<'a> {
             shots: Vec::new(),
             rings: Vec::new(),
             capsule: None,
+            crates: Vec::new(),
+            springs: Vec::new(),
+            hairballs: Vec::new(),
+            weapon_cooldown: 0.0,
+            shots_fired: 0,
+            crates_broken: 0,
+            springs_used: 0,
             hearts: 3,
             invuln: 0.0,
+            landed_this_frame: false,
             rings_taken: 0,
             stomps: 0,
             hits_taken: 0,
@@ -150,6 +166,14 @@ impl<'a> Game<'a> {
         self.shots.clear();
         self.rings.clear();
         self.capsule = None;
+        self.crates.clear();
+        self.springs.clear();
+        self.hairballs.clear();
+        self.level.extra.clear();
+        self.weapon_cooldown = 0.0;
+        self.shots_fired = 0;
+        self.crates_broken = 0;
+        self.springs_used = 0;
         self.hearts = 3;
         self.invuln = 0.0;
         self.rings_taken = 0;
@@ -184,6 +208,26 @@ impl<'a> Game<'a> {
             upgrade,
             taken: false,
         });
+        self.crates = encounter
+            .crates
+            .iter()
+            .map(|pos| Crate {
+                pos: *pos,
+                hp: 2,
+                alive: true,
+                loot: gameplay::crate_loot(pos.x),
+            })
+            .collect();
+        self.springs = encounter
+            .springs
+            .iter()
+            .map(|pos| Spring {
+                pos: *pos,
+                cooldown: 0.0,
+            })
+            .collect();
+        self.hairballs.clear();
+        self.sync_solids();
         self.scenario = encounter.scenario.to_string();
         self.scenario_t = 3.0;
         self.current_chunk = chunk;
@@ -194,7 +238,45 @@ impl<'a> Game<'a> {
         }
     }
 
-    fn update_encounter(&mut self, dt: f32) {
+    fn sync_solids(&mut self) {
+        self.level.extra.clear();
+        for c in &self.crates {
+            if c.alive {
+                self.level.extra.push(c.hitbox());
+            }
+        }
+    }
+
+    fn break_crate(&mut self, index: usize) {
+        if !self.crates[index].alive {
+            return;
+        }
+        self.crates[index].alive = false;
+        self.crates_broken += 1;
+        let c = self.crates[index];
+        self.particles.sparkle(c.pos + Vec2::new(0.0, -22.0));
+        let _ = c;
+        match self.crates[index].loot {
+            CrateLoot::Rings(n) => {
+                for k in 0..n as i32 {
+                    let offset = (k as f32 - n as f32 * 0.5) * 20.0;
+                    self.rings.push(RingPickup {
+                        pos: self.crates[index].pos + Vec2::new(offset, -36.0 - k as f32 * 6.0),
+                        taken: false,
+                    });
+                }
+            }
+            CrateLoot::Heart => {
+                self.hearts = (self.hearts + 1).min(5);
+                self.toast = 1.8;
+                self.toast_text = "СЕРДЦЕ".into();
+            }
+            CrateLoot::Nothing => {}
+        }
+        self.sync_solids();
+    }
+
+    fn update_encounter(&mut self, dt: f32, fire: bool) {
         let chunk_x0 = self.current_chunk as f32 * CHUNK_W;
         for badnik in &mut self.badniks {
             if badnik.alive {
@@ -269,6 +351,106 @@ impl<'a> Game<'a> {
                 self.toast_text = format!("СБОРКА: {}", upgrade.label());
             }
         }
+
+        // Springs launch the cat; great for reaching high rings.
+        for spring in &mut self.springs {
+            spring.cooldown = (spring.cooldown - dt).max(0.0);
+            if spring.cooldown <= 0.0
+                && self.player.on_ground
+                && spring.trigger().overlaps(self.player.hitbox())
+            {
+                spring.cooldown = 0.45;
+                self.player.vel.y = -1550.0;
+                self.player.on_ground = false;
+                self.springs_used += 1;
+                self.particles.dust(self.player.pos, 1.0);
+                self.particles.sparkle(spring.pos + Vec2::new(0.0, -12.0));
+            }
+        }
+
+        // Weapon: a furball every third of a second.
+        self.weapon_cooldown = (self.weapon_cooldown - dt).max(0.0);
+        if fire && self.weapon_cooldown <= 0.0 {
+            self.weapon_cooldown = 0.34;
+            self.shots_fired += 1;
+            let c = self.player.center();
+            self.hairballs.push(Hairball {
+                pos: c + Vec2::new(self.player.facing * 36.0, 4.0),
+                vel: Vec2::new(self.player.facing * 920.0, -80.0),
+                life: 1.5,
+                bounces: 0,
+            });
+        }
+
+        let chunk_x0 = self.current_chunk as f32 * CHUNK_W;
+        for ball in &mut self.hairballs {
+            ball.life -= dt;
+            ball.vel.y += 1000.0 * dt;
+            ball.pos += ball.vel * dt;
+            let wl = self.level.waterline(ball.pos.x);
+            if ball.pos.y > wl - 2.0 {
+                if ball.bounces == 0 {
+                    ball.pos.y = wl - 2.0;
+                    ball.vel.y = -520.0;
+                    ball.bounces = 1;
+                } else {
+                    ball.life = 0.0;
+                }
+            }
+            if ball.pos.x < chunk_x0 || ball.pos.x > chunk_x0 + CHUNK_W {
+                ball.life = 0.0;
+            }
+        }
+
+        let mut hits: Vec<(usize, Option<usize>, Option<usize>)> = Vec::new();
+        for bi in 0..self.hairballs.len() {
+            if self.hairballs[bi].life <= 0.0 {
+                continue;
+            }
+            let hb = self.hairballs[bi].hitbox();
+            let bad = self
+                .badniks
+                .iter()
+                .position(|b| b.alive && b.hitbox().overlaps(hb));
+            let cr = self
+                .crates
+                .iter()
+                .position(|c| c.alive && c.hitbox().overlaps(hb));
+            if bad.is_some() || cr.is_some() {
+                hits.push((bi, bad, cr));
+            }
+        }
+        for (bi, bad, cr) in hits {
+            self.hairballs[bi].life = 0.0;
+            let at = self.hairballs[bi].pos;
+            if let Some(b) = bad {
+                self.badniks[b].alive = false;
+                self.stomps += 1;
+                let pos = self.badniks[b].pos;
+                self.particles.sparkle(pos);
+            }
+            if let Some(ci) = cr {
+                self.crates[ci].hp = self.crates[ci].hp.saturating_sub(1);
+                if self.crates[ci].hp == 0 {
+                    self.break_crate(ci);
+                }
+            }
+            self.particles.dust(at, 1.0);
+        }
+        self.hairballs.retain(|b| b.life > 0.0);
+
+        // Stomping a crate breaks it and drops the loot.
+        if self.landed_this_frame {
+            if let Some(i) = self.crates.iter().position(|c| {
+                c.alive
+                    && (self.player.pos.x - c.pos.x).abs() < 34.0
+                    && (self.player.pos.y - (c.pos.y - 44.0)).abs() < 8.0
+            }) {
+                self.break_crate(i);
+                self.player.vel.y = -520.0;
+                self.player.on_ground = false;
+            }
+        }
     }
 
     fn damage(&mut self) {
@@ -337,7 +519,7 @@ impl<'a> Game<'a> {
                 / self.director.campaign.len() as f32
         };
         format!(
-            "{{\"seed\":{},\"hearts\":{},\"drops\":{},\"chunks\":[{}],\"events\":{{\"rings\":{},\"stomps\":{},\"hits\":{},\"upgrades\":{{\"speed\":{},\"jump\":{},\"magnet\":{},\"shield\":{}}}}},\"summary\":{{\"fun_avg\":{:.3},\"novelty_avg\":{:.3},\"scenarios\":{}}}}}",
+            "{{\"seed\":{},\"hearts\":{},\"drops\":{},\"chunks\":[{}],\"events\":{{\"rings\":{},\"stomps\":{},\"hits\":{},\"shots\":{},\"crates\":{},\"springs\":{},\"upgrades\":{{\"speed\":{},\"jump\":{},\"magnet\":{},\"shield\":{}}}}},\"summary\":{{\"fun_avg\":{:.3},\"novelty_avg\":{:.3},\"scenarios\":{}}}}}",
             self.seed,
             self.hearts,
             self.drops,
@@ -345,6 +527,9 @@ impl<'a> Game<'a> {
             self.rings_taken,
             self.stomps,
             self.hits_taken,
+            self.shots_fired,
+            self.crates_broken,
+            self.springs_used,
             self.builds[0],
             self.builds[1],
             self.builds[2],
@@ -409,7 +594,8 @@ impl<'a> Game<'a> {
                 if chunk != self.current_chunk {
                     self.enter_chunk(chunk);
                 }
-                self.update_encounter(dt);
+                self.landed_this_frame = events.landed;
+                self.update_encounter(dt, input.fire_pressed);
                 self.collect_drops();
                 self.check_goal();
                 self.follow_camera(dt);
@@ -657,6 +843,135 @@ impl<'a> Game<'a> {
     ) -> Result<(), String> {
         let time = self.time;
         let palette = self.assets.palette;
+
+        for c in &self.crates {
+            if !c.alive {
+                continue;
+            }
+            let x = c.pos.x - 22.0;
+            let y = c.pos.y - 44.0;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(x - 2.0, y - 2.0, 48.0, 48.0),
+                Color::RGBA(8, 14, 16, 220),
+            )?;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(x, y, 44.0, 44.0),
+                Color::RGBA(150, 100, 56, 255),
+            )?;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(x, y, 44.0, 6.0),
+                Color::RGBA(190, 140, 86, 255),
+            )?;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(x + 6.0, y + 8.0, 4.0, 28.0),
+                Color::RGBA(96, 62, 34, 255),
+            )?;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(x + 34.0, y + 8.0, 4.0, 28.0),
+                Color::RGBA(96, 62, 34, 255),
+            )?;
+            match c.loot {
+                CrateLoot::Rings(_) => {
+                    render::ring(
+                        canvas,
+                        cam,
+                        scale,
+                        (x + 22.0, y + 22.0),
+                        7.0,
+                        3.0,
+                        8,
+                        Color::RGBA(250, 214, 110, 240),
+                    )?;
+                }
+                CrateLoot::Heart => {
+                    render::fill_rect(
+                        canvas,
+                        cam,
+                        scale,
+                        Rect::new(x + 17.0, y + 16.0, 10.0, 10.0),
+                        Color::RGBA(228, 74, 74, 240),
+                    )?;
+                }
+                CrateLoot::Nothing => {}
+            }
+        }
+
+        for spring in &self.springs {
+            let x = spring.pos.x;
+            let y = spring.pos.y;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(x - 18.0, y - 8.0, 36.0, 8.0),
+                Color::RGBA(44, 52, 56, 240),
+            )?;
+            for i in 0..3 {
+                let w = 22.0 - i as f32 * 2.0;
+                render::fill_rect(
+                    canvas,
+                    cam,
+                    scale,
+                    Rect::new(x - w * 0.5, y - 14.0 - i as f32 * 6.0, w, 4.0),
+                    Color::RGBA(150, 162, 168, 240),
+                )?;
+            }
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(x - 22.0, y - 36.0, 44.0, 7.0),
+                Color::RGBA(228, 60, 60, 245),
+            )?;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(x - 22.0, y - 36.0, 44.0, 2.0),
+                Color::RGBA(255, 150, 140, 245),
+            )?;
+        }
+
+        for ball in &self.hairballs {
+            let cx = ball.pos.x;
+            let cy = ball.pos.y;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(cx - 7.0, cy - 7.0, 14.0, 14.0),
+                Color::RGBA(240, 236, 218, 255),
+            )?;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(cx - 4.0, cy - 9.0, 8.0, 4.0),
+                Color::RGBA(240, 236, 218, 255),
+            )?;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(cx - 3.0, cy - 2.0, 6.0, 6.0),
+                Color::RGBA(198, 158, 118, 255),
+            )?;
+        }
 
         for badnik in &self.badniks {
             if !badnik.alive {
@@ -1071,7 +1386,7 @@ impl<'a> Game<'a> {
                 scale,
                 VIEW_W * 0.5,
                 VIEW_H - 76.0,
-                "A D — ИДТИ · ПРОБЕЛ — ПРЫЖОК · S — НЫРЯТЬ",
+                "A D — БЕГ · ПРОБЕЛ — ПРЫЖОК · J — ШАРИК · S — НЫРЯТЬ",
                 3,
                 Color::RGBA(246, 238, 212, alpha),
                 Color::RGBA(8, 14, 15, alpha),
@@ -1554,6 +1869,15 @@ fn main() -> Result<(), String> {
             game.cam = home_camera(Vec2::new(x, y));
         }
     }
+    if flag("--fire") {
+        let c = game.player.center();
+        game.hairballs.push(gameplay::Hairball {
+            pos: c + Vec2::new(game.player.facing * 36.0, 4.0),
+            vel: Vec2::new(game.player.facing * 920.0, -80.0),
+            life: 1.5,
+            bounces: 0,
+        });
+    }
     if let Some(cam) = forced_cam {
         game.cam = Vec2::new(
             cam.x.clamp(0.0, WORLD_W - VIEW_W),
@@ -1601,6 +1925,7 @@ fn main() -> Result<(), String> {
     let mut timer = Instant::now();
     let mut start_pressed = false;
     let mut jump_pressed = false;
+    let mut fire_pressed = false;
 
     'run: loop {
         let dt = timer.elapsed().as_secs_f32().min(1.0 / 30.0);
@@ -1641,6 +1966,9 @@ fn main() -> Result<(), String> {
                     if !repeat && matches!(key, Keycode::Space | Keycode::Return) {
                         start_pressed = true;
                     }
+                    if !repeat && matches!(key, Keycode::J | Keycode::X) {
+                        fire_pressed = true;
+                    }
                 }
                 _ => {}
             }
@@ -1657,10 +1985,12 @@ fn main() -> Result<(), String> {
                 || keys.is_scancode_pressed(Scancode::Up)
                 || keys.is_scancode_pressed(Scancode::Z),
             jump_pressed,
+            fire_pressed,
         };
 
         game.update(dt, &input, start_pressed);
         jump_pressed = false;
+        fire_pressed = false;
         start_pressed = false;
 
         game.draw(&mut canvas, SCALE)?;

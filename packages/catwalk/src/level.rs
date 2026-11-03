@@ -24,6 +24,9 @@ pub struct Drop {
 
 pub struct Level {
     pub platforms: Vec<Rect>,
+    /// Solids generated on top of the painting (crates, structures). They are
+    /// rebuilt whenever the active screen changes.
+    pub extra: Vec<Rect>,
     pub drops: Vec<Drop>,
     pub goal: Vec2,
     /// Waterline control points, interpolated linearly; the lake surface in
@@ -91,6 +94,7 @@ impl Level {
 
         Self {
             platforms,
+            extra: Vec::new(),
             drops,
             // The goal is the spray ring at the foot of the waterfall.
             goal: Vec2::new(1480.0, 1900.0),

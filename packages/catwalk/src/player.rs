@@ -30,6 +30,7 @@ pub struct Input {
     pub left: bool,
     pub right: bool,
     pub down: bool,
+    pub fire_pressed: bool,
     pub jump_held: bool,
     pub jump_pressed: bool,
 }
@@ -222,7 +223,7 @@ impl Player {
 
     fn resolve_x(&mut self, level: &Level) {
         let mut hit = self.hitbox();
-        for p in &level.platforms {
+        for p in level.platforms.iter().chain(level.extra.iter()) {
             if hit.overlaps(*p) {
                 if self.vel.x > 0.0 {
                     self.pos.x = p.x - HALF_W;
@@ -237,7 +238,7 @@ impl Player {
 
     fn resolve_y(&mut self, level: &Level, events: &mut Events) {
         let mut hit = self.hitbox();
-        for p in &level.platforms {
+        for p in level.platforms.iter().chain(level.extra.iter()) {
             if !hit.overlaps(*p) {
                 continue;
             }
