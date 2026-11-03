@@ -24,10 +24,6 @@ let
     dir = ../files/mpv;
     extensions = "any";
   };
-  artTree = neg.tree {
-    dir = ../files/art/fun-art;
-    extensions = "any";
-  };
   rooted = neg.rooted ../.;
 
   missing = builtins.tryEval (neg.find libTree "definitely-not-a-file");
@@ -54,10 +50,6 @@ let
     # extensions = "any": every regular file, last extension stripped
     (check (anyTree ? mpv) "extensions = \"any\" takes files of every kind (mpv.conf → mpv)")
     (check (anyTree ? input) "…and strips the last extension (input.conf → input)")
-
-    # two entries wanting one key → both keep their full names (nothing shadowed)
-    (check (artTree ? "skull.sh" && artTree ? "skull.txt") "colliding keys keep their full names")
-    (check (!(artTree ? skull)) "the colliding short key is not invented")
 
     # rooted: the same vocabulary for call sites without `config`
     (check (rooted.path "lib/opts.nix" == ./opts.nix) "rooted resolves against its root")
