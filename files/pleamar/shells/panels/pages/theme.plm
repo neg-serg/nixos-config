@@ -53,7 +53,9 @@ part Theme {
         size: 360 * scale, 330 * scale
 
         group place {
-            move: 0, (1 - lift) * 330 * scale
+            // The surface is the card grown by the shader's margin (6 px a side), so
+            // the torn fringe of a light theme's sheet has room to be drawn.
+            move: 6 * scale, 6 * scale + (1 - lift) * 330 * scale
 
             group zoom {
                 scale: scale
