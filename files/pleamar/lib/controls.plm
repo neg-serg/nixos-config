@@ -38,9 +38,11 @@ import "palette.plm"
 library Controls strict {
 
     // ---- the sizes the shell's panels use (design px) ----
-    let switch.w = 38
-    let switch.h = 22
-    let switch.knob = 17
+    let switch.w = 30
+    let switch.h = 16
+    let switch.knob = 12
+    let switch.pad = 2
+    let switch.corner = 3
     let slider.h = 6
     let slider.zone = 26
     let thumb.h = 28
@@ -70,21 +72,20 @@ library Controls strict {
 
         size: w * scale, h * scale
 
-        let r = switch.knob / 2 * scale
-        let pad = (h - switch.knob) / 2 * scale
-        let kx = pick(on, r + pad, w * scale - r - pad)
+        // Strict and small: a flat bar with a rounded-corner square knob, no rim
+        // and no border (the shell's plates have none either); the state is the
+        // colour, the hover only deepens it. The knob is inset by `switch.pad`
+        // from the end it sits at.
+        let pad = switch.pad * scale
+        let knob = switch.knob * scale
+        let kx = pick(on, pad, w * scale - knob - pad)
         let track = pick(on, fill, lit)
-        let tone = mix(track, ink, 0.10 + 0.10 * hit.hover)
+        let tone = mix(track, ink, 0.08 * hit.hover)
 
-        body {
-            color: tone
-            opacity: pick(enabled, 45%, 100%)
-            rim: pick(on, 0%, 12%)
-            border: 1 * scale, mix(tone, ink, 0.18)
-            box { from: 0, 0; size: w * scale, h * scale; corner: h / 2 * scale }
-        }
+        box { from: 0, 0; size: w * scale, h * scale; corner: switch.corner * scale
+            color: tone; opacity: pick(enabled, 40%, 100%) }
 
-        ellipse { at: kx, h / 2 * scale; radius: r
+        box { from: kx, (h * scale - knob) / 2; size: knob, knob; corner: 1.5 * scale
             color: pick(on, off, on_tone); opacity: pick(enabled, 60%, 100%) }
 
         zone box hit { from: 0, 0; size: w * scale, h * scale; corner: h / 2 * scale
