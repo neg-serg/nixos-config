@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-# renoise-pwj - launch Renoise. The system 'renoise' wrapper
-# (packages/overlay.nix) already runs it under pw-jack with the glib VST lib
-# path; this script is kept as a stable entry point for recipes and other
-# scripts that predate the wrapper.
-set -euo pipefail
-exec renoise "$@"

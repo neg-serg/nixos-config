@@ -1,0 +1,29 @@
+[package]
+name = "local-bin-misc"
+version = "0.1.0"
+edition = "2021"
+description = "Rust ports of the last shell helpers in packages/local-bin/bin (pb, any, v, sclang-pwj, renoise-pwj)"
+license = "MIT"
+
+# One binary per former shell helper, installed under the script's own name.
+[[bin]]
+name = "pb"
+path = "src/pb.rs"
+
+[[bin]]
+name = "any"
+path = "src/any.rs"
+
+[[bin]]
+name = "v"
+path = "src/v.rs"
+
+[[bin]]
+name = "sclang-pwj"
+path = "src/sclang_pwj.rs"
+
+[[bin]]
+name = "renoise-pwj"
+path = "src/renoise_pwj.rs"
+
+[workspace]

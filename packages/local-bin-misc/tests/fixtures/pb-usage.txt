@@ -1,0 +1,19 @@
+
+     █
+▄▀▀▄ █▐▀▄
+█▐░█░█▐░█░ ░ ░ https://git.io/pb.sh
+█▐▄▀ ▀▄▄▀
+█   pb; command line pastebin service helper
+ {kopimi,CC0} MMXVIII-MMXXIV . syntax samurai
+         ▟▙
+ ▟▒░░░░░░░▜▙▜████████████████████████████████▛
+ ▜▒░░░░░░░▟▛▟▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▛
+         ▜▛
+usage:
+   pb <service> [file|stream]
+
+services:
+   catbox.moe, iotek.org, temp.sh, uguu.se
+
+environment variables:
+   UA: user-agent string (defaults to some chrome one)
