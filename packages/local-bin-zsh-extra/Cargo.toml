@@ -1,0 +1,38 @@
+[package]
+name = "local-bin-zsh-extra"
+version = "0.1.0"
+edition = "2021"
+description = "Rust ports of the remaining zsh helpers in packages/local-bin/bin (gh-issues-export, mpd_del_album, sx, sys-relief, vol, win-vm)"
+license = "MIT"
+
+# One binary per former zsh script, installed under the script's own name.
+[[bin]]
+name = "gh-issues-export"
+path = "src/gh_issues_export.rs"
+
+[[bin]]
+name = "mpd_del_album"
+path = "src/mpd_del_album.rs"
+
+[[bin]]
+name = "sx"
+path = "src/sx.rs"
+
+[[bin]]
+name = "sys-relief"
+path = "src/sys_relief.rs"
+
+[[bin]]
+name = "vol"
+path = "src/vol.rs"
+
+[[bin]]
+name = "win-vm"
+path = "src/win_vm.rs"
+
+[dependencies]
+# gh-issues-export parses the paginated `gh api` stream and renders the YAML
+# frontmatter that used to be shaped by jq; serde_json is the only dependency.
+serde_json = "1"
+
+[workspace]

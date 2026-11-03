@@ -111,6 +111,12 @@
           "read_documents"
           "pl"
           "music-tui"
+          "gh-issues-export"
+          "mpd_del_album"
+          "sx"
+          "sys-relief"
+          "vol"
+          "win-vm"
           "pic-notify"
           "screenrec"
           "clip"
@@ -224,6 +230,13 @@
         ".local/bin/read_documents".source = lib.getExe' pkgs.neg.local-bin-zsh "read_documents";
         ".local/bin/pl".source = lib.getExe' pkgs.neg.local-bin-zsh "pl";
         ".local/bin/music-tui".source = lib.getExe' pkgs.neg.local-bin-zsh "music-tui";
+        # Rust ports of the remaining zsh helpers (packages/local-bin-zsh-extra).
+        ".local/bin/gh-issues-export".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "gh-issues-export";
+        ".local/bin/mpd_del_album".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "mpd_del_album";
+        ".local/bin/sx".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "sx";
+        ".local/bin/sys-relief".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "sys-relief";
+        ".local/bin/vol".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "vol";
+        ".local/bin/win-vm".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "win-vm";
 
         # Rust ports of the desktop/media helpers (packages/local-bin-desktop).
         ".local/bin/pic-notify".source = lib.getExe' pkgs.neg.local-bin-desktop "pic-notify";

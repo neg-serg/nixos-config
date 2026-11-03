@@ -121,6 +121,7 @@ in
       local-bin-audio = final.callPackage ./local-bin-audio { }; # Rust ports of the audio helpers (audio-diag, jam, sc-live, ...)
       local-bin-misc = final.callPackage ./local-bin-misc { }; # Rust ports of the last local-bin helpers (pb, any, v, pw-jack wrappers)
       local-bin-zsh = final.callPackage ./local-bin-zsh { }; # Rust ports of the last zsh helpers (iommu-info, music-rename, music-tui, pl, read_documents)
+      local-bin-zsh-extra = final.callPackage ./local-bin-zsh-extra { }; # Rust ports of gh-issues-export, mpd_del_album, sx, sys-relief, vol, win-vm
       local-bin-system = final.callPackage ./local-bin-system {
         # pdf2md used @DOCLING_BIN@ as a substitution; the port compiles the
         # same path in. Keep the expression identical to modules/cli/ocr.nix.
