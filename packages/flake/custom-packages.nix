@@ -58,6 +58,15 @@
 
   dsh = pkgs.neg.dsh;
 
+  # GUI apps deliberately kept out of the system closure. The launchers in
+  # modules/user/session/chat.nix build these on first run and register a GC
+  # root under $HOME, so the app bytes never enter system-path.
+  telegram-desktop = pkgs.telegram-desktop;
+  telegram-desktop-proxy = pkgs.writeShellScriptBin "telegram-desktop-proxy" ''
+    exec ${pkgs.proxychains}/bin/proxychains4 -q \
+      ${pkgs.telegram-desktop}/bin/telegram-desktop "$@"
+  '';
+
   # MERT similarity index tooling (Rust; embeddings come from music-embed).
   music-index-tools = pkgs.neg.music-index-tools;
 
