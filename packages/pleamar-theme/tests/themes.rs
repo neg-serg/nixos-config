@@ -98,8 +98,6 @@ fn apply_writes_the_pipeline_s_skin_library() {
         "retro",
         "\
 name = \"Retro\"
-font = \"Iosevka\"
-corner_rounding = 18
 light = true
 
 [palette]
@@ -176,18 +174,14 @@ fn a_broken_file_is_named_with_its_line_and_leaves_theme_plm_alone() {
 #[test]
 fn list_names_the_good_themes_and_reports_the_broken_one() {
     let case = Case::new("list");
-    case.theme(
-        "retro",
-        "name = \"Retro\"\nfont = \"Iosevka\"\ncorner_rounding = 18\n",
-    );
+    case.theme("retro", "name = \"Retro\"\nlight = true\n");
     case.theme("bad", "unknown = 1\n");
     let output = case.run(&["list"]);
     assert_eq!(output.status.code(), Some(1), "stdout: {}", stdout(&output));
     let out = stdout(&output);
     assert!(out.contains("NAME"), "{out}");
     assert!(out.contains("Retro"), "{out}");
-    assert!(out.contains("Iosevka"), "{out}");
-    assert!(out.contains("18"), "{out}");
+    assert!(out.contains("yes"), "a light theme: {out}");
     assert!(!out.contains("bad"), "the broken theme is left out: {out}");
     let error = stderr(&output);
     assert!(error.contains("bad.toml"), "{error}");
@@ -235,12 +229,9 @@ fn plain_lists_one_row_per_theme_and_marks_the_applied_one() {
     let case = Case::new("plain");
     case.theme(
         "amber",
-        "name = \"Amber\"\nfont = \"Iosevka\"\n[palette]\naccent = \"#ffb347\"\n",
+        "name = \"Amber\"\n[palette]\naccent = \"#ffb347\"\n",
     );
-    case.theme(
-        "cool",
-        "name = \"Cool\"\ncorner_rounding = 12\n[palette]\naccent = \"#006fcc\"\n",
-    );
+    case.theme("cool", "name = \"Cool\"\n[palette]\naccent = \"#006fcc\"\n");
     let output = case.run(&["apply", "amber"]);
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
 
@@ -255,31 +246,30 @@ fn plain_lists_one_row_per_theme_and_marks_the_applied_one() {
         .find(|line| line.contains("Amber"))
         .expect("the amber row");
     let fields: Vec<&str> = amber.split('\t').collect();
-    assert_eq!(fields.len(), 8, "{amber}");
+    assert_eq!(fields.len(), 7, "{amber}");
     assert_eq!(fields[0], "Amber");
-    assert_eq!(fields[1], "Iosevka");
-    assert_eq!(fields[2], "-");
-    assert!(fields[3].ends_with("amber.toml"), "{amber}");
-    assert_eq!(fields[4], "1", "the applied theme is marked: {amber}");
+    assert!(fields[1].ends_with("amber.toml"), "{amber}");
+    assert_eq!(fields[2], "1", "the applied theme is marked: {amber}");
     assert_eq!(
-        &fields[5..8],
+        &fields[3..6],
         ["1.0000", "0.7020", "0.2784"],
         "the accent channels: {amber}"
     );
+    assert_eq!(fields[6], "0", "a dark theme: {amber}");
 
     let cool = lines
         .iter()
         .find(|line| line.contains("Cool"))
         .expect("the cool row");
-    assert_eq!(cool.split('\t').nth(4), Some("0"), "{cool}");
-    assert_eq!(cool.split('\t').nth(5), Some("0.0000"), "{cool}");
+    assert_eq!(cool.split('\t').nth(2), Some("0"), "{cool}");
+    assert_eq!(cool.split('\t').nth(3), Some("0.0000"), "{cool}");
 
     // Applying the other theme moves the mark.
     let output = case.run(&["apply", "cool"]);
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
     let text = stdout(&case.run(&["list", "--plain"]));
     for line in text.lines() {
-        let selected = line.split('\t').nth(4).expect("five columns");
+        let selected = line.split('\t').nth(2).expect("seven columns");
         if line.contains("Cool") {
             assert_eq!(selected, "1", "{line}");
         } else {

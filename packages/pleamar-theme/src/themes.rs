@@ -6,8 +6,6 @@
 //!
 //! ```toml
 //! name   = "Retro"
-//! font   = "Iosevka"     # reported by `list`, not written into theme.plm
-//! corner_rounding = 18   # likewise: it is the compositor's setting
 //! light  = false         # skin.light, and the mode in the header
 //!
 //! [palette]
@@ -51,10 +49,6 @@ pub struct ThemeFile {
     /// The card's name; `None` when the file leaves it out (the caller then
     /// uses the file stem).
     pub name: Option<String>,
-    /// The shell's typeface, by family name.
-    pub font: Option<String>,
-    /// The compositor's window corner radius, in pixels.
-    pub corner_rounding: Option<u32>,
     /// `skin.light`: whether the palette is a light one.
     pub light: bool,
     pub coal: String,
@@ -95,8 +89,6 @@ impl ThemeFile {
 /// Read a theme file. Every error starts with the 1-based line it came from.
 pub fn parse(text: &str) -> Result<ThemeFile, String> {
     let mut name: Option<String> = None;
-    let mut font: Option<String> = None;
-    let mut corner_rounding: Option<u32> = None;
     let mut light = false;
     let mut palette = false;
     let mut coal = STOCK_COAL.to_string();
@@ -134,14 +126,6 @@ pub fn parse(text: &str) -> Result<ThemeFile, String> {
         let value = value.trim();
         match (palette, key) {
             (false, "name") => name = Some(quoted(line_number, key, value)?),
-            (false, "font") => font = Some(quoted(line_number, key, value)?),
-            (false, "corner_rounding") => {
-                corner_rounding = Some(
-                    value
-                        .parse::<u32>()
-                        .map_err(|_| format!("line {line_number}: corner_rounding needs a whole number, not '{value}'"))?,
-                )
-            }
             (false, "light") => {
                 light = match value {
                     "true" => true,
@@ -155,7 +139,7 @@ pub fn parse(text: &str) -> Result<ThemeFile, String> {
             }
             (false, other) => {
                 return Err(format!(
-                    "line {line_number}: unknown key '{other}' outside [palette] (name, font, corner_rounding, light)"
+                    "line {line_number}: unknown key '{other}' outside [palette] (name, light)"
                 ))
             }
             (true, "coal") => coal = colour(line_number, key, value)?,
@@ -173,8 +157,6 @@ pub fn parse(text: &str) -> Result<ThemeFile, String> {
 
     Ok(ThemeFile {
         name,
-        font,
-        corner_rounding,
         light,
         coal,
         surface,
@@ -241,8 +223,6 @@ mod tests {
             theme,
             super::ThemeFile {
                 name: None,
-                font: None,
-                corner_rounding: None,
                 light: false,
                 coal: STOCK_COAL.to_string(),
                 surface: STOCK_SURFACE.to_string(),
@@ -258,8 +238,6 @@ mod tests {
         let text = "\
 # a comment line
 name = \"Retro\"
-font = \"Iosevka\"
-corner_rounding = 18
 light = true
 
 [palette]
@@ -271,8 +249,6 @@ accent = \"#06C\"
 ";
         let theme = parse(text).expect("parse");
         assert_eq!(theme.name.as_deref(), Some("Retro"));
-        assert_eq!(theme.font.as_deref(), Some("Iosevka"));
-        assert_eq!(theme.corner_rounding, Some(18));
         assert!(theme.light);
         assert_eq!(theme.coal, "#101418");
         assert_eq!(theme.accent, "#0066cc", "short hex is expanded and lowered");

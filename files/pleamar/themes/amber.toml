@@ -2,7 +2,6 @@
 # the repository by Nix; a theme you write yourself under another name in this
 # folder is yours and stays untouched.
 name = "Amber"
-font = "Iosevka"
 light = false
 
 [palette]

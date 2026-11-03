@@ -42,8 +42,6 @@ A theme file is a small TOML subset; every key is optional (the stock palette
 fills what is missing):
 
   name   = \"Retro\"        # shown by `list`
-  font   = \"Iosevka\"      # shown by `list`, not written into theme.plm
-  corner_rounding = 18   # likewise: the compositor's setting
   light  = false         # skin.light and the header's mode
 
   [palette]
@@ -250,6 +248,15 @@ fn push() -> ExitCode {
     }
 }
 
+/// One theme as `list` shows it and `--plain` hands to the scene's logic.
+struct Row {
+    name: String,
+    light: bool,
+    path: String,
+    selected: bool,
+    accent: (f64, f64, f64),
+}
+
 fn list(args: &[String]) -> ExitCode {
     let plain = args.iter().any(|argument| argument == "--plain");
     let directory = match themes_dir() {
@@ -275,25 +282,23 @@ fn list(args: &[String]) -> ExitCode {
     };
     files.sort();
 
-    let mut rows: Vec<(String, String, String, String, String, String, String)> = Vec::new();
+    let applied = applied_source();
+    let mut rows: Vec<Row> = Vec::new();
     let mut failed = false;
     for path in files {
         let name = stem(&path).to_string();
         match read_theme(&path) {
             Ok(theme) => {
-                let (red, green, blue) = themes::channels(&theme.accent).unwrap_or((0.0, 0.0, 0.0));
-                rows.push((
-                    theme.name.unwrap_or(name),
-                    theme.font.unwrap_or_else(|| "-".to_string()),
-                    theme
-                        .corner_rounding
-                        .map(|value| value.to_string())
-                        .unwrap_or_else(|| "-".to_string()),
-                    path.display().to_string(),
-                    format!("{red:.4}"),
-                    format!("{green:.4}"),
-                    format!("{blue:.4}"),
-                ))
+                let shown = path.display().to_string();
+                rows.push(Row {
+                    name: theme.name.unwrap_or(name),
+                    light: theme.light,
+                    selected: applied
+                        .as_deref()
+                        .is_some_and(|source| same_file(source, &shown)),
+                    path: shown,
+                    accent: themes::channels(&theme.accent).unwrap_or((0.0, 0.0, 0.0)),
+                })
             }
             Err(error) => {
                 err(format!("{}: {error}", path.display()));
@@ -302,70 +307,49 @@ fn list(args: &[String]) -> ExitCode {
         }
     }
 
+    let failed_code = if failed {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    };
     if rows.is_empty() {
         if !failed && !plain {
             println!("{TOOL}: no themes in {}", directory.display());
         }
-        return if failed {
-            ExitCode::from(1)
-        } else {
-            ExitCode::SUCCESS
-        };
+        return failed_code;
     }
     if plain {
-        // One line per theme, for the scene's logic: name, font, corners, the
-        // file, 1 when it is the theme `theme.plm` was made from, and the accent
-        // as three channels so a row can draw its own swatch (`rgb()`).
-        let applied = applied_source();
+        // One line per theme, for the scene's logic: name, the file, 1 when it is
+        // the theme `theme.plm` was made from, the accent as three `rgb()` channels
+        // (so a row draws its own swatch), and 1 for a light theme.
         for row in &rows {
-            let selected = applied
-                .as_deref()
-                .is_some_and(|source| same_file(source, &row.3));
+            let (red, green, blue) = row.accent;
             println!(
-                "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
-                row.0,
-                row.1,
-                row.2,
-                row.3,
-                if selected { "1" } else { "0" },
-                row.4,
-                row.5,
-                row.6
+                "{}\t{}\t{}\t{red:.4}\t{green:.4}\t{blue:.4}\t{}",
+                row.name,
+                row.path,
+                if row.selected { "1" } else { "0" },
+                if row.light { "1" } else { "0" }
             );
         }
-        return if failed {
-            ExitCode::from(1)
-        } else {
-            ExitCode::SUCCESS
-        };
+        return failed_code;
     }
     let name_width = rows
         .iter()
-        .map(|row| row.0.chars().count())
+        .map(|row| row.name.chars().count())
         .chain(std::iter::once("NAME".len()))
         .max()
         .unwrap_or(4);
-    let font_width = rows
-        .iter()
-        .map(|row| row.1.chars().count())
-        .chain(std::iter::once("FONT".len()))
-        .max()
-        .unwrap_or(4);
-    println!(
-        "{:<name_width$}  {:<font_width$}  {:>7}  {}",
-        "NAME", "FONT", "CORNERS", "FILE"
-    );
+    println!("{:<name_width$}  {:<5}  {}", "NAME", "LIGHT", "FILE");
     for row in &rows {
         println!(
-            "{:<name_width$}  {:<font_width$}  {:>7}  {}",
-            row.0, row.1, row.2, row.3
+            "{:<name_width$}  {:<5}  {}",
+            row.name,
+            if row.light { "yes" } else { "no" },
+            row.path
         );
     }
-    if failed {
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
-    }
+    failed_code
 }
 
 fn stem(path: &Path) -> &str {
