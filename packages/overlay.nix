@@ -72,6 +72,9 @@ in
       '';
   });
 
+  # Host firmware subset for trantor; replaces the full linux-firmware bundle.
+  linux-firmware-minimal = final.callPackage ./linux-firmware-minimal { };
+
   # GHCi with the TidalCycles library preloaded — used by the nvim tidal
   # ftplugin (tidal-edit / tidalctl demo/code) to boot a tidal> REPL.
   tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
@@ -87,7 +90,7 @@ in
     // (gui.neg or { })
     // {
       game = final.callPackage ./game { }; # Unified game launcher
-      crabwalk = final.callPackage ./crabwalk { }; # pixel-perfect platformer on the waterfall wallpaper
+      sonicwalk = final.callPackage ./sonicwalk { }; # Sonic platformer over the waterfall wallpaper
       joern = final.callPackage ./joern { }; # Open-source code analysis platform
       superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
       superdirt-mixer = final.callPackage ./superdirt-mixer { }; # graphical mixer UI quark for SuperDirt orbits (gain/pan/reverb/EQ/compressor)
