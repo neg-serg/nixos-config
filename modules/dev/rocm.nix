@@ -9,13 +9,9 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    # torch-rocm (a 7.7G Python env) moved to the `rocm` devshell and the
+    # `nix run .#torch-rocm` app; only the monitoring CLI stays in the closure.
     environment.systemPackages = [
-      # torch-rocm CLI: python3.14 env with ROCm PyTorch (RX 9070 XT).
-      # env -u PYTHONPATH: the login shell may leak a py3.13 venv path which
-      # breaks numpy in the 3.14 env.
-      (pkgs.writeShellScriptBin "torch-rocm" ''
-        exec env -u PYTHONPATH ${pkgs.torchRocmEnv}/bin/python "$@"
-      '')
       pkgs.rocmPackages.rocm-smi # ROCm System Management Interface
     ];
   };
