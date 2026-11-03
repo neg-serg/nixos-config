@@ -15,46 +15,31 @@ let
   # is ~3.4 s of the ~3.6 s activation. The two filters below are the same
   # predicates expressed with bash pattern matching, so no process is spawned
   # per line. The rest of the upstream script is used verbatim.
-  # Assert-guarded: if upstream rewrites those lines, evaluation fails loudly
-  # instead of silently falling back to the slow path.
-  activateSrc = builtins.readFile "${config.system.build.all-maid}/nix-maid-${mainUser}/bin/activate";
-  slowFilter = [
-    ''echo "$path" | grep -q "$state_home/nix-maid/static"''
-    ''echo "$path" | grep -q "$state_home/nix-maid/.*/static"''
-  ];
-  fastFilter = [
-    ''[[ $path == *"$state_home/nix-maid/static"* ]]''
-    "[[ $path =~ $state_home/nix-maid/.*/static ]]"
-  ];
-  # sd-switch costs ~190 ms (almost all of it a single `systemctl --user
-  # daemon-reload`) and is only needed when unit definitions changed. The
-  # marker remembers the units directory applied by the previous activation:
-  # when it is unchanged and nothing failed, skip it (systemd reads
-  # ~/.config/systemd/user itself when the session starts). A different
-  # directory or any failed unit falls back to the full sd-switch.
-  sdSwitchOld = ''sd-switch --new-units "$config_home/systemd/user" "''${sd_switch_flags[@]}"'';
-  sdSwitchNew = ''
-    units_dir="$(realpath "$config_home/systemd/user")"
-    marker="$state_home/nix-maid/sd-switch-units"
-    # Absolute systemctl path: activate overrides PATH and systemd is not in it
-    if [[ -z "$(${lib.getExe' pkgs.systemd "systemctl"} --user list-units --state=failed --no-legend --plain 2>/dev/null | head -n1)" \
-          && -f "$marker" && "$(cat "$marker")" == "$units_dir" ]]; then
-      echo ":: units unchanged ($units_dir), sd-switch skipped"
-    else
-      sd-switch --new-units "$config_home/systemd/user" "''${sd_switch_flags[@]}"
-      mkdir -p "$(dirname "$marker")"
-      echo "$units_dir" > "$marker"
-    fi'';
-  activateFastSrc =
-    assert lib.assertMsg (lib.all (f: lib.hasInfix f activateSrc) (slowFilter ++ [ sdSwitchOld ]))
-      "nix-maid fast-activation: upstream activate no longer contains the expected `echo | grep` filters / sd-switch call — re-check the patch";
-    builtins.replaceStrings (slowFilter ++ [ sdSwitchOld ]) (fastFilter ++ [ sdSwitchNew ]) activateSrc;
-  activateFast = pkgs.writeTextFile {
-    name = "nix-maid-activate-fast";
-    executable = true;
-    destination = "/bin/activate";
-    text = activateFastSrc;
-  };
+  #
+  # The patch runs at *build* time. Reading the upstream output during
+  # evaluation (builtins.readFile on a derivation) forced an IFD build of
+  # all-maid on every eval; substituteInPlace does the same literal replacement
+  # in the build sandbox, and --replace-fail keeps the loud failure when
+  # upstream rewrites the lines.
+  activateFast = pkgs.runCommand "nix-maid-activate-fast" { } ''
+    install -Dm755 ${config.system.build.all-maid}/nix-maid-${mainUser}/bin/activate $out/bin/activate
+    substituteInPlace $out/bin/activate \
+      --replace-fail 'echo "$path" | grep -q "$state_home/nix-maid/static"' \
+                     '[[ $path == *"$state_home/nix-maid/static"* ]]' \
+      --replace-fail 'echo "$path" | grep -q "$state_home/nix-maid/.*/static"' \
+                     '[[ $path =~ $state_home/nix-maid/.*/static ]]' \
+      --replace-fail 'sd-switch --new-units "$config_home/systemd/user" "''${sd_switch_flags[@]}"' \
+        '  units_dir="$(realpath "$config_home/systemd/user")"
+      marker="$state_home/nix-maid/sd-switch-units"
+      if [[ -z "$(${lib.getExe' pkgs.systemd "systemctl"} --user list-units --state=failed --no-legend --plain 2>/dev/null | head -n1)" \
+            && -f "$marker" && "$(cat "$marker")" == "$units_dir" ]]; then
+        echo ":: units unchanged ($units_dir), sd-switch skipped"
+      else
+        sd-switch --new-units "$config_home/systemd/user" "''${sd_switch_flags[@]}"
+        mkdir -p "$(dirname "$marker")"
+        echo "$units_dir" > "$marker"
+      fi'
+  '';
 in
 {
   imports = [
