@@ -66,7 +66,6 @@ in
       systemPackages = [
         # pkgs.mangohud removed — fails to build on the unstable rev
         pkgs.neg.game # Unified game launcher — CPU pinning, Gamescope, sessions
-        pkgs.neg.catwalk # Mini cat platformer painted on the waterfall wallpaper
         pkgs.corectrl # GUI for AMD GPU overclocking and fan control
         pkgs.ryzenadj # AMD CPU overclocking (PBO, curve optimizer) via SMU
         pkgs.stress-ng # CPU/RAM stress testing for stability verification
