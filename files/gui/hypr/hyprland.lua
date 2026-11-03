@@ -559,17 +559,21 @@ hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Ob
 -- DDC hangs even in `detect` here — decide on that separately.
 --
 -- --
--- The Genelec keys drive the monitors through `genlc` directly: `volume --by ±1` steps the
--- state file genlc owns and genlc routes the write itself — the daemon's socket when the daemon
--- holds the adapter, the HID adapter otherwise. The bar's tile watches that same state file, so
--- it follows these keys without an IPC round trip. Mute stays on the plugin's event: the muted
--- flag and the pre-mute level live there, and the plugin runs `genlc mute on|off`; a bare
--- `genlc mute` has no state to toggle from (2026-11-02: the wheel turned, the monitors did not,
--- when two writers fought over the adapter — one writer now).
+-- The Genelec keys go through the bar's Genelec plugin, the same path the tile's wheel takes:
+-- `Genelec.turn ±1` moves the tile's number at once and coalesces the writes (one absolute
+-- `genlc volume <dB>` per burst, 150 ms after the last notch). Driving `genlc volume --by` from
+-- every keypress instead — what this did until 2026-11-03 — wrote the state file per press and
+-- left the tile's number a watch tick behind (~1 s measured), so a held key crawled while the
+-- wheel was immediate. The direct `genlc` form stays as a fallback for a bar that is not
+-- answering (`--say` exits 1, `timeout` 124), so the keys still work without the shell.
+-- Mute stays on the plugin's event too: the muted flag and the pre-mute level live there, and
+-- the plugin runs `genlc mute on|off`; a bare `genlc mute` has no state to toggle from (2026-11-02:
+-- the wheel turned, the monitors did not, when two writers fought over the adapter — one writer
+-- now).
 -- Keys the wheel sends as Next/Prev are the same volume steps, not track skips, as before.
 -- `--by=-1`, not `--by -1`: the attached form keeps the parser from reading `-1` as a flag.
-local GENELEC_UP = "genlc volume --by=1"
-local GENELEC_DOWN = "genlc volume --by=-1"
+local GENELEC_UP = 'timeout 3 pleamar --say bar "emit Genelec.turn 1" || genlc volume --by=1'
+local GENELEC_DOWN = 'timeout 3 pleamar --say bar "emit Genelec.turn -1" || genlc volume --by=-1'
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd(GENELEC_UP), { repeating = true, locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd(GENELEC_DOWN), { repeating = true, locked = true })
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(GENELEC_UP), { repeating = true })
