@@ -94,40 +94,62 @@ part SysPanel {
 
             // ----***--------------------------- history
             // sysmon samples all the time (panels.luau `wanted`), so the last 60 records are the
-            // minute before the drawer opened, not the minute after. Four series share the same
-            // 0..100 % scale, so the chart is a comparison, not four separate sparklines. GPU and
-            // temperature appear only when the worker has a real reading for them.
+            // minute before the drawer opened, not the minute after. Four series share one
+            // 0..100 % scale, so the chart is a comparison, not four sparklines; each series is a
+            // polyline of one `line` per pair of samples, the flow card's shape. GPU and
+            // temperature are broken where the worker had no reading, never drawn to zero.
             let hist.x = 14
-            let hist.y = 388
-            let hist.w = 876
-            let hist.h = 176
-            let hist.pitch = hist.w / max(sys_hist.total, 1)
+            let hist.y = 386
+            let hist.w = 840
+            let hist.h = 166
             text "History" { at: 14, 350; anchor: left center; family: "Iosevka"; size: 17; weight: 700; color: skin.ink }
-            text "last 60 s" { at: 92, 350; anchor: left center; family: "Iosevka"; size: 12; color: ink.off }
+            // The legend: a dot in the series colour and its name, one row under the title.
             box { from: 14, 367; size: 8, 8; corner: 4; color: skin.accent }
             text "CPU" { at: 28, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim }
             box { from: 76, 367; size: 8, 8; corner: 4; color: amber }
             text "RAM" { at: 90, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim }
             box { from: 138, 367; size: 8, 8; corner: 4; color: highlight; show: sysmon_gpu == 1 }
-            text "GPU" { at: 152, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim; show: sysmon_gpu == 1 }
+            text "GPU" { at: 152, 371; anchor: left center; family: "Iosevka"; size: 12; color: ink.off; show: sysmon_gpu == 1 }
             box { from: 200, 367; size: 8, 8; corner: 4; color: warn; show: sysmon_temp == 1 }
-            text "TEMP" { at: 214, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim; show: sysmon_temp == 1 }
+            text "TEMP" { at: 214, 371; anchor: left center; family: "Iosevka"; size: 12; color: ink.off; show: sysmon_temp == 1 }
 
-            repeat g in 0..3 {
-                box { from: hist.x, hist.y + hist.h - g * hist.h / 3; size: hist.w, 1; color: skin.ink; opacity: 12% }
+            // Five rules at the quarters, round numbers every one, and every one labelled: the ONS
+            // chart guidance says gridlines always carry the value they stand for and the count
+            // stays between three and six on a chart this size. Only the value axis gets them —
+            // a time axis gets tick marks, not gridlines — and the zero line is the emphasised one
+            // (ONS "Axes and gridlines": the zero line carries more weight than a standard rule).
+            repeat g in 0..4 {
+                box { from: hist.x, hist.y + hist.h - g * hist.h / 4; size: hist.w, 1; color: skin.ink; opacity: 8% }
             }
-            text "100 %" { at: hist.x + hist.w - 2, hist.y - 8; anchor: right center; family: "Iosevka"; size: 10; color: ink.off }
-            text "0 %" { at: hist.x + hist.w - 2, hist.y + hist.h - 8; anchor: right center; family: "Iosevka"; size: 10; color: ink.off }
+            box { from: hist.x, hist.y + hist.h; size: hist.w, 1; color: skin.ink; opacity: 22% }
+            text "100 %" { at: hist.x + hist.w + 8, hist.y; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+            text "75 %" { at: hist.x + hist.w + 8, hist.y + hist.h / 4; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+            text "50 %" { at: hist.x + hist.w + 8, hist.y + hist.h / 2; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+            text "25 %" { at: hist.x + hist.w + 8, hist.y + 3 * hist.h / 4; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+            text "0 %" { at: hist.x + hist.w + 8, hist.y + hist.h; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+            // The time axis: ticks at the window's ends and its middle, with the spans under them.
+            repeat t in 0..2 {
+                box { from: hist.x + t * hist.w / 2, hist.y + hist.h + 2; size: 1, 3; color: skin.ink; opacity: 30% }
+            }
+            text "−60 s" { at: hist.x, hist.y + hist.h + 12; anchor: left center; family: "Iosevka"; size: 10; color: ink.off }
+            text "−30 s" { at: hist.x + hist.w / 2, hist.y + hist.h + 12; anchor: center; family: "Iosevka"; size: 10; color: ink.off }
+            text "now" { at: hist.x + hist.w, hist.y + hist.h + 12; anchor: right center; family: "Iosevka"; size: 10; color: ink.off }
 
+            // One `line` per segment and series, round caps closing the joins. CPU is the primary
+            // reading and is drawn last (over the others) and wider; the rest sit behind it.
             for h in sys_hist {
-                box { from: hist.x + h.index * hist.pitch, hist.y + hist.h - h.cpu * hist.h
-                    size: max(hist.pitch, 1), 1.5; color: skin.accent; opacity: 85% }
-                box { from: hist.x + h.index * hist.pitch, hist.y + hist.h - h.ram * hist.h
-                    size: max(hist.pitch, 1), 1.5; color: amber; opacity: 85% }
-                box { from: hist.x + h.index * hist.pitch, hist.y + hist.h - h.gpu * hist.h
-                    size: max(hist.pitch, 1), 1.5; color: highlight; opacity: 75%; show: sysmon_gpu == 1 }
-                box { from: hist.x + h.index * hist.pitch, hist.y + hist.h - h.temp * hist.h
-                    size: max(hist.pitch, 1), 1.5; color: warn; opacity: 75%; show: sysmon_temp == 1 }
+                line { from: hist.x + h.t0 * hist.w, hist.y + hist.h - h.ram0 * hist.h
+                    to: hist.x + h.t1 * hist.w, hist.y + hist.h - h.ram1 * hist.h
+                    width: 1.3; color: amber; opacity: 85% }
+                line { from: hist.x + h.t0 * hist.w, hist.y + hist.h - h.gpu0 * hist.h
+                    to: hist.x + h.t1 * hist.w, hist.y + hist.h - h.gpu1 * hist.h
+                    width: 1.3; color: highlight; opacity: 85%; show: h.gpu_ok }
+                line { from: hist.x + h.t0 * hist.w, hist.y + hist.h - h.temp0 * hist.h
+                    to: hist.x + h.t1 * hist.w, hist.y + hist.h - h.temp1 * hist.h
+                    width: 1.2; color: warn; opacity: 80%; show: h.temp_ok }
+                line { from: hist.x + h.t0 * hist.w, hist.y + hist.h - h.cpu0 * hist.h
+                    to: hist.x + h.t1 * hist.w, hist.y + hist.h - h.cpu1 * hist.h
+                    width: 1.8; color: skin.accent; opacity: 95% }
             }
             text "waiting for samples…" { at: hist.x + hist.w / 2, hist.y + hist.h / 2; anchor: center
                 family: "Iosevka"; size: 11; color: ink.off; show: sys_hist.total == 0 }
