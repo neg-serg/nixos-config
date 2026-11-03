@@ -29,10 +29,22 @@ SCENE="bar"
 DESCRIBE_FILE=""
 while (($#)); do
   case "$1" in
-    --scene) SCENE="${2:?--scene needs a name}"; shift 2 ;;
-    --describe) DESCRIBE_FILE="${2:?--describe needs a path}"; shift 2 ;;
-    -h|--help) sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *) echo "unknown argument: $1" >&2; exit 2 ;;
+    --scene)
+      SCENE="${2:?--scene needs a name}"
+      shift 2
+      ;;
+    --describe)
+      DESCRIBE_FILE="${2:?--describe needs a path}"
+      shift 2
+      ;;
+    -h | --help)
+      sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *)
+      echo "unknown argument: $1" >&2
+      exit 2
+      ;;
   esac
 done
 
