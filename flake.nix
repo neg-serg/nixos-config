@@ -147,6 +147,15 @@
     # its nixpkgs input can mismatch patches and kernel versions.
     # Pinned rev (release branch, 2026-09-01) — same reason as multiverse above.
     nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/594956b9640690cf0079d03d6b3a6a8f380ceea3";
+    # nix-cache-pin — rewrites a flake input to the newest revision whose
+    # packages all have binary-cache hits (`nix run .#cache-pin-<pin>`, pins in
+    # flake/cache-pin.nix). Fork: caniko/nix-cache-pin PR #20 (compromised-cache
+    # ban) plus the redirect guard, which upstream does not ship yet. Follows the
+    # top-level nixpkgs so the tool builds against the system pin.
+    nix-cache-pin = {
+      url = "github:neg-serg/nix-cache-pin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Waylandar — standalone Wayland calendar widget + dashboard (Quickshell + Python).
     # Local clone ~/src/waylandar is at the same rev; nixpkgs follows the top-level
     # pin so the build reuses the cached quickshell/python closure.
