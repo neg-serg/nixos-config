@@ -2,7 +2,7 @@
 let
   # Offline translation stack: CTranslate2 runtime, sentencepiece tokenizers and
   # huggingface-hub for pulling model conversions. Replaces the hand-kept
-  # ~/src/ai-tools/venv-translate pip tree (deleted 2026-10-23): the venv was
+  # ~/src/ai-tools/venv-translate pip tree (deleted 2026-11-03): the venv was
   # bound to the system python3.12 and lost its interpreter on the next python
   # bump, which is exactly what killed the marker/got-ocr venvs next to it.
   translateEnv = pkgs.python3.withPackages (ps: [
