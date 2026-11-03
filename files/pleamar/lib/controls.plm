@@ -1,0 +1,184 @@
+// controls.plm — the interactive controls every panel, drawer and lock page
+// draws: a switch, a slider, the lit piece of a segmented picker, and a button.
+//
+// This is the pleamar form of the QS controls the drawers used to draw inline:
+// the shapes, the states and the palette are the ones the port already had
+// (volume.plm's slider, the mute pill of the bar), pulled into one library so a
+// new panel does not draw its own. Nothing here is a colour literal.
+//
+//   import "../../lib/palette.plm"
+//   import "../../lib/controls.plm"
+//
+//   fact mute = false
+//   Switch(label: "Mute output", on: mute, scale: scale)
+//   on toggle switch_mute { fact.mute = not mute }
+//
+// A control never writes a fact: it emits what the hand asked for and the scene
+// decides. `Switch` emits `toggle` with no payload, `Slider` emits
+// `change(level)` (0..1), `Thumb` emits `select(index)`, `Button` emits `press`.
+// Keeping the state in the scene is what makes `pleamar --say <scene> describe`
+// truthful: the zone says what it does, the logic holds the value.
+//
+// Every length is a DESIGN PIXEL and each component multiplies its own by
+// `scale` (palette `ui` by default), like Capsule. A control that draws text is
+// wrapped in `group { scale: S }` and asked for `scale: 1`, because a `text`'s
+// `size:` is one literal number and follows no scale (capsule.plm's rule).
+//
+// Each control declares one `hit` zone with its `role:` (`toggle`, `slider`,
+// `tab`, `button` — `tab`, not `tabs`), `label:` for `describe` and `active:`
+// from `enabled`, so a disabled control is still drawn and no longer answers.
+// One engine quirk (pleamar 0.7.7, seen with `--say <scene> describe`): a zone
+// that is inactive at that moment is left out of `describe` unless it is a
+// button, so a disabled switch, slider or thumb is invisible to an agent while
+// its `enabled` is false; its label is still drawn, and a page that must stay
+// describable keeps the control active and gates the event in its logic.
+
+import "palette.plm"
+
+library Controls strict {
+
+    // ---- the sizes the shell's panels use (design px) ----
+    let switch.w = 38
+    let switch.h = 22
+    let switch.knob = 17
+    let slider.h = 6
+    let slider.zone = 26
+    let thumb.h = 28
+    let button.h = 26
+
+    // A switch: the pill a Settings row or a card draws for on/off. `switch.w`
+    // wide and `switch.h` high; the knob is a circle at the left while off and
+    // the right while on (it moves with `on`, so a spring on the fact animates
+    // it). Pressing anywhere on the pill emits `toggle`.
+    component Switch(toggle: event,
+                     on: bool,
+                     label: text,
+                     enabled: bool = true,
+                     w: number = switch.w,
+                     h: number = switch.h,
+                     scale: number = ui) {
+
+        size: w * scale, h * scale
+
+        let r = switch.knob / 2 * scale
+        let pad = (h - switch.knob) / 2 * scale
+        let kx = pick(on, r + pad, w * scale - r - pad)
+        let track = pick(on, mix(slate, ink, 0.16), accent)
+        let tone = mix(track, ink, 0.10 + 0.10 * hit.hover)
+
+        body {
+            color: tone
+            opacity: pick(enabled, 45%, 100%)
+            rim: pick(on, 0%, 12%)
+            border: 1 * scale, mix(tone, ink, 0.18)
+            box { from: 0, 0; size: w * scale, h * scale; corner: h / 2 * scale }
+        }
+
+        ellipse { at: kx, h / 2 * scale; radius: r
+            color: pick(on, ink.dim, on.accent); opacity: pick(enabled, 60%, 100%) }
+
+        zone box hit { from: 0, 0; size: w * scale, h * scale; corner: h / 2 * scale
+            cursor: pointer; label: label; role: toggle; checked: on; active: enabled }
+        on press hit { emit toggle }
+    }
+
+    // A slider: a track `w` wide and `slider.h` thick, the level filled from
+    // the left in `tone`, and a round knob at the level. Pressing the track
+    // jumps the level there (`press` and `drag` read the zone's own `local.x`),
+    // so the zone is `slider.zone` high: more than the track, less than a row.
+    // `value` is 0..1 and is the scene's; the control reads it, never keeps it.
+    component Slider(change: event,
+                     value: number,
+                     label: text,
+                     tone: color = accent,
+                     w: number = 216,
+                     enabled: bool = true,
+                     scale: number = ui) {
+
+        size: w * scale, slider.zone * scale
+
+        let h = slider.h
+        let r = h * scale
+        let lv = clamp(value, 0, 1)
+        let cy = slider.zone / 2 * scale
+        let kx = clamp(lv * w * scale, r, w * scale - r)
+        let level = clamp(lv * w * scale, 0, w * scale)
+
+        box { from: 0, cy - h / 2 * scale; size: w * scale, h * scale; corner: h / 2 * scale
+            color: ink; opacity: pick(enabled, ink.active * 0.4, ink.active) }
+
+        box { from: 0, cy - h / 2 * scale; size: level, h * scale; corner: h / 2 * scale
+            color: pick(enabled, mix(tone, slate, 0.55), tone); opacity: 90% }
+
+        ellipse { at: kx, cy; radius: r; color: pick(enabled, ink.dim, ink) }
+
+        zone box hit { from: 0, 0; size: w * scale, slider.zone * scale; corner: 6 * scale
+            cursor: pointer; label: label; role: slider
+            value: "{lv * 100, 0} %"; active: enabled }
+        on press hit { emit change(clamp(local.x / (w * scale), 0, 1)) }
+        on drag hit { emit change(clamp(local.x / (w * scale), 0, 1)) }
+    }
+
+    // The lit piece of a segmented picker ("pick one of several"): the track,
+    // the labels and their dividers stay the caller's, as in the QS controls
+    // this replaces. `count` cells wide, the lit cell slides to `index` (spring
+    // the fact and it follows), and a press anywhere emits `select(cell)`.
+    // Draw the caller's labels over it, one per cell, centred.
+    component Thumb(select: event,
+                    count: number,
+                    index: number,
+                    w: number,
+                    label: text = "Choices",
+                    h: number = thumb.h,
+                    enabled: bool = true,
+                    scale: number = ui) {
+
+        size: w * scale, h * scale
+
+        let cell = w / count * scale
+        let i = clamp(index, 0, count - 1)
+
+        body {
+            color: accent
+            opacity: pick(enabled, 45%, 90%)
+            rim: 10%
+            box { from: cell * i, 0; size: cell, h * scale; corner: 8 * scale }
+        }
+
+        zone box hit { from: 0, 0; size: w * scale, h * scale; corner: 8 * scale
+            cursor: pointer; label: label; role: tab; value: "{index + 1}"; active: enabled }
+        on press hit { emit select(clamp(floor(local.x / cell), 0, count - 1)) }
+    }
+
+    // A button: a capsule of `w` by `button.h` with its label centred. `primary`
+    // fills it with the accent (the one action a page offers); otherwise it is
+    // the same wash the menu rows use, deeper under the pointer and while held.
+    component Button(press: event,
+                     label: text,
+                     w: number,
+                     primary: bool = false,
+                     enabled: bool = true,
+                     scale: number = ui) {
+
+        size: w * scale, button.h * scale
+
+        let fill = pick(primary, mix(slate, ink, 0.10 + 0.12 * hit.hover + 0.08 * hit.pressed),
+            mix(accent, ink, 0.12 * hit.hover + 0.08 * hit.pressed))
+        let tone = pick(primary, pick(enabled, ink.off, ink), on.accent)
+
+        body {
+            color: fill
+            opacity: pick(enabled, 45%, 100%)
+            rim: pick(primary, 0%, 8%)
+            border: 1 * scale, mix(fill, ink, 0.16)
+            box { from: 0, 0; size: w * scale, button.h * scale; corner: 8 * scale }
+        }
+
+        text "{label}" { at: w / 2 * scale, button.h / 2 * scale; anchor: center
+            family: "Iosevka"; size: 12; color: tone; opacity: pick(enabled, 50%, 100%) }
+
+        zone box hit { from: 0, 0; size: w * scale, button.h * scale; corner: 8 * scale
+            cursor: pointer; label: label; role: button; active: enabled }
+        on press hit { emit press }
+    }
+}

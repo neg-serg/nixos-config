@@ -1,0 +1,103 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../theme.plm"
+import "../../lib/controls.plm"
+
+// controls.plm's proof scene: every control in the states a panel draws it in,
+// so `pleamar --check` proves the library compiles and a frame proves it
+// paints. A test asset — it is not a shell, is not deployed, and listens to
+// nothing (the facts stay where the controls left them).
+//
+//   pleamar --check files/pleamar/tests/controls/controls.plm
+//   pleamar --scene files/pleamar/tests/controls/controls.plm --seconds 4 --no-hud
+//
+// Each control takes its event from the scene (`toggle:`, `change:`, `select:`,
+// `press:`), so two switches on one page never share one: here every control
+// has an event of its own and a fact the event would move.
+
+scene controls {
+
+    surface { size: 420, 330; anchor: top; level: top }
+
+    // The facts a real page would keep; the controls only read them.
+    fact sw_a = false
+    fact sw_b = true
+    fact sw_off = false
+    fact lv_a = 0.42
+    fact lv_b = 0.9
+    fact mode = 1
+    fact pings = 0
+
+    // One event per control instance: a page with two switches declares two
+    // events, and its logic tells them apart without a payload convention.
+    event sw_a_toggle ->
+    event sw_b_toggle ->
+    event sw_off_toggle ->
+    event lv_a_change ->          // payload: level, 0..1
+    event lv_b_change ->          // payload: level, 0..1
+    event mode_select ->          // payload: cell index, 0-based
+    event go_press ->
+
+    body {
+        color: skin.coal
+        rim: 8%
+        box { from: 0, 0; size: screen.width, screen.height }
+    }
+
+    text "Controls" { at: 20, 20; anchor: left center; size: 13; weight: 600; color: skin.ink }
+
+    // ------------------------------------------------------------- switches
+    // A control that sets its own `size:` is placed by a `group`'s `move`:
+    // the instance takes no `at:` of its own (capsule.plm's rule).
+    text "Off" { at: 20, 58; anchor: left center; size: 12; color: skin.ink.dim }
+    group { move: 100, 58
+        Switch(toggle: sw_a_toggle, on: sw_a, label: "Switch, off", scale: 1)
+    }
+
+    text "On" { at: 20, 90; anchor: left center; size: 12; color: skin.ink.dim }
+    group { move: 100, 90
+        Switch(toggle: sw_b_toggle, on: sw_b, label: "Switch, on", scale: 1)
+    }
+
+    text "Disabled" { at: 20, 122; anchor: left center; size: 12; color: skin.ink.dim }
+    group { move: 100, 122
+        Switch(toggle: sw_off_toggle, on: sw_off, label: "Switch, disabled", enabled: false, scale: 1)
+    }
+
+    // -------------------------------------------------------------- sliders
+    text "Level" { at: 20, 160; anchor: left center; size: 12; color: skin.ink.dim }
+    group { move: 100, 160
+        Slider(change: lv_a_change, value: lv_a, label: "Level", scale: 1)
+    }
+
+    text "Disabled" { at: 20, 192; anchor: left center; size: 12; color: skin.ink.dim }
+    group { move: 100, 192
+        Slider(change: lv_b_change, value: lv_b, label: "Level, disabled", enabled: false, scale: 1)
+    }
+
+    // --------------------------------------------------------- segmented picker
+    // The track and the labels are the caller's; `Thumb` is the lit cell that
+    // slides under the chosen one (the piece a theme would reshape).
+    text "Mode" { at: 20, 236; anchor: left center; size: 12; color: skin.ink.dim }
+    box { from: 100, 222; size: 180, 28; corner: 8; color: slate; opacity: 60% }
+    group { move: 100, 222
+        Thumb(select: mode_select, count: 3, index: mode, w: 180, label: "Mode", scale: 1)
+    }
+    text "One" { at: 130, 236; anchor: center; size: 12; color: skin.ink }
+    text "Two" { at: 190, 236; anchor: center; size: 12; color: skin.ink }
+    text "Three" { at: 250, 236; anchor: center; size: 12; color: skin.ink }
+    box { from: 160, 228; size: 1, 16; color: ink; opacity: ink.subtle }
+    box { from: 220, 228; size: 1, 16; color: ink; opacity: ink.subtle }
+
+    // --------------------------------------------------------------- buttons
+    group { move: 20, 286
+        Button(press: go_press, label: "Button", w: 110, scale: 1)
+    }
+    group { move: 146, 286
+        Button(press: go_press, label: "Primary", w: 110, primary: true, scale: 1)
+    }
+    group { move: 272, 286
+        Button(press: go_press, label: "Disabled", w: 110, enabled: false, scale: 1)
+    }
+}
