@@ -31,41 +31,41 @@ write_baseline=0
 allow_dirty=0
 
 die() {
-	printf 'eval-bench: %s\n' "$*" >&2
-	exit 2
+  printf 'eval-bench: %s\n' "$*" >&2
+  exit 2
 }
 
 while [ $# -gt 0 ]; do
-	case "$1" in
-	--runs)
-		shift
-		runs="${1:?--runs needs a number}"
-		;;
-	--host)
-		shift
-		host="${1:?--host needs a name}"
-		;;
-	--attr)
-		shift
-		attr="${1:?--attr needs a path}"
-		;;
-	--baseline)
-		shift
-		baseline_file="${1:?--baseline needs a file}"
-		;;
-	--max-regression)
-		shift
-		max_pct="${1:?--max-regression needs a percentage}"
-		;;
-	--write-baseline) write_baseline=1 ;;
-	--allow-dirty) allow_dirty=1 ;;
-	-h | --help)
-		sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
-		exit 0
-		;;
-	*) die "unknown argument: $1 (see --help)" ;;
-	esac
-	shift
+  case "$1" in
+    --runs)
+      shift
+      runs="${1:?--runs needs a number}"
+      ;;
+    --host)
+      shift
+      host="${1:?--host needs a name}"
+      ;;
+    --attr)
+      shift
+      attr="${1:?--attr needs a path}"
+      ;;
+    --baseline)
+      shift
+      baseline_file="${1:?--baseline needs a file}"
+      ;;
+    --max-regression)
+      shift
+      max_pct="${1:?--max-regression needs a percentage}"
+      ;;
+    --write-baseline) write_baseline=1 ;;
+    --allow-dirty) allow_dirty=1 ;;
+    -h | --help)
+      sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *) die "unknown argument: $1 (see --help)" ;;
+  esac
+  shift
 done
 
 case "$runs" in '' | *[!0-9]*) die "--runs must be a positive integer" ;; esac
@@ -74,11 +74,11 @@ case "$max_pct" in '' | *[!0-9]*) die "--max-regression must be a non-negative i
 
 # Untracked files count too: the flake source copy includes them.
 if [ -n "$(git status --porcelain)" ]; then
-	if [ "$allow_dirty" -eq 1 ]; then
-		printf 'eval-bench: WARNING worktree is dirty (dirty-tree copy adds ~1.2 s)\n' >&2
-	else
-		die "worktree is dirty; commit or stash first (or pass --allow-dirty)"
-	fi
+  if [ "$allow_dirty" -eq 1 ]; then
+    printf 'eval-bench: WARNING worktree is dirty (dirty-tree copy adds ~1.2 s)\n' >&2
+  else
+    die "worktree is dirty; commit or stash first (or pass --allow-dirty)"
+  fi
 fi
 
 head_before="$(git rev-parse --short HEAD)"
@@ -88,25 +88,25 @@ cmd=(nix eval --raw --option eval-cache false ".#nixosConfigurations.$host.$attr
 
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/eval-bench.XXXXXXXX")"
 cleanup() {
-	case "$tmp" in "${TMPDIR:-/tmp}"/eval-bench.*) rm -rf -- "$tmp" ;; esac
+  case "$tmp" in "${TMPDIR:-/tmp}"/eval-bench.*) rm -rf -- "$tmp" ;; esac
 }
 trap cleanup EXIT
 
 printf 'eval-bench: host=%s head=%s runs=%d attr=%s\n' "$host" "$head_before" "$runs" "$attr"
 
-if command -v hyperfine >/dev/null 2>&1; then
-	hyperfine --warmup 1 --runs "$runs" --export-json "$tmp/bench.json" "${cmd[*]}" >/dev/null
-	read -r median min max < <(jq -r '.results[0].summary.time_wall_clock | "\(.median) \(.min) \(.max)"' "$tmp/bench.json")
+if command -v hyperfine > /dev/null 2>&1; then
+  hyperfine --warmup 1 --runs "$runs" --export-json "$tmp/bench.json" "${cmd[*]}" > /dev/null
+  read -r median min max < <(jq -r '.results[0].summary.time_wall_clock | "\(.median) \(.min) \(.max)"' "$tmp/bench.json")
 else
-	times=()
-	for i in $(seq 1 $((runs + 1))); do
-		start="${EPOCHREALTIME/./}"
-		"${cmd[@]}" >/dev/null
-		end="${EPOCHREALTIME/./}"
-		[ "$i" -eq 1 ] && continue
-		times+=($(((end - start) / 1000)))
-	done
-	read -r median min max < <(printf '%s\n' "${times[@]}" | sort -n | awk '
+  times=()
+  for i in $(seq 1 $((runs + 1))); do
+    start="${EPOCHREALTIME/./}"
+    "${cmd[@]}" > /dev/null
+    end="${EPOCHREALTIME/./}"
+    [ "$i" -eq 1 ] && continue
+    times+=($(((end - start) / 1000)))
+  done
+  read -r median min max < <(printf '%s\n' "${times[@]}" | sort -n | awk '
     { a[NR] = $1 }
     END {
       m = (NR % 2) ? a[(NR + 1) / 2] : (a[NR / 2] + a[NR / 2 + 1]) / 2
@@ -120,13 +120,13 @@ head_after="$(git rev-parse --short HEAD)"
 printf '  median %.3f s   min %.3f s   max %.3f s\n' "$median" "$min" "$max"
 
 if [ "$write_baseline" -eq 1 ]; then
-	printf '%s %s %s\n' "$median" "$head_before" "$(date +%F)" >"$baseline_file"
-	printf '  wrote baseline %s: median %s s at %s\n' "$baseline_file" "$median" "$head_before"
-	exit 0
+  printf '%s %s %s\n' "$median" "$head_before" "$(date +%F)" > "$baseline_file"
+  printf '  wrote baseline %s: median %s s at %s\n' "$baseline_file" "$median" "$head_before"
+  exit 0
 fi
 
 [ -f "$baseline_file" ] || die "no baseline at $baseline_file; create one with --write-baseline"
-read -r base_median base_head base_date <"$baseline_file"
+read -r base_median base_head base_date < "$baseline_file"
 case "$base_median" in '' | *[!0-9.]*) die "malformed baseline: $baseline_file" ;; esac
 
 pct="$(awk -v m="$median" -v b="$base_median" 'BEGIN { printf "%+.1f", (m / b - 1) * 100 }')"
@@ -135,7 +135,7 @@ printf '  baseline %.3f s (%s, %s)   limit %.3f s (+%s%%)\n' "$base_median" "$ba
 printf '  delta %s%%\n' "$pct"
 
 if awk -v m="$median" -v b="$base_median" -v p="$max_pct" 'BEGIN { exit !(m > b * (1 + p / 100)) }'; then
-	printf 'eval-bench: FAIL median %.3f s is above %.3f s (+%s%%)\n' "$median" "$limit" "$max_pct" >&2
-	exit 1
+  printf 'eval-bench: FAIL median %.3f s is above %.3f s (+%s%%)\n' "$median" "$limit" "$max_pct" >&2
+  exit 1
 fi
 printf 'eval-bench: PASS\n'
