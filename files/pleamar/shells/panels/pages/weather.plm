@@ -55,8 +55,15 @@ part Weather {
 
             // ----***--------------------- current conditions
             text weather.city { at: 14, 16; anchor: left center; width: 200; lines: 1; family: "Iosevka"; weight: 700; size: 12; color: skin.ink }
-            text weather.temp { at: 14, 50; anchor: left center; family: "Iosevka"; size: 32; weight: 700; color: skin.ink }
-            text weather.unit { at: 84, 54; anchor: left center; family: "Iosevka"; size: 14; color: skin.ink.dim }
+            // The unit follows the reading instead of sitting in a fixed 70 px slot: `-12` is
+            // 48 px wide at this size and `5` is 16, so a fixed x for `°C` left a hole between
+            // the number and its unit that grew as the number got shorter. Measured, the pair
+            // reads as one block at every value, and the widest reading still clears the
+            // condition glyph at 116. The unit's y is the big number's baseline, not the line's
+            // centre: 32 px type sits on ~62, and 56 puts the 14 px unit's own baseline there.
+            measure temp.w
+            text weather.temp { at: 14, 50; anchor: left center; measure: temp.w; family: "Iosevka"; size: 32; weight: 700; color: skin.ink }
+            text weather.unit { at: 14 + temp.w.width + 4, 56; anchor: left center; family: "Iosevka"; size: 14; color: skin.ink.dim }
             text weather.cond { at: 132, 50; anchor: left center; width: 154; lines: 2; family: "Iosevka"; size: 12; color: skin.ink.dim }
             // The reference's Material icon beside the condition (Weather.qml `_wicon`).
             text weather.glyph { at: 116, 50; anchor: center; family: "Material Symbols Outlined"; size: 16; color: skin.ink; opacity: 80%; show: weather.have }
