@@ -448,11 +448,9 @@ local function sysmon_publish()
             t0 = (k - 2) / span, t1 = (k - 1) / span,
             cpu0 = a.cpu, cpu1 = b.cpu,
             ram0 = a.ram, ram1 = b.ram,
-            gpu0 = a.gpu, gpu1 = b.gpu,
             temp0 = a.temp, temp1 = b.temp,
-            -- A series is broken, not drawn to zero, where its reading is missing: the chart may
-            -- not invent a dip the worker never measured.
-            gpu_ok = a.gpu_ok and b.gpu_ok,
+            -- The temperature is broken, not drawn to zero, where its reading is missing: the
+            -- chart may not invent a dip the worker never measured.
             temp_ok = a.temp_ok and b.temp_ok,
         }
     end
@@ -468,14 +466,12 @@ local function sysmon_apply(d, topic)
     local mem = type(parts.mem) == "table" and parts.mem or {}
     local swap = type(parts.swap) == "table" and parts.swap or {}
     local disk = type(parts.disk) == "table" and parts.disk or {}
-    local gpu = type(parts.gpu) == "table" and parts.gpu or {}
     local temp = type(parts.temp) == "table" and parts.temp or {}
     local cpu_pct = tonumber(cpu.percent) or 0
 
     local mp = tonumber(mem.percent) or 0
     local dp = tonumber(disk.percent) or 0
     local sp = tonumber(swap.percent) or 0
-    local gp = tonumber(gpu.percent)
     local tc = tonumber(temp.celsius)
     local tp = tonumber(temp.percent) or 0
 
@@ -492,27 +488,25 @@ local function sysmon_apply(d, topic)
         { label = "Swap", value = swap_value, level = sp / 100, tone = tone(sp, 60, 85) },
         { label = "Disk", value = "R " .. rate_kibs(disk.read_kibps) .. " · W " .. rate_kibs(disk.write_kibps),
           level = dp / 100, tone = tone(dp, 70, 90) },
-        { label = "GPU", value = gp and (fmt0(gp) .. " %") or "--", level = (gp or 0) / 100,
-          tone = tone(gp or 0, 80, 95) },
         { label = "Temperature", value = tc and (fmt1(tc) .. " °C") or "--", level = tp / 100,
           tone = tc and tone(tc, 75, 90) or 0 },
     }
 
     -- Every series is stored as a 0..1 share, so the chart's one 0..100 % scale is a plain
-    -- multiplication; `gpu_ok`/`temp_ok` say whether the worker really reported that reading, so a
-    -- missing one breaks its line instead of drawing a dip to zero.
+    -- multiplication; `temp_ok` says whether the worker really reported that reading, so a missing
+    -- one breaks its line instead of drawing a dip to zero. There is no GPU series: the worker's
+    -- `gpu_busy_percent` reads 99-100 % on this card while it is idle, and a chart may not draw a
+    -- reading nobody can stand by.
     local function share(v)
         if type(v) ~= "number" or v ~= v then return 0 end
         return math.min(1, math.max(0, v / 100))
     end
     sys_hist[#sys_hist + 1] = {
-        cpu = share(cpu_pct), ram = share(mp), gpu = share(gp), temp = share(tp),
-        gpu_ok = gp ~= nil,
+        cpu = share(cpu_pct), ram = share(mp), temp = share(tp),
         temp_ok = tc ~= nil and tp ~= nil,
     }
     if #sys_hist > SYS_HIST_LEN then table.remove(sys_hist, 1) end
     sysmon_publish()
-    fact.sysmon_gpu = (gp ~= nil) and 1 or 0
     fact.sysmon_temp = (tc ~= nil) and 1 or 0
     fact.sysmon_online = 1
     text["sysmon.err"] = ""

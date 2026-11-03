@@ -94,10 +94,11 @@ part SysPanel {
 
             // ----***--------------------------- history
             // sysmon samples all the time (panels.luau `wanted`), so the last 60 records are the
-            // minute before the drawer opened, not the minute after. Four series share one
-            // 0..100 % scale, so the chart is a comparison, not four sparklines; each series is a
-            // polyline of one `line` per pair of samples, the flow card's shape. GPU and
-            // temperature are broken where the worker had no reading, never drawn to zero.
+            // minute before the drawer opened, not the minute after. Three series share one
+            // 0..100 % scale, so the chart is a comparison, not three sparklines; each series is a
+            // polyline of one `line` per pair of samples, the flow card's shape. The temperature is
+            // broken where the worker had no reading, never drawn to zero; the GPU series is gone —
+            // its reading cannot be trusted on this card.
             let hist.x = 14
             let hist.y = 386
             let hist.w = 840
@@ -108,10 +109,8 @@ part SysPanel {
             text "CPU" { at: 28, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim }
             box { from: 76, 367; size: 8, 8; corner: 4; color: amber }
             text "RAM" { at: 90, 371; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim }
-            box { from: 138, 367; size: 8, 8; corner: 4; color: highlight; show: sysmon_gpu == 1 }
-            text "GPU" { at: 152, 371; anchor: left center; family: "Iosevka"; size: 12; color: ink.off; show: sysmon_gpu == 1 }
-            box { from: 200, 367; size: 8, 8; corner: 4; color: warn; show: sysmon_temp == 1 }
-            text "TEMP" { at: 214, 371; anchor: left center; family: "Iosevka"; size: 12; color: ink.off; show: sysmon_temp == 1 }
+            box { from: 138, 367; size: 8, 8; corner: 4; color: warn; show: sysmon_temp == 1 }
+            text "TEMP" { at: 152, 371; anchor: left center; family: "Iosevka"; size: 12; color: ink.off; show: sysmon_temp == 1 }
 
             // Five rules at the quarters, round numbers every one, and every one labelled: the ONS
             // chart guidance says gridlines always carry the value they stand for and the count
@@ -141,9 +140,6 @@ part SysPanel {
                 line { from: hist.x + h.t0 * hist.w, hist.y + hist.h - h.ram0 * hist.h
                     to: hist.x + h.t1 * hist.w, hist.y + hist.h - h.ram1 * hist.h
                     width: 1.3; color: amber; opacity: 85% }
-                line { from: hist.x + h.t0 * hist.w, hist.y + hist.h - h.gpu0 * hist.h
-                    to: hist.x + h.t1 * hist.w, hist.y + hist.h - h.gpu1 * hist.h
-                    width: 1.3; color: highlight; opacity: 85%; show: h.gpu_ok }
                 line { from: hist.x + h.t0 * hist.w, hist.y + hist.h - h.temp0 * hist.h
                     to: hist.x + h.t1 * hist.w, hist.y + hist.h - h.temp1 * hist.h
                     width: 1.2; color: warn; opacity: 80%; show: h.temp_ok }
