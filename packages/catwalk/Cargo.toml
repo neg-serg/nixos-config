@@ -3,10 +3,10 @@
 [workspace]
 
 [package]
-name = "crabwalk"
+name = "catwalk"
 version = "0.1.0"
 edition = "2021"
-description = "A tiny pixel-perfect platformer painted on the waterfall wallpaper"
+description = "A tiny pixel-perfect cat platformer painted on the waterfall wallpaper"
 authors = ["neg-serg"]
 
 [dependencies]

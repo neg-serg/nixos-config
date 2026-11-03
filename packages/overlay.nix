@@ -90,7 +90,7 @@ in
     // (gui.neg or { })
     // {
       game = final.callPackage ./game { }; # Unified game launcher
-      sonicwalk = final.callPackage ./sonicwalk { }; # Sonic platformer over the waterfall wallpaper
+      catwalk = final.callPackage ./catwalk { }; # cat platformer over the waterfall wallpaper
       joern = final.callPackage ./joern { }; # Open-source code analysis platform
       superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
       superdirt-mixer = final.callPackage ./superdirt-mixer { }; # graphical mixer UI quark for SuperDirt orbits (gain/pan/reverb/EQ/compressor)

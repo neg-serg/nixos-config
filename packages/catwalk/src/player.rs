@@ -20,8 +20,10 @@ const SWIM_SPEED: f32 = 380.0;
 const SWIM_ACCEL: f32 = 2100.0;
 const SWIM_JUMP: f32 = 1080.0;
 
-const HALF_W: f32 = 38.0;
-const HEIGHT: f32 = 46.0;
+// Sonic is drawn 80x96 world pixels tall; the hitbox is a little tighter so
+// his quills can overlap rock edges without snagging.
+const HALF_W: f32 = 22.0;
+const HEIGHT: f32 = 90.0;
 
 #[derive(Default, Clone, Copy)]
 pub struct Input {
@@ -49,6 +51,11 @@ pub struct Player {
     pub on_ground: bool,
     pub in_water: bool,
     pub song: f32,
+    /// Run-jump builds picked up from monitor capsules.
+    pub speed_mult: f32,
+    pub jump_mult: f32,
+    pub magnet: bool,
+    pub shield: bool,
     squash: f32,
     coyote: f32,
     buffer: f32,
@@ -64,6 +71,10 @@ impl Player {
             on_ground: false,
             in_water: false,
             song: 0.0,
+            speed_mult: 1.0,
+            jump_mult: 1.0,
+            magnet: false,
+            shield: false,
             squash: 1.0,
             coyote: 0.0,
             buffer: 0.0,
@@ -115,9 +126,9 @@ impl Player {
         let (accel, top, friction) = if self.in_water {
             (SWIM_ACCEL, SWIM_SPEED, 3400.0)
         } else if self.on_ground {
-            (GROUND_ACCEL, RUN_SPEED, GROUND_FRICTION)
+            (GROUND_ACCEL, RUN_SPEED * self.speed_mult, GROUND_FRICTION)
         } else {
-            (AIR_ACCEL, RUN_SPEED, 1200.0)
+            (AIR_ACCEL, RUN_SPEED * self.speed_mult, 1200.0)
         };
         if dir.abs() > 0.0 {
             self.vel.x = approach(self.vel.x, dir * top, accel * dt);
@@ -156,7 +167,7 @@ impl Player {
         } else {
             self.vel.y = (self.vel.y + GRAVITY * dt).min(MAX_FALL);
             if self.buffer > 0.0 && (self.on_ground || self.coyote > 0.0) {
-                self.vel.y = -JUMP_SPEED;
+                self.vel.y = -JUMP_SPEED * self.jump_mult;
                 self.buffer = 0.0;
                 self.coyote = 0.0;
                 self.on_ground = false;
@@ -194,6 +205,19 @@ impl Player {
         self.squash = approach(self.squash, 1.0, 3.2 * dt);
         self.song += dt * (1.0 + self.vel.x.abs() / RUN_SPEED);
         events
+    }
+
+    /// Get knocked away by a badnik or a shot.
+    pub fn hurt(&mut self, from_x: f32) {
+        let away = if self.pos.x < from_x { -1.0 } else { 1.0 };
+        self.vel.x = away * 520.0;
+        self.vel.y = -430.0;
+        self.on_ground = false;
+    }
+
+    /// Reset the temporary state after a hit.
+    pub fn keep_build(&mut self) {
+        // Builds survive a hit; this hook exists so damage code stays explicit.
     }
 
     fn resolve_x(&mut self, level: &Level) {
@@ -257,7 +281,7 @@ mod tests {
     }
 
     #[test]
-    fn jump_reaches_a_platform_two_crab_heights_up() {
+    fn jump_reaches_a_platform_two_body_heights_up() {
         let level = Level::waterfall();
         let mut player = Player::new(crate::level::SPAWN);
         step(&mut player, &level, Input::default(), 0.2);
@@ -287,7 +311,7 @@ mod tests {
         step(&mut player, &level, walk, 2.0);
         assert!(
             player.in_water,
-            "crab should be swimming at x={}",
+            "sonic should be swimming at x={}",
             player.pos.x
         );
         assert!(player.pos.y > 1900.0);
@@ -298,7 +322,7 @@ mod tests {
         let level = Level::waterfall();
         let mut player = Player::new(Vec2::new(2000.0, 1980.0));
         step(&mut player, &level, Input::default(), 1.0);
-        assert!(player.in_water, "crab should settle on the surface");
+        assert!(player.in_water, "sonic should settle on the surface");
         let surface = player.pos.y;
         // A leap out of the water has to clear a good part of the body height.
         let mut input = Input {

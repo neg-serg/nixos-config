@@ -12,7 +12,7 @@
 }:
 
 rustPlatform.buildRustPackage {
-  pname = "crabwalk";
+  pname = "catwalk";
   version = "0.1.0";
 
   src = ./.;
@@ -27,18 +27,19 @@ rustPlatform.buildRustPackage {
   doCheck = true;
 
   meta = {
-    description = "Tiny pixel-perfect platformer on the waterfall wallpaper";
+    description = "Tiny pixel-perfect cat platformer on the waterfall wallpaper";
     longDescription = ''
       A miniature platformer that uses the user's 7680x2160 waterfall
-      wallpaper as its level: the painting is the world at 1:1, the crab on
-      the grass ledge is the player character, and the waterfall, lake and
-      spray are animated with overlays derived from the same pixels. Collect
-      seven spray drops, cross the lake and climb the boulders to the falls.
+      wallpaper as its level: the painting is the world at 1:1, and a fan-made
+      pixel-art ginger cat (drawn by tools/generate_cat.py) runs, spins and
+      swims through it while the falls, lake and spray are
+      animated with overlays derived from the same pixels. Collect seven spray
+      drops, cross the lake and climb the boulders to the falls.
     '';
     homepage = "https://github.com/neg-serg/nixos-config";
     license = lib.licenses.mit;
     maintainers = [ ];
     platforms = lib.platforms.linux;
-    mainProgram = "crabwalk";
+    mainProgram = "catwalk";
   };
 }

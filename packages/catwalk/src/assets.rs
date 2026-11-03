@@ -11,7 +11,14 @@ use crate::effects::{waterfall_columns, FallColumn};
 use crate::math::hash01;
 
 const WORLD_JPG: &[u8] = include_bytes!("../assets/world.jpg");
-const CRAB_PNG: &[u8] = include_bytes!("../assets/crab.png");
+const CAT_PNG: &[u8] = include_bytes!("../assets/cat.png");
+const BADNIK_PNG: &[u8] = include_bytes!("../assets/badnik.png");
+// The painting's own crab sits exactly where the player spawns; this patch
+// (cloned from the clean ledge by tools/make_world_patch.py) hides it so
+// Sonic is the only character on the ledge. Everything else stays untouched.
+const WORLD_PATCH_PNG: &[u8] = include_bytes!("../assets/world_patch.png");
+const PATCH_X: i64 = 4533;
+const PATCH_Y: i64 = 1772;
 
 #[derive(Clone, Copy)]
 pub struct Palette {
@@ -43,9 +50,10 @@ impl Shimmer {
 
 pub struct Assets<'a> {
     pub world: Texture<'a>,
-    pub crab: Texture<'a>,
-    pub crab_w: f32,
-    pub crab_h: f32,
+    pub cat: Texture<'a>,
+    pub badnik: Texture<'a>,
+    pub cat_frame_w: f32,
+    pub cat_frame_h: f32,
     pub palette: Palette,
     pub falls: Vec<FallColumn>,
     pub shimmer: Vec<Shimmer>,
@@ -54,7 +62,9 @@ pub struct Assets<'a> {
 impl<'a> Assets<'a> {
     pub fn load(creator: &'a TextureCreator<WindowContext>) -> Result<Self, String> {
         let decoded = image::load_from_memory(WORLD_JPG).map_err(|e| e.to_string())?;
-        let rgba = decoded.to_rgba8();
+        let mut rgba = decoded.to_rgba8();
+        let patch = image::load_from_memory(WORLD_PATCH_PNG).map_err(|e| e.to_string())?;
+        image::imageops::overlay(&mut rgba, &patch.to_rgba8(), PATCH_X, PATCH_Y);
         let (w, h) = rgba.dimensions();
 
         let mut texture = creator
@@ -69,21 +79,37 @@ impl<'a> Assets<'a> {
         let falls = waterfall_columns(raw, w as usize, h as usize);
         let shimmer = collect_shimmer(raw, w as usize, h as usize);
 
-        let crab_image = image::load_from_memory(CRAB_PNG).map_err(|e| e.to_string())?;
-        let crab_rgba = crab_image.to_rgba8();
-        let (cw, ch) = crab_rgba.dimensions();
-        let mut crab = creator
-            .create_texture(PixelFormatEnum::RGBA32, TextureAccess::Static, cw, ch)
+        // Sprite sheet: 9 frames of 40x48 (idle 0..1, run 2..5, spin 6..8).
+        let cat_image = image::load_from_memory(CAT_PNG).map_err(|e| e.to_string())?;
+        let cat_rgba = cat_image.to_rgba8();
+        let (sw, sh) = cat_rgba.dimensions();
+        let mut cat = creator
+            .create_texture(PixelFormatEnum::RGBA32, TextureAccess::Static, sw, sh)
             .map_err(|e| e.to_string())?;
-        crab.update(None, crab_rgba.as_raw(), (cw * 4) as usize)
+        cat.update(None, cat_rgba.as_raw(), (sw * 4) as usize)
             .map_err(|e| e.to_string())?;
-        crab.set_blend_mode(sdl2::render::BlendMode::Blend);
+        cat.set_blend_mode(sdl2::render::BlendMode::Blend);
+        let frame_w = 40.0;
+        let frame_h = 48.0;
+
+        // Opponent sheet: 3 frames of 36x36 (hover A, hover B, destroyed).
+        let badnik_image = image::load_from_memory(BADNIK_PNG).map_err(|e| e.to_string())?;
+        let badnik_rgba = badnik_image.to_rgba8();
+        let (bw, bh) = badnik_rgba.dimensions();
+        let mut badnik = creator
+            .create_texture(PixelFormatEnum::RGBA32, TextureAccess::Static, bw, bh)
+            .map_err(|e| e.to_string())?;
+        badnik
+            .update(None, badnik_rgba.as_raw(), (bw * 4) as usize)
+            .map_err(|e| e.to_string())?;
+        badnik.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Ok(Self {
             world: texture,
-            crab,
-            crab_w: cw as f32,
-            crab_h: ch as f32,
+            cat,
+            badnik,
+            cat_frame_w: frame_w,
+            cat_frame_h: frame_h,
             palette: Palette::default(),
             falls,
             shimmer,
