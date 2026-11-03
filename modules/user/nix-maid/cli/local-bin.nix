@@ -101,6 +101,11 @@
           "mp"
           "nb"
           "qe"
+          "pb"
+          "any"
+          "v"
+          "sclang-pwj"
+          "renoise-pwj"
           "pic-notify"
           "screenrec"
           "clip"
@@ -202,6 +207,12 @@
         ".local/bin/mp".source = lib.getExe' pkgs.neg.local-bin-audio "mp";
         ".local/bin/nb".source = lib.getExe' pkgs.neg.local-bin-audio "nb";
         ".local/bin/qe".source = lib.getExe' pkgs.neg.local-bin-audio "qe";
+        # Rust ports of the last local-bin helpers (packages/local-bin-misc).
+        ".local/bin/pb".source = lib.getExe' pkgs.neg.local-bin-misc "pb";
+        ".local/bin/any".source = lib.getExe' pkgs.neg.local-bin-misc "any";
+        ".local/bin/v".source = lib.getExe' pkgs.neg.local-bin-misc "v";
+        ".local/bin/sclang-pwj".source = lib.getExe' pkgs.neg.local-bin-misc "sclang-pwj";
+        ".local/bin/renoise-pwj".source = lib.getExe' pkgs.neg.local-bin-misc "renoise-pwj";
 
         # Rust ports of the desktop/media helpers (packages/local-bin-desktop).
         ".local/bin/pic-notify".source = lib.getExe' pkgs.neg.local-bin-desktop "pic-notify";
