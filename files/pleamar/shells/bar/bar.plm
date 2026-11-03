@@ -146,10 +146,10 @@ scene bar {
     // of 9 then 7. A uniform 6 left every capsule after the clock 3 logical px short, so this
     // bar draws the 7 its own measurement gives.
     let row.gap = 7
-    // How many of the monitor pairs are there at all: the reference's own rule
-    // (SystemMonitorCapsule._vis*), swap only above systemMonitorSwapShowThreshold.
-    // The GPU pair is not in the count: it is dropped on this host (see SysmonCluster). A `let`
-    // INSIDE the component would not do: a component's `size:` is read in the caller's
+    // How many of the six monitor pairs are there at all: the reference's own
+    // rule (SystemMonitorCapsule._vis*), the GPU only on a machine that has
+    // one, swap only above systemMonitorSwapShowThreshold. A `let` INSIDE the
+    // component would not do: a component's `size:` is read in the caller's
     // scope, and there the name `shown` is the scene's own fact.
     // The tray's slot: QS's trayIconSlot is 22 logical px (max(CapsuleMetrics.inner 16,
     // panelHeight 22)), its icon 20 inside a 21 px frame. A scene-level let because a
@@ -181,7 +181,7 @@ scene bar {
     // flush against the edge where a hand reaching for the corner actually lands, and over nothing.
     let tray.reveal.w = 4 * ui * user_scale
     let tray.reveal.h = 25 * ui * user_scale
-    let sysmon.pairs = 1 + 1 + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
+    let sysmon.pairs = 1 + 1 + if(has.gpu, 1, 0) + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
     // The user's settings, merged by bar.luau: `scale` multiplies ui and the
     // per-monitor fit; `widget.*` decide which widgets of this slice are there.
     fact user_scale = 1.0
@@ -411,17 +411,19 @@ scene bar {
     text tip_body = ""
     // The tray item's own title, for the tooltip: a record's field, so the scene copies it out.
     text tip_title = ""
-    // QS Services/SystemMonitor: the 0..1 metrics the pairs draw, and whether the swap is on at all.
-    // There is no GPU fact: the pair is dropped on this host (see SysmonCluster).
+    // QS Services/SystemMonitor: six 0..1 metrics and whether two of them are
+    // there at all (the machine's GPU exposes a busy file, its swap is on).
     fact cpu = 0
     fact ram = 0
     // The reference's RAM hint prints the pair as well as the share ("7.2 / 16 GiB"), so the probe
     // publishes them: whole GiB for the total, tenths for what is in use.
     fact ram_used_gib = 0
     fact ram_total_gib = 0
+    fact gpu = 0
     fact temp = 0
     fact io = 0
     fact swap = 0
+    fact has.gpu = false
     fact has.swap = false
 
     // The transport's three commands, handled by bar.luau through the `media`
@@ -563,6 +565,7 @@ scene bar {
     image icon_next = file "icons/transport-next.svg", 14, 14
     image icon_cpu = file "icons/sysmon-cpu.svg", 13, 13
     image icon_ram = file "icons/sysmon-ram.svg", 13, 13
+    image icon_gpu = file "icons/sysmon-gpu.svg", 13, 13
     image icon_temp = file "icons/sysmon-temp.svg", 13, 13
     image icon_io = file "icons/sysmon-io.svg", 13, 13
     image icon_swap = file "icons/sysmon-swap.svg", 13, 13
@@ -993,8 +996,6 @@ scene bar {
     // (systemMonitorHideIdle, 3 %) keeps its place but dims to textDisabled,
     // and I/O disappears outright — that is the reference's own rule, and it is
     // why the cluster is often narrower than six pairs.
-    // The GPU pair is dropped on this host: `gpu_busy_percent` reads 99-100 % on the card while it
-    // is idle, so the pair would draw a full bar every second and lie.
     component SysmonPair(glyph: image, value: number, shown: bool, idle: bool,
                          warn: number, crit: number,
                          scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
@@ -1044,6 +1045,7 @@ scene bar {
                 at: 6, 0
                 SysmonPair(icon_cpu, cpu, true, cpu < 0.03, 0.5, 0.8, scale: 1)
                 SysmonPair(icon_ram, ram, true, ram < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_gpu, gpu, has.gpu, gpu < 0.03, 0.5, 0.8, scale: 1)
                 SysmonPair(icon_temp, temp, true, temp < 0.03, 0.43, 0.71, scale: 1)
                 // I/O is the one metric the reference takes away outright when
                 // it is idle (`_visIo = showIoMonitor && !_idleIo`), where the
