@@ -514,6 +514,13 @@ profile-eval: flamegraph-eval
 bench-rollout runs="3" engines="fix,nix":
     scripts/dev/rollout-bench.sh --runs {{ runs }} --engines {{ engines }}
 
+# Eval-time regression guard: median of N plain drvPath evals vs the committed
+# baseline; fails above +15%. Run before/after closure-minimization or
+# dendritic/import-tree experiments.
+# Usage: just bench-eval [runs]
+bench-eval runs="5":
+    bash "{{repo_root}}/scripts/dev/eval-bench.sh" --runs {{ runs }}
+
 # --- TidalCycles Live Coding --------------------------------------------------
 # Engine, editor, recording and monitoring are handled by the `tidalctl` CLI
 # (packages/tidalctl); recipes below are thin wrappers over it plus the Renoise
