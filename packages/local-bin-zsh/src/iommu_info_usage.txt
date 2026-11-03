@@ -1,0 +1,4 @@
+iommu-info: list or reset IOMMU groups
+Usage: iommu-info [r|reset]
+  Without args: list IOMMU groups and devices. With 'r' or 'reset':
+  show groups highlighting devices supporting reset.
