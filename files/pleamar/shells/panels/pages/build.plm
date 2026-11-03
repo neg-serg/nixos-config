@@ -43,5 +43,10 @@ part Build {
     // Every part prints its drawer at the end, and this one did not: the surface opened on
     // `drawer == build` and painted nothing — the empty window the scene's own header warns
     // about, and the only reason this card was ever blank.
-    BuildDrawer() { show: drawer == build }
+    // The surface is the monitor (see `panels.plm`), so the card is placed against
+    // its screen corner here: the `let` below is the component's own fit, times the user's zoom.
+    let build.s = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+    group { move: 2, screen.height - 214 * build.s - 2
+        BuildDrawer(scale: build.s) { show: drawer == build }
+    }
 }

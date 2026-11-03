@@ -130,5 +130,10 @@ part NetPanel {
         }
     }
 
-    NetPanelDrawer() { show: drawer == network }
+    // The surface is the monitor (see `panels.plm`), so the card is placed against
+    // its screen corner here: the `let` below is the component's own fit, times the user's zoom.
+    let network.s = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+    group { move: 5, screen.height - 338 * network.s - 41
+        NetPanelDrawer(scale: network.s) { show: drawer == network }
+    }
 }

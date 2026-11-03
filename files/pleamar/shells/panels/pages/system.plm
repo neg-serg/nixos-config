@@ -153,5 +153,10 @@ part SysPanel {
         }
     }
 
-    SystemDrawer() { show: drawer == system }
+    // The surface is the monitor (see `panels.plm`), so the card is placed against
+    // its screen corner here: the `let` below is the component's own fit, times the user's zoom.
+    let system.s = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+    group { move: (screen.width - 1040 * system.s) / 2, (screen.height - 610 * system.s) / 2
+        SystemDrawer(scale: system.s) { show: drawer == system }
+    }
 }

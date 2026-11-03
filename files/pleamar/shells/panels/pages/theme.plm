@@ -112,5 +112,10 @@ part Theme {
         }
     }
 
-    ThemeDrawer() { show: drawer == theme }
+    // The surface is the monitor (see `panels.plm`), so the card is placed against
+    // its screen corner here: the `let` below is the component's own fit, times the user's zoom.
+    let theme.s = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+    group { move: screen.width - 372 * theme.s - 5, screen.height - 342 * theme.s - 1
+        ThemeDrawer(scale: theme.s) { show: drawer == theme }
+    }
 }

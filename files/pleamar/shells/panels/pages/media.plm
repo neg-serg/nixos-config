@@ -134,5 +134,10 @@ part NowPlaying {
         }
     }
 
-    NowPlayingDrawer() { show: drawer == media }
+    // The surface is the monitor (see `panels.plm`), so the card is placed against
+    // its screen corner here: the `let` below is the component's own fit, times the user's zoom.
+    let media.s = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+    group { move: screen.width - 420 * media.s - 131, screen.height - 320 * media.s
+        NowPlayingDrawer(scale: media.s) { show: drawer == media }
+    }
 }

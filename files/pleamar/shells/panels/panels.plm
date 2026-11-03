@@ -27,14 +27,15 @@ import "../../lib/sun.plm" as sun
 // The drawers themselves are parts under pages/, which the scene imports for;
 // a part has no name of its own and is not checked alone (INTERFACES.md §1.3).
 // The drawers: volume, network, media (the now-playing card the bar's cover
-// opens), calendar, weather, build, system and theme — one part each under
+// opens), calendar, weather, build, system, theme and shell — one part each under
 // pages/. The `drawer` fact names exactly those and nothing else: a name with no
-// page behind it is a press that opens an empty window. There is no settings
-// drawer and none is planned: the shell's settings are the JSON files described
-// below, edited by hand. The theme drawer is not a settings page either: it
-// lists the theme files under ~/.config/pleamar/themes and applies one
-// (`pleamar-themes`, packages/pleamar-theme), which rewrites theme.plm the way a
-// wallpaper change does.
+// page behind it is a press that opens an empty window. `theme` lists the theme
+// files under ~/.config/pleamar/themes and applies one (`pleamar-themes`,
+// packages/pleamar-theme), which rewrites theme.plm the way a wallpaper change
+// does. `shell` is the settings page: the values of the JSON described below
+// (scale, type scale, the closing rules, Fahrenheit, the weather city and the
+// holiday country) and the light theme's paper warmth, changed live and written
+// back with `files.write` — the file stays the one place the defaults live.
 //
 // Opening and closing
 // -------------------
@@ -188,42 +189,54 @@ scene panels {
     // Radius is 0 everywhere: panelOverlayRadius and cornerRadiusLarge are both
     // 0 in the reference theme, so a plate is a plain rectangle.
 
-    surface media_card { size: 420, 320; anchor: bottom_right; margin: 0, 131, 0, 0
+    // The cards are placed on the screen, not on the surface: a surface's `size:`
+    // takes a literal and never follows `zoom`, so a card declared at its design
+    // size clipped as soon as the shell was scaled (the calendar already had a
+    // `surface.h` band-aid for the `ui` 1.15 case). A full-monitor surface with the
+    // card put at its own corner costs nothing: the input region lets the click
+    // through the empty part (reference, "A surface does not grow with what it
+    // draws"). Each page places its card in `screen` coordinates.
+    surface media_card { size: full, full
                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
                          open: drawer == media
         include "pages/media.plm"
     }
-    surface network_card { size: 470, 338; anchor: bottom_left; margin: 0, 0, 41, 5
+    surface network_card { size: full, full
                            level: overlay; reserve: 0; screens: each; keyboard: on_demand
                            open: drawer == network
         include "pages/network.plm"
     }
-    surface volume_card { size: 340, 320; anchor: bottom_right; margin: 0, 5, 1, 0
+    surface volume_card { size: full, full
                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
                           open: drawer == volume
         include "pages/volume.plm"
     }
-    surface theme_card { size: 372, 342; anchor: bottom_right; margin: 0, 5, 1, 0
+    surface theme_card { size: full, full
                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
                          open: drawer == theme
         include "pages/theme.plm"
     }
-    surface weather_card { size: 300, 196; anchor: bottom; margin: 0, 0, 46, 0
+    surface shell_card { size: full, full
+                         level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                         open: drawer == shell
+        include "pages/shell.plm"
+    }
+    surface weather_card { size: full, full
                            level: overlay; reserve: 0; screens: each; keyboard: on_demand
                            open: drawer == weather
         include "pages/weather.plm"
     }
-    surface build_card { size: 384, 214; anchor: bottom_left; margin: 0, 0, 2, 2
+    surface build_card { size: full, full
                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
                          open: drawer == build
         include "pages/build.plm"
     }
-    surface system_card { size: 1040, 610; anchor: center; margin: 0
+    surface system_card { size: full, full
                           level: overlay; reserve: 0; screens: each; keyboard: on_demand
                           open: drawer == system
         include "pages/system.plm"
     }
-    surface calendar_card { size: 380, 500; anchor: bottom_left; margin: 0, 0, 2, 2
+    surface calendar_card { size: full, full
                             level: overlay; reserve: 0; screens: each; keyboard: on_demand
                             open: drawer == calendar
         include "pages/calendar.plm"
@@ -239,7 +252,7 @@ scene panels {
                   services: "audio", "audio.*", "files", "files.write", "media", "media.*" }
 
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | network | media | calendar | weather | build | system | theme = none
+    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell = none
     // The socket takes the enum's value names (`--say panels "fact drawer weather"`), which is how
     // the bar opens a drawer; a separate numeric mirror was declared here and never written, and
     // its only reader opened the media card without the catcher, so the card could not be closed.
@@ -321,6 +334,14 @@ scene panels {
     event theme_apply ->
     // The warmth slider: 0 warm (2700 K) to 1 neutral (6500 K).
     event theme_warm ->
+    // The shell page's controls: 0..1 for the two scales, bare events for the
+    // switches (the logic flips the fact and writes settings.json).
+    event open_shell
+    event shell_zoom ->
+    event shell_type ->
+    event shell_toggle_escape ->
+    event shell_toggle_outside ->
+    event shell_toggle_fahrenheit ->
 
     // A press or a drag on the media card's progress band: how far along the track, 0..1.
     event seek ->
@@ -354,6 +375,8 @@ scene panels {
     text sysmon.err = ""
     text theme.err = ""
     text theme.warm = "4300 K"
+    text city = ""
+    text country = ""
     text weather.city = ""
     text weather.temp = ""
     // Published together with the value, not read from the flag at draw time:

@@ -659,6 +659,9 @@ hl.bind(M4 .. "+" .. SH .. "+j", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "e
 -- The theme picker: a drawer of the panels scene, opened by the bar like the rest.
 -- (`t` is sc-live's, so this one takes the free `g`.)
 hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit toggle_theme_panel"'))
+-- The shell page: window and type scale, the closing rules, Fahrenheit, the
+-- weather city and country, the light theme's paper warmth (`b` was free).
+hl.bind(M4 .. "+" .. SH .. "+b", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit toggle_shell_panel"'))
 -- The rest of the transport and the volume steps: M4+C+period/comma mimic the >
 -- and < keys, equal/minus stand in for the volume rocker (the XF86 keys stay on
 -- the Genelec path). The bar's `wheel_volume` takes notches and steps in 5 %

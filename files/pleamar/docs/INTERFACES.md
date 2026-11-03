@@ -218,12 +218,15 @@ order.
 `panels/*` is the shell's name for the drawer family; each entry is a *drawer name*, not a scene,
 and all of them live in the one `panels` process:
 
-`volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`.
+`volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`, `shell`.
 
 That is the whole list: the `drawer` fact names exactly the drawers that have a page behind them.
 `microphone`, `bluetooth`, `keyboard`, `tray`, `power` and `settings` were reserved names with no
 part, so a press on them opened an empty window; the owner dropped them on 2026-10-28, and there is
-no settings drawer to come — the shell's settings are the per-scene JSON files (§6), edited by hand.
+no settings drawer to come — the shell's settings are the per-scene JSON files (§6). `shell` is the
+one page that edits them while the shell runs: window scale, type scale, the two closing rules,
+Fahrenheit, the weather city and the holiday country (`settings.json`) and the light theme's paper
+warmth, each written at once and saved through `files.write`.
 `theme` is not a settings page either: it lists the theme files under `~/.config/pleamar/themes` and
 applies one through `pleamar-themes` (`packages/pleamar-theme`), which rewrites `theme.plm` the way
 the wallpaper pipeline does (§1.4). The bar's `toggle_theme_panel` opens it (`M4+SH+g`); no capsule
@@ -231,6 +234,11 @@ carries it. A light theme (`light = true` in its file) names its accent and noth
 whites: the paper, the surface under it and the ink come from one warmth in kelvin, which the drawer
 shows as a slider while that theme is in place (`pleamar-themes warm K`: 2700 warm, 6500 neutral,
 4300 unless set). `build` was added when its page landed and was missing from this list.
+
+A drawer's surface is the whole monitor (`size: full, full`) and the card is placed in `screen`
+coordinates by its page: a surface's `size:` takes a literal and never follows `zoom`, so a card
+declared at its design size clipped as soon as the shell was scaled, and the input region lets the
+click through the empty part, which makes the large surface free.
 
 Each drawer is a part under `shells/panels/pages/<name>.plm` (owned by PH2-B), included by
 `panels.plm`; a drawer that is too big for a part may be split into more parts, but the drawer name

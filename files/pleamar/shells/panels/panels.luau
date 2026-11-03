@@ -87,6 +87,9 @@ local D = {
 }
 
 local conf = { weatherCity = D.weatherCity, calendarCountry = D.calendarCountry }
+-- The file as it was read, unknown keys and all: a save writes this table back
+-- with the seven known keys replaced, so a key another version put there survives.
+local raw_conf = {}
 
 local function num(v, lo, hi, def)
     if type(v) ~= "number" or v ~= v then return def end
@@ -116,6 +119,7 @@ end
 
 local function apply_settings()
     local raw = read_settings()
+    raw_conf = raw
     fact.close_on_escape = flag(raw.closeOnEscape, D.closeOnEscape)
     fact.close_on_outside = flag(raw.closeOnOutside, D.closeOnOutside)
     fact.zoom = num(raw.scale, 0.5, 2.0, D.scale)
@@ -123,6 +127,10 @@ local function apply_settings()
     fact.use_fahrenheit = flag(raw.useFahrenheit, D.useFahrenheit)
     conf.weatherCity = str(raw.weatherCity, D.weatherCity)
     conf.calendarCountry = str(raw.calendarCountry, D.calendarCountry)
+    -- The two fields on the shell page show what the file says (a write of ours
+    -- arrives here too; the same string is not a caret reset).
+    text.city = conf.weatherCity
+    text.country = conf.calendarCountry
 end
 
 apply_settings()
@@ -1507,6 +1515,91 @@ on("theme_warm", function(value)
             after(400, function() warm_hold = false end)
         end)
     end)
+end)
+
+-- ==================== the shell page (settings, live) ====================
+-- Every control writes its fact at once, so the drawer repaints as it is
+-- dragged, and the value goes into settings.json (`files.write`), which is the
+-- one place the defaults live and the next start reads. The scene's own settings
+-- watcher applies what is written; a slider is debounced so a drag is a few
+-- writes and not one per pixel.
+local settings_timer = nil
+
+local function persist_settings()
+    local ok, failure = pcall(function()
+        local table_out = {}
+        for key, value in pairs(raw_conf) do table_out[key] = value end
+        table_out.closeOnEscape = fact.close_on_escape == true
+        table_out.closeOnOutside = fact.close_on_outside == true
+        -- Three decimals: the number is a float in the engine, and a user file
+        -- should read back as what was set, not as 0.8000000044703484.
+        table_out.scale = math.floor(fact.zoom * 1000 + 0.5) / 1000
+        table_out.fontScale = math.floor(fact.text_scale * 1000 + 0.5) / 1000
+        table_out.useFahrenheit = fact.use_fahrenheit == true
+        table_out.weatherCity = conf.weatherCity
+        table_out.calendarCountry = conf.calendarCountry
+        sys.call("files.write", FILE, table_out)
+    end)
+    if not ok then log("panels: cannot write settings.json: " .. tostring(failure)) end
+end
+
+local function persist_soon()
+    if settings_timer then cancel(settings_timer) end
+    settings_timer = after(150, function()
+        settings_timer = nil
+        persist_settings()
+    end)
+end
+
+on("shell_zoom", function(value)
+    touch_drawer()
+    fact.zoom = num(0.5 + math.min(math.max(value, 0), 1) * 1.5, 0.5, 2.0, D.scale)
+    persist_soon()
+end)
+
+on("shell_type", function(value)
+    touch_drawer()
+    fact.text_scale = num(0.5 + math.min(math.max(value, 0), 1) * 1.5, 0.5, 2.0, D.fontScale)
+    persist_soon()
+end)
+
+on("shell_toggle_escape", function()
+    touch_drawer()
+    fact.close_on_escape = not (fact.close_on_escape == true)
+    persist_settings()
+end)
+
+on("shell_toggle_outside", function()
+    touch_drawer()
+    fact.close_on_outside = not (fact.close_on_outside == true)
+    persist_settings()
+end)
+
+on("shell_toggle_fahrenheit", function()
+    touch_drawer()
+    fact.use_fahrenheit = not (fact.use_fahrenheit == true)
+    persist_settings()
+end)
+
+-- A submitted field: the city reaches the weather worker through its command
+-- line, so a running one is stopped and started again with the new argument; the
+-- country is the calendar worker's, and it is restarted only when that drawer is
+-- the one open.
+on("submit:city", function()
+    touch_drawer()
+    local value = (text.city or ""):match("^%s*(.-)%s*$")
+    if value == "" then return end
+    conf.weatherCity = value
+    persist_settings()
+    if fact.drawer == "weather" then stop_worker("weather") end
+end)
+
+on("submit:country", function()
+    touch_drawer()
+    local value = (text.country or ""):match("^%s*(.-)%s*$")
+    conf.calendarCountry = value
+    persist_settings()
+    if fact.drawer == "calendar" then stop_worker("calendar") end
 end)
 
 on("theme_apply", function(i)
