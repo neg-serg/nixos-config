@@ -54,6 +54,19 @@ on.
 The scenario name (chaos, ambush, chase, …) is derived from the mix the critic picked, so the toast
 also reports what kind of screen you walked into.
 
+## Weapons and structures
+
+- **Furball** (`J`/`X`): arcs under gravity, bounces once off the lake, pops a badnik in one hit and
+  dents crates. 0.34 s cooldown, no ammo — the cat is full of hair.
+- **Crates** (2 hits, stomp or furball): destructible wooden boxes on the painted ledges. Loot is
+  hash-derived per position: usually 2-4 rings, rarely a heart, sometimes empty. They are real
+  solids, so they can be climbed.
+- **Springs**: red launch pads on the ledges. Stepping on one throws the cat 1550 px/s upward, which
+  is how the high ring arcs are reachable.
+
+Both structures are part of the generated encounter, so they change per screen and enter the
+critic's signature and `situation` score.
+
 ## The opponent
 
 A badnik hovers in every generated screen. Behaviour is part of the proposal:

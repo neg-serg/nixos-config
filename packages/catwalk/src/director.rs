@@ -98,6 +98,9 @@ pub struct Encounter {
     pub spawns: Vec<Spawn>,
     pub rings: Vec<Ring>,
     pub capsule: Option<(Vec2, Upgrade)>,
+    /// Structures placed on the painted ledges.
+    pub crates: Vec<Vec2>,
+    pub springs: Vec<Vec2>,
     pub scenario: &'static str,
     pub seed: u32,
 }
@@ -131,8 +134,8 @@ impl Encounter {
     }
 
     /// Feature vector the critic compares against recent screens.
-    pub fn signature(&self) -> [f32; 10] {
-        let mut sig = [0.0f32; 10];
+    pub fn signature(&self) -> [f32; 12] {
+        let mut sig = [0.0f32; 12];
         for s in &self.spawns {
             sig[s.kind.index()] += 1.0;
         }
@@ -221,7 +224,7 @@ impl Default for Weights {
 pub struct Director {
     seed: u32,
     pub weights: Weights,
-    history: Vec<[f32; 10]>,
+    history: Vec<[f32; 12]>,
     upgrades_offered: [u32; 4],
     cache: Vec<Encounter>,
     pub last: Option<Proposal>,
@@ -433,12 +436,43 @@ impl Director {
             None
         };
 
+        // Structures: crates are destructible loot boxes, springs launch the
+        // cat high. Both sit on painted ledges, never on open water.
+        let mut crates = Vec::new();
+        let mut springs = Vec::new();
+        if !plats.is_empty() {
+            let crate_count = rng.range(0, 3) as usize;
+            for _ in 0..crate_count {
+                let p = rng.pick(&plats);
+                let x = (p.x + 80.0 + rng.f() * (p.w - 160.0).max(40.0))
+                    .clamp(x0 + 100.0, x0 + CHUNK_W - 100.0);
+                if (x - player.x).abs() > 260.0 {
+                    crates.push(Vec2::new(x, p.y));
+                }
+            }
+            if rng.f() < 0.6 {
+                let p = rng.pick(&plats);
+                let mut x = (p.x + 100.0 + rng.f() * (p.w - 200.0).max(40.0))
+                    .clamp(x0 + 100.0, x0 + CHUNK_W - 100.0);
+                if (x - player.x).abs() < 300.0 {
+                    x = if x < player.x {
+                        (x - 340.0).max(x0 + 100.0)
+                    } else {
+                        (x + 340.0).min(x0 + CHUNK_W - 100.0)
+                    };
+                }
+                springs.push(Vec2::new(x, p.y));
+            }
+        }
+
         let scenario = scenario_name(&spawns);
         Encounter {
             chunk,
             spawns,
             rings,
             capsule,
+            crates,
+            springs,
             scenario,
             seed: rng.next(),
         }
@@ -491,7 +525,8 @@ impl Director {
         } else {
             0.0
         };
-        let situation = (kinds * 0.6 + spread * 0.4).clamp(0.0, 1.0);
+        let structures = ((enc.crates.len() + enc.springs.len()) as f32 / 3.0).clamp(0.0, 1.0);
+        let situation = (kinds * 0.5 + spread * 0.3 + structures * 0.2).clamp(0.0, 1.0);
 
         let mut fairness = 1.0f32;
         for s in &enc.spawns {
@@ -541,7 +576,7 @@ fn scenario_name(spawns: &[Spawn]) -> &'static str {
     }
 }
 
-fn cosine(a: &[f32; 10], b: &[f32; 10]) -> f32 {
+fn cosine(a: &[f32; 12], b: &[f32; 12]) -> f32 {
     let dot: f32 = a.iter().zip(b).map(|(x, y)| x * y).sum();
     let na: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
     let nb: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
@@ -591,6 +626,10 @@ mod tests {
             for r in &enc.rings {
                 assert!(r.pos.x >= x0 && r.pos.x <= x0 + CHUNK_W);
                 assert!(r.pos.y < level.waterline(r.pos.x));
+            }
+            for c in enc.crates.iter().chain(enc.springs.iter()) {
+                assert!(c.x >= x0 && c.x <= x0 + CHUNK_W);
+                assert!(c.y < level.waterline(c.x));
             }
         }
     }

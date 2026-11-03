@@ -205,6 +205,33 @@ mod tests {
     }
 
     #[test]
+    fn crates_always_drop_something_sane() {
+        for x in (0..4000).step_by(37) {
+            match crate_loot(x as f32) {
+                CrateLoot::Rings(n) => assert!((2..=4).contains(&n)),
+                CrateLoot::Heart | CrateLoot::Nothing => {}
+            }
+        }
+    }
+
+    #[test]
+    fn furball_overlaps_a_crate() {
+        let ball = Hairball {
+            pos: Vec2::new(100.0, 900.0),
+            vel: Vec2::default(),
+            life: 1.0,
+            bounces: 0,
+        };
+        let krate = Crate {
+            pos: Vec2::new(100.0, 940.0),
+            hp: 2,
+            alive: true,
+            loot: CrateLoot::Rings(2),
+        };
+        assert!(ball.hitbox().overlaps(krate.hitbox()));
+    }
+
+    #[test]
     fn upgrades_scale_the_cat() {
         let mut player = Player::new(Vec2::new(0.0, 0.0));
         apply_upgrade(&mut player, Upgrade::Speed);
@@ -224,3 +251,68 @@ pub fn stomp_contact(player: &Player, badnik: &Badnik) -> bool {
         && player.vel.y > -40.0
         && player.hitbox().overlaps(badnik.hitbox())
 }
+
+/// The cat's ranged attack: a furball that arcs, bounces once and pops
+/// badniks and crates.
+#[derive(Clone, Copy)]
+pub struct Hairball {
+    pub pos: Vec2,
+    pub vel: Vec2,
+    pub life: f32,
+    pub bounces: u8,
+}
+
+impl Hairball {
+    pub fn hitbox(&self) -> Rect {
+        Rect::new(self.pos.x - 8.0, self.pos.y - 8.0, 16.0, 16.0)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum CrateLoot {
+    Rings(u8),
+    Heart,
+    Nothing,
+}
+
+#[derive(Clone, Copy)]
+pub struct Crate {
+    /// Base centre, sitting on a platform top.
+    pub pos: Vec2,
+    pub hp: u8,
+    pub alive: bool,
+    pub loot: CrateLoot,
+}
+
+impl Crate {
+    pub fn hitbox(&self) -> Rect {
+        Rect::new(self.pos.x - 22.0, self.pos.y - 44.0, 44.0, 44.0)
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct Spring {
+    /// Base centre, sitting on a platform top.
+    pub pos: Vec2,
+    pub cooldown: f32,
+}
+
+impl Spring {
+    pub fn trigger(&self) -> Rect {
+        Rect::new(self.pos.x - 26.0, self.pos.y - 30.0, 52.0, 30.0)
+    }
+}
+
+/// A crate drops its contents when broken.
+pub fn crate_loot(x: f32) -> CrateLoot {
+    let h = hash01((x as i32 as u32).wrapping_mul(2_654_435_761));
+    if h < 0.12 {
+        CrateLoot::Heart
+    } else if h < 0.85 {
+        CrateLoot::Rings(2 + (h * 3.0) as u8)
+    } else {
+        CrateLoot::Nothing
+    }
+}
+
+use crate::math::hash01;
