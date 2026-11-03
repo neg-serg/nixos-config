@@ -156,7 +156,7 @@ per process, one or more surfaces inside it (D1/D2), never a popup for a drawer.
 battery, media, weather, keyboard, tray, system monitor, startup gate | PH2-A | | `panels` |
 `shells/panels/panels.plm` | one per monitor (`screens: each`), anchor `top`, `level: overlay`,
 `reserve: 0`, open while a drawer is open | every drawer hanging from the bar: music, weather,
-network, calendar, mixer, tray menus, system monitor, settings | PH2-B | | `notifications` |
+network, calendar, mixer, tray menus, system monitor, theme | PH2-B | | `notifications` |
 `shells/notifications/notifications.plm` | three windows per monitor (`screens: each`):
 `centre_panel` 364 × monitor anchored `right`, `toast_stack` 360 × 660 anchored `bottom_right`, and
 a 1 × 1 `keeper` that holds the process. There is no full-monitor surface and no catcher — a zone
@@ -218,13 +218,18 @@ order.
 `panels/*` is the shell's name for the drawer family; each entry is a *drawer name*, not a scene,
 and all of them live in the one `panels` process:
 
-`volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`.
+`volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`.
 
 That is the whole list: the `drawer` fact names exactly the drawers that have a page behind them.
 `microphone`, `bluetooth`, `keyboard`, `tray`, `power` and `settings` were reserved names with no
 part, so a press on them opened an empty window; the owner dropped them on 2026-10-28, and there is
 no settings drawer to come — the shell's settings are the per-scene JSON files (§6), edited by hand.
-`build` was added when its page landed and was missing from this list.
+`theme` is not a settings page either: it lists the theme files under
+`~/.config/pleamar/themes` and applies one through `pleamar-themes`
+(`packages/pleamar-theme`), which rewrites `theme.plm` the way the wallpaper
+pipeline does (§1.4). The bar's `toggle_theme_panel` opens it (`M4+SH+t`); no
+capsule carries it. `build` was added when its page landed and was missing from
+this list.
 
 Each drawer is a part under `shells/panels/pages/<name>.plm` (owned by PH2-B), included by
 `panels.plm`; a drawer that is too big for a part may be split into more parts, but the drawer name

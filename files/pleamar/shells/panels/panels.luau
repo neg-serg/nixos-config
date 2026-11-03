@@ -1407,6 +1407,56 @@ end
 -- the calendar turned to the wrong month, the system dashboard went away mid-look — so the wait
 -- is twenty now, and every new fact, drawer change or press on the card's own zones starts it
 -- over (`touch_drawer`).
+-- ==================== the theme drawer ====================
+
+-- One row per theme file in ~/.config/pleamar/themes, as `pleamar-themes list
+-- --plain` answers it: name, font, corners, the file, and 1 when theme.plm was made
+-- from that file. The paths are kept here because an event payload is a number, and
+-- a row's press carries its index.
+local THEME_ROWS = 8
+local theme_paths = {}
+
+local function theme_refresh()
+    local ok = pcall(run, "pleamar-themes", { "list", "--plain" }, function(out)
+        local rows = {}
+        theme_paths = {}
+        for line in tostring(out):gmatch("[^\n]+") do
+            local name, font, corners, path, selected =
+                line:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$")
+            if name and #rows < THEME_ROWS then
+                local idx = #rows
+                theme_paths[idx] = path
+                rows[#rows + 1] = {
+                    idx = idx,
+                    name = name,
+                    detail = (font ~= "-" and font or "the shell's font")
+                        .. "  \u{00b7}  "
+                        .. (corners ~= "-" and (corners .. " px") or "square"),
+                    selected = selected == "1",
+                }
+            end
+        end
+        model.themes = rows
+        text["theme.err"] = ""
+    end)
+    if not ok then
+        model.themes = {}
+        theme_paths = {}
+        text["theme.err"] = "pleamar-themes is not available"
+    end
+end
+
+on("theme_apply", function(i)
+    touch_drawer()
+    local path = theme_paths[i]
+    if not path then return end
+    -- What it writes is theme.plm; every scene imports it, so the shell re-themes
+    -- on the reload and this card closes with the scene.
+    run("pleamar-themes", { "apply", path }, function(_, code)
+        if code ~= 0 then text["theme.err"] = "could not apply that theme" end
+    end)
+end)
+
 on("fact:sel_day", function() touch_drawer() end)
 on("fact:page", function() touch_drawer() end)
 
@@ -1453,6 +1503,12 @@ on("fact:drawer", function(v)
     -- already holds the minute before the open.
     if v == "system" then
         journal_refresh()
+    end
+
+    -- The theme card is a list of files, so it is read when the card opens and
+    -- after every apply (which reloads the scene anyway).
+    if v == "theme" then
+        theme_refresh()
     end
 
     -- The analyser runs only while the card that draws it is up. A scene rule

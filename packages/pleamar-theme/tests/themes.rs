@@ -218,3 +218,55 @@ fn a_usage_error_exits_two() {
     assert_eq!(output.status.code(), Some(2));
     assert!(stderr(&output).contains("no command"));
 }
+
+#[test]
+fn plain_lists_one_row_per_theme_and_marks_the_applied_one() {
+    let case = Case::new("plain");
+    case.theme(
+        "amber",
+        "name = \"Amber\"\nfont = \"Iosevka\"\n[palette]\naccent = \"#ffb347\"\n",
+    );
+    case.theme(
+        "cool",
+        "name = \"Cool\"\ncorner_rounding = 12\n[palette]\naccent = \"#006fcc\"\n",
+    );
+    let output = case.run(&["apply", "amber"]);
+    assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
+
+    let output = case.run(&["list", "--plain"]);
+    assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    let lines: Vec<&str> = text.lines().collect();
+    assert_eq!(lines.len(), 2, "{text}");
+
+    let amber = lines
+        .iter()
+        .find(|line| line.contains("Amber"))
+        .expect("the amber row");
+    let fields: Vec<&str> = amber.split('\t').collect();
+    assert_eq!(fields.len(), 5, "{amber}");
+    assert_eq!(fields[0], "Amber");
+    assert_eq!(fields[1], "Iosevka");
+    assert_eq!(fields[2], "-");
+    assert!(fields[3].ends_with("amber.toml"), "{amber}");
+    assert_eq!(fields[4], "1", "the applied theme is marked: {amber}");
+
+    let cool = lines
+        .iter()
+        .find(|line| line.contains("Cool"))
+        .expect("the cool row");
+    assert_eq!(cool.split('\t').nth(4), Some("0"), "{cool}");
+
+    // Applying the other theme moves the mark.
+    let output = case.run(&["apply", "cool"]);
+    assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
+    let text = stdout(&case.run(&["list", "--plain"]));
+    for line in text.lines() {
+        let selected = line.split('\t').nth(4).expect("five columns");
+        if line.contains("Cool") {
+            assert_eq!(selected, "1", "{line}");
+        } else {
+            assert_eq!(selected, "0", "{line}");
+        }
+    }
+}

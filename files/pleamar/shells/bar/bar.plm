@@ -470,6 +470,9 @@ scene bar {
     event toggle_network_panel ->
     event toggle_system_panel ->
     event toggle_build_panel ->
+    // The theme picker has no capsule of its own: M4+SH+t reaches it through this
+    // event and the same `toggle_drawer` every other drawer uses.
+    event toggle_theme_panel ->
     // The build badge's pointer, for its tooltip (QS's `PanelTooltip` over `capsule.hovered`).
     event build_hover ->
     // The workspace capsule asked for hyprexpo (QS: `Services.Expo.toggle()`), and the
