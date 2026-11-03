@@ -32,6 +32,7 @@ pub mod env;
 pub mod measure;
 pub mod proc;
 pub mod repo;
+pub mod rig;
 pub mod scene;
 pub mod smoke;
 pub mod text;
