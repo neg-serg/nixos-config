@@ -54,6 +54,13 @@ on.
 The scenario name (chaos, ambush, chase, …) is derived from the mix the critic picked, so the toast
 also reports what kind of screen you walked into.
 
+## Day and night
+
+A full cycle runs in four minutes (`src/daynight.rs`), starting at a seed-derived phase so runs
+begin at different times of day. The phase tints the painting (dawn amber, day neutral, dusk violet,
+night deep blue) and scales badnik and bolt speed by up to +28% at night. The HUD reports the phase
+next to the mechanic.
+
 ## Mechanics generator
 
 Every run draws a **mechanic set** from `src/mechanics.rs`: a pair of executable effects with a
@@ -65,7 +72,9 @@ pair synergy, balance of the magnitude, category variety:
 - `TripleShot` — the furball becomes a three-way fan;
 - `Shockwave` — a stomp kills every badnik within 240 px;
 - `Magnet` — rings are pulled in from 190 px;
-- `Bounce` — hard landings bounce the cat back up.
+- `Bounce` — hard landings bounce the cat back up;
+- `SlowMo` — taking a hit slows enemies and bolts to 50% for three seconds;
+- `Ghost` — the post-hit invulnerability window grows to 2.6 s.
 
 The chosen pair is printed at startup and shown in the HUD as a `MECHANICS:` line. `--mechanics N`
 runs the generator lab headlessly (1M sets in 0.27 s) and reports the best combinations;
