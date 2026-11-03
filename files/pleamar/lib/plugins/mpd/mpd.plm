@@ -63,8 +63,8 @@ library Mpd strict {
         // reference's shuffle badge is 11 logical px of ink, the port's 25, because the 25 was
         // the capsule's rim, not the glyph.
         let w = shown * glyph.size + max(0, shown - 1) * glyph.gap
-        let h = capsule.height
-        size: ((repeat + random + single + consume + xfade) * 14 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, capsule.height * scale
+        let h = bar.plate
+        size: ((repeat + random + single + consume + xfade) * 14 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, bar.plate * scale
         group zoom {
             scale: scale
             row flags {

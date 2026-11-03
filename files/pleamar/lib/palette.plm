@@ -123,6 +123,11 @@ library Palette strict {
     let corner.large = 0          // shape.cornerRadiusLarge
     let overlay.corner = 5        // panel.overlayRadius
     let bar.height = 22           // panel.height
+    // The plate every capsule in the strip paints, and the one fact the bar and its plugins
+    // share: 23 inside the 25 px band leaves the 1 px air the reference's centring gives, and
+    // `capsule.height` (18) is the popup-side default, five pixels shorter — a widget that took
+    // it sat off the row's line (build, voice, MPD flags, the media capsule).
+    let bar.plate = 23
     let bar.module = 22           // panel.moduleHeight
     let bar.side = 4              // panel.sideMargin
     let bar.gap = 4               // panel.widgetSpacing
