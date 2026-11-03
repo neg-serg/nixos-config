@@ -151,4 +151,3 @@ fn state_without_outputs_falls_back() {
         vec![call("wl", &["query"]), call("wl", &["random", &expected]),]
     );
 }
-
