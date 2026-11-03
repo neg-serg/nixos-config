@@ -93,10 +93,10 @@ part SysPanel {
                 show: journal.total == 0 and sys.have }
 
             // ----***--------------------------- history
-            // The worker samples while the drawer is open; panels.luau keeps the last 60
-            // records. Four series share the same 0..100 % scale, so the chart is a
-            // comparison, not four separate sparklines. GPU and temperature appear only
-            // when the worker has a real reading for them.
+            // sysmon samples all the time (panels.luau `wanted`), so the last 60 records are the
+            // minute before the drawer opened, not the minute after. Four series share the same
+            // 0..100 % scale, so the chart is a comparison, not four separate sparklines. GPU and
+            // temperature appear only when the worker has a real reading for them.
             let hist.x = 14
             let hist.y = 388
             let hist.w = 876
