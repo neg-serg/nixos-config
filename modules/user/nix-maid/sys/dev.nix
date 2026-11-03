@@ -46,12 +46,12 @@ in
         ]
         ++ lib.optionals enableJoern [ pkgs.neg.joern ]
         ++ lib.optionals enableCpp [
-          # C/C++ toolchain with ccache
+          # C/C++ compiler + cache only: cmake/ninja and the clangd/lldb
+          # toolchain live in the `cpp` devshell (gcc stays because `cc` builds
+          # tree-sitter parsers at runtime).
           ccacheGcc # ccache-wrapper for gcc/g++/c++ (higher priority via symlinkJoin)
           pkgs.ccache # ccache CLI binary itself
           pkgs.gcc # compiler runtime libs
-          pkgs.cmake # build system
-          pkgs.ninja # fast build tool
         ];
 
         # Environment Variables
