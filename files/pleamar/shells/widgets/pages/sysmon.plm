@@ -1,0 +1,78 @@
+// pages/sysmon.plm — the desktop system monitor (part `Sysmon`).
+//
+// Legacy: quickshell/modules/desktopwidgets/SysmonWidget.qml — one row per stat
+// (name, value, bar), then the CPU history as a line, then the uptime. The rows
+// here are the same four (cpu, ram, temp, disk) with the GPU row only on a machine
+// that has one; the history is drawn as forty small bars instead of a polyline,
+// because a `path` in this language takes its points when it is written and a model
+// arrives while it runs. The line under the rows is the RAM pair the reference
+// prints in its tooltip ("7.2 / 16 GiB"); the worker reports no uptime, so that is
+// the one thing of the widget the port leaves out.
+//
+// The numbers come from pleamar-sysmon through widgets.luau, as they do for the
+// bar and the system drawer; this part draws facts and texts only.
+
+part Sysmon {
+
+    component SysmonPlate(scale: number = clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        size: 300 * scale, 258 * scale
+
+        group place {
+            move: min(sysmon.nx * screen.width, max(0, screen.width - 300 * scale)), min(sysmon.ny * screen.height, max(0, screen.height - 258 * scale))
+
+            group zoom {
+                scale: scale
+
+                Plate(w: 300, h: 258, title: "system") {
+                    // 30 px per row, 4 apart: the bar sits 20 px into its row, so the
+                    // gap between a bar and the next label is 10.
+                    group { move: 0, 0; Stat(label: "cpu", read: cpu.read, value: cpu, w: 268) }
+                    group { move: 0, 34; Stat(label: "ram", read: ram.read, value: ram, w: 268) }
+                    group { move: 0, 68; Stat(label: "temp", read: temp.read, value: temp, w: 268, tone: live.amber) }
+                    group { move: 0, 102; Stat(label: "disk", read: disk.read, value: disk, w: 268) }
+                    group { move: 0, 136; show: has.gpu; Stat(label: "gpu", read: gpu.read, value: gpu, w: 268) }
+
+                    text ram.pair { at: 0, 172; family: "Iosevka"; size: 9; color: live.ink.off }
+
+                    // CPU history: forty bars, newest at the right, 268 px wide. The
+                    // plate is 258 tall so this row (28 high, at 186) ends 16 px inside
+                    // the content slot.
+                    group hist {
+                        move: 0, 186
+                        let step = 268 / 40
+                        for h in hist {
+                            box {
+                                from: h.index * step, 28 - 28 * clamp(h.v, 0, 1)
+                                size: step - 2, 28 * clamp(h.v, 0, 1)
+                                corner: 1
+                                color: live.accent
+                                opacity: 55%
+                                show: h.v > 0.01
+                            }
+                        }
+                    }
+                }
+
+                zone box sysmon_grab {
+                    from: 0, 0
+                    size: 300, 258
+                    corner: 12
+                    cursor: move
+                    label: "System monitor"
+                    role: region
+                }
+                on press sysmon_grab {
+                    sysmon.gx = sysmon.nx
+                    sysmon.gy = sysmon.ny
+                }
+                on drag sysmon_grab {
+                    sysmon.nx = clamp(sysmon.gx + drag.dx / screen.width, 0, max(0, 1 - 300 * scale / screen.width))
+                    sysmon.ny = clamp(sysmon.gy + drag.dy / screen.height, 0, max(0, 1 - 258 * scale / screen.height))
+                }
+                on release sysmon_grab { emit sysmon_moved }
+            }
+        }
+    }
+
+    SysmonPlate() { show: has.sysmon }
+}

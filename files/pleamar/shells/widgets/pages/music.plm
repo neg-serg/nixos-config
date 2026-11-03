@@ -1,0 +1,86 @@
+// pages/music.plm — the desktop now-playing plate (part `Music`).
+//
+// Legacy: quickshell/modules/desktopwidgets/MusicWidget.qml — the sleeve, the
+// track and its artist, the progress line, elapsed/total and three transport
+// buttons. The layout is the reference's: 72 px of cover, the words beside it, the
+// progress line under them, the times under the line, the transport below.
+//
+// The sleeve is the Cover plugin's (`lib/plugins/cover`), the same resolver the
+// bar's media capsule and the media drawer use: an MPRIS art URL first, the album
+// directory's sister files when the URL is a player export, a remote picture
+// fetched into the cache. Nothing here knows about any of that.
+//
+// The words the language cannot compose — "1:23", "4:05" — are live texts the
+// logic writes (widgets.luau); the plate only prints them.
+
+part Music {
+
+    component MusicPlate(scale: number = clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        size: 360 * scale, 140 * scale
+
+        group place {
+            move: min(music.nx * screen.width, max(0, screen.width - 360 * scale)), min(music.ny * screen.height, max(0, screen.height - 140 * scale))
+
+            group zoom {
+                scale: scale
+
+                Plate(w: 360, h: 140, title: "music") {
+                    Cover.Art(w: 72, h: 72, radius: 8)
+
+                    text track { at: 84, 6; width: 236; lines: 1; family: "Iosevka"; size: 14; weight: 600; color: live.ink }
+                    text artist { at: 84, 26; width: 236; lines: 1; family: "Iosevka"; size: 11; color: live.ink.dim }
+                    // Nothing playing: the track text is empty, and the plate says so
+                    // where the track would be instead of leaving a hole.
+                    text "nothing playing" { at: 84, 6; family: "Iosevka"; size: 12; color: live.ink.off; show: not playing }
+                    text "start a player" { at: 84, 26; family: "Iosevka"; size: 10; color: live.ink.off; opacity: 70%; show: not playing }
+
+                    // The progress line: the track's own colour under a track of the
+                    // text's at 12 % (the reference's WidgetBar).
+                    box { from: 84, 48; size: 236, 3; corner: 1.5; color: live.ink; opacity: 12% }
+                    box { from: 84, 48; size: 236 * clamp(media.progress, 0, 1), 3; corner: 1.5; color: live.accent }
+                    text media.pos { at: 84, 58; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.dim }
+                    text media.len { at: 320, 58; anchor: right center; family: "Iosevka"; size: 9; color: live.ink.dim }
+
+                    // Transport, in the reference's Material glyphs. Two texts for
+                    // play/pause: a text chosen with `if` is a 0.5 feature, and a
+                    // `show:` pair says the same thing without the version dance.
+                    text "skip_previous" { at: 84, 62; family: "Material Symbols Outlined"; size: 16; color: live.ink.dim; opacity: if(playing, 1, 40%) }
+                    text "play_arrow" { at: 116, 62; family: "Material Symbols Outlined"; size: 16; color: live.accent; show: not playing }
+                    text "pause" { at: 116, 62; family: "Material Symbols Outlined"; size: 16; color: live.accent; show: playing }
+                    text "skip_next" { at: 148, 62; family: "Material Symbols Outlined"; size: 16; color: live.ink.dim; opacity: if(playing, 1, 40%) }
+                }
+
+                // The plate is the handle for moving; the transport zones below are
+                // declared after it, so they take their own presses.
+                zone box music_grab {
+                    from: 0, 0
+                    size: 360, 140
+                    corner: 12
+                    cursor: move
+                    label: "Now playing: {track}"
+                    role: region
+                }
+                on press music_grab {
+                    music.gx = music.nx
+                    music.gy = music.ny
+                }
+                on drag music_grab {
+                    music.nx = clamp(music.gx + drag.dx / screen.width, 0, max(0, 1 - 360 * scale / screen.width))
+                    music.ny = clamp(music.gy + drag.dy / screen.height, 0, max(0, 1 - 140 * scale / screen.height))
+                }
+                on release music_grab { emit music_moved }
+
+                // 22 px of zone around each 16 px glyph, as the reference's buttons are.
+                zone box music_prev { from: 81, 59; size: 22, 22; corner: 11; cursor: pointer; label: "Previous track"; role: button }
+                zone box music_play { from: 113, 59; size: 22, 22; corner: 11; cursor: pointer; label: pick(playing, "Pause", "Play"); role: button }
+                zone box music_next { from: 145, 59; size: 22, 22; corner: 11; cursor: pointer; label: "Next track"; role: button }
+
+                on press music_prev { emit media_previous }
+                on press music_play { emit media_toggle }
+                on press music_next { emit media_next }
+            }
+        }
+    }
+
+    MusicPlate() { show: has.music }
+}
