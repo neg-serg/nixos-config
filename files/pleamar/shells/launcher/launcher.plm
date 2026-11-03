@@ -1,7 +1,7 @@
 language 0.4
 
 import "../../lib/palette.plm"
-import "../../theme.plm"
+import "../../lib/palette-live.plm"
 import "../../lib/capsule.plm"
 import "../../lib/icons.plm"
 
@@ -62,6 +62,30 @@ import "../../lib/icons.plm"
 
 scene launcher {
 
+    // The live palette (lib/palette-live.plm): the theme handed over as facts, so a
+    // new theme repaints this scene without a reload. launcher.luau reads them out of the
+    // scene's own `palette.json` (`pleamar-themes push` writes it); the defaults are
+    // the repository's theme.plm, so the first frame looks as it always did.
+    fact pal_coal_r = 0.0000
+    fact pal_coal_g = 0.0000
+    fact pal_coal_b = 0.0000
+    fact pal_surface_r = 0.1412
+    fact pal_surface_g = 0.1647
+    fact pal_surface_b = 0.2078
+    fact pal_ink_r = 0.7961
+    fact pal_ink_g = 0.8392
+    fact pal_ink_b = 0.8980
+    fact pal_ink_dim_r = 0.6824
+    fact pal_ink_dim_g = 0.7255
+    fact pal_ink_dim_b = 0.7843
+    fact pal_accent_r = 0.0000
+    fact pal_accent_g = 0.4353
+    fact pal_accent_b = 0.8000
+    fact pal_on_accent_r = 1.0000
+    fact pal_on_accent_g = 1.0000
+    fact pal_on_accent_b = 1.0000
+    fact pal_light = 0
+
     // One overlay surface per monitor, full size, no reserve: the launcher is
     // modal on every screen while `open` holds, and a closed surface is neither
     // seen nor pressed (INTERFACES §2.3). `keyboard: exclusive while open` is what
@@ -84,7 +108,7 @@ scene launcher {
         // The scrim dims what is under the launcher. The catcher is the full-monitor
         // zone that closes it on an outside press; it is declared before the panel,
         // so every panel zone sits above it (INTERFACES §2.2's pattern).
-        box { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: shadow.strong; show: open }
+        box { from: 0, 0; size: screen.width, screen.height; color: live.coal; opacity: shadow.strong; show: open }
 
         zone box catcher {
             from: 0, 0; size: screen.width, screen.height
@@ -196,17 +220,17 @@ scene launcher {
 
             box wash {
                 from: 0, 0; size: w, h; corner: menu.item.corner
-                color: mix(skin.surface, skin.accent, 0.18 + 0.22 * lit)
+                color: mix(live.slate, live.accent, 0.18 + 0.22 * lit)
                 opacity: max(0.10 + 0.55 * lit, hit.hover * 0.8)
             }
             image a.icon { at: 5, 5; size: 16, 16 }
             text a.local_name {
                 at: 27, h / 2; anchor: left center; width: 256; lines: 1
-                size: 14; family: "Iosevka"; weight: 500; color: skin.ink
+                size: 14; family: "Iosevka"; weight: 500; color: live.ink
             }
             text a.id {
                 at: w - 6, h / 2; anchor: right center; width: 120; lines: 1
-                size: 10; family: "Iosevka"; color: ink.off
+                size: 10; family: "Iosevka"; color: live.ink.off
             }
 
             // The row zone: the standard launcher-result label `{app.local_name}`
@@ -234,25 +258,25 @@ scene launcher {
             group zoom {
                 scale: scale
 
-                Capsule(w, h, fill: skin.coal, alpha: 96%, radius: overlay.corner, shadow: 45%, scale: 1) { }
+                Capsule(w, h, fill: live.coal, alpha: 96%, radius: overlay.corner, shadow: 45%, scale: 1) { }
 
                 // The card swallows the presses that land on it, so they do not
                 // reach the dismissal catcher underneath. Not pressable, so no
                 // label (INTERFACES §8.1).
                 zone box body { from: 0, 0; size: w, h; corner: overlay.corner; role: region }
 
-                image Icons.search { at: 18, 13; size: 22, 22; tint: skin.ink.dim }
+                image Icons.search { at: 18, 13; size: 22, 22; tint: live.ink.dim }
                 input query {
                     at: 52, 12; width: 390
-                    size: 15; color: skin.ink; family: "Iosevka"; selection: skin.accent.deep
+                    size: 15; color: live.ink; family: "Iosevka"; selection: live.accent_deep
                     placeholder: "Search applications"
                     label: "Search applications"
                 }
-                box { from: 0, 47; size: w, 1; color: skin.ink; opacity: ink.subtle }
+                box { from: 0, 47; size: w, 1; color: live.ink; opacity: ink.subtle }
 
                 text "No applications found" { family: "Iosevka";
                     at: w / 2, (54 + max_results * (menu.item.height + menu.item.gap)) / 2
-                    anchor: center; size: 13; color: ink.off
+                    anchor: center; size: 13; color: live.ink.off
                     show: results.total == 0
                 }
 

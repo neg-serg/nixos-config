@@ -199,7 +199,14 @@ fn same_file(left: &str, right: &str) -> bool {
 
 /// The scenes that draw with `lib/palette-live.plm`, by scene name (the folder
 /// under `~/.local/share/pleamar/` they read their own files from).
-const PALETTE_SCENES: [&str; 2] = ["bar", "panels"];
+const PALETTE_SCENES: [&str; 6] = [
+    "bar",
+    "panels",
+    "launcher",
+    "notifications",
+    "toast",
+    "picker",
+];
 
 fn data_home() -> Result<PathBuf, String> {
     if let Some(value) = env::var_os("XDG_DATA_HOME") {

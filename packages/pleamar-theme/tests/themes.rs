@@ -297,7 +297,14 @@ fn apply_leaves_the_live_palette_where_a_scene_reads_it() {
     );
     let output = case.run(&["apply", "amber"]);
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
-    for scene in ["bar", "panels"] {
+    for scene in [
+        "bar",
+        "panels",
+        "launcher",
+        "notifications",
+        "toast",
+        "picker",
+    ] {
         let json = case.palette(scene);
         assert!(json.contains("\"coal_r\":"), "{scene}: {json}");
         assert!(json.contains("\"accent_r\":1.0000"), "{scene}: {json}");
@@ -332,7 +339,7 @@ fn push_reads_the_theme_in_place() {
     .expect("theme.plm");
     let output = case.run(&["push"]);
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
-    assert!(stdout(&output).contains("pushed the palette to 2 scene(s)"));
+    assert!(stdout(&output).contains("pushed the palette to 6 scene(s)"));
     let json = case.palette("panels");
     assert!(json.contains("\"accent_g\":0.8000"), "{json}");
 }
