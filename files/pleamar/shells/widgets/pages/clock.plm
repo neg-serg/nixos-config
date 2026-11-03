@@ -1,0 +1,61 @@
+// pages/clock.plm — the desktop clock (part `Clock`).
+//
+// Legacy: quickshell/modules/desktopwidgets/ClockWidget.qml + PlainClock.qml and
+// its fifteen theme faces. This part is one face for every theme: the time at 54
+// design px, the date under it, the second at the right of the date — the plain
+// face's content, in the shell's own type, on the shared Plate. A face per desktop
+// theme is what the port dropped (widgets.plm says why).
+//
+// The plate is a component for two reasons. A parameter's default is read where the
+// component is used, which is what makes the fit each monitor copy's own
+// (palette.plm rule 2). And a `move:` written on the copy itself is read in the
+// caller's scope, where it does not place anything — so the move lives on a group
+// inside the component, where the parameter is in scope.
+
+part Clock {
+
+    component ClockPlate(scale: number = clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        size: 250 * scale, 138 * scale
+
+        group place {
+            // The stored position, kept inside this monitor: a hand-edited file, or
+            // the same file on a shorter screen, must not push the plate off the edge.
+            move: min(clock.nx * screen.width, max(0, screen.width - 250 * scale)), min(clock.ny * screen.height, max(0, screen.height - 138 * scale))
+
+            group zoom {
+                scale: scale
+
+                Plate(w: 250, h: 138, title: "clock") {
+                    text "{now.time}" { at: 0, 24; anchor: left center; family: "Iosevka"; size: 54; weight: 600
+                        color: live.ink; shadow: 0, 2, 14, 45% }
+                    text "{now.date}" { at: 2, 74; anchor: left center; family: "Iosevka"; size: 12; color: live.ink.dim }
+                    text number(tick.second) { at: 218, 74; anchor: right center; family: "Iosevka"; size: 10; color: live.ink.off }
+                }
+
+                // The plate is the handle: press anywhere on it and move. Declared
+                // after the plate's content so it sits above it; 250 x 138 is the
+                // plate at scale 1 (the group scales the zone with the drawing).
+                zone box clock_grab {
+                    from: 0, 0
+                    size: 250, 138
+                    corner: 12
+                    cursor: move
+                    label: "Clock {now.time}"
+                    role: region
+                }
+
+                on press clock_grab {
+                    clock.gx = clock.nx
+                    clock.gy = clock.ny
+                }
+                on drag clock_grab {
+                    clock.nx = clamp(clock.gx + drag.dx / screen.width, 0, max(0, 1 - 250 * scale / screen.width))
+                    clock.ny = clamp(clock.gy + drag.dy / screen.height, 0, max(0, 1 - 138 * scale / screen.height))
+                }
+                on release clock_grab { emit clock_moved }
+            }
+        }
+    }
+
+    ClockPlate() { show: has.clock }
+}

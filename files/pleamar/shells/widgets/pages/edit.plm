@@ -1,0 +1,66 @@
+// pages/edit.plm — the widgets' own strip (part `Edit`).
+//
+// The way in and out of the desktop widgets without a settings drawer: while
+// `editing` is true, a pill along the bottom of the screen carries one toggle per
+// widget, a reset and a done. It is the reference's Widgets tab (modules/
+// lockthemes/WidgetsTab.qml, which switches desktop widgets on and off) reduced to
+// the one thing a desktop layer can show by itself.
+//
+// Every toggle says what it is: `label:` for an agent, `checked:` for whether the
+// widget is there, `role: toggle`. The pill is a plate of its own and does not drag.
+
+part Edit {
+
+    component EditBar(scale: number = clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        size: 468 * scale, 44 * scale
+
+        group place {
+            move: (screen.width - 468 * scale) / 2, min(screen.height - 54 * scale, max(0, screen.height - 44 * scale))
+
+            group zoom {
+                scale: scale
+
+                body {
+                    color: live.coal
+                    opacity: 90%
+                    border: 1, mix(live.coal, live.ink, 12%)
+                    rim: 0.07
+                    shadow: 0, 10, 28, 45%
+                    box { from: 0, 0; size: 468, 44; corner: 22 }
+                }
+
+                // A small accent tick on the left edge, so the strip reads as the
+                // shell's own thing rather than a stray toast.
+                box { from: 16, 21; size: 10, 2; corner: 1; color: live.accent }
+
+                text "clock" { at: 40, 22; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: if(has.clock, live.ink, live.ink.off) }
+                text "music" { at: 106, 22; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: if(has.music, live.ink, live.ink.off) }
+                text "quote" { at: 172, 22; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: if(has.quote, live.ink, live.ink.off) }
+                text "system" { at: 238, 22; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: if(has.sysmon, live.ink, live.ink.off) }
+                text "cava" { at: 304, 22; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: if(has.cava, live.ink, live.ink.off) }
+                text "reset" { at: 366, 22; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.dim }
+                text "done" { at: 428, 22; anchor: left center; family: "Iosevka"; size: 10; weight: 700; color: live.accent }
+
+                // The zones: 10 px of air around each word, the pill's whole height
+                // for the targets that must not be missed.
+                zone box edit_clock { from: 34, 4; size: 60, 36; corner: 18; cursor: pointer; label: "Clock widget"; role: toggle; checked: has.clock }
+                zone box edit_music { from: 100, 4; size: 60, 36; corner: 18; cursor: pointer; label: "Music widget"; role: toggle; checked: has.music }
+                zone box edit_quote { from: 166, 4; size: 60, 36; corner: 18; cursor: pointer; label: "Quote widget"; role: toggle; checked: has.quote }
+                zone box edit_sysmon { from: 232, 4; size: 64, 36; corner: 18; cursor: pointer; label: "System monitor widget"; role: toggle; checked: has.sysmon }
+                zone box edit_cava { from: 298, 4; size: 58, 36; corner: 18; cursor: pointer; label: "Analyser widget"; role: toggle; checked: has.cava }
+                zone box edit_reset { from: 360, 4; size: 58, 36; corner: 18; cursor: pointer; label: "Reset widget positions"; role: button }
+                zone box edit_done { from: 422, 4; size: 56, 36; corner: 18; cursor: pointer; label: "Done"; role: button }
+
+                on press edit_clock { emit toggle_clock }
+                on press edit_music { emit toggle_music }
+                on press edit_quote { emit toggle_quote }
+                on press edit_sysmon { emit toggle_sysmon }
+                on press edit_cava { emit toggle_cava }
+                on press edit_reset { emit reset_positions }
+                on press edit_done { emit edit }
+            }
+        }
+    }
+
+    EditBar() { show: editing }
+}

@@ -1,0 +1,54 @@
+// pages/cava.plm — the desktop CAVA analyser (part `Cava`).
+//
+// Legacy: quickshell/modules/cava/CavaWidget.qml + components/CavaShader.qml — a
+// band of bars that moves with what plays. pleamar's cava lives in a plugin
+// (lib/plugins/spectrum, the bar's own analyser: it owns the cava process and fills
+// a model at cava's cadence), so this part is the band and nothing else.
+//
+// `Spectrum.active` is driven from widgets.plm: cava runs only while something
+// plays and only while the widget is switched on — the plugin's own rule (a plugin
+// that decides for itself keeps a cava process alive in a scene that draws
+// nothing).
+
+part Cava {
+
+    component CavaPlate(scale: number = clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)) {
+        size: 320 * scale, 118 * scale
+
+        group place {
+            move: min(cava.nx * screen.width, max(0, screen.width - 320 * scale)), min(cava.ny * screen.height, max(0, screen.height - 118 * scale))
+
+            group zoom {
+                scale: scale
+
+                Plate(w: 320, h: 118, title: "cava") {
+                    group bands {
+                        move: 0, 10
+                        Spectrum.Bars(width: 288, height: 38, tone: live.accent, end: live.highlight)
+                    }
+                    text "silence" { at: 144, 30; anchor: center; family: "Iosevka"; size: 9; color: live.ink.off; show: not playing }
+                }
+
+                zone box cava_grab {
+                    from: 0, 0
+                    size: 320, 118
+                    corner: 12
+                    cursor: move
+                    label: "Analyser"
+                    role: region
+                }
+                on press cava_grab {
+                    cava.gx = cava.nx
+                    cava.gy = cava.ny
+                }
+                on drag cava_grab {
+                    cava.nx = clamp(cava.gx + drag.dx / screen.width, 0, max(0, 1 - 320 * scale / screen.width))
+                    cava.ny = clamp(cava.gy + drag.dy / screen.height, 0, max(0, 1 - 118 * scale / screen.height))
+                }
+                on release cava_grab { emit cava_moved }
+            }
+        }
+    }
+
+    CavaPlate() { show: has.cava }
+}
