@@ -338,7 +338,7 @@ lib.mkMerge [
       lib.mkIf
         (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
         {
-          sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
+          sopsFile = ../../../secrets/resilio.sops.yaml;
           owner = "rslsync";
           mode = "0400";
         };
@@ -346,7 +346,7 @@ lib.mkMerge [
       lib.mkIf
         (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
         {
-          sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
+          sopsFile = ../../../secrets/resilio.sops.yaml;
           owner = "rslsync";
           mode = "0400";
         };
