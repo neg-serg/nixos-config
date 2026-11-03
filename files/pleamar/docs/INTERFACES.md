@@ -316,6 +316,25 @@ header carries the port note and names what was dropped.
   hand-drawn `WidgetFrame` faces); the plate here is drawn from the live palette, so a theme change
   repaints it with the rest of the shell.
 
+### 2.5 The OSD (`shells/osd`)
+
+A small pill above the bottom edge that appears on a volume or brightness change and hides 1.4 s
+after the last one. It is driven entirely by the services (`audio`, `brightness`): no scene and no
+bind calls it, which is what makes every source of a volume change raise it — the bar's capsule, a
+wheel over it, an application's own mixer, `wpctl`. Ported from dhrruvsharma/shell's `Osd/`; the
+scene's header carries what was dropped.
+
+- **Surface**: 260 × 72, anchor `bottom`, margin 44, `level: overlay`, and no zones at all — a press
+  goes through it to whatever is behind.
+- **Facts**: `shown` (bool), `muted` (bool), `mode` (`volume | brightness`), `level` (0..1), and the
+  live texts `percent` and `glyph`. The logic owns them; another tool reads them.
+- The volume pill's wave is `audio.level` (the loudest sample right now — the reference's
+  WaveMeter); the brightness pill draws the level it was moved to, and a mute draws a flat warning
+  line instead of the wave.
+- On trantor the volume keys move the Genelec monitors through `genlc`, not the PipeWire sink, so
+  the keys do not raise the pill. The bar's capsule and every application do; a Genelec reading in
+  it would need the bar's plugin facts over IPC, and is not invented here.
+
 ## 3. Palette (`lib/palette.plm`)
 
 `lib/palette.plm` is a strict library of `let` names and `spring`s. It declares nothing else (no

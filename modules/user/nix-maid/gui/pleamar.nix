@@ -29,7 +29,7 @@
 # ## Units and guards (when the flag is on)
 #
 # - `pleamar-<scene>.service` for every scene in `pleamarScenes` (`bar`, `panels`, `notifications`,
-#   `toast`, `launcher`, `widgets`), each running
+#   `toast`, `launcher`, `widgets`, `osd`), each running
 #   `pleamar --scene ~/.config/pleamar/shells/<scene>/<scene>.plm --no-hud` with memory/CPU caps.
 #   `overlay` is an on-demand unit (`pleamarOnDemandUnits`) and `proof` is not started at all;
 #   `overview` is a deliberate omission (a resident process for one IPC verb costs more than the
@@ -109,6 +109,9 @@ let
     # bottom layer over the wallpaper, under every window. Its own scene, not part
     # of the bar, because it draws when no panel is open.
     "widgets"
+    # The volume/brightness pill: watches `audio` and `brightness` and shows itself, so it
+    # is resident — nothing else could start it on the change that has to raise it.
+    "osd"
   ];
 
   # Scenes that must come back from *any* exit, not only a crash: the bar and
@@ -121,8 +124,10 @@ let
     "toast"
     "launcher"
     # The desktop layer is lost the same way a bar is when the compositor closes
-    # its surfaces; nothing else would bring it back.
+    # its surfaces; nothing else would bring it back. The OSD is a scene whose whole
+    # job is to be there when the volume moves, so it comes back too.
     "widgets"
+    "osd"
   ];
 
   # The scenes the hang watchdog probes. A wedged bar is the obvious one, but the panels scene draws
