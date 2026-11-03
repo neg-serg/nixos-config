@@ -51,7 +51,14 @@ let
       material = "blur";
       layer_shell = {
         layer = "top";
-        keyboard_interactivity = "on_demand";
+        # `on_demand` leaves the keyboard with the previously focused window
+        # until the user clicks the launcher, so Escape (and every typed key)
+        # leaks to that window instead of reaching the search field. `exclusive`
+        # is what a launcher needs: the surface takes the keyboard for as long
+        # as it is mapped and Escape reaches vicinae. Upstream defaults to it
+        # too; the known Hyprland caveat is mouse input on popups (action panel)
+        # can misbehave, which is the price of not leaking keys.
+        keyboard_interactivity = "exclusive";
       };
     };
 
