@@ -650,12 +650,14 @@ scene bar {
         // of the body, in the same font and with no `width:` of its own, left to take what its
         // longest line needs — `show:` is an opacity, so the renderer still shapes it and fills
         // the measure. `tiph` is the text that is drawn: it wraps at the card's own width and so
-        // says how tall the block came out. 9 px of padding each side, 5 above and below; the
-        // floor is the port's own 160 (the reference's `tooltip.min` is 20, and a two-word card
-        // that narrow reads as a dot) and 300 the widest before a line wraps.
+        // says how tall the block came out. 9 px of padding each side, 5 above and below: the card
+        // is the words plus 18, with the reference's `tooltip.min` (20) as the floor and the
+        // screen, less the strip's 8 px margin on either side, as the only ceiling. A short card
+        // hugs its words instead of sitting in a 160 px plate, and a long line widens the card
+        // instead of wrapping at 300.
         measure tipw
         measure tiph
-        let card.w = clamp(tipw.width + 18, 160, 300)
+        let card.w = clamp(tipw.width + 18, 20, screen.width - 16)
         let card.h = tiph.height + 10
         // The card's left edge, centred on the pointer and kept 8 px inside the strip.
         let card.left = clamp(tip.x - card.w / 2, 8, screen.width - (card.w + 8))
