@@ -64,7 +64,7 @@
   telegram-desktop = pkgs.telegram-desktop;
   telegram-desktop-proxy = pkgs.writeShellScriptBin "telegram-desktop-proxy" ''
     exec ${pkgs.proxychains}/bin/proxychains4 -q \
-      ${pkgs.telegram-desktop}/bin/telegram-desktop "$@"
+      ${pkgs.telegram-desktop}/bin/Telegram "$@"
   '';
 
   # MERT similarity index tooling (Rust; embeddings come from music-embed).
