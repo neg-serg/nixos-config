@@ -410,6 +410,10 @@ hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 
 -- lost its key there and can be re-bound here if it is missed.
 hl.bind(M4 .. "+c", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/clipboard/history"))
 hl.bind(M4 .. "+Escape", hl.dsp.window.close())
+-- The session menu (lock / sleep / log out / restart / shut down): the panels scene's
+-- `power` drawer, so the outside press and Escape are the drawer family's own. The two
+-- destructive tiles want the button held, and are `agent: no` toward a described press.
+hl.bind(M4 .. "+" .. SH .. "+Escape", hl.dsp.exec_cmd('pleamar --say panels "fact drawer power"'))
 hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 -- Pseudo-fullscreen (maximize) toggle: fills the work area but stays a normal
 -- window (bar stays on top) — the same state swayimg gets from the
