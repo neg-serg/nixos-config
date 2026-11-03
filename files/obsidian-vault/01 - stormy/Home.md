@@ -1,6 +1,6 @@
 ______________________________________________________________________
 
-banner: "!\[[08 - Recources/Purple_Sky.png]\]" banner_y: 0.44857 author: stormy cssclasses:
+banner: "!\[[08 - Recources/Purple_Sky.jpg]\]" banner_y: 0.44857 author: stormy cssclasses:
 
 - hide-properties
 - dashboard
