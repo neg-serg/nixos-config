@@ -63,12 +63,16 @@ part Music {
                 on press music_grab {
                     music.gx = music.nx
                     music.gy = music.ny
+                    busy = true
                 }
                 on drag music_grab {
                     music.nx = clamp(music.gx + drag.dx / screen.width, 0, max(0, 1 - 360 * scale / screen.width))
                     music.ny = clamp(music.gy + drag.dy / screen.height, 0, max(0, 1 - 140 * scale / screen.height))
                 }
-                on release music_grab { emit music_moved }
+                on release music_grab {
+                    busy = false
+                    emit music_moved
+                }
 
                 // 22 px of zone around each 16 px glyph, as the reference's buttons are.
                 zone box music_prev { from: 81, 59; size: 22, 22; corner: 11; cursor: pointer; label: "Previous track"; role: button }

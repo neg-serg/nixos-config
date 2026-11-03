@@ -86,7 +86,14 @@ scene widgets {
         anchor: top_left
         level: bottom
         screens: each
-        rate: 30, 10 while not playing
+        // 10 at rest, the bar's own resting pace: the clock ticks a second, sysmon
+        // every two, and a round that paints nothing is cheap (the running bar
+        // measured 1 % of a core at 12). A drag needs real frames — measured on a
+        // 2 fps surface, the pointer's motion arrived as one jump per round, not as
+        // motion — so the pressed plate raises `busy` and the pace with it. The fact
+        // reaches the surface one round later, which is why resting is not slower
+        // than 10: the first 100 ms of a drag are the frames it takes to notice.
+        rate: 30, 10 while not playing and not busy
     }
 
     permissions {
@@ -128,6 +135,8 @@ scene widgets {
     fact has.sysmon = true
     fact has.cava = false
     fact editing = false
+    // A plate is being dragged: the surface paints at full pace until it is let go.
+    fact busy = false
 
     // ------------------------------------------------------------- the clock
     // `clock` changes when the minute does, `clock.seconds` every second; neither

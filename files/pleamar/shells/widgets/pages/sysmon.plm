@@ -64,12 +64,16 @@ part Sysmon {
                 on press sysmon_grab {
                     sysmon.gx = sysmon.nx
                     sysmon.gy = sysmon.ny
+                    busy = true
                 }
                 on drag sysmon_grab {
                     sysmon.nx = clamp(sysmon.gx + drag.dx / screen.width, 0, max(0, 1 - 300 * scale / screen.width))
                     sysmon.ny = clamp(sysmon.gy + drag.dy / screen.height, 0, max(0, 1 - 258 * scale / screen.height))
                 }
-                on release sysmon_grab { emit sysmon_moved }
+                on release sysmon_grab {
+                    busy = false
+                    emit sysmon_moved
+                }
             }
         }
     }

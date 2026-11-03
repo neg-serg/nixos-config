@@ -38,12 +38,16 @@ part Quote {
                 on press quote_grab {
                     quote.gx = quote.nx
                     quote.gy = quote.ny
+                    busy = true
                 }
                 on drag quote_grab {
                     quote.nx = clamp(quote.gx + drag.dx / screen.width, 0, max(0, 1 - 360 * scale / screen.width))
                     quote.ny = clamp(quote.gy + drag.dy / screen.height, 0, max(0, 1 - 150 * scale / screen.height))
                 }
-                on release quote_grab { emit quote_moved }
+                on release quote_grab {
+                    busy = false
+                    emit quote_moved
+                }
 
                 // The refresh mark, above the plate's handle: 24 px of zone around a
                 // 16 px glyph.

@@ -47,12 +47,16 @@ part Clock {
                 on press clock_grab {
                     clock.gx = clock.nx
                     clock.gy = clock.ny
+                    busy = true
                 }
                 on drag clock_grab {
                     clock.nx = clamp(clock.gx + drag.dx / screen.width, 0, max(0, 1 - 250 * scale / screen.width))
                     clock.ny = clamp(clock.gy + drag.dy / screen.height, 0, max(0, 1 - 138 * scale / screen.height))
                 }
-                on release clock_grab { emit clock_moved }
+                on release clock_grab {
+                    busy = false
+                    emit clock_moved
+                }
             }
         }
     }
