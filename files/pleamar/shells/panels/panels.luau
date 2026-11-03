@@ -40,6 +40,10 @@ local FILE = "settings.json"
 -- facts: no file is rewritten and nothing reloads. The poll is one small read
 -- every two seconds; a value that has not moved is not written again.
 local PALETTE_ROLES = { "coal", "surface", "ink", "ink_dim", "accent", "on_accent" }
+-- The warmth slider writes through the tool; until its run answers, a poll of
+-- `palette.json` must not drag the knob back to the old temperature.
+local warm_hold = false
+local warm_timer = nil
 
 local function palette_load()
     local ok, palette = pcall(function()
@@ -57,6 +61,13 @@ local function palette_load()
     end
     if type(palette.light) == "number" and fact.pal_light ~= palette.light then
         fact.pal_light = palette.light
+    end
+    -- A light theme's paper is worked out from its warmth; the tool leaves the
+    -- number it used in the palette, and the slider shows it.
+    if type(palette.temperature) == "number" and not warm_hold then
+        local value = math.min(math.max((palette.temperature - 2700) / 3800, 0), 1)
+        if fact.warm ~= value then fact.warm = value end
+        text["theme.warm"] = string.format("%.0f K", palette.temperature)
     end
 end
 
@@ -1477,6 +1488,26 @@ local function theme_refresh()
         text["theme.err"] = "pleamar-themes is not available"
     end
 end
+
+-- The light theme's one number: the paper is the temperature, and the tool
+-- rebuilds theme.plm, palette.json and the facts every scene draws from it.
+-- Dragging sends at most one run per 120 ms; the knob follows the hand at once.
+on("theme_warm", function(value)
+    touch_drawer()
+    local normalized = math.min(math.max(value, 0), 1)
+    local kelvin = math.floor(2700 + normalized * 3800 + 0.5)
+    fact.warm = (kelvin - 2700) / 3800
+    text["theme.warm"] = string.format("%d K", kelvin)
+    warm_hold = true
+    if warm_timer then cancel(warm_timer) end
+    warm_timer = after(120, function()
+        warm_timer = nil
+        run("pleamar-themes", { "warm", tostring(kelvin) }, function(_, code)
+            if code ~= 0 then text["theme.warm"] = "warmth failed" end
+            after(400, function() warm_hold = false end)
+        end)
+    end)
+end)
 
 on("theme_apply", function(i)
     touch_drawer()

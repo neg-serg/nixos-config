@@ -226,8 +226,11 @@ part, so a press on them opened an empty window; the owner dropped them on 2026-
 no settings drawer to come — the shell's settings are the per-scene JSON files (§6), edited by hand.
 `theme` is not a settings page either: it lists the theme files under `~/.config/pleamar/themes` and
 applies one through `pleamar-themes` (`packages/pleamar-theme`), which rewrites `theme.plm` the way
-the wallpaper pipeline does (§1.4). The bar's `toggle_theme_panel` opens it (`M4+SH+t`); no capsule
-carries it. `build` was added when its page landed and was missing from this list.
+the wallpaper pipeline does (§1.4). The bar's `toggle_theme_panel` opens it (`M4+SH+g`); no capsule
+carries it. A light theme (`light = true` in its file) names its accent and nothing else about its
+whites: the paper, the surface under it and the ink come from one warmth in kelvin, which the drawer
+shows as a slider while that theme is in place (`pleamar-themes warm K`: 2700 warm, 6500 neutral,
+4300 unless set). `build` was added when its page landed and was missing from this list.
 
 Each drawer is a part under `shells/panels/pages/<name>.plm` (owned by PH2-B), included by
 `panels.plm`; a drawer that is too big for a part may be split into more parts, but the drawer name

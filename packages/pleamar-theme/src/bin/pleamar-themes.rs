@@ -18,8 +18,9 @@ use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
-use std::process::ExitCode;
+use std::process::{ExitCode, Stdio};
 
+use pleamar_theme::render;
 use pleamar_theme::themes;
 use pleamar_theme::time;
 
@@ -32,11 +33,17 @@ pleamar-themes — themes as files for ~/.config/pleamar/theme.plm
   pleamar-themes apply FILE|NAME      write theme.plm from that theme
   pleamar-themes show FILE|NAME       print the theme.plm it would write
   pleamar-themes push                 hand the palette to the scenes that draw it
+  pleamar-themes warm KELVIN          the light theme's paper: 2700 warm, 6500 neutral
   pleamar-themes -h | --help
 
 A bare NAME reads <config>/pleamar/themes/<NAME>.toml; a value with a slash is
 a path. `apply` replaces <config>/pleamar/theme.plm atomically, which is the
 file a running scene imports — it re-themes on its next reload.
+
+A light theme (`light = true`) names its accent and nothing else about the
+whites: its paper, the surface under it and the ink are worked out from the
+warmth in KELVIN (`warm`, default 4300), so the whole light side follows one
+number. A dark theme keeps the colours its file gives.
 
 A theme file is a small TOML subset; every key is optional (the stock palette
 fills what is missing):
@@ -75,6 +82,7 @@ fn run() -> ExitCode {
         "apply" => write_theme(&args[1..], true),
         "show" => write_theme(&args[1..], false),
         "push" => push(),
+        "warm" => warm(&args[1..]),
         other => usage_fail(format!("unknown command '{other}'")),
     }
 }
@@ -133,6 +141,50 @@ fn read_theme(path: &Path) -> Result<themes::ThemeFile, String> {
     themes::parse(&text)
 }
 
+/// The warmth a light theme's paper is worked out at: a plain number in
+/// `$XDG_CONFIG_HOME/pleamar/warmth`, so the drawer and the tool agree without
+/// either reading the other's state.
+fn warmth_path() -> Result<PathBuf, String> {
+    Ok(config_home()?.join("pleamar/warmth"))
+}
+
+fn read_warmth() -> f64 {
+    let Ok(path) = warmth_path() else {
+        return themes::WARMTH_DEFAULT;
+    };
+    let Ok(text) = fs::read_to_string(path) else {
+        return themes::WARMTH_DEFAULT;
+    };
+    text.trim()
+        .parse::<f64>()
+        .map(|kelvin| kelvin.clamp(themes::WARMTH_MIN, themes::WARMTH_MAX))
+        .unwrap_or(themes::WARMTH_DEFAULT)
+}
+
+fn write_warmth(kelvin: f64) -> Result<(), String> {
+    let path = warmth_path()?;
+    if let Some(directory) = path.parent() {
+        fs::create_dir_all(directory)
+            .map_err(|error| format!("cannot create {}: {error}", directory.display()))?;
+    }
+    write_atomic(&path, &format!("{kelvin:.0}\n"))
+        .map_err(|error| format!("cannot write {}: {error}", path.display()))
+}
+
+/// Read a theme file and render it. A light theme's whites come from the stored
+/// warmth (`warm_palette`); a dark one keeps the file's colours.
+fn build_theme(path: &Path) -> Result<(themes::ThemeFile, render::Theme), String> {
+    let theme_file = read_theme(path)?;
+    let theme = if theme_file.light {
+        let kelvin = read_warmth();
+        let palette = themes::warm_palette(kelvin, &theme_file.accent);
+        theme_file.to_theme_at(path, &palette, kelvin)
+    } else {
+        theme_file.to_theme(path)
+    };
+    Ok((theme_file, theme))
+}
+
 fn write_theme(args: &[String], write: bool) -> ExitCode {
     let Some(target) = args.first() else {
         return usage_fail("apply/show needs a theme file or a name");
@@ -142,13 +194,11 @@ fn write_theme(args: &[String], write: bool) -> ExitCode {
         Err(error) => return fail(error),
     };
     let path = resolve(target, &directory);
-    let theme_file = match read_theme(&path) {
-        Ok(theme_file) => theme_file,
+    let (theme_file, theme) = match build_theme(&path) {
+        Ok(built) => built,
         Err(error) => return fail(format!("{}: {error}", path.display())),
     };
-    let contents = theme_file
-        .to_theme(&path)
-        .render(&time::utc_timestamp_now());
+    let contents = theme.render(&time::utc_timestamp_now());
     if !write {
         print!("{contents}");
         return ExitCode::SUCCESS;
@@ -222,7 +272,8 @@ fn data_home() -> Result<PathBuf, String> {
 /// reads it (`files.read` never leaves the scene's own directory).
 fn push_palette() -> Result<usize, String> {
     let output = output_file()?;
-    let palette = themes::palette_from_theme_file(&output)?;
+    let mut palette = themes::palette_from_theme_file(&output)?;
+    palette.temperature = Some(read_warmth());
     let data = data_home()?;
     let json = palette.json();
     let mut written = 0;
@@ -233,6 +284,33 @@ fn push_palette() -> Result<usize, String> {
         let _ = fs::set_permissions(&directory, fs::Permissions::from_mode(0o700));
         write_atomic(&directory.join("palette.json"), &json)
             .map_err(|error| format!("cannot write the palette for {scene}: {error}"))?;
+        // The scene polls that file every two seconds; one `--say` makes a theme
+        // change (and the warmth slider) visible at once. A scene that is not
+        // running refuses and is ignored.
+        let mut facts: Vec<String> = Vec::new();
+        for (name, channels) in [
+            ("coal", palette.coal),
+            ("surface", palette.surface),
+            ("ink", palette.ink),
+            ("ink_dim", palette.ink_dim),
+            ("accent", palette.accent),
+            ("on_accent", palette.on_accent),
+        ] {
+            for (channel, value) in [("r", channels.0), ("g", channels.1), ("b", channels.2)] {
+                facts.push(format!("fact pal_{name}_{channel} {value:.4}"));
+            }
+        }
+        facts.push(format!(
+            "fact pal_light {}",
+            if palette.light { 1 } else { 0 }
+        ));
+        let _ = std::process::Command::new("pleamar")
+            .arg("--say")
+            .arg(scene)
+            .args(&facts)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
         written += 1;
     }
     Ok(written)
@@ -255,6 +333,56 @@ struct Row {
     path: String,
     selected: bool,
     accent: (f64, f64, f64),
+}
+
+/// `warm KELVIN`: store the light theme's warmth and, when a light theme is the
+/// one in place, rebuild `theme.plm` from it — which re-renders the lock screen
+/// and pushes the palette to the scenes in one go.
+fn warm(args: &[String]) -> ExitCode {
+    let Some(value) = args.first() else {
+        return usage_fail("warm needs a temperature in kelvin (2700 warm, 6500 neutral)");
+    };
+    let kelvin = match value.parse::<f64>() {
+        Ok(kelvin) if (2000.0..=8000.0).contains(&kelvin) => kelvin,
+        _ => return fail(format!("warmth is 2000..8000 K, not '{value}'")),
+    };
+    let kelvin = kelvin.clamp(themes::WARMTH_MIN, themes::WARMTH_MAX);
+    if let Err(error) = write_warmth(kelvin) {
+        return fail(error);
+    }
+    let applied = applied_source();
+    let rebuilt = applied
+        .as_deref()
+        .filter(|source| source.ends_with(".toml"))
+        .map(Path::new)
+        .filter(|path| path.is_file())
+        .and_then(|path| match build_theme(path) {
+            Ok((theme_file, theme)) if theme_file.light => {
+                Some((path.to_path_buf(), theme_file, theme))
+            }
+            _ => None,
+        });
+    let Some((path, theme_file, theme)) = rebuilt else {
+        println!("{TOOL}: warmth {kelvin:.0} K stored; the theme in place is not a light one");
+        return ExitCode::SUCCESS;
+    };
+    let output = match output_file() {
+        Ok(output) => output,
+        Err(error) => return fail(error),
+    };
+    let contents = theme.render(&time::utc_timestamp_now());
+    if let Err(error) = write_atomic(&output, &contents) {
+        return fail(format!("cannot write {}: {error}", output.display()));
+    }
+    let name = theme_file.name.unwrap_or_else(|| stem(&path).to_string());
+    println!(
+        "{TOOL}: {name} at {kelvin:.0} K, wrote {}",
+        output.display()
+    );
+    if let Err(error) = push_palette() {
+        eprintln!("{TOOL}: warning: {error}");
+    }
+    ExitCode::SUCCESS
 }
 
 fn list(args: &[String]) -> ExitCode {
