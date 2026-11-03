@@ -1,7 +1,7 @@
 language 0.6
 
 import "../../lib/palette.plm"
-import "../../theme.plm"
+import "../../lib/palette-live.plm"
 import "../../lib/capsule.plm"
 
 // picker.plm — the wallpaper deck (scene `picker`), the pleamar port of the swatch-deck picker
@@ -49,6 +49,30 @@ import "../../lib/capsule.plm"
 // which a scene may reach — its own folder is all of it (INTERFACES §6).
 
 scene picker {
+
+    // The live palette (lib/palette-live.plm): the theme handed over as facts, so a
+    // new theme repaints this scene without a reload. picker.luau reads them out of the
+    // scene's own `palette.json` (`pleamar-themes push` writes it); the defaults are
+    // the repository's theme.plm, so the first frame looks as it always did.
+    fact pal_coal_r = 0.0000
+    fact pal_coal_g = 0.0000
+    fact pal_coal_b = 0.0000
+    fact pal_surface_r = 0.1412
+    fact pal_surface_g = 0.1647
+    fact pal_surface_b = 0.2078
+    fact pal_ink_r = 0.7961
+    fact pal_ink_g = 0.8392
+    fact pal_ink_b = 0.8980
+    fact pal_ink_dim_r = 0.6824
+    fact pal_ink_dim_g = 0.7255
+    fact pal_ink_dim_b = 0.7843
+    fact pal_accent_r = 0.0000
+    fact pal_accent_g = 0.4353
+    fact pal_accent_b = 0.8000
+    fact pal_on_accent_r = 1.0000
+    fact pal_on_accent_g = 1.0000
+    fact pal_on_accent_b = 1.0000
+    fact pal_light = 0
 
     // The deck's own surface: unnamed, so it is the scene's — what is drawn loose below belongs to
     // it (a named surface carries only what its own block holds). One copy per monitor, full size,
@@ -199,7 +223,7 @@ scene picker {
             clip box { from: 0, 0; size: CW, CH; corner: 16 }
             image c.picture { at: 0, 0; size: CW, CH; fit: cover }
             // The cards behind the front one sit a little darker, and the hover lifts them.
-            box { from: 0, 0; size: CW, CH; corner: 16; color: skin.coal
+            box { from: 0, 0; size: CW, CH; corner: 16; color: live.coal
                   opacity: (0.45 - 0.30 * lit) * (1 - hit.hover * 0.5) }
             // The wallpaper's palette: the scheme its card would give the desktop.
             row chips { at: 12, CH - 28; gap: 4
@@ -213,13 +237,13 @@ scene picker {
             // A favourited card wears a star, on a disc dark enough to read over any picture.
             group marked {
                 show: c.fav
-                box { from: CW - 30, 10; size: 22, 22; corner: 11; color: skin.coal; opacity: 55% }
-                image star { at: CW - 26, 14; size: 14, 14; tint: skin.accent }
+                box { from: CW - 30, 10; size: 22, 22; corner: 11; color: live.coal; opacity: 55% }
+                image star { at: CW - 26, 14; size: 14, 14; tint: live.accent }
             }
             text c.name { at: 12, CH - 50; anchor: left center; width: CW - 24; lines: 1
-                          size: 12.5; color: skin.ink }
+                          size: 12.5; color: live.ink }
             // The ring of the card the keyboard is on.
-            box { from: 0, 0; size: CW, CH; corner: 16; stroke: 2; color: skin.accent; opacity: lit }
+            box { from: 0, 0; size: CW, CH; corner: 16; stroke: 2; color: live.accent; opacity: lit }
         }
 
         zone box hit { from: 0, 0; size: CW, CH; corner: 16; cursor: pointer
@@ -243,17 +267,17 @@ scene picker {
             group zoom {
                 scale: scale
 
-                Capsule(DW, DH, fill: skin.coal, alpha: 92%, radius: overlay.corner, shadow: 45%, scale: 1) { }
+                Capsule(DW, DH, fill: live.coal, alpha: 92%, radius: overlay.corner, shadow: 45%, scale: 1) { }
 
                 // The card swallows the presses that land on it, so they do not reach the
                 // dismissal catcher underneath. Not pressable, so no label.
                 zone box body { from: 0, 0; size: DW, DH; corner: overlay.corner; role: region }
 
-                text "Wallpapers" { at: 32, 42; anchor: left center; size: 17; weight: 600; color: skin.ink }
+                text "Wallpapers" { at: 32, 42; anchor: left center; size: 17; weight: 600; color: live.ink }
                 text folder { at: 32, 70; anchor: left center; width: DW - 260; lines: 1
-                              size: 11.5; color: skin.ink.dim }
+                              size: 11.5; color: live.ink.dim }
                 text status { at: DW - 32, 42; anchor: right center; width: 520; lines: 1; align: right
-                              size: 11.5; color: skin.ink.dim }
+                              size: 11.5; color: live.ink.dim }
 
                 // The deck: rows of cards the wheel and a drag scroll (`view:`), with the front
                 // card's row kept in sight by the rule below. A row is `cols` cards and as tall as
@@ -269,13 +293,13 @@ scene picker {
                 }
 
                 text "No wallpapers in {folder}" { at: DW / 2, 96 + view_h / 2; anchor: center
-                                                   size: 13; color: skin.ink.dim
+                                                   size: 13; color: live.ink.dim
                                                    show: walls.count == 0 and not only_favourites }
                 text "No favourites yet: press f on a wallpaper you like"
-                    { at: DW / 2, 96 + view_h / 2; anchor: center; size: 13; color: skin.ink.dim
+                    { at: DW / 2, 96 + view_h / 2; anchor: center; size: 13; color: live.ink.dim
                       show: walls.count == 0 and only_favourites }
                 text "arrows choose · enter sets · f favourite · s sorts · tab all / favourites · n / p next page · r reads the folder · g settings · esc closes"
-                    { at: DW / 2, DH - 30; anchor: center; size: 11; color: skin.ink.dim }
+                    { at: DW / 2, DH - 30; anchor: center; size: 11; color: live.ink.dim }
 
                 // The keyboard's card is always in sight: the deck scrolls to the row it is on
                 // when it changes hands, and when the deck opens.
@@ -309,7 +333,7 @@ scene picker {
             group zoom {
                 scale: scale
 
-                Capsule(SW, SH, fill: skin.coal, alpha: 96%, radius: overlay.corner, shadow: 50%,
+                Capsule(SW, SH, fill: live.coal, alpha: 96%, radius: overlay.corner, shadow: 50%,
                         rim: 1, scale: 1) { }
 
                 // The card swallows the presses that land on it, so the deck's cards underneath
@@ -317,47 +341,47 @@ scene picker {
                 zone box body { from: 0, 0; size: SW, SH; corner: overlay.corner; role: region }
 
                 text "Picker settings" { at: pad, 34; anchor: left center; size: 16; weight: 600
-                                         color: skin.ink }
+                                         color: live.ink }
 
                 text "WALLPAPER FOLDER" { at: pad, 72; anchor: left center; size: 10.5; weight: 600
-                                          color: skin.ink.dim }
+                                          color: live.ink.dim }
                 input field_folder {
-                    at: pad, 84; width: fw; size: 13; color: skin.ink; family: "Iosevka"
-                    selection: skin.accent.deep; placeholder: "~/pic/wl"
+                    at: pad, 84; width: fw; size: 13; color: live.ink; family: "Iosevka"
+                    selection: live.accent_deep; placeholder: "~/pic/wl"
                     label: "Wallpaper folder"
                 }
-                box { from: pad, 116; size: fw, 1; color: skin.ink; opacity: ink.subtle }
+                box { from: pad, 116; size: fw, 1; color: live.ink; opacity: ink.subtle }
 
                 text "WALLPAPER COMMAND" { at: pad, 142; anchor: left center; size: 10.5; weight: 600
-                                           color: skin.ink.dim }
+                                           color: live.ink.dim }
                 input field_command {
-                    at: pad, 154; width: fw; size: 13; color: skin.ink; family: "Iosevka"
-                    selection: skin.accent.deep; placeholder: "wl img {}"
+                    at: pad, 154; width: fw; size: 13; color: live.ink; family: "Iosevka"
+                    selection: live.accent_deep; placeholder: "wl img {}"
                     label: "Wallpaper command"
                 }
-                box { from: pad, 186; size: fw, 1; color: skin.ink; opacity: ink.subtle }
+                box { from: pad, 186; size: fw, 1; color: live.ink; opacity: ink.subtle }
 
                 text note { at: pad, 210; anchor: left center; width: fw; lines: 1; size: 11.5
-                            color: skin.ink.dim }
+                            color: live.ink.dim }
 
                 // A button is a painted box with a zone over it (the shape is the zone's; the
                 // paint is the box's — §8: a zone brings the springs and takes the press).
-                box { from: SW - 206, SH - 52; size: 84, 32; corner: 8; color: skin.accent
+                box { from: SW - 206, SH - 52; size: 84, 32; corner: 8; color: live.accent
                       opacity: 88% }
                 zone box save { from: SW - 206, SH - 52; size: 84, 32; corner: 8; cursor: pointer
                                 role: button; label: "Save the settings" }
                 text "Save" { at: SW - 164, SH - 36; anchor: center; size: 12; weight: 600
-                              color: skin.on.accent }
+                              color: live.on.accent }
 
-                box { from: SW - 114, SH - 52; size: 84, 32; corner: 8; color: skin.ink
+                box { from: SW - 114, SH - 52; size: 84, 32; corner: 8; color: live.ink
                       opacity: 8% }
                 zone box close { from: SW - 114, SH - 52; size: 84, 32; corner: 8; cursor: pointer
                                  role: button; label: "Close the settings" }
                 text "Close" { at: SW - 72, SH - 36; anchor: center; size: 12; weight: 600
-                               color: skin.ink }
+                               color: live.ink }
 
                 text "Enter saves · Esc closes" { at: pad, SH - 36; anchor: left center; size: 11
-                                                  color: skin.ink.dim }
+                                                  color: live.ink.dim }
 
                 on press save { emit save_settings }
                 on press close { emit close_settings }
@@ -368,7 +392,7 @@ scene picker {
 
     // The scrim dims what is under the deck; the catcher closes it on a press outside the panel.
     // Declared before the panel, so every panel zone sits above it.
-    box { from: 0, 0; size: screen.width, screen.height; color: skin.coal; opacity: shadow.strong; show: open }
+    box { from: 0, 0; size: screen.width, screen.height; color: live.coal; opacity: shadow.strong; show: open }
 
     zone box catcher { from: 0, 0; size: screen.width, screen.height
                        label: "Close the wallpaper deck"; role: region }
@@ -391,7 +415,7 @@ scene picker {
     // The settings screen: declared after the panel, so it paints over the deck and its catcher
     // takes the presses before a card under it does. A press outside the card closes the screen,
     // not the deck, and the deck's own close takes the screen with it (the rule above).
-    box { from: 0, 0; size: screen.width, screen.height; color: skin.coal
+    box { from: 0, 0; size: screen.width, screen.height; color: live.coal
           opacity: shadow.strong * 2; show: settings }
     zone box sheet_catcher { from: 0, 0; size: screen.width, screen.height
                              label: "Close the picker settings"; role: region

@@ -1,7 +1,7 @@
 language 0.4
 
 import "../../lib/palette.plm"
-import "../../theme.plm"
+import "../../lib/palette-live.plm"
 import "../../lib/capsule.plm"
 
 // toast.plm — the toast scene of the pleamar shell (PH2-D).
@@ -57,6 +57,30 @@ import "../../lib/capsule.plm"
 // this version supports; `describe` reports «Screenshot path», never the path.
 
 scene toast {
+
+    // The live palette (lib/palette-live.plm): the theme handed over as facts, so a
+    // new theme repaints this scene without a reload. toast.luau reads them out of the
+    // scene's own `palette.json` (`pleamar-themes push` writes it); the defaults are
+    // the repository's theme.plm, so the first frame looks as it always did.
+    fact pal_coal_r = 0.0000
+    fact pal_coal_g = 0.0000
+    fact pal_coal_b = 0.0000
+    fact pal_surface_r = 0.1412
+    fact pal_surface_g = 0.1647
+    fact pal_surface_b = 0.2078
+    fact pal_ink_r = 0.7961
+    fact pal_ink_g = 0.8392
+    fact pal_ink_b = 0.8980
+    fact pal_ink_dim_r = 0.6824
+    fact pal_ink_dim_g = 0.7255
+    fact pal_ink_dim_b = 0.7843
+    fact pal_accent_r = 0.0000
+    fact pal_accent_g = 0.4353
+    fact pal_accent_b = 0.8000
+    fact pal_on_accent_r = 1.0000
+    fact pal_on_accent_g = 1.0000
+    fact pal_on_accent_b = 1.0000
+    fact pal_light = 0
 
     // ------***------------- facts & texts
     // `visible` is interface (§2.1): how many toasts are on screen.
@@ -155,36 +179,36 @@ scene toast {
                 // not a hole. Not pressable, so no label; hidden from agents.
                 zone box card { from: 0, 0; size: w, h; corner: 4; role: region; agent: hidden }
 
-                // The box: translucent coal (the legacy 85%) with the outline
+                // The box: translucent live.coal (the legacy 85%) with the live.outline
                 // hairline the legacy border drew.
-                Capsule(w, h, fill: skin.coal, alpha: 95%, radius: 4, edge: 1, edge_tone: outline, edge_alpha: 12%, shadow: 45%, scale: 1) { }
+                Capsule(w, h, fill: live.coal, alpha: 95%, radius: 4, edge: 1, edge_tone: live.outline, edge_alpha: 12%, shadow: 45%, scale: 1) { }
 
                 // ------***----------- preview
                 // 428 x 280 plate, the picture fitted inside it (the legacy
                 // Image with PreserveAspectFit).
-                box { from: 16, 16; size: 428, 280; corner: 4; color: skin.surface; opacity: 45% }
+                box { from: 16, 16; size: 428, 280; corner: 4; color: live.slate; opacity: 45% }
                 image shot { at: 19, 19; size: 422, 274; show: shot_ok }
                 // The legacy camera glyph, drawn from shapes: an icon name is
                 // not guaranteed in the session's theme, three boxes are.
                 group cam { show: not shot_ok; opacity: 55%
-                    box { from: 199, 133; size: 62, 46; corner: 8; color: ink.off }
-                    ellipse { at: 230, 156; radius: 12; color: skin.coal }
-                    box { from: 214, 123; size: 32, 10; corner: 4; color: ink.off }
+                    box { from: 199, 133; size: 62, 46; corner: 8; color: live.ink.off }
+                    ellipse { at: 230, 156; radius: 12; color: live.coal }
+                    box { from: 214, 123; size: 32, 10; corner: 4; color: live.ink.off }
                 }
                 zone box preview { from: 16, 16; size: 428, 280; corner: 4; cursor: pointer; label: "Open screenshot"; role: button }
                 on press preview { emit open_shot }
 
                 // ------***----------- title and close
-                text "Screenshot captured" { family: "Iosevka"; at: 16, 318; anchor: left center; size: 14; weight: 500; color: skin.ink }
-                text shot_meta { at: 16, 334; anchor: left top; width: 370; lines: 1; size: 12; family: "Iosevka"; color: skin.ink.dim }
-                line { from: 436, 312; to: 448, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
-                line { from: 448, 312; to: 436, 324; width: 1.4; color: ink.off; opacity: 55% + 45% * close_zone.hover }
+                text "Screenshot captured" { family: "Iosevka"; at: 16, 318; anchor: left center; size: 14; weight: 500; color: live.ink }
+                text shot_meta { at: 16, 334; anchor: left top; width: 370; lines: 1; size: 12; family: "Iosevka"; color: live.ink.dim }
+                line { from: 436, 312; to: 448, 324; width: 1.4; color: live.ink.off; opacity: 55% + 45% * close_zone.hover }
+                line { from: 448, 312; to: 436, 324; width: 1.4; color: live.ink.off; opacity: 55% + 45% * close_zone.hover }
                 zone box close_zone { from: 426, 302; size: 32, 32; corner: 6; cursor: pointer; label: "Dismiss screenshot"; role: button }
                 on press close_zone { emit hide }
 
                 // ------***----------- path row (private)
-                text shot_short { at: 16, 372; anchor: left center; width: 330; lines: 1; size: 11; family: "Iosevka"; color: ink.off }
-                text shot_ts { at: 444, 372; anchor: right center; size: 11; family: "Iosevka"; color: ink.off }
+                text shot_short { at: 16, 372; anchor: left center; width: 330; lines: 1; size: 11; family: "Iosevka"; color: live.ink.off }
+                text shot_ts { at: 444, 372; anchor: right center; size: 11; family: "Iosevka"; color: live.ink.off }
                 // The screenshot path is private (INTERFACES §8.1). `agent: hidden`
                 // on a zone does not hide the words drawn over it in 0.4.11 —
                 // checked with a probe scene and `--say describe`: the zone
@@ -232,8 +256,8 @@ scene toast {
     // be parameterised, §9) and its hover spring reaches this copy as a number.
     component Action(title: text, x: number, y: number, w: number, hover: number) {
         size: w, 36
-        box { from: x, y; size: w, 36; corner: 6; color: mix(skin.coal, skin.surface, 65% + 35% * hover) }
-        text title { at: x + w / 2, y + 18; anchor: center; width: w - 12; align: center; lines: 1; size: 12; family: "Iosevka"; weight: 500; color: skin.ink }
+        box { from: x, y; size: w, 36; corner: 6; color: mix(live.coal, live.slate, 65% + 35% * hover) }
+        text title { at: x + w / 2, y + 18; anchor: center; width: w - 12; align: center; lines: 1; size: 12; family: "Iosevka"; weight: 500; color: live.ink }
     }
 
     Card()
