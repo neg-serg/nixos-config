@@ -90,6 +90,12 @@ in
         # restart the unit.
         ExecStart = "${pkgs.writeShellScript "vane-run" ''
           set -euo pipefail
+          # Rootless podman maps the subuid range through setuid helpers and fails
+          # the whole run with "newuidmap: executable file not found in $PATH" when
+          # they are not on PATH. The user manager's PATH does not carry
+          # /run/wrappers/bin, so bring it in here instead of widening the default
+          # environment of every user service.
+          export PATH=/run/wrappers/bin:$PATH
           podman=${lib.getExe pkgs.podman}
           if "$podman" container exists vane; then
             "$podman" start vane > /dev/null 2>&1 || true
