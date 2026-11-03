@@ -9,7 +9,7 @@ lib.mkIf (builtins.pathExists (inputs.self + "/secrets/trantor-wireguard-wg-quic
   # On-demand WireGuard VPN for trantor, configured via wg-quick config stored in sops.
   # The tunnel is not started automatically; use systemctl start/stop to control it.
   sops.secrets."wireguard/trantor-wg-quick" = {
-    sopsFile = inputs.self + "/secrets/trantor-wireguard-wg-quick.sops";
+    sopsFile = ../../../secrets/trantor-wireguard-wg-quick.sops;
     format = "binary"; # keep original wg-quick config format
     owner = "root";
     group = "root";

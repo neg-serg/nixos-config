@@ -57,13 +57,13 @@ in
 
   config = lib.mkIf config.trantor.telegram.enable {
     sops.secrets."telegram/bot-token" = {
-      sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
+      sopsFile = ../../secrets/telegram.sops.yaml;
       key = "bot-token";
       owner = "root";
       mode = "0400";
     };
     sops.secrets."telegram/chat-id" = {
-      sopsFile = inputs.self + "/secrets/telegram.sops.yaml";
+      sopsFile = ../../secrets/telegram.sops.yaml;
       key = "chat-id";
       owner = "root";
       mode = "0400";
