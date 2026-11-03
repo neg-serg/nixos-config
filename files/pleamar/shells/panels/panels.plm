@@ -203,7 +203,7 @@ scene panels {
                           open: drawer == volume
         include "pages/volume.plm"
     }
-    surface theme_card { size: 360, 330; anchor: bottom_right; margin: 0, 5, 1, 0
+    surface theme_card { size: 372, 342; anchor: bottom_right; margin: 0, 5, 1, 0
                          level: overlay; reserve: 0; screens: each; keyboard: on_demand
                          open: drawer == theme
         include "pages/theme.plm"
