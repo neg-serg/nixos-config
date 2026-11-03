@@ -49,4 +49,7 @@ where they conflict.
   task, not after each fix.
 - Behavioural harnesses (`pleamar-smoke`, `pleamar-describe-snap`) need `pleamar-wm`; when it is
   absent they cannot run — report that and stop, do not read their scripts to find a way around it.
+- The bar's live geometry has its own gate: `just pleamar-geometry` (insets, band, gaps, overlaps,
+  no widths — `docs/INTERFACES.md` §3.6). It needs the running scene and skips with a notice
+  otherwise; `scripts/dev/check-pleamar-geometry.sh --describe FILE` checks a saved run.
 - Commit scope: `[gui/pleamar] <Area>: <imperative summary>`.
