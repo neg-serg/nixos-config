@@ -635,7 +635,9 @@ hl.bind(M4 .. "+" .. SH .. "+m", hl.dsp.exec_cmd("menu-search"), { locked = true
 -- its editor/scrolling capture and recording
 -- (hl.plugin.hyprcapture.open_editor(...), record_toggle()); nothing binds it.
 hl.bind(M4 .. "+" .. SH .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/Screenshot-$(date \'+%Y-%m-%d-%H%M%S\').png"; grim -l 0 "$shot"'))
-hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/Screenshot-$(date \'+%Y-%m-%d-%H%M%S\').png"; grim -l 0 -g "$(slurp)" "$shot"'))
+-- The region capture then opens in swappy (the reference's screenshot editor): annotate, crop,
+-- save back over the same file, which is the one the toast watcher already announced.
+hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/Screenshot-$(date \'+%Y-%m-%d-%H%M%S\').png"; grim -l 0 -g "$(slurp)" "$shot"; [ -s "$shot" ] && swappy -f "$shot"'))
 hl.bind(M4 .. "+" .. SH .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec screen"))
 hl.bind(M4 .. "+" .. SH .. "+" .. C .. "+v", hl.dsp.exec_cmd("~/.local/bin/screenrec area"))
 -- Screen annotation overlay (wayscriber): toggle the resident drawing layer
