@@ -1221,12 +1221,13 @@ local function tip_line(i)
             .. " down, " .. (text.net_tx ~= "" and (text.net_tx .. text.net_tx_unit) or "--") .. " up"
             .. "\n" .. net_state_line()
     elseif i == 4 then
-        -- SystemMonitorCapsule.qml:22-35, `TooltipText.compose("Monitoring", "", hints)`: CPU, RAM
-        -- with the pair, the temperature, and the click line. The GPU line is dropped with its
-        -- pair: the worker's `gpu_busy_percent` reads 99-100 % on this card while it is idle, so
-        -- the bar has nothing it can stand by to show.
+        -- SystemMonitorCapsule.qml:22-35, `TooltipText.compose("Monitoring", "", hints)`: CPU, GPU
+        -- (only when the probe found one), RAM with the pair, the temperature, and the click line.
         local lines = { "Monitoring" }
         lines[#lines + 1] = string.format("CPU: %d%%", math.floor((fact.cpu or 0) * 100 + 0.5))
+        if fact["has.gpu"] == true then
+            lines[#lines + 1] = string.format("GPU: %d%%", math.floor((fact.gpu or 0) * 100 + 0.5))
+        end
         lines[#lines + 1] = string.format("RAM: %d%% (%.1f / %d GiB)",
             math.floor((fact.ram or 0) * 100 + 0.5), tonumber(fact.ram_used_gib) or 0,
             tonumber(fact.ram_total_gib) or 0)
@@ -2295,8 +2296,7 @@ run("hyprctl", { "submap" }, function(out) set_submap(out) end)
 -- The worker does the arithmetic now (packages/pleamar-sysmon, the same one the
 -- panels subscribe to): one JSON object per line with the ratios already scaled,
 -- and an unavailable GPU/temperature carried as `{ err = ... }`. The bar keeps
--- its thresholds and the idle rule (panel: systemMonitorHideIdle, 3%) and reads CPU, RAM and the
--- temperature; the GPU is ignored — the pair is dropped in bar.plm, the reading cannot be trusted.
+-- its thresholds and the idle rule (panel: systemMonitorHideIdle, 3%).
 local SYS_INTERVAL_MS = 2000
 local sysmon_handle = nil
 local sysmon_restart = nil
@@ -2338,6 +2338,12 @@ local function applySample(data)
     local temp = data.temp
     if type(temp) == "table" and type(temp.percent) == "number" then
         fact.temp = clamp01(temp.percent / 100)
+    end
+
+    local gpu = data.gpu
+    if type(gpu) == "table" and type(gpu.percent) == "number" then
+        fact["has.gpu"] = true
+        fact.gpu = clamp01(gpu.percent / 100)
     end
 end
 
