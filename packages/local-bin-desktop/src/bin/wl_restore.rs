@@ -141,4 +141,3 @@ fn random_wallpaper(program: &[u8], line: u32) {
         std::process::exit(outcome.code);
     }
 }
-
