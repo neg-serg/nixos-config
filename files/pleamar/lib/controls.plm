@@ -53,7 +53,7 @@ library Controls strict {
     // the right while on (it moves with `on`, so a spring on the fact animates
     // it). Pressing anywhere on the pill emits `toggle`.
     // The colours are the caller's: a scene on the live palette passes
-    // `fill: live.slate, lit: live.accent, off: live.ink.dim, on: live.on.accent`,
+    // `fill: live.slate, lit: live.accent, off: live.ink.dim, on_tone: live.coal`,
     // and the stock palette below is only the fallback for a scene that still
     // draws with `skin.*`. (Both names changed with the palette; a switch left on
     // the stock accent came out blue in a green theme, which is exactly the kind
@@ -64,7 +64,7 @@ library Controls strict {
                      fill: color = mix(slate, ink, 0.16),
                      lit: color = accent,
                      off: color = ink.dim,
-                     on_tone: color = on.accent,
+                     on_tone: color = coal,
                      enabled: bool = true,
                      w: number = switch.w,
                      h: number = switch.h,
