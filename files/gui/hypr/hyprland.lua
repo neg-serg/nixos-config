@@ -238,19 +238,23 @@ hl.config({
     --   hyprctl eval 'hl.config({ decoration = { blur = { variant = "acrylic" } } })'
     -- (the animated ones — drops, water, fluid_jar, aurora, heat_shimmer,
     -- ripple — recompute the blur every frame).
-    -- OFF since 2026-11-02: on 0.57 every presented frame re-blurs the areas of
-    -- every blurred layer, and the shell keeps ~18 of them mapped (its closed
-    -- catchers, cards and menus included, which the engine does not unmap). At 4K
-    -- that was the lag: measured on the live session with the shell at its idle
-    -- paces, `decoration:blur:enabled = false` took Hyprland from 75-87 % of a
-    -- core to 36 % and its socket round-trip (the compositor's own responsiveness,
-    -- a proxy for input) from 17-25 ms to 8 ms. Cached blur (new_optimizations +
-    -- xray) did not help. The cost of the look: the bar is a flat translucent
-    -- strip now — the scene's own glass is off too (bar.plm `strip.glass = 0%`),
-    -- so nothing frosts it. Re-enable with the line below when the engine stops
-    -- mapping closed surfaces (then only the open ones pay) or the compositor's
-    -- per-frame cost is fixed upstream.
-    blur = { enabled = false, variant = "prism", size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
+    -- ON again since 2026-11-06 at the owner's call, with `variant = "frost"`:
+    -- the frost is the point of the material, and the shell's own glass stays off
+    -- (`bar.plm strip.glass = 0%`) so the compositor does the blur through the
+    -- `pleamar` layer rule below — one implementation, not two.
+    --
+    -- The price, measured 2026-11-02 on 0.57 (the reason it was off for four
+    -- days): every presented frame re-blurs the areas of every blurred layer, and
+    -- the shell keeps ~18 of them mapped (its closed catchers, cards and menus
+    -- included, which the engine does not unmap). At 4K with the shell at its idle
+    -- paces that took Hyprland from 75-87 % of a core to 36 %, and its socket
+    -- round-trip (the compositor's own responsiveness, a proxy for input) from
+    -- 17-25 ms to 8 ms; cached blur (new_optimizations + xray) did not help.
+    -- Measured again on 2026-11-06 with the shell idle: 12 % of a core against
+    -- 7.5 % with blur off, so the cost now tracks what is actually blurred.
+    -- Turn it off live with `hyprctl eval 'hl.config({ decoration = { blur = {
+    -- enabled = false } } })'` if it starts costing the input latency again.
+    blur = { enabled = true, variant = "frost", size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy, xray = false, new_optimizations = false },
     -- motion blur: adds a smear while anything on screen is moving — the
     -- scrolling tape and dragged windows are where it reads. 24 samples is the
     -- tuning knob (higher = smoother, more GPU); `hyprctl eval 'hl.config({
