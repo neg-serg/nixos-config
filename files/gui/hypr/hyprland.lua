@@ -1487,7 +1487,11 @@ hl.session_start = function()
   hl.exec_cmd("systemctl --user start wl-daemon.service")
   hl.exec_cmd("wl-restore")
   hl.exec_cmd("kitty --single-instance --class term")
-  hl.exec_cmd("Telegram")
+  -- Only the on-demand launcher is on PATH (modules/user/session/chat.nix): the
+  -- package's own executable is `Telegram` and the launcher builds it on first
+  -- run, so a bare `Telegram` here was a dead exec after Telegram left the
+  -- system closure (2026-11-03).
+  hl.exec_cmd("telegram-desktop")
   -- wl-clip-persist is a single daemon: a rescue/fresh restart must not stack
   -- a second copy, and the cliphist watcher is replaced the same way.
   hl.exec_cmd("sh -c 'pkill -x wl-clip-persist 2>/dev/null; wl-clip-persist --clipboard regular'")
