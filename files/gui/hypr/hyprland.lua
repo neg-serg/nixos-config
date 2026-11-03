@@ -123,6 +123,9 @@ local cls = {
   dev         = "^(nwim)$",
   games       = "^(steam|Steam)$",
   steam_app   = "^(steam_app_.*)$", -- Steam games (steam_app_*); keep in sync with m.steam_app
+  -- The nested compositor `game gamescope …` puts the game inside a window of
+  -- this class, so it needs the same route as a bare steam_app window.
+  gamescope   = "^(gamescope)$",
   doc         = "^(sioyek)$",
   vid         = "^(mpv)$",
   obs         = "^(obs)$",
@@ -1337,6 +1340,7 @@ local routes = {
   { class = cls.dev,         id = 3 },
   { class = cls.games,       id = 4 },
   { class = cls.steam_app,   id = 4, float = true }, -- Steam games (steam_app_*): same workspace, floated
+  { class = cls.gamescope,   id = 4, float = true }, -- gamescope-wrapped games: same workspace, floated
   { class = cls.doc,         id = 5 },
   { class = cls.vid,         id = 6 },
   { class = cls.obs,         id = 7 },
@@ -1364,7 +1368,8 @@ end
 
 -- VCV Rack: WM_CLASS is the shared "GLFW-Application", so route by the
 -- stable title prefix "VCV Rack" (a class route would catch every GLFW app).
-hl.window_rule({ name = "route-rack", match = { title = "^VCV Rack" }, no_blur = true, workspace = "19" })
+-- Rules match the whole string, so the version suffix needs `(.*)$`.
+hl.window_rule({ name = "route-rack", match = { title = "^VCV Rack(.*)$" }, no_blur = true, workspace = "19" })
 
 -- =====================================================================
 -- Layer rules (rules.conf)
