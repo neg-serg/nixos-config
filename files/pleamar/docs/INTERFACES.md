@@ -271,6 +271,21 @@ or let the capsule do it (§4).
 
 ### 3.1 Design pixels and the base scale
 
+**One monitor has three sizes, and this document means the third.** On this host the panel is
+3840×2160 at Hyprland scale 2:
+
+| name       | this host   | what reads it                                                                                                             |
+| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| device px  | 3840 × 2160 | the framebuffer: buffers, `grim`, a screenshot, `hyprctl monitors` `width`/`height`                                       |
+| logical px | 1920 × 1080 | `screen.width`/`screen.height`, every `at:`/`size:`/`from:` in a scene, and the size a `kind: lock` face is configured at |
+| design px  | 1920 × 1080 | the numbers in this palette, multiplied by the scale of §3.2                                                              |
+
+A lock face is the one surface where the first two meet in one line: it is configured in logical px
+and paints device buffers, and its declared box is centred on the monitor (`size: full, full` is the
+monitor itself — `packages/overlays/pleamar-lock-full.patch`; taken as the zero it compiles to, the
+box puts the scene's origin at the monitor's centre and paints the screen half a panel away).
+`just screen-numbers` prints all three, live, with the wallpaper's own shape.
+
 Every length in the palette is a **design pixel** — the number the QS theme uses (`panel.height` 22,
 `cornerRadius` 6, `type.small` 14, …). Sizes in scenes are written as `<design length> * <scale>`;
 the scale is `ui` (1.15, the QS `panel.scale`) in a single-surface scene, and a per-monitor value in

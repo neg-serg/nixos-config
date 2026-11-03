@@ -2,14 +2,13 @@
 //!
 //! Restores the wallpaper through `wl`, validating the saved state first: a
 //! state that names a deleted image makes `wl restore` exit 0 having painted
-//! nothing, so the port checks the file itself and falls back to the greeter's
-//! resolver or a random pick. `systemctl`, `wl`, `sleep` and the resolver stay
-//! subprocesses; the state JSON and the greeter cache copy are native.
+//! nothing, so the port checks the file itself and falls back to the first path
+//! still on disk or a random pick. `systemctl`, `wl` and `sleep` stay
+//! subprocesses; the state JSON is read natively.
 
 #![forbid(unsafe_code)]
 
 use std::os::unix::ffi::OsStrExt;
-use std::path::Path;
 
 use local_bin_desktop::env;
 use local_bin_desktop::json::Json;
@@ -58,45 +57,44 @@ fn main() {
             random_wallpaper(&program, 24);
         }
     } else {
-        // The state is stale or there is no previous session: ask the same
-        // resolver the login layer uses.
-        let resolver = b"/etc/quickshell/scripts/wl-wallpaper-resolve.sh";
-        let mut candidate = Cmd::from_bytes(resolver)
-            .stdout(Sink::Capture)
-            .stderr(Sink::Null)
-            .run();
-        candidate.stdout = text::strip_trailing_newlines(&candidate.stdout).to_vec();
-        if !candidate.stdout.is_empty() {
+        // The state is stale or there is no previous session: take the first path
+        // that is still on disk, the same ladder `wl-restore-retry` (the daemon's
+        // ExecStartPost) walks — wl's own last-good, the producer cache the theme and
+        // the login layer read (INTERFACES.md §1.2), then the old "current wallpaper"
+        // link.
+        //
+        // It used to ask `/etc/quickshell/scripts/wl-wallpaper-resolve.sh`, the
+        // resolver of the shell deleted on 2026-11-02: that path has not existed
+        // since, so this branch fell straight through to a random pick and the
+        // "same wallpaper as last time" this tool exists for never came back.
+        let mut candidate: Vec<u8> = Vec::new();
+        for relative in [
+            ".local/state/wl/last-good",
+            ".cache/pleamar/wallpaper-path",
+            ".cache/current_wallpaper_source",
+        ] {
+            let mut path = env::var_or_empty("HOME");
+            path.push(b'/');
+            path.extend_from_slice(relative.as_bytes());
+            let Ok(contents) = std::fs::read(std::ffi::OsStr::from_bytes(&path)) else {
+                continue;
+            };
+            let first = text::first_line(&contents).to_vec();
+            if !first.is_empty() && readable(&first) {
+                candidate = first;
+                break;
+            }
+        }
+        if candidate.is_empty() {
+            random_wallpaper(&program, 33);
+        } else {
             let apply = Cmd::new("wl")
                 .arg("img")
-                .arg_bytes(&candidate.stdout)
+                .arg_bytes(&candidate)
                 .stderr(Sink::Null)
                 .run();
             if apply.code != 0 {
                 random_wallpaper(&program, 31);
-            }
-        } else {
-            random_wallpaper(&program, 33);
-        }
-    }
-
-    // Sync the current wallpaper to the greeter cache for smooth transitions.
-    let mut notify_file = env::var_or_empty("HOME");
-    notify_file.extend_from_slice(b"/.cache/quickshell-wallpaper-path");
-    if Path::new(std::ffi::OsStr::from_bytes(&notify_file)).is_file() {
-        if let Ok(contents) = std::fs::read(std::ffi::OsStr::from_bytes(&notify_file)) {
-            let wallpaper = text::first_line(&contents).to_vec();
-            if !wallpaper.is_empty() && Path::new(std::ffi::OsStr::from_bytes(&wallpaper)).is_file()
-            {
-                let target = Path::new("/home/greeter/.cache/greeter-wallpaper");
-                if let Some(parent) = target.parent() {
-                    let _ = std::fs::create_dir_all(parent);
-                }
-                let _ = copy_file_with_mode(
-                    Path::new(std::ffi::OsStr::from_bytes(&wallpaper)),
-                    target,
-                    0o644,
-                );
             }
         }
     }
@@ -144,10 +142,3 @@ fn random_wallpaper(program: &[u8], line: u32) {
     }
 }
 
-fn copy_file_with_mode(source: &Path, target: &Path, mode: u32) -> std::io::Result<()> {
-    use std::os::unix::fs::PermissionsExt;
-    let contents = std::fs::read(source)?;
-    std::fs::write(target, contents)?;
-    std::fs::set_permissions(target, std::fs::Permissions::from_mode(mode))?;
-    Ok(())
-}

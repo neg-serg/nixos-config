@@ -3,15 +3,16 @@
 # (moved out of the docs tree; keep it in sync with the code it describes)
 #
 #
-# Alternate desktop shell: pleamar (https://github.com/k4ditano/pleamar) is a Rust Wayland runtime
-# with a declarative `.plm` scene language. The port replaces the Quickshell shell area by area — bar,
-# panels, notifications, toast, launcher — and every scene is an independent process with its own
-# unit, so one can restart or be measured without touching the others.
+# Desktop shell: pleamar (https://github.com/k4ditano/pleamar) is a Rust Wayland runtime with a
+# declarative `.plm` scene language. It replaced the Quickshell shell area by area — bar, panels,
+# notifications, toast, launcher, and since 2026-11-02 the login screen — and every scene is an
+# independent process with its own unit, so one can restart or be measured without touching the
+# others.
 #
 # **On** since the parity push: `features.gui.pleamar.enable = true` in `hosts/trantor/default.nix`,
-# and this module's units are the session's shell. It is the only shell in the tree — the Quickshell
-# reference panel module is gone — and the scenes and `pkgs.pleamar` stay either way, so flipping the
-# flag off just stops the scenes.
+# and this module's units are the session's shell. It is the only shell in the tree: the Quickshell
+# module was deleted with its tree on 2026-11-02, so there is no second panel to fall back to — but
+# the scenes and `pkgs.pleamar` stay either way, and flipping the flag off just stops the scenes.
 #
 # ## Sources of truth
 #
@@ -43,7 +44,7 @@
 #   change, writing `~/.config/pleamar/theme.plm`.
 # - `pleamar-cleanup-symlink` — removes stale deployed links; without it a scene dies on a missing
 #   `.plm` between cleanup and activation.
-# - Login-phase guard: while `%t/quickshell-login/login-phase` exists the login layer owns the screen
+# - Login-phase guard: while `%t/pleamar-login/login-phase` exists the login layer owns the screen
 #   (`pleamar-login-layer`, which runs the lock scene by hand) and no session scene may start;
 #   systemd re-evaluates the condition once the marker is gone.
 #
@@ -132,11 +133,12 @@ let
   # lock scene owns the screen and no session scene may start. systemd re-evaluates
   # the condition when the marker is removed after the password, so the units still
   # come up with hyprland-session.target.
-  loginPhaseGuard = "!%t/quickshell-login/login-phase";
+  loginPhaseGuard = "!%t/pleamar-login/login-phase";
 
   # ── Deployment ────────────────────────────────────────────────────────────
   # Live repo links (config.lib.neg.live): editing files/pleamar takes effect in
-  # the deployed tree without a rebuild, exactly like files/quickshell.
+  # the deployed tree without a rebuild, exactly the way the old shell's tree was
+  # deployed.
   pleamarShellsLive = config.lib.neg.live "files/pleamar/shells";
   pleamarLibLive = config.lib.neg.live "files/pleamar/lib";
 
@@ -261,7 +263,7 @@ let
       wantedBy = [ "hyprland-session.target" ];
       unitConfig = {
         # A scene crash loop must give up: five starts in 30 s, then stay down
-        # until the session is restarted (the Quickshell unit's policy).
+        # until the session is restarted (the policy the old shell's unit had).
         StartLimitIntervalSec = 30;
         StartLimitBurst = 5;
         ConditionPathExists = [
@@ -324,10 +326,10 @@ let
   #     pleamar --say lock "fact locked false"          # unlock (PAM first)
   #
   # Both halves are behind PH3-L's PAM matrix, a human gate (superplan:
-  # `human-gate="yes"`): the owner runs it at a logout, never a test. Until it has
-  # passed, the login screen rolls back to the previous generation — or to the
-  # Quickshell layer with a `git revert` of the login-layer commits, since
-  # files/quickshell stays in the tree until then.
+  # `human-gate="yes"`): the owner runs it at a logout, never a test. A bad login
+  # screen is undone with the previous generation (`nixos-rebuild --rollback`), not
+  # with a config switch: the Quickshell layer it replaced was deleted on 2026-11-02,
+  # so git history is the only way back to it.
   pleamarOnDemandUnits = {
     pleamar-lock = (pleamarSceneUnit "lock") // {
       wantedBy = [ ];
@@ -587,10 +589,11 @@ lib.mkIf pleamarEnabled (
         description = "Run the pleamar theme pipeline when the wallpaper changes";
         wantedBy = [ "graphical-session.target" ];
         pathConfig = {
-          # The new producer path plus the legacy one until the cutover.
+          # The producer path the theme pipeline reads (INTERFACES.md §1.2). The legacy
+          # `quickshell-wallpaper-path` it used to watch beside it went with the shell
+          # that introduced it (2026-11-02) and its last writer (2026-11-03).
           PathModified = [
             "%h/.cache/pleamar/wallpaper-path"
-            "%h/.cache/quickshell-wallpaper-path"
           ];
           Unit = "pleamar-theme.service";
         };

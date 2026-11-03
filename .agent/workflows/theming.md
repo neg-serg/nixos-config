@@ -32,9 +32,8 @@ pleamar-theme --accent '#006FCC'   # force the accent only
 ```
 
 The script takes the wallpaper from `--wallpaper`, else from
-`$XDG_CACHE_HOME/pleamar/wallpaper-path` (canonical), else from the legacy
-`$XDG_CACHE_HOME/quickshell-wallpaper-path`, and rewrites `~/.config/pleamar/theme.plm` atomically.
-No wallpaper and no `--accent`/`--from-json` is an error and leaves the previous file alone.
+`$XDG_CACHE_HOME/pleamar/wallpaper-path`, and rewrites `~/.config/pleamar/theme.plm` atomically. No
+wallpaper and no `--accent`/`--from-json` is an error and leaves the previous file alone.
 
 ## Runtime behaviour
 

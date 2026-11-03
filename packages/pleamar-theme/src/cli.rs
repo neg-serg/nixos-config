@@ -21,8 +21,7 @@ Usage:
 
 Where the wallpaper is found, in this order:
   --wallpaper FILE
-  $XDG_CACHE_HOME/pleamar/wallpaper-path      (canonical; INTERFACES.md §1.2, first line)
-  $XDG_CACHE_HOME/quickshell-wallpaper-path   (legacy fallback, first line)
+  $XDG_CACHE_HOME/pleamar/wallpaper-path      (INTERFACES.md §1.2, first line)
 
 What is written: ~/.config/pleamar/theme.plm, a strict `library Skin { … }`
 with skin.coal/surface/ink/ink.dim/accent/accent.hover/accent.deep/on.accent.

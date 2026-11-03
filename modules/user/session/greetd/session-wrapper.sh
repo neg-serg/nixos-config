@@ -12,7 +12,7 @@
 # session for greetd to fall back from) — so the login screen comes back without
 # a separate greeter process.
 #
-# Marker: $QS_LOGIN_STATE_DIR/state
+# Marker: $PLEAMAR_LOGIN_STATE_DIR/state
 #   login   — no successful login in this session yet; show the login layer
 #   session — login done; hyprland.lua starts the desktop session
 #
@@ -49,15 +49,17 @@ export PATH="/run/wrappers/bin:/run/current-system/sw/bin:$PATH"
 
 : "${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
 export XDG_RUNTIME_DIR
-# The directory keeps its historical name: the unit conditions in
-# modules/user/nix-maid/gui/pleamar.nix and pleamar.nix's loginPhaseGuard name the
-# same path, and renaming it buys nothing a login debug needs. Only the file names
-# (`state`, `login-phase`) and the values inside them are the contract.
-export QS_LOGIN_STATE_DIR="$XDG_RUNTIME_DIR/quickshell-login"
+# The login marker: `state` (`login` | `session`) and the `login-phase` file beside
+# it, in a directory named after the shell that owns the login screen (pleamar).
+# The unit conditions in modules/user/nix-maid/gui/pleamar.nix and hypridle's are
+# written with `%t/pleamar-login/login-phase`, i.e. this same directory. Only the
+# file names and the values inside them are the contract; the wrapper writes both,
+# the login layer and hypr-start clear them.
+export PLEAMAR_LOGIN_STATE_DIR="$XDG_RUNTIME_DIR/pleamar-login"
 
 # logind creates XDG_RUNTIME_DIR for the greetd session before this script runs;
 # the mkdir is for a compositor started by hand (outside greetd).
-mkdir -p "$QS_LOGIN_STATE_DIR" 2> /dev/null || true
+mkdir -p "$PLEAMAR_LOGIN_STATE_DIR" 2> /dev/null || true
 
 # Wait for input devices before starting the compositor: without this the first
 # seconds of the login screen would not take keyboard/mouse input.
@@ -66,12 +68,12 @@ while ! ls /dev/input/event* > /dev/null 2>&1; do
 done
 
 # A fresh logind session means an empty runtime dir, i.e. a fresh login screen.
-if [ ! -r "$QS_LOGIN_STATE_DIR/state" ]; then
-  printf 'login\n' > "$QS_LOGIN_STATE_DIR/state"
+if [ ! -r "$PLEAMAR_LOGIN_STATE_DIR/state" ]; then
+  printf 'login\n' > "$PLEAMAR_LOGIN_STATE_DIR/state"
 fi
 
 # Systemd-visible half of the same marker: every pleamar scene unit and
-# hypridle.service carry ConditionPathExists=!%t/quickshell-login/login-phase, i.e.
+# hypridle.service carry ConditionPathExists=!%t/pleamar-login/login-phase, i.e.
 # they refuse to start while the login screen is up. They have to: nix-maid's
 # sd-switch starts changed units *directly*, bypassing the session target, and did
 # exactly that during the login phase (2026-09-19 18:25:47 — the bar came up
@@ -80,7 +82,7 @@ fi
 # pleamar-login-layer removes the file when the password is accepted, and
 # hypr-start removes it as well, so a crashed layer can never leave the desktop
 # blocked.
-: > "$QS_LOGIN_STATE_DIR/login-phase"
+: > "$PLEAMAR_LOGIN_STATE_DIR/login-phase"
 
 # The login wallpaper is not resolved here: pleamar-login-layer publishes it into
 # the lock scene's own data folder while the login phase runs, from the wl state

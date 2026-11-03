@@ -1,0 +1,27 @@
+diff --git a/src/platform/wayland.rs b/src/platform/wayland.rs
+--- a/src/platform/wayland.rs
++++ b/src/platform/wayland.rs
+@@ -1942,7 +1942,22 @@
+         }
+         // Its box, centred on THIS monitor: what's left over around it is also
+         // seen, so the background is painted large and each monitor shows its own part.
+-        face.view_origin = (origin.0 - (size.0 as f32 - bounds.0 as f32) / 2.0, origin.1 - (size.1 as f32 - bounds.1 as f32) / 2.0);
++        //
++        // A box written `full` arrives here as a zero —the compiler writes `full` as
++        // 0— and a zero box is centred on the monitor by the line below, which puts the
++        // scene's origin at the monitor's CENTRE: everything the scene draws from its
++        // own corner (a clock at half the width, a card at 62 % of the height) lands
++        // half a panel away, off the screen. `full` means the box IS the monitor, so
++        // the face's own size stands in for the zero, axis by axis.
++        let box_size = (if bounds.0 == 0 { size.0 } else { bounds.0 }, if bounds.1 == 0 { size.1 } else { bounds.1 });
++        face.view_origin = (origin.0 - (size.0 as f32 - box_size.0 as f32) / 2.0, origin.1 - (size.1 as f32 - box_size.1 as f32) / 2.0);
++        // Said out loud, because a shifted face is a login screen with nothing on it and
++        // no error anywhere: the box, the face and the corner the scene paints from are
++        // the three numbers that tell a right one from a shifted one.
++        println!(
++            "lock   · {}: box {}x{}, face {}x{}, from {},{}",
++            face.name, box_size.0, box_size.1, size.0, size.1, face.view_origin.0, face.view_origin.1
++        );
+         if let Some(paints) = face.pending.take() {
+             let _ = self.to_render.send(ToRender::Sheet(Box::new(gpu::NewSheet {
+                 id: face.id,

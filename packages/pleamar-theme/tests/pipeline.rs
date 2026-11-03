@@ -258,7 +258,7 @@ fn legacy_cache_path_and_a_coloured_fixture() {
     fs::create_dir_all(home.join(".cache")).expect("cache");
     fs::create_dir_all(home.join(".config/pleamar")).expect("config");
     fs::write(home.join(".config/pleamar/keep.txt"), "sentinel\n").expect("keep");
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
+    write_canonical_cache(&home, &blue);
 
     let result = run(&home, &[]);
     assert_eq!(result.code, 0, "stderr: {}", result.stderr);
@@ -313,34 +313,6 @@ fn legacy_cache_path_and_a_coloured_fixture() {
 }
 
 #[test]
-fn the_canonical_cache_path_wins_over_the_legacy_one() {
-    if !magick_available() {
-        skip("magick");
-        return;
-    }
-    let work = TempDir::new("canonical");
-    let (blue, light, _gray) = fixtures(work.path());
-    let home = work.path().join("home2");
-    write_canonical_cache(&home, &light);
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
-
-    let result = run(&home, &[]);
-    assert_eq!(result.code, 0, "stderr: {}", result.stderr);
-    assert!(
-        result
-            .stdout
-            .contains(&format!("source {}", light.display())),
-        "INTERFACES §1.2 path did not win: {}",
-        result.stdout
-    );
-    let text = theme_text(&home);
-    let ink = lower(&theme_value(&text, "ink"));
-    let surface = lower(&theme_value(&text, "surface"));
-    assert_contrast_at_least(&ink, &surface, 4.5, "light fixture");
-    assert_eq!(theme_value(&text, "light"), "true");
-}
-
-#[test]
 fn mode_flag_and_mode_file_flip_the_palette() {
     if !magick_available() {
         skip("magick");
@@ -389,7 +361,7 @@ fn accent_override_keeps_the_shells_tones() {
     let work = TempDir::new("accent");
     let (blue, _light, _gray) = fixtures(work.path());
     let home = work.path().join("home1");
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
+    write_canonical_cache(&home, &blue);
 
     let result = run(&home, &["--accent", "#AbCdEf"]);
     assert_eq!(result.code, 0, "stderr: {}", result.stderr);
@@ -448,7 +420,7 @@ fn a_failed_run_leaves_the_previous_file_and_no_temp() {
     let work = TempDir::new("failed-run");
     let (blue, _light, _gray) = fixtures(work.path());
     let home = work.path().join("home6");
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
+    write_canonical_cache(&home, &blue);
     assert_eq!(run(&home, &[]).code, 0);
 
     let before = fs::read(theme_path(&home)).expect("before");
@@ -539,12 +511,7 @@ fn xdg_defaults_fall_back_to_home() {
     let work = TempDir::new("xdg-defaults");
     let (blue, _light, _gray) = fixtures(work.path());
     let home = work.path().join("home");
-    fs::create_dir_all(home.join(".cache")).expect("cache");
-    fs::write(
-        home.join(".cache/quickshell-wallpaper-path"),
-        format!("{}\n", blue.display()),
-    )
-    .expect("cache file");
+    write_canonical_cache(&home, &blue);
 
     let output = Command::new(binary())
         .env("HOME", &home)
@@ -572,7 +539,7 @@ fn explicit_wallpaper_wins_over_the_cache() {
     let work = TempDir::new("explicit");
     let (blue, light, _gray) = fixtures(work.path());
     let home = work.path().join("home");
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
+    write_canonical_cache(&home, &blue);
 
     let result = run(&home, &["--wallpaper", light.to_str().expect("path")]);
     assert_eq!(result.code, 0, "stderr: {}", result.stderr);
@@ -637,7 +604,7 @@ fn a_second_run_for_the_same_wallpaper_is_unchanged() {
     let work = TempDir::new("unchanged");
     let (blue, _light, _gray) = fixtures(work.path());
     let home = work.path().join("home");
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
+    write_canonical_cache(&home, &blue);
     assert_eq!(run(&home, &[]).code, 0);
     let first = theme_text(&home);
 
@@ -659,8 +626,8 @@ fn the_file_is_written_atomically_with_mode_0644() {
     let work = TempDir::new("permissions");
     let (blue, _light, _gray) = fixtures(work.path());
     let home = work.path().join("home");
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
-    let cache_before = fs::read(home.join(".cache/quickshell-wallpaper-path")).expect("cache");
+    write_canonical_cache(&home, &blue);
+    let cache_before = fs::read(home.join(".cache/pleamar/wallpaper-path")).expect("cache");
     assert_eq!(run(&home, &[]).code, 0);
 
     let metadata = fs::metadata(theme_path(&home)).expect("theme.plm");
@@ -672,7 +639,7 @@ fn the_file_is_written_atomically_with_mode_0644() {
         "unexpected files: {entries:?}"
     );
     assert_eq!(
-        fs::read(home.join(".cache/quickshell-wallpaper-path")).expect("cache"),
+        fs::read(home.join(".cache/pleamar/wallpaper-path")).expect("cache"),
         cache_before,
         "the pipeline wrote to the cache"
     );
@@ -735,7 +702,7 @@ fn tool_errors_report_the_overridden_names() {
 
     if magick_available() {
         let (blue, _light, _gray) = fixtures(work.path());
-        write_cache(&home, "quickshell-wallpaper-path", &blue);
+        write_canonical_cache(&home, &blue);
         let result = run_with_env(&home, &[], &[("MAGICK_BIN", "/nonexistent/magick")]);
         // The shell's tool check ran inside a command substitution, so the
         // missing tool warned and continued; the run ends with exit 1 because
@@ -859,7 +826,7 @@ fn forced_modes_use_the_switch_file_and_ignore_its_whitespace() {
     let work = TempDir::new("mode-file");
     let (blue, _light, _gray) = fixtures(work.path());
     let home = work.path().join("home");
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
+    write_canonical_cache(&home, &blue);
     fs::create_dir_all(home.join(".config/pleamar")).expect("config");
     fs::write(home.join(".config/pleamar/theme.mode"), " l i g h t \n\n").expect("theme.mode");
 
@@ -885,7 +852,7 @@ fn empty_values_are_absent_like_the_shells_dash_n() {
     let work = TempDir::new("empty-values");
     let (blue, _light, _gray) = fixtures(work.path());
     let home = work.path().join("home");
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
+    write_canonical_cache(&home, &blue);
 
     // --wallpaper '' falls back to the cache and --accent '' keeps sampling.
     let result = run(&home, &["--wallpaper", "", "--accent", ""]);
@@ -909,7 +876,7 @@ fn the_generated_file_names_the_wallpaper_source() {
     let work = TempDir::new("source");
     let (blue, _light, _gray) = fixtures(work.path());
     let home = work.path().join("home");
-    write_cache(&home, "quickshell-wallpaper-path", &blue);
+    write_canonical_cache(&home, &blue);
 
     let result = run(&home, &[]);
     assert_eq!(result.code, 0, "stderr: {}", result.stderr);

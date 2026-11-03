@@ -60,7 +60,13 @@ in
   # platform has made the connection to ask with, its one request for `ext-session-lock` was
   # refused and remembered as sent, so a scene whose only surface is the lock never locked
   # anything and never painted (pleamar-lock-engage.patch makes the request repeatable and has
-  # the platform wake the render once it can take it).
+  # the platform wake the render once it can take it). And the box of a lock face: `size: full,
+  # full` is compiled as a zero, and the engine centres that zero box on the monitor, which puts
+  # the scene's origin at the monitor's CENTRE — every lock screen drawn from its own corner
+  # (this one puts the clock at half the width and the card at 62 % of the height) lands half a
+  # panel away, off the screen, with nothing said in the log. A `full` box now stands for the
+  # face's own size, and the face prints its box and the corner it paints from
+  # (pleamar-lock-full.patch).
   pleamar = inputs.pleamar.packages.${prev.stdenv.hostPlatform.system}.pleamar.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [
       # The one commit the pin used to carry in `neg-serg/pleamar`
@@ -77,6 +83,7 @@ in
       ./pleamar-transport-flags.patch
       ./pleamar-soft-render.patch
       ./pleamar-lock-engage.patch
+      ./pleamar-lock-full.patch
     ];
   });
 

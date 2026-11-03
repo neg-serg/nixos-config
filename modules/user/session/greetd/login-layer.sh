@@ -82,7 +82,7 @@ fi
 PATH="/run/wrappers/bin:$KBD/bin:/run/current-system/sw/bin:${PATH:-}"
 export PATH
 
-STATE_DIR="${QS_LOGIN_STATE_DIR:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/quickshell-login}"
+STATE_DIR="${PLEAMAR_LOGIN_STATE_DIR:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/pleamar-login}"
 mkdir -p "$STATE_DIR" 2> /dev/null || true
 
 # The picture behind the card. The lock reads `wallpaper.path` — one absolute
@@ -172,26 +172,26 @@ alive() { kill -0 "$scene_pid" 2> /dev/null; }
 
 # ---- what was actually drawn (best effort, never fatal) ----------------------
 #
-# A lock face draws the scene's box CENTRED on its monitor — in the runtime,
-# `configure` sets `view_origin = origin - (monitor - box) / 2`, so a box that is
-# not the monitor's logical size shifts the whole login screen by half the
-# difference. That is the cold-boot picture: the card in one quarter, the rest
-# empty (2026-11-02 00:11).
+# A lock face draws the scene's box CENTRED on its monitor — the runtime's
+# `configure` sets `view_origin = origin - (face - box) / 2` — so a box that is not
+# the monitor's logical size shifts the whole login screen by half the difference.
+# `size: full` did exactly that: the compiler writes `full` as a zero box, a zero box
+# is centred on the monitor, and the scene's origin landed at the monitor's CENTRE —
+# the clock and the card painted half a panel away, off the screen, with nothing in
+# any log saying so. `pleamar-lock-full.patch` makes a `full` box stand for the
+# face's own size and has the face print the three numbers below.
 #
-# The gate above is the preventive half. This is the observational one: the scene
-# prints the size it measured, and the compositor says what the monitor is. It only
-# *reports*, on purpose — killing a scene that may already hold the lock is a
-# lockout, not a fix (ext-session-lock keeps the session locked when its client
-# goes: pleamar --docs reference, the lock-screen section). The login itself stays
-# usable with a shifted card, and nothing here can block it.
-measured() {
+# This is the observational half and it only *reports*: killing a scene that may
+# already hold the lock is a lockout, not a fix (ext-session-lock keeps the session
+# locked when its client goes: pleamar --docs reference, the lock-screen section).
+# A login screen with a shifted face is still usable, and nothing here can block it.
+#
+# What it reads, once per configured face (the engine's own line):
+#   lock   · DP-2: box 1920x1080, face 1920x1080, from 0,0
+painted() {
   tail -n "+$((started_at + 1))" "$LOG" 2> /dev/null \
-    | sed -n 's/.*surface [0-9][0-9]* on \([^ ][^ ]*\) (lock) · \([^ ][^ ]*\) ·.*/\1 \2/p' \
+    | sed -n 's/^lock [^:]*: box \([0-9][0-9]*x[0-9][0-9]*\), face \([0-9][0-9]*x[0-9][0-9]*\), from \(.*\)$/\1 \2 \3/p' \
     | tail -1
-}
-monitor_size() {
-  hyprctl monitors -j 2> /dev/null \
-    | "$JQ" -r --arg n "$1" '[.[] | select(.name == $n)][0] | "\((.width / .scale) | floor)x\((.height / .scale) | floor)"' 2> /dev/null
 }
 
 # The compositor holds the session only once every face is up; that is the fact the
@@ -207,26 +207,36 @@ while [ "$polls" -lt 30 ]; do
   sleep 0.1
 done
 
-# One line with both sizes, when the scene got as far as printing its own: the next
-# cold boot then answers "was the face the monitor's size at engage time" without a
-# rebuild and without a second logout.
-face="$(measured)"
-face_name=""
+# One line with the three numbers, when the scene got as far as configuring a face:
+# the next cold boot then answers "was the face the monitor's size at engage time,
+# and did the scene paint from its corner" without a rebuild and without a second
+# logout.
+face="$(painted)"
+box=""
 face_size=""
-want=""
+from=""
 if [ -n "$face" ]; then
-  face_name="${face%% *}"
-  # The scene prints `1920×1080` (U+00D7); the compositor is asked for `1920x1080`,
-  # so the two are compared in ASCII.
-  face_size="$(printf '%s' "${face#* }" | sed 's/×/x/')"
-  want="$(monitor_size "$face_name")"
+  box="${face%% *}"
+  rest="${face#* }"
+  face_size="${rest%% *}"
+  from="${rest#* }"
 fi
-printf 'login layer: lock.held "%s" after %d ms; compositor "%s"; face "%s"; monitor "%s"\n' \
+# The same face in the pixels the panel has. A HiDPI panel gives one monitor two
+# numbers that both read as "the screen" (here a 1920x1080 logical face painting
+# 3840x2160 device buffers), and a log that names only one of them is how the shifted
+# face above stayed unread for a day. Best effort: a compositor that does not answer
+# leaves the field "unknown".
+device=""
+if size_json="$(hyprctl monitors -j 2> /dev/null)"; then
+  device="$(printf '%s' "$size_json" \
+    | "$JQ" -r '[.[] | select(.focused)][0] // .[0] | "\(.width)x\(.height) at scale \(.scale)"' 2> /dev/null || true)"
+fi
+printf 'login layer: lock.held "%s" after %d ms; compositor "%s"; box "%s"; face "%s" logical; device "%s"; from "%s"\n' \
   "${held:-none}" "$((polls * 100))" "${HYPRLAND_INSTANCE_SIGNATURE:+hyprland}" \
-  "${face_size:-none}" "${want:-unknown}" >> "$LOG"
-if [ -n "$face_size" ] && [ -n "$want" ] && [ "$face_size" != "$want" ]; then
-  printf 'login layer: WARNING the lock face is "%s" but %s is "%s": the login screen is shifted by half the difference; NOT restarted on purpose, a locker killed while it holds the lock leaves the session locked with nothing to type into\n' \
-    "$face_size" "$face_name" "$want" >> "$LOG"
+  "${box:-none}" "${face_size:-none}" "${device:-unknown}" "${from:-none}" >> "$LOG"
+if [ -n "$from" ] && { [ "$from" != "0,0" ] || [ "$box" != "$face_size" ]; }; then
+  printf 'login layer: WARNING the login face paints from "%s" (box "%s" on a "%s" logical face, "%s" device): the screen is shifted by that much; NOT restarted on purpose, a locker killed while it holds the lock leaves the session locked with nothing to type into\n' \
+    "$from" "$box" "$face_size" "${device:-unknown}" >> "$LOG"
 fi
 
 while alive; do

@@ -51,7 +51,7 @@ part Card {
             frost: lock.glass.frost
             shine: pointer
             shadow: 0, 10, 28, 45%
-            box { from: -240, -165; size: 480, 320; corner: 6 }
+            box { from: -240, -185; size: 480, 370; corner: 6 }
         }
 
         // ------------------------------------------------------- the avatar
@@ -59,7 +59,7 @@ part Card {
         // the fallback (LockContent.qml tries theme avatar → ~/.face →
         // monogram; the integration publishes one path, see README.md).
         group avatar_block {
-            move: 0, -83
+            move: 0, -103
 
             group portrait {
                 clip inset 0 box { from: -52, -52; size: 104, 104; corner: 16 }
@@ -83,7 +83,11 @@ part Card {
         }
 
         // --------------------------------------------------- user@host line
-        row identity { at: 0, -2; anchor: center; gap: 0
+        // Its top, not its centre: a `row` takes `at:` as its top-left corner and
+        // `anchor: center` only puts it across the card. So this is the reference's
+        // 150 design px under the card's top edge (-185 + 150 = -35), not a guess at a
+        // centre that would move with the row's height.
+        row identity { at: 0, -35; anchor: center; gap: 0
             text user { size: 22; color: skin.ink; family: "Iosevka" }
             text host { size: 22; color: skin.ink.dim; opacity: 60%; family: "Iosevka" }
         }
@@ -94,19 +98,19 @@ part Card {
         // dark wallpaper, light on a light one. No frame: the well's own rim and the caret say
         // "type here".
         box field_bg {
-            from: -192, 33; size: 384, 58; corner: 8
+            from: -192, 12; size: 384, 58; corner: 8
             color: skin.coal; opacity: 55%
             glass: 100%; refraction: lock.field.refraction; frost: lock.glass.frost
         }
         text ">" {
-            at: -174, 62; anchor: left center; size: 20; color: skin.accent
+            at: -174, 41; anchor: left center; size: 20; color: skin.accent
             opacity: if(busy, 90%, 35%); family: "Iosevka"
         }
         // The password field: `secret: true` and `agent: no` are the policy
         // (INTERFACES.md §8.1, frozen label `Password`). The logic is the only
         // reader of `text.password`; drawing never shows it.
         input password {
-            at: -150, 48; width: 330; size: 22; weight: 500; color: skin.ink
+            at: -150, 30; width: 330; size: 22; weight: 500; color: skin.ink
             family: "Iosevka"; selection: skin.accent
             secret: true; label: "Password"; agent: no
             placeholder: "type the password"
@@ -114,7 +118,7 @@ part Card {
         // PAM is running: one accent line filling along the bottom edge of the
         // field (the legacy sweeping bar, as a fill — a sweep needs a loop).
         box field_progress {
-            from: -177, 86; size: 354 * busy_progress, 2; corner: 1
+            from: -177, 65; size: 354 * busy_progress, 2; corner: 1
             color: skin.accent; show: busy
         }
 
@@ -126,16 +130,17 @@ part Card {
         group chip {
             show: kb_on
             box chip_bg {
-                from: -192, 92; size: 78, 22; corner: 11
+                from: -192, 118; size: 90, 32; corner: 16
                 color: skin.ink; opacity: 8%
             }
-            // 78 design px: "layout: ru" is ten glyphs of Iosevka at 14 (≈6.5 each) plus the
-            // pill's 12 px of padding on each side, rounded up for a three-letter code.
+            // 90 design px: "layout: ru" is ten glyphs of Iosevka at 15 (≈6.4 each) plus the
+            // pill's 13 px of padding on each side. The reference sized the pill to its label
+            // (`implicitWidth`), which a `box` cannot do; 90 fits a three-letter code too.
             text "layout: {kb_layout}" {
-                at: -181, 103; anchor: left center; size: 14; family: "Iosevka"; color: skin.ink.dim
+                at: -179, 134; anchor: left center; size: 15; family: "Iosevka"; color: skin.ink.dim
             }
             zone box chip_hit {
-                from: -192, 92; size: 78, 22; corner: 11; cursor: pointer
+                from: -192, 118; size: 90, 32; corner: 16; cursor: pointer
                 label: "Keyboard layout {kb_layout}"; role: button
             }
             on press chip_hit { emit toggle_layout }
@@ -147,7 +152,7 @@ part Card {
         // the field (`LockContent.qml:244-253`): the failure first, then Caps Lock, then a note —
         // and the first two are warnings, so the line wears the danger colour for both.
         text status {
-            at: 0, 113; anchor: center; size: 16; family: "Iosevka"
+            at: 0, 92; anchor: center; size: 16; family: "Iosevka"
             color: if(status_danger, lock.danger, skin.ink.dim)
         }
     }

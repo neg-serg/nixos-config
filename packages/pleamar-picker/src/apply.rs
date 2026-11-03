@@ -5,8 +5,6 @@
 //!
 //! - `~/.cache/pleamar/wallpaper-path` — the still, the producer path the
 //!   theme pipeline watches;
-//! - `~/.cache/quickshell-wallpaper-path` — the same still for the legacy
-//!   readers in the session (the bar accent, wl-greeter-sync);
 //! - `~/.cache/current_wallpaper_source` — a symlink to FILE, what is on
 //!   screen;
 //! - `~/.cache/current_wallpaper` — a symlink to the still;
@@ -94,9 +92,11 @@ pub fn run() -> i32 {
     force_symlink(&wallpaper, &cache.join("current_wallpaper_source"));
     force_symlink(&still, &cache.join("current_wallpaper"));
 
-    // `printf '%s\n'` to the three files, in the shell's order.
+    // `printf '%s\n'` to the two files, in the shell's order. There used to be a
+    // third, `~/.cache/quickshell-wallpaper-path`, kept for the shell that wrote it
+    // and its readers; both are gone (the shell on 2026-11-02, the last reader
+    // `wl-greeter-sync` on 2026-11-03), so the canonical path above is the only one.
     write_line(&pleamar_cache.join("wallpaper-path"), &still);
-    write_line(&cache.join("quickshell-wallpaper-path"), &still);
     write_line(&state.join("last-good"), &still);
 
     // The painter: detached in its own session, so it outlives this process.

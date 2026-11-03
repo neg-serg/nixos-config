@@ -83,7 +83,12 @@ part State {
     // effects cannot nest, so the posteriser and the tube live in one file and
     // compose on each sample (shaders/paper.wgsl).
     shader paper = file "../shaders/paper.wgsl"
-    image wall = from wallpaper, 3840, 2160
+    // `0, 0`: the cell keeps the PICTURE's own shape. A declared `3840, 2160` fitted every
+    // wallpaper into a 16:9 cell, so a panorama (the deck is 3.55:1) arrived with black bands
+    // baked into its texture and the login screen showed a strip of picture between them —
+    // the reference filled the screen and cropped instead (`Image.PreserveAspectCrop`).
+    // The drawing says `fit: cover` for the same reason (pages/backdrop.plm).
+    image wall = from wallpaper, 0, 0
     image face = from avatar, 512, 512
 
     // --------------------------------------------------------------- events

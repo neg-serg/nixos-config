@@ -372,8 +372,8 @@
 # - **Configured keys**: the output directories (`save_dir` → `$XDG_PICTURES_DIR/shots`,
 #   `record_save_dir` → `$XDG_VIDEOS_DIR/recordings`) plus `screenshot_notification = false` and
 #   `show_thumbnail = false`. The directories keep the grim/screenrec paths and the `pic-*` helpers
-#   working; the two switches hand screenshot feedback back to the fast quickshell toast (below)
-#   instead of the plugin's own notification and result thumbnail. Recording status notifications stay
+#   working; the two switches hand screenshot feedback back to the shell's own toast (below) instead
+#   of the plugin's own notification and result thumbnail. Recording status notifications stay
 #   on — the record binds use `screenrec`, not HyprCapture, so the thumbnail loss is theirs too.
 # - **Screenshot toast**: the `screenshot-toast.path` unit (`main.nix`) watches the shots directory
 #   and runs `screenshot-toast` (`packages/local-bin-desktop (screenshot-toast)`), which forwards the newest
@@ -454,9 +454,10 @@
 #
 # - Hyprland autoreload stays off; reload manually via the keybinding.
 # - Hypr config is split under `files/gui/hypr/*` and linked via nix-maid.
-# - Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
+# - The bar's keyboard-layout capsule listens to Hyprland `keyboard-layout` events, prefers the
 #   `main: true` device, shows the current submap as an accent pictogram before the keyboard glyph and
-#   layout (e.g., `★ ⌨ en`), and uses `hyprctl switchxkblayout current next` on click.
+#   layout (e.g., `★ ⌨ en`), and uses `hyprctl switchxkblayout current next` on click. (It came from
+#   the Quickshell bar this one replaced; the behaviour is the same.)
 # - Swayimg is launched via `sx` (`packages/local-bin-zsh-extra` (sx)): gallery mode, images sorted by ctime
 #   (newest first). Its window is tuned via Hyprland window rules (`pic-pseudo-fullscreen`).
 #
@@ -1028,9 +1029,8 @@ in
           # Screenshot feedback: HyprCapture saves captures into the shots
           # directory and its own notification/thumbnail are disabled (see
           # files/gui/hypr/hyprcapture.lua), so this service is what fires the
-          # pre-HyprCapture quickshell toast (pic-info -> pic-notify) for a
-          # capture that landed there. The screenshot-toast.path unit triggers
-          # it.
+          # shell's toast (pic-info -> pic-notify) for a capture that landed
+          # there. The screenshot-toast.path unit triggers it.
           screenshot-toast = systemdUser.mkUserService {
             presets = [ "oneshot" ];
             description = "Show the screenshot toast for a new capture";

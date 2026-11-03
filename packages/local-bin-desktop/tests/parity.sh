@@ -613,7 +613,6 @@ begin_tool() {
   require_binaries
 }
 
-
 tool_enabled() {
   [ -z "$TOOL_FILTER" ] || [ "$TOOL_FILTER" = "$1" ]
 }
@@ -910,14 +909,6 @@ wl_stale_setup() {
 wl_empty_setup() {
   mkdir -p "$HOME_DIR/pic/wl"
 }
-wl_sync_setup() {
-  mkdir -p "$HOME_DIR/.local/state/wl" "$HOME_DIR/pic/wl" "$HOME_DIR/.cache"
-  printf 'wall' > "$HOME_DIR/wall.png"
-  printf '%s' "{\"outputs\":{\"eDP-1\":{\"wallpaper_path\":\"$HOME_DIR/wall.png\"}}}" \
-    > "$HOME_DIR/.local/state/wl/state.json"
-  printf '%s\n' "$HOME_DIR/wall.png" > "$HOME_DIR/.cache/quickshell-wallpaper-path"
-}
-
 if tool_enabled wl-restore; then
   begin_tool wl-restore
   compare "wl-restore: valid state restores" wl_state_setup
@@ -931,7 +922,11 @@ if tool_enabled wl-restore; then
     printf '3' > "$FAKE_WL_COUNTER"
   }
   compare "wl-restore: waits for the daemon socket" wl_retry_setup
-  compare "wl-restore: greeter cache sync path" wl_sync_setup
+  # There is no "greeter cache sync" scenario any more: the copy into
+  # /home/greeter went with that account on 2026-11-03, and the port no longer
+  # reads the legacy `~/.cache/quickshell-wallpaper-path` — the stale-state
+  # fallback walks wl's last-good, the producer cache and the old
+  # `current_wallpaper_source` link instead.
 fi
 
 # ── unlock ───────────────────────────────────────────────────────────────────
