@@ -80,14 +80,11 @@ library Genelec strict {
         // The silhouette sits inside the plate, not above it: at 20 against a 13 px plate its
         // bottom edge hung out of the pill.
         let size.icon = 17
-        // The label is `-95 dB` at 14 px Iosevka; 32 design px held only `-51`, and the plate was
-        // drawn that narrow with 8 px of slot left over to its right — the gap that kept the row
-        // from ending where the screen does. The slot is the plate now, and the plate holds the
-        // whole label.
-        // 48 is what `-51 dB` inks at 14 px: the plate is the content plus the capsule's own 4 px
-        // on each side, so the air left of the icon and right of the label are the same. 46 ran the
-        // label into the plate's edge, and 55 or 60 left a strip of empty plate after it.
-        let label.w = 48
+        // The label is `-95dB` — minus, two digits, the unit, no space, the way the QS pill
+        // prints it — so five glyphs is the widest the format gets: 5 * 7 = 35 at 14 px Iosevka.
+        // 48 was sized for the old `-51 dB` spelling and left 13 px of empty plate at the right
+        // of a string that never fills it, which read as the tile hanging off the row's edge.
+        let label.w = 35
         let w = 2 * capsule.pad + size.icon + capsule.gap + label.w
         // 23 design: the height every other capsule's plate is drawn at. A taller one pokes out of
         // the strip at its rounded corner, which is the black notch at the right end.
