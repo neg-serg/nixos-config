@@ -9,10 +9,28 @@ cost. Everything here is a decision for the owner or a multi-week project, not a
 `nh os switch --dry` after an edit: **10.8 s** (stock Determinate 12.2 s). Of that:
 
 - ~0.75–1.0 s is parsing `.nix` files (10 %; 7762 files, 55.46 MiB, of which 98.2 % is three copies
-  of nixpkgs and only 0.96 MiB is this repo);
+  of nixpkgs and only 0.96 MiB is this repo) — and **speculative parallel parsing was built, proven
+  correct, and is slower end to end**; see the first section below;
 - **~6.6 s is the evaluator core** — allocation, GC, symbol interning (`SymbolTable::create` 4.4 %,
   `mi_theap_alloc_new` 3.5 %, `BumpMemoryResource::do_allocate` 2.1 %);
 - the rest is the module system and the 2232 derivations at ~0.34 ms each.
+
+## 0. Parallel parsing: correct, and slower (closed 2026-11-02)
+
+The obvious idea does not work, and the reason is structural: **there is no batch.** Evaluation is
+lazy, so `parseExprFromFile` is reached one file at a time on demand — `eval-cores 16` buys exactly
+nothing for a `drvPath` eval, because the fiber pool only ever serves value-to-json. A speculative
+prefetcher was written instead (831 lines: scan each parsed AST for path literals, parse the files
+they denote on a 4-thread pool into a cache the demand path consults first, 1024-tree lookahead
+window as back-pressure): parse phase 697 → 492 ms (−29 %), 2669 of 5634 demand parses served from
+the cache. Correctness held — functional suite Ok 201 / Fail 1 (the known baseline), `drvPath`
+identical across eight configurations, `lazy-trees` true, daemon round trip fine.
+
+**End to end it is slower**: 7402 → 7480 ms median, paired deltas +284/+136/+175/−10/+318 ms. Only
+about a third of the parses are anticipatable, and the anticipatable ones are the cheap files; the
+14 files ≥256 KiB surface immediately before they are needed. The prefetcher's bookkeeping costs
+more than the parsing it saves. Patch kept unapplied at
+`/tmp/pp/0006-libexpr-prefetch-parsing.patch`.
 
 ## 1. One nixpkgs instead of three (~0.25 s parse, unknown eval)
 
