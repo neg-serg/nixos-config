@@ -319,6 +319,20 @@ update:
     fi; \
     XDG_CACHE_HOME="$cache" nix flake update
 
+# Search a nix-cache-pin pin for binary-cache hits without touching the tree.
+# The CLI edits ./flake.nix of the flake it runs in, so run this from the repo
+# root. Pins live in flake/cache-pin.nix; pass extra CLI flags (--plan,
+# --check-current, ...) by calling `nix run .#cache-pin-<pin> -- <flags>`.
+# Usage: just cache-pin [pin]
+cache-pin pin="cachyos":
+    nix run ".#cache-pin-{{ pin }}" -- --dry-run
+
+# Apply a nix-cache-pin pin: rewrite the input revision in flake.nix and re-lock
+# it. Verify the result (diff, `just check`) before rebuilding anything.
+# Usage: just cache-pin-apply [pin]
+cache-pin-apply pin="cachyos":
+    nix run ".#cache-pin-{{ pin }}"
+
 # Re-point the music-AI venv interpreters after a nix-collect-garbage run (the
 # venvs symlink to store pythons that have no GC root). --check for a read-only
 # status report, --dry-run to preview the actions.
