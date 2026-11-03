@@ -3,9 +3,6 @@
   fonts.fontDir.enable = true; # add fontdir support for nixos
   fonts.packages = [
     pkgs.material-symbols # Material Design icon font for panels/quickshell
-    pkgs.nerd-fonts.fira-code # FiraCode Nerd Font for terminal symbols
-    pkgs.nerd-fonts.jetbrains-mono # JetBrainsMono Nerd Font (hyprlock theme font_family)
-    pkgs.inter # Inter: UI font for the login card (legible at small sizes)
     pkgs.noto-fonts # Google Noto multilingual fonts
     pkgs.noto-fonts-cjk-sans # CJK sans-serif fonts
     pkgs.noto-fonts-color-emoji # Color emoji fonts
@@ -14,4 +11,42 @@
     pkgs.ttf-code2002 # Code2002 freeware font: Plane 2 rare CJK ideographs (Ext B-I)
     pkgs.ttf-code20x3 # Code20X3 freeware font: Plane 3 CJK Extensions G/H
   ];
+
+  # hyprlock/hyprland themes still name JetBrains Mono and Inter; map them to
+  # the fonts that remain installed (Iosevka Nerd for mono symbols, Outfit for
+  # UI) instead of a generic fallback.
+  fonts.fontconfig.localConf = ''
+    <?xml version="1.0"?>
+    <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+    <fontconfig>
+      <alias binding="same">
+        <family>JetBrains Mono Nerd Font</family>
+        <prefer><family>Iosevka</family></prefer>
+      </alias>
+      <alias binding="same">
+        <family>JetBrainsMono Nerd Font</family>
+        <prefer><family>Iosevka</family></prefer>
+      </alias>
+      <alias binding="same">
+        <family>JetBrains Mono Nerd Font Mono</family>
+        <prefer><family>Iosevka</family></prefer>
+      </alias>
+      <alias binding="same">
+        <family>Fira Code Nerd Font</family>
+        <prefer><family>Iosevka</family></prefer>
+      </alias>
+      <alias binding="same">
+        <family>Fira Code Nerd Font Mono</family>
+        <prefer><family>Iosevka</family></prefer>
+      </alias>
+      <alias binding="same">
+        <family>Inter</family>
+        <prefer><family>Outfit</family></prefer>
+      </alias>
+      <alias binding="same">
+        <family>Inter Display</family>
+        <prefer><family>Outfit</family></prefer>
+      </alias>
+    </fontconfig>
+  '';
 }
