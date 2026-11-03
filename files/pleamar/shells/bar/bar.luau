@@ -1012,11 +1012,13 @@ sys.watch("workspaces", workspacesChanged)
 --                                                       (`networkPingIntervalMs`)
 --   · and every 500 ms for 10 s after a link comes up  — Connectivity.qml:23-26 and 115-127
 --                                                       (`fastIntervalMs` / `fastDurationMs`)
---   · the target is 8.8.8.8                            — Settings.qml:218 (`networkPingTarget`)
+--   · the target is 1.1.1.1, not the reference's 8.8.8.8 — Settings.qml:218 names 8.8.8.8, but
+--     that address is ICMP-black-holed on this network (it times out while 1.1.1.1 and 9.9.9.9
+--     answer), so the capsule reported "Local network, no internet" on a working link.
 -- The reference wraps the ping in `dash -c … && echo OK || echo FAIL` (Connectivity.qml:107-110)
 -- because its ProcessRunner collects lines rather than exit codes; `ping`'s own exit code says
 -- the same, so the command is asked directly and nothing is spawned in between.
-local PING_TARGET = "8.8.8.8"
+local PING_TARGET = "1.1.1.1"
 local LINK_POLL_MS = 4000
 local PING_SLOW_MS = 30000
 local PING_FAST_MS = 500
