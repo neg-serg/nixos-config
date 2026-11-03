@@ -22,6 +22,9 @@ in
   packages = [
     translateEnv
     playwrightEnv
+    # Docling (~3.9 GiB with its layout/table models): PDF/DOCX → Markdown.
+    # Moved out of the system closure; also `nix run .#docling -- file.pdf`.
+    pkgs.neg.docling-env
     pkgs.nodejs # runtime for the Playwright suites (@playwright/test needs >= 20)
     pkgs.chromium # system browser: CDP attach to a live Vivaldi/Chromium profile
   ];

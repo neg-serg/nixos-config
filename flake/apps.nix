@@ -31,6 +31,14 @@ in
       type = "app";
       program = "${pkgs.neg.midi-transcribe}/bin/midi-transcribe";
     };
+    docling = {
+      type = "app";
+      program = "${pkgs.neg.docling-env}/bin/docling";
+    };
+    faust2sc = {
+      type = "app";
+      program = "${pkgs.faust2sc}/bin/faust2sc";
+    };
   }
   // cachePin.apps;
 }

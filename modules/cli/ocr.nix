@@ -1,5 +1,9 @@
-# OCR/docling tooling: Tesseract engine (eng/rus/osd), ocrmypdf for PDFs and
-# docling for PDF/DOCX → Markdown (layout + table models).
+# OCR tooling: Tesseract engine (eng/rus/osd) and ocrmypdf for PDFs.
+#
+# Docling (PDF/DOCX → Markdown, layout + table models) is no longer part of the
+# system closure: its python env is ~3.9 GiB and only needed on demand. Run it
+# as `nix run .#docling -- file.pdf` or from the `ai` devshell, where `docling`
+# is on PATH; pdf2md (packages/local-bin-system) resolves it from PATH too.
 { pkgs, ... }:
 let
   # Default tesseract ships eng only; rus needed for Russian text, osd for
@@ -24,26 +28,10 @@ let
   ocrmypdf = pkgs.python3.pkgs.toPythonApplication (
     pkgs.python3.pkgs.ocrmypdf.override { inherit tesseract unpaper; }
   );
-  # Docling: PDF/DOCX → Markdown with layout/table models — the store-native
-  # replacement for the marker-pdf pip venv that used to live in
-  # ~/src/ai-tools (its interpreter went stale on a python bump and `marker`
-  # has been dead since). Bound as a python env because the CLI ships with the
-  # python package; Tesseract above stays the OCR engine for scanned pages.
-  #
-  # ignoreCollisions: in the pinned nixpkgs (docling 2.118.0) the full package
-  # propagates `docling-slim` and BOTH install bin/docling-tools, so buildEnv
-  # refuses the environment outright ("two given paths contain a conflicting
-  # subpath", exit 25) and the whole system fails to build. The two copies come
-  # from the same version, so the file is interchangeable: keep the first.
-  doclingEnv = pkgs.python3.withPackages (ps: [ ps.docling ]);
-  docling = doclingEnv.overrideAttrs (_: {
-    ignoreCollisions = true;
-  });
 in
 {
   environment.systemPackages = [
     tesseract # OCR engine (Tesseract) with eng/rus/osd language data
     ocrmypdf # add searchable text layer to PDFs via OCR (uses Tesseract)
-    docling # PDF/DOCX → Markdown converter with layout and table detection
   ];
 }

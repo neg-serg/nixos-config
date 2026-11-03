@@ -7,5 +7,9 @@
     pkgs.dexed # DX7-compatible synth
     pkgs.stochas # probability-driven MIDI sequencer
     pkgs.vcv-rack # modular synth platform
+    # Moved out of the system closure (2 GiB with the Faust compiler):
+    # compile Faust DSP into SuperCollider UGens (faust2sc.py); also
+    # `nix run .#faust2sc`.
+    pkgs.faust2sc
   ];
 }
