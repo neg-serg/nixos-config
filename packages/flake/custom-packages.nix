@@ -73,6 +73,9 @@
   renoise = pkgs.renoise;
   sioyek = pkgs.sioyek;
   vivaldi = pkgs.vivaldi-fixed;
+  difftastic = pkgs.difftastic;
+  npins = pkgs.npins;
+  nix-init = pkgs.nix-init;
   tshark = pkgs.tshark;
   galaxy-buds-client = pkgs.galaxy-buds-client;
   vial = pkgs.vial;
