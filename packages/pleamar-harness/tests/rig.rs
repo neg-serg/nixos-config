@@ -4,8 +4,17 @@
 mod support;
 
 use std::fs;
+use std::os::unix::net::UnixListener;
 
 use support::{stderr, stdout, Case};
+
+/// The pleamar the rig talks through: it records the socket directory it was
+/// handed, which is what `--say` needs to find a scene in another session.
+const SAY_PLEAMAR: &str = r#"#!/bin/sh
+printf '%s\n' "argv: $*" >> "$FAKE_LOG"
+printf 'sockets: %s\n' "${PLEAMAR_SOCKETS:-}" >> "$FAKE_STATE/say.env"
+echo "fake describe: ok"
+"#;
 
 /// A headless compositor that stays up (the fixture `pleamar-wm` exits at once
 /// because its `sleep` is a fake), recording what the rig handed it.
@@ -21,6 +30,7 @@ perl -e 'sleep 30'
 fn rig_case(label: &str) -> Case {
     let case = Case::rig(label);
     case.fake("pleamar-wm", LONG_WM);
+    case.fake("pleamar", SAY_PLEAMAR);
     case
 }
 
@@ -87,11 +97,23 @@ fn starts_a_copy_with_its_own_environment_and_stops_it() {
     let seen = fs::read_to_string(case.state.join("wm.autostart")).expect("autostart seen");
     assert!(seen.contains("/rig/conf/pleamar"), "{seen}");
 
+    // The compositor names its session, so the rig finds the scene's socket
+    // directory instead of deriving it (`PLEAMAR_SOCKETS`).
+    let socket_dir = case.dir.join("rig/run/pleamar-test");
+    fs::create_dir_all(&socket_dir).expect("the rig's runtime directory");
+    let _socket = UnixListener::bind(socket_dir.join("bar.sock")).expect("a scene socket");
+
     // Talking to it goes through the rig's socket.
     let output = case.run_with(&["say", "bar", "describe"], &[("RIG", rig.as_str())]);
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
     let calls = case.calls().join("\n");
-    assert!(calls.contains("[--say] [bar] [describe]"), "{calls}");
+    assert!(calls.contains("argv: --say bar describe"), "{calls}");
+    wait_for(&case.state.join("say.env"));
+    let said = fs::read_to_string(case.state.join("say.env")).expect("the say record");
+    assert!(
+        said.contains(&format!("sockets: {}", socket_dir.display())),
+        "{said}"
+    );
 
     // An edit comes back with `sync`.
     fs::remove_file(&copy).expect("remove the copied scene");

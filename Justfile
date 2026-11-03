@@ -256,6 +256,20 @@ plugin-sandbox:
 render-plugins out="":
     bash "{{repo_root}}/scripts/dev/check-plugin-render.sh" "{{repo_root}}" {{if out != "" { "--out " + out } else { "" }}}
 
+# Run a copy of the shell in a headless pleamar-wm (`pleamar-rig`, in
+# packages/pleamar-harness): the tree is copied into $RIG with its own HOME and
+# data, and `just rig sync|say|log|stop` work on that copy. Examples:
+#   just rig start --scene bar --png /tmp/rig.png --at 3
+#   just rig say bar describe
+#   just rig stop
+rig *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="{{repo_root}}"
+    wm=$(nix build --no-link --print-out-paths "$root#pleamar-wm")
+    harness=$(nix build --no-link --print-out-paths "$root#pleamar-harness")
+    exec env PLEAMAR_WM_BIN="$wm/bin/pleamar-wm" "$harness/bin/pleamar-rig" {{ARGS}}
+
 # Resolve repo paths by name (see lib/README.md → Which resolver, where):
 #   just paths keys files        what to write in Nix for files/…
 #   just paths keys modules --any

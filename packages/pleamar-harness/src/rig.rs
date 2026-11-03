@@ -21,7 +21,7 @@
 use std::env;
 use std::fs;
 use std::io::Write;
-use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::{FileTypeExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -265,6 +265,39 @@ fn copy_tree(source: &Path, destination: &Path) -> std::io::Result<usize> {
     Ok(copied)
 }
 
+/// The directory a scene listens in: `$RIG/run/pleamar-<session>/<scene>.sock`.
+/// The compositor names the session, so the rig looks for the socket rather
+/// than guessing the name; `PLEAMAR_SOCKETS` is what the client takes.
+fn find_socket_dir(root: &Path, scene: &str) -> Option<PathBuf> {
+    let wanted = format!("{scene}.sock");
+    let entries = fs::read_dir(root).ok()?;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if entry.file_type().ok().is_some_and(|kind| kind.is_dir()) {
+            let candidate = path.join(&wanted);
+            if fs::symlink_metadata(&candidate)
+                .map(|meta| meta.file_type().is_socket())
+                .unwrap_or(false)
+            {
+                return Some(path);
+            }
+        }
+    }
+    None
+}
+
+/// Wait up to two seconds for a scene's socket: the compositor starts the scene
+/// asynchronously after `start` returned.
+fn wait_for_socket(root: &Path, scene: &str) -> Option<PathBuf> {
+    for _ in 0..20 {
+        if let Some(directory) = find_socket_dir(root, scene) {
+            return Some(directory);
+        }
+        proc::sleep("0.1");
+    }
+    None
+}
+
 fn read_pid(rig: &Rig) -> Option<u32> {
     let text = fs::read_to_string(rig.pid_file()).ok()?;
     text.trim().parse().ok()
@@ -416,8 +449,21 @@ fn say(ctx: &mut Ctx, rig: &Rig, options: &Options) -> Result<i32, Halt> {
     }
     let pleamar = resolve(ctx, "pleamar", "PLEAMAR_BIN")?;
     let mut command = Command::new(&pleamar);
-    command.arg("--say").args(&options.rest);
+    // One command, as the shell writes it (`--say panels 'get drawer'`): the
+    // words after the scene are joined, not passed as separate argv.
+    command
+        .arg("--say")
+        .arg(&options.rest[0])
+        .arg(options.rest[1..].join(" "));
     apply_env(&mut command, rig);
+    // The compositor names its client session, so the socket is found rather
+    // than derived; without it `pleamar --say` looks in the live session's
+    // directory (and says the scene is not there).
+    if env::var("PLEAMAR_SOCKETS").map_or(true, |value| value.is_empty()) {
+        if let Some(directory) = wait_for_socket(&rig.run(), &options.rest[0]) {
+            command.env("PLEAMAR_SOCKETS", directory);
+        }
+    }
     let status = command
         .status()
         .map_err(|error| Halt::Fail(format!("cannot run {pleamar}: {error}")))?;
