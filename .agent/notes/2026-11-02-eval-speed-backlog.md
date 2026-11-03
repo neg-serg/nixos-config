@@ -76,3 +76,40 @@ BOLT (\<1 %, `instructions:u` +0.07 %), `-O3 -march=znver5` (no change), `MIMALL
 derivations), patches 0002/0006/0007/0008 (neutral or inapplicable), a fork for parallel evaluation
 (ceiling 4.5 s, realistic 6.0 s), an incremental eval server (zero locality). Numbers and reasoning
 are in the plan; do not retry these without new evidence.
+
+## 4. Symbol interning: 2x per call, invisible in wall clock (closed 2026-11-02)
+
+`SymbolTable::create` is 4.4 % of the eval, but the shape is inverted from what it looks like: on
+this tree it is **98.1 % hits**, not inserts. Counters from a real eval (counter-patched build,
+identical `drvPath`): 6,900,686 calls, 6,770,510 already interned, 130,176 inserts, 33 tables (one
+per thread, 96.8 % of calls on the main one), 65.6 MB hashed, mean name 9.5 B. `rdtsc` split in
+situ: hash 18 % of `create`, `insert_and_visit` 82 % — so the price is the concurrent set's shared
+lock plus an *exclusive* group lock taken for a lookup that never writes.
+
+Four "obvious" fixes were measured at **0 %**: precomputing the hash (there is no double hashing),
+comparing hashes before strings (already exactly one compare per hit), sharding (single table), and
+reserving capacity (130k inserts). A thread-local memo in front of the concurrent set *did* work on
+the hot path — **17.4 → 9.3 ns/call (−46 %)**, `create` 3.2 % → 1.4 % of cycles — and the patch
+passes every gate (suite Ok 201 / Fail 1, `drvPath` byte-identical, `lazy-trees`, daemon round
+trip).
+
+**It does not move wall clock**: 28 interleaved pairs at load 1.9–4.2 give −0.21 % (SEM 0.7 %, 15/28
+wins) and the two halves disagree (−1.13 %, +0.66 %). The base-vs-base noise floor on this host is
+±4 % (user time 6.68–7.64 s over 12 runs), so a ~1 % effect is below what can be measured here. The
+patch is kept unapplied at `/tmp/symtab/0002-symbol-memo.patch`.
+
+Also a correction to the profile reading: `__memcmp` is not mostly interning — `create` accounts for
+6.76 M of 76.6 M calls (9 %); the rest is `Bindings::lexicographicOrder` 13 M,
+`std::map<std::string>` comparators 11 M, `prim_replaceStrings` 5.4 M, `SingleDerivedPath` 2.7 M.
+
+## The pattern across all of it
+
+BOLT (\<1 %), `-march=znver5` (0 %), a flat attribute index (modelled −0.5…−1.3 %), speculative
+parallel parsing (−29 % on the parse phase, +175 ms end to end), and a symbol memo (−46 % on the
+operation, −0.2 % on the eval). Every one either fails to move the number or moves it the wrong way.
+
+The consistent explanation: **this evaluation is memory-bound, not compute-bound.** The cycles saved
+in one function reappear in cache misses elsewhere. What is left is the allocator and the GC — that
+is, rewriting the evaluator's memory layout, which is a project rather than a patch, and would need
+a validation harness (which exists: `scripts/dev/nix-memo-diff.sh` plus the four-patch build whose
+suite is Ok 201 / Fail 1).
