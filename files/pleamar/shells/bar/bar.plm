@@ -938,11 +938,13 @@ scene bar {
         // a width is only known once the text is shaped, so both are measured.
         measure glyph
         measure lead
-        // 69, not 38: that is the reference's plate (measured off its strip — the plates sit
-        // at 8, 72, 158, 223, 287 and are 54, 79, 58, 57, 95 LOGICAL px wide, which is 47, 69,
-        // 50, 50, 83 in this scene's design px), and at 38 the label was cut to "λ:te": a
-        // capsule sized for the glyph and nothing else.
-        size: 69 * scale, strip * scale
+        // 75, not 38: the reference's plate for this workspace is 69 (the plates sit at 8, 72,
+        // 158, 223, 287 and are 54, 79, 58, 57, 95 logical px wide, which is 47, 69, 50, 50, 83
+        // in this scene's design px), and at 38 the label was cut to "λ:te": a capsule sized for
+        // the glyph and nothing else. Six more than the reference: the label's box now stops at
+        // the 6 px of air it starts with, and at exactly 69 that last subtraction left "term"
+        // with a box the width of its own ink, which the engine elided.
+        size: 75 * scale, strip * scale
         group zoom {
             scale: scale
             body {
@@ -953,7 +955,7 @@ scene bar {
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
                 border: 1, mix(skin.coal, skin.ink, 8%)
-                box { from: 0, 1; size: 69, 23; corner: 6 }
+                box { from: 0, 1; size: 75, 23; corner: 6 }
             }
             // The glyphs this reads are Nerd Font code points (`WS_GLYPH` in the logic), so they need
             // the face they were chosen in — Material has no such names and drew squares.
@@ -965,10 +967,10 @@ scene bar {
             // The name is what the owner typed — lower-case on this host, so its ink is x-height
             // and reads 1.25 px low on a line-box anchor (measured); one px up centres the common
             // case. A capitalised name would sit 1 px high, which is the smaller error of the two.
-            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2 - 1; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - 12 - (glyph.width + 5 + lead.width); lines: 1 }
+            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2 - 1; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 75 - 12 - (glyph.width + 5 + lead.width); lines: 1 }
             // The capsule shows the workspace that is already in force, so it is always the
             // selected tab: `selected:` is what a reader of `--say bar describe` needs to know it.
-            zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab; selected: true }
+            zone box ws { from: 0, 0; size: 75, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab; selected: true }
             on enter ws { emit tip(1) }
             on leave ws { emit tip_hide }
             on press ws { emit overview }
