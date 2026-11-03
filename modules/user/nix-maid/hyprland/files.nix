@@ -79,7 +79,11 @@ in
         ".config/hypr/hyprscratch.conf".text = ''
           telegram {
               class = org.telegram.desktop
-              command = Telegram
+              # The on-demand launcher (modules/user/session/chat.nix) is the only
+              # Telegram executable on PATH: the package's own binary is named
+              # `Telegram`, and a bare `Telegram` here spawned nothing after
+              # Telegram moved out of the system closure (2026-11-03).
+              command = telegram-desktop
               options = special
               # Fresh spawns land right-aligned; user geometry (saved by
               # scratchpad-geometry.service) wins once the window is moved.
