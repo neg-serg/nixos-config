@@ -1,0 +1,61 @@
+language 0.4
+
+// cover.plm — the album-art resolver as a plugin: which picture belongs to the
+// track that is playing.
+//
+// Legacy: files/quickshell/Services/CoverResolver.qml. MPRIS gives an art URL;
+// that URL is often a temporary file the player exported, while the album
+// directory next to the track holds the real cover. The resolver validates the
+// URL, looks for the canonical sister files in that directory (cover, front,
+// folder, album — in that order, jpg/jpeg/png/gif/webp) and publishes the best
+// path as a plain filesystem path, which is what `image … = from` can paint.
+//
+//     import "../../lib/plugins/cover/cover.plm" as cover
+//     cover.Art(w: 200, h: 200)
+//
+// The other half of PH3-P's last item (MusicMeta: ffprobe/mediainfo/sox) is
+// `lib/plugins/meta/`, which takes the file path from MPD — pleamar's `media`
+// service reports no URL, and `playerctl metadata xesam:url` is not a stand-in
+// whenever more than one MPRIS player is up. INTERFACES §10.5 carries the
+// deviation and the upstream ask (a `url` field on `media`).
+//
+// Compile proof: cover.check.plm.
+
+import "../../palette.plm"
+
+library Cover strict {
+
+    // The plugin's own: the media service for the art URL, `ls` to look at the
+    // album directory (the files service is sandboxed to the plugin's folder,
+    // and the album is not in it), and `curl`/`mkdir`/`rm` for a remote URL —
+    // fetched once into `$XDG_CACHE_HOME/pleamar/cover` and published as a path,
+    // because `image … = from` paints a path and not a URL.
+    permissions { run: "ls", "curl", "mkdir", "rm"; services: "media", "env" }
+
+    // ------------------------------------------------------------- boundary
+    // The resolved picture, as a plain path — a sister file in the album's
+    // directory, the player's own export, or a remote URL fetched into the cache;
+    // empty while nothing is known or when nothing could be resolved.
+    text cover = ""
+    fact found = false
+    // The URL the player reported, kept for the scene's tooltip and for the
+    // report when a cover could not be resolved.
+    text raw = ""
+
+    // A 200 × 200 cell (the QS sidePanel.albumArtSize): the declared size fixes
+    // the shape the picture is fitted into.
+    image art = from cover, 200, 200
+
+    // `radius`: QS paints the bar's cover in `albumArtContainer`, a rounded square at
+    // `Theme.cornerRadiusSmall` (shape.cornerRadiusSmall = 6). Without it a sleeve whose own
+    // pixels are light shows four square corners outside the rounded plate it sits on — which
+    // is what "the pill is not like the one in Quickshell" was looking at.
+    component Art(w: number = 200, h: number = 200, radius: number = corner.small) {
+        size: w, h
+        clip box { from: 0, 0; size: w, h; corner: radius }
+        image art { at: 0, 0; size: w, h; show: found }
+        // The face of "no cover": a quiet plate, so a scene does not need its
+        // own placeholder.
+        box { from: 0, 0; size: w, h; corner: radius; color: slate; opacity: 35%; show: not found }
+    }
+}

@@ -1,0 +1,23 @@
+language 0.4
+
+// meta.check.plm — the compile proof of the track-metadata plugin (INTERFACES §10.2).
+
+import "../../palette.plm"
+import "./meta.plm" as meta
+
+scene meta_check {
+    surface { size: 200, 60; anchor: top; level: overlay; agent: hidden }
+
+    meta.Line()
+    meta.Line(scale: 1.3)
+
+    on demo {
+        Meta.bitDepth = 24
+        Meta.sampleRate = 96000
+        Meta.bitrateKbps = 1024
+        Meta.channels = 2
+        Meta.trackNo = 6
+        Meta.discNo = 1
+        Meta.year = 2024
+    }
+}

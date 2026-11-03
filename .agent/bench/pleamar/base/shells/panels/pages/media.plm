@@ -1,0 +1,138 @@
+// pages/media.plm — the now-playing card (`drawer == media`).
+//
+// Legacy: files/quickshell/Widgets/SidePanel/Music.qml. The card is cover ·
+// identity rows · analyser band, bottom-anchored, and the transport stays where
+// QS keeps it — in the bar capsule, not here (Music.qml:705: "Track title
+// removed on request: the card carries the identity rows below and the bar
+// keeps the title"). There is no close button either: the reference closes on
+// Escape and on an outside press, and the drawer family does both.
+//
+// Layout, from the reference's own tokens — `musicPopupWidth` 420
+// (Settings.json), `sidePanel.albumArtSize` 200 (Theme/sidePanel.jsonc), padding
+// 12, band 76 with the scrub line under it:
+//
+//     +--------------------------------------------------+
+//     | [cover 200]  rows: icon + value, 18 apart        |
+//     |                                                  |
+//     | band (analyser)                                  |
+//     | elapsed                                     total|
+//     | ================ scrub line ==================== |
+//     +--------------------------------------------------+
+//
+// Every element has its own coordinates and its own box: nothing is stacked by
+// a layout that could change its mind. That is deliberate — a `column` sizes
+// itself to what it holds, so the block moved a few pixels whenever a tag row
+// appeared or a value grew, which reads as the card twitching around its centre.
+// Rows sit at `12 + index * 18` instead, and the tag rows continue from the
+// number of service rows (`media_rows.total`), so a row never lands on another.
+//
+// Icon and value are anchored by their **bottom** edge, on the same line: a
+// Material glyph and a text centred at the same y do not share an optical
+// baseline, and the icons looked like they were floating.
+//
+// Every length is a design-pixel literal inside `group zoom { scale }`: `size:`
+// and `weight:` take ONE number and drop the rest of the expression
+// (INTERFACES §9.2), so `size: 11 * scale` draws at 11 px while the card grows.
+//
+// The part is `NowPlaying`, not `Media`: an identifier is case-insensitive here,
+// so a part named after the drawer's own enum value shadows it and
+// `show: drawer == media` compares the fact with the part — the rule never
+// fires, the surface never opens, and the scene exits a couple of seconds after
+// the drawer is asked for.
+
+part NowPlaying {
+    component NowPlayingDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 420 * scale, 320 * scale
+
+        group {
+            move: 0, (1 - lift) * 320 * scale
+
+            group zoom {
+                scale: scale
+
+
+                // ----***------------------------- the card
+                body {
+                    color: coal
+                    opacity: 75%
+                        box { from: 0, 0; size: 420, 320; corner: 0; opacity: 0% }
+                }
+
+                // ----***--------------------- album art
+                // The cover plugin resolves the real album-directory file behind
+                // the player's URL; with nothing resolvable it draws its own
+                // quiet plate, which is the reference's fallback.
+                group { move: 12, 12
+                    Cover.Art(w: 200, h: 200)
+                }
+
+                // ----***------------------ identity rows
+                // Row n sits at 12 + n * 18; the tag rows continue after the
+                // service's own, and the whole block ends before the band.
+                for r in media_rows {
+                    text r.glyph { at: 216, 12 + r.index * 18 + 13; anchor: left bottom
+                        family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+                    text r.value { at: 234, 12 + r.index * 18 + 13; anchor: left bottom; width: 174; lines: 1
+                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink }
+                }
+                for r in Meta.rows {
+                    text r.glyph { at: 216, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom
+                        family: "Material Symbols Outlined"; size: 11; color: skin.ink.dim }
+                    text r.value { at: 234, 12 + (media_rows.total + r.index) * 18 + 13; anchor: left bottom; width: 174; lines: 1
+                        family: "Iosevka"; weight: 700; size: 11; color: skin.ink }
+                }
+
+                // ----***---------- analyser band
+                // QS draws IPhoneSpectrum here, one-sided, with the scrub line
+                // under it; panels.plm sets `Spectrum.mirror`. Its colour is the cover's
+                // (`Music.qml`'s `accentColor: detailsCol.musicAccent`), not the wallpaper
+                // palette's accent — the card follows the album, the shell follows the wall.
+                group { move: 12, 224
+                    spec.Bars(width: 396, height: 76, tone: cover_accent, end: cover_accent, gap: 0)
+                }
+
+                // ----***----------------------- scrub line
+                // On the band's bottom edge, full width, as Music.qml anchors it.
+                // The elapsed and total timestamps belong to the hover preview in
+                // the reference, so at rest the card shows none.
+                // The band, as Music.qml draws it: a hairline track tinted with the
+                // fill colour at 0.14, the played part at full strength under it,
+                // and a vertical bloom rising 30 % of the band behind the fill
+                // (a gradient from nothing to 0.38 there; one box at a fifth
+                // here, since a box carries one colour). The fill is the cover accent
+                // (`_progressFillColor`, the reference's `musicAccent`).
+                box { from: 12, 305; size: 396, 3; corner: 1.5; color: cover_accent; opacity: 14% }
+                box { from: 12, 280; corner: 3
+                    size: 396 * clamp(media.pos / max(media.length, 1), 0, 1), 25
+                    color: cover_accent; opacity: 15% }
+                box { from: 12, 305; corner: 1.5
+                    size: 396 * clamp(media.pos / max(media.length, 1), 0, 1), 3
+                    color: cover_accent }
+
+                // ----***----------------- the scrub band
+                // QS seeks from a press on the progress bar (`Music.qml`'s `seekFromX`, a MouseArea
+                // over the band) and the port drew the line and nothing else, so the one control a
+                // player has to jump inside a track did nothing. `local.x` carries the zone's own
+                // `from:` (12), so the fraction is the distance from it over the 396 the band is
+                // wide; `drag` keeps seeking while the button is held, as the reference's does.
+                zone box scrub { from: 12, 296; size: 396, 16; cursor: pick(media.can_seek, not_allowed, pointer)
+                                 label: pick(media.can_seek, "Seek (this player cannot seek)", "Seek")
+                                 role: slider; value: "{media.pos, 0} s" }
+                // The cursor already says `default` when the player cannot seek; the press used to
+                // seek anyway, so the band did what the pointer promised it would not.
+                on press scrub while media.can_seek { emit seek(clamp((local.x - 12) / 396, 0, 1)) }
+                on drag scrub { emit seek(clamp((local.x - 12) / 396, 0, 1)) }
+
+                // ----***---------------- nothing playing
+                group { show: media_rows.total == 0
+                    text "music_note" { at: 210, 146; anchor: center
+                        family: "Material Symbols Outlined"; size: 28; color: skin.ink.dim }
+                    text "No music player detected" { at: 210, 178; anchor: center
+                        family: "Iosevka"; size: 11; color: ink.off }
+                }
+            }
+        }
+    }
+
+    NowPlayingDrawer() { show: drawer == media }
+}

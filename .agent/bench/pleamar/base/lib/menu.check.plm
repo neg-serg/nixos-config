@@ -1,0 +1,30 @@
+language 0.4
+
+// menu.check.plm — the compile proof of the shared menu rows.
+//
+// INTERFACES §9.1: a library is not opened, it is type-checked through something that imports it,
+// and `just pleamar-check` skips `library` files outright. Nothing in the tree imported
+// `lib/menu.plm` yet — the drawers written for it land one at a time — so the row component was
+// compiled by no gate at all. The plugins carry the same proof beside them (`<name>.check.plm`,
+// §10.2); this is the scene the library is compiled in, and the one to extend when a row grows a
+// parameter.
+
+import "./palette.plm"
+import "./menu.plm" as menu
+
+scene menu_check {
+    surface { size: 320, 240; anchor: top; level: overlay; agent: hidden }
+
+    // `Action` takes the event its press emits; the proof only has to name it.
+    event chosen ->
+
+    column rows {
+        gap: 2
+        menu.Action("Open", chosen)
+        menu.Action("Taken", chosen, checked: true, value: 3)
+        menu.Action("A child", chosen, depth: 1, value: 7)
+        menu.Action("Disabled", chosen, enabled: false)
+        menu.Action("Quit", chosen, danger: true)
+        menu.Action("Wide", chosen, width: 300, scale: 1.5)
+    }
+}

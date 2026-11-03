@@ -1,0 +1,194 @@
+// pages/calendar.plm — the calendar drawer (`drawer == calendar`).
+//
+// A month grid (Sunday first, the khal default on this host: firstweekday 0)
+// plus the selected day's entries. The grid itself is panels.luau's: it builds
+// `cells` (42 records, ISO-accurate including the adjacent-month padding),
+// `events` and `holidays` from the pleamar-calendar worker, and the month
+// title. The khal date-format bug (M13: khal parses dates with its own
+// `dateformat = %d.%m.%Y`) is fixed inside the worker, which retries the month
+// range in that format and normalises every date back to ISO before printing;
+// this scene therefore only ever sees ISO `date` fields.
+//
+// Navigation (cal_prev / cal_next) is handled by panels.luau: it recomputes
+// the grid and restarts the worker for the new month. A missing worker keeps
+// the grid and shows `cal.err` ("not available") instead of pretending there
+// are events; the same text carries a worker error.
+//
+// The grid also carries what the reference's calendar carried beyond a month:
+// a day with an event or a public holiday gets a corner dot (red for a
+// holiday, accent for an event) and a holiday its faint wash, and — when the
+// pill tracker knows the day — the plate and the dot that say taken, missed,
+// still pending or no record at all (Calendar.qml:35-42, 269-272, 309). Under
+// the month title sits the tracker's streak ("5 days", Calendar.qml:186-197).
+// Both come from the pill plugin's boundary: `cal_streak` and `cal.streak` for
+// the header, and the `pill` field of every cell for the markers, all of them
+// decided in panels.luau.
+//
+// Roles and labels follow INTERFACES.md §8.2; every repeated cell carries its
+// own month-qualified label from the model so `--say press` is unambiguous.
+
+part Calendar {
+    // 500, not the reference's 480: the card carries the pill tracker's streak row under the month
+    // (Calendar.qml:186-197), and the QS popup grew the same way when its pill overlay was on
+    // (480 -> 520). The 20 design px are the streak row and the extra line in the day list.
+    component CalendarDrawer(surface.h: number = 500,
+                             scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+        size: 380 * scale, 500 * scale
+
+        group {
+            // Bottom-left, like the legacy calendar popup (calendar.popupMargin), and pinned to
+            // the bottom of the surface it lives in: `panels.plm` declares that surface as
+            // 380 x 500, the 380 x 500 card at the `ui` 1 the literals are written against, so at
+            // `scale` 1 the card fills it and `move` is 0. `surface.h` is that literal (the call
+            // below passes 500); a mismatch clipped the card's bottom row before.
+            move: 0, (surface.h - 500 * scale) + (1 - lift) * 500 * scale
+
+            // ----***----------------------------- the card
+            body {
+                color: coal
+                opacity: 85%
+                box { from: 0, 0; size: 380 * scale, 500 * scale; corner: 0; opacity: 0% }
+            }
+            box { from: 0 * scale, 0 * scale; size: 380 * scale, 1 * scale; color: skin.accent; opacity: 25% }
+
+            // ----***------------------ header: month and arrows
+            // The header is mirrored: 14 px from each edge, and the capsules are 20 tall, so
+            // they start at 8 to sit on the title's line (18) rather than 2 px under it.
+            group { move: 14 * scale, 8 * scale
+                Capsule(24, 20, fill: skin.surface, alpha: 60%, radius: 10, scale: scale)
+                text "chevron_left" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink }
+                zone box prev { cursor: pointer; from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
+                    label: "Previous month"; role: button }
+                on press prev { emit cal_prev }
+            }
+            group { move: 342 * scale, 8 * scale
+                Capsule(24, 20, fill: skin.surface, alpha: 60%, radius: 10, scale: scale)
+                text "chevron_right" { at: 12 * scale, 10 * scale; anchor: center; family: "Material Symbols Outlined"; size: 14; color: skin.ink }
+                zone box next { cursor: pointer; from: 0, 0; size: 24 * scale, 20 * scale; corner: 10 * scale
+                    label: "Next month"; role: button }
+                on press next { emit cal_next }
+            }
+            text cal.title { at: 190 * scale, 18 * scale; anchor: center; family: "Iosevka"; size: 16; weight: 700; color: skin.accent }
+
+            // ----***--------------------- the pill tracker's streak
+            // Calendar.qml:186-197: a flame and "N days", centred under the month, and only while
+            // there is a run to show. The glyph sits to the left of the words, whose width is
+            // measured rather than guessed — the count changes what "N days" takes.
+            measure streakw
+            text cal.streak { at: 190 * scale, 35 * scale; anchor: center; family: "Iosevka"; size: 12; weight: 700; color: skin.ink.dim
+                              measure: streakw; show: cal_streak > 0 }
+            text "local_fire_department" { at: 190 * scale - streakw.width / 2 - 9 * scale, 35 * scale; anchor: center
+                                           family: "Material Symbols Outlined"; size: 14; color: amber; show: cal_streak > 0 }
+
+            box { from: 12 * scale, 48 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
+
+            // ----***------------------------- weekday row
+            repeat c in 0..7 {
+                text pick(c, "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa") { at: 40 * scale + c * 48 * scale, 60 * scale; anchor: center; family: "Iosevka"; size: 12; color: skin.ink.dim }
+            }
+
+            // ----***--------------------------- month grid
+            // wrap: 7 is the grid (7 per line); the 42 cells are always there,
+            // so nothing moves when a month is short.
+            row { at: 16 * scale, 68 * scale; wrap: 7; gap: 2 * scale
+                for c in cells {
+                    group {
+                        size: 48 * scale, 40 * scale
+                        // The tracker's wash fades in and out instead of appearing with the state
+                        // (the reference's PillIndicator animates its pill's width and opacity, `NumberStdOut`
+                        // in: 1 -> maxPillWidth and 0 -> 1, and `NumberStdIn` back out). One spring per
+                        // cell, not one per state: the state picks the colour and the alpha, the spring
+                        // only says whether the plate is there yet, so a month change fades the washes
+                        // away instead of blinking them.
+                        prop wash = 0 ~ui.quick
+                        follow wash = if(c.pill == 0, 0, 1)
+                        // The pill tracker's plate, under the selection so a chosen day still reads
+                        // as chosen: taken is the accent at 35 %, missed the error tone at 28 %,
+                        // today still pending a fainter 12 %, and a past day with no record at all
+                        // a 6 % grey (Calendar.qml:269-272). A public holiday gets its own 10 % wash
+                        // when the tracker says nothing about that day (Calendar.qml:274).
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale
+                              color: pick(c.pill, skin.ink, skin.accent, warn, warn, skin.ink)
+                              opacity: pick(c.pill, 6%, 35%, 28%, 12%, 6%) * wash
+                              show: c.pill > 0 or wash > 0.01 }
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: warn; opacity: 10%; show: c.mark == 2 and c.pill == 0 }
+                        // A day off, as the production calendar has it (isdayoff.ru, through the
+                        // worker): the wash the reference paints in gold at 22 % (Calendar.qml:269-272),
+                        // here the ink's own 10 %, so a weekend and a holiday on a weekday read as
+                        // "nothing here today" without competing with the tracker's colours.
+                        // A working Saturday from the calendar is not a day off — that is the one
+                        // thing weekday arithmetic cannot tell, and it is why the source exists.
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.ink; opacity: 10%; show: c.dayoff == 1 and c.pill == 0 and c.mark == 0 }
+                        box { from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; color: skin.accent; opacity: ink.active; show: c.this and c.day == sel_day }
+                        box { from: 0.75 * scale, 0.75 * scale; size: 46.5 * scale, 38.5 * scale; corner: 3 * scale; stroke: 1.5 * scale; color: skin.accent; show: c.today }
+                        // The corner marks: a public holiday (or a day with only events) at the top
+                        // right, the pill's own at the top left, both 4 dp dots on a 2 dp margin
+                        // (Calendar.qml:309).
+                        ellipse { at: 44 * scale, 4 * scale; radius: 2 * scale; color: skin.accent; show: c.mark == 1 }
+                        ellipse { at: 44 * scale, 4 * scale; radius: 2 * scale; color: warn; show: c.mark == 2 }
+                        ellipse { at: 4 * scale, 4 * scale; radius: 2 * scale; color: skin.accent; show: c.pill == 1 }
+                        ellipse { at: 4 * scale, 4 * scale; radius: 2 * scale; color: warn; show: c.pill == 2 }
+                        // The number wears the pill's colour, as it did in the reference
+                        // (Calendar.qml:285-288); today keeps its accent and its weight.
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; weight: 700; color: skin.accent; show: c.this and c.today and (c.pill == 0 or c.pill == 1) }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: skin.accent; show: c.this and not c.today and c.pill == 1 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: warn; show: c.this and c.pill == 2 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: skin.ink.dim; show: c.this and c.pill == 3 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: skin.ink; show: c.this and not c.today and c.pill == 0 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink.off; show: c.this and c.pill == 4 }
+                        text number(c.day, 0) { at: 24 * scale, 21 * scale; anchor: center; family: "Iosevka"; size: 13; color: ink.off; show: not c.this }
+                        zone box day { cursor: pointer; from: 0, 0; size: 48 * scale, 40 * scale; corner: 3 * scale; active: c.this
+                            label: c.label; role: button; selected: c.this and c.day == sel_day }
+                        on press day { sel_day = c.day }
+                    }
+                }
+            }
+
+            box { from: 12 * scale, 322 * scale; size: 356 * scale, 1 * scale; color: skin.ink; opacity: ink.subtle }
+            text cal.err { at: 190 * scale, 330 * scale; anchor: center; family: "Iosevka"; size: 12; color: warn }
+
+            // ----***------------------- the selected day's entries
+            text "Selected day" { at: 14 * scale, 346 * scale; anchor: left center; family: "Iosevka"; size: 12; color: skin.ink.dim; show: sel_day > 0 }
+            column daylist {
+                at: 14 * scale, 356 * scale
+                view: 352 * scale, 116 * scale
+                gap: 2 * scale
+                for h in holidays {
+                    group {
+                        show: h.day == sel_day and sel_day > 0
+                        size: 352 * scale, 16 * scale
+                        ellipse { at: 5 * scale, 8 * scale; radius: 3 * scale; color: warn }
+                        text h.name { at: 16 * scale, 8 * scale; anchor: left center; width: 330 * scale; lines: 1; family: "Iosevka"; size: 12; color: skin.ink.dim }
+                    }
+                }
+                for e in events {
+                    group {
+                        show: e.day == sel_day and sel_day > 0
+                        size: 352 * scale, 16 * scale
+                        ellipse { at: 5 * scale, 8 * scale; radius: 3 * scale; color: skin.accent }
+                        text e.title { at: 16 * scale, 8 * scale; anchor: left center; width: 244 * scale; lines: 1; family: "Iosevka"; size: 12; color: skin.ink.dim }
+                        text e.time { at: 266 * scale, 8 * scale; anchor: left center; width: 44 * scale; family: "Iosevka"; size: 12; color: skin.accent }
+                        text e.cal { at: 314 * scale, 8 * scale; anchor: left center; width: 34 * scale; lines: 1; family: "Iosevka"; size: 12; color: ink.off }
+                    }
+                }
+            }
+
+            text cal.today { at: 190 * scale, 486 * scale; anchor: center; family: "Iosevka"; size: 12; color: ink.off }
+        }
+    }
+
+    // The arrows walk the grid: a day left and right, a week up and down, with the month following
+    // when the walk leaves it (the reference's popup is a mouse calendar and has no keys at all;
+    // this is the port's own, and it is the last drawer that answers them). Escape is the scene's
+    // (`close_on_escape`), and nothing else is needed: a day is selected by being walked onto.
+    on key Left while drawer == calendar { emit cal_step(-1) }
+    on key Right while drawer == calendar { emit cal_step(1) }
+    on key Up while drawer == calendar { emit cal_step(-7) }
+    on key Down while drawer == calendar { emit cal_step(7) }
+
+    // `surface.h` is the surface's own literal in `panels.plm` (380 x 500, see the surface in
+    // panels.plm): passed here so the two numbers cannot drift apart the way they did — 575 was
+    // the old height at the `ui` 1.15 scale, and the card drew 75 px past the bottom of a
+    // 500-high surface, clipping its last row.
+    CalendarDrawer(surface.h: 500) { show: drawer == calendar }
+}

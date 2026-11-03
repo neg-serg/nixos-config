@@ -1,0 +1,108 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../theme.plm"
+import "../../lib/capsule.plm"
+
+// lock.plm — the session lock / login scene of the pleamar shell (PH3-L).
+//
+// The same card the legacy Quickshell login layer draws (greeter/login.qml +
+// greeter/lock/LockContent.qml) as an `ext-session-lock` surface: while it is
+// open the compositor paints nothing else and routes every key and pointer
+// event here, on every monitor. `preview.plm` next to this file draws the same
+// card in an ordinary window for looking at it without locking anything.
+//
+// Unit / marker contract, cutover, rollback and the rescue path: README.md.
+// In one line: this scene only ever runs while the wrapper marker says "login"
+// (`$PLEAMAR_LOGIN_STATE_DIR/login-phase` exists), it is born locked (`fact locked`
+// true), and a successful password emits `unlocked`; the integration writes
+// `state=session`, removes `login-phase` and *then* releases the lock with
+// `pleamar --say lock "fact locked false"`. Killing this scene never unlocks
+// the session — ext-session-lock keeps it locked on purpose.
+//
+// Authentication: the logic next to this file (lock.luau) asks
+// `sys.ask("auth.check", password)` — the `auth` service, real PAM behind it
+// (the same check the legacy PamContext ran) — and nothing else. The password
+// is read from `text.password`, never written to a file, never logged, and the
+// field is cleared before the answer is reported.
+//
+// Colours follow the wallpaper. The scene imports theme.plm like every other scene (`skin.*` is
+// the palette the theme pipeline regenerates when the wallpaper changes), so the card's plate, its
+// well, its ink and its accent are the wallpaper's own roles; pages/card.plm and pages/backdrop.plm
+// name them, and list the greeter tokens that stay frozen because theme.plm has no role for them
+// (`lock.danger`, the `lock.edge` rim, the `lock.widget` glass). The repository copy of theme.plm
+// is the committed fallback, so the login screen — loaded from /etc/pleamar-lock before
+// ~/.config/pleamar exists — still has a palette to read.
+//
+// Settings — `~/.local/share/pleamar/lock/settings.json`, read and watched by
+// lock.luau, defaults in code, unknown keys kept:
+//   clock24h   bool    true    greeter `nixie24h`; false shows the 12-hour form
+//   uiScale    number  1.2     0.8 – 2.0, greeter `uiScale`: the card's scale
+//   wallpaper  text    ""      absolute path of the wallpaper to show; empty
+//                              falls back to the dot grid (never a literal path)
+//   avatar     text    ""      absolute path of the portrait; empty draws the
+//                              monogram
+//   user       text    ""      override for the identity line; empty reads $USER
+//   retryDelayMs number 800    300 – 5000: the pause before another submit counts
+// `uiScale` and `clock24h` are the frozen lock keys of INTERFACES.md §6.3; the
+// rest are this scene's own and are documented here (an integration publishing
+// a wallpaper should prefer `pleamar --say lock text wallpaper <path>`).
+
+scene lock {
+
+    // The lock is the whole screen: auth check, clock, and its own settings.
+    // `cat` reads /etc/hostname for the identity line (fixed, read-only path).
+    // `pleamar-kbdlayout` is the keyboard worker: the layout in force and Caps Lock (its LED) in
+    // one sample, and `switch` for the chip's press.
+    permissions { run: "cat", "pleamar-kbdlayout"; services: "auth", "clock", "env", "files" }
+
+    // `locked` is INTERFACES.md §2.1: the lock surface wants the session (the
+    // compositor's own `lock.held` says whether it has it). It is born true:
+    // this scene is only started in the login phase, and a lock screen that
+    // failed open would be worse than one that has to be released. Verified at
+    // runtime with `pleamar --say lock "get locked"`.
+    fact locked = true
+    // The handover contract (README.md): the logic raises it once `auth.check`
+    // answered true, and the rule below the surface releases the session there and then. The
+    // upstream contract has an integration write the login marker and only then say
+    // `fact locked false`; this port has no such integration and no marker to write — the login
+    // phase belongs to the greeter, which is absent, and the port locks inside the session — so a
+    // lock that waited for one would never open on a right password. `unlocked` is raised in the
+    // `auth.check` success branch alone; an outside caller can still say
+    // `pleamar --say lock "emit unlocked"`, and `fact locked false` keeps working by hand.
+    fact unlocked = false
+
+    include "pages/state.plm"
+
+    // One lock face per monitor, which is what `kind: lock` is: the protocol gives it a copy on
+    // every monitor by itself and covers the others with plain black. `screens: each` here asked
+    // for four numbered copies instead, and the engine never matched them to the plugged outputs:
+    // `screens: each` made it wait for [0,1,2,3] and `lock.held` stayed 0 on a live session and in
+    // a headless sway alike. `screens:` belongs on this surface only to keep it off monitors
+    // (`screens: "DP-2"`). `agent: hidden` and `captures: hidden` are the policy for the whole
+    // surface (§8.1): an agent never reads it, a screenshot never catches it.
+    surface screen_lock {
+        kind: lock
+        // `full, full` is the whole monitor, and that is also the box the face is
+        // centred on: the scene's origin is the monitor's top-left corner, which is
+        // what every `at:` in pages/ assumes. The engine used to take the zero that
+        // `full` compiles to literally, centre that on the monitor and paint the whole
+        // screen half a panel off (`pleamar-lock-full.patch`); a face now also prints
+        // its box and the corner it paints from, and the login layer reports them.
+        size: full, full
+        open: locked
+        keyboard: exclusive while locked
+        agent: hidden
+        captures: hidden
+
+        include "pages/backdrop.plm"
+        include "pages/clock.plm"
+        include "pages/card.plm"
+    }
+
+    // A right password releases the session: `open: locked` is the protocol's own switch, so
+    // clearing it makes the compositor drop `lock.held` and hand the desktop back. Before this
+    // rule the scene raised `unlocked` and waited for an integration that does not exist, which
+    // left a live session locked with no way in but `pleamar --say lock "fact locked false"`.
+    on unlocked { locked = false }
+}

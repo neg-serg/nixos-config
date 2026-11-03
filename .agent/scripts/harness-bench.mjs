@@ -190,13 +190,14 @@ function applyGold(workspace, suitePath, testCase) {
 
 async function runTrial(suite, suitePath, testCase, trial, opts) {
   const workspace = mkdtempSync(join(tmpdir(), 'dsh-bench-'))
+  const env = { ...process.env, BENCH_SUITE_DIR: resolve(dirname(suitePath)) }
   const timeoutMs = Number(testCase.timeoutMs ?? suite.timeoutMs ?? 300000)
   try {
     if (testCase.workspace) {
       cpSync(resolve(dirname(suitePath), testCase.workspace), workspace, { recursive: true })
     }
     if (testCase.setup) {
-      const setup = await exec('bash', ['-lc', testCase.setup], { cwd: workspace, timeoutMs })
+      const setup = await exec('bash', ['-lc', testCase.setup], { cwd: workspace, timeoutMs, env })
       if (setup.code !== 0) throw new Error('setup failed for ' + testCase.id + ': ' + tail(setup.stderr || setup.stdout, 5))
     }
     const before = frozenHashes(workspace, testCase)
@@ -212,7 +213,7 @@ async function runTrial(suite, suitePath, testCase, trial, opts) {
     const run = await exec(bin, args, { cwd: workspace, timeoutMs })
     let check = { code: null, output: '', skipped: false }
     if (testCase.check) {
-      const checked = await exec('bash', ['-lc', testCase.check], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000) })
+      const checked = await exec('bash', ['-lc', testCase.check], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000), env })
       check = { code: checked.code, output: tail(checked.stdout + '\n' + checked.stderr, 8), skipped: false, timedOut: checked.timedOut }
     } else {
       check = { code: null, output: '', skipped: true }
@@ -368,16 +369,17 @@ async function modeVerify(flags, positional) {
   console.log('\ncase                       red    green  verdict')
   for (const testCase of cases) {
     const workspace = mkdtempSync(join(tmpdir(), 'dsh-verify-'))
+    const env = { ...process.env, BENCH_SUITE_DIR: resolve(dirname(suitePath)) }
     const timeoutMs = Number(testCase.timeoutMs ?? suite.timeoutMs ?? 300000)
     try {
       cpSync(resolve(dirname(suitePath), testCase.workspace), workspace, { recursive: true })
       if (testCase.setup) {
-        const setup = await exec('bash', ['-lc', testCase.setup], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000) })
+        const setup = await exec('bash', ['-lc', testCase.setup], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000), env })
         if (setup.code !== 0) throw new Error('setup failed for ' + testCase.id + ': ' + tail(setup.stderr || setup.stdout, 5))
       }
-      const red = await exec('bash', ['-lc', testCase.check], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000) })
+      const red = await exec('bash', ['-lc', testCase.check], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000), env })
       applyGold(workspace, suitePath, testCase)
-      const green = await exec('bash', ['-lc', testCase.check], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000) })
+      const green = await exec('bash', ['-lc', testCase.check], { cwd: workspace, timeoutMs: Math.min(timeoutMs, 120000), env })
       const ok = red.code !== 0 && green.code === 0
       if (!ok) failures += 1
       console.log(

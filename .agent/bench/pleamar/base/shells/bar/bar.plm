@@ -1,0 +1,1926 @@
+language 0.4
+
+// bar.plm — the pleamar bar, first slice (PH2-A / superplan).
+//
+// Legacy: files/quickshell/Bar/Bar.qml asks for three layer-shell surfaces per
+// monitor, all anchored to the BOTTOM edge (anchors.bottom: true), one of them
+// the reserve panel whose exclusiveZone is the bar height; the port asks for
+// ONE surface, anchored by the `edge` setting (bottom on trantor), reserving
+// its strip while `shown` holds.
+//
+// Reading order, left to right, is the legacy one:
+//   left row:  clock · workspaces · pill · keyboard · network · sysmon · weather
+//   right row: media · MPD · voice (while the command runs) · tray · mic · volume · Genelec
+// This slice draws clock/date, the workspace tabs, the network capsule (left)
+// and the volume capsule (right). The other modules come later; each has a
+// marked extension point below.
+//
+// Interfaces this file follows: files/pleamar/docs/INTERFACES.md — §2 (surface,
+// facts `shown`/`startup`), §3.2 (the scale), §4 (the Capsule API),
+// §6 (the settings keys, merged by bar.luau), §8 (labels and roles).
+//
+// Two compiler facts shape the file:
+//   · A surface `size:`/`reserve:`/`margin:` takes a PLAIN NUMBER (the reference:
+//     "the slots that take a plain number —a surface's `margin:` and `reserve:`
+//     — say so too when something follows it"; checked on 0.4.31: `size: full,
+//     h` answers `expected a number here`). So the surface height is spelled out
+//     (25), and every widget draws in DESIGN PIXELS inside a
+//     `group { scale: scale }`, the group scaling once; a lib Capsule is asked
+//     for `scale: 1` inside it so the group is the only multiplier.
+//   · A text's `size:` and `weight:` are EXPRESSIONS and follow facts (reference
+//     §text: "`size: 21 * u` is 21 times `u` … `size: 12 + 4 * lane` follows
+//     `lane` as it changes"), which is what makes `fontScale` reachable at all:
+//     every text size in this file and in the plugins it draws is multiplied by
+//     the `text_scale` fact.
+//   · A component parameter default is read at the use site (INTERFACES §4), so
+//     a `scale:` default is per monitor. Call sites pass no scale; the default
+//     is `ui * user_scale * mon_scale[min(screen.index, 3)]` — the QS `Theme.scale()`
+//     for a bar, which is where the design numbers in this file come from, with
+//     the user's own multipliers on top.
+//
+// Parity notes (measured, not guessed). These came from the live QS strip, shot
+// pixel by pixel against this bar by `just parity-bar` — a gate that needed the
+// reference shell running beside the port. Quickshell was deleted on 2026-11-02
+// and the gate with it: the numbers below are the record, `docs/PARITY.md` says
+// what was closed, and nothing reproduces them automatically any more.
+//
+// What the reference is, measured off its own strip (DP-2, 3840x2160 @2x; the
+// bar occupies the last 50 physical rows, the gate's crop starts 20 above it):
+//   · one surface 25 logical px tall, reserving 25 — QS draws panelHeight 22 at
+//     Theme.scale() 1.15, and 22 * 1.15 rounds to 25;
+//   · a full-width face of coal at ~84 % (rgb(12,14,16) over bright wallpaper,
+//     rgb(6,7,8) over dark), no rim, no shadow;
+//   · each widget on its own WidgetCapsule face: 53 % coal, radius 6, ~14
+//     design px tall;
+//   · left cluster order and ink spans: clock · workspace · keyboard · network ·
+//     sysmon · weather.
+//
+// Two pleamar rules this file learned the hard way:
+//   · a `box` at a NEGATIVE `from:` draws nothing at all, silently (--check is
+//     happy) — a face starts at 0 and the content is inset instead;
+//   · a component's `size:` is read in the CALLER's scope, so a `let` written
+//     inside the component is not visible there (inline the expression); inside
+//     a `group` it is.
+//
+// The tray works, verified on 2026-10-26 (the comment here used to say it painted
+// nothing: that was true of the engine's tray list on 0.4.11 and is not true of
+// 0.4.29). A pointer in the bottom-right corner expands it (`on enter tray_reveal`
+// -> `tray_hot`), `--say bar describe` then shows `trayhit#Right44#r0..r3
+// «Vicinae» «neru» «TelegramDesktop» «Steam» at 1721,10 22×25`, the four icons
+// paint on their plates, and the right button opens the item's own dbusmenu tree —
+// `sys.ask("tray.menu", key)` answers it, the engine reading it off the bus, so no
+// `lib/plugins/traymenu` is needed: `get tm.count` was 8 for vicinae («Toggle
+// Vicinae», «Vicinae v0.29.0 [unknown]», a separator, «About Vicinae»,
+// «Settings…», …) and for Steam its five recent games and its Shop and Library entries.
+// What is still missing is depth: the menu is a flat list of at most 8 rows (the
+// surface is 300×176), so an item whose menu nests loses its children.
+//
+// Open after that: the left capsules' widths and the gaps between them (the
+// port's keyboard capsule is visibly narrower than the reference's).
+//
+// Settings, merged by bar.luau from the scene's own settings.json:
+//   edge          top | bottom, default bottom   — applied: the `bar_edge` fact
+//                 drives `anchor:` (the fact cannot be called `edge`: that name
+//                 collides with the Capsule component's own `edge` parameter)
+//   scale         0.5..2.0, default 1.0          — applied: `user_scale`
+//   widgets       array of text, max 24          — applied as visibility for
+//                 every widget this file draws (bar.luau's `WIDGETS`: clock,
+//                 workspaces, keyboard, pill, network, sysmon, weather, media,
+//                 mpd, volume, mic, genelec, systray, build)
+//   mediaPriority array of text, max 8, default  — which player the media capsule, its
+//                 mpdPlaying · anyPlaying ·        tooltip and the transport act on: the
+//                 mpdRecent · recent · manual ·    rules of QS MusicPlayers.qml, in order;
+//                 first                             the logic picks with them and pins the
+//                                                   pick with `media.choose`
+//   mediaPreset   default | manualFirst |        — the rule order used when mediaPriority
+//                 playingFirst | mpdBias            holds nothing the port knows
+//   mediaPinned   array of text, default []      — ids that win a tie (QS pinnedPlayers)
+//   mediaIgnored  array of text, default []      — ids the bar never shows (ignoredPlayers)
+//   mediaRecent   array of text, max 5           — the MRU stack, written by the logic
+//   height        16..64, default 22             — not applied: a surface's
+//                 `size:` takes a plain number, so the strip cannot follow a
+//                 runtime value (checked on 0.4.31: `size: full, h` answers
+//                 `expected a number here`, and the reference says so too —
+//                 "the slots that take a plain number —a surface's `margin:`
+//                 and `reserve:`— say so when something follows it")
+//   fontScale     0.5..2.0, default 1.0          — applied: the `text_scale`
+//                 fact multiplies every text size and nothing else (the QS
+//                 `fontSizeMultiplier`). Plates keep their design widths, so a
+//                 multiplier well above 1.0 elides inside them — the reference's
+//                 capsules measure their content, these are constants.
+//   monitorScale  array of numbers, ≤ 4,         — applied: one fact per monitor
+//                 each 0.5..2.5, default []         (`mon_scale.0..3`), read by
+//                 every component's `scale:` default through `screen.index`
+//                 Both multipliers scale the drawing against a surface whose height is a
+//                 literal, so above 1.0 the plates are drawn taller than the strip — the
+//                 same limit `scale` has had since the slice was written, and the one
+//                 `height` would lift if a surface could take a runtime value.
+//   animations, startupClean                     — not applied: `animations`
+//                 would have to choose a spring at runtime, and a `~spring` is
+//                 a name written when the scene loads; `startupClean` is the
+//                 login gate, which lives in the deployment, not in a scene
+
+import "../../lib/palette.plm"
+import "../../theme.plm"
+import "../../art.plm" as artacc
+import "../../lib/capsule.plm"
+import "../../lib/plugins/pill/pill.plm" as pill
+import "../../lib/plugins/mpd/mpd.plm" as mpd
+import "../../lib/plugins/genelec/genelec.plm" as gen
+import "../../lib/plugins/spectrum/spectrum.plm" as spec
+import "../../lib/plugins/cover/cover.plm" as art
+import "../../lib/plugins/build/build.plm" as build
+import "../../lib/plugins/voice/voice.plm" as voice
+
+scene bar {
+
+    // ------------------------------------------------- facts the interface fixes
+    // `bar_edge` is the surface anchor; `shown` gates surface and reserve (tests
+    // and other tools read both). `startup` is the login gate's fact: this slice
+    // leaves it false, the gate itself is a later slice.
+    fact bar_edge: top | bottom = bottom
+    fact shown = true
+    fact startup = false
+    // The gap between two capsules, QS panel.widgetSpacing 4 at the 1.35
+    // interWidgetRatio: round(4 * 1.15) = 5 logical, times 1.35 rounds to 7 —
+    // 6.1 design px, six here.
+    // 7, not 6: the reference's plates sit at 5, 72, 158, 223 with gaps of 9 then 7,
+    // and a uniform 6 left every capsule after the clock 3 logical px short.
+    let row.gap = 7
+    // How many of the six monitor pairs are there at all: the reference's own
+    // rule (SystemMonitorCapsule._vis*), the GPU only on a machine that has
+    // one, swap only above systemMonitorSwapShowThreshold. A `let` INSIDE the
+    // component would not do: a component's `size:` is read in the caller's
+    // scope, and there the name `shown` is the scene's own fact.
+    // The tray's slot, in design px: 22 = max(CapsuleMetrics.inner 16,
+    // panelHeight 22) * 1.15 rounded, which is QS's trayIconSlot. A scene-level
+    // let because a component's `size:` is read in the caller's scope.
+    // The seam between the halves is 8 logical px wide and slanted
+    // (`BarLayout.wedgeWidthNorm` caps the wedge at the same 8): tried as a gap
+    // of 7 design px between two leaning paths, and the centre of the strip got
+    // WORSE (mean over 1680..1980 went 3.88 -> 6.73), so the gap as drawn does
+    // not match the reference's window: on this wallpaper neither shows, and
+    // what looks like a diagonal in the reference is the WEATHER capsule's own
+    // right triangle (`capsule.rightTriangleVisible`, width factor 0.75,
+    // highlight `max(2, 3 * s)` in a darkened accent), not a seam.
+    // Every capsule face, from WidgetCapsule.qml + this theme:
+    //   height `uniformCapsuleHeight` = max(CapsuleMetrics.height = inner 16 +
+    //   2 * pad 5, round(panelHeight 22 * 0.55 * 1.15)) = 26 logical px = 23
+    //   design, centred in the 25 design strip (y = 1);
+    //   fill `WidgetBg.color(settings, key, fallback)` -> widgetBackgrounds.default
+    //   `#000000b0` = 69 %, which is what this bar runs (colors.surface's 53 %
+    //   would only apply with no widgetBackgrounds entry);
+    //   corner `shape.cornerRadiusSmall` = 6.
+    let seam = 7
+    let tray.slot = 22
+    // The corner that reveals the tray: QS's `panelHotzoneWidth` 16 and `panelHotzoneHeight` 9
+    // (Settings/Theme.qml:687-688), a hover target of its own over the panel's bottom-right corner
+    // (`Bar.qml:1246-1260`) and nothing else. Two things forced a different shape here. The
+    // reference's 16 x 9 box lands on the Genelec tile — measured with `pleamar --say bar describe`
+    // on 2026-11-02 the tile ends at x 1916 and the box began at 1904, so 108 px² were the tile's —
+    // and a widget above the corner takes the hover, which left a strip four pixels wide to hit. So
+    // the corner is that strip: the bar's whole height, the last four design px of the surface,
+    // flush against the edge where a hand reaching for the corner actually lands, and over nothing.
+    let tray.reveal.w = 4 * ui * user_scale
+    let tray.reveal.h = 25 * ui * user_scale
+    let sysmon.pairs = 1 + 1 + if(has.gpu, 1, 0) + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
+    // The user's settings, merged by bar.luau: `scale` multiplies ui and the
+    // per-monitor fit; `widget.*` decide which widgets of this slice are there.
+    fact user_scale = 1.0
+    // `fontScale` (INTERFACES §6.2): every text size is multiplied by this and by nothing else,
+    // which is what the reference's `fontSizeMultiplier` does. The plates keep their design
+    // widths — they are constants here, not measurements of their content — so a multiplier far
+    // from 1.0 crowds the type inside them instead of widening them.
+    fact text_scale = 1.0
+    // `monitorScale`, one per monitor, read by every component's `scale:` default through
+    // `screen.index` (a component's parameter default is read at its use site, so each monitor
+    // copy reads its own). 1.0 is the fourth: a monitor the array does not reach keeps the design.
+    fact mon_scale.0 = 1.0
+    fact mon_scale.1 = 1.0
+    fact mon_scale.2 = 1.0
+    fact mon_scale.3 = 1.0
+    fact widget.clock = true
+    fact widget.workspaces = true
+    fact widget.pill = true
+    fact widget.network = true
+    fact widget.keyboard = true
+    fact widget.sysmon = true
+    fact widget.weather = true
+    fact widget.systray = true
+    fact widget.mpd = true
+    fact widget.volume = true
+    fact widget.mic = true
+    fact widget.genelec = true
+    fact widget.build = true
+    // The pill's state, mirrored out of the plugin by the rules below. A plugin's facts and texts are
+    // live for this scene and stale for its logic (measured 2026-10-31), and the card is built by the
+    // logic — so the scene copies them into names the logic owns. `takenAt` is a text and a rule can
+    // only watch a fact, which is why it is copied when `taken` flips: the plugin sets both together.
+    fact pill.taken = false
+    fact pill.reminder = false
+    fact pill.streak = 0
+    text pill.at = ""
+    fact widget.media = true
+    // Set by bar.luau from the `media` service: a player is there (the QS
+    // `MusicManager.hasPlayer`). The language compares numbers only, so the
+    // scene cannot ask `media.player != ""` itself.
+    fact media.present = false
+    // The cursor is over the media capsule: the transport strip rides in.
+    // The track's position in seconds, kept by the logic (see the time row below).
+    fact media.pos = 0
+    fact media.hot = false
+    // The audio capsules (QS AudioLevelCapsule): `shown` is the reference's own
+    // visibility rule — not at 100 %, not muted — carried by bar.luau because
+    // it needs the timers and the two fields; `hot` is the cursor over them,
+    // which brings the pill up.
+    fact vol.shown = false
+    fact vol.hot = false
+    fact mic.shown = false
+    fact mic.hot = false
+    // The cursor is anywhere on the strip: QS's `panelHovering`, which is what
+    // brings the Genelec tile (idle-hidden) back. (Not `bar.hot`: the palette
+    // already has a `bar.hot` — panel.hotzone.width.)
+    fact strip.hot = false
+    // The tooltip: QS gives every capsule one on its own layer surface
+    // (PanelTooltip + TooltipText.compose), and this bar's own surface is 25 px
+    // tall, so it cannot hold one.
+    // Named without a dot on purpose: `pleamar --say bar fact tip_open true`
+    // is refused ("I don't understand 'tip_open'"), so a fact an outside tool
+    // may want to poke carries no dot. `tip_open` is the card being up.
+    fact tip_open = false
+    // And `tip_hover` is the surface the card is drawn on, up from the moment the pointer lands
+    // on a capsule to the moment it leaves: the card takes its size from a text measured in
+    // that surface (see `bartip`), and a measurement is a frame behind, so the room has to be
+    // there for the `tooltip.delay` the card waits before it shows.
+    fact tip_hover = false
+
+    // Where the card hangs: the reference's tool window follows the capsule it belongs to
+    // (`PanelTooltip` reads that capsule's `x`), and the capsule is wherever the pointer is.
+    // A scene cannot ask a zone where it sits, so it follows the mouse — and the mouse is
+    // `cursor.x`, not `pointer.x`: the tooltip surface takes no input (no zone on it), so the
+    // pointer is never "over" it and `pointer.x` there reads 0, which pinned every card to the
+    // strip's left edge. `cursor` is the mouse wherever it is, in the scene's own coordinates.
+    // The card is clamped inside the strip when drawn: a tooltip that hangs off the monitor is
+    // a tooltip nobody reads.
+    prop tip.x = 960 ~calm
+    follow tip.x = cursor.x
+    // The tray's menu, open on the item `text tray_key` names: the logic sets it when the right
+    // button lands on an icon, and a press anywhere closes it (this scene's own catcher, below).
+    fact tray_open = false
+    // The tray's own state, and the only part of it the scene can decide for itself: whether the
+    // icons are there at all. QS keeps it as `expanded` (`Bar/Modules/SystemTray.qml:76`, drawn by
+    // `inlineBox.visible: expanded`) and moves it from four timers that live in
+    // `Services/TrayController.qml:17-50`; timers cannot run in a rule, so they are in bar.luau and
+    // this fact is what it tells the scene.
+    fact tray.expanded = false
+    // The collapsed trigger (`collapsedTrayIcon`, SystemTray.qml:222): QS declares it and then keeps
+    // it off the strip (`visible: false`, :219 — the tray is revealed by the hot corner instead), and
+    // the port keeps that default. With the fact on, the bar shows the same button, which turns its
+    // arrow a quarter while the tray is out (`iconRotation`, :223). No dot in the name, as with
+    // `tip_open`: `pleamar --say bar "fact tray_trigger true"` is how a tool turns it on. The hot
+    // corner does not depend on it — that is the path a hand takes, and gating it on a flag nothing
+    // sets left the tray unreachable with the mouse.
+    fact tray_trigger = false
+    // The open menu's rows, flattened by the logic from `sys.ask("tray.menu", key)` — the
+    // engine reads `com.canonical.dbusmenu` and answers a list of records, which a scene
+    // The rows of the tray's menu: one record per line, `sep` marking a separator, `depth` how
+    // far into a submenu the line sits (`lib/menu.plm` indents by it), and `sub` a line that has
+    // children under it — the reference draws a chevron beside those and opens a flyout, and a
+    // menu here is one plate, so the flyout is its rows indented under their parent. A scene
+    // cannot hold a table, so the logic publishes this and keeps the ids to itself.
+    model tray_menu max 64 { label: text; sep: bool; depth: number; sub: bool }
+
+    // The tray item the menu belongs to: a text, because an event carries numbers only and
+    // the logic cannot read the model. `tray_id` and `tray_title` are what `window-activate`
+    // needs for `--raise-for`: the bus key is not the item id the helper maps.
+    text tray_key = ""
+    text tray_id = ""
+    text tray_title = ""
+    fact tm.count = 0
+    // Which row the cursor is on (1-based, 0 = none): the wash under a menu line.
+    fact tm.hot = 0
+    // The plate's height follows the rows that are really there: a two-item menu must not
+    // stand in a six-row box. The surface is the tallest it may be; the plate inside it is
+    // not.
+    // The plate's width, from the longest line: a 300 px plate behind a two-word menu is a
+    // slab of empty glass. The logic keeps that one label (`tm_widest`) and the bar measures it
+    // in `tmw`, in the words the rows are drawn with — the same trick as the tooltip's card.
+    // The twin lives here, in the bar's own surface, and not in `barmenu`: a measure is filled
+    // by the frame before, and a surface that is up only while the menu is open has no frame
+    // before — the bar, always up, has, so the menu opens on a width it already knows.
+    measure tmw
+    text tm_widest = ""
+    text "{tm_widest}" { measure: tmw; show: false; at: 0, 0; anchor: left top; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; lines: 1 }
+    fact tm.panel_h = 0
+    // How deep the deepest drawn row sits: the plate has to be wide enough for its indent.
+    fact tm.indent = 0
+    // The engine's id for each line: what `tray.menu_click` takes to click it.
+    // A line that is a separator: no label, one hairline instead.
+    // What QS's WsIndicator shows for the ACTIVE workspace: its icon (a Nerd
+    // Font glyph, the same codepoint the tree's SVGs are cut from) and the name
+    // with Hyprland's `:name` prefix stripped. bar.luau fills them; the scene
+    // cannot compare workspace names itself (text, not numbers).
+    text ws_icon = ""
+    // The Old Italic letter the owner puts in front of the name, kept apart: only
+    // Code2001 has U+10330 among the faces here, and the label's Iosevka does not.
+    text ws_lead = ""
+    text ws_label = ""
+    // The two halves of the network readout, as QS prints them.
+    // The two readouts, without their unit letter — the capsule draws the number
+    // beside a link glyph and the tooltip appends the letter (measured against the
+    // reference: it reads "022.6", the port used to read "015.7K").
+    // The icon is the state, as in the reference (`Volume.qml` / `Microphone.qml`):
+    // `volume_off` when muted, `volume_down` below half, `volume_up` above; `mic_off` when the
+    // input is muted. The logic writes a number because the scene cannot pass a different
+    // image from an `if`: 0 up, 1 down, 2 off for the sink; 0 live, 1 muted for the source.
+    fact vol.kind = 0
+    fact mic.kind = 0
+    // The RME AIO Pro's output route, kept by the logic (`pwroute current`): `pro` says there is one
+    // (the press then toggles AES/Analog, as QS's Volume.qml did on a pro-audio sink), `route` is its
+    // name for the tooltip and for whoever asks the bar over IPC, and `readout` is what the capsule
+    // prints in place of the software percentage — the route's short label, which is QS's `labelText`.
+    fact vol.pro = false
+    text vol.route = ""
+    text vol.readout = ""
+    text net_rx = "--"
+    text net_tx = "--"
+    text net_rx_unit = ""
+    text net_tx_unit = ""
+    // How many leading zeros the readout starts with (QS dims them in textDisabled);
+    // the letter of the unit is drawn in the accent, and "K" is not drawn at all.
+    fact net_rx_zeros = 0
+    fact net_tx_zeros = 0
+    fact net_rx_show_unit = false
+    fact net_tx_show_unit = false
+    // The connection asks two questions, not one: is there a LINK (an interface that is up,
+    // Connectivity.qml:59-76) and is there INTERNET (a ping every 30 s, Connectivity.qml:86-110),
+    // plus whether a TUNNEL is among those interfaces (ConnectivityState.qml:25-46). The kernel's
+    // `network.online` is a single flag and cannot tell a dead cable from a router with no uplink,
+    // which is what the link glyph's three inks say (NetClusterCapsule.qml:41-43). bar.luau
+    // probes them; the scene only draws what it says.
+    fact net.link = false
+    fact net.internet = false
+    fact net.vpn = false
+    // The tunnel's interface name, or "connected" when it did not say one
+    // (ConnectivityState.qml:44 `vpnInterface`); words, so a text.
+    text net.vpn_state = ""
+    // The Hiddify tray item, when the host has one: the reference draws its own icon in the VPN
+    // slot instead of the shield (NetClusterCapsule.qml:96-108), and the item is the thing the
+    // slot's press activates (NetClusterCapsule.qml:110-131). `hiddify_icon` is a name or a path.
+    fact net.hiddify = false
+    text net.hiddify_icon = ""
+    // The active keyboard layout, as `hyprctl devices` prints it (`ru`, `en`).
+    text kb_layout = ""
+    // The submap's glyph and name (`resize` -> ⇔), set by bar.luau from the compositor's socket.
+    // A live text cannot be compared in an expression (`text` is drawn, not asked), so whether there
+    // is a badge at all is the logic's answer as a fact.
+    text kb_badge = ""
+    text kb_mode = ""
+    // The keyboard the indicator follows (`pick_keyboard` in bar.luau): the tooltip prints it, and
+    // the event socket only speaks for this device.
+    text kb_device = ""
+    fact kb_badge_on = false
+    // The weather capsule, filled by bar.luau from open-meteo through its own
+    // on-disk cache: the WMO code as one of seven pictures, the readouts, and the wind
+    // arrow's angle (meteorological degrees + 180, where the wind blows TO).
+    // `have` stays false until an answer — cached or fresh — has landed.
+    fact weather.have = false
+    fact weather.dir = 0
+    // The moon's phase, 0 = new, 0.5 = full: the disc's shadow is placed by it.
+    fact weather.moon = 0
+    // 0 sunny, 1 partly cloudy, 2 cloudy, 3 fog, 4 rain, 5 snow, 6 thunderstorm.
+    fact weather.kind = 1
+    text weather.temp = "--°C"
+    text weather.hum = ""
+    text weather.wind = ""
+    // What the tooltip says. The scene cannot compose text, so it says which
+    // capsule the cursor is on (`emit tip(n)`) and bar.luau writes the line.
+    text tip_body = ""
+    // The tray item's own title, for the tooltip: a record's field, so the scene copies it out.
+    text tip_title = ""
+    // QS Services/SystemMonitor: six 0..1 metrics and whether two of them are
+    // there at all (the machine's GPU exposes a busy file, its swap is on).
+    fact cpu = 0
+    fact ram = 0
+    // The reference's RAM hint prints the pair as well as the share ("7.2 / 16 GiB"), so the probe
+    // publishes them: whole GiB for the total, tenths for what is in use.
+    fact ram_used_gib = 0
+    fact ram_total_gib = 0
+    fact gpu = 0
+    fact temp = 0
+    fact io = 0
+    fact swap = 0
+    fact has.gpu = false
+    fact has.swap = false
+
+    // The transport's three commands, handled by bar.luau through the `media`
+    // service (QS calls MusicManager.toggle/next/previous).
+    event media_prev ->
+    event media_toggle ->
+    event media_next ->
+    // The capsule's cover shows the now-playing card in the `panels` scene (its press
+    // toggles it, `toggle_media_panel`; this is the open-only half for callers that want it
+    // up regardless). That scene exits while no drawer is open (its only surface is the
+    // drawer), so the logic has to start the unit and then say where to go.
+    // The cursor went onto the media capsule or its transport pill, or left them.
+    // The scene cannot hold a grace period of its own, and without one the pill would
+    // vanish in the gap between the two: the logic keeps it up for 300 ms (reference:
+    // MediaTransport's closeGrace).
+    event media_hover ->
+    event open_media_panel ->
+    // QS opens NetFlowPopup from the network capsule; same drawer family here.
+    event open_network_panel ->
+    // The VPN slot inside the network capsule is QS's MouseArea over it
+    // (NetClusterCapsule.qml:110-131): a left press activates the Hiddify tray item, a right
+    // press asks that item for its own menu. Both are events because only the logic may
+    // command a service, and only it knows which tray record the slot stands for.
+    event vpn_press ->
+    event vpn_menu ->
+    // The rest of the reference's pressable capsules, each with the drawer QS opened
+    // from it: the clock its calendar (ClockWidget's `calendar.toggle()`), the weather
+    // capsule its card (WeatherButton's overlay), the system cluster the monitoring
+    // dashboard (SystemMonitorCapsule's `qs-monitor` overlay), the build badge the build
+    // list (BuildStatus's `qs-buildstatus` popup). Drawer names are §2.2 of INTERFACES.md;
+    // the logic says which, because a rule cannot run `pleamar --say`. These `open_*`
+    // events stay for callers that want the drawer shown regardless of what is on screen.
+    event open_calendar_panel ->
+    event open_weather_panel ->
+    event open_system_panel ->
+    event open_build_panel ->
+    // The presses toggle instead: every one of those capsules is QS's `OverlayToggleCapsule`
+    // with `autoToggleOnTap: true`, so the same drawer a second time closes it (the legacy
+    // `toggleCalendar`/`toggleWeather` did the same). These events read the drawer's current
+    // name first and flip it (bar.luau's `toggle_drawer`).
+    event toggle_calendar_panel ->
+    event toggle_weather_panel ->
+    event toggle_media_panel ->
+    event toggle_network_panel ->
+    event toggle_system_panel ->
+    event toggle_build_panel ->
+    // The build badge's pointer, for its tooltip (QS's `PanelTooltip` over `capsule.hovered`).
+    event build_hover ->
+    // The workspace capsule asked for hyprexpo (QS: `Services.Expo.toggle()`), and the
+    // keyboard capsule for the next layout of the boards (`KeyboardLayoutHypr`'s
+    // `switchKeyboardLayout()`; the logic spells out why it is `all` and not `current`).
+    event open_overview ->
+    event next_layout ->
+
+    // --------------------------------------------------------------- surface
+    // 25, not QS's `panelHeight` of 22: the reference draws that 22 at
+    // `Theme.scale(screen)` = panel.scale 1.15 (drawn on a 2x monitor it lands
+    // at 2.3 physical px per design px, a 25-logical-px surface). pleamar's
+    // `screen.width`/`height` are the SURFACE's, not the monitor's, so the
+    // per-monitor fit of palette rule 2 reads 22/1080 here and clamps to
+    // fit.min — the port drew everything at 0.92 instead of 1.15, 20% small.
+    // A bar surface has one scale, so it is `ui` and the surface is 22 * 1.15
+    // rounded: 25. The reserve is the same 25, so windows stop at the bar
+    // exactly where they do under Quickshell (measured: hyprctl reports the QS
+    // panel at 0,1055 1920x25).
+    // The hotzone: QS's `panel.hotzone.width` is 9 design px (10 logical at panel.scale
+    // 1.15), carried by the surface *above* the strip and reserved by nothing — it is the
+    // band a tooltip lives in and the pointer enters from. Without it the scene could not
+    // hold one: the tooltip's own surface needs room above the strip, and the renderer
+    // said so itself — "a drawing is cut: it needs 2 px above more than this 1920 x 25
+    // surface has".
+    let hot = 10
+    // How tall the strip is inside the surface: 25 design px drawn at `ui` 1.15. The
+    // coordinates at this level are logical (a row's `at:` is not multiplied by the scale;
+    // only a component's `size:` is), which is why this one number is written in logical px
+    // and the design numbers below it are not.
+    let band = 25
+    surface {
+        // 25 design px of content are 28.75 logical at `ui` 1.15, plus 10 of hotzone. A
+        // surface's `size:` takes a literal (header, line 23), so the arithmetic is here and
+        // not in the language: 29 + 10.
+        size: full, 35
+        anchor: bar_edge
+        level: top
+        // The reserve is the strip alone, as in the reference: the hotzone is not taken
+        // from the windows, it only catches the pointer.
+        reserve: 25 while shown
+        // The bar does not need the monitor's 240 frames a second: measured on DP-2, one
+        // 1920x35 frame costs 4.2 ms while 240 Hz gives it only 4.16 ms, so the screen rate
+        // missed frames. 120 Hz leaves an 8.3 ms budget — twice the measured cost — while
+        // keeping hover and tooltip motion ahead of a 60 Hz panel.
+        // 120 while the pointer is on the strip, 12 when nobody is near it: the engine paints at
+        // the surface's pace and never idles on its own, so a full-width layer at 120 fps is paid
+        // for on every compositor frame whether anything changed or not. Measured: 1205 frames in
+        // 10 s at rest, `waiting for the screen` in every slow frame — the bar's own paint is
+        // 0.6 ms, so what it costs is the round, not the drawing.
+        // The resting pace was 30 and is 12 since 2026-11-02: on 0.57 the compositor spends
+        // ~2-4 ms of CPU per presented frame at 4K, so the resting rounds are what a core went
+        // into — 64 % of one for the bar alone at 30, 31 % at 12 (measured on the quiet host,
+        // nothing else painting). Hover and tooltip motion keep the 120, so nothing a hand
+        // waits on got slower; only the facts that change by themselves (clock, sysmon,
+        // workspaces) now land within 83 ms instead of 33.
+        rate: 120, 12 while not strip.hot
+        screens: each
+    }
+
+    // Who blurs the bar: nobody, for now. The scene's own glass was measured on
+    // 2026-11-02 at 69 % of a core for the bar alone against 27 % without (every
+    // capture is a screencopy the compositor paints and reads back), so it is off;
+    // the compositor's `decoration:blur` on the `pleamar` namespace was the next
+    // layer of the same cost (it re-blurs all ~18 mapped shell layers on every
+    // presented frame, closed ones included) and is off too — hyprland.lua has the
+    // numbers. The strip keeps its `opacity: 60 %` coal over the desktop, which is
+    // the look: flat, still translucent, no frost. `lens` is off as well: `lens: true`
+    // kept taking screencopies even at `strip.glass = 0%` (measured 2026-11-02: 74 %
+    // of a core with it against 62 % without, and every capture is a 4K readback that
+    // holds the compositor — and therefore input — for 10-20 ms, which is what made
+    // the cursor hitch). A switch back to the scene glass brings both back together.
+    let strip.glass = 0%
+
+    // The moon's own shader: the phase terminator, stippled (moon.wgsl).
+    shader moon_face = file "moon.wgsl"
+
+    // Icons as SVG, not as a glyph font: a text glyph is rasterised at 14 * 1.15 = 16.1 logical px
+    // and the fraction is what blurs it, while a vector is drawn at the device pixel grid. The
+    // Material-shaped files are the font's own outlines, so the pictures do not change — only
+    // their edges: resvg rasterises them at the surface's scale instead of hinting a 14 px font.
+    image icon_keyboard = file "icons/keyboard.svg", 14, 14
+    image icon_network = file "icons/network.svg", 14, 14
+    // The Material `verified_user` outline NetClusterCapsule.qml:91 asks for as `"verified_user"`
+    // (its `mode: "material"` slot), cut to the same 24-unit grid as the icons above.
+    image icon_vpn = file "icons/vpn.svg", 14, 14
+    // The Hiddify item's own picture when the host runs one (NetClusterCapsule.qml:96-108 draws
+    // `hiddifyTrayItem.icon`): a name from the icon theme or a path, whichever the tray reports.
+    image vpn_tray = from net.hiddify_icon, 14, 14
+    image icon_vol_up = file "icons/volume.svg", 14, 14
+    image icon_vol_down = file "icons/volume-down.svg", 14, 14
+    image icon_vol_off = file "icons/volume-off.svg", 14, 14
+    image icon_mic = file "icons/microphone.svg", 14, 14
+    image icon_mic_off = file "icons/microphone-off.svg", 14, 14
+    image icon_prev = file "icons/transport-prev.svg", 14, 14
+    image icon_play = file "icons/transport-play.svg", 14, 14
+    image icon_pause = file "icons/transport-pause.svg", 14, 14
+    image icon_next = file "icons/transport-next.svg", 14, 14
+    image icon_cpu = file "icons/sysmon-cpu.svg", 13, 13
+    image icon_ram = file "icons/sysmon-ram.svg", 13, 13
+    image icon_gpu = file "icons/sysmon-gpu.svg", 13, 13
+    image icon_temp = file "icons/sysmon-temp.svg", 13, 13
+    image icon_io = file "icons/sysmon-io.svg", 13, 13
+    image icon_swap = file "icons/sysmon-swap.svg", 13, 13
+    image icon_weather_sunny = file "icons/weather-sunny.svg", 14, 14
+    image icon_weather_partly = file "icons/weather-partly.svg", 14, 14
+    image icon_weather_cloud = file "icons/weather-cloud.svg", 14, 14
+    image icon_weather_fog = file "icons/weather-fog.svg", 14, 14
+    image icon_weather_rain = file "icons/weather-rain.svg", 14, 14
+    image icon_weather_snow = file "icons/weather-snow.svg", 14, 14
+    image icon_weather_thunder = file "icons/weather-thunder.svg", 14, 14
+    image icon_weather_drop = file "icons/weather-drop.svg", 14, 14
+    image icon_weather_wind = file "icons/weather-wind.svg", 14, 14
+    // The tray's two stand-in pictures, both Material outlines like the ones above: the glyph of
+    // the collapsed trigger (`collapsedTrayIcon`, `expand_more` — Docs/SettingsSchema.json:89) and
+    // the one an item with no icon is drawn with (`trayFallbackIcon`, `broken_image` — :90).
+    image icon_tray_expand = file "icons/tray-expand.svg", 14, 14
+    image icon_tray_broken = file "icons/tray-broken-image.svg", 18, 18
+
+    // A named surface carries what it draws and shares every fact with the bar,
+    // so a tooltip needs no round trip. `level: overlay` so it reads over the
+    // bar; `open:` so it costs nothing while nobody is on a capsule. It is up while the pointer is
+    // on a capsule (`tip_hover`) and the card inside it waits for the reference's delay
+    // (`tip_open`): a card that took its size from a text has to be measured where it is drawn,
+    // so the room is there for a frame before the card is.
+    //
+    // It used to be impossible to show at all: pleamar sizes surfaces in LOGICAL px while their
+    // content is drawn at `ui` 1.15, so a surface 25 px tall held only 21.7 design px and the
+    // card was cut ("a drawing is cut: it needs 2 px above more than this 1920 x 25 surface
+    // has"). The bar's own surface pays for the hotzone now, and this one is 104 tall.
+    // Renamed away from `tip`: the engine build on this host hands a rectangle to `tip` and
+    // `tray_menu`, which swallows the pointer. This name is nobody's rule, and the catcher
+    // (the one surface that needs the rectangle) keeps its own.
+    surface bartip {
+        // Full width, so the card inside can stand where the pointer is: a surface is placed by
+        // literals (its own `margin` cannot read a fact), and the plate inside can. Nothing here
+        // takes a press — no zone, so the surface's input region is empty.
+        // 104 = six 15 px lines plus the card's 10 px of padding and the 4 px it floats above the
+        // bar: the monitoring tooltip is the tallest the reference has — its title, four hints and
+        // the click line (`TooltipText.compose`). The surface is the ceiling (a `size:` takes a
+        // literal) and the card is never taller than the six lines it may hold.
+        size: full, 104
+        anchor: bottom
+        // Measured: with `margin: 0, 0, 29, 0` the card's bottom edge sat 38
+        // logical px above the bar's top (the anchor is the work area, not the
+        // surface), so it hugs it instead.
+        margin: 0, 0, 0, 0
+        level: overlay
+        // Up while the pointer is on a capsule, and while the card is up: an outside tool may
+        // poke `tip_open` without ever hovering, and then there is nothing to measure in.
+        open: tip_hover or tip_open
+        // The card's own size, taken from the words rather than guessed. `tipw` is a hidden twin
+        // of the body, in the same font and with no `width:` of its own, left to take what its
+        // longest line needs — `show:` is an opacity, so the renderer still shapes it and fills
+        // the measure. `tiph` is the text that is drawn: it wraps at the card's own width and so
+        // says how tall the block came out. 9 px of padding each side, 5 above and below; the
+        // floor is the port's own 160 (the reference's `tooltip.min` is 20, and a two-word card
+        // that narrow reads as a dot) and 300 the widest before a line wraps.
+        measure tipw
+        measure tiph
+        let card.w = clamp(tipw.width + 18, 160, 300)
+        let card.h = tiph.height + 10
+        // The card's left edge, centred on the pointer and kept 8 px inside the strip.
+        let card.left = clamp(tip.x - card.w / 2, 8, screen.width - (card.w + 8))
+        let card.top = 104 - card.h - 4
+        body {
+            color: skin.coal
+            opacity: 96%
+            show: tip_open
+            border: 1, mix(skin.coal, skin.ink, 12%)
+            box { from: card.left, card.top; size: card.w, card.h; corner: 5 }
+        }
+        // The measure of the widest line: the body's own words, the same font, no `width:` of its
+        // own, and never seen.
+        text "{tip_body}" { measure: tipw; show: false; at: 0, 0; anchor: left top; size: 12 * text_scale; line_height: 1.25; color: skin.ink; family: "Iosevka"; lines: 6 }
+        // Up to six lines, which is the reference's tallest (`TooltipText.compose`: a title with
+        // its value, then the hints, one per line — the monitoring capsule's title, four hints and
+        // a click line). The logic writes the newlines; the card takes the size they measure.
+        text "{tip_body}" { measure: tiph; show: tip_open; at: card.left + 9, card.top + 5; anchor: left top; size: 12 * text_scale; line_height: 1.25; color: skin.ink; family: "Iosevka"; width: card.w - 18; lines: 6 }
+    }
+
+    // The catcher comes *before* the menu: two surfaces at the same level stack in the order
+    // they are declared, and a catcher declared after the menu sits on top of it — its own
+    // lines would answer no click. It covers the whole monitor (`top_left`, not `center`, which
+    // measured the work area and left the bar's strip bare).
+    // The catcher: a full-monitor, invisible surface under the menu while it is open, so a
+    // click anywhere closes it. Without one the menu could only be dismissed by asking for it
+    // again — which is not how any menu on a desktop works.
+    surface barcatcher {
+        size: full, full
+        anchor: top_left
+        level: overlay
+        open: tray_open
+        // `on_demand`, not `exclusive`: exclusive takes the keyboard from the whole session for as
+        // long as the fact holds, and a fact that gets stuck (a debug `--say`, a scene that dies
+        // with the menu open) leaves a desktop that types into nothing. On demand the compositor
+        // hands the keys over when the surface is focused, and Esc still reaches the scene.
+        // `open:` is what keeps the desktop safe, not the size of the body: the engine empties the
+        // input region of a surface it is not showing, so a catcher nobody opened takes no click
+        // while the open one owns the monitor. A named surface's zones never reach `boxes`, so the
+        // patch hands this surface —and only this one— its own rectangle. The zone is the whole
+        // monitor because a press is matched to a zone: it has to land in `anywhere` for the menu
+        // to be dismissed.
+        body { color: skin.coal; opacity: 4%
+            box { from: 0, 0; size: barcatcher.width, barcatcher.height }
+        }
+        // `role: region`, like the overlay scene's own catcher: it is a dismissal surface the size of
+        // the monitor, not a button, and `describe` was calling the whole screen one.
+        zone box anywhere { from: 0, 0; size: barcatcher.width, barcatcher.height; cursor: pointer; label: "Close"; role: region }
+        // Either button: a menu is dismissed by the first press anywhere else, whatever it is.
+        on press anywhere { emit tray_close }
+        on press right anywhere { emit tray_close }
+    }
+
+    // The tray's menu: a surface of its own above the bar's right end, because a menu
+    // cannot live inside a 39 logical px strip. Rows come from the item's own `menu` tree
+    // (the engine's record carries it), two levels deep.
+    surface barmenu {
+        // 300 = 12 px of plate padding plus 14 rows of 20 — the rows that fit at once, the same
+        // count the reference shows. A longer menu scrolls inside the plate instead of losing its
+        // tail (bar.luau's `TRAY_MENU_ROWS` clamps `tm.panel_h` to those 14 rows). A literal,
+        // because a surface's `size:` takes numbers and nothing else (checked: `size: 300, menu.h`
+        // is `expected a number here`). The plate and everything in it hang from the bottom, so a
+        // short menu leaves the space above it empty — and empty means no zone, which the engine
+        // turns into a click-through region.
+        size: 300, 300
+        anchor: bottom_right
+        // No bottom margin: `margin` is measured from the work area, whose lower edge is already
+        // the bar's top — 39 px more lifted the menu clear off the strip it belongs to.
+        margin: 0, 8, 0, 0
+        level: overlay
+        open: tray_open
+        // The plate's width, measured rather than guessed: `tmw` is the longest label, shaped in
+        // the rows' own face (14 px Iosevka), and 36 is what the plate and its rows take around
+        // it — 8 px of plate on each side, 10 px of row on each side. The plate hangs from the
+        // right, against the monitor's edge, so a short menu grows leftwards instead of walking
+        // away from the icon it came out of: 300 is this surface's own literal width.
+        // The indent of a submenu row costs width too: `tm.indent` is the deepest row's depth.
+        let menu.w = clamp(tmw.width + 36 + tm.indent * 12, 120, 300)
+        let menu.left = 300 - menu.w
+        // The surface's height and the plate's: the plate hangs from the bottom, so everything is
+        // measured down from `menu.h`, and the rows start 6 px inside it.
+        let menu.h = 300
+        let menu.top = menu.h - tm.panel_h
+        body {
+            // The plate the bar's capsules wear, not a lonely grey slab: the same coal at the
+            // same 69 %, a faint rim, and the accent hairline down the left edge that the
+            // reference's menus carry.
+            color: skin.coal
+            opacity: 69%
+            border: 1, mix(skin.coal, skin.ink, 8%)
+            // The surface is the ceiling; the plate hangs from its bottom, against the bar. Drawing
+            // it from the top left a gap between the menu and the strip it came out of.
+            box { from: menu.left, menu.top; size: menu.w, tm.panel_h; corner: 8 }
+            box { from: menu.left, menu.top + 6; size: 2, tm.panel_h - 12; corner: 1; color: skin.accent }
+        }
+        // `view:` is the window the rows are seen through and `content:` the whole list, so a menu
+        // longer than 14 rows is scrolled with the wheel (a layout with `view:` is dragged and
+        // wheeled by the engine) instead of ending at the plate's edge.
+        column { at: menu.left + 8, menu.top + 6; gap: 0
+                 view: menu.w - 16, tm.panel_h - 12; content: 20 * tm.count
+            // One turn per row the item's menu has: a `group` so the wash, the label, the separator
+            // rule and the zone lie on top of each other (a `row` would lay them out sideways, and
+            // the zone used to land 284 px to the right of the line it was meant to catch).
+            for m in tray_menu {
+                group line { size: menu.w - 16, 20
+                    box { from: 0, 0; size: menu.w - 16, 20; corner: 4; color: skin.ink; opacity: 6%; show: tm.hot == m.index + 1 }
+                    text m.label { at: 10 + m.depth * 12, 10; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; width: menu.w - 36 - m.depth * 12; lines: 1; show: not m.sep }
+                    box { from: 10, 10; size: menu.w - 36, 1; color: skin.ink; opacity: 12%; show: m.sep }
+                    // A line with children under it: the reference's own chevron, and no action of
+                    // its own — a dbusmenu parent is a container, not something to click.
+                    text "›" { at: menu.w - 30, 10; anchor: right center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka"; show: m.sub }
+                    // A separator is a hairline, not a button: the row's zone is not drawn for it,
+                    // so it is neither described as a pressable line nor wired to `tray.menu_click`
+                    // with a dbusmenu separator's id.
+                    // `agent: no`: this is another application's own menu, and §8.1 puts every row
+                    // that "closes a window or application" (Quit, Log out, Disconnect) behind that
+                    // flag — a hand may still press them, an agent may not. Nothing about a
+                    // dbusmenu row says whether it is destructive, so the whole menu is closed to
+                    // agents instead of guessed row by row.
+                    zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button; agent: no; show: not m.sep }
+                    on enter hit { tm.hot = m.index + 1 }
+                    on press hit { emit tray_click(m.index + 1) }
+                }
+            }
+        }
+    }
+
+
+    // What is drawn inside the surface, in the same design pixels.
+    let strip = 25
+
+    // ----------------------------------------------------------- permissions
+    // Listening: clock, workspaces, audio, network. Commanding: workspaces.focus,
+    // audio.* (step/mute) and the scene's own settings file. `hypr-expo` is the workspace
+    // capsule's overview (QS ran the same helper from Services/Expo.qml); `hyprctl` also
+    // switches the keyboard layout on the keyboard capsule's press; `pwroute` is the volume
+    // capsule's route toggle (the RME's AES/Analog pair); `ip` reads the interfaces — the
+    // link, and the tunnel's name — and `ping` is the internet's own probe, exactly the two
+    // commands QS's Connectivity.qml runs for the same two questions.
+    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pleamar-sysmon", "pwroute", "systemctl", "window-activate", "nixbuild-status", "mpc", "genlc", "playerctl", "ffprobe"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write", "say:panels", "nixbuild-status" }
+
+    // ------------------------------------------------------------------ data
+    // One record per workspace; `active` says whether that one is the active
+    // workspace of the monitor it lives on — per-monitor, so each copy of the
+    // bar lights its own without a line of logic.
+    //
+    // Limitation, checked against the compiler: the record's `monitor` is text
+    // and the language compares numbers only, so the tabs cannot be filtered to
+    // this monitor's workspaces (`ws.monitor == screen.name` is refused). On one
+    // monitor the list is exactly right; on several, each copy shows them all
+    // and the active tab of every monitor is lit. Closing it needs a text
+    // comparison in the language or a helper worker that distributes per monitor.
+    model spaces max 9 { id: number; name: text; monitor: text; active: bool }
+
+    // `minute` is here for the tick below: a `change` needs a number to watch, and the printed
+    // reading is a text.
+    service clock as now { time: text; date: text; minute: number }
+    // The track the capsule shows (QS: MusicManager.trackTitle/trackArtist).
+    // `playing` and `paused` are the player's own `PlaybackStatus` (the engine's
+    // `pleamar-media-state.patch`): with one bool for both, a paused track and a stopped
+    // one looked alike and the capsule had to guess its visibility from an empty title.
+    // `can_go_next` is MPRIS's `CanGoNext`, from the same patch: the reference's next button is
+    // `enabled: MusicManager.canGoNext` (`MediaTransport.qml:81`), and `mpc` is a player that
+    // answers `false`.
+    // `can_go_prev`, `can_play` and `can_pause` are the rest of what the reference's transport is
+    // gated on (`MediaTransport.qml:71-76`), carried by `pleamar-transport-flags.patch`.
+    service media { playing: bool; paused: bool; title: text; artist: text; album: text; player: text; position: number; length: number; can_go_next: bool; can_go_prev: bool; can_play: bool; can_pause: bool }
+    service workspaces { list: spaces }
+    service audio { volume: number; muted: bool; input: number; input_muted: bool }
+    service network { online: bool; kind: none | wired | wifi; name: text; strength: number }
+    // The tray, straight from the StatusNotifier host: `key` is what a click is
+    // sent back with, `icon` comes as a name or a path, ready to paint.
+    // The tray's records: `menu` is a flag —the item says it has a menu— and the tree itself
+    // comes from `sys.ask("tray.menu", key)` in the logic, which is where the engine already
+    // reads `com.canonical.dbusmenu` (src/platform/tray.rs: query). A scene cannot hold a
+    // table, so the logic flattens it into the `tm.*` texts the menu surface draws.
+    // `no_icon` is the one thing the scene cannot see for itself: the reference's TrayIcon paints a
+    // stand-in glyph when the item brings no picture (`Components/TrayIcon.qml:28` `trayFallbackIcon`,
+    // default `broken_image` in Docs/SettingsSchema.json:90), and an empty field is a text the
+    // language cannot test — bar.luau sets it while it walks the list.
+    model icons max 12 {
+        key: text
+        id: text
+        title: text
+        icon: image 18, 18
+        menu: bool = false
+        no_icon: bool = false
+    }
+    service tray { list: icons }
+
+    // --------------------------------------------------------- facts & events
+    // `side` is the side margin in design px (palette bar.side): a later
+    // settings round may expose it, the frozen schema does not.
+    fact side = 4
+    // The media capsule's track box, in design px: the logic keeps it on the length of
+    // "artist — title" (bar.luau), since the plate is sized by the string it holds. At
+    // 420 the text keeps this width and the engine elides it; shorter tracks set their
+    // own exact width, so no fixed box leaves a hole after a short title.
+    fact media_w = 420
+    // The volume fill is a spring carried by rules, never touched per frame.
+    prop level = 0 ~calm
+    follow level = if(audio.muted, 0, audio.volume)
+    // The microphone's level only tints its glyph (same rule).
+    prop mic.level = 0 ~calm
+    follow mic.level = if(audio.input_muted, 0, audio.input)
+
+    event focus_workspace ->
+    // A click on a tray icon: the record's index, because an event carries a
+    // number and the keys live in the logic, which is what the tray is told with.
+    event tray_press ->
+    // The same index from a right press: the item's own menu is what it asks for.
+    // A press on one of the menu's lines: the number of the line, 1..8.
+    event tray_click ->
+    event tray_close ->
+    event tray_menu ->
+    // The three hover inputs of the reference's machine, each a `1` on entering and a `0` on
+    // leaving: the reveal corner (`hotHover`, SystemTray.qml:25-50), the icons themselves (the
+    // inline hover area, :129-132) and the whole strip (`panelHover`, :14 — the same thing
+    // `strip.hot` carries, sent again because the logic has to hear the moment it ends).
+    event tray_hot ->
+    event tray_icons ->
+    event tray_panel ->
+    // A press on the collapsed trigger, QS's `collapsedButton.onClicked` (SystemTray.qml:224-229).
+    event tray_toggle ->
+    // The cursor came onto a left capsule; the number is its place in the row.
+    event tip ->
+    // The cursor left that capsule (or the whole strip): the logic cancels the pending show
+    // and closes the card, so a 150 ms timer armed on enter cannot fire after the pointer left.
+    event tip_hide ->
+    // The one number on the bar everybody watches: a shove on its spring when the clock's reading
+    // changes (the reference's `NumberFadeBehavior`, as far as a printed text can go).
+    prop tick.dip = 0 ~120ms
+    // 34 px/s against a 120 ms spring is a 3 px rise that is gone before the eye settles, which
+    // is what a number changing should look like; the mechanism was measured with a 3 s spring
+    // and a 600 px/s shove (the reading rose and faded), because 120 ms is not photogenic.
+    on change now.minute { impulse tick.dip 34 }
+
+    event wheel_volume ->
+    // The volume capsule's press: QS's `toggleRoute()` — `pwroute toggle`, the RME's AES/Analog pair.
+    // The mute it used to be is what bar.luau falls back to when there is no RME sink to move.
+    event toggle_route ->
+    event toggle_mic ->
+    // The wheel over the microphone tile: the sink has `audio.step`; the source only
+    // takes an absolute `audio.input`, so the logic adds the notch to the last sample.
+    event mic_step ->
+
+    // -------------------------------------------------------- left: the clock
+    // The service writes time and date itself; no slot here pads numbers, so
+    // neither is composed from hour/minute.
+    component Clock(dip: number = 0, scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        // QS's ClockWidget prints the time at round(fontSizeSmall 14 * timeFontScale
+        // 0.7 * capsuleScale 1.15) = 11 logical px. 14 design px here is 16.1 over
+        // the group's scale and measured 34 px of ink against the reference's 28;
+        // 11.5 is 13.2 and lines up. (An earlier note claimed 14 "agrees" — it was
+        // measuring width against a different face.)
+        // As wide as the time it prints, plus the capsule's 6 px of padding on each side: 50 held a
+        // fixed 38 px of text and left the rest as dead plate.
+        // 47 = 6 + 35 (five glyphs of Iosevka at 14 are 7 px each) + 6. A `measure` on the text
+        // below is not in scope for a `let` above it, so the sum is written out.
+        let w.card = 47
+        size: w.card * scale, strip * scale
+        group zoom {
+            scale: scale
+            body {
+                color: skin.coal
+                opacity: 69%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: w.card, 23; corner: 6 }
+            }
+            // QS rolls its numbers (`NumberFadeBehavior` in `Components/`), which a language that
+            // prints a text cannot do: what a text can do is leave and come back. The minute change
+            // shoves a spring (`tick.dip`, the scene's — a component cannot hear the clock service in
+            // a rule), and the reading rises 3 px and fades for ~120 ms: the fade half of the
+            // reference's roll, in this language's own terms.
+            group tick_zone { move: 0, -clamp(dip, 0, 3); opacity: 1 - clamp(dip, 0, 3) * 0.22
+                // `time.tone` is the palette's role for this glyph and it is the frozen
+                // `ink`; the clock has to follow the theme like every other label, so it takes
+                // the wallpaper's ink — the same token `time.text.color` names in the reference.
+                text "{now.time}" { at: 6, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 35; lines: 1 }
+            }
+            // Pressable, as in the reference: ClockWidget's TapHandler is `calendar.toggle()`,
+            // so the capsule is a button and not a label.
+            zone box clock { from: 0, 0; size: w.card, strip; corner: corner; cursor: pointer; label: "Clock {now.time}"; role: button }
+            on enter clock { emit tip(0) }
+            on leave clock { emit tip_hide }
+            on press clock { emit toggle_calendar_panel }
+        }
+    }
+
+    // ------------------------------------------------- left: the workspace
+    // QS's WsIndicator is ONE capsule for the workspace that is focused — the
+    // icon in the accent, the name beside it in the text colour — and not a row
+    // of tabs per workspace. The port drew a tab per record (four of them here),
+    // each a filled capsule with a triangle, which is what made the left end
+    // read far brighter than the reference.
+    // The capsule shows the workspace that is already in force, so "focus it" would be the
+    // press doing nothing: what WsIndicator.qml:19 does on a click is `Expo.toggle()`, and
+    // that is the event the copy is handed.
+    component WsCapsule(overview: event,
+                       scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        // The glyph, the Old Italic letter and the label are laid out side by side;
+        // a width is only known once the text is shaped, so both are measured.
+        measure glyph
+        measure lead
+        // 69, not 38: that is the reference's plate (measured off its strip — the plates sit
+        // at 8, 72, 158, 223, 287 and are 54, 79, 58, 57, 95 LOGICAL px wide, which is 47, 69,
+        // 50, 50, 83 in this scene's design px), and at 38 the label was cut to "λ:te": a
+        // capsule sized for the glyph and nothing else.
+        size: 69 * scale, strip * scale
+        group zoom {
+            scale: scale
+            body {
+                color: skin.coal
+                opacity: 69%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: 69, 23; corner: 6 }
+            }
+            // The glyphs this reads are Nerd Font code points (`WS_GLYPH` in the logic), so they need
+            // the face they were chosen in — Material has no such names and drew squares.
+            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.accent.hover; family: "FiraCode Nerd Font Mono" }
+            text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka" }
+            // `width:` and one line: a long name used to run over the plate and onto the keyboard
+            // capsule beside it, which is what the fixed 69 design px are there to prevent.
+            text "{ws_label}" { at: 6 + glyph.width + 5 + lead.width, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka"; width: 69 - (6 + glyph.width + 5 + lead.width); lines: 1 }
+            // The capsule shows the workspace that is already in force, so it is always the
+            // selected tab: `selected:` is what a reader of `--say bar describe` needs to know it.
+            zone box ws { from: 0, 0; size: 69, strip; corner: corner; cursor: pointer; label: "Workspace {ws_label}"; role: tab; selected: true }
+            on enter ws { emit tip(1) }
+            on leave ws { emit tip_hide }
+            on press ws { emit overview }
+        }
+    }
+
+    // ---------------------------------------------------- left: system monitor
+    // QS SystemMonitorCapsule: six `icon + vertical bar` pairs in one capsule,
+    // in the fixed order CPU · RAM · GPU · temperature · I/O · swap. Each pair
+    // is `panel.icons.iconSizeSmall`-ish glyph and a `systemMonitorBarWidth`
+    // bar as tall as `panelHeight * 0.55` (palette bar.height / 2), filled from
+    // the bottom and coloured by the metric's own thresholds
+    // (SystemMonitorUi.thresholdColor). A metric under the idle threshold
+    // (systemMonitorHideIdle, 3 %) keeps its place but dims to textDisabled,
+    // and I/O disappears outright — that is the reference's own rule, and it is
+    // why the cluster is often narrower than six pairs.
+    component SysmonPair(glyph: image, value: number, shown: bool, idle: bool,
+                         warn: number, crit: number,
+                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        // One pair, laid out once: the glyph 13 wide, three of air, the bar 3 — 21 in all. The
+        // cluster's step is written with the same numbers, so the four pairs read as one row.
+        let bh = 12
+        let glyph.w = 13
+        let gap = 3
+        let bar.w = 3
+        size: (glyph.w + gap + bar.w + 2) * scale, strip * scale
+        group zoom {
+            scale: scale
+            image glyph { at: 0, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: if(idle, ink.off, if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim))); show: shown }
+            // MonitorBar draws the fill and nothing else: no track behind it, so
+            // a 5 % metric is a short dash, not a dot on a rail.
+            box { from: glyph.w + gap, strip / 2 + bh / 2 - value * bh; size: bar.w, value * bh; corner: 1.5; color: if(value >= crit, warn, if(value >= warn, amber, skin.ink.dim)); show: shown }
+        }
+    }
+
+    component SysmonCluster(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        // The box is as wide as the pairs that show: QS's capsule is
+        // `horizontalPadding * 2 + metricsRow.implicitWidth`, and a metric the
+        // idle rule took away takes its width with it.
+        let inner = sysmon.pairs * 21 + (sysmon.pairs - 1) * 4
+        size: (sysmon.pairs * 21 + (sysmon.pairs - 1) * 4 + 12) * scale, strip * scale
+        group zoom {
+            scale: scale
+            // A `box` placed at a NEGATIVE `from:` draws nothing at all (five
+            // faces written that way never appeared); the face starts at 0 and
+            // the content is inset by the capsule's padding instead.
+            body {
+                color: skin.coal
+                opacity: 69%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: inner + 12, 23; corner: 6 }
+            }
+            row metrics {
+                gap: 4
+                align: center
+                // 0, not `strip / 2 - 12`: the pairs are `strip` tall and already centred by the
+                // row's own `align`, and each one carries its own `scale` — inside this `group zoom`
+                // that made every pair 1.15² and the row taller than the strip.
+                at: 6, 0
+                SysmonPair(icon_cpu, cpu, true, cpu < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_ram, ram, true, ram < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_gpu, gpu, has.gpu, gpu < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_temp, temp, true, temp < 0.03, 0.43, 0.71, scale: 1)
+                // I/O is the one metric the reference takes away outright when
+                // it is idle (`_visIo = showIoMonitor && !_idleIo`), where the
+                // others stay and only dim: it is worth 44 physical px of the
+                // row, and a cluster that keeps it pushes everything after it
+                // (the weather) to the right.
+                SysmonPair(icon_io, io, io >= 0.03, io < 0.03, 0.5, 0.8, scale: 1)
+                SysmonPair(icon_swap, swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8, scale: 1)
+            }
+            // The cluster had no zone at all, so a hand could not hover it and the line
+            // `tip_line` already writes for it (case 4) never reached the screen. The plate is
+            // the pressable area, as on every other capsule, and the press toggles the
+            // monitoring dashboard (QS: `autoToggleOnTap` on SystemMonitorCapsule).
+            zone box sysmon { from: 0, 0; size: inner + 12, strip; corner: corner; cursor: pointer; label: "System monitor"; role: button }
+            on enter sysmon { emit tip(4) }
+            on leave sysmon { emit tip_hide }
+            on press sysmon { emit toggle_system_panel }
+        }
+    }
+
+    // ------------------------------------------------------- left: the weather
+    // QS WeatherButton: one row of pieces — the code's glyph in the accent, the
+    // temperature, water_drop and the humidity, the navigation arrow turned by
+    // the wind with its speed beside it, and the moon — inside one
+    // WidgetCapsule whose width is `horizontalPadding * 2 + content`.
+    //
+    // The offsets are the reference's ink, measured again against its bar with
+    // both strips in one screenshot (the earlier set came from a single strip and
+    // had drifted: by the wind the port was 6 design px right of the reference and
+    // by the moon 19). Relative to the glyph, QS places temp +19.6, water_drop
+    // +32.2, humidity +38.3, arrow +51.3, wind +57.8, moon +70.4 design px, with
+    // its Row's `spacing: 4 * capsuleScale` between them.
+    component WeatherCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        // The pictures are fixed at 14 design px; only the live text still measures itself.
+        measure w.temp
+        measure w.hum
+        measure w.wind
+        // 168, not 158: with the row's type at 14 the group grew, and the capsule has to be
+        // wider than the moon (it ends at ~153) so the slant cuts the capsule's end.
+        size: 156 * scale, strip * scale
+        group zoom {
+            scale: scale
+            // The reference cuts this capsule's right end on a SLANT and runs a
+            // hairline along the cut (`rightTriangleVisible` zeroes the right
+            // radii and lays a triangle of `_triangleWidth` = round(1.15 * 1 * 1
+            // * 16) = 18 logical px at `rightTriangleWidthFactor` 0.75 past the
+            // right edge, so the face gains the point while the cut takes it
+            // back). Measured off the strip: the cut leans "/" over ~13 design
+            // px, the hairline is `triangleHighlightWidth` = 3 logical px.
+            //
+            // The face is an ordinary capsule — the `body` and the hairline border of its
+            // neighbours, skin.coal at 69 % — and a `clip` of the trapezoid does the
+            // cutting, so the fill and the border stop ON the slant instead of the slant
+            // being a slash laid over a rounded rectangle. The cut starts at 180 and not
+            // at the capsule's 168: `corner` is 6, so the top-right arc lives in 180..168,
+            // and a clip that reached the end would leave that arc standing outside the
+            // cut. A `clip` reaches to the end of the group it is in, so the face has a
+            // group of its own: the ink, the moon and the zone below must not be clipped
+            // along with the plate.
+            group face {
+                clip path {
+                    at: 0, 1
+                    move 0, 0
+                    line 156, 0
+                    line 148, 23
+                    line 0, 23
+                    close
+                }
+                body {
+                    color: skin.coal
+                    opacity: 69%
+                    border: 1, mix(skin.coal, skin.ink, 8%)
+                    // The box reaches the clip's far edge (a narrower one left a square shoulder
+                    // and a wider one a wedge of empty plate). Both numbers are set from the ink:
+                    // the moon ends 145.5 px into the plate, so the cut runs 156 → 148 and leaves
+                    // it 10 px of air at the top of the slant and 2 at the bottom.
+                    box { from: 0, 1; size: 156, 23; corner: corner }
+                }
+            }
+            // The cut carries no hairline. QS draws one there (`triangleHighlightColor`, the
+            // accent put through black twice) and the port followed it, but on this bar it read
+            // as a coloured slash laid across the capsule's end rather than as the cut itself —
+            // the clip's own edge, with the plate's border on it, is where the shape ends.
+            // Laid out after their own widths, not at fixed offsets: the offsets were read
+            // off the reference once and then the port's glyphs turned out wider, so the
+            // temperature ran into the water drop ("11°C◯67%") and the capsule measured 114
+            // logical px of ink where the reference's is 155. `measure` is what fixes that —
+            // the same mechanism the workspace capsule uses for its glyph.
+            let gap.g = 4
+            let icon.w = 14
+            let drop.w = 14
+            let arrow.w = 14
+            // 4, not 6: the row's last glyph ended 2.5 px from the cut while the first sat 6.5
+            // from the plate's left edge, and even air is what a plate is judged by.
+            let x.temp = 4 + icon.w + gap.g
+            let x.drop = x.temp + w.temp.width + gap.g
+            let x.hum = x.drop + drop.w + gap.g
+            let x.arrow = x.hum + w.hum.width + gap.g
+            let x.wind = x.arrow + arrow.w + gap.g
+            let x.moon = x.wind + w.wind.width + gap.g
+            // One picture of seven: the logic turns the WMO code into this number, because a
+            // component cannot choose a different image from an `if`.
+            group weather_face { move: 4, strip / 2 + 1 - icon.w / 2
+                image icon_weather_sunny { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 0 }
+                image icon_weather_partly { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 1 }
+                image icon_weather_cloud { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 2 }
+                image icon_weather_fog { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 3 }
+                image icon_weather_rain { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 4 }
+                image icon_weather_snow { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 5 }
+                image icon_weather_thunder { at: 0, 0; size: icon.w, icon.w; tint: skin.accent; show: weather.kind == 6 }
+            }
+            text "{weather.temp}" { measure: w.temp; at: x.temp, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka" }
+            image icon_weather_drop { at: x.drop, strip / 2 + 1 - drop.w / 2; size: drop.w, drop.w; tint: skin.ink.dim }
+            text "{weather.hum}" { measure: w.hum; at: x.hum, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka" }
+            // `text` has no `rotate`: the arrow turns inside a group whose pivot
+            // is the glyph's own centre.
+            group arrow { pivot: x.arrow + arrow.w / 2, strip / 2 + 1; rotate: weather.dir
+                image icon_weather_wind { at: x.arrow, strip / 2 + 1 - arrow.w / 2; size: arrow.w, arrow.w; tint: skin.ink.dim }
+            }
+            text "{weather.wind}" { measure: w.wind; at: x.wind, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink.dim; family: "Iosevka" }
+            // MoonPhaseIcon: a disc, and the shadow that bites into it moved by
+            // the phase — at new moon it sits on the disc, at full moon clear of
+            // it. The shadow is the face's own colour, as in the reference.
+            // The face, and the dark side of it. QS's MoonPhaseIcon works the illuminated
+            // fraction out of the same reference (the new moon of 2000-01-06 18:14 UTC) and
+            // dithers the terminator; the amount of darkness here is the phase's own:
+            // sin(phase * 180) is the illuminated fraction, so the shadow is that many
+            // twelfths short of the face. The old (phase - 0.5) * 24 offset put a fully dark
+            // disc over a full moon.
+            // The moon: dithered by its own shader (moon.wgsl), which takes the phase
+            // QS's MoonPhaseIcon takes and stipples the terminator the same way.
+            shader moon_face { at: x.moon, 6; size: 13.5, 13.5; values: weather.moon; colors: skin.ink.dim, skin.coal }
+            zone box weather { from: 0, 0; size: 156, strip; corner: corner; cursor: pointer; label: "Weather {weather.temp}"; role: button }
+            on enter weather { emit tip(5) }
+            on leave weather { emit tip_hide }
+            on press weather { emit toggle_weather_panel }
+        }
+    }
+
+    // ------------------------------------------------------ left: the keyboard
+    component KeyboardCluster(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        // 8 + 20 (the icon) + 6 + 14 (two glyphs of the layout) + 6. The 50 it held clipped the
+        // layout to `r` once the icon grew.
+        size: 54 * scale, strip * scale
+        group zoom {
+            scale: scale
+            body {
+                color: skin.coal
+                opacity: 69%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: 54, 23; corner: 6 }
+            }
+            // 10 and 32, not 6 and 28: the reference insets this capsule's ink 12 logical px
+            // from its own edge (its glyph measures at 170 inside a plate at 158), while the
+            // other capsules inset 6 — measured, not guessed.
+            // While a submap is in force its glyph takes the keyboard picture's place (`✦` special,
+            // `⇔` resize, `▩` tiling, `🖼` wallpaper — `KeyboardLayoutHypr.qml:295-303`), in the
+            // accent. The reference instead grows its capsule and prints `glyph ⌨ layout`; here a
+            // row reads its child's `size:` once, when it lays the row out (bar.plm's own note on
+            // component sizes), so a capsule that grew and shrank again would not reflow — the mode
+            // is drawn in the 20 px the icon already owns, and the layout keeps its place.
+            image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: skin.ink.dim; show: not kb_badge_on }
+            text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18 * text_scale; color: skin.accent; show: kb_badge_on }
+            text "{kb_layout}" { at: 34, strip / 2; anchor: left center; size: 14 * text_scale; color: skin.ink; family: "Iosevka"; width: 14; lines: 1 }
+            // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
+            // layout of the device in force (`switchKeyboardLayout()`), and the label follows
+            // from the event socket a moment later. The wheel does the same here: a capsule that
+            // reads as a knob should answer the hand that turns it, not only the one that clicks.
+            zone box kb { from: 0, 0; size: 54, strip; corner: corner; cursor: pointer; label: "Keyboard {kb_layout}"; role: button }
+            on enter kb { emit tip(2) }
+            on leave kb { emit tip_hide }
+            on press kb { emit next_layout }
+            on scroll kb { emit next_layout }
+        }
+    }
+
+    // -------------------------------------------------------- left: network
+    // QS NetFlowCapsule -> NetClusterCapsule: the link glyph in the accent and,
+    // beside it, the two-row throughput readout — receive over transmit, small
+    // type, three digits and a decimal (ConnUi.formatRxText/formatTxText).
+    // The port drew `wired net1 1 %` in a capsule instead: a different widget
+    // with a different width, and the biggest single difference in the left
+    // cluster after the tabs.
+    component NetCluster(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        measure w.rx
+        measure w.tx
+        let icon = 14
+        let text.x = 22
+        // The VPN slot rides BEFORE the link glyph and exists only while a tunnel is up
+        // (NetClusterCapsule.qml:80-83, `visible: root.vpnConnected`), so the capsule grows by
+        // it. In QS that slot is a ConnectivityIconSlot of CapsuleMetrics.inner = 11 logical px
+        // plus panel.netCluster.spacing 1, about 10 design px; this port draws a 14 design px
+        // glyph and keeps the 2 px step it already uses between a glyph and what follows it
+        // (icon at 6, text at 22), so the slot advances by those 16. `pick` is an index
+        // selector — no tunnel, no advance, and the capsule keeps its 50. The width is spelled
+        // out again in `size:` on purpose: a component's `size:` is read in the caller's scope,
+        // where this `let` does not exist (the header's own rule), while everything inside the
+        // `group` below reads it as usual.
+        let vpn.w = pick(net.vpn, 0, 16)
+        size: (50 + pick(net.vpn, 0, 16)) * scale, strip * scale
+        group zoom {
+            scale: scale
+            body {
+                color: skin.coal
+                opacity: 69%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: 50 + vpn.w, 23; corner: 6 }
+            }
+            // NetClusterCapsule.qml:41-43 asks the link glyph three inks: status.error with no
+            // link at all, status.warning with a link but no internet, the accent with both. The
+            // accent is `accentColor`, QS's Color.desaturate(accentPrimary, vpn.desaturateAmount
+            // 0.45) — the accent mixed 45 % toward its own luminance grey. The scene language has
+            // no luminance, and the group's own `saturation` is exactly that mix on the GPU: 0.55
+            // of the accent's saturation is what 45 % of grey leaves. The two warning tones are
+            // the theme's own (ConnUi.errorColor / warningColor, colors.status.*), never
+            // desaturated, so they are drawn outside that group.
+            image icon_network { at: 6 + vpn.w, strip / 2 + 1 - icon / 2; size: icon, icon; tint: warn; show: not net.link }
+            image icon_network { at: 6 + vpn.w, strip / 2 + 1 - icon / 2; size: icon, icon; tint: amber; show: net.link and not net.internet }
+            group lan_tone { saturation: 0.55
+                image icon_network { at: 6 + vpn.w, strip / 2 + 1 - icon / 2; size: icon, icon; tint: skin.accent; show: net.internet }
+                // The tunnel's shield, in `vpnIconColor` — the same desaturated accent, and the
+                // slot is only there while the tunnel is (NetClusterCapsule.qml:83, 87-95).
+                image icon_vpn { at: 6, strip / 2 + 1 - icon / 2; size: icon, icon; tint: skin.accent; show: net.vpn and not net.hiddify }
+            }
+            // QS paints the Hiddify item's own icon on top of the slot and makes the shield
+            // underneath transparent (NetClusterCapsule.qml:95, 100-108): the app's real picture,
+            // four logical px smaller than the slot.
+            image vpn_tray { at: 8, strip / 2 + 1 - 5; size: 10, 10; show: net.vpn and net.hiddify }
+            // The weight is 700 because that is the face QS gets: it asks for Font.Black and
+            // fontconfig answers with Iosevka Bold (`fc-match Iosevka:weight=black`), while
+            // 600 lands on Medium — a visibly lighter readout. 9.6 design px is the
+            // reference's 11 logical px (round(round(14 * 1.0) * 0.7)) divided by this
+            // scene's 1.15 scale; at 10 the rows drew 11.5 px, half a pixel too tall.
+            // The reference also sets letterSpacing 0.5, which the scene language has no
+            // property for (its `letter_*` effects move glyphs without opening the line).
+            text "{net_rx}" { measure: w.rx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 - 5; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_rx_zeros, 45%, 100%) }
+            text "{net_rx_unit}" { at: text.x + vpn.w + w.rx.width, strip / 2 - 5; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent; family: "Iosevka"; show: net_rx_show_unit }
+            text "{net_tx}" { measure: w.tx; width: 24; lines: 1; at: text.x + vpn.w, strip / 2 + 3; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.ink; family: "Iosevka"; letter_opacity: if(letter < net_tx_zeros, 45%, 100%) }
+            text "{net_tx_unit}" { at: text.x + vpn.w + w.tx.width, strip / 2 + 3; anchor: left center; size: 9.6 * text_scale; weight: 700; color: skin.accent; family: "Iosevka"; show: net_tx_show_unit }
+            // The capsule's own press zone starts after the VPN slot, so the two never overlap:
+            // the left part is the Hiddify item's (QS puts a MouseArea over the slot), the rest
+            // opens the flow drawer and carries the capsule's tooltip.
+            zone box net { from: vpn.w, 0; size: 50, strip; corner: corner; label: pick(network.online, "Network: offline", "Network {network.name}"); role: button }
+            on enter net { emit tip(3) }
+            on leave net { emit tip_hide }
+            on press net { emit toggle_network_panel }
+            // The tunnel, as §8 of INTERFACES.md names it: a button that says `VPN: <state>`.
+            // Its presses are the reference's: left activates the Hiddify item, right asks for
+            // that item's menu — both land in bar.luau, which is the one holding the record.
+            // Entering it opens the same card the capsule does (the reference's tooltip belongs
+            // to the whole capsule, slot included); it has no `leave` on purpose — the strip's
+            // own `strip_hover` zone emits `tip_hide` when the pointer leaves the band, so a
+            // pointer crossing from the slot to the readout does not close and reopen the card.
+            zone box vpn { from: 0, 0; size: vpn.w, strip; corner: corner; label: "VPN: {net.vpn_state}"; role: button; cursor: pointer; show: net.vpn }
+            on enter vpn { emit tip(3) }
+            on press vpn { emit vpn_press }
+            on press right vpn { emit vpn_menu }
+        }
+    }
+
+    // ---------------------------------------------------- right: the tray
+    // QS SystemTray, in the settings this bar runs (`hideSystemTrayCapsule`,
+    // `collapseSystemTray`, `systemTrayTightSpacing`): at rest the capsule is not
+    // there at all and the icons appear only while the tray is expanded — which
+    // is why the reference strip shows no tray even with applets running.
+    //
+    // What "expanded" is: not the strip being under the cursor, which is what this port used to
+    // draw (`strip.hot`, so the icons were out whenever the pointer was anywhere on the bar). It is
+    // the reference's own machine — `Bar/Modules/SystemTray.qml:25-50` with its four timers in
+    // `Services/TrayController.qml:17-50` — and its inputs are three hover areas and two presses:
+    // the corner over the bar's bottom right (`hotHover`), the icons themselves (the inline box,
+    // :129-132), the whole strip (`panelHover`, which keeps it up but never brings it out), the
+    // collapsed trigger and the tray's own menu. All of them reach bar.luau as events, and
+    // `tray.expanded` is what comes back: this file draws, the logic counts the milliseconds.
+    //
+    // Geometry from SystemTray.qml: a slot of `trayIconSlot` = max(inner 16,
+    // panelHeight 22) * 1.15 = 25 logical px, the icon `trayIconSize` = 20 inside
+    // a 21 px frame, slots 2 logical px apart. At 2.3 physical px per design that
+    // is a 22 design slot and an 18 design icon, with no capsule padding
+    // (`horizontalPadding` is 0 while the spacing is tight).
+    // One icon: its frame, the picture and the hit zone. A component taking the
+    // record, because that is how a list is walked here (notifications does the
+    // same) — a `for` inside a `group` painted nothing at all.
+    component TrayIcon(r: record, scale: number) {
+        size: tray.slot * scale, strip * scale
+        // The plate every other capsule in the strip wears. This was a 6 % wash on the bare
+        // strip, which read as a hole between the network cluster and the microphone; QS draws
+        // the tray inside `InlineTrayCapsule`, whose fill is the same as its neighbours'.
+        body {
+            color: skin.coal
+            opacity: 69%
+            border: 1, mix(skin.coal, skin.ink, 8%)
+            box { from: 1 * scale, 1 * scale; size: (tray.slot - 2) * scale, 23 * scale; corner: 6 * scale }
+        }
+        // The item's own picture, or the stand-in QS puts in its place: an item that brings no icon
+        // (`Components/TrayIcon.qml:126` — no source, or one that failed to load) is drawn as
+        // `trayFallbackIcon`, `broken_image` here (Docs/SettingsSchema.json:90), in `textSecondary`
+        // (:30 `fallbackColor`). A picture that fails to load cannot be seen from the scene, so what
+        // is caught is the item that brings none.
+        image r.icon { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale; show: not r.no_icon }
+        image icon_tray_broken { at: 2 * scale, 3 * scale; size: 18 * scale, 18 * scale; tint: skin.ink.dim; show: r.no_icon }
+        zone box trayhit { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: "{r.title}"; role: button }
+        // The item's title is the record's, so the scene hands it over and the logic prints it. The
+        // icons hold the tray out while the pointer is on them (SystemTray.qml:129-132), so the same
+        // two triggers say that as well.
+        on enter trayhit { tip_title = r.title; emit tip(12); emit tray_icons(1) }
+        on leave trayhit { emit tip_hide; emit tray_icons(0) }
+        on press trayhit { emit tray_press(r.index) }
+        // A zone that goes away takes its pointer with it and `leave` never comes (the rule the
+        // audio capsules and the build badge carry): a tray that collapses under the cursor used to
+        // leave the item's title hanging and `trayOverIcons` set in the logic.
+        on change tray.expanded while not tray.expanded { emit tip_hide; emit tray_icons(0) }
+        // The item's own menu. A scene that uses the right button is never closed by one
+        // (`press right`, language reference §14), which is why this trigger is also what
+        // keeps a stray right click from closing the bar.
+        on press right trayhit { tray_key = r.key; tray_id = r.id; tray_title = r.title; emit tray_menu(r.index) }
+    }
+
+    // The collapsed trigger, QS's `collapsedButton` (`SystemTray.qml:216-230`): a capsule the size
+    // of an icon slot whose glyph is `collapsedTrayIcon` (`expand_more`, `Docs/SettingsSchema.json:89`),
+    // turned a quarter while the tray is out (:223 `iconRotation: expanded ? 90 : 0`). The reference
+    // keeps it off the strip (:219 `visible: false` — the tray is revealed from the corner instead),
+    // and `tray_trigger` is that same choice; what it is worth on the port is the press path and its
+    // 120 ms guard (`openGuard`, :77, :226).
+    component TrayTrigger(scale: number) {
+        size: tray.slot * scale, strip * scale
+        body {
+            color: skin.coal
+            opacity: 69%
+            border: 1, mix(skin.coal, skin.ink, 8%)
+            box { from: 1 * scale, 1 * scale; size: (tray.slot - 2) * scale, 23 * scale; corner: 6 * scale }
+        }
+        // A group, because `image` has no rotation of its own: the arrow turns about its centre.
+        // `RotateBehavior` of the reference: 220 ms (`ui.anim.rotateMs`), no overshoot, and reduced
+        // motion settles it at once — `~220ms` is that time said as a spring.
+        prop turn.deg = 0 ~220ms
+        follow turn.deg = pick(tray.expanded, 0, 90)
+        group turn { pivot: (tray.slot / 2) * scale, (strip / 2) * scale; rotate: turn.deg * 1deg
+            image icon_tray_expand { at: (tray.slot - 14) / 2 * scale, (strip - 14) / 2 * scale; size: 14 * scale, 14 * scale; tint: skin.ink }
+        }
+        zone box tray_trigger { from: 0, 0; size: tray.slot * scale, strip * scale; corner: corner; cursor: pointer; label: pick(tray.expanded, "Show the system tray", "Hide the system tray"); role: button }
+        // Hovering it is the hot corner's own job (:38-42): it brings the tray out.
+        on enter tray_trigger { emit tray_hot(1) }
+        on leave tray_trigger { emit tray_hot(0) }
+        on press tray_trigger { emit tray_toggle }
+    }
+
+    // ---------------------------------------------- right: microphone, volume
+    // QS AudioEndpointCapsule -> AudioLevelCapsule -> PillIndicator, as far as
+    // the bar shows it at rest and under the cursor:
+    //   · at rest the capsule is the Material glyph of the level, tinted with
+    //     the level's own colour (panel.volume.lowColor -> highColor). The port
+    //     used to paint the level as a filled bar inside a capsule — not the
+    //     reference, and what made the right end read much lighter;
+    //   · the plate is a fixed slot and the reading is always in it. QS grew the capsule on hover
+    //     (`pick(strip.hot, 26, 46)`) and hid it entirely when the endpoint was silent, carrying
+    //     that in `vol.shown`/`mic.shown`; the port followed the first and the second. Both were
+    //     dropped on 2026-11-02: entering the bar anywhere re-laid the whole right row out from
+    //     under the hand, which is worse than a wider plate. `vol.shown`/`mic.shown` are still
+    //     published by bar.luau and nothing here reads them — the capsules are always there.
+    component AudioTile(glyph: number, slot: number, readout: text, hot: bool, fill: color,
+                        scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        let icon = pill.icon
+        let glyph.w = 14
+        // One plate, as wide as it needs to be: the icon alone at rest, the icon and its reading
+        // while the pointer is on it. Drawn as two boxes before — a fixed 30 px capsule with a
+        // second pill sliding out to its left — which left black plate sticking out to the right
+        // of the glyph and put the number outside the capsule it belongs to.
+        // The plate *is* the slot, and the slot shrinks with the tile: a plate drawn wider than what
+        // it holds is the empty pill that sat to the right of the microphone.
+        // The plate is the slot, always: it used to be `pick(hot, icon-only, slot)`, so the two
+        // audio capsules grew by 20 px each the moment the pointer touched the bar anywhere — the
+        // whole right row slid out from under the hand. A fixed plate cannot jump; the reading is
+        // always in it, and hovering only raises the tip.
+        let w = slot
+        let gx = pick(hot, w / 2, w - capsule.pad - icon / 2)
+        size: w * scale, strip * scale
+        group zoom {
+            scale: scale
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: w, 23; corner: corner }
+            }
+            // The icon keeps the right end of the plate, the reading grows to its left. One of
+            // five pictures, chosen by the logic's number: 0 up, 1 down, 2 off, 3 live mic,
+            // 4 muted mic. The glyph stays 14 px inside the pill's 22 px icon cell.
+            image icon_vol_up { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 0 }
+            image icon_vol_down { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 1 }
+            image icon_vol_off { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 2 }
+            image icon_mic { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 3 }
+            image icon_mic_off { at: gx - glyph.w / 2, strip / 2 + 1 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 4 }
+            text "{readout}" {
+                measure w.out
+                at: w - 2 * capsule.pad - icon, strip / 2
+                anchor: right center
+                size: 14 * text_scale
+                weight: 500
+                color: skin.ink
+                family: "Iosevka"
+            }
+        }
+    }
+
+    component VolCapsule(step: event, route: event,
+                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        let slot = 46
+        size: slot * scale, strip * scale
+        group zoom {
+            scale: scale
+            // The reading arrives ready-made from the logic — the route's name on a pro sink, the
+            // percentage otherwise (QS prints `labelText`, the route's short label, there).
+            AudioTile(vol.kind, slot, vol.readout, vol.hot, mix(volume.low, volume.high, level), scale: 1)
+            // On a pro sink the capsule is a route switch, not a fader: QS's `wheelEnabled` is
+            // `!isProAudioSink` there (`Volume.qml`), because a pro-audio output's level is the
+            // hardware's (here the Genelec capsule's) and the software fader moves nothing audible.
+            zone box vol { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: pick(vol.pro, "Volume {audio.volume * 100, 0} %", "Output route {vol.route}, click toggles"); role: slider; value: "{audio.volume * 100, 0} %" }
+            on enter vol { vol.hot = true; emit tip(7) }
+            on leave vol { vol.hot = false; emit tip_hide }
+            on scroll vol while not vol.pro { emit step(wheel) }
+            on press vol { emit route }
+            on change vol.shown while not vol.shown { vol.hot = false; emit tip_hide }
+        }
+    }
+
+    component MicCapsule(mute: event, step: event,
+                         scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        let slot = 46
+        size: slot * scale, strip * scale
+        group zoom {
+            scale: scale
+            AudioTile(mic.kind + 3, slot, "{audio.input * 100, 0}%", mic.hot, mix(volume.low, volume.high, mic.level), scale: 1)
+            zone box mic { from: 0, 0; size: slot, strip; corner: corner; cursor: pointer; label: "Microphone {audio.input * 100, 0} %"; role: slider; value: "{audio.input * 100, 0} %" }
+            on enter mic { mic.hot = true; emit tip(8) }
+            on leave mic { mic.hot = false; emit tip_hide }
+            on scroll mic { emit step(wheel) }
+            on press mic { emit mute }
+            // A zone that goes away takes its pointer with it, and `leave` never comes: the tile
+            // stayed "hovered" and its plate kept the open width.
+            on change mic.shown while not mic.shown { mic.hot = false; emit tip_hide }
+        }
+    }
+
+    // ------------------------------------------------------------------ rows
+    component Left(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        row { at: side * scale, hot + band / 2; anchor: left middle; gap: row.gap * scale
+            // Clock and pill sit close together — the reference's `clockPillGroup`, whose own
+            // spacing is `max(1, round(2 * s))`, two logical px against the row's seven. The pill
+            // used to stand after the workspaces, which is not where it is in the shell this bar
+            // is a port of.
+            // Clock and pill are siblings of the row and share its gap: the reference keeps them
+            // 2 px apart in a group of their own, but a hidden pill still cost that group its
+            // gap, which is why the first space measured 9 while every other one was 7.
+            Clock(tick.dip) { show: widget.clock }
+            row pill_slot { show: widget.pill and (Pill.reminder or (Pill.taken and strip.hot)); pill.Mark(plate: skin.coal, tone.on: skin.accent.hover, tone.off: skin.ink.dim, plate.h: 23, plate.top: 1) }
+            WsCapsule(open_overview) { show: widget.workspaces }
+
+            // QS KeyboardLayoutHypr: the keyboard glyph and the active layout,
+            // nothing else (the icon is not in a square, `iconSquare: false`).
+            KeyboardCluster() { show: widget.keyboard }
+            // The pill capsule, in the legacy order — clock · workspaces · pill ·
+            // keyboard · network) rides in only when it is wanted: QS wraps it
+            // in a SlideReveal revealed by `PillTracker.reminderActive ||
+            // (PillTracker.taken && hovering the left row)`, so at rest the bar
+            // has no pill at all and the neighbours close up. A `show:` on a
+            // copy of a strict-library component is read inside the library,
+            // where the scene's `widget.pill` does not exist; the slot row
+            // carries the condition instead.
+            // The overdue half is the half that matters: `reminder` keeps the pill up
+            // while nothing is taken, and a taken one still shows while the strip is hot.
+            NetCluster() { show: widget.network }
+            SysmonCluster() { show: widget.sysmon }
+            // No `weather.have`: the reference keeps the capsule at `--°C` until an answer arrives,
+            // and the left row used to shift the moment the first one did.
+            WeatherCapsule() { show: widget.weather }
+            // The build badge is not here: QS draws `BuildStatus` centred along the bar, and the
+            // strip has a middle of its own (see the row after `Right()`).
+        }
+    }
+
+    // ------------------------------------------------------- media capsule
+    // The QS `Media` capsule, as far as this slice reaches: square album art on
+    // the left (the Cover plugin), "artist — title" beside it, the analyser
+    // (the Spectrum plugin) when there is one, and the transport as three
+    // Material glyphs that fade in while the cursor is over the capsule (QS
+    // slides a whole strip out; the slide needs the panel-level hover tracker
+    // the bar does not have yet). Clicking the cover opens the now-playing
+    // panel in QS — no panel exists here, so a cover click does nothing.
+    component MediaCapsule(prev: event, toggle: event, next: event,
+                           scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        // QS `baseHeight = max(capsule.capsuleHeight, panelHeight * scale)` = 25,
+        // the art is that square, the text is `musicTextPx = 16` and the
+        // analyser is `iconPreferredWidth` wide (~ the art).
+        let h = bar.height
+        let art.w = bar.height
+        // The track's box comes from the logic (`fact media_w`): QS sizes the whole capsule
+        // by `trackContainer.implicitWidth`, the title text's own width (Media.qml:103-106),
+        // so the plate hugs the string it holds. The width has to be a fact and not a
+        // `measure:` capped with `min()`: a text given `width:` reports that width from
+        // `measure:`, so the cap always won and a long title grew the plate while the text
+        // spilled out of it. The logic writes 7 px per character (Iosevka at 14) and stops
+        // at 420; `width: media_w` makes the engine elide long tracks with an ellipsis.
+        let text.w = media_w
+        let spec.w = bar.height
+        let btn.w = 16
+        // The time row is measured, not reserved: the two digit texts are, and the two
+        // parentheses and the slash are one character each (7 design px at size 14).
+        measure tp
+        measure tl
+        let time.w = tp.width + tl.width + 21
+        // art, the space the reference leaves before the track, the track, the space after
+        // it, the time: three row gaps and the 2 px `space` the row carries.
+        // The analyser's room is taken *while it is shown*, not always: at rest the plate
+        // hugs what it holds, and hovering widens it by one analyser's width. That is what
+        // the reference does (`transportRevealed`, an analyser at `opacity: 0` until then,
+        // with the neighbours sliding aside) and what the first version of this capsule got
+        // wrong in both directions — the empty band after the time was the analyser's room
+        // reserved for a picture that was not there.
+        // Written as the row lays itself out: 6 of padding, the art, `gap + 2` (the row's gap and its
+        // `space 2`), the track, `gap`, the time, and — only while the analyser is up — `gap` and the
+        // analyser. The old sum counted three gaps always and 2 px where the row uses `gap + 2`,
+        // which is why the time and the analyser hung 4 px past the plate.
+        let w = 6 + art.w + (bar.gap + 2) + text.w + bar.gap + time.w + pick(media.hot, 0, bar.gap + spec.w) + 6
+        size: w * scale, bar.height * scale
+        group zoom {
+            scale: scale
+            // The plate is QS's WidgetCapsule: `WidgetBg.color(..., "media", …)` fills
+            // with widgetBackgrounds.default `#000000b0` (69 %) and `borderVisible` adds
+            // `textPrimary` at panel.capsule.borderOpacity 0.08, one `uiBorderWidth` wide —
+            // two layers, the dark one under the faint light one. The port drew no plate
+            // at all here, which read as the track floating on the strip.
+            body {
+                color: skin.coal
+                opacity: 69%
+                // Flat, as the reference's capsules are: QS's WidgetCapsule is a
+                // translucent fill plus `OverlayFrame`'s stroke at borderOpacity 0.08.
+                // The glass in that shell is not per widget — it is the compositor's,
+                // over the whole surface (see the strip below).
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1.5; size: w, h; corner: corner }
+            }
+
+            // What the capsule holds, in the order QS lays it out: the art, the track, the
+            // time, and the analyser at the end — whose room `w` reserves, hover or not.
+            row media_row {
+                // 6, not 0: `w` reserves 6 px at each end, and a row at 0 left the art flush
+                // against the plate's left edge while the same 6 at the right went unused.
+                at: 6, 1.5
+                gap: bar.gap
+                align: center
+                art.Art(w: 22, h: 22)
+                // The reference leaves 8 logical px between the art and the track; the row's
+                // own gap is 6, and measured they were flush (the art and the first word came
+                // out as one run of ink).
+                space 2
+                // The fact's width, not a measurement: it is the string's own width until 420,
+                // and past that the engine cuts it with an ellipsis instead of growing the plate.
+                text "{media.artist} — {media.title}" { width: text.w; lines: 1; size: 14 * text_scale; weight: 500; color: skin.ink; family: "Iosevka" }
+                // The time, in the two colours QS uses: the brackets and the slash wear
+                // the cover's accent (MusicManager.accentColor, sampled from the art), the
+                // digits wear textPrimary while playing and textSecondary while paused, at
+                // media.time.alpha.playing 1.0 / .paused 0.8.
+                row time_row {
+                    gap: 0
+                    text "(" { size: 14 * text_scale; weight: 500; color: cover_accent; family: "Iosevka" }
+                    // The position is the scene's own fact, not `media.position`: the engine
+                    // reports that one on a change and never polls it, so it stood still while the
+                    // track played (measured: 149 for three minutes against MPD's 5:37). The logic
+                    // ticks it every second and resyncs on every media event.
+                    text "{media.pos, time}" { measure: tp; size: 14 * text_scale; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
+                    text "/" { size: 14 * text_scale; weight: 500; color: cover_accent; family: "Iosevka" }
+                    text "{media.length, time}" { measure: tl; size: 14 * text_scale; weight: 500; color: pick(media.playing, skin.ink.dim, skin.ink); opacity: pick(media.playing, 80%, 100%); family: "Iosevka" }
+                    text ")" { size: 14 * text_scale; weight: 500; color: cover_accent; family: "Iosevka" }
+                }
+                // The analyser, revealed with the transport: QS keeps it inside the
+                // capsule (`iconPreferredWidth`) and its room is in `w` above.
+                // A library component is read in its own scope, so `show` has to sit on a
+                // box of this scene's: the slot collapses while the analyser is not shown.
+                row spec_slot { show: media.hot; spec.Bars(width: 22, height: 20, gap: 1) }
+            }
+            // The capsule answers for itself: a press toggles the now-playing page, as the
+            // reference's `Media.qml` does through `toggleSidePanel()`, and the pointer on it
+            // asks for the card.
+            zone box z_track { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Media: {media.title}"; role: button }
+            on press z_track { emit toggle_media_panel }
+            // `emit tip(6)` first: this rule used to set `tip_open` itself, which
+            // showed the card on the frame the surface came up — before the words had been
+            // measured in it. It waits the reference's 150 ms like every other capsule now, and
+            // that wait is what the measurement needs. The second emit is what raises the
+            // transport pill: the controls live outside this capsule, so the capsule is the only
+            // zone that can report the cursor arriving (a zone inside a row that `media.hot`
+            // hides never exists, and could never report it).
+            on enter z_track { emit tip(6); emit media_hover(true) }
+            on leave z_track { emit tip_hide; emit media_hover(false) }
+
+            // The transport is not in here: it is its own pill, to the left of this
+            // capsule (`Transport` below), which is where QS's `MediaTransport` rides out
+            // and why its buttons used to land under the plate's edge and its hit zones
+            // past it.
+        }
+    }
+
+    // The playback controls, as QS's `MediaTransport` under a `SlideReveal`: their own
+    // pill to the LEFT of the media capsule, which slides aside while it is up.
+    //
+    // Sizes from the reference (Theme.fontSizeSmall 14, capsuleScale 1.15): a button is
+    // round(round(14 * 1.15 * 1.1) * 1.6) = 29 logical px, the row's spacing is
+    // round(6 * 1.15) = 7, and the pill's padding is 1.5 * 6 = 9. In this scene's design
+    // pixels that is 25, 5 and 8, and 101 wide with the two gaps.
+    component Transport(prev: event, toggle: event, next: event,
+                        scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        let btn = 25
+        let gap = 5
+        let pad = 8
+        let w = 3 * btn + 2 * gap + 2 * pad
+        size: w * scale, strip * scale
+        group zoom {
+            scale: scale
+            // The same plate as the capsule: `backgroundKey: "media"` in the reference,
+            // so the two pills read as one family when the strip is up.
+            body {
+                color: skin.coal
+                opacity: 69%
+                border: 1, mix(skin.coal, skin.ink, 8%)
+                box { from: 0, 1; size: w, 23; corner: corner }
+            }
+            row controls { at: pad, strip / 2; anchor: left middle; gap: gap
+                // Three buttons of one width in a row of equal gaps: the glyphs are what a hand
+                // aims at, and until now nothing under them answered a press — the transport was
+                // three pictures.
+                // Same rule as the next button: dimmed where the player says it cannot go back
+                // (`enabled: MusicManager.canGoPrevious`, MediaTransport.qml:71).
+                row btn_prev { size: btn, strip; align: center
+                    image icon_prev { size: 14, 14
+                        tint: pick(media.can_go_prev, ink.off, pick(media.hot, skin.ink, skin.accent)) }
+                }
+                // The glyph is the *action*, not the state (`MediaTransport.qml:73`:
+                // `isPlaying ? "pause" : "play_arrow"`). Drawn the other way round the two were
+                // swapped, and a playing track offered a play triangle — measured 2026-10-28 off the
+                // bar with a synthetic player answering `Playing`. A player that can neither play
+                // nor pause keeps the button dimmed, as `enabled: canPlay || canPause` does there.
+                row btn_play { size: btn, strip; align: center
+                    image icon_play { size: 14, 14
+                        tint: pick(media.can_play or media.can_pause, ink.off, pick(media.hot, skin.ink, skin.accent))
+                        show: not media.playing }
+                    image icon_pause { size: 14, 14
+                        tint: pick(media.can_play or media.can_pause, ink.off, pick(media.hot, skin.ink, skin.accent))
+                        show: media.playing }
+                }
+                // A player with nothing after this song keeps the button and loses its ink:
+                // the reference paints `Color.withAlpha(textPrimary, 0.35)` there
+                // (`MediaTransport.qml:111-113`), and the port's own `text.disabled` says the
+                // same thing without an alpha at the drawing site. `pick` is by place, so the
+                // first argument is the one a false condition takes.
+                row btn_next { size: btn, strip; align: center
+                    image icon_next { size: 14, 14
+                        tint: pick(media.can_go_next, ink.off, pick(media.hot, skin.ink, skin.accent)) }
+                }
+            }
+            // The capsule itself: hovering it asks for the media card (title and metadata) and keeps
+            // the transport out. The second emit is what makes the pill reachable at all: the eight
+            // pixels of backing between the capsule and the play button are this zone, and
+            // `z_track`'s leave clears `media.hot` the moment the cursor crosses — so the transport
+            // row (shown on `media.hot`) vanished from under the pointer before it arrived, and its
+            // own `leave` never fired. The row does not act on a press here, so the pointer is not
+            // told otherwise.
+            zone box z_media { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Now playing"; role: region }
+            on enter z_media { emit tip(6); emit media_hover(true) }
+            on leave z_media { emit tip_hide; emit media_hover(false) }
+
+            // The zones sit on the buttons they name — the reason the old ones missed is
+            // that they were placed past the capsule's width while the buttons were drawn
+            // inside it.
+            zone box z_prev { from: pad, 0; size: btn, strip; corner: corner
+                cursor: pick(media.can_go_prev, not_allowed, pointer)
+                label: pick(media.can_go_prev, "Previous track (this player has nothing before this song)", "Previous track")
+                role: button }
+            zone box z_play { from: pad + btn + gap, 0; size: btn, strip; corner: corner
+                cursor: pick(media.can_play or media.can_pause, not_allowed, pointer)
+                label: pick(media.can_play or media.can_pause, "Play or pause (this player cannot)", "Play or pause")
+                role: button }
+            zone box z_next { from: pad + 2 * (btn + gap), 0; size: btn, strip; corner: corner
+                cursor: pick(media.can_go_next, not_allowed, pointer)
+                label: pick(media.can_go_next, "Next track (this player cannot skip)", "Next track")
+                role: button }
+            // Entering the strip keeps it up: the cursor has to be able to walk from the
+            // capsule onto the controls without the pill vanishing under it.
+            on enter z_prev { emit media_hover(true) }
+            on enter z_play { emit media_hover(true) }
+            on enter z_next { emit media_hover(true) }
+            on leave z_prev { emit media_hover(false) }
+            on leave z_play { emit media_hover(false) }
+            on leave z_next { emit media_hover(false) }
+            // The reference's MouseAreas are `enabled:` on the same two answers, so a dimmed
+            // button does nothing rather than asking a player that will refuse.
+            on press z_prev while media.can_go_prev { emit prev }
+            on press z_play while media.can_play or media.can_pause { emit toggle }
+            // The reference's MouseArea is `enabled: canGoNext`, so a press on a dimmed button
+            // does nothing at all rather than reaching a player that will refuse it.
+            on press z_next while media.can_go_next { emit next }
+        }
+    }
+
+    component Right(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+
+        // `side`, not `side - 8`: with the Genelec tile always present the row ends 5 logical px
+        // past the screen edge (`describe` measured the tile's zone at 1844 + 81 = 1925 on a
+        // 1920 bar). The same 4 design px the left row keeps is what the right row keeps now.
+        row { at: screen.width - side * scale, hot + band / 2; anchor: right middle; gap: row.gap * scale
+            // The legacy order from the left: media · MPD · systray · mic ·
+            // volume · Genelec. The tray is still an extension point.
+            // The controls ride out to the left of the capsule, so they are declared
+            // before it: the row grows leftwards and the capsule slides aside, which is
+            // what `SlideReveal` does in the reference.
+            row transport_slot { show: widget.media and media.present and media.hot; Transport(media_prev, media_toggle, media_next) }
+            row media_slot { show: widget.media and media.present; MediaCapsule(media_prev, media_toggle, media_next) }
+            // QS shows the flag badges only while media is up AND there is a
+            // flag to show; with none it still drew an empty capsule here.
+            // No `media.present` here: measured on the two bars, the reference draws the
+            // shuffle badge while the port drew nothing, because the port had tied the badges
+            // to "something is playing" and nothing was. A flag the owner set is not a media
+            // state — it is shown while any flag is on.
+            row mpd_slot { show: widget.mpd and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags(type_scale: text_scale) }
+            // The voice command's badge: `mpd-voice once` (Super+Shift+Q) listens to the
+            // microphone and then speaks the answer, so the capsule says a client is on
+            // instead of leaving a voice from the speakers unexplained. `Voice.active` is
+            // the plugin's poll of the process; the row takes no space while nothing runs.
+            row voice_slot { show: Voice.active
+                voice.Tile(type_scale: text_scale) }
+            // The icons, while the tray is out: `tray.expanded` is the whole state machine's answer
+            // (`SystemTray.qml:102-105` draws the box on the same property), so the strip keeps the
+            // reference's resting look — no tray at all — instead of showing it whenever the pointer
+            // is on the bar. No gap between the icons: `systemTrayTightSpacing` on this host.
+            row tray_slot { show: widget.systray and icons.count > 0 and tray.expanded; gap: 0; align: center
+                for r in icons { TrayIcon(r, scale) }
+            }
+            // The collapsed trigger, to the right of the icons as in the reference (:216, declared
+            // after the inline box). `tray_trigger` is false on this host, as the reference's own
+            // `visible: false` keeps it.
+            row tray_button { show: widget.systray and tray_trigger; gap: 0; align: center
+                TrayTrigger(scale)
+            }
+            // `or strip.hot`: the reference brings a muted (or 100 %) capsule back while the
+            // pointer is on the panel, and without that there is nothing on the bar to press to
+            // unmute — the control vanished exactly when it was needed.
+            MicCapsule(toggle_mic, mic_step) { show: widget.mic }
+            VolCapsule(wheel_volume, toggle_route) { show: widget.volume }
+            // Genelec, the rightmost module, as in the legacy bar. The reference hides it until
+            // `panelHovering` (the strip's hover) — but this slot was gated on the tile's own
+            // hover, and a tile that is not drawn cannot be hovered: once hidden it stayed
+            // hidden. The plate is a hover thing inside the tile; the silhouette and the level
+            // are always there, as the microphone's glyph is.
+            // The tile's own tones are the theme's: the plugin is a library and cannot read
+            // `skin.*`, so the plate, the ink and the accent are handed to it here.
+            row genelec_slot { show: widget.genelec
+                gen.Tile(row: strip, type_scale: text_scale, plate: skin.coal, tone: skin.ink, tone.dim: skin.ink.dim, loud: skin.accent) }
+        }
+    }
+
+    // -------------------------------------------------------------- the strip
+    // One face across the whole width, translucent: measured off the reference
+    // (grim, DP-2 @2x) the bar strip is a uniform near-black that still follows
+    // the wallpaper behind it — rgb(12,14,16) over bright rock, rgb(6,7,8) over
+    // the dark part. The backdrop is `panel.backdrop.color` #000000 at
+    // `panel.seam.opacity` 0.88 (Bar.qml:360-380; `nonTerminalOpacity` is 1.0
+    // there), so 88 %, not the opaque 100% the port used
+    // (which read as a flat slab) and not nothing at all (which let the
+    // wallpaper through unbroken). No rim and no shadow: QS paints neither
+    // (`panel.capsule.borderWidth` is 0 and WidgetCapsule has no drop shadow).
+    body {
+        color: skin.coal
+        // `panel.seam.opacity` is 0.88 in the reference, where the blur is the compositor's; here
+        // the surface does the blur, so a flat 0.88 hid the glass and 0.62 let a light
+        // wallpaper's own colour through as a slab. The dark theme needs the lower number and the
+        // light one does not: `skin.coal` is #000000 there, so 0.84 of it is a black wall with
+        // nothing behind it to bend, and the glass reads as paint.
+        opacity: if(skin.light, 84%, 60%)
+        // No blur anywhere at the moment: the compositor's `decoration:blur` is off
+        // (hyprland.lua has the measurement) and `strip.glass` is 0, so this body is
+        // just its `opacity` coal over the desktop. `lens: false` because the lens
+        // kept taking screencopies at 0 % glass too — each one a 4K readback that
+        // held the compositor (and input) for 10-20 ms; 74 % of a core against 62 %
+        // without, measured 2026-11-02. The scene's own lens is the alternative look
+        // (a screencopy of what is behind the strip on every capture, 61-69 % of a
+        // core for the bar alone): the frost below belongs to it and is inert at 0 %,
+        // kept so the switch back is one number.
+        glass: 70% * strip.glass
+        lens: false
+        tint: 42%
+        // Smoked glass in the dark theme: what is seen through is taken down, the brighter the
+        // more, its colour kept — so a window under the bar stops competing with the strip's own
+        // words instead of being covered up. The light theme keeps none: there `milk` is the
+        // counterpart, and it is not asked for yet.
+        smoke: if(skin.light, 0%, 90%)
+        // `auto` leaves a bare wallpaper clear, which is what let the pink through unblurred;
+        // the strip wants the frosted reading everywhere, it is 25 px tall.
+        frost: 100%
+        // No rim. The bevel is a band the glass leaves open at the silhouette: it either catches
+        // the light — the lit border that had to go — or shows what is behind it, which with no
+        // `highlight` and no `mirror` measured 15.6 against an interior of 50.9, a dark line of
+        // its own. So the band is capped with the plate's own colour: a 1 px `border` in
+        // `skin.coal` closes it at the surface's tone, and what is left bends without ever
+        // catching anything.
+        // `refraction` is how thick the glass is — how far its edge pulls what is behind it in;
+        // 200 % is the thick lens of the language's own example. 180 % on a 25 px strip bends
+        // the wallpaper where it meets the plate, `dispersion: 60%` splits the bend a little
+        // (red, green and blue each by their own index) and `dome: 8%` magnifies the middle
+        // faintly, so the plate reads as a piece of glass rather than a pane of water.
+        refraction: 180%
+        dispersion: 60%
+        dome: 8%
+        mirror: 0%
+        highlight: 0%
+        border: 1, skin.coal
+        // The shape, not a second coat of paint: a body fills its own extent, and a box
+        // inside it with no colour of its own inherits the body's and fills it again. The
+        // two coats are what a measurement of the strip shows — QS' #1D1E21 for a plate at
+        // 88 % over that wallpaper, the port's #040404, and 1 - (1 - 0.88)^2 = 0.9856 with
+        // 0.0144 * rgb(242,250,255) is exactly #040404. `opacity: 0%` keeps the shape the
+        // body needs and drops the second coat.
+        box { from: 0, hot; size: screen.width, band; opacity: 0% }
+    }
+    // ---- hover relays for the three capsules whose tooltip the plugin cannot draw
+    // A plugin has no surface, so the card is the bar's: the plugin keeps its own `hot` fact and
+    // the scene turns it into the tooltip's own events. The indexes are `tip_line`'s in bar.luau —
+    // 9 the pill, 10 the MPD flags, 11 Genelec; the rest of the strip is wired in place (`emit tip`
+    // beside each `on enter`), and these three live here because their zones are the plugins'.
+    on change Pill.hot while Pill.hot { emit tip(9) }
+    on change Pill.hot while not Pill.hot { emit tip_hide }
+    on change Pill.taken { pill.taken = Pill.taken; pill.at = Pill.takenAt }
+    on change Pill.reminder { pill.reminder = Pill.reminder }
+    on change Pill.streak { pill.streak = Pill.streak }
+    on change Mpd.hot while Mpd.hot { emit tip(10) }
+    on change Mpd.hot while not Mpd.hot { emit tip_hide }
+    on change Genelec.hot while Genelec.hot { emit tip(11) }
+    on change Genelec.hot while not Genelec.hot { emit tip_hide }
+    // The pill's right press toggles the calendar, as QS's second TapHandler did
+    // (`calendar.toggle()`), and that drawer now marks the tracked days and their streak: it
+    // reads the same `Pill.days` model this mark is drawn from (`pages/calendar.plm`).
+    on change Pill.asks { emit toggle_calendar_panel }
+
+    // The whole strip is a hover target for the widgets that hide at idle
+    // (QS's `panelHovering`): declared before the rows, so every widget's own
+    // zone is above it and keeps its clicks.
+    // The hotzone counts as the bar for `strip.hot`: the widgets that hide at idle come
+    // back when the pointer enters the band above the strip, which is what QS does.
+    // Hover is the strip, not the tooltip's headroom: the 10 px above the paint exist so the
+    // tooltip card is not cut, and counting them as the bar's zone took the pointer over the
+    // windows below for a band nothing is drawn in.
+    zone box strip_hover { from: 0, hot; size: screen.width, band; label: "Bar"; role: region }
+    // `tray_panel` is the same moment told to the logic: the tray machine needs to know when the
+    // strip is *left* (`panelHover`, SystemTray.qml:14), which a fact cannot say.
+    on enter strip_hover { strip.hot = true; emit tray_panel(1) }
+    on leave strip_hover { strip.hot = false; emit tip_hide; emit tray_panel(0) }
+
+    // The corner the tray is revealed from: QS's hot zone (`Bar.qml:1246-1260`) — a hover target of
+    // its own over the bottom right of the panel, 16 by 9 design px (`Settings/Theme.qml:687-688`),
+    // drawing nothing. Here it is a zone like any other, declared with the strip's own hover target
+    // so the widgets stay above it: a press in its box still reaches the capsule drawn over it
+    // (Genelec), and its hover fires where a hand reaching for the bottom-right corner lands.
+    // Only while there is a tray to reveal: nothing is drawn for an empty one, and the state
+    // machine has nothing to expand. It is not gated on `tray_trigger` either — that flag is off by
+    // default and nothing sets it, which is how the corner came to be a dead zone and the tray
+    // unreachable with the mouse. The box is the four-pixel strip at the surface's right edge (see
+    // `tray.reveal` above): `pleamar --say bar describe` shows it clear of the Genelec tile.
+    zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region; show: widget.systray and icons.count > 0 }
+    on enter tray_reveal { emit tray_hot(1) }
+    on leave tray_reveal { emit tray_hot(0) }
+
+    Left()
+    Right()
+
+    // The build badge, in the middle of the strip: QS puts `BuildStatus` on a panel of its own
+    // centred along the bottom edge, so its capsule stands where the bar's centre is — not at
+    // the end of a row where it shoved the weather and the clock around every time a build
+    // started. It takes no space at rest (`Build.busy` is false while nothing runs), and a
+    // press on it toggles the build drawer (QS: `autoToggleOnTap` on BuildStatus).
+    row build_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; show: widget.build and Build.busy
+        build.Tile(toggle_build_panel, build_hover, type_scale: text_scale)
+        // A zone that goes away takes its pointer with it and `leave` never comes: a build that ends
+        // under the cursor takes its card too (the rule the audio capsules carry).
+        on change Build.busy while not Build.busy { emit tip_hide }
+    }
+
+    // ------------------------------------------------------------ what waits
+    // Later slices (rest of PH2-A): the pill capsule, the keyboard layout, the
+    // system monitor and the weather on the left; media + its transport, the MPD
+    // flags, the system monitor, the tray, the microphone and Genelec on the
+    // right; the seam/wedge between the two bar halves; the startup gate (it
+    // reads `startupClean` and drives `startup`); and the settings keys that
+    // cannot act yet (see the header).
+    //
+    // Widget ORDER is not a runtime thing: the scene paints in the order it is
+    // written, so `widgets` is applied as visibility here, and an order would be
+    // applied when the scene is generated.
+}

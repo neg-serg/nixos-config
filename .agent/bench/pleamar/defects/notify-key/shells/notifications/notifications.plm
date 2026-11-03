@@ -1,0 +1,461 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../theme.plm"
+import "../../lib/capsule.plm"
+
+// notifications.plm — the notification scene of the pleamar shell (PH2-C).
+//
+// While this scene runs, this process IS `org.freedesktop.Notifications`. The
+// `notifications` service hands every record the server keeps to
+// notifications.luau — `{ id, app, title, body, icon, image, urgency, time,
+// actions }` — and the logic answers with `notifications.dismiss`,
+// `notifications.invoke`, `notifications.clear` and `notifications.keep`.
+// This is the port of files/quickshell/Notifications: dunst-style stacked
+// toasts in the bottom-right corner (max two by default, auto-dismiss,
+// urgency-coloured), the notification centre with history, DND, per-record
+// actions and the default action, and images.
+//
+// Three windows per monitor (`screens: each`), none of them the screen: the
+// drawer is 364 design px wide and as tall as the monitor (`centre_panel`), the
+// toast stack is a corner box (`toast_stack`), and a one-pixel `keeper` holds the
+// process — and the notification server it IS — while both are closed. All three
+// are `level: overlay`, `reserve: -1`: nothing reserves room for them, and only
+// their zones take clicks. Windows rather than one full-monitor surface because
+// a zone claims the pointer for the whole box it covers, so the full-monitor
+// version claimed the desktop and its cursor with it; see the window block below.
+//
+// Persistence (INTERFACES §6), inside this scene's own folder
+// `~/.local/share/pleamar/notifications/`, written only by notifications.luau:
+//
+//   settings.json
+//     dnd           (bool,   false)           do not disturb; also the `dnd` fact
+//     maxToasts     (number, 2, 1..6)         toasts on screen at once
+//     autoDismissMs (number, 6000, 0..60000)  0 keeps a toast until it is dismissed
+//     historyMax    (number, 50, 0..200)      records remembered — the ones the
+//                                             server no longer keeps; the ones
+//                                             still kept sit on top of those
+//     sound         (bool,   false)           extra key: a short bell with a toast
+//   history.json
+//     items = { { id, app, title, body, icon, image, urgency, time, actions }, … },
+//     newest first, capped by historyMax. Unknown keys survive in both files.
+//
+// IPC (INTERFACES §2.1; the scene name is the IPC name, no aliases):
+//   pleamar --say notifications "emit open_centre"     show the centre
+//   pleamar --say notifications "emit close_centre"    hide it
+//   pleamar --say notifications "emit toggle_centre"
+//   pleamar --say notifications "emit dismiss_all"     close every toast and the centre
+//   pleamar --say notifications "emit clear_all"       empty the centre and the history
+//   pleamar --say notifications "fact dnd true"        do not disturb (persisted)
+//   pleamar --say notifications "fact centre true"     same as open_centre
+//
+// The centre's keys are the legacy list's own (NotificationCenter.qml:46-89):
+// C-n/C-p one row, C-f/C-b five, C-a/C-e the ends, C-k and Return take the row
+// under the cursor, Escape closes. A key rule can only say which of those was
+// pressed, so it sends an op and notifications.luau moves the cursor — the
+// index, the bounds and the visible window are its state, not the scene's:
+//   pleamar --say notifications "emit nav 0"   0 next · 1 previous · 2 five
+//                                              down · 3 five up · 4 the first
+//                                              row · 5 the last · 6 take the
+//                                              cursor's row
+//
+// `emit dismiss_all` is the path a compositor bind calls: it replaces the legacy
+// `touch ~/.cache/quickshell/notif-close-all`. The canonical
+// `~/.cache/pleamar/notif-close-all` semaphore of INTERFACES §1.2 cannot be
+// read from a scene — the files API never leaves the scene's own folder — so
+// the bind talks to this event instead (PH2-D owns the trigger files).
+//
+// Agent policy (INTERFACES §8): the standard labels are used verbatim; "Clear
+// all notifications" is `agent: no`. The notification body is private: a
+// `text` cannot carry `agent:` itself and a hidden zone does not claim the
+// words drawn in it (they would surface as loose text), so each card draws the
+// body inside its card zone — declared after the hidden body zone, so the
+// pointer still reaches it — whose `label:` is the standard `{app}: {title}`.
+// `describe` therefore reports the card and its standard label, and the
+// `agent: hidden` body zone is the explicit mark that the area is private.
+//
+// Every drawn length is a design pixel multiplied by `scale` exactly once;
+// `scale` is the frozen per-monitor expression below, read per copy because a
+// component parameter default is read where the copy is used.
+
+scene notifications {
+
+    // The colour of a card's plate. `notify.tone` is #000000 and the drawer the
+    // centre draws is `skin.coal` — black on black, so the cards read as loose
+    // text rather than as cards (seen 2026-10-28). Mixing the palette's two
+    // surface tokens keeps the card inside the theme's own colours while giving
+    // it an edge to be seen against; `notify.accent` at 24 % is that edge.
+    let notify.card = mix(skin.coal, skin.surface, 55%)
+
+
+    // ---------------------------------------------------------------- data
+    // What the toast stack draws; the logic fills it oldest first, so the
+    // newest toast sits at the bottom edge, the way the legacy display pushed
+    // them up.
+    model toasts max 6 {
+        slot: number = 0
+        app: text
+        title: text
+        body: text
+        pic: image 44, 44
+        urgency: number = 0
+        def: number = -1
+        list acts max 3 { ix: number = -1; label: text; glyph: text; mark: number = 0 }
+    }
+
+    // What the centre draws: a *window* of the notifications the server still
+    // keeps first, then the ones already gone (`old`), with `first` on the
+    // first of those — the "Earlier" line. The list itself can hold 200 (the
+    // top of the historyMax clamp); only these 12 rows are unfolded, and the
+    // logic hands over the slice that is on screen (`entryFirst`,
+    // `entryFirstY`, `entryTotal`). `y` and `h` are that row's place and
+    // height in the whole list, in design pixels. Unfolding all 200 cards was
+    // what cost the frame: thousands of zones, most inside a shut drawer.
+    // `sel` is 1 on the row the keyboard has — the reference's
+    // `ListView.isCurrentItem`, which its delegate reads to draw the highlight
+    // (NotificationCenter.qml:155-163) — and it is the logic's cursor, so it is
+    // a fact of the row and not of the drawing.
+    model entries max 12 {
+        slot: number = 0
+        app: text
+        title: text
+        body: text
+        pic: image 40, 40
+        urgency: number = 0
+        old: number = 0
+        first: number = 0
+        sel: number = 0
+        def: number = -1
+        y: number = 0
+        h: number = 0
+        list acts max 3 { ix: number = -1; label: text; glyph: text; mark: number = 0 }
+    }
+
+    // ------------------------------------------------------- facts & events
+    fact dnd = false
+    fact centre = false
+    fact count = 0
+    // The centre's window, in design pixels, kept by the logic: the row the
+    // slice starts at (0-based, for `for … from`), where that row sits in the
+    // whole list, and how long the whole list is (`content:`).
+    fact entryFirst = 0
+    fact entryFirstY = 0
+    fact entryTotal = 0
+    // Where the cursor's row sits in the whole list, and how tall it is, in the
+    // same design pixels: the scene keeps that row in sight with them, because
+    // only it knows how tall its drawer is (see Centre).
+    fact selY = 0
+    fact selH = 0
+
+    event open_centre
+    event close_centre
+    event toggle_centre
+    event dismiss_all ->  // close every toast and the centre (legacy M4+space)
+    event clear_all ->    // empty the centre and the history (centre button)
+    event nav ->          // payload: which key of the centre was pressed (the op)
+    event act ->          // payload: an index into the logic's action table
+    event drop ->         // payload: a record's handle (dismiss it, or forget it)
+    event slid ->         // payload: where the centre is scrolled, design pixels
+
+    // --------------------------------------------------------- permissions
+    // Watching `notifications` is not commanding it; the commands the logic
+    // carries need `notifications.*` (INTERFACES §6 / logic docs §Permissions).
+    permissions { services: "notifications", "notifications.*", "files", "files.write", "sound" }
+
+    // ------------------------------------------------------------- windows
+    // Three windows, and none of them the screen. The drawer is as wide as the
+    // drawer (364 design px — the reference's own width) and as tall as the
+    // monitor; the toast stack is a corner box that holds six cards; the keeper
+    // is one pixel and holds the process — and with it
+    // `org.freedesktop.Notifications` — while both are closed, because a scene
+    // whose last surface closes exits a second or so later and the server would
+    // go with it (panels.plm keeps the same keeper for the same reason).
+    //
+    // The earlier version was one full-monitor surface with a catcher under the
+    // drawer, and that catcher was the whole desktop taken: every press on the
+    // monitor went to it, and, because a zone makes pleamar claim the pointer for
+    // the whole box it covers (src/render.rs:2664), so did the cursor — the arrow
+    // over the drawer was the scene's arrow everywhere. Measured 2026-10-28.
+    // There is no catcher now: the centre closes on its X, on Escape, or on the
+    // compositor's `M4+space` bind, which runs
+    // `pleamar --say notifications "emit dismiss_all"`.
+    //
+    // `keyboard: on_demand` rather than `exclusive`: with exclusive the
+    // compositor keeps the focus until something else asks for it, so the bind
+    // that opened the centre cannot take the keyboard back to close it (Marea
+    // gave up on exclusive for the same reason). The price is one click — the
+    // Emacs keys and Escape reach the scene once the pointer has been over it,
+    // which is also when a row has been picked.
+    // The pace: a scene's pace is that of its fastest open surface, and the keeper
+    // is the one surface that is always open — without a `rate:` the scene asked for
+    // the monitor's 240 frames a second to draw one pixel. Measured 2026-10-31 with
+    // `pleamar --report`: 2911 frames in 12 s with nothing on screen, and every one
+    // of them is a compositor frame on a 4K/240 output (a cursor move rides one too).
+    // 15 while idle since 2026-11-02, for the reason panels.plm gives: the pace is also how long
+    // a `fact` change waits before it is drawn (1 fps 1.4 s, 15 fps 67 ms), and the 0.57
+    // compositor pays ~3 ms per presented frame, so the idle rounds are what cost a core.
+    surface keeper { size: 1, 1; anchor: top_left; level: background; reserve: 0; screens: each
+                     rate: 240, 10 while not centre and toasts.count == 0 }
+
+    surface centre_panel {
+        size: 364, full
+        anchor: right
+        level: overlay
+        reserve: -1
+        screens: each
+        open: centre
+        keyboard: on_demand
+        Centre()
+    }
+
+    // A toast card is 340 design px wide and 96 tall; six of them plus their
+    // gaps is the tallest the stack can get (`model toasts max 6`).
+    surface toast_stack {
+        size: 360, 660
+        anchor: bottom_right
+        margin: 0, 12, 12, 0
+        level: overlay
+        reserve: -1
+        screens: each
+        // Not while the centre is open: the drawer covers this corner, and a
+        // toast under it would be a card nobody can see (the arrival is in the
+        // centre's list anyway). Its timer keeps running, so what is left of
+        // the stack shows up when the drawer closes.
+        open: toasts.count > 0 and not centre
+        ToastStack()
+    }
+
+    // --------------------------------------------------------------- rules
+    on open_centre { centre = true }
+    on close_centre { centre = false }
+    on toggle_centre { toggle centre }
+    on key Escape { centre = false }
+
+    // The reference's Emacs-style list keys, one rule each, the key list and the
+    // op order as NotificationCenter.qml:46-89 has them: C-n/C-p a row down and
+    // up (:57-58), C-f/C-b five (:59-60), C-a/C-e the ends (:61-62), and C-k
+    // (:63-71) and Return (:82-89) both take the row under the cursor — the
+    // reference discards it in both, with no activation of its own for Return.
+    // It takes Ctrl alone there, without Shift, Alt or Meta (:50-51), and each
+    // rule here names exactly one modifier. What a key is allowed to do is say
+    // which one it was; the cursor and its bounds live in notifications.luau,
+    // and the surface lends the keyboard only while the centre is up.
+    on key Ctrl+n while centre { emit nav(0) }
+    on key Ctrl+p while centre { emit nav(1) }
+    on key Ctrl+f while centre { emit nav(2) }
+    on key Ctrl+b while centre { emit nav(3) }
+    on key Ctrl+a while centre { emit nav(4) }
+    on key Ctrl+e while centre { emit nav(5) }
+    on key Ctrl+k while centre { emit nav(6) }
+    on key Return while centre { emit nav(6) }
+
+    // ------------------------------------------------------------- drawing
+    // Nothing is loose here: a scene's loose drawing belongs to its own unnamed
+    // surface, and this scene has none — the centre and the toasts draw inside
+    // the windows declared above, so what is on screen is exactly those.
+
+    // ---------------------------------------------------------- components
+    // `scale` is `ui` here, not the per-monitor `scaleNow` of INTERFACES §3.2:
+    // that expression reads `screen.width`/`screen.height`, and inside a named
+    // surface those measure the WINDOW, not the monitor — with a 360 px toast
+    // window the clamp bottomed out at 0.8 and every card came out a fifth
+    // smaller than its own text (measured 2026-10-28). palette.plm's rule 2
+    // says the same: a scene that is not one full-monitor surface uses `ui`.
+    component Centre(scale: number = ui) {
+        // The drawer fills its own window (`centre_panel`: 364 design px wide and
+        // the monitor tall), so it draws from that window's corner and takes the
+        // numbers from the window itself — a reload cannot disagree with them.
+        // `x` stays a name so the header arithmetic below reads as it always has.
+        let x = 0
+        let w = centre_panel.width
+        let h = centre_panel.height
+        let vh = h - 102 * scale
+
+        prop dnd_knob = 0 ~ui.quick
+        follow dnd_knob = dnd
+
+        // The drawer and its left hairline.
+        box { from: x, 0; size: w, h; color: skin.coal; opacity: 94% }
+        box { from: x, 0; size: 1 * scale, h; color: skin.ink; opacity: 12% }
+
+        // Header: the title, a close button, the DND toggle and clear-all.
+        text "Notifications" { at: x + 18 * scale, 28 * scale; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: notify.ink }
+        line { from: x + w - 31 * scale, 19 * scale; to: x + w - 19 * scale, 31 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        line { from: x + w - 19 * scale, 19 * scale; to: x + w - 31 * scale, 31 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        zone box close_zone { from: x + w - 36 * scale, 14 * scale; size: 26 * scale, 26 * scale; corner: 6 * scale; cursor: pointer; label: "Close notifications"; role: button }
+        on press close_zone { centre = false }
+
+        box { from: x + 20 * scale, 57 * scale; size: 30 * scale, 14 * scale; corner: 7 * scale; color: mix(skin.surface, skin.accent, dnd); opacity: 1 }
+        ellipse { at: x + 20 * scale + (7 + 16 * dnd_knob) * scale, 64 * scale; radius: 6 * scale; color: skin.ink }
+        text "Do not disturb" { at: x + 60 * scale, 63 * scale; anchor: left center; family: "Iosevka"; size: 14; color: notify.ink; opacity: if(dnd, 100%, 75%) }
+        zone box dnd_zone { from: x + 12 * scale, 48 * scale; size: 176 * scale, 30 * scale; corner: 7 * scale; cursor: pointer; label: "Do not disturb"; role: toggle; checked: dnd }
+        on press dnd_zone { toggle dnd }
+
+        box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: skin.surface; opacity: 1 }
+        box { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; color: skin.ink; opacity: ink.hover * clear_zone.hover }
+        text "Clear all" { at: x + w - 94 * scale, 63 * scale; anchor: center; family: "Iosevka"; size: 14; color: skin.ink }
+        zone box clear_zone { from: x + w - 176 * scale, 48 * scale; size: 164 * scale, 30 * scale; corner: 7 * scale; cursor: pointer; label: "Clear all notifications"; role: button; agent: no }
+        on press clear_zone { emit clear_all }
+
+        // The history, scrolled. The named `column list` IS the list zone — its
+        // whole box, underneath the cards — so there is no separate `zone box
+        // list_zone` here any more: a plain zone with the same box and the same
+        // role stood on top of the layout, and an agent asking `describe` got
+        // the header and nothing else — no cards to read, none to press
+        // (measured 2026-10-28; dropping it brings back the list and its
+        // `item` rows, which is the half of INTERFACES §8 that matters here).
+        // The standard "Notifications" label went with it: a layout that carries
+        // `label:`/`role:` stops being a scrolling layout in 0.4.29 (`list.scroll`
+        // disappears), so the label stays the header text above.
+        // `content:` is the whole list, so the wheel and the drag run over it;
+        // the copies are only the window (`entries`), placed where they belong by
+        // `entryFirstY` in CentreCard. Whenever the scroll crosses a design pixel
+        // the logic is told where it is, and it answers with the slice that fits.
+        column list ~ui.overlay { at: x + 14 * scale, 88 * scale; gap: 8 * scale; view: 336 * scale, h - 102 * scale; content: entryTotal * scale
+            for n in entries { CentreCard(n, scale) }
+        }
+        on change floor(list.scroll / scale) { emit slid(floor(list.scroll / scale)) }
+
+        // The cursor's row is kept in sight, the way the reference centres it
+        // with `positionViewAtIndex(target, ListView.Center)`
+        // (NotificationCenter.qml:76 and :85): the row's place and height come
+        // from the logic (`selY`, `selH`), and only this copy knows how tall its
+        // drawer is, so the target is worked out here and clamped to the list.
+        // The scroll then reports itself through `slid` above, as it does for
+        // the wheel, and the logic answers with the window that now fits.
+        on change selY { list.scroll: clamp(selY * scale + selH * scale / 2 - vh / 2, 0, max(0, entryTotal * scale - vh)) }
+        text "No notifications" { at: x + w / 2, h / 2; anchor: center; family: "Iosevka"; size: 16; color: notify.ink; opacity: 55%; show: entries.count == 0 }
+    }
+
+    component ToastStack(scale: number = ui) {
+        // The stack hangs from the bottom-right corner of its own window
+        // (`toast_stack`), so the window's size is what places it: the newest
+        // card stays at the bottom edge and the older ones are pushed up.
+        column stack ~ui.overlay { at: toast_stack.width, toast_stack.height; anchor: right bottom; gap: 6 * scale
+            for t in toasts { ToastCard(t, scale) }
+        }
+    }
+
+    // One toast: the card, its urgency stripe, its picture, its title and
+    // body, its actions and its dismiss mark.
+    component ToastCard(t: record, scale: number) {
+        size: 340 * scale, 96 * scale
+
+        Capsule(340, 96, fill: notify.card, alpha: 92%, radiu: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 24%, shadow: 45%, scale: scale) { }
+        box { from: 2 * scale, 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(t.urgency == 2, warn, if(t.urgency == 1, amber, notify.accent)) }
+        image t.pic { at: 12 * scale, 18 * scale; size: 44 * scale, 44 * scale }
+        text t.title { at: 66 * scale, 24 * scale; anchor: left center; width: 230 * scale; lines: 1; family: "Iosevka"; size: 14; weight: 700; color: notify.ink }
+
+        // Two lines of body, and a box the text cannot leave. `lines: 2` ends a
+        // WRAPPED line with an ellipsis; it does not touch a body that carries
+        // its own newlines (a bot's digest), which then drew straight past the
+        // card and over the one below it — measured 2026-10-28, six hard lines
+        // landing on the next card's title. The clip is the guarantee, whatever
+        // the text does; notifications.luau shortens such a body to two lines
+        // before the scene ever sees it, so no word is cut in half either.
+        group {
+            clip box { from: 64 * scale, 35 * scale; size: 242 * scale, 33 * scale }
+            text t.body { at: 66 * scale, 38 * scale; anchor: left top; width: 230 * scale; lines: 2; family: "Iosevka"; size: 12; color: notify.ink; opacity: 85% }
+        }
+
+        // The body is private. `text` cannot carry `agent:` itself, and a
+        // hidden zone does not claim the words drawn in it — they would surface
+        // as loose text. So the card zone below (same area, declared after, so
+        // the pointer reaches it) claims them under its standard
+        // `{app}: {title}` label, and this hidden zone is the explicit mark:
+        // describe leaves the area out.
+        zone box body_private { from: 62 * scale, 34 * scale; size: 238 * scale, 38 * scale; agent: hidden }
+
+        // The whole card answers the pointer: the default action, if the record
+        // has one. Declared before the actions, so their zones stay on top.
+        zone box body_zone { from: 0, 0; size: 340 * scale, 96 * scale; corner: 4 * scale; cursor: pointer; label: "{t.app}: {t.title}"; role: item }
+        on press body_zone { emit act(t.def) }
+
+        row acts { at: 12 * scale, 70 * scale; gap: 6 * scale; align: start
+            for a in t.acts { Action(a, scale) }
+        }
+
+        line { from: 319 * scale, 15 * scale; to: 327 * scale, 23 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        line { from: 327 * scale, 15 * scale; to: 319 * scale, 23 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        zone box close_zone { from: 314 * scale, 10 * scale; size: 18 * scale, 18 * scale; corner: 5 * scale; cursor: pointer; label: "Dismiss {t.app}: {t.title}"; role: button }
+        on press close_zone { emit drop(t.slot) }
+    }
+
+    // One notification in the centre: the same card, plus the "Earlier" line
+    // when it is the first of the ones already gone, and the cursor's wash when
+    // the keyboard has it.
+    component CentreCard(n: record, scale: number) {
+        // The header line is read before the body's `let`s, so the height says
+        // it out in full; `oy` is the same expression for the drawing below.
+        // `h` comes from the logic, which lays every row out in the whole list,
+        // so the window's rows keep the gaps the scrolled list had, and `place`
+        // moves the whole slice down to where it starts in that list
+        // (`entryFirstY`): a column stacks its children from the top of its
+        // content, while the scroll — and with it the wheel, the drag and the
+        // cursor — is measured in the whole list.
+        size: 336 * scale, 96 * scale + if(n.first == 1, 22 * scale, 0)
+        let oy = if(n.first == 1, 22 * scale, 0)
+
+        group place { move: 0, entryFirstY * scale
+            text "Earlier" { at: 2 * scale, 12 * scale; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: notify.ink; opacity: 60%; show: n.first == 1 }
+
+            // The body is private here too: the hidden zone marks the area first,
+            // then the card zone (declared after, so the pointer reaches it) claims
+            // the words under its standard label (see ToastCard).
+            zone box body_private { from: 56 * scale, oy + 34 * scale; size: 270 * scale, 38 * scale; agent: hidden }
+
+            // Pressing the card dismisses what the server still keeps; a record
+            // already gone is forgotten from the history (the legacy centre's
+            // "Earlier" cards were inert — this is the port's one deviation).
+            // Declared before the action buttons: a zone declared later is on top.
+            // `selected:` says which row the keyboard has, for the same reason the
+            // launcher's rows do (INTERFACES §8.1).
+            zone box card_zone { from: 0, oy; size: 336 * scale, 96 * scale; corner: 4 * scale; cursor: pointer; label: "{n.app}: {n.title}"; role: item; selected: n.sel == 1 }
+            on press card_zone { emit drop(n.slot) }
+
+            group dim { opacity: if(n.old == 1, 74%, 100%)
+                group bg { move: 0, oy
+                    Capsule(336, 96, fill: notify.card, alpha: 92%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 24%, shadow: 30%, scale: scale) { }
+                }
+                box { from: 2 * scale, oy + 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(n.urgency == 2, warn, if(n.urgency == 1, amber, notify.accent)) }
+                image n.pic { at: 12 * scale, oy + 18 * scale; size: 40 * scale, 40 * scale }
+                text n.title { at: 60 * scale, oy + 24 * scale; anchor: left center; width: 262 * scale; lines: 1; family: "Iosevka"; size: 14; weight: 700; color: notify.ink }
+                // The same two lines and the same clip as a toast (see ToastCard):
+                // a body with hard newlines in it used to be drawn past the card
+                // and over the row below.
+                group {
+                    clip box { from: 58 * scale, oy + 35 * scale; size: 272 * scale, 33 * scale }
+                    text n.body { at: 60 * scale, oy + 38 * scale; anchor: left top; width: 262 * scale; lines: 2; family: "Iosevka"; size: 12; color: notify.ink; opacity: 85% }
+                }
+                row acts { at: 12 * scale, oy + 70 * scale; gap: 6 * scale; align: start
+                    for a in n.acts { Action(a, scale) }
+                }
+            }
+        }
+
+        // The cursor's wash: the reference draws it over the whole row the
+        // keyboard has, in the accent at 0.15 and with a 4 px corner
+        // (NotificationCenter.qml:155-163). Last, so it tints the card and not
+        // the other way round, and no zone, so it takes no press.
+        box { from: 0, oy; size: 336 * scale, 96 * scale; corner: 4 * scale; color: notify.accent; opacity: 15% * n.sel }
+    }
+
+    // One action button of a notification: the glyph its label earns and the
+    // label, the way the reference's button drew them — icon, 5 px, text
+    // (NotificationCard.qml:148-176). The glyph is one of the Material Symbols
+    // names the reference's `actionIcon` picks by reading the label
+    // (NotificationCard.qml:42-62); the reading is a rule about words, so
+    // notifications.luau does it and hands the name over in `glyph`, with `mark`
+    // saying whether there is one (an action labelled nothing it knows keeps the
+    // centred label and no glyph, as there). Drawn from the installed Material
+    // Symbols Outlined font with its ligatures, like the MPD flags.
+    component Action(a: record, scale: number) {
+        size: 96 * scale, 22 * scale
+
+        box { from: 0, 0; size: 96 * scale, 22 * scale; corner: 6 * scale; color: mix(skin.surface, skin.ink, 0.2 * hit.hover); opacity: 1 }
+        text a.glyph { at: 7 * scale, 11 * scale; anchor: left center; family: "Material Symbols Outlined"; size: 12; color: skin.ink; opacity: 75%; show: a.mark == 1 }
+        text a.label { at: (48 + 8 * a.mark) * scale, 11 * scale; anchor: center; width: (88 - 16 * a.mark) * scale; align: center; lines: 1; family: "Iosevka"; size: 12; color: skin.ink }
+        zone box hit { from: 0, 0; size: 96 * scale, 22 * scale; corner: 6 * scale; cursor: pointer; label: "{a.label}"; role: button }
+        on press hit { emit act(a.ix) }
+    }
+}
