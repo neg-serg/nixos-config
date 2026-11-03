@@ -13,7 +13,11 @@ let
   # $HOME; later runs exec the binary directly. The wrapper itself references
   # only nix, never Telegram, so system-path stays small.
   mkTelegramLauncher =
-    { name, attr }:
+    {
+      name,
+      attr,
+      binary ? name,
+    }:
     pkgs.writeShellScriptBin name ''
       root="$HOME/.local/state/nix-apps/${name}"
       if [ ! -e "$root" ]; then
@@ -22,12 +26,13 @@ let
         out=$(${pkgs.nix}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#${attr}")
         ${pkgs.nix}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
       fi
-      exec "$root/bin/${name}" "$@"
+      exec "$root/bin/${binary}" "$@"
     '';
 
   telegram = mkTelegramLauncher {
     name = "telegram-desktop";
     attr = "telegram-desktop";
+    binary = "Telegram";
   };
   telegramProxy = mkTelegramLauncher {
     name = "telegram-desktop-proxy";
