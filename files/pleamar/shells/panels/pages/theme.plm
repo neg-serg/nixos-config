@@ -36,6 +36,11 @@ part Theme {
             text "{t.detail}" { at: 12, 24; anchor: left center
                 family: "Iosevka"; size: 9; color: live.ink.dim }
 
+            // The theme's accent, as the file gives it (the logic passes the
+            // channels `rgb()` takes, so the row shows its own colour).
+            box swatch { from: w - 20, 13; size: 8, 8; corner: 4
+                color: rgb(t.accent_r, t.accent_g, t.accent_b) }
+
             // The row zone: `role: item` and `selected:` so the machine tree says
             // which theme is the one in place (INTERFACES.md §8.1).
             zone box hit { from: 0, 0; size: w, h; corner: menu.item.corner

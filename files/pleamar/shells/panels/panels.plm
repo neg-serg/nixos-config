@@ -430,7 +430,7 @@ scene panels {
     model sinks max 8 { id: text; name: text; default: bool }
     model sources max 8 { id: text; name: text; default: bool }
     model media_rows max 8 { glyph: text; value: text }
-    model themes max 8 { idx: number; name: text; detail: text; selected: bool }
+    model themes max 8 { idx: number; name: text; detail: text; selected: bool; accent_r: number; accent_g: number; accent_b: number }
 
     // ----***------------------- audio (no worker)
     // Volume, microphone and the per-stream mixers come from the service; the

@@ -229,6 +229,18 @@ let
     ".local/bin/pleamar-themes".source = lib.getExe' pkgs.neg.pleamar-theme "pleamar-themes";
   };
 
+  # The themes the shell ships: `files/pleamar/themes/*.toml` linked into
+  # ~/.config/pleamar/themes, where `pleamar-themes list` finds them. A theme the
+  # user writes there under a name of their own is not touched; these three are
+  # Nix-owned and a local edit to one is replaced on activation.
+  pleamarThemeFiles =
+    neg.mkDirLinks ".config/pleamar/themes" (config.lib.neg.live "files/pleamar/themes")
+      [
+        "amber.toml"
+        "graphite.toml"
+        "paper.toml"
+      ];
+
   pleamarHomeFiles =
     neg.mkDirLinks ".config/pleamar/shells" pleamarShellsLive pleamarShellNames
     // neg.mkDirLinks ".config/pleamar/lib" pleamarLibLive pleamarLibNames
@@ -236,6 +248,7 @@ let
     // lib.optionalAttrs pickerEnabled pleamarPickerHelperLinks
     // pleamarIconLinks
     // pleamarThemeLinks
+    // pleamarThemeFiles
     // pleamarPaletteBin
     // {
       ".config/pleamar/autostart" = {

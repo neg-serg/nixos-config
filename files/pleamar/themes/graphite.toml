@@ -1,0 +1,11 @@
+# Graphite — a cool, low-chroma palette with a pale-cyan accent.
+name = "Graphite"
+font = "Iosevka"
+light = false
+
+[palette]
+coal = "#0E1013"
+surface = "#1B2026"
+ink = "#D8DEE6"
+ink_dim = "#98A2AE"
+accent = "#7FD6FF"

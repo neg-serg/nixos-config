@@ -1,0 +1,13 @@
+# Amber — warm accent on a near-black glass (the shell's own style). Linked from
+# the repository by Nix; a theme you write yourself under another name in this
+# folder is yours and stays untouched.
+name = "Amber"
+font = "Iosevka"
+light = false
+
+[palette]
+coal = "#0B0D10"
+surface = "#161A1F"
+ink = "#E6EDF3"
+ink_dim = "#AEB9C8"
+accent = "#FFB347"

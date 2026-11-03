@@ -268,20 +268,26 @@ fn list(args: &[String]) -> ExitCode {
     };
     files.sort();
 
-    let mut rows: Vec<(String, String, String, String)> = Vec::new();
+    let mut rows: Vec<(String, String, String, String, String, String, String)> = Vec::new();
     let mut failed = false;
     for path in files {
         let name = stem(&path).to_string();
         match read_theme(&path) {
-            Ok(theme) => rows.push((
-                theme.name.unwrap_or(name),
-                theme.font.unwrap_or_else(|| "-".to_string()),
-                theme
-                    .corner_rounding
-                    .map(|value| value.to_string())
-                    .unwrap_or_else(|| "-".to_string()),
-                path.display().to_string(),
-            )),
+            Ok(theme) => {
+                let (red, green, blue) = themes::channels(&theme.accent).unwrap_or((0.0, 0.0, 0.0));
+                rows.push((
+                    theme.name.unwrap_or(name),
+                    theme.font.unwrap_or_else(|| "-".to_string()),
+                    theme
+                        .corner_rounding
+                        .map(|value| value.to_string())
+                        .unwrap_or_else(|| "-".to_string()),
+                    path.display().to_string(),
+                    format!("{red:.4}"),
+                    format!("{green:.4}"),
+                    format!("{blue:.4}"),
+                ))
+            }
             Err(error) => {
                 err(format!("{}: {error}", path.display()));
                 failed = true;
@@ -301,19 +307,23 @@ fn list(args: &[String]) -> ExitCode {
     }
     if plain {
         // One line per theme, for the scene's logic: name, font, corners, the
-        // file, and 1 when it is the theme `theme.plm` was made from.
+        // file, 1 when it is the theme `theme.plm` was made from, and the accent
+        // as three channels so a row can draw its own swatch (`rgb()`).
         let applied = applied_source();
         for row in &rows {
             let selected = applied
                 .as_deref()
                 .is_some_and(|source| same_file(source, &row.3));
             println!(
-                "{}\t{}\t{}\t{}\t{}",
+                "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
                 row.0,
                 row.1,
                 row.2,
                 row.3,
-                if selected { "1" } else { "0" }
+                if selected { "1" } else { "0" },
+                row.4,
+                row.5,
+                row.6
             );
         }
         return if failed {

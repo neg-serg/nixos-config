@@ -417,6 +417,16 @@ impl LivePalette {
     }
 }
 
+/// `#rrggbb` as the three channels a `fact` takes (0..1), or `None` when it is
+/// not a hex colour.
+pub fn channels(hex_text: &str) -> Option<(f64, f64, f64)> {
+    let hex = hex::normalize(hex_text)?;
+    let number = |range: std::ops::Range<usize>| -> f64 {
+        u8::from_str_radix(&hex[range], 16).unwrap_or(0) as f64 / 255.0
+    };
+    Some((number(1..3), number(3..5), number(5..7)))
+}
+
 /// Read the palette out of a generated `theme.plm` (`let skin.<role> = <value>`).
 pub fn palette_from_theme_file(path: &Path) -> Result<LivePalette, String> {
     let text = fs::read_to_string(path)
@@ -445,12 +455,7 @@ pub fn palette_from_text(text: &str) -> Result<LivePalette, String> {
     };
     let colour = |role: &str| -> Result<(f64, f64, f64), String> {
         let raw = get(role)?;
-        let hex = hex::normalize(raw)
-            .ok_or_else(|| format!("theme.plm's `{role}` is not a hex colour: {raw}"))?;
-        let number = |range: std::ops::Range<usize>| -> f64 {
-            u8::from_str_radix(&hex[range], 16).unwrap_or(0) as f64 / 255.0
-        };
-        Ok((number(1..3), number(3..5), number(5..7)))
+        channels(raw).ok_or_else(|| format!("theme.plm's `{role}` is not a hex colour: {raw}"))
     };
     let coal = colour("skin.coal")?;
     let surface = colour("skin.surface")?;

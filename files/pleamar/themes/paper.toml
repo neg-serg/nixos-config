@@ -1,0 +1,13 @@
+# Paper — the light one: it is what `light = true` and `skin.light` ask the
+# scenes for (a dark ink on a bright surface, and the writing over a wallpaper
+# takes its dark tone).
+name = "Paper"
+font = "Iosevka"
+light = true
+
+[palette]
+coal = "#F2EFE8"
+surface = "#E4DFD5"
+ink = "#1A1A1A"
+ink_dim = "#55524C"
+accent = "#B4541E"
