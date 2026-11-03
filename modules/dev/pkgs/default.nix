@@ -1,8 +1,12 @@
 {
   lib,
   pkgs,
+  config,
   ...
 }:
+let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+in
 {
   environment.systemPackages = lib.unique ([
     pkgs.hyperfine # benchmarking tool
@@ -12,6 +16,10 @@
     pkgs.shellcheck # shell linter
     pkgs.shfmt # shell formatter
     pkgs.strace # trace syscalls
+    (onDemand {
+      name = "strace-tui";
+      attr = "strace-tui";
+    }) # syscall-trace explorer for strace output, built on first run
     pkgs.uv # Python package manager (uvx for MCP servers like qdrant, blender, wireshark, arxiv, serena)
   ]);
 
