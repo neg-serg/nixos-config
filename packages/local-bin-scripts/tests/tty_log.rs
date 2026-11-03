@@ -48,7 +48,7 @@ fn fixture(label: &str) -> Case {
 }
 
 fn log_dir(case: &Case) -> std::path::PathBuf {
-    case.home.join(".cache/quickshell/tty-logs")
+    case.home.join(".cache/pleamar/tty-logs")
 }
 
 fn log_file(case: &Case, name: &str) -> std::path::PathBuf {
