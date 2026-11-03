@@ -112,6 +112,12 @@ in
   # after a crash, so there is nothing to lose by not syncing it.
   systemd.services.zfs-cache-dataset = {
     description = "Create tank/cache for the compiler caches (ccache, sccache)";
+    # No default deps: the implicit After=basic.target closed the boot cycle
+    # cache → zfs-mount → local-fs.target → sysinit.target → basic.target → sockets.
+    # systemd broke it by deleting jobs, systemd-tmpfiles-setup among them, so
+    # /run/opengl-driver was never linked and the login compositor had no GBM
+    # device to allocate from (see ec5dc15df for the same fix on zfs-import-*).
+    unitConfig.DefaultDependencies = false;
     wantedBy = [ "zfs.target" ];
     after = [ "zfs-import.target" ];
     before = [ "zfs-mount.service" ];
