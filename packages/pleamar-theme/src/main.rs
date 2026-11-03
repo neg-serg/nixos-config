@@ -317,6 +317,8 @@ fn run() -> ExitCode {
 
     // ---- write -------------------------------------------------------------
     let resolved = Theme {
+        title: "wallpaper palette".to_string(),
+        generated_by: "files/pleamar/scripts/theme/theme.sh".to_string(),
         source: wallpaper.as_ref().map(|path| path.display().to_string()),
         mode: theme,
         mode_note,

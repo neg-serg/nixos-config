@@ -41,7 +41,8 @@
 #   `pleamarHealthScenes` (the bar and the panels; 2-minute period, first run after 5 minutes) and
 #   restarts the one that stops answering.
 # - `pleamar-theme` — runs the theme pipeline (packages/pleamar-theme) on every wallpaper
-#   change, writing `~/.config/pleamar/theme.plm`.
+#   change, writing `~/.config/pleamar/theme.plm`; `pleamar-themes` writes the same file from a
+#   hand-written theme file (`list`, `apply`, `show`), so a theme is a file, not a wallpaper.
 # - `pleamar-cleanup-symlink` — removes stale deployed links; without it a scene dies on a missing
 #   `.plm` between cleanup and activation.
 # - Login-phase guard: while `%t/pleamar-login/login-phase` exists the login layer owns the screen
@@ -223,6 +224,9 @@ let
     ".local/bin/pleamar-wallpaper-palettes".source = lib.getExe pkgs.neg.wallpaper-palettes;
     # Manual runs (and the theming workflow) use the same compiled pipeline.
     ".local/bin/pleamar-theme".source = lib.getExe pkgs.neg.pleamar-theme;
+    # The second binary of the same package: hand-written themes (`list`,
+    # `apply`, `show`) write the same theme.plm the pipeline does.
+    ".local/bin/pleamar-themes".source = lib.getExe' pkgs.neg.pleamar-theme "pleamar-themes";
   };
 
   pleamarHomeFiles =

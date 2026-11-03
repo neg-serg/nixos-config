@@ -24,7 +24,7 @@ rustPlatform.buildRustPackage {
   doCheck = true;
 
   meta = lib.mkMeta {
-    description = "pleamar theme pipeline (wallpaper colours to ~/.config/pleamar/theme.plm)";
+    description = "pleamar theme pipeline (wallpaper colours and theme files to ~/.config/pleamar/theme.plm)";
     homepage = "https://github.com/neg-serg/nixos-config";
     license = lib.licenses.mit;
     mainProgram = "pleamar-theme";
