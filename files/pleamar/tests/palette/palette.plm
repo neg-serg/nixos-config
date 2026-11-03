@@ -1,0 +1,85 @@
+language 0.4
+
+import "../../lib/palette.plm"
+import "../../lib/palette-live.plm"
+
+// palette-live.plm's proof scene: the same colours drawn twice — the static
+// `palette.plm` swatch and the fact-driven `live.*` one — so a change of facts
+// is visible without the scene reloading.
+//
+//   pleamar --check files/pleamar/tests/palette/palette.plm
+//   pleamar --scene files/pleamar/tests/palette/palette.plm --seconds 20 --no-hud
+//   pleamar --say palette "fact pal_accent_r 0.2" "fact pal_accent_g 0.9" "fact pal_accent_b 0.35"
+//
+// The second command repaints the right-hand swatches and leaves the scene as it
+// was; `log` shows no reload. A theme producer (the logic of a real shell) sets
+// these 33 facts from the wallpaper; nothing here writes them.
+
+scene palette {
+
+    surface { size: 420, 210; anchor: top; level: top }
+
+    // What a theme producer would set: one triple per colour. The defaults are
+    // palette.plm's, so a scene that starts before the logic has spoken looks
+    // as it always did.
+    fact pal_coal_r = 0.0000
+    fact pal_coal_g = 0.0000
+    fact pal_coal_b = 0.0000
+    fact pal_slate_r = 0.1412
+    fact pal_slate_g = 0.1647
+    fact pal_slate_b = 0.2078
+    fact pal_outline_r = 0.2314
+    fact pal_outline_g = 0.2980
+    fact pal_outline_b = 0.3608
+    fact pal_ink_r = 0.7961
+    fact pal_ink_g = 0.8392
+    fact pal_ink_b = 0.8980
+    fact pal_ink_dim_r = 0.6824
+    fact pal_ink_dim_g = 0.7255
+    fact pal_ink_dim_b = 0.7843
+    fact pal_ink_off_r = 0.4196
+    fact pal_ink_off_g = 0.4431
+    fact pal_ink_off_b = 0.5412
+    fact pal_warn_r = 1.0000
+    fact pal_warn_g = 0.4196
+    fact pal_warn_b = 0.5059
+    fact pal_amber_r = 1.0000
+    fact pal_amber_g = 0.7020
+    fact pal_amber_b = 0.2784
+    fact pal_highlight_r = 0.5804
+    fact pal_highlight_g = 0.8824
+    fact pal_highlight_b = 0.9765
+    fact pal_accent_r = 0.0000
+    fact pal_accent_g = 0.4353
+    fact pal_accent_b = 0.8000
+    fact pal_on_accent_r = 1.0000
+    fact pal_on_accent_g = 1.0000
+    fact pal_on_accent_b = 1.0000
+
+    body {
+        color: live.coal
+        rim: 8%
+        box { from: 0, 0; size: screen.width, screen.height }
+    }
+
+    text "Live palette" { at: 20, 18; anchor: left center; size: 13; weight: 600; color: live.ink }
+    text "static" { at: 20, 44; anchor: left center; size: 11; color: ink.dim }
+    text "live" { at: 236, 44; anchor: left center; size: 11; color: live.ink.dim }
+
+    // The static palette's swatches: what palette.plm has always drawn.
+    box { from: 20, 56; size: 60, 44; corner: 8; color: slate; opacity: 90% }
+    box { from: 20, 106; size: 60, 44; corner: 8; color: accent; opacity: 90% }
+    box { from: 20, 156; size: 60, 44; corner: 8; color: warn; opacity: 90% }
+
+    // The same roles through the facts: `--say palette "fact pal_accent_r ..."`
+    // repaints these and nothing else.
+    box { from: 236, 56; size: 60, 44; corner: 8; color: live.slate }
+    box { from: 236, 106; size: 60, 44; corner: 8; color: live.accent }
+    box { from: 236, 156; size: 60, 44; corner: 8; color: live.warn }
+
+    // The derived shades follow the accent fact: these are not set by anyone.
+    text "accent_hover" { at: 306, 106; anchor: left center; size: 11; color: live.accent_hover }
+    text "accent_deep" { at: 306, 122; anchor: left center; size: 11; color: live.accent_deep }
+
+    text "A theme changes these by setting facts; the scene does not reload." { at: 20, 200; anchor: left center; size: 11; color: live.ink.dim }
+}

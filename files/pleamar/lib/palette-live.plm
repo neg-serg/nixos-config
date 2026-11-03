@@ -1,0 +1,53 @@
+// palette-live.plm — the colours a theme changes while the scene runs, as
+// facts: a new palette repaints the scene without rewriting a file and
+// reloading it.
+//
+// The engine's `rgb(r, g, b)` takes three numbers that may be facts
+// (`pleamar --docs reference`, "a palette taken from the wallpaper, by setting
+// three facts, without a file to rewrite and a scene to reload"). The scene
+// declares the facts and its logic sets them; this library only reads them.
+//
+//   import "../../lib/palette.plm"        // the static one, for Capsule & co.
+//   import "../../lib/palette-live.plm"
+//
+//   fact pal_ink_r = 0.7961               // the defaults are palette.plm's
+//   fact pal_ink_g = 0.8392
+//   fact pal_ink_b = 0.8980               // ... one triple per colour
+//
+//   text "Muted" { color: live.ink.dim }
+//   Capsule(140, 34, fill: live.slate, scale: 1) { ... }
+//
+// The names are `live.*` on purpose: `palette.plm` already defines `ink`,
+// `slate`, `accent`, and `capsule.plm`/`menu.plm` import it and use those names
+// themselves, so a library that redefined them could not be imported beside
+// them. The static palette also carries the sizes and the roles of other
+// programs (notify.*, volume.*, lock.*); those are not a theme's to change and
+// stay where they are.
+//
+// Who sets the facts: the scene's own logic (a watcher of `theme.plm`, the
+// wallpaper service, a Settings page) — never this library. A scene that has
+// not been ported yet keeps drawing with `palette.plm` alone; the two coexist,
+// which is what lets a scene move over one colour at a time.
+//
+// A program that is not this scene (the lock screen, a separate process) cannot
+// see facts: it keeps importing the generated `theme.plm`, as before.
+
+library PaletteLive strict {
+
+    // ── the palette a theme drives (facts: pal_*_r, pal_*_g, pal_*_b) ──
+    let live.coal = rgb(pal_coal_r, pal_coal_g, pal_coal_b)
+    let live.slate = rgb(pal_slate_r, pal_slate_g, pal_slate_b)
+    let live.outline = rgb(pal_outline_r, pal_outline_g, pal_outline_b)
+    let live.ink = rgb(pal_ink_r, pal_ink_g, pal_ink_b)
+    let live.ink.dim = rgb(pal_ink_dim_r, pal_ink_dim_g, pal_ink_dim_b)
+    let live.ink.off = rgb(pal_ink_off_r, pal_ink_off_g, pal_ink_off_b)
+    let live.warn = rgb(pal_warn_r, pal_warn_g, pal_warn_b)
+    let live.amber = rgb(pal_amber_r, pal_amber_g, pal_amber_b)
+    let live.highlight = rgb(pal_highlight_r, pal_highlight_g, pal_highlight_b)
+    let live.accent = rgb(pal_accent_r, pal_accent_g, pal_accent_b)
+    let live.on.accent = rgb(pal_on_accent_r, pal_on_accent_g, pal_on_accent_b)
+
+    // The shades the static palette works out from the accent.
+    let live.accent_hover = mix(live.accent, #ffffff, 20%)
+    let live.accent_deep = mix(live.accent, live.coal, 80%)
+}
