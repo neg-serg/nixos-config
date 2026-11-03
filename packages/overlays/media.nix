@@ -35,6 +35,13 @@ in
   pycamilladsp-plot = call (pkg "pycamilladsp-plot") { };
   # VapourSynth NCNN (Vulkan) plugin: AI upscale/interp/denoise in VS (GPL-3)
   vsncnn = call (pkg "vsncnn") { };
+  # scide's QtWebEngine help browser is unused (scnvim renders help itself).
+  # nixpkgs only sets -DSC_USE_QTWEBENGINE, so the qtwebengine build input must
+  # be filtered out too — wrapQtAppsHook otherwise bakes it into bin/scide and
+  # the closure keeps ~824M nobody reads.
+  supercollider = (prev.supercollider.override { useQtWebEngine = false; }).overrideAttrs (old: {
+    buildInputs = builtins.filter (p: (p.pname or "") != "qtwebengine") old.buildInputs;
+  });
   # SuperCollider third-party UGen plugins (server plugins + SC classes)
   sc-plugin-farm = call (pkg "sc-plugin-farm") { }; # fake SC source root for building UGens
   f0plugins = call (pkg "f0plugins") { inherit scPluginFarm mkScPlugin; }; # redFrik SC plugins: sound chips, rhythms, wavesets
