@@ -12,9 +12,11 @@
     pkgs.ttf-code20x3 # Code20X3 freeware font: Plane 3 CJK Extensions G/H
   ];
 
-  # hyprlock/hyprland themes still name JetBrains Mono and Inter; map them to
-  # the fonts that remain installed (Iosevka Nerd for mono symbols, Outfit for
-  # UI) instead of a generic fallback.
+  # Themes and app configs still name JetBrains Mono, FiraCode and Inter; map
+  # them to the fonts that remain installed (Iosevka Nerd for mono symbols,
+  # Outfit for UI) instead of a generic fallback. Both spellings are aliased:
+  # the real Nerd Font families carry no space ("FiraCode Nerd Font Mono"),
+  # while a few configs here spell them with one ("Fira Code Nerd Font Mono").
   fonts.fontconfig.localConf = ''
     <?xml version="1.0"?>
     <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
@@ -28,6 +30,10 @@
         <prefer><family>Iosevka</family></prefer>
       </alias>
       <alias binding="same">
+        <family>JetBrainsMono Nerd Font Mono</family>
+        <prefer><family>Iosevka</family></prefer>
+      </alias>
+      <alias binding="same">
         <family>JetBrains Mono Nerd Font Mono</family>
         <prefer><family>Iosevka</family></prefer>
       </alias>
@@ -36,7 +42,15 @@
         <prefer><family>Iosevka</family></prefer>
       </alias>
       <alias binding="same">
+        <family>FiraCode Nerd Font</family>
+        <prefer><family>Iosevka</family></prefer>
+      </alias>
+      <alias binding="same">
         <family>Fira Code Nerd Font Mono</family>
+        <prefer><family>Iosevka</family></prefer>
+      </alias>
+      <alias binding="same">
+        <family>FiraCode Nerd Font Mono</family>
         <prefer><family>Iosevka</family></prefer>
       </alias>
       <alias binding="same">
