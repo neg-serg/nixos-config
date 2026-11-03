@@ -427,9 +427,10 @@ end)
 
 -- ---- sysmon: one `tiles` record per metric -------------------------------
 
--- The worker samples once a second while the drawer exists; this ring keeps the last minute
--- for the history chart. It is cleared when the drawer opens, so a close/open gap does not
--- draw a straight line across time that was never sampled.
+-- The worker samples once a second for as long as the scene runs, not only while the drawer is
+-- open: the chart is worth more when it holds the minute before the open. This ring keeps that
+-- minute and survives a close/open — the samples in it are real time, so the page never has to
+-- explain a gap it drew as data.
 local SYS_HIST_LEN = 60
 local sys_hist = {}
 
@@ -816,6 +817,10 @@ local function subscribe_line(name)
 end
 
 local function wanted(name)
+    -- The system worker is the one that outlives its drawer: the chart is the minute BEFORE the
+    -- open, so the sampling cannot start when the drawer does. It is one procfs read a second;
+    -- the other two call the network and a calendar and stay tied to their drawer.
+    if name == "sysmon" then return true end
     return fact.drawer == WORKERS[name].drawer
 end
 
@@ -1294,10 +1299,11 @@ end
 
 -- ==================== drawer lifecycle ====================
 
--- One worker at a time, only while its drawer is open. Whatever changed the
--- drawer fact (a scene rule, --say from a bind, the bar's logic), this brings
--- the workers in line; the half-second pass is the safety net, not the main
--- path (the fact listener below is).
+-- One worker at a time, and one of them without a drawer (`sysmon`: see `wanted`). Whatever
+-- changed the drawer fact (a scene rule, --say from a bind, the bar's logic), this brings the
+-- workers in line; the half-second pass is the safety net, not the main path (the fact listener
+-- below is).
+local sysmon_ticks = 0
 local function reconcile()
     -- The date is the logic's own, and a scene lives for days: the "today" marker, the holidays row
     -- and the pill's `pending` are all decided against `today_*` when the grid is built. Turn them
@@ -1309,6 +1315,18 @@ local function reconcile()
         cal_rebuild()
     end
     ensure_audio_watch()
+    -- The system worker is never stopped by a drawer closing, so a give-up is never cleared by one
+    -- either. Time it instead: one attempt a minute, so a helper that comes back is picked up
+    -- without a restart of the shell.
+    sysmon_ticks = sysmon_ticks + 1
+    if sysmon_ticks >= 120 then
+        sysmon_ticks = 0
+        local h = H.sysmon
+        if h.gave_up and not h.id and not h.timer then
+            h.gave_up = false
+            h.tries = 0
+        end
+    end
     for name in pairs(WORKERS) do
         if wanted(name) then
             if name == "calendar" and fact.cal_year == 0 then
@@ -1408,11 +1426,10 @@ on("fact:drawer", function(v)
         net_stop()
     end
 
-    -- The system dashboard reads the journal once, when it opens: the worker
-    -- prints a single line and exits. Its history starts from the first sample of this open.
+    -- The system dashboard reads the journal once, when it opens: the worker prints a single line
+    -- and exits. The history ring is not touched here — sysmon sampled all along, so the chart
+    -- already holds the minute before the open.
     if v == "system" then
-        sys_hist = {}
-        sysmon_publish()
         journal_refresh()
     end
 
@@ -1427,7 +1444,7 @@ end)
 
 every(500, reconcile)
 
--- The grid is ready before the first open; no worker runs while drawer == none.
+-- The grid is ready before the first open; the only worker that runs without a drawer is sysmon.
 fact.cal_year, fact.cal_month = today_y, today_m
 fact.sel_day = today_d
 cal_rebuild()
