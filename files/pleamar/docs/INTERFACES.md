@@ -224,12 +224,10 @@ That is the whole list: the `drawer` fact names exactly the drawers that have a 
 `microphone`, `bluetooth`, `keyboard`, `tray`, `power` and `settings` were reserved names with no
 part, so a press on them opened an empty window; the owner dropped them on 2026-10-28, and there is
 no settings drawer to come — the shell's settings are the per-scene JSON files (§6), edited by hand.
-`theme` is not a settings page either: it lists the theme files under
-`~/.config/pleamar/themes` and applies one through `pleamar-themes`
-(`packages/pleamar-theme`), which rewrites `theme.plm` the way the wallpaper
-pipeline does (§1.4). The bar's `toggle_theme_panel` opens it (`M4+SH+t`); no
-capsule carries it. `build` was added when its page landed and was missing from
-this list.
+`theme` is not a settings page either: it lists the theme files under `~/.config/pleamar/themes` and
+applies one through `pleamar-themes` (`packages/pleamar-theme`), which rewrites `theme.plm` the way
+the wallpaper pipeline does (§1.4). The bar's `toggle_theme_panel` opens it (`M4+SH+t`); no capsule
+carries it. `build` was added when its page landed and was missing from this list.
 
 Each drawer is a part under `shells/panels/pages/<name>.plm` (owned by PH2-B), included by
 `panels.plm`; a drawer that is too big for a part may be split into more parts, but the drawer name
