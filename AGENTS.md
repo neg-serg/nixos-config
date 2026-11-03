@@ -91,6 +91,10 @@ General guidance
   rules), see `.agent/workflows/` (long-form recipes: `docs/howto/agent-recipes.md`).
 - Before committing: run `just fmt` then `just check`; never commit unformatted
   or failing changes.
+- Lookup discipline: start from the error or output that names the failure; consult reference docs
+  only when it does not, and then with a targeted query (`… | rg -A3 '<key>'`) instead of dumping a
+  whole grammar/docs stream. A full dump stays in the prompt and is re-billed on every later step,
+  so it costs far more than the fix it was meant to make safe.
 
 Debugging: Iron Law (ported from hermes-agent systematic-debugging)
 - NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST: reproduce the exact symptom and build a tight
