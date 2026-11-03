@@ -193,8 +193,19 @@ in
   systemd.timers."fwupd-refresh".enable = false; # fwupdmgr refresh timer — manual refresh still works
   systemd.services.systemd-networkd-persistent-storage.enable = false; # declarative .link files handle naming
 
-  # MT6639/MT7927 Bluetooth firmware blob — see hardware/system.nix
-  hardware.firmware = lib.mkAfter [ systemData.firmwareBlob ];
+  # MT6639/MT7927 Bluetooth blob — see hardware/system.nix. Full linux-firmware
+  # carries Intel/Qualcomm/NVIDIA/Mellanox blobs this host has no hardware for;
+  # keep the AMD GPU, MediaTek MT7927 Wi-Fi/Bluetooth, Realtek RTL8126 and
+  # regulatory files, plus alsa/sof for the audio DSPs.
+  hardware.enableRedistributableFirmware = lib.mkForce false;
+  hardware.cpu.amd.updateMicrocode = true;
+  hardware.wirelessRegulatoryDatabase = true;
+  hardware.firmware = lib.mkAfter [
+    systemData.firmwareBlob
+    pkgs.linux-firmware-minimal
+    pkgs.alsa-firmware
+    pkgs.sof-firmware
+  ];
 
   # Raise the memlock limit for the whole user session. Three layers, because
   # workloads start from user space: 1) system manager default (applies to system

@@ -32,20 +32,10 @@ in
 
       hardware = {
         i2c.enable = true;
-        cpu.amd.updateMicrocode = true;
+        cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
         enableAllFirmware = false; # Disable installing ALL firmware to save space
-        # Full linux-firmware carries Intel/Qualcomm/NVIDIA/Mellanox blobs this
-        # host has no hardware for. Keep only the AMD GPU, MediaTek MT7927
-        # Wi-Fi/Bluetooth, Realtek RTL8126 and regulatory files (rtl_nic is
-        # also requested by r8169); the host's MT6639 BT blob is added below.
-        enableRedistributableFirmware = false;
-        firmware = lib.mkAfter [
-          pkgs.linux-firmware-minimal
-          pkgs.alsa-firmware # USB/HD-audio DSP firmware (RME/other audio)
-          pkgs.sof-firmware # SOF audio DSP firmware
-        ];
-        wirelessRegulatoryDatabase = true;
+        enableRedistributableFirmware = true; # Install standard distributable firmware
         firmwareCompression = "xz"; # Compress firmware (xz) to save space (requires kernel support)
 
         usb-modeswitch.enable = true; # mode switching tool for controlling 'multi-mode' USB devices.
