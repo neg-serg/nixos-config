@@ -117,6 +117,15 @@ in
       pleamar-picker = final.callPackage ./pleamar-picker { }; # picker scene commands (wallpaper still/apply, deck CLI)
       pleamar-harness = final.callPackage ./pleamar-harness { }; # pleamar developer harnesses (measure, describe-snap, smoke) as Rust binaries
       local-bin-scripts = final.callPackage ./local-bin-scripts { }; # Rust ports of the small local-bin helper scripts
+      local-bin-desktop = final.callPackage ./local-bin-desktop { }; # Rust ports of the desktop/media local-bin helpers
+      local-bin-audio = final.callPackage ./local-bin-audio { }; # Rust ports of the audio helpers (audio-diag, jam, sc-live, ...)
+      local-bin-system = final.callPackage ./local-bin-system {
+        # pdf2md used @DOCLING_BIN@ as a substitution; the port compiles the
+        # same path in. Keep the expression identical to modules/cli/ocr.nix.
+        docling = (final.python3.withPackages (ps: [ ps.docling ])).overrideAttrs (_: {
+          ignoreCollisions = true;
+        });
+      }; # Rust ports of the system-level local-bin/bin helpers
       tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the Python tgchat after a fresh login)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
       renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)

@@ -512,6 +512,7 @@ lib.mkIf pleamarEnabled (
       # scene runs need it on PATH while the feature is on.
       environment.systemPackages = [
         pkgs.pleamar # Wayland desktop shell runtime (bars/launchers/notifications as scenes)
+        pkgs.neg.pleamar-harness # dev harnesses: PNG matrix, describe snapshots, cgroup budgets
       ];
 
       # The lock scene checks the password through the PAM service the engine names in its

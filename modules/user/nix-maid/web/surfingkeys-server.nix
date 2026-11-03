@@ -24,26 +24,20 @@ lib.mkIf (config.lib.neg.enabled "web") {
     };
   };
 
-  systemd.user.services.surfingkeys-extension-patch =
-    let
-      patchScript = pkgs.writeShellScript "surfingkeys-extension-patch" (
-        builtins.readFile (config.lib.neg.path "packages/local-bin/bin/surfingkeys-extension-patch")
-      );
-    in
-    {
-      description = "Patch SurfingKeys extension to auto-load config from local server";
-      # The script logs every patch through `logger` (util-linux), which is not
-      # part of systemd's default service PATH — without it the unit died with
-      # status 127 on every login since at least 2026-09-19.
-      path = [ pkgs.util-linux ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = patchScript;
-      };
-      after = [ "graphical-session.target" ];
-      wants = [ "graphical-session.target" ];
-      wantedBy = [ "graphical-session.target" ];
+  systemd.user.services.surfingkeys-extension-patch = {
+    description = "Patch SurfingKeys extension to auto-load config from local server";
+    # The script logs every patch through `logger` (util-linux), which is not
+    # part of systemd's default service PATH — without it the unit died with
+    # status 127 on every login since at least 2026-09-19.
+    path = [ pkgs.util-linux ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = lib.getExe' pkgs.neg.local-bin-system "surfingkeys-extension-patch";
     };
+    after = [ "graphical-session.target" ];
+    wants = [ "graphical-session.target" ];
+    wantedBy = [ "graphical-session.target" ];
+  };
 
   # Vivaldi updates the force-installed extension in place and mid-session
   # (1.19.3 landed at 21:17 while the session was already running), while the

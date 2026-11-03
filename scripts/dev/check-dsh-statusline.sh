@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regression gate for packages/local-bin/bin/dsh-statusline.
+# Regression gate for packages/local-bin-system (dsh-statusline).
 #
 # The script is the content half of the status line: a host pipes session JSON to
 # its stdin and renders the first stdout line. What this pins:
@@ -17,14 +17,14 @@
 set -uo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BIN="${1:-$here/../../packages/local-bin/bin/dsh-statusline}"
+BIN="${1:-$(command -v dsh-statusline || true)}"
 
 if [ ! -f "$BIN" ]; then
   echo "check-dsh-statusline: no such script: $BIN" >&2
   exit 1
 fi
 
-run() { sh "$BIN" "$@"; }
+run() { "$BIN" "$@"; }
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
@@ -33,9 +33,6 @@ trap 'rm -rf "$work"' EXIT
 # helper, so every dev gate reports and exits identically.
 # shellcheck source-path=SCRIPTDIR source=lib.sh
 . "$here/lib.sh"
-
-sh -n "$BIN"
-assert $? "the script parses as POSIX sh"
 
 # ── fixture: a dirty repository ──────────────────────────────────────────────
 repo="$work/repo"

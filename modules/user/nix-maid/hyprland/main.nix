@@ -220,7 +220,7 @@
 #   with HyprShade's interface (`v_texcoord` / `tex` / `fragColor`) plus the plugin's per-frame
 #   uniforms (`is_active`, `surface_size`, `time`, `window_box`, …). Editing a shader takes effect on
 #   the next frame — no reload, no config change.
-# - **Command**: `shade` (`packages/local-bin/bin/shade`, i.e. `~/.local/bin/shade`) drives the plugin
+# - **Command**: `shade` (`packages/local-bin-system` (shade), i.e. `~/.local/bin/shade`) drives the plugin
 #   from the shell — `shade list`, `shade on [NAME]` (focused window; without NAME an fzf picker over
 #   the shader directory), `shade off`, `shade class CLASS [NAME]`, `shade layer NS [NAME]`,
 #   `shade reload`. It calls the plugin through `hyprctl eval` and swallows the spurious "expected a
@@ -376,7 +376,7 @@
 #   instead of the plugin's own notification and result thumbnail. Recording status notifications stay
 #   on — the record binds use `screenrec`, not HyprCapture, so the thumbnail loss is theirs too.
 # - **Screenshot toast**: the `screenshot-toast.path` unit (`main.nix`) watches the shots directory
-#   and runs `screenshot-toast` (`packages/local-bin/bin/screenshot-toast`), which forwards the newest
+#   and runs `screenshot-toast` (`packages/local-bin-desktop (screenshot-toast)`), which forwards the newest
 #   file to `pic-info` → `pic-notify` → the shell's toast (pleamar's `toast` scene, which polls
 #   `$XDG_CACHE_HOME/pleamar/screenshot-event.json`; `pic-notify` also keeps writing the legacy
 #   `~/.cache/quickshell` pair, and falls back to `notify-send` only when neither shell answers its

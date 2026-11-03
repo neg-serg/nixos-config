@@ -77,7 +77,7 @@
 #
 # ### pic-ocr (screenshot → text, engine choice)
 #
-# - Script: `packages/local-bin/bin/pic-ocr` (installed to `~/.local/bin`).
+# - Script: `packages/local-bin-desktop` (pic-ocr) (installed to `~/.local/bin`).
 # - Two engines: classic **tesseract** (eng+rus, fast) and local **neural** OCR via Ollama's
 #   `qwen3-vl:8b` (default; override with `PIC_OCR_NN_MODEL`). Neural images never leave the machine.
 # - Usage: `pic-ocr [--engine=nn|tesseract|menu] IMAGE`; with no IMAGE it captures a region (`slurp`).

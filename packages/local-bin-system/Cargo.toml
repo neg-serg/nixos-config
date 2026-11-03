@@ -1,0 +1,60 @@
+[package]
+name = "local-bin-system"
+version = "0.1.0"
+edition = "2021"
+description = "Rust ports of the system-level packages/local-bin/bin helpers"
+license = "MIT"
+
+# One binary per former shell helper, installed under the script's own name.
+[[bin]]
+name = "steam-cloud-fix"
+path = "src/steam_cloud_fix.rs"
+
+[[bin]]
+name = "dsh-statusline"
+path = "src/dsh_statusline.rs"
+
+[[bin]]
+name = "sw"
+path = "src/sw.rs"
+
+[[bin]]
+name = "shade"
+path = "src/shade.rs"
+
+[[bin]]
+name = "main-menu"
+path = "src/main_menu.rs"
+
+[[bin]]
+name = "surfingkeys-extension-patch"
+path = "src/surfingkeys_extension_patch.rs"
+
+[[bin]]
+name = "dsh-url"
+path = "src/dsh_url.rs"
+
+[[bin]]
+name = "qr"
+path = "src/qr.rs"
+
+[[bin]]
+name = "pdf2md"
+path = "src/pdf2md.rs"
+
+[[bin]]
+name = "upstream-radar"
+path = "src/upstream_radar.rs"
+
+[[bin]]
+name = "vsmlrt-models"
+path = "src/vsmlrt_models.rs"
+
+[[bin]]
+name = "nix-updates"
+path = "src/nix_updates.rs"
+
+[dependencies]
+serde_json = "1"
+
+[workspace]

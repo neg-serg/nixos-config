@@ -20,7 +20,7 @@ import "../../lib/capsule.plm"
 //     `$XDG_CACHE_HOME/pleamar/screenshot-event.json`. That path is OUTSIDE
 //     the scene's own folder and the files service never leaves the folder, so
 //     the logic reads it with `run("cat", …)` (permission `run: "cat"`).
-//   · The producer (`packages/local-bin/bin/pic-notify`) writes that JSON; it
+//   · The producer (`packages/local-bin-desktop (pic-notify)`) writes that JSON; it
 //     also keeps writing the legacy `~/.cache/quickshell/screenshot-event{,.json}`
 //     pair for the Quickshell toast, which nothing here reads — a new scene must
 //     not add files under the legacy cache (INTERFACES §1.2).

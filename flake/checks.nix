@@ -205,7 +205,7 @@ in
       '';
 
   # ── dsh-statusline guard ───────────────────────────────────────────
-  # packages/local-bin/bin/dsh-statusline is the content half of the status
+  # packages/local-bin-system (dsh-statusline) is the content half of the status
   # line: session JSON on stdin, one line on stdout. The guard pins the protocol
   # subset (branch, dirty counts, context from ratio or tokens/max, turn), the
   # worktree naming, DSH_STATUSLINE_PARTS, and that a missing field degrades
@@ -225,7 +225,7 @@ in
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME"
         # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
-        bash ${../scripts/dev}/check-dsh-statusline.sh ${../packages/local-bin/bin/dsh-statusline}
+        bash ${../scripts/dev}/check-dsh-statusline.sh ${pkgs.neg.local-bin-system}/bin/dsh-statusline
         touch $out
       '';
 

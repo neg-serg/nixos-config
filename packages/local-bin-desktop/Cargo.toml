@@ -1,0 +1,68 @@
+[package]
+name = "local-bin-desktop"
+version = "0.1.0"
+edition = "2021"
+description = "Rust ports of the desktop/media helpers from packages/local-bin/bin"
+license = "MIT"
+
+[[bin]]
+name = "pic-notify"
+path = "src/bin/pic_notify.rs"
+
+[[bin]]
+name = "screenrec"
+path = "src/bin/screenrec.rs"
+
+[[bin]]
+name = "clip"
+path = "src/bin/clip.rs"
+
+[[bin]]
+name = "screenshot-toast"
+path = "src/bin/screenshot_toast.rs"
+
+[[bin]]
+name = "pic-info"
+path = "src/bin/pic_info.rs"
+
+[[bin]]
+name = "pic-ocr"
+path = "src/bin/pic_ocr.rs"
+
+[[bin]]
+name = "pic-dirs-list"
+path = "src/bin/pic_dirs_list.rs"
+
+[[bin]]
+name = "wl-restore"
+path = "src/bin/wl_restore.rs"
+
+[[bin]]
+name = "unlock"
+path = "src/bin/unlock.rs"
+
+[[bin]]
+name = "kitty-font-zoom"
+path = "src/bin/kitty_font_zoom.rs"
+
+[[bin]]
+name = "cursor-stretch"
+path = "src/bin/cursor_stretch.rs"
+
+[[bin]]
+name = "pngoptim"
+path = "src/bin/pngoptim.rs"
+
+[[bin]]
+name = "hypr-resize-proportional"
+path = "src/bin/hypr_resize_proportional.rs"
+
+[dependencies]
+# Delivering SIGINT to wf-recorder and probing its liveness (screenrec) needs a
+# safe signal API; std can only SIGKILL a Child it still owns.
+nix = { version = "0.30", default-features = false, features = [
+  "signal",
+  "process",
+] }
+
+[workspace]
