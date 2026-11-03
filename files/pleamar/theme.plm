@@ -15,8 +15,13 @@
 // Roles:
 //   skin.coal     colors.background       the wallpaper's darkest cluster
 //   skin.surface  colors.surfaceVariant   its second-darkest
-//   skin.ink      colors.text.primary     the lightest cluster, kept at 4.5:1 on surface
-//   skin.ink.dim  colors.text.secondary   ink mixed 35 % toward surface
+//   skin.ink      colors.text.primary     the lightest cluster, stepped toward the
+//                                         extreme until it clears 4.5:1 on surface
+//                                         (9.8:1 with these defaults)
+//   skin.ink.dim  colors.text.secondary   the static token colors.jsonc carries, not a
+//                                         mix of the other two (the comment below the
+//                                         value says the same; these defaults are ~17 %
+//                                         of the way from ink to surface)
 //   skin.accent   colors.accent.primary   the wallpaper's mean saturated colour,
 //                                         hue-matched onto #006FCC
 //   skin.accent.hover / skin.accent.deep / skin.on.accent — the derived tokens

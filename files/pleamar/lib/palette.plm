@@ -25,8 +25,8 @@
 //        ui * clamp(min(screen.width / design.width,
 //                       screen.height / design.height), fit.min, fit.max)
 //
-//    That is 1.15 on the reference monitor and stays within fit.min..fit.max
-//    elsewhere. Pass it as the `scale:` argument of the lib components and
+//    That is `ui` on the reference monitor — the fit is 1 at 1920x1080 — and stays within
+//    fit.min..fit.max elsewhere. Pass it as the `scale:` argument of the lib components and
 //    multiply every other length by it. In a single-surface scene use `ui`
 //    alone: there `screen.width`/`screen.height` measure the surface, not the
 //    monitor.
@@ -35,6 +35,13 @@
 //    hex. The QS tokens that were translucent are split into a tone and an
 //    alpha (`veil` 53% over `coal`, `ink.hover` 6%, …) and the drawing site
 //    applies the alpha with `opacity:` or `fill: tone alpha`.
+//
+// 4. Not every token has a reader. The reference's settings surface is wider than the scenes this
+//    tree draws, so some values are the reference theme's record and nothing more (the census is
+//    docs/INTERFACES.md §3.3; `bar.plate` is the one added after the port). An unreferenced token
+//    is not a promise that a scene will name it, and a scene that writes a literal is not
+//    automatically wrong — it is a decision that the token did not fit. What a scene must not do is
+//    write a literal that disagrees with a token it then reads somewhere else.
 //
 // Springs are named after the QS animation timings they replace and are
 // critically damped to arrive in that time: `ui.quick` ≈ 120 ms, `ui.fast`
@@ -153,6 +160,10 @@ library Palette strict {
     // The capsule contract (lib/capsule.plm) reads these as its defaults.
     let capsule.pad = 4           // CapsuleMetrics.padding (ui.spacing.xsmall)
     let capsule.pad.y = 2         // CapsuleMetrics vertical padding
+    // The capsule component's default height, and the popup-scale one: 18 is inner 10 +
+    // 2 * pad_y 2 + 2 * ... — the arithmetic the reference uses for a card, not for the strip.
+    // A bar capsule paints `bar.plate` (23) instead; the difference is what made build, voice,
+    // MPD flags and the media capsule sit five pixels short of their neighbours.
     let capsule.height = 18       // CapsuleMetrics height: inner 10 + 2 * pad
     let capsule.gap = 2           // CapsuleButton iconSpacing (rowSpacingSmall)
     let capsule.edge = 0          // panel.capsule.borderWidth

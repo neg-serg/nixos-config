@@ -4,6 +4,11 @@ Status: frozen 2026-10-16 by PH1-T1. Every PH2 scene, library and helper is writ
 document. If something here is wrong, it is fixed here first and the change is announced; nothing in
 `shells/**` or `scripts/helpers/**` is allowed to define an interface this document does not.
 
+Verified against pleamar 0.4.11 (language 0.4) when it was frozen; this host now runs 0.7.7
+(language 0.9), and the scenes' `language 0.4` header is still accepted. Treat §9.2's compiler notes
+as a 0.4.11 record until they are re-checked against the running binary — the rest of the document
+(interfaces, palette names, settings, labels) is what the scenes are held to.
+
 Sources this document is derived from, read once and not to be edited by scene authors:
 
 - `files/quickshell` (read-only legacy reference) — `Theme/manifest.json` + `Theme/*.jsonc` +
@@ -252,10 +257,11 @@ label texts in §8 (`Volume`, `Network`, `Media`, `Calendar`, `Weather`, `Build`
   that must differ per monitor is written *inside* the repeated drawing (see §3.2 — loose `let`s,
   `prop`s and `fact`s are shared by all copies).
 
-- The bar's surface carries the shadow room the QS theme expected: a body shadow of `0, 2, 6` needs
-  4 px below the strip, so `size: full, bar.height * scale + 4 * scale` with the strip drawn in the
-  top `bar.height * scale`, or anchor the surface where the shadow cannot be cut (§5.3 of the
-  reference: a cut shadow is a renderer message, not an error, but it is a visible defect).
+- The bar's surface is 35 px: the 25 px strip plus a 10 px hotzone above it, the band the tooltip's
+  own surface lives in and the pointer enters from. It is anchored to the edge it reserves
+  (`reserve: 25 while shown`), and its `size:` is a literal because a surface's size cannot follow a
+  runtime value (§3.1). A taller surface is not free — the renderer refuses to cut a drawing and
+  reports it — so a widget that needs more room above the strip grows this number, not `bar.plate`.
 
 ## 3. Palette (`lib/palette.plm`)
 
@@ -581,6 +587,35 @@ A one-off duration can still be written inline (`~620ms`), and the house springs
 `reducedMotion` setting, springs settle at once; scenes do not need to branch for that (the renderer
 does it), but `spin`, `wave` and `blink` go quiet on their own.
 
+### 3.6 Bar geometry invariants
+
+The bar is one 25 px strip drawn in logical pixels (`ui` is 1, §3.1). Its geometry is not a table of
+constants — widths follow their content — so what a change must preserve is a set of rules, and
+`just pleamar-geometry` enforces the last four of them on the live scene
+(`scripts/dev/check-pleamar-geometry.sh`):
+
+- **One plate line.** Every capsule in the strip paints `box { from: 0, 1; size: w, bar.plate }`
+  with `corner: 6` — `bar.plate` is 23 (palette), not `capsule.height`'s 18, which is the
+  popup-scale default (§4). A widget that takes the 18 is five pixels short and sits off the line
+  (build, voice, MPD flags and the media capsule all did).
+- **Widths are facts.** A capsule that holds a string is as wide as that string: the logic composes
+  `vol.w`, `mic.w`, `ws.w`, `weather.w` and `media_w` from the same characters it prints (Iosevka's
+  half-em advance: 7 px per glyph at 14, times `fontScale`, plus the plate's own padding and glyph
+  slots), and the scene sizes the component from the fact. A component cannot measure itself into
+  its own `size:` — that slot is read in the caller's scope — so a literal here is a decision to
+  clip or to leave dead plate.
+- **Optical centre is not the line box.** `anchor: … center` centres the hhea line box, not the ink:
+  digits and caps land about 0.25 px high, an x-height-only string (`ru`, a lower-case workspace
+  name) about 1.25 px low, a glyph drawn from a fallback face further still. Correct per glyph
+  class, not with one global nudge: the `+ 1` that used to sit on every icon moved them the wrong
+  way against their labels.
+- **Icons are centred on their frame**, so their art must be square with equal padding; an SVG whose
+  `viewBox` is not square (the keyboard's old `20 × 12`) renders letterboxed and reads lighter than
+  its neighbours.
+- **Contrast floors.** Accent *text* uses `accent.hover` (5.8:1 on a plate), not `accent` (4.1:1);
+  the dimmed leading zeros of the network readout stay at 60 % or lighter (45 % measured 3.3:1);
+  `ink.off` is for non-text roles unless the surface behind it is known to be dark.
+
 ## 4. Capsule API (`lib/capsule.plm`)
 
 The capsule is the one background every widget uses; it is the pleamar form of
@@ -624,7 +659,8 @@ component Capsule(w: number,
 | parameter | meaning | default | QS source | | --------------------------------- |
 \-------------------------------------------- | --------------------- |
 ------------------------------------------------------------- | | `w` | design width; the copy is
-`w * scale` wide | required | — | | `h` | design height | `capsule.height` = 18 |
+`w * scale` wide | required | — | | `h` | design height. `capsule.height` = 18 is the popup-scale
+default; the bar's capsules pass `bar.plate` = 23 (§3.6) | `capsule.height` = 18 |
 `uniformCapsuleHeight` (inner 10 + 2 × pad) | | `fill` | box colour | `slate` |
 `Theme.surfaceVariant` / `WidgetBg` fallback | | `alpha` | how much of `fill` covers | `veil` = 53%
 | `Theme.surface` #88000000 | | `pad`, `pad_y` | room around the content | 4 / 2 |
@@ -1099,9 +1135,8 @@ surface default is yes.
 
 ### 9.1 Gates
 
-- After every edit: `env -u LD_LIBRARY_PATH /tmp/plm-recon/result/bin/pleamar --check <scene>.plm`
-  (or `pleamar --check` when the binary is in `PATH`). The compiler is the only authority on syntax;
-  a scene that merely starts is not checked enough.
+- After every edit: `pleamar --check <scene>.plm`. The compiler is the only authority on syntax; a
+  scene that merely starts is not checked enough.
 - Before handoff: `just pleamar-check` (runs `scripts/dev/check-plm.sh` over every tracked `.plm`)
   and `just lint`. While the binary is not in `PATH` the gate prints a skip notice and exits 0;
   never mistake the skip for a pass.
@@ -1114,8 +1149,11 @@ surface default is yes.
   `<name>.check.plm` beside it, because nothing else in the repo would ever compile it (§10). The
   PH1 scratch consumers are in `/tmp/plm-consumer/` (`palette_probe.plm` exercises every let and
   spring, `capsule_use.plm` every capsule parameter).
-- Per scene, before a task is done: headless PNG reviewed, `describe` snapshot committed under
-  `tests/`, budget row in `tests/evidence/` (harness owned by PH0-T3/PH0-T4).
+- Per scene, before a task is done: a render reviewed and a `describe` read. The harness that used
+  to do this (`pleamar-smoke`, `pleamar-describe-snap`) needs `pleamar-wm`, which is not installed
+  here: the committed `tests/*.describe.txt` predate the current bar and are **not** a gate — do not
+  hand-edit them, and do not treat their numbers as truth. For the live bar use
+  `just pleamar-geometry` (§3.6), which asserts the invariants rather than a snapshot of widths.
 - The behavior of a runtime change is not proven by `--check`; it is proven by a headless run plus a
   `describe` snapshot. Say which was run.
 
