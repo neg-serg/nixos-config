@@ -59,11 +59,12 @@ pub fn fill_rects<RT: RenderTarget>(
     canvas.fill_rects(&converted)
 }
 
-pub fn draw_texture<RT: RenderTarget>(
+pub fn draw_texture_frame<RT: RenderTarget>(
     canvas: &mut Canvas<RT>,
     cam: Cam,
     scale: i32,
     texture: &Texture,
+    src: SdlRect,
     dst: Rect,
     flip_h: bool,
 ) -> Result<(), String> {
@@ -72,7 +73,7 @@ pub fn draw_texture<RT: RenderTarget>(
     let h = (dst.h * scale as f32).round().max(1.0) as u32;
     canvas.copy_ex(
         texture,
-        None,
+        Some(src),
         Some(SdlRect::new(x, y, w, h)),
         0.0,
         None,
@@ -137,6 +138,31 @@ pub fn text_shadow<RT: RenderTarget>(
         shadow,
     )?;
     text(canvas, cam, scale, x, y, content, px, col)
+}
+
+pub fn text_right<RT: RenderTarget>(
+    canvas: &mut Canvas<RT>,
+    cam: Cam,
+    scale: i32,
+    right_x: f32,
+    y: f32,
+    content: &str,
+    px: i32,
+    col: Color,
+    shadow: Color,
+) -> Result<(), String> {
+    let width = font::text_width(content, px) as f32;
+    text_shadow(
+        canvas,
+        cam,
+        scale,
+        right_x - width,
+        y,
+        content,
+        px,
+        col,
+        shadow,
+    )
 }
 
 pub fn text_centered<RT: RenderTarget>(

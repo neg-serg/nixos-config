@@ -5,8 +5,10 @@
 // wallpaper itself; only the crab, the drops and the water overlays move.
 
 mod assets;
+mod director;
 mod effects;
 mod font;
+mod gameplay;
 mod level;
 mod math;
 mod player;
@@ -23,7 +25,9 @@ use sdl2::render::{BlendMode, Canvas, RenderTarget, TextureCreator};
 use sdl2::video::WindowContext;
 
 use assets::Assets;
+use director::{Director, Upgrade, CHUNK_W};
 use effects::Particles;
+use gameplay::{Badnik, Capsule, RingPickup, Shot};
 use level::{DROP_COUNT, SPAWN, VIEW_H, VIEW_W, WORLD_H, WORLD_W};
 use math::{hash01, smooth, Rect, Vec2};
 use player::{Input, Player};
@@ -36,6 +40,7 @@ enum State {
     Title,
     Play,
     Won,
+    Lost,
 }
 
 struct Game<'a> {
@@ -47,6 +52,25 @@ struct Game<'a> {
     time: f32,
     title_t: f32,
     won_t: f32,
+    lost_t: f32,
+    director: Director,
+    current_chunk: i32,
+    badniks: Vec<Badnik>,
+    shots: Vec<Shot>,
+    rings: Vec<RingPickup>,
+    capsule: Option<Capsule>,
+    hearts: i32,
+    invuln: f32,
+    rings_taken: u32,
+    stomps: u32,
+    hits_taken: u32,
+    builds: [u32; 4],
+    fun: f32,
+    novelty: f32,
+    scenario: String,
+    scenario_t: f32,
+    metrics_path: Option<String>,
+    seed: u32,
     drops: usize,
     state: State,
     hint: f32,
@@ -54,6 +78,7 @@ struct Game<'a> {
     toast_text: String,
     clean: bool,
     debug: bool,
+    frame_override: Option<usize>,
     dust_clock: f32,
     mote_clock: f32,
     spray_clock: f32,
@@ -61,7 +86,7 @@ struct Game<'a> {
 }
 
 impl<'a> Game<'a> {
-    fn new(assets: Assets<'a>, debug: bool) -> Self {
+    fn new(assets: Assets<'a>, debug: bool, seed: u32) -> Self {
         let level = level::Level::waterfall();
         let player = Player::new(SPAWN);
         Self {
@@ -73,6 +98,25 @@ impl<'a> Game<'a> {
             time: 0.0,
             title_t: 0.0,
             won_t: 0.0,
+            lost_t: 0.0,
+            director: Director::new(seed),
+            current_chunk: i32::MIN,
+            badniks: Vec::new(),
+            shots: Vec::new(),
+            rings: Vec::new(),
+            capsule: None,
+            hearts: 3,
+            invuln: 0.0,
+            rings_taken: 0,
+            stomps: 0,
+            hits_taken: 0,
+            builds: [0; 4],
+            fun: 0.0,
+            novelty: 0.0,
+            scenario: String::new(),
+            scenario_t: 0.0,
+            metrics_path: None,
+            seed,
             drops: 0,
             state: State::Title,
             hint: 0.0,
@@ -80,6 +124,7 @@ impl<'a> Game<'a> {
             toast_text: String::new(),
             clean: false,
             debug,
+            frame_override: None,
             dust_clock: 0.0,
             mote_clock: 0.0,
             spray_clock: 0.0,
@@ -98,6 +143,221 @@ impl<'a> Game<'a> {
         self.state = State::Play;
         self.title_t = 0.0;
         self.won_t = 0.0;
+        self.lost_t = 0.0;
+        self.current_chunk = i32::MIN;
+        self.badniks.clear();
+        self.shots.clear();
+        self.rings.clear();
+        self.capsule = None;
+        self.hearts = 3;
+        self.invuln = 0.0;
+        self.rings_taken = 0;
+        self.stomps = 0;
+        self.hits_taken = 0;
+        self.builds = [0; 4];
+        self.fun = 0.0;
+        self.novelty = 0.0;
+        self.scenario.clear();
+        self.scenario_t = 0.0;
+    }
+
+    fn enter_chunk(&mut self, chunk: i32) {
+        let encounter = self
+            .director
+            .encounter_for(chunk, self.player.pos, &self.level);
+        self.badniks = encounter
+            .spawns
+            .iter()
+            .map(|s| Badnik::from_spawn(*s))
+            .collect();
+        self.rings = encounter
+            .rings
+            .iter()
+            .map(|r| RingPickup {
+                pos: r.pos,
+                taken: false,
+            })
+            .collect();
+        self.capsule = encounter.capsule.map(|(pos, upgrade)| Capsule {
+            pos,
+            upgrade,
+            taken: false,
+        });
+        self.scenario = encounter.scenario.to_string();
+        self.scenario_t = 3.0;
+        self.current_chunk = chunk;
+        self.shots.clear();
+        if let Some(last) = &self.director.last {
+            self.fun = last.scores.fun;
+            self.novelty = last.scores.surprise;
+        }
+    }
+
+    fn update_encounter(&mut self, dt: f32) {
+        let chunk_x0 = self.current_chunk as f32 * CHUNK_W;
+        for badnik in &mut self.badniks {
+            if badnik.alive {
+                badnik.update(dt, &self.player, &self.level, chunk_x0, &mut self.shots);
+            }
+        }
+
+        let mut stomped = Vec::new();
+        let mut hurt = false;
+        {
+            let p = &self.player;
+            let invulnerable = self.invuln > 0.0;
+            for badnik in &mut self.badniks {
+                if !badnik.alive || !badnik.hitbox().overlaps(p.hitbox()) {
+                    continue;
+                }
+                if gameplay::stomp_contact(p, badnik) {
+                    stomped.push(badnik.pos);
+                } else if !invulnerable {
+                    hurt = true;
+                }
+            }
+        }
+        for pos in stomped {
+            for badnik in &mut self.badniks {
+                if (badnik.pos - pos).len() < 1.0 {
+                    badnik.alive = false;
+                }
+            }
+            self.stomps += 1;
+            self.particles.sparkle(pos);
+        }
+        if hurt {
+            self.damage();
+        }
+
+        let shot_hits =
+            gameplay::update_shots(&mut self.shots, dt, &self.player, &self.level, chunk_x0);
+        if shot_hits > 0 && self.invuln <= 0.0 {
+            self.damage();
+        }
+
+        self.invuln = (self.invuln - dt).max(0.0);
+        self.scenario_t = (self.scenario_t - dt).max(0.0);
+
+        let center = self.player.center();
+        let magnet = self.player.magnet;
+        for ring in &mut self.rings {
+            if ring.taken {
+                continue;
+            }
+            if magnet {
+                let d = center - ring.pos;
+                if d.len() < 190.0 {
+                    ring.pos += d.normalized() * (460.0 * dt);
+                }
+            }
+            if (center - ring.pos).len() < 42.0 {
+                ring.taken = true;
+                self.rings_taken += 1;
+                self.particles.sparkle(ring.pos);
+            }
+        }
+        if let Some(capsule) = &mut self.capsule {
+            if !capsule.taken && capsule.hitbox().overlaps(self.player.hitbox()) {
+                capsule.taken = true;
+                let upgrade = capsule.upgrade;
+                gameplay::apply_upgrade(&mut self.player, upgrade);
+                self.builds[upgrade.index()] += 1;
+                self.particles.sparkle(capsule.pos);
+                self.toast = 2.4;
+                self.toast_text = format!("СБОРКА: {}", upgrade.label());
+            }
+        }
+    }
+
+    fn damage(&mut self) {
+        if self.invuln > 0.0 {
+            return;
+        }
+        let from = self.player.pos.x;
+        self.hits_taken += 1;
+        self.invuln = 1.35;
+        self.particles
+            .sparkle(self.player.pos + Vec2::new(0.0, -40.0));
+        if self.player.shield {
+            self.player.shield = false;
+            self.toast = 1.6;
+            self.toast_text = "ЩИТ РАЗБИТ".into();
+            return;
+        }
+        self.player.keep_build();
+        self.player.hurt(from);
+        self.hearts -= 1;
+        if self.hearts <= 0 {
+            self.hearts = 0;
+            self.state = State::Lost;
+            self.lost_t = 0.0;
+            self.write_metrics();
+        }
+    }
+
+    fn metrics_json(&self) -> String {
+        let mut chunks = String::new();
+        for p in &self.director.campaign {
+            if !chunks.is_empty() {
+                chunks.push(',');
+            }
+            chunks.push_str(&format!(
+                "{{\"chunk\":{},\"scenario\":\"{}\",\"fun\":{:.3},\"surprise\":{:.3},\"build\":{:.3},\"situation\":{:.3},\"fairness\":{:.3},\"enemies\":{},\"rings\":{}}}",
+                p.encounter.chunk,
+                p.encounter.scenario,
+                p.scores.fun,
+                p.scores.surprise,
+                p.scores.build,
+                p.scores.situation,
+                p.scores.fairness,
+                p.encounter.spawns.len(),
+                p.encounter.rings.len()
+            ));
+        }
+        let fun_avg = if self.director.campaign.is_empty() {
+            0.0
+        } else {
+            self.director
+                .campaign
+                .iter()
+                .map(|p| p.scores.fun)
+                .sum::<f32>()
+                / self.director.campaign.len() as f32
+        };
+        let novelty_avg = if self.director.campaign.is_empty() {
+            0.0
+        } else {
+            self.director
+                .campaign
+                .iter()
+                .map(|p| p.scores.surprise)
+                .sum::<f32>()
+                / self.director.campaign.len() as f32
+        };
+        format!(
+            "{{\"seed\":{},\"hearts\":{},\"drops\":{},\"chunks\":[{}],\"events\":{{\"rings\":{},\"stomps\":{},\"hits\":{},\"upgrades\":{{\"speed\":{},\"jump\":{},\"magnet\":{},\"shield\":{}}}}},\"summary\":{{\"fun_avg\":{:.3},\"novelty_avg\":{:.3},\"scenarios\":{}}}}}",
+            self.seed,
+            self.hearts,
+            self.drops,
+            chunks,
+            self.rings_taken,
+            self.stomps,
+            self.hits_taken,
+            self.builds[0],
+            self.builds[1],
+            self.builds[2],
+            self.builds[3],
+            fun_avg,
+            novelty_avg,
+            self.director.campaign.len()
+        )
+    }
+
+    fn write_metrics(&self) {
+        if let Some(path) = &self.metrics_path {
+            let _ = std::fs::write(path, self.metrics_json());
+        }
     }
 
     fn start_playing(&mut self) {
@@ -144,9 +404,17 @@ impl<'a> Game<'a> {
                     }
                 }
 
+                let chunk = (self.player.pos.x / CHUNK_W).floor() as i32;
+                if chunk != self.current_chunk {
+                    self.enter_chunk(chunk);
+                }
+                self.update_encounter(dt);
                 self.collect_drops();
                 self.check_goal();
                 self.follow_camera(dt);
+            }
+            State::Lost => {
+                self.lost_t += dt;
             }
             State::Won => {
                 self.won_t += dt;
@@ -221,6 +489,7 @@ impl<'a> Game<'a> {
                     for _ in 0..6 {
                         self.particles.sparkle(goal);
                     }
+                    self.write_metrics();
                 }
             } else {
                 self.toast = 2.2;
@@ -266,6 +535,7 @@ impl<'a> Game<'a> {
         }
 
         self.draw_water(canvas, cam, scale)?;
+        self.draw_encounter(canvas, cam, scale)?;
         self.draw_goal(canvas, cam, scale)?;
         self.draw_drops(canvas, cam, scale)?;
         self.draw_player(canvas, cam, scale)?;
@@ -378,6 +648,137 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
+    fn draw_encounter<RT: RenderTarget>(
+        &mut self,
+        canvas: &mut Canvas<RT>,
+        cam: Cam,
+        scale: i32,
+    ) -> Result<(), String> {
+        let time = self.time;
+        let palette = self.assets.palette;
+
+        for badnik in &self.badniks {
+            if !badnik.alive {
+                continue;
+            }
+            let frame = (badnik.t * 14.0) as usize % 2;
+            let src = SdlRect::new((frame as u32 * 36) as i32, 0, 36, 36);
+            let bob = (badnik.t * 3.0).sin() * 4.0;
+            let dst = Rect::new(badnik.pos.x - 36.0, badnik.pos.y - 36.0 + bob, 72.0, 72.0);
+            render::draw_texture_frame(
+                canvas,
+                cam,
+                scale,
+                &self.assets.badnik,
+                src,
+                dst,
+                badnik.dir < 0.0,
+            )?;
+        }
+
+        for shot in &self.shots {
+            render::ring(
+                canvas,
+                cam,
+                scale,
+                (shot.pos.x, shot.pos.y),
+                9.0,
+                3.0,
+                8,
+                Color::RGBA(255, 120, 60, 220),
+            )?;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(shot.pos.x - 3.0, shot.pos.y - 3.0, 6.0, 6.0),
+                Color::RGBA(255, 232, 150, 240),
+            )?;
+        }
+
+        for ring in &self.rings {
+            if ring.taken {
+                continue;
+            }
+            let bob = (time * 2.4 + ring.pos.x * 0.01).sin() * 3.0;
+            render::ring(
+                canvas,
+                cam,
+                scale,
+                (ring.pos.x, ring.pos.y + bob),
+                12.0,
+                3.0,
+                12,
+                Color::RGBA(250, 214, 110, 235),
+            )?;
+            render::fill_rect(
+                canvas,
+                cam,
+                scale,
+                Rect::new(ring.pos.x - 2.0, ring.pos.y + bob - 12.0, 4.0, 3.0),
+                Color::RGBA(255, 250, 220, 240),
+            )?;
+        }
+
+        if let Some(capsule) = &self.capsule {
+            if !capsule.taken {
+                let bob = (time * 2.0).sin() * 3.0;
+                let x = capsule.pos.x;
+                let y = capsule.pos.y + bob;
+                // Monitor body.
+                render::fill_rect(
+                    canvas,
+                    cam,
+                    scale,
+                    Rect::new(x - 24.0, y - 30.0, 48.0, 58.0),
+                    Color::RGBA(8, 14, 18, 200),
+                )?;
+                render::fill_rect(
+                    canvas,
+                    cam,
+                    scale,
+                    Rect::new(x - 21.0, y - 27.0, 42.0, 52.0),
+                    Color::RGBA(178, 192, 200, 255),
+                )?;
+                render::fill_rect(
+                    canvas,
+                    cam,
+                    scale,
+                    Rect::new(x - 16.0, y - 22.0, 32.0, 30.0),
+                    match capsule.upgrade {
+                        Upgrade::Speed => Color::RGBA(250, 206, 90, 255),
+                        Upgrade::Jump => Color::RGBA(120, 190, 255, 255),
+                        Upgrade::Magnet => Color::RGBA(196, 140, 250, 255),
+                        Upgrade::Shield => Color::RGBA(120, 220, 160, 255),
+                    },
+                )?;
+                render::fill_rect(
+                    canvas,
+                    cam,
+                    scale,
+                    Rect::new(x - 12.0, y + 12.0, 24.0, 6.0),
+                    Color::RGBA(90, 104, 112, 255),
+                )?;
+                if let Some(glyph) = capsule.upgrade.label().chars().next() {
+                    let label = glyph.to_string();
+                    render::text_centered(
+                        canvas,
+                        cam,
+                        scale,
+                        x,
+                        y - 16.0,
+                        &label,
+                        4,
+                        Color::RGBA(20, 24, 28, 235),
+                        Color::RGBA(20, 24, 28, 0),
+                    )?;
+                }
+            }
+        }
+        let _ = palette;
+        Ok(())
+    }
+
     fn draw_goal<RT: RenderTarget>(
         &mut self,
         canvas: &mut Canvas<RT>,
@@ -442,31 +843,66 @@ impl<'a> Game<'a> {
         scale: i32,
     ) -> Result<(), String> {
         let p = &self.player;
-        let sq = p.squash();
-        let w = self.assets.crab_w * (1.0 + (1.0 - sq) * 0.5);
-        let h = self.assets.crab_h * sq;
         let wl = self.level.waterline(p.pos.x);
-        let bottom = if p.in_water { wl + 8.0 } else { p.pos.y };
-        let x = p.pos.x - w * 0.5;
-        let y = bottom - h;
+        let speed = p.vel.x.abs();
+
+        // Sheet layout: idle 0..1, run 2..5, spin ball 6..8.
+        let computed = if p.in_water {
+            2 + (self.time * 7.0) as usize % 4
+        } else if !p.on_ground {
+            6 + (self.time * 18.0) as usize % 3
+        } else if speed > 40.0 {
+            2 + (p.song * 6.0) as usize % 4
+        } else if (self.time * 1.8).sin() > 0.0 {
+            1
+        } else {
+            0
+        };
+        let frame = self.frame_override.unwrap_or(computed);
+        let spinning = frame >= 6;
+
+        let sq = p.squash();
+        let fw = self.assets.cat_frame_w * 2.0;
+        let fh = self.assets.cat_frame_h * 2.0;
+        let (w, h) = if spinning {
+            (fw, fh)
+        } else {
+            (fw * (1.0 + (1.0 - sq) * 0.5), fh * sq)
+        };
+        let (x, y) = if spinning {
+            // The ball frame is centred on the body, not on the feet.
+            let c = p.center();
+            (c.x - w * 0.5, c.y - h * 0.5)
+        } else {
+            let bottom = if p.in_water { wl + 8.0 } else { p.pos.y };
+            (p.pos.x - w * 0.5, bottom - h)
+        };
 
         let shadow_y = if p.in_water { wl + 5.0 } else { p.pos.y };
-        for (sw, sh, a) in [(34.0, 4.0, 70u8), (22.0, 3.0, 90), (12.0, 2.0, 110)] {
-            render::fill_rect(
-                canvas,
-                cam,
-                scale,
-                Rect::new(p.pos.x - sw * 0.5, shadow_y - sh * 0.5, sw, sh),
-                Color::RGBA(6, 14, 14, a),
-            )?;
-        }
-
-        self.assets.crab.set_alpha_mod(255);
-        render::draw_texture(
+        let (sw, sh) = if spinning { (26.0, 3.0) } else { (34.0, 4.0) };
+        render::fill_rect(
             canvas,
             cam,
             scale,
-            &self.assets.crab,
+            Rect::new(p.pos.x - sw * 0.5, shadow_y - sh * 0.5, sw, sh),
+            Color::RGBA(6, 14, 14, 80),
+        )?;
+
+        if self.invuln > 0.0 && (self.time * 22.0).sin() < 0.0 {
+            return Ok(());
+        }
+        let src = SdlRect::new(
+            (frame as u32 * self.assets.cat_frame_w as u32) as i32,
+            0,
+            self.assets.cat_frame_w as u32,
+            self.assets.cat_frame_h as u32,
+        );
+        render::draw_texture_frame(
+            canvas,
+            cam,
+            scale,
+            &self.assets.cat,
+            src,
             Rect::new(x, y, w, h),
             p.facing < 0.0,
         )?;
@@ -656,6 +1092,130 @@ impl<'a> Game<'a> {
             )?;
         }
 
+        // Hearts.
+        for i in 0..3 {
+            let x = left + i as f32 * 26.0;
+            let y = top + 42.0;
+            let col = if (i as i32) < self.hearts {
+                Color::RGBA(228, 74, 74, 245)
+            } else {
+                Color::RGBA(40, 30, 32, 170)
+            };
+            for (rx, ry, rw, rh) in [
+                (x + 2.0, y, 2.0, 2.0),
+                (x + 6.0, y, 2.0, 2.0),
+                (x, y + 2.0, 10.0, 4.0),
+                (x + 2.0, y + 6.0, 6.0, 2.0),
+                (x + 4.0, y + 8.0, 2.0, 2.0),
+            ] {
+                render::fill_rect(canvas, cam, scale, Rect::new(rx, ry, rw, rh), col)?;
+            }
+        }
+        // Rings.
+        let rx = left + 3.0 * 26.0 + 18.0;
+        let ry = top + 46.0;
+        render::ring(
+            canvas,
+            cam,
+            scale,
+            (rx, ry),
+            8.0,
+            3.0,
+            10,
+            Color::RGBA(250, 214, 110, 240),
+        )?;
+        render::text_shadow(
+            canvas,
+            cam,
+            scale,
+            rx + 14.0,
+            top + 38.0,
+            &format!("{}", self.rings_taken),
+            3,
+            palette.cream,
+            palette.ink,
+        )?;
+
+        // Build badges.
+        let mut bx = left + 3.0 * 26.0 + 86.0;
+        for upgrade in Upgrade::all() {
+            if self.builds[upgrade.index()] > 0 {
+                let col = match upgrade {
+                    Upgrade::Speed => Color::RGBA(250, 206, 90, 240),
+                    Upgrade::Jump => Color::RGBA(120, 190, 255, 240),
+                    Upgrade::Magnet => Color::RGBA(196, 140, 250, 240),
+                    Upgrade::Shield => Color::RGBA(120, 220, 160, 240),
+                };
+                render::fill_rect(
+                    canvas,
+                    cam,
+                    scale,
+                    Rect::new(bx, top + 38.0, 12.0, 12.0),
+                    col,
+                )?;
+                bx += 18.0;
+            }
+        }
+
+        // Director readout: the fun metric the critic maximised.
+        render::text_right(
+            canvas,
+            cam,
+            scale,
+            VIEW_W - 46.0,
+            40.0,
+            &format!("ФАН {:.2}", self.fun),
+            3,
+            palette.cream,
+            palette.ink,
+        )?;
+        render::text_right(
+            canvas,
+            cam,
+            scale,
+            VIEW_W - 46.0,
+            70.0,
+            &format!("НОВИЗНА {:.2}", self.novelty),
+            2,
+            Color::RGBA(206, 220, 210, 210),
+            palette.ink,
+        )?;
+        let bar_w = 150.0;
+        render::fill_rect(
+            canvas,
+            cam,
+            scale,
+            Rect::new(VIEW_W - 46.0 - bar_w, 104.0, bar_w, 6.0),
+            Color::RGBA(8, 14, 15, 150),
+        )?;
+        render::fill_rect(
+            canvas,
+            cam,
+            scale,
+            Rect::new(
+                VIEW_W - 46.0 - bar_w,
+                104.0,
+                bar_w * self.fun.clamp(0.0, 1.0),
+                6.0,
+            ),
+            Color::RGBA(250, 214, 110, 220),
+        )?;
+
+        if self.scenario_t > 0.0 {
+            let alpha = (self.scenario_t.min(1.0) * 235.0) as u8;
+            render::text_centered(
+                canvas,
+                cam,
+                scale,
+                VIEW_W * 0.5,
+                150.0,
+                &format!("СЦЕНАРИЙ: {} · ФАН {:.2}", self.scenario, self.fun),
+                3,
+                Color::RGBA(246, 238, 212, alpha),
+                Color::RGBA(8, 14, 15, alpha),
+            )?;
+        }
+
         Ok(())
     }
 
@@ -693,7 +1253,7 @@ impl<'a> Game<'a> {
                     scale,
                     VIEW_W * 0.5,
                     462.0,
-                    "КРАБ ИДЁТ К БОЛЬШОЙ ВОДЕ",
+                    "КОТИК БЕЖИТ К БОЛЬШОЙ ВОДЕ",
                     3,
                     Color::RGBA(230, 236, 220, 220),
                     palette.ink,
@@ -759,9 +1319,57 @@ impl<'a> Game<'a> {
                     scale,
                     VIEW_W * 0.5,
                     540.0,
-                    "КРАБ ДОБРАЛСЯ ДО БОЛЬШОЙ ВОДЫ",
+                    "КОТИК ДОБРАЛСЯ ДО БОЛЬШОЙ ВОДЫ",
                     3,
                     Color::RGBA(224, 232, 214, 220),
+                    palette.ink,
+                )?;
+                render::text_centered(
+                    canvas,
+                    cam,
+                    scale,
+                    VIEW_W * 0.5,
+                    720.0,
+                    "R — ЕЩЁ РАЗ · ESC — ВЫХОД",
+                    3,
+                    Color::RGBA(246, 238, 212, 220),
+                    palette.ink,
+                )?;
+            }
+            State::Lost => {
+                let fade = (self.lost_t / 0.7).clamp(0.0, 1.0);
+                render::fill_rect(
+                    canvas,
+                    cam,
+                    scale,
+                    Rect::new(0.0, 0.0, VIEW_W, VIEW_H),
+                    Color::RGBA(20, 8, 10, (120.0 * fade) as u8),
+                )?;
+                render::text_centered(
+                    canvas,
+                    cam,
+                    scale,
+                    VIEW_W * 0.5,
+                    360.0,
+                    "КОТИК УСТАЛ",
+                    10,
+                    Color::RGBA(250, 226, 220, 240),
+                    palette.ink,
+                )?;
+                render::text_centered(
+                    canvas,
+                    cam,
+                    scale,
+                    VIEW_W * 0.5,
+                    470.0,
+                    &format!(
+                        "ФАН {:.2} · КОЛЬЦА {} · СЦЕНАРИИ {}",
+                        self.fun,
+                        self.rings_taken,
+                        self.director.campaign.len()
+                    ),
+                    3,
+                    Color::RGBA(236, 220, 210, 230),
                     palette.ink,
                 )?;
                 render::text_centered(
@@ -820,18 +1428,22 @@ fn main() -> Result<(), String> {
 
     if flag("--help") || flag("-h") {
         println!(
-            "crabwalk — a miniature platformer on the waterfall wallpaper\n\n\
-             USAGE: crabwalk [OPTIONS]\n\n\
+            "catwalk — a miniature cat platformer on the waterfall wallpaper\n\n\
+             USAGE: catwalk [OPTIONS]\n\n\
              OPTIONS:\n\
              \x20 --shot PATH      render one 1920x1080 frame to a PPM and exit\n\
              \x20 --cam X,Y        camera position for --shot\n\
              \x20 --time SECS      animation clock for --shot\n\
              \x20 --state S        title | play | won (for --shot)\n\
              \x20 --pos X,Y        spawn position (QA)\n\
+             \x20 --frame N        force sprite-sheet frame 0..8 (QA)\n\
+             \x20 --warmup SECS    simulate before a --shot (QA)\n\
+             \x20 --seed N         director seed (default 0x5EED)\n\
+             \x20 --metrics PATH   write the run's fun metrics as JSON\n\
              \x20 --debug          draw platform and hitbox outlines\n\
              \x20 --clean          background only (pixel comparison)\n\n\
              KEYS: A/D or arrows walk, Space jump, S dive, R restart, F11 fullscreen,\n\
-             \x20     F12 screenshot to /tmp/crabwalk.ppm, Esc quit"
+             \x20     F12 screenshot to /tmp/catwalk.ppm, Esc quit"
         );
         return Ok(());
     }
@@ -849,6 +1461,10 @@ fn main() -> Result<(), String> {
     });
     let forced_time = value("--time").and_then(|v| v.parse::<f32>().ok());
     let forced_state = value("--state").unwrap_or_else(|| "title".into());
+    let seed = value("--seed")
+        .and_then(|v| v.parse::<u32>().ok())
+        .unwrap_or(0x5EED);
+    let metrics_path = value("--metrics");
 
     let sdl = sdl2::init()?;
     let _ = sdl2::hint::set("SDL_RENDER_SCALE_QUALITY", "0");
@@ -883,8 +1499,10 @@ fn main() -> Result<(), String> {
 
     let creator: TextureCreator<WindowContext> = canvas.texture_creator();
     let assets = Assets::load(&creator)?;
-    let mut game = Game::new(assets, debug);
+    let mut game = Game::new(assets, debug, seed);
     game.clean = clean;
+    game.metrics_path = metrics_path;
+    println!("catwalk seed: {seed}");
 
     if let Some(time) = forced_time {
         game.time = time;
@@ -901,6 +1519,9 @@ fn main() -> Result<(), String> {
         }
         _ => {}
     }
+    if let Some(frame) = value("--frame") {
+        game.frame_override = frame.parse::<usize>().ok().map(|f| f.min(8));
+    }
     if let Some(pos) = value("--pos") {
         let mut it = pos.split(',');
         let x = it.next().and_then(|v| v.parse::<f32>().ok());
@@ -915,6 +1536,13 @@ fn main() -> Result<(), String> {
             cam.x.clamp(0.0, WORLD_W - VIEW_W),
             cam.y.clamp(0.0, WORLD_H - VIEW_H),
         );
+    }
+    if let Some(secs) = value("--warmup").and_then(|v| v.parse::<f32>().ok()) {
+        let dt = 1.0 / 60.0;
+        let idle = Input::default();
+        for _ in 0..(secs * 60.0) as usize {
+            game.update(dt, &idle, false);
+        }
     }
 
     if let Some(path) = shot {
@@ -941,6 +1569,7 @@ fn main() -> Result<(), String> {
         let mut out = std::fs::File::create(&path).map_err(|e| e.to_string())?;
         write!(out, "P6\n{} {}\n255\n", VIEW_W, VIEW_H).map_err(|e| e.to_string())?;
         out.write_all(&pixels).map_err(|e| e.to_string())?;
+        game.write_metrics();
         println!("saved {path}");
         return Ok(());
     }
@@ -966,11 +1595,11 @@ fn main() -> Result<(), String> {
                         break 'run;
                     }
                     if key == Keycode::F12 {
-                        if let Err(e) = save_ppm(&canvas, "/tmp/crabwalk.ppm") {
+                        if let Err(e) = save_ppm(&canvas, "/tmp/catwalk.ppm") {
                             eprintln!("screenshot failed: {e}");
                         }
                     }
-                    if key == Keycode::R && game.state == State::Won {
+                    if key == Keycode::R && matches!(game.state, State::Won | State::Lost) {
                         game.reset();
                     }
                     if !repeat

@@ -17,6 +17,15 @@ impl Vec2 {
     pub fn len(self) -> f32 {
         (self.x * self.x + self.y * self.y).sqrt()
     }
+
+    pub fn normalized(self) -> Self {
+        let len = self.len();
+        if len > f32::EPSILON {
+            self * (1.0 / len)
+        } else {
+            Self::default()
+        }
+    }
 }
 
 impl Add for Vec2 {
