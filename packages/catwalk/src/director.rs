@@ -118,6 +118,18 @@ pub struct Proposal {
 }
 
 impl Encounter {
+    /// ASCII slug for the stdout/JSON study report.
+    pub fn scenario_slug(&self) -> &'static str {
+        match self.scenario {
+            "ТИХИЙ ПАТРУЛЬ" => "patrol",
+            "ПОГОНЯ" => "chase",
+            "ОБСТРЕЛ" => "shoot",
+            "ЗАСАДА" => "ambush",
+            "ПЕРЕКРЁСТОК" => "crossing",
+            _ => "chaos",
+        }
+    }
+
     /// Feature vector the critic compares against recent screens.
     pub fn signature(&self) -> [f32; 10] {
         let mut sig = [0.0f32; 10];
@@ -187,8 +199,28 @@ impl Rng {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct Weights {
+    pub surprise: f32,
+    pub build: f32,
+    pub situation: f32,
+    pub fairness: f32,
+}
+
+impl Default for Weights {
+    fn default() -> Self {
+        Self {
+            surprise: 0.30,
+            build: 0.24,
+            situation: 0.26,
+            fairness: 0.20,
+        }
+    }
+}
+
 pub struct Director {
     seed: u32,
+    pub weights: Weights,
     history: Vec<[f32; 10]>,
     upgrades_offered: [u32; 4],
     cache: Vec<Encounter>,
@@ -201,6 +233,7 @@ impl Director {
     pub fn new(seed: u32) -> Self {
         Self {
             seed,
+            weights: Weights::default(),
             history: Vec::new(),
             upgrades_offered: [0; 4],
             cache: Vec::new(),
@@ -253,6 +286,19 @@ impl Director {
         chosen.encounter
     }
 
+    fn least_offered(&self) -> Upgrade {
+        let mut best = Upgrade::Speed;
+        let mut best_count = u32::MAX;
+        for up in Upgrade::all() {
+            let count = self.upgrades_offered[up.index()];
+            if count < best_count {
+                best_count = count;
+                best = up;
+            }
+        }
+        best
+    }
+
     fn generate(&self, chunk: i32, attempt: usize, player: Vec2, level: &Level) -> Encounter {
         let mut rng = Rng::new(
             self.seed
@@ -270,12 +316,25 @@ impl Director {
             .collect();
 
         let count = 1 + rng.range(0, 3) as usize;
+        // Half of the proposals are "pure" scenarios of a single behaviour;
+        // the rest mix. Without this the random kind draw almost never
+        // produces a patrol-only or shoot-only screen.
+        let pure = rng.f() < 0.5;
+        let shared = match rng.range(0, 3) {
+            0 => EnemyKind::Drifter,
+            1 => EnemyKind::Chaser,
+            _ => EnemyKind::Shooter,
+        };
         let mut spawns = Vec::new();
         for _ in 0..count {
-            let kind = match rng.range(0, 3) {
-                0 => EnemyKind::Drifter,
-                1 => EnemyKind::Chaser,
-                _ => EnemyKind::Shooter,
+            let kind = if pure {
+                shared
+            } else {
+                match rng.range(0, 3) {
+                    0 => EnemyKind::Drifter,
+                    1 => EnemyKind::Chaser,
+                    _ => EnemyKind::Shooter,
+                }
             };
             let (mut x, mut y);
             if plats.is_empty() {
@@ -350,17 +409,17 @@ impl Director {
             }
         }
 
-        // Capsule: bias toward an upgrade the run has not offered yet.
-        let capsule = if let Some(p) = plats.get(rng.range(0, plats.len() as i32) as usize) {
-            let mut best = Upgrade::Speed;
-            let mut best_count = u32::MAX;
-            for up in Upgrade::all() {
-                let count = self.upgrades_offered[up.index()];
-                if count < best_count {
-                    best_count = count;
-                    best = up;
-                }
-            }
+        // Capsule: bias toward an upgrade the run has not offered yet. A
+        // water-only chunk gets one floating over the lake, so every screen
+        // of a campaign can move the build forward.
+        let capsule = if plats.is_empty() {
+            let wl = level.waterline(x0 + CHUNK_W * 0.5);
+            Some((
+                Vec2::new(x0 + CHUNK_W * 0.5, wl - 90.0),
+                self.least_offered(),
+            ))
+        } else if let Some(p) = plats.get(rng.range(0, plats.len() as i32) as usize) {
+            let best = self.least_offered();
             let mut cx = (p.x + p.w * 0.5).clamp(x0 + 120.0, x0 + CHUNK_W - 120.0);
             if (cx - player.x).abs() < 320.0 {
                 cx = if cx < player.x {

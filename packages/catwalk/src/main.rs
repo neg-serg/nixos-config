@@ -13,6 +13,7 @@ mod level;
 mod math;
 mod player;
 mod render;
+mod study;
 
 use std::io::Write;
 use std::time::Instant;
@@ -1440,11 +1441,33 @@ fn main() -> Result<(), String> {
              \x20 --warmup SECS    simulate before a --shot (QA)\n\
              \x20 --seed N         director seed (default 0x5EED)\n\
              \x20 --metrics PATH   write the run's fun metrics as JSON\n\
+             \x20 --study N        simulate N campaigns headlessly and report\n\
+             \x20 --study-json P   write the study report as JSON\n\
+             \x20 --study-threads T  worker threads for --study\n\
              \x20 --debug          draw platform and hitbox outlines\n\
              \x20 --clean          background only (pixel comparison)\n\n\
              KEYS: A/D or arrows walk, Space jump, S dive, R restart, F11 fullscreen,\n\
              \x20     F12 screenshot to /tmp/catwalk.ppm, Esc quit"
         );
+        return Ok(());
+    }
+
+    if let Some(runs) = value("--study").and_then(|v| v.parse::<u64>().ok()) {
+        let threads = value("--study-threads")
+            .and_then(|v| v.parse::<usize>().ok())
+            .unwrap_or_else(|| {
+                std::thread::available_parallelism()
+                    .map(|v| v.get())
+                    .unwrap_or(8)
+            });
+        let base = value("--study-seed")
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(0xC0FF_EE11);
+        let study = study::run_study(runs, threads, base);
+        print!("{}", study.report());
+        if let Some(path) = value("--study-json") {
+            let _ = std::fs::write(path, study.json());
+        }
         return Ok(());
     }
 
