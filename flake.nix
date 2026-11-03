@@ -4,6 +4,10 @@
     extra-experimental-features = "pipe-operators";
   };
   inputs = {
+    # Dendritic pilot: `flake/devshells/` walks itself, so a new shell file needs
+    # no list entry. `vic/import-tree` is the pattern's walker — deps-free, no
+    # inputs of its own, MIT — pinned by flake.lock.
+    import-tree.url = "github:vic/import-tree";
     # Determinate Nix 3.23.3 (determinate + nix-src share the release tag on
     # purpose — the module installs the determinate-nixd binary that pairs with
     # the nix build, so bump both together). Bumped from 3.21.7: on that rev
