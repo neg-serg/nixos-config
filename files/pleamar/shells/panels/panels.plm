@@ -371,9 +371,12 @@ scene panels {
     // gives (4 Hz), so 240 of them are the reference's 60 s window.
     model flow max 240 { t0: number; t1: number; rx0: number; rx1: number; tx0: number; tx1: number }
     model tiles max 8 { label: text; value: text; level: number; tone: number }
-    // The system drawer's history: one record per worker sample, oldest first. The worker
-    // samples once a second while the drawer is open, so 60 records are a one-minute window.
-    model sys_hist max 60 { cpu: number; ram: number; gpu: number; temp: number }
+    // The system drawer's history: one record per pair of neighbour samples, oldest first, each
+    // carrying the segment's two ends (the flow card's shape: a scene can loop over a model but
+    // cannot build a path or remember the previous point). `t` runs over the whole 60-slot window,
+    // so the curve grows in from the left. `gpu_ok`/`temp_ok`: both ends had a real reading, so a
+    // missing one breaks the line instead of drawing a dip.
+    model sys_hist max 60 { t0: number; t1: number; cpu0: number; cpu1: number; ram0: number; ram1: number; gpu0: number; gpu1: number; temp0: number; temp1: number; gpu_ok: bool; temp_ok: bool }
     // `mark`: 1 a day with an event, 2 a public holiday. `pill`: 0 nothing known, 1 taken,
     // 2 missed, 3 still pending (today), 4 a past day with no record — the QS statuses.
     // `dayoff` is a day off as the production calendar has it (isdayoff.ru: a weekend, a holiday or a

@@ -434,10 +434,27 @@ end)
 local SYS_HIST_LEN = 60
 local sys_hist = {}
 
+-- One record per pair of neighbours, the shape the flow card settled on: the scene can loop over a
+-- model but cannot build a path from it or hold the previous point of a series, so a segment is
+-- published as its two ends. `t` runs over the whole window, so the curve grows in from the left
+-- until the window is full and slides after that, one sample a step.
 local function sysmon_publish()
+    local n = #sys_hist
+    local span = math.max(SYS_HIST_LEN - 1, 1)
     local rows = {}
-    for i = 1, #sys_hist do
-        rows[i] = sys_hist[i]
+    for k = 2, n do
+        local a, b = sys_hist[k - 1], sys_hist[k]
+        rows[#rows + 1] = {
+            t0 = (k - 2) / span, t1 = (k - 1) / span,
+            cpu0 = a.cpu, cpu1 = b.cpu,
+            ram0 = a.ram, ram1 = b.ram,
+            gpu0 = a.gpu, gpu1 = b.gpu,
+            temp0 = a.temp, temp1 = b.temp,
+            -- A series is broken, not drawn to zero, where its reading is missing: the chart may
+            -- not invent a dip the worker never measured.
+            gpu_ok = a.gpu_ok and b.gpu_ok,
+            temp_ok = a.temp_ok and b.temp_ok,
+        }
     end
     model.sys_hist = rows
 end
@@ -481,7 +498,18 @@ local function sysmon_apply(d, topic)
           tone = tc and tone(tc, 75, 90) or 0 },
     }
 
-    sys_hist[#sys_hist + 1] = { cpu = cpu_pct / 100, ram = mp / 100, gpu = (gp or 0) / 100, temp = tp / 100 }
+    -- Every series is stored as a 0..1 share, so the chart's one 0..100 % scale is a plain
+    -- multiplication; `gpu_ok`/`temp_ok` say whether the worker really reported that reading, so a
+    -- missing one breaks its line instead of drawing a dip to zero.
+    local function share(v)
+        if type(v) ~= "number" or v ~= v then return 0 end
+        return math.min(1, math.max(0, v / 100))
+    end
+    sys_hist[#sys_hist + 1] = {
+        cpu = share(cpu_pct), ram = share(mp), gpu = share(gp), temp = share(tp),
+        gpu_ok = gp ~= nil,
+        temp_ok = tc ~= nil and tp ~= nil,
+    }
     if #sys_hist > SYS_HIST_LEN then table.remove(sys_hist, 1) end
     sysmon_publish()
     fact.sysmon_gpu = (gp ~= nil) and 1 or 0
