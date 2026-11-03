@@ -146,10 +146,12 @@ in
       zfs set primarycache=all tank/cache
       zfs set quota=50G tank/cache
       zfs mount tank/cache 2>/dev/null || true
-      # tmpfiles creates /cache/user and /cache/sccache during activation, which runs
-      # before this unit and therefore lands inside the directory the dataset later
-      # covers — after the mount those dirs are gone. Create them here, after the
-      # mount, so the compiler caches have somewhere to write on the first boot.
+      # tmpfiles creates /cache/nix, /cache/user and /cache/sccache during
+      # activation, which runs before this unit and therefore lands inside the
+      # directory the dataset later covers — after the mount those dirs are
+      # gone. Create them here, after the mount, so the compiler caches have
+      # somewhere to write on the first boot.
+      install -d -o root -g nixbld -m 0775 /cache/nix
       install -d -o neg -g users -m 0755 /cache/user
       install -d -o neg -g users -m 0700 /cache/sccache
       chown root:nixbld /cache
@@ -253,7 +255,13 @@ in
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
-    "d /cache 0775 root nixbld -" # ccache for sandboxed Nix builds
+    "d /cache 0775 root nixbld -" # compiler caches (see the dataset above)
+    # The build-owned cache, exposed to sandboxed builds through
+    # nix.settings.extra-sandbox-paths (modules/nix/settings.nix). Also a
+    # tmpfiles entry, not just an install(1) in the unit: the path has to exist
+    # even when the dataset is not mounted, or every sandboxed build fails on
+    # a missing mount source.
+    "d /cache/nix 0775 root nixbld -" # ccache for sandboxed Nix builds
     # The two below exist because /cache itself belongs to root:nixbld: a user-level
     # compiler cache there fails to create its lock directory ("Failed to create
     # directory /cache/lock: Permission denied") and silently compiles without caching.

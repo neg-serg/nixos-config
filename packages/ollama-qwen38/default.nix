@@ -9,6 +9,7 @@
 
   cmake,
   gitMinimal,
+  runCommand,
   clblast,
   libdrm,
   rocmPackages,
@@ -107,6 +108,18 @@ let
 
   cudaPath = lib.removeSuffix "-${cudaMajorVersion}" cudaToolkit;
 
+  # ccache in "masquerade" mode: a directory of compiler names symlinked to
+  # ccache, which resolves the real compiler further down PATH. CC/CXX point
+  # at it, so both the outer cmake build and the llama.cpp ExternalProject
+  # child compile through the cache — the child inherits CC/CXX and PATH, but
+  # not the parent's -DCMAKE_*_COMPILER_LAUNCHER.
+  ccacheCompiler = runCommand "ollama-ccache-compiler" { } ''
+    mkdir -p $out/bin
+    for name in cc gcc g++ c++; do
+      ln -s ${ccache}/bin/ccache $out/bin/$name
+    done
+  '';
+
   # Since v0.30, llama.cpp is consumed via CMake FetchContent rather than
   # vendored in-tree. Pre-stage the pin (tracks upstream's
   # `LLAMA_CPP_VERSION` file) so the FetchContent step uses our copy
@@ -176,11 +189,31 @@ goBuild (finalAttrs: {
       CXXFLAGS = "-Wno-c++17-extensions -I${rocmPath}/include";
     }
     // lib.optionalAttrs enableCuda { CUDA_PATH = cudaPath; }
-    // lib.optionalAttrs enableVulkan { VULKAN_SDK = shaderc.bin; };
+    // lib.optionalAttrs enableVulkan { VULKAN_SDK = shaderc.bin; }
+    // {
+      # tank/cache, mounted into the build sandbox by
+      # nix.settings.extra-sandbox-paths (modules/nix/settings.nix). The
+      # directory is root:nixbld 0775, so the build user can write it; without
+      # the sandbox path ccache would target an unwritable $HOME and cache
+      # nothing.
+      CCACHE_DIR = "/cache/nix";
+      CCACHE_COMPRESS = "1";
+      CCACHE_MAXSIZE = "40G";
+      # nix's cc-wrapper appends NIX_CFLAGS_COMPILE after ccache has hashed the
+      # command line, so direct mode would reuse objects built with other
+      # include/optimisation flags. Preprocessor mode hashes what the compiler
+      # actually sees and is the only sound choice behind that wrapper.
+      # (ccache has no "false" for booleans: the off switch is NODIRECT.)
+      CCACHE_NODIRECT = "true";
+      CC = "${ccacheCompiler}/bin/cc";
+      CXX = "${ccacheCompiler}/bin/c++";
+    };
 
   nativeBuildInputs = [
     cmake
     gitMinimal
+    ccache
+    ccacheCompiler
   ]
   ++ lib.optionals enableRocm (
     rocmLibs
@@ -194,7 +227,6 @@ goBuild (finalAttrs: {
     autoAddDriverRunpath
   ]
   ++ lib.optionals enableVulkan [
-    ccache
     # ggml-vulkan/CMakeLists.txt does `find_package(SPIRV-Headers REQUIRED)`
     # at configure time (it builds shader code into the vulkan backend).
     # Header-only — nativeBuildInputs is the right slot.
@@ -254,24 +286,34 @@ goBuild (finalAttrs: {
       ) "-DOLLAMA_LLAMA_BACKENDS=${llamaBackend}";
 
     in
-    builtins.replaceStrings
-      [
-        "@NIX_CFLAGS_COMPILE@"
-        "@CMAKEFLAGSCUDAARCHITECTURES@"
-        "@CMAKEFLAGSROCMTARGETS@"
-        "@CMAKEFLAGSBACKEND@"
-      ]
-      [
-        (lib.optionalString enableVulkan (
-          builtins.replaceStrings [ "@HEADERS@" "@HEADERS_V2@" ] [ "${spirv-headers}" "${spirv-headers}" ] (
-            builtins.readFile ./vulkan-env.sh.in
-          )
-        ))
-        "${cmakeFlagsCudaArchitectures}"
-        "${cmakeFlagsRocmTargets}"
-        "${cmakeFlagsBackend}"
-      ]
-      (builtins.readFile ./pre-build.sh.in);
+    ''
+      # The sandbox only sees /cache/nix when the running nix.conf lists it
+      # (modules/nix/settings.nix). The first generation that enables it is
+      # built under the old config, so degrade to an uncached compile instead
+      # of failing on a cache path the build cannot create.
+      if [ ! -d /cache/nix ]; then
+        export CCACHE_DISABLE=1
+      fi
+    ''
+    +
+      builtins.replaceStrings
+        [
+          "@NIX_CFLAGS_COMPILE@"
+          "@CMAKEFLAGSCUDAARCHITECTURES@"
+          "@CMAKEFLAGSROCMTARGETS@"
+          "@CMAKEFLAGSBACKEND@"
+        ]
+        [
+          (lib.optionalString enableVulkan (
+            builtins.replaceStrings [ "@HEADERS@" "@HEADERS_V2@" ] [ "${spirv-headers}" "${spirv-headers}" ] (
+              builtins.readFile ./vulkan-env.sh.in
+            )
+          ))
+          "${cmakeFlagsCudaArchitectures}"
+          "${cmakeFlagsRocmTargets}"
+          "${cmakeFlagsBackend}"
+        ]
+        (builtins.readFile ./pre-build.sh.in);
 
   # The llama.cpp sub-build is driven by ExternalProject_Add and does
   # not inherit the parent's CMAKE_SKIP_BUILD_RPATH setting, so its

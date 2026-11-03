@@ -125,6 +125,14 @@ in
       # Deduplication via weekly nix.optimise timer instead of per-write
       auto-optimise-store = false;
       preallocate-contents = true; # Reduce ZFS CoW fragmentation by pre-allocating store paths
+      # Compiler caches for sandboxed builds live on tank/cache
+      # (modules/system/filesystems.nix). A sandbox mounts nothing it is not
+      # told about, so without this a build's ccache writes into
+      # /homeless-shelter and silently caches nothing. Only the build-owned
+      # subdirectory is exposed: /cache/user and /cache/sccache belong to the
+      # user's own builds, and sccache cannot work here at all — it talks to a
+      # daemon over a socket the sandbox does not have.
+      extra-sandbox-paths = [ "/cache/nix" ];
       # lazy-locks removed — not supported by current Determinate Nix
     }
     // caches;
