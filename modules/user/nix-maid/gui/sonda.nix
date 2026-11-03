@@ -33,10 +33,27 @@
   config,
   ...
 }:
+let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+in
 {
   config = lib.mkIf (config.lib.neg.enabled "gui" && config.features.gui.sonda.enable) {
     environment.systemPackages = [
-      pkgs.sonda # file manager for pleamar-wm, searching files by what they contain
+      (onDemand {
+        name = "sonda";
+        attr = "sonda";
+      }) # file manager for pleamar-wm, searching files by what they contain
+      (pkgs.makeDesktopItem {
+        name = "sonda";
+        desktopName = "Sonda";
+        exec = "sonda";
+        icon = "system-file-manager";
+        categories = [
+          "System"
+          "FileManager"
+        ];
+        mimeTypes = [ "inode/directory" ];
+      })
     ];
   };
 }

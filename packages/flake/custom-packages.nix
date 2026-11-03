@@ -70,6 +70,8 @@
   # Wave 1 on-demand apps: aliases so the launchers in the system modules can
   # `nix build .#<attr>` without pulling the app into system-path.
   waylandar = pkgs.waylandar;
+  renoise = pkgs.renoise;
+  sioyek = pkgs.sioyek;
   tshark = pkgs.tshark;
   galaxy-buds-client = pkgs.galaxy-buds-client;
   vial = pkgs.vial;

@@ -8,6 +8,7 @@ let
   guiEnabled = config.lib.neg.enabled "gui";
   wifiEnabled = config.lib.neg.enabled "net.wifi";
   menuPkgs = if guiEnabled && !devSpeed && wifiEnabled then [ pkgs.iwmenu ] else [ ]; # Launcher-driven Wi-Fi manager for Linux
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 in
 {
   environment.systemPackages = [
@@ -22,7 +23,21 @@ in
     pkgs.libxml2 # xmllint for SVG validation
 
     # -- Viewer --
-    pkgs.sioyek # PDF viewer for research papers (OpenGL, GTK-free zathura alternative)
+    (onDemand {
+      name = "sioyek";
+      attr = "sioyek";
+    }) # PDF viewer for research papers, built on demand
+    (pkgs.makeDesktopItem {
+      name = "sioyek";
+      desktopName = "Sioyek";
+      exec = "sioyek %f";
+      icon = "sioyek-icon-linux";
+      categories = [
+        "Office"
+        "Viewer"
+      ];
+      mimeTypes = [ "application/pdf" ];
+    })
 
     # -- Wayland Utils --
     pkgs.networkmanager # CLI nmcli helper for panels

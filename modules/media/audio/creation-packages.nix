@@ -9,6 +9,7 @@
 }:
 let
   enabled = config.lib.neg.enabled "media.audio.creation";
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 
   # pw-jack launcher unit (lib/jack-app.nix): ExecStart under pw-jack, the
   # audio-graph ordering and the restart policy live there.
@@ -75,7 +76,24 @@ let
     pkgs.dexed # DX7-compatible FM synth
     pkgs.surge-xt # open-source wavetable/VA hybrid synth (VST3/CLAP/LV2) — MPE-capable
     pkgs.odyssey # open-source ARP Odyssey-style VA synth (VST3/LV2)
-    pkgs.renoise # Renoise tracker — modern tracker-based DAW (licensed full release, unfree)
+    (onDemand {
+      name = "renoise";
+      attr = "renoise";
+    }) # Renoise tracker — modern tracker-based DAW, built on first use
+    (pkgs.makeDesktopItem {
+      name = "renoise";
+      desktopName = "Renoise";
+      exec = "renoise %f";
+      icon = "renoise";
+      categories = [
+        "AudioVideo"
+        "Audio"
+      ];
+      mimeTypes = [
+        "application/x-renoise-module"
+        "application/x-renoise-rns-module"
+      ];
+    })
     pkgs.stochas # probability-driven MIDI sequencer
     pkgs.vcv-rack # modular synth platform
   ];
