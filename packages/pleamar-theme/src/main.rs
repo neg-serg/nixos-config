@@ -98,22 +98,17 @@ fn run() -> ExitCode {
         }
         wallpaper = Some(explicit);
     } else {
-        // The canonical path first; the legacy Quickshell one is still honoured
-        // so a wallpaper that only reached the old file keeps theming.
-        for cache_file in [
-            PathBuf::from(append_suffix(
-                cache_home.as_os_str(),
-                "/pleamar/wallpaper-path",
-            )),
-            PathBuf::from(append_suffix(
-                cache_home.as_os_str(),
-                "/quickshell-wallpaper-path",
-            )),
-        ] {
-            if let Some(found) = read_path_file(&cache_file) {
-                wallpaper = Some(PathBuf::from(found));
-                break;
-            }
+        // The one producer path (INTERFACES.md §1.2). It used to fall back to a
+        // `quickshell-wallpaper-path` beside it, from the shell this pipeline
+        // replaced; that shell was deleted on 2026-11-02 and nothing writes the old
+        // file any more (the picker's write and `wl-greeter-sync` went on 2026-11-03),
+        // so a fallback would only ever read a stale leftover.
+        let cache_file = PathBuf::from(append_suffix(
+            cache_home.as_os_str(),
+            "/pleamar/wallpaper-path",
+        ));
+        if let Some(found) = read_path_file(&cache_file) {
+            wallpaper = Some(PathBuf::from(found));
         }
     }
 
@@ -168,8 +163,7 @@ fn run() -> ExitCode {
     if !extracted && options.accent.is_empty() && options.from_json.is_empty() {
         err("nothing to extract: no wallpaper found and no --accent/--from-json colour");
         err(format!(
-            "looked at: {}/pleamar/wallpaper-path (canonical), {}/quickshell-wallpaper-path (legacy)",
-            cache_home.display(),
+            "looked at: {}/pleamar/wallpaper-path",
             cache_home.display()
         ));
         err("pass --wallpaper FILE, --accent '#RRGGBB' or --from-json FILE");

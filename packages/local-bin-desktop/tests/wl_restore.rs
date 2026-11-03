@@ -52,6 +52,28 @@ fn stale_state_falls_back_to_a_random_pick() {
 }
 
 #[test]
+fn stale_state_prefers_the_producer_cache_over_a_random_pick() {
+    let sandbox = Sandbox::new("wl-stale-cache");
+    sandbox.install_default_fakes();
+    let image = wallpaper(&sandbox);
+    state(&sandbox, "/nonexistent/wall.png");
+    // The path the theme pipeline and the login layer read (INTERFACES §1.2).
+    sandbox.write(
+        &sandbox.home.join(".cache/pleamar/wallpaper-path"),
+        format!("{}\n", image.display()).as_bytes(),
+    );
+    let outcome = sandbox.run(BIN, &[]);
+    assert_eq!(outcome.code, 0);
+    assert_eq!(
+        sandbox.wl_calls(),
+        vec![
+            call("wl", &["query"]),
+            call("wl", &["img", image.to_str().unwrap()]),
+        ]
+    );
+}
+
+#[test]
 fn missing_state_falls_back_to_a_random_pick() {
     let sandbox = Sandbox::new("wl-nostate");
     sandbox.install_default_fakes();
@@ -130,19 +152,3 @@ fn state_without_outputs_falls_back() {
     );
 }
 
-#[test]
-fn greeter_cache_sync_is_best_effort() {
-    let sandbox = Sandbox::new("wl-greeter");
-    sandbox.install_default_fakes();
-    let image = wallpaper(&sandbox);
-    state(&sandbox, image.to_str().unwrap());
-    sandbox.write(
-        &sandbox.home.join(".cache/quickshell-wallpaper-path"),
-        format!("{}\n", image.display()).as_bytes(),
-    );
-    let outcome = sandbox.run(BIN, &[]);
-    // The install target lives outside the sandbox (/home/greeter); its failure
-    // is swallowed exactly like the original's `|| true`.
-    assert_eq!(outcome.code, 0);
-    assert_eq!(outcome.stderr, b"");
-}

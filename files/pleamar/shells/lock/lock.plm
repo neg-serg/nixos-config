@@ -14,7 +14,7 @@ import "../../lib/capsule.plm"
 //
 // Unit / marker contract, cutover, rollback and the rescue path: README.md.
 // In one line: this scene only ever runs while the wrapper marker says "login"
-// (`$QS_LOGIN_STATE_DIR/login-phase` exists), it is born locked (`fact locked`
+// (`$PLEAMAR_LOGIN_STATE_DIR/login-phase` exists), it is born locked (`fact locked`
 // true), and a successful password emits `unlocked`; the integration writes
 // `state=session`, removes `login-phase` and *then* releases the lock with
 // `pleamar --say lock "fact locked false"`. Killing this scene never unlocks
@@ -83,6 +83,12 @@ scene lock {
     // surface (§8.1): an agent never reads it, a screenshot never catches it.
     surface screen_lock {
         kind: lock
+        // `full, full` is the whole monitor, and that is also the box the face is
+        // centred on: the scene's origin is the monitor's top-left corner, which is
+        // what every `at:` in pages/ assumes. The engine used to take the zero that
+        // `full` compiles to literally, centre that on the monitor and paint the whole
+        // screen half a panel off (`pleamar-lock-full.patch`); a face now also prints
+        // its box and the corner it paints from, and the login layer reports them.
         size: full, full
         open: locked
         keyboard: exclusive while locked

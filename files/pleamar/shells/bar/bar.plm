@@ -38,12 +38,11 @@ language 0.4
 //     for a bar, which is where the design numbers in this file come from, with
 //     the user's own multipliers on top.
 //
-// Parity notes (measured, not guessed). The gate is `just parity-bar DIR
-// approve hide`: it shoots the live QS strip, hides quickshell, shoots the port
-// over the same strip and prints mean / visible-share. It has to run OUTSIDE
-// the agent's file sandbox — grim needs /dev/shm and the GPU is needed for the
-// scene's dmabuf frames — which the `hub` tool does (a plain bash call fails
-// with `failed to create buffer`).
+// Parity notes (measured, not guessed). These came from the live QS strip, shot
+// pixel by pixel against this bar by `just parity-bar` — a gate that needed the
+// reference shell running beside the port. Quickshell was deleted on 2026-11-02
+// and the gate with it: the numbers below are the record, `docs/PARITY.md` says
+// what was closed, and nothing reproduces them automatically any more.
 //
 // What the reference is, measured off its own strip (DP-2, 3840x2160 @2x; the
 // bar occupies the last 50 physical rows, the gate's crop starts 20 above it):

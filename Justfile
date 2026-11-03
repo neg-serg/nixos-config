@@ -200,6 +200,14 @@ lint:
 pleamar-check:
     bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}"
 
+# What each layer of this session calls a size: the panel's device px, the compositor's
+# scale, the logical px a scene draws its lengths in, and the shape of the wallpaper it
+# would be handed. Run it before writing a size into a scene, and when a log line's
+# numbers look wrong (scripts/dev/screen-numbers.sh says why: one monitor has four of
+# them, and a lock face is configured in logical px but paints device px).
+screen-numbers:
+    bash "{{repo_root}}/scripts/dev/screen-numbers.sh"
+
 # The palette gate: every scene that paints with `accent`, `coal`, `slate`, `ink`
 # or `ink.dim` must import theme.plm, or it is silently drawing the frozen
 # palette. Its own recipe rather than a line inside `lint`: that recipe keeps the
@@ -223,31 +231,6 @@ theme-test:
 # nothing), the same plugin must run once approved. Runs in `lint` too.
 plugin-sandbox:
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}"
-
-# Measure the bar's widgets against the reference's, window by window: the drift
-# of the ink profile (gated at 4 logical px) and the icon pairs of the right
-# window (gated at 4 px of position and 3 of width). The left window's ink
-# profile and run table are printed and not gated — that window carries the
-# throughput digits and the weather, which differ between the bars by
-# construction. `--shot FILE` measures an existing frame.
-parity-clusters *ARGS:
-    bash "{{repo_root}}/scripts/dev/parity-clusters.sh" "{{repo_root}}" {{ARGS}}
-
-# Measure the pleamar bar against the live Quickshell bar, pixel by pixel:
-# captures the bar strip before (quickshell) and while the pleamar scene is up,
-# prints the mean difference and the share of visibly changed pixels, and writes
-# qs | pleamar | diff into DIR.
-#   just parity-bar                 measure the chrome only
-#   just parity-bar DIR             keep the artifacts in DIR
-#   just parity-bar DIR approve     also approve the plugins, so their data
-#                                   (cover, analyser, flags, dB) is live
-#   just parity-bar DIR approve hide  stop quickshell for the capture (its bar
-#                                   would otherwise show through the port's
-#                                   transparent parts) and start it again after
-# (`just` owns its own flags, so `--approve` cannot be passed through the
-# recipe; the word `approve` is the switch.)
-parity-bar out="" approve="" hide="":
-    bash "{{repo_root}}/scripts/dev/parity-bar.sh" "{{repo_root}}" {{if out != "" { "--out " + out } else { "" }}} {{if approve != "" { "--approve" } else { "" }}} {{if hide != "" { "--hide-qs" } else { "" }}}
 
 # Render every plugin's proof scene, one PNG each, into a temp dir
 # (`just render-plugins DIR` to keep them). Uses pleamar-wm headless when it is

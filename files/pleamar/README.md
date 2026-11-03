@@ -1,6 +1,7 @@
 # files/pleamar — the pleamar desktop shell
 
-Port of the Quickshell desktop shell (`files/quickshell`, now legacy and read-only) to
+Port of the Quickshell desktop shell (deleted on 2026-11-02; its QML is in git history, and
+`docs/PARITY.md` maps each ported behaviour to the file and line it came from) to
 [pleamar](https://github.com/k4ditano/pleamar): a Rust desktop runtime with a declarative `.plm`
 scene language and optional sandboxed Luau logic. One scene per shell area (bar, notifications,
 panels, lock, ...), each scene independently runnable, restartable and measurable. The plan with

@@ -42,7 +42,7 @@ systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND
 # writes "session"; this copy covers the rescue bind and a hand-flipped marker —
 # both modes, because reaching this script at all means the session is allowed to
 # start.
-rm -f "${QS_LOGIN_STATE_DIR:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/quickshell-login}/login-phase"
+rm -f "${PLEAMAR_LOGIN_STATE_DIR:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/pleamar-login}/login-phase"
 
 # A compositor that died leaves its /run/user/$UID/hypr/<signature>/ behind, complete
 # with cold sockets. Anything globbing hypr/*/.socket2.sock can then pick the dead

@@ -78,22 +78,17 @@ fn an_image_without_a_still_helper_caches_itself() {
 
     assert_eq!(read(&case.cache_path()), format!("{image}\n"));
     assert_eq!(
-        read(&case.cache.join("quickshell-wallpaper-path")),
-        format!("{image}\n")
-    );
-    assert_eq!(
         read(&case.home.join(".local/state/wl/last-good")),
         format!("{image}\n")
     );
+    // The legacy `quickshell-wallpaper-path` is not written any more: the shell it
+    // was kept for is gone.
+    assert!(!case.cache.join("quickshell-wallpaper-path").exists());
 
     // The text caches are ordinary files with the process umask's mode,
     // never executable; the reference file is created by this same test.
     let reference = case.reference_file();
     assert_eq!(mode(&case.cache_path()), mode(&reference));
-    assert_eq!(
-        mode(&case.cache.join("quickshell-wallpaper-path")),
-        mode(&reference)
-    );
     assert_eq!(
         mode(&case.home.join(".local/state/wl/last-good")),
         mode(&reference)

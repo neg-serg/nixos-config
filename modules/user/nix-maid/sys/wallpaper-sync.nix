@@ -8,22 +8,13 @@ let
   cfg = config.features.gui;
   jq = lib.getExe' pkgs.jq "jq";
   systemdUser = config.lib.neg.systemdUser;
-  mainHome = config.lib.neg.homeDir;
 
-  # The greeter session runs as its own user and cannot read the main user's
-  # home, so the wallpaper is copied into the greeter's cache. Keep these two
-  # paths in step with modules/user/session/greetd.nix (greeterCache /
-  # greeterWallpaperFallback).
-  greeterCache = "/home/greeter/.cache";
-  greeterWallpaperFallback = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
-
-  # When wl daemon changes its state (new wallpaper), write the path to
-  # quickshell-wallpaper-path (triggers the greeter sync above) and keep a
-  # last-good copy. last-good is the fallback wl-wallpaper-resolve.sh falls back to
-  # when both wl sources name a file that is gone — wallpapers get deleted, renamed
-  # and moved, and on 2026-09-19 exactly that left the desktop with no wallpaper at
-  # all (wl restore exits 0 without painting anything) while the login screen fell
-  # back to a random image.
+  # When wl daemon changes its state (new wallpaper), publish the path the rest of
+  # the stack reads and keep a last-good copy. last-good is the fallback
+  # wl-wallpaper-resolve.sh falls back to when both wl sources name a file that is
+  # gone — wallpapers get deleted, renamed and moved, and on 2026-09-19 exactly that
+  # left the desktop with no wallpaper at all (wl restore exits 0 without painting
+  # anything) while the login screen fell back to a random image.
   wlStateSync = pkgs.writeShellScript "wl-state-sync" ''
     set -euo pipefail
     export PATH="${
@@ -32,78 +23,23 @@ let
       ]
     }"
     state_file="$HOME/.local/state/wl/state.json"
-    notify_file="$HOME/.cache/quickshell-wallpaper-path"
-    # The pleamar theme reads THIS one (pleamar-theme: the canonical path; the file above is its legacy
-    # fallback), and until now only the picker wrote it. On 2026-11-02 the theme had been built from
-    # k8dp3m.jpg while wl was painting exk2zr.png — the shell's colours came from a wallpaper that
-    # was not on screen. Written from wl's own state, so the two cannot drift again.
+    # The one path the theme pipeline and the login layer read (`pleamar-theme`:
+    # `$XDG_CACHE_HOME/pleamar/wallpaper-path`, INTERFACES.md §1.2). Until this
+    # service existed only the picker wrote it, and on 2026-11-02 the theme had been
+    # built from k8dp3m.jpg while wl was painting exk2zr.png — the shell's colours
+    # came from a wallpaper that was not on screen. Written from wl's own state, so
+    # the two cannot drift again. The old `~/.cache/quickshell-wallpaper-path` is
+    # gone with the shell that introduced it.
     pleamar_file="$HOME/.cache/pleamar/wallpaper-path"
 
     if [ -f "$state_file" ]; then
       wallpaper_path="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state_file" 2>/dev/null || true)"
       if [ -n "$wallpaper_path" ] && [ -f "$wallpaper_path" ]; then
-        echo "$wallpaper_path" > "$notify_file"
         echo "$wallpaper_path" > "$HOME/.local/state/wl/last-good"
         mkdir -p "$(dirname "$pleamar_file")" 2> /dev/null || true
         echo "$wallpaper_path" > "$pleamar_file" 2> /dev/null || true
       fi
     fi
-  '';
-
-  # Copy the current wallpaper into the greeter cache. wl only refreshes that
-  # copy for `wl random` (client/src/random.rs:greeter_sync), so without this
-  # service the copy would keep the wallpaper of the last rebuild. The login
-  # screen itself no longer reads it: the pleamar login layer publishes
-  # `wallpaper.path` into the lock scene's data folder from the same two sources
-  # this chain uses. The copy stays for the greeter account and the nixie tools.
-  wlGreeterSync = pkgs.writeShellScript "wl-greeter-sync" ''
-    set -euo pipefail
-    export PATH="${
-      lib.makeBinPath [
-        pkgs.coreutils # cat, head, tr, chmod, chgrp, mv, sort
-        pkgs.findutils # find
-      ]
-    }"
-
-    dst="${greeterCache}/greeter-wallpaper"
-    src=""
-
-    # 1) Live path: wl writes it on every img/random/restore.
-    notify="$HOME/.cache/quickshell-wallpaper-path"
-    if [ -f "$notify" ]; then
-      candidate="$(head -n1 "$notify" | tr -d '[:space:]')"
-      if [ -n "$candidate" ] && [ -r "$candidate" ]; then
-        src="$candidate"
-      fi
-    fi
-
-    # 2) Daemon state — the only source on a fresh boot, before any notify file.
-    state="$HOME/.local/state/wl/state.json"
-    if [ -z "$src" ] && [ -f "$state" ]; then
-      candidate="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$state" 2>/dev/null || true)"
-      if [ -n "$candidate" ] && [ -r "$candidate" ]; then
-        src="$candidate"
-      fi
-    fi
-
-    # 3) Any wallpaper from the collection, 4) the activation fallback.
-    if [ -z "$src" ]; then
-      src="$(find "$HOME/pic/wl" -maxdepth 1 -type f 2>/dev/null | sort -R | head -n1 || true)"
-    fi
-    if [ -z "$src" ] || [ ! -f "$src" ]; then
-      src="${greeterWallpaperFallback}"
-    fi
-    [ -f "$src" ] || exit 0
-
-    # Copy through a temp file in the target directory and rename: after a
-    # rebuild the destination is owned by the greeter user, and a user unit
-    # cannot chown (install -o needs root) — but the directory is group
-    # writable, so only a rename is needed.
-    tmp="$dst.$$"
-    cat "$src" > "$tmp"
-    chmod 0644 "$tmp"
-    chgrp greeter "$tmp" 2>/dev/null || true
-    mv -f "$tmp" "$dst"
   '';
 
   # Restore the session wallpaper right after the daemon starts. Two jobs:
@@ -158,8 +94,8 @@ let
     # screen empty. Ask the files the rest of the stack already writes what is
     # actually on disk and apply that: wl's own last-good, the picker's
     # canonical cache, then the legacy "current wallpaper" link. (The old
-    # /etc/quickshell/scripts/wl-wallpaper-resolve.sh went away with the
-    # Quickshell login layer.)
+    # /etc/quickshell/scripts/wl-wallpaper-resolve.sh went away with the shell it
+    # belonged to, on 2026-11-02.)
     candidate=""
     for f in "$HOME/.local/state/wl/last-good" \
              "$HOME/.cache/pleamar/wallpaper-path" \
@@ -275,44 +211,10 @@ lib.mkIf (cfg.enable or false) {
     };
   };
 
-  systemd.user.paths."wl-greeter-sync" = {
-    description = "Watch for wallpaper changes and sync to greeter";
-    wantedBy = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    pathConfig = {
-      PathChanged = "%h/.cache/quickshell-wallpaper-path";
-      Unit = "wl-greeter-sync.service";
-    };
-  };
-
-  # The path unit above only names its trigger unit: the service itself never
-  # existed, so the path unit refused to start ("unit wl-greeter-sync.service to
-  # trigger not loaded") and the greeter wallpaper was never refreshed between
-  # rebuilds. Also runs once per session so a dead path unit is not fatal.
-  systemd.user.services."wl-greeter-sync" = systemdUser.mkUserService {
-    description = "Copy the current wallpaper into the greeter cache";
-    after = [
-      "wl-daemon.service"
-      "graphical-session-pre.target"
-    ];
-    partOf = [ "graphical-session.target" ];
-    wantedBy = [ "graphical-session.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${wlGreeterSync}";
-    };
-    # wl rewrites its state in bursts while outputs settle (5+ triggers in a few
-    # seconds); the default limit of 5 starts per 10 s would fail such a burst.
-    unitConfig = {
-      StartLimitIntervalSec = 0;
-    };
-  };
-
-  # Watches wl daemon's state file; on each wallpaper change it
-  # writes the current wallpaper path to quickshell-wallpaper-path,
-  # which the wl-greeter-sync path unit above picks up.
+  # Watches wl daemon's state file; on each wallpaper change it publishes the
+  # current wallpaper path where the theme pipeline and the login layer read it.
   systemd.user.services."wl-state-sync" = {
-    description = "Extract current wallpaper path from wl state and notify quickshell";
+    description = "Publish the current wallpaper path from wl's state";
     after = [
       "wl-daemon.service"
       "graphical-session-pre.target"
@@ -323,9 +225,10 @@ lib.mkIf (cfg.enable or false) {
       ExecStart = "${wlStateSync}";
     };
     # wl rewrites state.json in bursts while outputs settle (5+ writes within a
-    # few seconds). The default start rate limit refused the oneshot then
+    # few seconds). The default start rate limit refused the oneshot then,
     # which kills the path unit with 'unit-start-limit-hit' — after that the
-    # greeter chain stayed dead for the rest of the session.
+    # wallpaper path stayed stale for the rest of the session (the theme pipeline
+    # reads the file this service writes, so its colours froze with it).
     unitConfig = {
       StartLimitIntervalSec = 0;
     };

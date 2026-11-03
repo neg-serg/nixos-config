@@ -7,10 +7,14 @@
 // shader draws the legacy dot-grid fallback itself when no wallpaper path was
 // published, so the scene needs no second shader for that case.
 //
-// No loose `let`: with `screens: each` the copies would share it, so the cover
-// arithmetic is written inside the repeated drawing, where `screen.*` belongs
-// to the copy (INTERFACES.md §3.2). The image cell is declared 16:9; a monitor
-// of another shape gets a wider or taller crop, never a squash.
+// The picture is drawn at the whole surface and `fit: cover`: it keeps its own
+// proportions and the screen crops it, which is the reference's
+// `Image.PreserveAspectCrop` (background/BackgroundImage.qml:300-310). The cell it
+// comes from is declared with the picture's own shape (`image wall = from wallpaper,
+// 0, 0`), so nothing letterboxes it on the way to the atlas — a fixed 16:9 cell put
+// black bands over a panorama, and the login screen showed a strip between them.
+// `screen.*` inside the surface belongs to its own copy (INTERFACES.md §3.2), so the
+// arithmetic lives here and not in a `let` the copies would share.
 
 part Backdrop {
 
@@ -20,8 +24,9 @@ part Backdrop {
         shader: paper, 0.008, 0.6, 0.13, 0.05, 0.35, 0.35, 0.55, 2
 
         image wall {
-            at: (screen.width - max(screen.width, screen.height * 1.7777778)) / 2, (screen.height - max(screen.width / 1.7777778, screen.height)) / 2
-            size: max(screen.width, screen.height * 1.7777778), max(screen.width / 1.7777778, screen.height)
+            at: 0, 0
+            size: screen.width, screen.height
+            fit: cover
             show: wall_ok
         }
     }
@@ -31,14 +36,15 @@ part Backdrop {
     // role, the same tone the drawers and the launcher lay under themselves — so a light wallpaper
     // veils with its own light tone instead of frozen black. The vignette lives in paper.wgsl.
     //
-    // It covers three screens' worth, centred on the scene's origin, because a lock surface does
-    // not own its own size: `size:` on a `kind: lock` surface is "the box that gets centred on
-    // each monitor", and the runtime's own reference says to paint the backdrop large, "what lies
-    // around it shows too" (pleamar --docs reference, the lock-screen section; its example draws
-    // its backdrop from -4000). On a monitor whose box and size agree this is the same 18 % pane
-    // as before; if they ever disagree — the boot-time face sized for a monitor that is not the
-    // one on screen — the login screen is at least filled instead of three quarters black with
-    // the card pushed into a corner.
+    // It covers three screens' worth, centred on the scene's origin, because `size:` on a
+    // `kind: lock` surface is "the box that gets centred on each monitor" and the runtime's own
+    // reference says to paint the backdrop large, "what lies around it shows too" (pleamar --docs
+    // reference, the lock-screen section; its example draws its backdrop from -4000). A box
+    // written `full` is the monitor itself (`pleamar-lock-full.patch`: a zero box was centred on
+    // the monitor, which put the scene's origin at the monitor's centre and painted the whole
+    // login screen half a panel away — the card in a corner, the rest black, no error anywhere),
+    // so with one monitor this is a plain full-screen pane; with several it is what keeps every
+    // face covered, since the scene sees the largest one and each face shows its own part.
     box scrim {
         from: -screen.width, -screen.height
         size: screen.width * 3, screen.height * 3

@@ -1382,12 +1382,21 @@ for _, ns in ipairs({ "selection", "indicator.*", "hyprpicker" }) do
 end
 
 -- blur with per-namespace ignore_alpha
+--
+-- Every pleamar surface carries the SAME namespace — its platform layer makes
+-- layer surfaces with the literal "pleamar" (`create_layer_surface(..., Some(
+-- "pleamar"), ...)`), so `hyprctl layers` shows one name for the bar, the drawers,
+-- the toast and the overlay alike. A rule per scene is not possible here, which is
+-- also why the entries below carry no scene names.
+--
+-- The Quickshell era needed a list: qs-*, quickshell-bar-reserve, shell:*,
+-- bar*/barcorner.*/dock*/overview*/cheatsheet*/sideright*/sideleft*/osk*/session*.
+-- That shell was deleted on 2026-11-02 and nothing paints those namespaces any
+-- more, so the entries are gone: a layer rule for a namespace no surface has is a
+-- line that reads like the shell is still there.
 local blur_layers = {
-  { ns = "qs-.*",           ia = 0.05 }, -- was 0.6: the bar chips are semi-transparent, 0.6 dropped their blur
-  -- pleamar: every scene's layer surface, bar and drawers alike, carries this
-  -- one namespace (`hyprctl layers` shows "pleamar" for all five). Without it
-  -- the drawers' 75 % plate has nothing behind it to be glass over — the card
-  -- read as a flat dark rectangle, which is what it looked like.
+  -- Without this the drawers' 75 % plate has nothing behind it to be glass over —
+  -- the card read as a flat dark rectangle, which is what it looked like.
   -- pleamar's drawers draw real glass (`glass: 100%`, `smoke: 100%`), but this
   -- Hyprland answers no `ext-background-effect`, so the scene's own blur request
   -- goes nowhere and the glass is a tint with its lit edge and nothing frosted
@@ -1395,24 +1404,12 @@ local blur_layers = {
   -- Measured 2026-10-23: glass alone reads as transparent; the rule alone reads
   -- as a flat plate; both together are the reference's card.
   { ns = "pleamar",         ia = 0.05 },
-  { ns = "quickshell-bar-reserve", ia = 0.05 }, -- the bar's shared backdrop strip; a bare
-                                                -- "quickshell" entry matched no surface (layer
-                                                -- rules match a namespace in full)
+  -- Not this shell: vicinae is its own app, and the two generic names stay for
+  -- whatever else paints them (a foreign launcher, a notification daemon).
   { ns = "vicinae",         ia = 0.6 },
   { ns = "launcher",        ia = 0.5 },
   { ns = "notifications",   ia = 0.69 },
-  { ns = "shell:notifications", ia = 0.5 },
-  { ns = "shell:notification-center", ia = 0.5 },
-  { ns = "session[0-9]*" },
-  { ns = "bar[0-9]*",       ia = 0.6 },
-  { ns = "barcorner.*",     ia = 0.6 },
-  { ns = "dock[0-9]*",      ia = 0.6 },
-  { ns = "overview[0-9]*",  ia = 0.6 },
-  { ns = "cheatsheet[0-9]*", ia = 0.6 },
-  { ns = "sideright[0-9]*", ia = 0.6 },
-  { ns = "sideleft[0-9]*",  ia = 0.6 },
   { ns = "indicator.*",     ia = 0.6 },
-  { ns = "osk[0-9]*",       ia = 0.6 },
 }
 for _, l in ipairs(blur_layers) do
   local rule = { name = "blur-" .. l.ns, match = { namespace = l.ns }, blur = true }
@@ -1420,21 +1417,11 @@ for _, l in ipairs(blur_layers) do
   hl.layer_rule(rule)
 end
 
--- slide animations for side panels
-hl.layer_rule({ name = "slide-left", match = { namespace = "sideleft.*" }, animation = "slide left" })
-hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, animation = "slide right" })
-
--- quickshell's notification toasts and its history sidebar are bottom-right /
--- right-edge surfaces (namespaces "shell:*", not the older "notifications"
--- ones the blur pass still lists), so they enter from the right edge instead of
--- only cross-fading.
-hl.layer_rule({ name = "slide-notif", match = { namespace = "shell:notifications" }, animation = "slide right" })
-hl.layer_rule({ name = "slide-notif-center", match = { namespace = "shell:notification-center" }, animation = "slide right" })
-
--- bottom-up slide for overlay popups
-hl.layer_rule({ name = "slide-up", match = { namespace = "qs-weather" }, animation = "slide bottom" })
-hl.layer_rule({ name = "slide-up-cal", match = { namespace = "qs-calendar" }, animation = "slide bottom" })
-hl.layer_rule({ name = "slide-up-mon", match = { namespace = "qs-monitor" }, animation = "slide bottom" })
+-- No slide rules for the shell: every pleamar surface shares one namespace
+-- ("pleamar"), so a layer rule cannot tell the toast from the bar, and the
+-- Quickshell-era per-surface namespaces (sideright.*, sideleft.*, shell:*,
+-- qs-*) have no surface left to match. The scenes animate themselves — the
+-- toast and the drawers do it in their own springs (`lift`, `drawer`).
 
 -- =====================================================================
 -- Autostart (autostart.conf / env.conf) -- NixOS-appropriate
@@ -1446,12 +1433,12 @@ hl.layer_rule({ name = "slide-up-mon", match = { namespace = "qs-monitor" }, ani
 -- `pleamar-login-layer` (modules/user/session/greetd/login-layer.sh).
 --
 -- Phase detection reads the marker the session wrapper maintains and exports:
---   $QS_LOGIN_STATE_DIR/state   "login" | "session"   (see greetd/session-wrapper.sh)
+--   $PLEAMAR_LOGIN_STATE_DIR/state   "login" | "session"   (see greetd/session-wrapper.sh)
 -- The directory sits in XDG_RUNTIME_DIR, which logind wipes when the session
 -- ends — a logout therefore always comes back to the login screen, with nobody
--- having to reset the marker. No QS_LOGIN_STATE_DIR (a compositor started by
+-- having to reset the marker. No PLEAMAR_LOGIN_STATE_DIR (a compositor started by
 -- hand, outside greetd) means session phase.
-local loginStateDir = os.getenv("QS_LOGIN_STATE_DIR")
+local loginStateDir = os.getenv("PLEAMAR_LOGIN_STATE_DIR")
 local loginPhase = (function()
   if not loginStateDir then return false end
   local f = io.open(loginStateDir .. "/state", "r")
@@ -1492,7 +1479,7 @@ end
 -- after a failed login layer, or in a hand-started compositor. It writes
 -- "session", starts the target and runs the apps/helpers.
 hl.bind(M4 .. "+" .. SH .. "+F12", hl.dsp.exec_cmd(
-  "sh -c 'printf \"session\\n\" > \"${QS_LOGIN_STATE_DIR:-/tmp}/state\"; hypr-start && hyprctl eval \"hl.session_start()\"'"
+  "sh -c 'printf \"session\\n\" > \"${PLEAMAR_LOGIN_STATE_DIR:-/tmp}/state\"; hypr-start && hyprctl eval \"hl.session_start()\"'"
 ))
 
 hl.on("hyprland.start", function()
@@ -1556,7 +1543,7 @@ hl.on("hyprland.start", function()
       sh -c '
         for _ in 1 2 3; do
           pleamar-login-layer
-          if grep -qx session "${QS_LOGIN_STATE_DIR:-/tmp}/state" 2>/dev/null; then
+          if grep -qx session "${PLEAMAR_LOGIN_STATE_DIR:-/tmp}/state" 2>/dev/null; then
             hypr-start --login && hyprctl eval "hl.session_start()"
             exit 0
           fi

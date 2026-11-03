@@ -106,20 +106,24 @@ base_home() {
   printf 'sentinel\n' > "$HOME_DIR/.config/pleamar/keep.txt"
 }
 
-setup_legacy_blue() {
+# The legacy `$XDG_CACHE_HOME/quickshell-wallpaper-path` was dropped from the port on
+# 2026-11-03 (nothing writes it since the shell that introduced it was deleted), so
+# there is no scenario for it any more: the canonical producer path is the only one,
+# and a saved shell copy would disagree with the port exactly there.
+setup_canonical_blue() {
   base_home
-  printf '%s\n' "$WORK/blue.png" > "$HOME_DIR/.cache/quickshell-wallpaper-path"
+  mkdir -p "$HOME_DIR/.cache/pleamar"
+  printf '%s\n' "$WORK/blue.png" > "$HOME_DIR/.cache/pleamar/wallpaper-path"
 }
 
 setup_canonical_light() {
   base_home
   mkdir -p "$HOME_DIR/.cache/pleamar"
   printf '%s\n' "$WORK/light.png" > "$HOME_DIR/.cache/pleamar/wallpaper-path"
-  printf '%s\n' "$WORK/blue.png" > "$HOME_DIR/.cache/quickshell-wallpaper-path"
 }
 
 setup_mode_file() {
-  setup_legacy_blue
+  setup_canonical_blue
   printf ' l i g h t \n\n' > "$HOME_DIR/.config/pleamar/theme.mode"
 }
 
@@ -234,34 +238,33 @@ scenario() { # label setup-fn args...
 # ---- scenarios -------------------------------------------------------------
 
 section "wallpaper resolution and golden output"
-scenario "legacy cache path, blue fixture" setup_legacy_blue
-scenario "canonical cache path wins over the legacy one" setup_canonical_light
+scenario "canonical cache path, blue fixture" setup_canonical_blue
 
 section "modes and the switch file"
 scenario "--mode dark on a light wallpaper" setup_canonical_light --mode dark
 scenario "theme.mode=light on a dark wallpaper" setup_mode_file
 
 section "explicit colours"
-scenario "--accent wins and is lower-cased" setup_legacy_blue --accent '#AbCdEf'
+scenario "--accent wins and is lower-cased" setup_canonical_blue --accent '#AbCdEf'
 scenario "--from-json without a wallpaper" setup_empty --from-json "$WORK/pal.json"
 scenario "--accent wins over --from-json" setup_empty --accent '#ABCDEF' --from-json "$WORK/pal.json"
 scenario "short forms and numeric JSON values" setup_empty --from-json "$WORK/short.json"
 
 section "errors"
 scenario "nothing to extract" setup_empty
-scenario "bad --accent" setup_legacy_blue --accent not-a-colour
+scenario "bad --accent" setup_canonical_blue --accent not-a-colour
 scenario "unreadable --wallpaper" setup_empty --wallpaper "$WORK/gone.png"
-scenario "unknown argument" setup_legacy_blue --nope
-scenario "missing option value" setup_legacy_blue --wallpaper
-scenario "bad --mode" setup_legacy_blue --mode blue
+scenario "unknown argument" setup_canonical_blue --nope
+scenario "missing option value" setup_canonical_blue --wallpaper
+scenario "bad --mode" setup_canonical_blue --mode blue
 scenario "bad JSON" setup_empty --from-json "$WORK/bad.json"
 scenario "empty JSON object" setup_empty --from-json "$WORK/empty.json"
-scenario "--help" setup_legacy_blue --help
+scenario "--help" setup_canonical_blue --help
 
 section "external tools"
 EXTRA_ENV=(MAGICK_BIN=/nonexistent/magick)
-run_side shell setup_legacy_blue
-run_side rust setup_legacy_blue
+run_side shell setup_canonical_blue
+run_side rust setup_canonical_blue
 compare_side "missing magick warns and falls back"
 EXTRA_ENV=(JQ_BIN=/nonexistent/jq)
 run_side shell setup_empty --from-json "$WORK/pal.json"
@@ -276,7 +279,7 @@ scenario "a directory as --wallpaper" setup_empty --wallpaper "$WORK"
 
 section "the unchanged shortcut"
 for side in shell rust; do
-  setup_legacy_blue
+  setup_canonical_blue
   tool=$(tool_for "$side")
   invoke "$side" "$tool"
   first=$(sha256sum "$HOME_DIR/.config/pleamar/theme.plm" | cut -d' ' -f1)
@@ -291,8 +294,8 @@ done
 compare_side "a second run for the same wallpaper is unchanged"
 
 section "the timestamp is the only field a rerun changes"
-run_side shell setup_legacy_blue
-run_side rust setup_legacy_blue
+run_side shell setup_canonical_blue
+run_side rust setup_canonical_blue
 if cmp -s "$WORK/shell.theme" "$WORK/rust.theme"; then
   printf 'note: this run landed in the same second, so // written: matched too\n'
 else
@@ -304,7 +307,8 @@ setup_source_change() {
   base_home
   magick -size 32x32 xc:'#08101e' "$WORK/one.png"
   cp "$WORK/one.png" "$WORK/two.png"
-  printf '%s\n' "$WORK/one.png" > "$HOME_DIR/.cache/quickshell-wallpaper-path"
+  mkdir -p "$HOME_DIR/.cache/pleamar"
+  printf '%s\n' "$WORK/one.png" > "$HOME_DIR/.cache/pleamar/wallpaper-path"
 }
 source_change_run() { # side tool
   local side=$1 tool=$2 first second
@@ -312,7 +316,7 @@ source_change_run() { # side tool
   HOME="$HOME_DIR" XDG_CONFIG_HOME="$HOME_DIR/.config" XDG_CACHE_HOME="$HOME_DIR/.cache" \
     "$tool" > /dev/null 2>&1
   first=$(sha256sum "$HOME_DIR/.config/pleamar/theme.plm" | cut -d' ' -f1)
-  printf '%s\n' "$WORK/two.png" > "$HOME_DIR/.cache/quickshell-wallpaper-path"
+  printf '%s\n' "$WORK/two.png" > "$HOME_DIR/.cache/pleamar/wallpaper-path"
   if HOME="$HOME_DIR" XDG_CONFIG_HOME="$HOME_DIR/.config" XDG_CACHE_HOME="$HOME_DIR/.cache" \
     "$tool" > "$WORK/$side.out" 2> "$WORK/$side.err"; then
     echo 0 > "$WORK/$side.rc"

@@ -17,7 +17,7 @@
       # business running while the login screen is up (it locks/blank the screen),
       # and nix-maid's sd-switch can start a changed unit without the session
       # target. See modules/user/session/greetd/session-wrapper.sh.
-      unitConfig.ConditionPathExists = "!%t/quickshell-login/login-phase";
+      unitConfig.ConditionPathExists = "!%t/pleamar-login/login-phase";
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.hypridle}";
         RestartSec = "2";

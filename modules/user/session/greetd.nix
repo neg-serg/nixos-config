@@ -86,12 +86,6 @@ in
         sleep 0.2
       done
     '';
-    # Prevent nix-maid's maid-activation.service from running for the greeter user.
-    # No session of its own ever starts for that account any more (the login runs
-    # as the main user), so the condition is a leftover guard: should anything run
-    # as greeter again, it must not spend nix-store calls on user config
-    # management it has no use for.
-    systemd.user.services.maid-activation.unitConfig.ConditionUser = "!greeter";
     security.pam.services.greetd.enableGnomeKeyring = true;
     # The lock scene checks the password through the PAM service `pleamar`
     # (files/pleamar/shells/lock/lock.luau → `sys.ask("auth.check", …)`), and
@@ -102,14 +96,13 @@ in
     # and not a degraded mode. That module's own values win whenever it is on.
     security.pam.services.pleamar.unixAuth = lib.mkDefault true;
     security.pam.services.pleamar.fprintAuth = lib.mkDefault true;
-    users.users.greeter = {
-      home = "/home/greeter";
-      createHome = true;
-      homeMode = "0710";
-      isSystemUser = true;
-      group = "greeter";
-    };
-    users.groups.greeter = { };
+    # No `greeter` account any more. It existed because the greeter session used to
+    # run as its own user, which also needed the wallpaper copied into a home it
+    # could read; on 2026-11-02 the login became a session-lock scene inside the
+    # main user's compositor, and on 2026-11-03 the last readers of that copy went
+    # away (modules/user/nix-maid/sys/wallpaper-sync.nix no longer writes it). The
+    # old /home/greeter is left on disk: nothing owns it now, and deleting a home
+    # is not a rebuild's decision.
     environment.systemPackages = [ loginLayer ];
     # The pleamar tree the login layer loads its scene from: a store copy, because
     # the login phase runs before the session target, so ~/.config/pleamar is not
@@ -128,21 +121,9 @@ in
     # The wrapper is deployed as a readable copy of what greetd runs; greetd itself
     # starts the store path above.
     environment.etc."greetd/session-wrapper".source = sessionWrapper;
-    # Expose the Wayland session .desktop files so the greeter can list and
-    # switch sessions (Hyprland only; this host has no X sessions).
-    environment.pathsToLink = lib.mkAfter [
-      "/share/wayland-sessions"
-    ];
-    systemd.tmpfiles.rules = lib.mkAfter [
-      # Greeter reads session .desktop files from /usr/share/wayland-sessions;
-      # point it at the system profile's merged share dir.
-      "d /usr/share 0755 root root -"
-      "L+ /usr/share/wayland-sessions - - - - /run/current-system/sw/share/wayland-sessions"
-      "d /home/greeter 0710 greeter greeter -"
-      # modules/user/nix-maid/sys/wallpaper-sync.nix keeps the login wallpaper in
-      # this cache (wl's own state lives in the main user's home, which the greeter
-      # account cannot read).
-      "d /home/greeter/.cache 0775 greeter greeter -"
-    ];
+    # No session list and no /usr/share/wayland-sessions: the old greeter read the
+    # .desktop files there to offer a session choice, and this host has one user and
+    # one session — the port dropped the selector (files/pleamar/docs/PARITY.md, the
+    # "User and session selection" row). Nothing reads that directory now.
   };
 }
