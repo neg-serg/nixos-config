@@ -8,6 +8,7 @@ let
   cfg = config.features.web.vivaldi;
   webEnabled = config.lib.neg.enabled "web";
   guiEnabled = config.lib.neg.enabled "gui";
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 
   # Extension install strategy — ExtensionInstallForcelist (force-installed via
   # managed policy). The browser itself downloads and (re)installs SurfingKeys +
@@ -26,73 +27,49 @@ let
   # We keep proprietaryCodecs=false (no snap download), but vivaldi-bin has libffmpeg.so
   # as DT_NEEDED and its RUNPATH only covers opt/vivaldi/lib/, not opt/vivaldi/ where
   # the bundled libffmpeg.so lives. So we patch the RUNPATH to include opt/vivaldi/.
-  vivaldi-pkg = pkgs.vivaldi.override {
-    # Wayland Ozone + Skia renderer (stable colors, no Vulkan video-overlay bug) +
-    # VA-API hardware video decoding on AMD (radeonsi). Vulkan is disabled — it causes
-    # a white-screen video overlay on Wayland (Chromium bug).
-    # --force-color-profile=srgb is needed for fullscreen: Hyprland direct_scanout
-    # bypasses compositor color management (cm=auto), so the GPU outputs in native
-    # display gamut.  sRGB clamp keeps colors consistent windowed ↔ fullscreen.
-    # --disable-features=WaylandWpColorManagerV1: Chromium's wp_color_manager_v1
-    # protocol handshake with Hyprland cm=auto can fail on AMD, causing overbright
-    # gamma and incorrect colors (vs Firefox which doesn't use this protocol).
-    # VivaldiCssMods: the "Allow for using CSS modifications" experiment flag.
-    # It is a native runtime feature flag (vivaldi://experiments → getAllFeatureFlags),
-    # NOT a Preferences key — Vivaldi can drop the toggle on restart/upgrade and
-    # then silently ignores css_ui_mods_directory (all usercss stops applying).
-    # Forcing it via --enable-features keeps the CSS mods active unconditionally.
-    # --remote-debugging-port=9222: CDP endpoint for inspecting the browser's own
-    # DOM (navbar/toolbars) while debugging usercss selectors. Loopback-only.
-    # --remote-allow-origins=*: CDP rejects WebSocket handshakes from unknown
-    # origins unless allowed; the debugger connects from a local script.
-    # --force-dark-mode: sets prefers-color-scheme to dark for web contents. The GTK
-    # side of this box is dark already (gtk-application-prefer-dark-theme=1), but that
-    # only reaches apps reading GTK settings — Vivaldi runs as pure Wayland/Ozone and
-    # still reported "light", so about:blank (a new tab, a target that has not painted
-    # yet) was painted white: the flash. With a dark preference Blink uses its dark
-    # base background for about:blank — the same #121212 headless Chromium paints
-    # (measured on chromium-151 with --headless=new --screenshot). This is NOT
-    # Vivaldi's "Force dark mode" (that one auto-inverts light pages); sites that ship
-    # a dark variant merely switch to it.
-    # --load-extension=.../neg-newtab: the dark new-tab page lives in
-    # files/vivaldi-newtab as an unpacked MV3 extension (chrome_url_overrides
-    # .newtab). It is not on the Web Store, so ExtensionInstallForcelist cannot
-    # carry it (the store force-installs above stay untouched). The path is the
-    # stable home symlink deployed by browsing.nix — a /nix/store path changes on
-    # every rebuild and Vivaldi then drops the extension as orphaned. Vivaldi
-    # additionally has its own "New Tab Page" setting, default = start page:
-    # there a new tab paints white until its target renders, and
-    # --force-dark-mode does not cover that frame. vivaldi-prefs.py therefore
-    # sets vivaldi.tabs.new_page.link = 3 (NEW_PAGE_TYPE.extension), so Ctrl+T
-    # lands in this extension. Verified: Manifest::Location COMMAND_LINE, no
-    # disable_reasons, body background #0a0b0e.
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --force-dark-mode --load-extension=${config.users.users.neg.home}/.config/vivaldi/extensions/neg-newtab --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1 --remote-debugging-port=9222 --remote-allow-origins=*";
-    proprietaryCodecs = false;
-  };
-
-  # Patch RUNPATH on vivaldi-bin so the NEEDED libffmpeg.so (bundled, opt/vivaldi/)
-  # is findable. nixpkgs's libPath only adds opt/vivaldi/lib but Vivaldi ships
-  # libffmpeg.so in opt/vivaldi/ directly.
-  vivaldi-fixed = vivaldi-pkg.overrideAttrs (old: {
-    buildPhase = old.buildPhase + ''
-      patchelf --add-rpath "$out/opt/vivaldi" opt/vivaldi/vivaldi-bin
-    '';
-  });
 
 in
 {
   config = lib.mkIf (webEnabled && guiEnabled && cfg.enable) {
 
     environment.systemPackages = [
-      vivaldi-fixed # Vivaldi browser (Chromium-based, with Wayland flags, patched libffmpeg.so rpath)
+      (onDemand {
+        name = "vivaldi";
+        attr = "vivaldi";
+      }) # Vivaldi browser (Chromium-based, patched build), built on first use
+      (pkgs.makeDesktopItem {
+        name = "vivaldi-stable";
+        desktopName = "Vivaldi";
+        exec = "vivaldi %U";
+        icon = "vivaldi";
+        categories = [
+          "Network"
+          "WebBrowser"
+        ];
+        mimeTypes = [
+          "application/pdf"
+          "application/rdf+xml"
+          "application/rss+xml"
+          "application/xhtml+xml"
+          "application/xhtml_xml"
+          "application/xml"
+          "image/gif"
+          "image/jpeg"
+          "image/png"
+          "image/webp"
+          "text/html"
+          "text/xml"
+          "x-scheme-handler/http"
+          "x-scheme-handler/https"
+        ];
+      })
     ];
 
-    # Point BROWSER/DEFAULT_BROWSER at the same patched build. nix-maid's
-    # browser table selects plain pkgs.vivaldi, so the closure used to carry
-    # two builds of the same browser (454M each).
+    # BROWSER/DEFAULT_BROWSER resolve the launcher by name; referencing a store
+    # path here would pull the browser back into system-path.
     environment.sessionVariables = {
-      BROWSER = lib.mkForce (lib.getExe vivaldi-fixed);
-      DEFAULT_BROWSER = lib.mkForce (lib.getExe vivaldi-fixed);
+      BROWSER = lib.mkForce "vivaldi";
+      DEFAULT_BROWSER = lib.mkForce "vivaldi";
     };
 
     # Chromium managed policies — most Chromium-based browsers read from here.

@@ -72,6 +72,7 @@
   waylandar = pkgs.waylandar;
   renoise = pkgs.renoise;
   sioyek = pkgs.sioyek;
+  vivaldi = pkgs.vivaldi-fixed;
   tshark = pkgs.tshark;
   galaxy-buds-client = pkgs.galaxy-buds-client;
   vial = pkgs.vial;

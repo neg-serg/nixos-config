@@ -1,14 +1,11 @@
 {
-  lib,
-  pkgs,
-
   ...
 }:
 {
   vivaldi = {
     name = "Vivaldi";
-    pkg = pkgs.vivaldi;
-    bin = "${lib.getExe pkgs.vivaldi}";
+    pkg = null;
+    bin = "vivaldi";
     desktop = "vivaldi-stable";
     newTabArg = "";
   };
