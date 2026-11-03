@@ -122,13 +122,18 @@ in
       local-bin-misc = final.callPackage ./local-bin-misc { }; # Rust ports of the last local-bin helpers (pb, any, v, pw-jack wrappers)
       local-bin-zsh = final.callPackage ./local-bin-zsh { }; # Rust ports of the last zsh helpers (iommu-info, music-rename, music-tui, pl, read_documents)
       local-bin-zsh-extra = final.callPackage ./local-bin-zsh-extra { }; # Rust ports of gh-issues-export, mpd_del_album, sx, sys-relief, vol, win-vm
-      local-bin-system = final.callPackage ./local-bin-system {
-        # pdf2md used @DOCLING_BIN@ as a substitution; the port compiles the
-        # same path in. Keep the expression identical to modules/cli/ocr.nix.
-        docling = (final.python3.withPackages (ps: [ ps.docling ])).overrideAttrs (_: {
-          ignoreCollisions = true;
-        });
-      }; # Rust ports of the system-level local-bin/bin helpers
+      # Docling (~3.9 GiB with its layout/table models): PDF/DOCX → Markdown.
+      # Deliberately outside the system closure — it lives in the `ai` devshell
+      # and behind the `docling` flake app; pdf2md resolves `docling` from PATH.
+      #
+      # ignoreCollisions: in the pinned nixpkgs (docling 2.118.0) the full
+      # package propagates `docling-slim` and BOTH install bin/docling-tools, so
+      # buildEnv refuses the environment ("two given paths contain a conflicting
+      # subpath", exit 25). The copies are the same version — keep the first.
+      docling-env = (final.python3.withPackages (ps: [ ps.docling ])).overrideAttrs (_: {
+        ignoreCollisions = true;
+      });
+      local-bin-system = final.callPackage ./local-bin-system { }; # Rust ports of the system-level local-bin/bin helpers
       tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the Python tgchat after a fresh login)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
       renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)

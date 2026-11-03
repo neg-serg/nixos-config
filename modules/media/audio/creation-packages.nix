@@ -37,7 +37,9 @@ let
     pkgs.safetynet # SafetyNet SC quark — protect against dangerous audio signals
     pkgs.ddwplug # ddwPlug SC quark — dynamic per-note synth patching
     pkgs.miscellaneous-lib # miSCellaneous_lib SC quark — patterns, granulation, live coding
-    pkgs.faust2sc # compile Faust DSP into SuperCollider UGens (faust2sc.py)
+    # faust2sc (2 GiB with the Faust compiler) moved to the `pro-audio`
+    # devshell and `nix run .#faust2sc`: compile Faust DSP into SC UGens on
+    # demand instead of carrying the compiler in every system activation.
     # Tidal/GHC is a 3.1G Haskell env; it lives in the `haskell` devshell and
     # this wrapper enters that shell on demand, so nvim, tidal-edit and
     # tidalctl keep finding `tidal-ghci` from any launch context.

@@ -1,6 +1,8 @@
-# Shared Python package list — single source of truth for the system python
-# env (modules/dev/python/pkgs.nix) and the python devshell
-# (flake/devshells/python.nix). Add/remove packages HERE, not in both files.
+# Shared Python package list — single source of truth for the python devshell
+# (flake/devshells/python.nix). This env used to sit in the system closure
+# (modules/dev/python/pkgs.nix); it now holds only the minimal molten-nvim host
+# env, and the full list is entered on demand with `nix develop .#python`.
+# Add/remove packages HERE, not in the devshell file.
 { }:
 {
   # ps: -> [ ... ] — package list for python3.withPackages
