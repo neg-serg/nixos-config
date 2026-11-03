@@ -11,6 +11,7 @@ mod font;
 mod gameplay;
 mod level;
 mod math;
+mod mechanics;
 mod player;
 mod render;
 mod study;
@@ -31,6 +32,7 @@ use effects::Particles;
 use gameplay::{Badnik, Capsule, Crate, CrateLoot, Hairball, RingPickup, Shot, Spring};
 use level::{DROP_COUNT, SPAWN, VIEW_H, VIEW_W, WORLD_H, WORLD_W};
 use math::{hash01, smooth, Rect, Vec2};
+use mechanics::{Effect, Mechanic};
 use player::{Input, Player};
 use render::Cam;
 
@@ -80,6 +82,8 @@ struct Game<'a> {
     scenario_t: f32,
     metrics_path: Option<String>,
     seed: u32,
+    mechanics: Mechanic,
+    bounce_cooldown: f32,
     drops: usize,
     state: State,
     hint: f32,
@@ -134,6 +138,11 @@ impl<'a> Game<'a> {
             scenario_t: 0.0,
             metrics_path: None,
             seed,
+            mechanics: {
+                let mut lab = mechanics::Lab::new(seed);
+                lab.next(seed).mechanic
+            },
+            bounce_cooldown: 0.0,
             drops: 0,
             state: State::Title,
             hint: 0.0,
@@ -146,6 +155,15 @@ impl<'a> Game<'a> {
             mote_clock: 0.0,
             spray_clock: 0.0,
             goal_clock: 0.0,
+        }
+    }
+
+    fn apply_mechanics(&mut self) {
+        self.player.rules.double_jump = self.mechanics.has(Effect::DoubleJump);
+        self.player.rules.glide = self.mechanics.glide();
+        self.player.rules.air_jump = self.mechanics.air_jump();
+        if self.mechanics.has(Effect::Magnet) {
+            self.player.magnet = true;
         }
     }
 
@@ -184,6 +202,12 @@ impl<'a> Game<'a> {
         self.novelty = 0.0;
         self.scenario.clear();
         self.scenario_t = 0.0;
+        self.mechanics = {
+            let mut lab = mechanics::Lab::new(self.seed);
+            lab.next(self.seed).mechanic
+        };
+        self.bounce_cooldown = 0.0;
+        self.apply_mechanics();
     }
 
     fn enter_chunk(&mut self, chunk: i32) {
@@ -286,6 +310,7 @@ impl<'a> Game<'a> {
 
         let mut stomped = Vec::new();
         let mut hurt = false;
+        let mut killed = false;
         {
             let p = &self.player;
             let invulnerable = self.invuln > 0.0;
@@ -300,14 +325,17 @@ impl<'a> Game<'a> {
                 }
             }
         }
-        for pos in stomped {
+        for pos in &stomped {
             for badnik in &mut self.badniks {
-                if (badnik.pos - pos).len() < 1.0 {
+                if (badnik.pos - *pos).len() < 1.0 {
                     badnik.alive = false;
                 }
             }
             self.stomps += 1;
-            self.particles.sparkle(pos);
+            self.particles.sparkle(*pos);
+        }
+        if !stomped.is_empty() {
+            killed = true;
         }
         if hurt {
             self.damage();
@@ -374,12 +402,21 @@ impl<'a> Game<'a> {
             self.weapon_cooldown = 0.34;
             self.shots_fired += 1;
             let c = self.player.center();
-            self.hairballs.push(Hairball {
-                pos: c + Vec2::new(self.player.facing * 36.0, 4.0),
-                vel: Vec2::new(self.player.facing * 920.0, -80.0),
-                life: 1.5,
-                bounces: 0,
-            });
+            let angles: &[f32] = if self.mechanics.has(Effect::TripleShot) {
+                &[-0.17, 0.0, 0.17]
+            } else {
+                &[0.0]
+            };
+            for angle in angles {
+                let (sin, cos) = angle.sin_cos();
+                let dir = Vec2::new(self.player.facing * cos, sin);
+                self.hairballs.push(Hairball {
+                    pos: c + Vec2::new(self.player.facing * 36.0, 4.0),
+                    vel: Vec2::new(dir.x * 920.0, dir.y * 920.0 - 80.0),
+                    life: 1.5,
+                    bounces: 0,
+                });
+            }
         }
 
         let chunk_x0 = self.current_chunk as f32 * CHUNK_W;
@@ -426,6 +463,7 @@ impl<'a> Game<'a> {
             if let Some(b) = bad {
                 self.badniks[b].alive = false;
                 self.stomps += 1;
+                killed = true;
                 let pos = self.badniks[b].pos;
                 self.particles.sparkle(pos);
             }
@@ -438,6 +476,20 @@ impl<'a> Game<'a> {
             self.particles.dust(at, 1.0);
         }
         self.hairballs.retain(|b| b.life > 0.0);
+
+        // Generated mechanic: stomps send a shockwave through nearby badniks.
+        if killed && self.mechanics.has(Effect::Shockwave) {
+            let at = self.player.pos + Vec2::new(0.0, -20.0);
+            for badnik in &mut self.badniks {
+                if badnik.alive && (badnik.pos - at).len() < 240.0 {
+                    badnik.alive = false;
+                }
+            }
+            for i in 0..14 {
+                let a = i as f32 / 14.0 * std::f32::consts::TAU;
+                self.particles.mote(at + Vec2::new(a.cos(), a.sin()) * 60.0);
+            }
+        }
 
         // Stomping a crate breaks it and drops the loot.
         if self.landed_this_frame {
@@ -595,6 +647,13 @@ impl<'a> Game<'a> {
                     self.enter_chunk(chunk);
                 }
                 self.landed_this_frame = events.landed;
+                self.bounce_cooldown = (self.bounce_cooldown - dt).max(0.0);
+                if events.landed && self.bounce_cooldown <= 0.0 && self.mechanics.bounce() > 0.0 {
+                    self.player.vel.y = -self.mechanics.bounce();
+                    self.player.on_ground = false;
+                    self.bounce_cooldown = 0.6;
+                    self.particles.dust(self.player.pos, 1.0);
+                }
                 self.update_encounter(dt, input.fire_pressed);
                 self.collect_drops();
                 self.check_goal();
@@ -1473,6 +1532,18 @@ impl<'a> Game<'a> {
             }
         }
 
+        render::text_shadow(
+            canvas,
+            cam,
+            scale,
+            48.0,
+            VIEW_H - 42.0,
+            &format!("МЕХАНИКА: {}", self.mechanics.label()),
+            2,
+            Color::RGBA(246, 238, 212, 200),
+            palette.ink,
+        )?;
+
         // Director readout: the fun metric the critic maximised.
         render::text_right(
             canvas,
@@ -1757,6 +1828,8 @@ fn main() -> Result<(), String> {
              \x20 --seed N         director seed (default 0x5EED)\n\
              \x20 --metrics PATH   write the run's fun metrics as JSON\n\
              \x20 --study N        simulate N campaigns headlessly and report\n\
+             \x20 --mechanics N    generate N mechanics, report the best\n\
+             \x20 --mechanics-json P  write the mechanics lab as JSON\n\
              \x20 --study-json P   write the study report as JSON\n\
              \x20 --study-threads T  worker threads for --study\n\
              \x20 --debug          draw platform and hitbox outlines\n\
@@ -1764,6 +1837,18 @@ fn main() -> Result<(), String> {
              KEYS: A/D or arrows walk, Space jump, S dive, R restart, F11 fullscreen,\n\
              \x20     F12 screenshot to /tmp/catwalk.ppm, Esc quit"
         );
+        return Ok(());
+    }
+
+    if let Some(runs) = value("--mechanics").and_then(|v| v.parse::<u64>().ok()) {
+        let base = value("--seed")
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(0xC0FF_EE11);
+        let lab = mechanics::run_lab(runs, base);
+        print!("{}", lab.report());
+        if let Some(path) = value("--mechanics-json") {
+            let _ = std::fs::write(path, lab.json());
+        }
         return Ok(());
     }
 
@@ -1840,7 +1925,11 @@ fn main() -> Result<(), String> {
     let mut game = Game::new(assets, debug, seed);
     game.clean = clean;
     game.metrics_path = metrics_path;
-    println!("catwalk seed: {seed}");
+    game.apply_mechanics();
+    println!(
+        "catwalk seed: {seed} (mechanics: {})",
+        game.mechanics.label()
+    );
 
     if let Some(time) = forced_time {
         game.time = time;
