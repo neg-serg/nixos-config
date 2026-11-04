@@ -145,15 +145,22 @@ route_complete() {
 
 # Add first, prune after: when a port vanished between the check and the call,
 # the working path is still there instead of having been taken down already.
+#
+# Order matters for the first two groups: WirePlumber auto-links a new stream
+# to the default sink (game-stereo), whose monitor is this capture input.
+# Connecting GAME -> CAP while the playback stream still feeds game-stereo
+# closes a unity-gain feedback loop, and each prune is a pw-link round trip
+# (slow under load). Move the playback stream to AES, prune the stray link,
+# and only then close the capture path.
 route_dsp() {
-  add "$GAME:output_FL" "$CAP:input_FL"
-  add "$GAME:output_FR" "$CAP:input_FR"
   add "$PB:output_FL" "$AES_L"
   add "$PB:output_FR" "$AES_R"
-  prune_sources "$CAP:input_FL" "$GAME:output_FL"
-  prune_sources "$CAP:input_FR" "$GAME:output_FR"
   prune_dests "$PB:output_FL" "$AES_L"
   prune_dests "$PB:output_FR" "$AES_R"
+  add "$GAME:output_FL" "$CAP:input_FL"
+  add "$GAME:output_FR" "$CAP:input_FR"
+  prune_sources "$CAP:input_FL" "$GAME:output_FL"
+  prune_sources "$CAP:input_FR" "$GAME:output_FR"
   # Exactly one path to AES: the DSP's.
   del "$GAME:output_FL" "$AES_L"
   del "$GAME:output_FR" "$AES_R"
