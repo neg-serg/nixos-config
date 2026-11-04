@@ -20,6 +20,7 @@ import "../../lib/icons.plm"
 //   pleamar --say launcher "fact open false"      close
 //   pleamar --say launcher "text query kitty"     type into the filter without a keyboard
 //   pleamar --say launcher "submit query kitty"   type and press Enter
+//   pleamar --say launcher "submit query :fire"    a `:` query is the emoji picker: Enter copies
 // The facts are the interface (§2.1): `open` (bool, false) and `query` (text, "").
 // Enter launches the selected row and closes; Escape and a press outside close;
 // a press on a row launches it. The surface holds the keyboard exclusively while
@@ -132,7 +133,7 @@ scene launcher {
 
     // Listening: apps (the declarative list below). Commanding: apps.launch.
     // Files: the scene's own settings.json, read and watched by launcher.luau.
-    permissions { services: "apps", "apps.launch", "files" }
+    permissions { run: "wl-copy"; services: "apps", "apps.launch", "files" }
 
     // The interface facts (INTERFACES §2.1); `max_results` and `zoom` are the
     // user's settings, merged by launcher.luau.
@@ -269,7 +270,7 @@ scene launcher {
                 input query {
                     at: 52, 12; width: 390
                     size: 15; color: live.ink; family: "Iosevka"; selection: live.accent_deep
-                    placeholder: "Search applications"
+                    placeholder: "Search applications · : for emoji"
                     label: "Search applications"
                 }
                 box { from: 0, 47; size: w, 1; color: live.ink; opacity: ink.subtle }

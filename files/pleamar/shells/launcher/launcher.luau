@@ -122,8 +122,135 @@ local function snapshot()
     end
 end
 
+-- ==================== emoji and kaomoji ====================
+-- A query that starts with `:` is a lookup in this table instead of the application list: the
+-- rows are the characters themselves, Enter copies one to the clipboard (`wl-copy`) and closes.
+-- The set is curated rather than complete: it is what a shell's picker is for — the faces one
+-- actually types — and every entry is searchable by its English name. `:` alone lists them all.
+-- (The reference kept whole Unicode tables in `files/emoji.json`; a scene cannot read files
+-- outside its own folder, and a thousand rows behind a fourteen-pixel list is not a picker.)
+local EMOJI = {
+    { "😀", "grinning" }, { "😃", "smile open" }, { "😄", "smile" }, { "😁", "beaming" },
+    { "😆", "laughing" }, { "😅", "sweat smile" }, { "🤣", "rofl" }, { "😂", "joy tears" },
+    { "🙂", "slight smile" }, { "🙃", "upside down" }, { "😉", "wink" }, { "😊", "blush" },
+    { "😇", "innocent halo" }, { "🥰", "love hearts" }, { "😍", "heart eyes" }, { "🤩", "star struck" },
+    { "😘", "kiss" }, { "😗", "kissing" }, { "😚", "kissing closed" }, { "😙", "kissing smile" },
+    { "😋", "yum" }, { "😛", "tongue" }, { "😜", "wink tongue" }, { "🤪", "zany" },
+    { "😝", "squint tongue" }, { "🤑", "money mouth" }, { "🤗", "hug" }, { "🤭", "hand over mouth" },
+    { "🤫", "shush" }, { "🤔", "thinking" }, { "🤐", "zipper mouth" }, { "🤨", "raised eyebrow" },
+    { "😐", "neutral" }, { "😑", "expressionless" }, { "😶", "no mouth" }, { "😏", "smirk" },
+    { "😒", "unamused" }, { "🙄", "eye roll" }, { "😬", "grimace" }, { "🤥", "lying" },
+    { "😌", "relieved" }, { "😔", "pensive" }, { "😪", "sleepy" }, { "🤤", "drool" },
+    { "😴", "sleeping" }, { "😷", "mask" }, { "🤒", "thermometer" }, { "🤕", "bandage" },
+    { "🤢", "nauseated" }, { "🤮", "vomit" }, { "🤧", "sneeze" }, { "🥵", "hot" },
+    { "🥶", "cold" }, { "🥴", "woozy" }, { "😵", "dizzy" }, { "🤯", "exploding head" },
+    { "🤠", "cowboy" }, { "🥳", "party" }, { "😎", "sunglasses cool" }, { "🤓", "nerd" },
+    { "🧐", "monocle" }, { "😕", "confused" }, { "😟", "worried" }, { "🙁", "frown" },
+    { "😮", "surprised" }, { "😯", "hushed" }, { "😲", "astonished" }, { "😳", "flushed" },
+    { "🥺", "pleading" }, { "😦", "frowning" }, { "😧", "anguished" }, { "😨", "fearful" },
+    { "😰", "anxious" }, { "😥", "sad relieved" }, { "😢", "cry" }, { "😭", "sob" },
+    { "😱", "scream" }, { "😖", "confounded" }, { "😣", "persevere" }, { "😞", "disappointed" },
+    { "😓", "downcast sweat" }, { "😩", "weary" }, { "😫", "tired" }, { "🥱", "yawn" },
+    { "😤", "triumph" }, { "😡", "rage" }, { "😠", "angry" }, { "🤬", "cursing" },
+    { "😈", "devil" }, { "👿", "imp" }, { "💀", "skull" }, { "☠️", "skull crossbones" },
+    { "💩", "poop" }, { "🤡", "clown" }, { "👹", "ogre" }, { "👻", "ghost" },
+    { "👽", "alien" }, { "🤖", "robot" }, { "😺", "cat smile" }, { "😸", "cat grin" },
+    { "😻", "cat heart eyes" }, { "🙀", "cat scream" }, { "😿", "cat cry" }, { "🙈", "see no evil" },
+    { "🙉", "hear no evil" }, { "🙊", "speak no evil" }, { "❤️", "heart red" }, { "🧡", "heart orange" },
+    { "💛", "heart yellow" }, { "💚", "heart green" }, { "💙", "heart blue" }, { "💜", "heart purple" },
+    { "🖤", "heart black" }, { "🤍", "heart white" }, { "💔", "broken heart" }, { "❣️", "heart exclamation" },
+    { "💕", "two hearts" }, { "💖", "sparkling heart" }, { "💘", "cupid" }, { "💝", "gift heart" },
+    { "🔥", "fire" }, { "✨", "sparkles" }, { "⭐", "star" }, { "🌟", "glowing star" },
+    { "💫", "dizzy star" }, { "⚡", "zap lightning" }, { "☀️", "sun" }, { "🌙", "moon" },
+    { "🌈", "rainbow" }, { "☁️", "cloud" }, { "❄️", "snowflake" }, { "🌊", "wave water" },
+    { "🌱", "seedling" }, { "🌿", "herb" }, { "🍀", "clover luck" }, { "🌵", "cactus" },
+    { "🌴", "palm" }, { "🌸", "cherry blossom" }, { "🌹", "rose" }, { "🌻", "sunflower" },
+    { "🍁", "maple leaf" }, { "🎃", "pumpkin" }, { "🎄", "christmas tree" }, { "🎁", "gift" },
+    { "🎉", "party popper" }, { "🎊", "confetti" }, { "🎈", "balloon" }, { "🎵", "music note" },
+    { "🎶", "music notes" }, { "🎧", "headphones" }, { "🎸", "guitar" }, { "🎹", "piano" },
+    { "🥁", "drum" }, { "🎮", "gamepad" }, { "🎯", "dart target" }, { "🎲", "dice" },
+    { "🏆", "trophy" }, { "🥇", "gold medal" }, { "⚽", "soccer" }, { "🏀", "basketball" },
+    { "🚀", "rocket" }, { "🛸", "ufo" }, { "🌍", "earth" }, { "🗺️", "map" },
+    { "🧭", "compass" }, { "⛰️", "mountain" }, { "🏔️", "snow mountain" }, { "🏕️", "camping" },
+    { "🍕", "pizza" }, { "🍔", "burger" }, { "🍟", "fries" }, { "🌮", "taco" },
+    { "🍣", "sushi" }, { "🍜", "ramen" }, { "🍩", "donut" }, { "🍪", "cookie" },
+    { "🍰", "cake" }, { "☕", "coffee" }, { "🍵", "tea" }, { "🍺", "beer" },
+    { "🍷", "wine" }, { "🥃", "whisky" }, { "🍎", "apple" }, { "🍋", "lemon" },
+    { "🥑", "avocado" }, { "🌶️", "chili" }, { "🧄", "garlic" }, { "🧠", "brain" },
+    { "👀", "eyes" }, { "👁️", "eye" }, { "🫀", "heart organ" }, { "🦴", "bone" },
+    { "👍", "thumbs up" }, { "👎", "thumbs down" }, { "👌", "ok" }, { "🤌", "pinched fingers" },
+    { "✌️", "victory peace" }, { "🤞", "fingers crossed" }, { "🤟", "love you" }, { "🤘", "rock" },
+    { "👏", "clap" }, { "🙌", "raised hands" }, { "🤝", "handshake" }, { "🙏", "pray thanks" },
+    { "💪", "muscle" }, { "🖕", "middle finger" }, { "✍️", "writing" }, { "🧑‍💻", "developer" },
+    { "💻", "laptop" }, { "🖥️", "desktop" }, { "⌨️", "keyboard" }, { "🖱️", "mouse" },
+    { "💾", "floppy save" }, { "📀", "dvd" }, { "📱", "phone" }, { "🔋", "battery" },
+    { "🔌", "plug" }, { "💡", "bulb idea" }, { "🔍", "search" }, { "📌", "pin" },
+    { "📎", "paperclip" }, { "✂️", "scissors" }, { "🔧", "wrench" }, { "🔨", "hammer" },
+    { "⚙️", "gear settings" }, { "🧲", "magnet" }, { "🔒", "lock" }, { "🔓", "unlock" },
+    { "🔑", "key" }, { "🗝️", "old key" }, { "🛡️", "shield" }, { "⚔️", "swords" },
+    { "🏹", "bow arrow" }, { "💣", "bomb" }, { "🧨", "firecracker" }, { "🕯️", "candle" },
+    { "📖", "book" }, { "📚", "books" }, { "✏️", "pencil" }, { "🖊️", "pen" },
+    { "📝", "memo note" }, { "📅", "calendar" }, { "⏰", "alarm clock" }, { "⏳", "hourglass" },
+    { "⌛", "hourglass done" }, { "💯", "hundred" }, { "✅", "check" }, { "❌", "cross" },
+    { "⚠️", "warning" }, { "❓", "question" }, { "❗", "exclamation" }, { "♻️", "recycle" },
+}
+
+local KAOMOJI = {
+    { "(╯°□°）╯︵ ┻━┻", "table flip" },
+    { "┬─┬ノ( º _ ºノ)", "table back" },
+    { "( ͡° ͜ʖ ͡°)", "lenny" },
+    { "¯\\_(ツ)_/¯", "shrug" },
+    { "(╥﹏╥)", "cry" },
+    { "(◕‿◕)", "happy" },
+    { "(︶︹︺)", "sad" },
+    { "ヽ(´▽`)/", "cheer" },
+    { "(•_•) ( •_•)>⌐■-■ (⌐■_■)", "deal with it" },
+    { "ʕ•ᴥ•ʔ", "bear" },
+    { "(づ｡◕‿‿◕｡)づ", "hug" },
+    { "ᕕ( ᐛ )ᕗ", "run" },
+    { "OwO", "owo" },
+    { "UwU", "uwu" },
+    { "o(*^▽^*)o", "joy" },
+    { "(=^･ω･^=)", "cat" },
+    { "~(￣▽￣)~", "dance" },
+    { "(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧", "sparkle" },
+    { "Σ(°△°|||)︴", "shock" },
+    { "(ง'̀-'́)ง", "fight" },
+}
+
+local emoji_mode = false
+local emoji_picks = {}
+
+local function emoji_rows(needle, by_time)
+    local out, picks = {}, {}
+    local function add(list, kind)
+        for _, e in ipairs(list) do
+            if needle == "" or lower(e[2]):find(needle, 1, true) then
+                out[#out + 1] = { name = "", exec = "", icon = "face-smile", id = kind, local_name = e[1] .. "   " .. e[2] }
+                picks[#out] = e[1]
+                if #out >= by_time then return true end
+            end
+        end
+        return false
+    end
+    if add(EMOJI, "emoji") then return out, picks end
+    add(KAOMOJI, "kaomoji")
+    return out, picks
+end
+
 local function rebuild()
     local q = trim(lower(text.query))
+
+    -- `:` (or `:name`) is the emoji lookup; anything else is the application list.
+    if q:sub(1, 1) == ":" then
+        local rows, picks = emoji_rows(trim(q:sub(2)), math.min(#EMOJI + #KAOMOJI, math.floor(fact.max_results)))
+        emoji_mode = true
+        emoji_picks = picks
+        model.results = rows
+        fact.selected = 0
+        return
+    end
+    emoji_mode = false
 
     local hits = {}
     for _, rec in ipairs(apps_all) do
@@ -171,6 +298,19 @@ local function launch(i)
     -- A second ask in the same turn (a row press, a repeated submit) must not
     -- launch twice.
     if not fact.open then return end
+
+    -- An emoji row is copied, not launched: it has no program behind it.
+    if emoji_mode then
+        local pick = emoji_picks[(tonumber(i) or 0) + 1]
+        if type(pick) == "string" and pick ~= "" then
+            run("wl-copy", { pick }, function() end)
+        end
+        fact.open = false
+        fact.armed = false
+        text.query = ""
+        fact.selected = 0
+        return
+    end
 
     local rec = model.results[i + 1]
     if type(rec) == "table" then
