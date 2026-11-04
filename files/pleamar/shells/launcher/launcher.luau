@@ -248,6 +248,10 @@ local function rebuild()
         emoji_picks = picks
         model.results = rows
         fact.selected = 0
+        -- The safety net below rebuilds when `text.query` moved since the last slice. Left stale,
+        -- it rebuilt every 750 ms and reset `selected` with it, so the arrow keys in the emoji
+        -- list jumped back to the first row before a hand could press Enter.
+        last_query = text.query
         return
     end
     emoji_mode = false
