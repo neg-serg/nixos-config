@@ -28,6 +28,11 @@ import "../../lib/icons.plm"
 // fallback. This scene is not a systemd unit and is not part of the shell: it
 // lives next to the scene it previews (a documented exception to the one-scene
 // naming rule, see README.md).
+//
+// It reads the palette the way the tree does: `../../theme.plm` beside this file is the committed
+// fallback, not the generated one. The login screen itself follows the wallpaper
+// (~/.config/pleamar/theme.plm, through the import root pleamar-login-layer builds), so a preview
+// started from the tree may show the default accent where the login shows the wallpaper's.
 
 scene preview {
 
