@@ -17,7 +17,7 @@
 #     - the input path list: `*.nix` (tracked, staged and untracked), `flake.lock`
 #       and every non-Nix file a `.nix` file names literally, discovered per run
 #       from `readFile|fileContents|fromJSON|pathExists|readDir|neg.path|…` call
-#       sites (`files/hardware/udev/*.rules`, `files/gui/zellij/config.kdl`,
+#       sites (`files/hardware/udev/*.rules`, `files/herdr/config.toml`,
 #       `secrets/*.sops.yaml`, …);
 #     - `git status --porcelain=v1 -z` and `git diff HEAD --binary` restricted to
 #       that path list — the content of every changed input, binary included;
