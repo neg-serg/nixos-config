@@ -4,7 +4,7 @@
 # fixed vocabulary, and the whole `--say` mini-language.
 #
 # `--say` takes the scene as one word and every command as one word of its own —
-# `pleamar --say widgets "emit toggle_clock"` — because the program splits the
+# `pleamar --say notifications "emit toggle_centre"` — because the program splits the
 # command line itself, not the shell. The completion therefore rebuilds the
 # whole command word and `compadd -U` replaces it, keeping the quoting right.
 # The names come from the scene the runtime already knows: `pleamar --luau-types`

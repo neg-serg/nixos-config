@@ -268,9 +268,7 @@ cannot move a widget — the bar paints in the order its scene is written — an
 height, because the bar's surface is sized by a literal. The page asks the bar's logic (`say:bar`,
 events `set_edge` and `set_widget` with a packed payload) and the bar writes its own
 `settings.json`: one writer per folder (§1.2). It is also the shell's door: the bar's gear capsule
-(the reference's `Settings`) opens this page, and the toggles hub's `desktop widgets` row opens the
-widgets scene's own edit strip (`say:widgets`, `emit edit`) — so neither the bar's widgets nor the
-desktop ones depend on a key bind.
+(the reference's `Settings`) opens this page, so the bar's widgets do not depend on a key bind.
 
 ## 2.3 Surfaces, screens and reserve
 
@@ -298,38 +296,7 @@ desktop ones depend on a key bind.
   runtime value (§3.1). A taller surface is not free — the renderer refuses to cut a drawing and
   reports it — so a widget that needs more room above the strip grows this number, not `bar.plate`.
 
-### 2.4 The desktop widgets (`shells/widgets`)
-
-One scene for what lies on the desktop: the clock, the now-playing plate, a quote, the system
-monitor and the CAVA analyser. Ported from the dhrruvsharma/shell rice
-(`quickshell/modules/desktopwidgets/`, `modules/cava/`), not from the legacy tree — the scene's
-header carries the port note and names what was dropped.
-
-- **Surface**: one per monitor (`screens: each`), `size: full, full`, `anchor: top_left`,
-  `level: bottom`, `reserve: 0`. A desktop layer is under every window and over the wallpaper; the
-  compositor passes a press through the empty part of the surface (the input region is the zones),
-  so a click on the wallpaper still lands on whatever is behind it.
-- **Facts** (interface, and the live mirror of the settings file): `has.clock`, `has.music`,
-  `has.quote`, `has.sysmon`, `has.cava` (bool, defaults `true`, `true`, `true`, `true`, `false`),
-  `editing` (bool, `false`, the strip is up) and `playing` (bool, `false`; the media service as the
-  scene sees it — read-only for other tools, since its logic owns it).
-- **Events** (each reaches `widgets.luau`): `edit` (show or hide the strip), `toggle_clock`,
-  `toggle_music`, `toggle_quote`, `toggle_sysmon`, `toggle_cava`, `reset_positions`, and the press
-  events `media_toggle`, `media_next`, `media_previous`, `next_quote`.
-- **Settings** (`~/.local/share/pleamar/widgets/widgets.json`, read and watched by the logic): a
-  bool per widget under its fact name, and `positions."<name>".x` / `.y` — 0..1 of the monitor, the
-  plate's top left. The file holds only what the user changed; `reset_positions` writes the
-  reference's corners back.
-- **Zones**: the plates themselves (`role: region`, `cursor: move`), the transport, the quote's
-  refresh and the strip's toggles (`role: button` / `toggle`, with `checked:`). A plate switched off
-  is not drawn, so its zones are inactive and `describe` leaves them out.
-- **Needs no worker of its own**: the clock is a service, `pleamar-sysmon` is the bar's own worker
-  spawned through the scene's permissions, the sleeve is the Cover plugin, and cava is the Spectrum
-  plugin. The one thing the port dropped is the reference's per-desktop-theme frame set (fifteen
-  hand-drawn `WidgetFrame` faces); the plate here is drawn from the live palette, so a theme change
-  repaints it with the rest of the shell.
-
-### 2.5 The OSD (`shells/osd`)
+### 2.4 The OSD (`shells/osd`)
 
 A small pill above the bottom edge that appears on a volume or brightness change and hides 1.4 s
 after the last one. It is driven entirely by the services (`audio`, `brightness`): no scene and no
