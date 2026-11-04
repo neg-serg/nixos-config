@@ -1,0 +1,16 @@
+diff --git a/src/alsa_backend/device.rs b/src/alsa_backend/device.rs
+--- a/src/alsa_backend/device.rs
++++ b/src/alsa_backend/device.rs
+@@ -368,6 +368,12 @@
+                 }
+                 Errno::EAGAIN => {
+                     trace!("Capture: encountered EAGAIN error on read, trying again");
++                    // The PipeWire ALSA plugin keeps the capture PCM readable while no
++                    // frames are there yet: `poll` returns at once, `readi` answers EAGAIN,
++                    // and this loop ran 1.29 million times in three seconds (one core,
++                    // measured 2026-11-04). Yield for a fraction of a chunk instead; the
++                    // read still happens as soon as the plugin has the frames.
++                    std::thread::sleep(std::time::Duration::from_millis(1));
+                     continue;
+                 }
+                 Errno::EPIPE => {
