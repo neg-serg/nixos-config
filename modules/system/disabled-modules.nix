@@ -1,16 +1,16 @@
 { ... }: {
   disabledModules = [
     # Web servers — not used on trantor (no web serving from this machine)
-    "services/web-servers/nginx.nix"
+    # "services/web-servers/nginx/default.nix"  # referenced by web-apps (romm.nix) and nginx-* modules
     # "services/web-servers/apache-httpd/default.nix"  # referenced by zabbix web frontend
     # "services/web-servers/caddy/default.nix"  # referenced by wordpress.nix
     # "services/web-servers/traefik.nix"  # referenced by pangolin.nix
-    "services/web-servers/haproxy.nix"
+    "services/networking/haproxy.nix"
 
     # Databases — not used on trantor
     # "services/databases/postgresql.nix"  # referenced by too many modules (taler, peertube, plausible, etc.)
     # "services/databases/mysql.nix"  # referenced by writefreely.nix
-    "services/databases/mariadb.nix"
+    # "services/databases/mariadb.nix"  # module removed; services.mysql carries mariadb
     # "services/databases/redis.nix"  # referenced by send.nix
     # "services/databases/mongodb.nix"  # referenced by your_spotify.nix
     "services/databases/influxdb.nix"
@@ -39,7 +39,7 @@
     # K8s / container orchestration (kubernetes disabled; nomad has cross-refs with other modules)
 
     # Game servers
-    "services/games/valheim/default.nix"
+    # "services/games/valheim/default.nix"  # module removed from nixpkgs
     "services/games/minecraft-server.nix"
 
     # Monitoring we don't use
@@ -49,13 +49,13 @@
     "services/monitoring/zabbix-agent.nix"
 
     # Misc servers we don't use
-    "services/misc/gitlab.nix"
+    "services/misc/gitlab/default.nix"
     "services/misc/gitea.nix"
     "services/misc/plex.nix"
-    "services/misc/emby.nix"
-    "services/misc/matrix-synapse.nix"
+    # "services/misc/emby.nix"  # module removed from nixpkgs
+    # "services/matrix/synapse.nix"  # referenced by the mautrix bridges (services.matrix-synapse.enable)
     "services/misc/paperless.nix"
-    "services/misc/grocy.nix"
+    "services/web-apps/grocy.nix"
 
     # Desktop managers — plasma6 disabled because SDDM module was removed from nixpkgs-unstable
     "services/desktop-managers/plasma6.nix"
@@ -65,7 +65,7 @@
     "services/display-managers/ly.nix"
     "services/display-managers/lemurs.nix"
     "services/display-managers/cosmic-greeter.nix"
-    "services/display-managers/dms-greeter.nix"
+    # "services/display-managers/dms-greeter.nix"  # module removed from nixpkgs
     "services/display-managers/plasma-login-manager.nix"
 
     # Auto-detection (facter) — disabled because nixpkgs-slim removed hyperv-guest.nix
