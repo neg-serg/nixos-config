@@ -161,6 +161,10 @@ rec {
         bingMarket: en-US
   '';
 
+  # Model policy for the terminal profile: the DeepSeek route (V4.1-only catalog
+  # plus retry policy), the local llama-swap catalog, and the default model for
+  # new sessions (each note follows below).
+  #
   # DeepSeek provider policy for the terminal profile: retry a malformed stream
   # instead of closing the turn. The adapter aborts the whole turn when a
   # tool-call's accumulated arguments fail a strict JSON.parse — the error is
@@ -182,14 +186,40 @@ rec {
   # settings section cannot carry the policy here. Patch semantics replace the
   # whole row config, so every key the base and dsh-TUI bundle layers set is
   # repeated (composed values as of 2026-10-12).
+  #
+  # The catalog is narrowed to V4.1-Flash on purpose: the shipped list also
+  # offers `deepseek-v4-pro`, which carries V4-era capability metadata (text-only
+  # input, no in-history system-prompt update). The row replaces the whole
+  # provider config, so this `models` list is the complete picker catalog for the
+  # route — a capability that is not repeated here is gone.
+  #
+  # The default-model row pins new sessions to the same V4.1 route. The caretaker
+  # rewrites it on every rebuild and login, so a runtime switch (/model, /fast,
+  # /effort) survives only until the next one.
+  #
+  # The local catalog used to live in `settings.yaml` under `llm-pi-ai`. dsh
+  # 0.2.0-rc.2 removed that file: its one-time import renamed it to
+  # `settings.yaml.imported` and rejected the `llm-pi-ai` section, which is
+  # exactly why the local models dropped out of /model. The caretaker owns this
+  # block, so a rebuild restores the route instead of depending on a hand edit
+  # that the next profile-layer rewrite discards.
   llmRows = ''
-    # llm-deepseek: MALFORMED_RESPONSE is retryable (module: dsh-terminal-plugins.nix).
+    # llm-deepseek: V4.1-only catalog, MALFORMED_RESPONSE is retryable
+    # (module: dsh-terminal-plugins.nix).
     - id: llm-deepseek
       config:
         apiKeyEnv: DEEPSEEK_API_KEY
         baseURL: !!js process.env.DEEPSEEK_BASE_URL
         thinking: enabled
         reasoningEffort: max
+        models:
+          - id: deepseek-flash
+            name: DeepSeek-V41-Flash
+            inputModalities:
+              - text
+              - image
+            systemPromptUpdate: in-history
+            toolUpdate: addition-only
         retryPolicy:
           mode: normal
           maxRetries: 3
@@ -200,5 +230,47 @@ rec {
             - TIMEOUT
             - TRANSPORT
             - MALFORMED_RESPONSE
+    # llama-swap: the local uncensored catalog on 127.0.0.1:9292 (Vulkan; see
+    # modules/llm/llama-swap.nix). The route is OpenAI-compatible and takes no
+    # real key — LLAMA_SWAP_API_KEY is a dummy credential that only satisfies
+    # the adapter. The model list is explicit: dsh does not discover models for
+    # a hand-declared route, so anything missing here has no picker entry.
+    - id: llm-pi-ai
+      config:
+        providers:
+          llama-swap:
+            displayName: Local uncensored (llama-swap)
+            api: openai-completions
+            baseURL: http://127.0.0.1:9292/v1
+            apiKeyEnv: LLAMA_SWAP_API_KEY
+            defaultContextWindow: 32768
+            defaultMaxTokens: 8192
+            models:
+              - id: qwen3.6-35b-abliterated
+                name: Qwen3.6-35B abliterated
+                contextWindow: 65536
+              - id: gpt-oss-20b-abliterated
+                name: gpt-oss-20b abliterated
+                contextWindow: 65536
+              - id: gemma4-26b-abliterated
+                name: Gemma 4 26B abliterated
+                contextWindow: 32768
+              - id: qwen3-vl-8b-abliterated
+                name: Qwen3-VL-8B abliterated (vision)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
+              - id: tiny
+                name: Spark 4B abliterated (CPU, no VRAM)
+                contextWindow: 16384
+    # agent-default-model: deployment default for new sessions (module:
+    # dsh-terminal-plugins.nix). Runtime switches revert on the next rebuild or
+    # login, when the caretaker restores this row.
+    - id: agent-default-model
+      config:
+        provider: deepseek-official
+        model: deepseek-flash
+        reasoningEffort: high
   '';
 }
