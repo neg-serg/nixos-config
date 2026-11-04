@@ -78,6 +78,21 @@ let
       --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 --jinja
   '';
 
+  # Qwen3.8-27B abliterated (IQ3_S, ~3.5 bpw) — the quality tier: dense 27B,
+  # the highest bits-per-weight of anything served here, text-only. Dense
+  # attention makes the KV cache expensive: q8_0 caches only leave room for
+  # ~8k, so both run q4_0 and the context stops at 16k (14.3 GiB total with
+  # the desktop open, measured 34 tok/s). At 32k the model spills and drops
+  # to ~4 tok/s. `--reasoning off` is mandatory: without it the reply arrives
+  # with an empty `content` (everything goes to reasoning).
+  qwen38 = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/abliterated/Qwen3.8-27B-abliterated-IQ3_S.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 16384 -np 1 --flash-attn on --fit off --reasoning off \
+      --cache-type-k q4_0 --cache-type-v q4_0 --jinja
+  '';
+
   # Spark-X2.6-4B abliterated (Q4) — the CPU-only tier: no VRAM at all, so it
   # can be used while a game owns the card. ~22 tok/s with 4 threads, which
   # leaves 28 of the 32 hardware threads to the game. The game guard skips it.
@@ -188,6 +203,13 @@ in
           aliases = [
             "strong"
             "qwen3.6"
+          ];
+        };
+        "qwen3.8-27b-abliterated" = {
+          cmd = qwen38;
+          aliases = [
+            "qwen3.8"
+            "ru"
           ];
         };
         "tiny" = {
