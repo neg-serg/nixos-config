@@ -73,6 +73,15 @@ let
       -c 32768 -np 1 --flash-attn on --fit off --reasoning off --jinja
   '';
 
+  # Spark-X2.6-4B abliterated (Q4) — the CPU-only tier: no VRAM at all, so it
+  # can be used while a game owns the card. ~22 tok/s with 4 threads, which
+  # leaves 28 of the 32 hardware threads to the game. The game guard skips it.
+  tiny = ''
+    ${llamaVulkan} -m ${modelDir}/abliterated/Spark-X2.6-4B-abliterated-Q4_K_M.gguf \
+      -ngl 0 -t 4 -c 16384 -np 1 --jinja --reasoning off \
+      --host 127.0.0.1 --port ''${PORT}
+  '';
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -85,10 +94,13 @@ let
     runtimeInputs = [
       pkgs.coreutils # sleep in the polling loop
       pkgs.curl # GET /unload against llama-swap
+      pkgs.jq # read /running, so the CPU-only model is left alone
       pkgs.procps # pgrep for game process detection
     ];
     text = ''
-      endpoint="http://127.0.0.1:${toString config.services.llama-swap.port}/unload"
+      base="http://127.0.0.1:${toString config.services.llama-swap.port}"
+      endpoint="$base/unload"
+      running="$base/running"
       gaming=0
 
       is_gaming() {
@@ -108,10 +120,15 @@ let
       while true; do
         if is_gaming; then
           if [ "$gaming" = 0 ]; then
-            echo "game detected — unloading llama-swap models"
+            echo "game detected — unloading GPU models"
             gaming=1
           fi
-          curl -fsS -o /dev/null --max-time 5 "$endpoint" || echo "unload request failed" >&2
+          # llama-swap keeps one model resident: leave the CPU-only `tiny`
+          # alone (it holds no VRAM) and unload anything else.
+          model=$(curl -fsS --max-time 5 "$running" | jq -r '.running[0].model // empty' 2>/dev/null)
+          if [ "$model" != "tiny" ]; then
+            curl -fsS -o /dev/null --max-time 5 "$endpoint" || echo "unload request failed" >&2
+          fi
           sleep 20
         else
           if [ "$gaming" = 1 ]; then
@@ -166,6 +183,13 @@ in
           aliases = [
             "strong"
             "qwen3.6"
+          ];
+        };
+        "tiny" = {
+          cmd = tiny;
+          aliases = [
+            "cheap"
+            "spark-cpu"
           ];
         };
       };

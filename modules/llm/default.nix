@@ -70,6 +70,7 @@
 #   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      |  8k | 12.3G | 50    |
 #   | gpt-oss-20b  | gpt-oss-20b-abliterated MXFP4            | 32k | 15.8G | 75-85 |
 #   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 32k | 14.9G | 48    |
+#   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 16k | 0G    | 22    |
 #
 # - `gpt-oss-20b-abliterated` needs `--reasoning-effort low`: at the default
 #   effort it spends the whole token budget on reasoning and returns empty
@@ -80,6 +81,9 @@
 #   holds: 35B MoE, 3B active, dynamic IQ2. At IQ2 it can wander into
 #   comment-only "reasoning" on tricky coding prompts, so gpt-oss stays the
 #   tools default.
+# - `tiny` (Spark-X2.6-4B abliterated, `cheap` alias) runs on 4 CPU threads
+#   with `-ngl 0`: zero VRAM, ~22 tok/s, so it does not compete with a game.
+#   The game guard skips it and still unloads every GPU model.
 # - The Gemma and gpt-oss commands start with `--fit off`: auto-fit reads the
 #   VRAM of the model being swapped out as free, offloads a few layers, and
 #   gemma4 then crashes on the first request.
