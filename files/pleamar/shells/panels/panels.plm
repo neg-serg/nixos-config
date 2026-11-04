@@ -306,7 +306,7 @@ scene panels {
     // Connectivity.qml runs.
     // `wl-copy` is the reference's clipboard copy of the journal's problems (SystemMonitorPopup.qml:17-40
     // runs it every time the dashboard opens, so a paste into a chat carries the lines).
-    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "pleamar-themes", "flow", "ip", "ping", "pleamar", "wl-copy", "systemctl", "hyprctl", "notify-send", "gh"
+    permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "pleamar-themes", "flow", "ip", "ping", "pleamar", "wl-copy", "systemctl", "hyprctl", "notify-send", "wlsunset", "gh"
                   services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*", "bluetooth", "bluetooth.*", "network.*", "say:notifications", "say:bar", "clock" }
 
     // ----***--------------- bluetooth (the `bluetooth` drawer)
@@ -347,6 +347,9 @@ scene panels {
     }
     service network as net { wifi: bool; online: bool; name: text; networks: nets }
     fact dnd = false
+    // The night light: `wlsunset` while it is on (panels.luau spawns and kills it), kept in
+    // this scene's settings.json as `nightLight`.
+    fact night_light = false
 
     // The Wi-Fi page's own state: whether the password band is up, which network it is asking
     // about, the typed password (cleared after a join) and what the last attempt said.
@@ -498,6 +501,7 @@ scene panels {
     event toggle_wifi ->
     event toggle_bt ->
     event toggle_dnd ->
+    event toggle_night ->
     event note_add ->
     event note_delete ->
     event timer_add ->

@@ -117,7 +117,29 @@ local function read_settings()
     return raw
 end
 
-local function apply_settings()
+local function -- ==================== the night light ====================
+-- `wlsunset` shifts the screen's temperature; it runs until killed, so it is one spawned process
+-- for as long as the switch is on. The scene owns it: this logic started it, this logic kills it.
+local night_pid = nil
+
+local function night_apply(on)
+    if on and not night_pid then
+        local ok, id = pcall(spawn, "wlsunset", { "-t", "3500", "-T", "6500" }, function() end, function()
+            night_pid = nil
+        end)
+        if ok then
+            night_pid = id
+        else
+            log("panels: wlsunset did not start: " .. tostring(id))
+        end
+    elseif not on and night_pid then
+        pcall(kill, night_pid)
+        night_pid = nil
+    end
+end
+
+apply_settings()
+night_apply(fact.night_light)
     local raw = read_settings()
     raw_conf = raw
     fact.close_on_escape = flag(raw.closeOnEscape, D.closeOnEscape)
@@ -125,6 +147,7 @@ local function apply_settings()
     fact.zoom = num(raw.scale, 0.5, 2.0, D.scale)
     fact.text_scale = num(raw.fontScale, 0.5, 2.0, D.fontScale)
     fact.use_fahrenheit = flag(raw.useFahrenheit, D.useFahrenheit)
+    fact.night_light = flag(raw.nightLight, false)
     conf.weatherCity = str(raw.weatherCity, D.weatherCity)
     conf.calendarCountry = str(raw.calendarCountry, D.calendarCountry)
     -- The two fields on the shell page show what the file says (a write of ours
@@ -2061,12 +2084,20 @@ local function persist_settings()
         table_out.scale = math.floor(fact.zoom * 1000 + 0.5) / 1000
         table_out.fontScale = math.floor(fact.text_scale * 1000 + 0.5) / 1000
         table_out.useFahrenheit = fact.use_fahrenheit == true
+        table_out.nightLight = fact.night_light == true
         table_out.weatherCity = conf.weatherCity
         table_out.calendarCountry = conf.calendarCountry
         sys.call("files.write", FILE, table_out)
     end)
     if not ok then log("panels: cannot write settings.json: " .. tostring(failure)) end
 end
+
+on("toggle_night", function()
+    touch_drawer()
+    fact.night_light = not fact.night_light
+    night_apply(fact.night_light)
+    persist_settings()
+end)
 
 local function persist_soon()
     if settings_timer then cancel(settings_timer) end

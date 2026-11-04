@@ -19,6 +19,9 @@ in
     # -- Power --
     pkgs.upower # power management daemon for laptops/desktops
 
+    # -- Display --
+    pkgs.wlsunset # night light: shifts the screen's colour temperature (the toggles page's switch)
+
     # -- SVG / Graphics --
     pkgs.libxml2 # xmllint for SVG validation
 
