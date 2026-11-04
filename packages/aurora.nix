@@ -142,9 +142,10 @@ let
     };
   };
 
-  # The catalogue tools: the same pinned source, a different crate and a different closure. The
-  # `headphones` bin lives in `aurora-camilla`, speaks JSON over the daemon's websocket and needs
-  # none of the player's Vulkan stack; building it apart is what keeps `nix why-depends` honest.
+  # The catalogue tools: the same pinned source, a different crate and a different closure. Both
+  # bins live in `aurora-camilla`: `headphones` files models and applies them over the daemon's
+  # websocket, `headphones-web` serves the same catalogue on loopback; neither needs the player's
+  # Vulkan stack, and building them apart is what keeps `nix why-depends` honest.
   tools = rustPlatform.buildRustPackage {
     pname = "aurora-tools";
     version = "0.1.0";
@@ -159,12 +160,14 @@ let
       "aurora-camilla"
       "--bin"
       "headphones"
+      "--bin"
+      "headphones-web"
     ];
 
     doCheck = false;
 
     meta = lib.mkMeta {
-      description = "aurora tools: the headphone model catalogue CLI";
+      description = "aurora tools: the headphone catalogue CLI and its loopback web page";
       license = lib.licenses.mit;
       mainProgram = "headphones";
     };
