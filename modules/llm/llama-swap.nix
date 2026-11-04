@@ -52,7 +52,8 @@ let
 
   # gpt-oss-20b abliterated (MXFP4, 3.6B active) — the big uncensored tier:
   # ~75-85 tok/s at 64k, tools, reasoning and arithmetic all survive the
-  # abliteration. The KV cache is q8_0; f16 at 64k leaves no headroom.
+  # abliteration. The KV cache is q8_0; f16 at 64k leaves no headroom, and -ub
+  # 1024 lifts prefill from 4075 to 4546 tok/s for 170 MB.
   # `--reasoning-effort low` is mandatory: at the default effort the model
   # burns the whole token budget on reasoning and returns empty content, and
   # `--reasoning off` makes it worse.
@@ -61,7 +62,7 @@ let
       -m ${modelDir}/abliterated/gpt-oss-20b-abliterated-MXFP4.gguf \
       --host 127.0.0.1 --port ''${PORT} \
       -c 65536 -np 1 --flash-attn on --fit off --jinja \
-      --cache-type-k q8_0 --cache-type-v q8_0 \
+      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 \
       --reasoning-effort low
   '';
 
