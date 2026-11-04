@@ -70,8 +70,14 @@
 #   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 32k | 12.6G | 45    |
 #   | gpt-oss-20b  | gpt-oss-20b-abliterated MXFP4            | 64k | 16.0G | 75-85 |
 #   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 64k | 15.2G | 55    |
+#   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 16k | 14.3G | 34    |
 #   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 16k | 0G    | 22    |
 #
+# - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
+#   ~3.5 bpw, the highest bits-per-weight served here. Dense KV is expensive,
+#   so both caches run q4_0 and the context stops at 16k (q8_0 KV fits only
+#   ~8k; 32k spills to ~4 tok/s). `--reasoning off` is mandatory — without it
+#   the reply carries an empty `content`.
 # - `gpt-oss-20b-abliterated` needs `--reasoning-effort low`: at the default
 #   effort it spends the whole token budget on reasoning and returns empty
 #   content. With low effort it keeps tools, JSON and arithmetic intact.
