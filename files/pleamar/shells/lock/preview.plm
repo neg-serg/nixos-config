@@ -48,6 +48,10 @@ scene preview {
         kind: window
         title: "pleamar · lock preview"
         keyboard: on_demand
+        // The same pace as the lock scene (see lock.plm): the preview is the harness for the
+        // login, and a harness that burns the monitor's refresh is what made the measured cost
+        // of the greeter look like the cost of a game.
+        rate: 60, 15 while appear > 0.99 and shake == 0 and not busy
 
         include "pages/backdrop.plm"
         include "pages/clock.plm"
