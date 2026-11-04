@@ -3,14 +3,13 @@
 //! The build-time patch sets (formerly `packages/dsh/patch-*.py`) run against
 //! the unpacked npm tree, and the profile caretaker subcommands (formerly
 //! `modules/user/nix-maid/apps/dsh-*.py`) rewrite the terminal profile's
-//! `cordis.patch.yml`, the liangshen preset and `~/.dsh/settings.yaml`.
+//! `cordis.patch.yml` and the liangshen preset.
 //!
 //! Exit codes follow the scripts they replace: 0 success, 1 a failed
 //! assertion or I/O error, 2 a usage error.
 
 mod engine;
 mod liangshen;
-mod models_settings;
 mod patches;
 mod tui_preset;
 
@@ -22,7 +21,6 @@ commands:
   session-format <dir>                  released-0.1.x session payloads
   session-migration <dir>               interrupted-turn repair for v3 logs
   ptc-env <dir>                         keep LD_LIBRARY_PATH in PTC workers
-  models-settings <settings.yaml> <blocks.json>
   tui-preset <patch.yml> <rows> <presets.json> [prefix]
   liangshen-prune <agent.cordis.yml>";
 
@@ -57,7 +55,6 @@ fn dispatch(args: &[String]) -> i32 {
             Some(patches::SESSION_MIGRATION_DONE),
         ),
         "ptc-env" => run_set(rest, "patch-ptc-env", patches::PTC_ENV, None),
-        "models-settings" => models_settings::run(rest),
         "tui-preset" => tui_preset::run(rest),
         "liangshen-prune" => liangshen::run(rest),
         other => {

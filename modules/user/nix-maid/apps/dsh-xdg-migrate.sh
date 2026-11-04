@@ -95,7 +95,7 @@ for pair in "cache=$cache" "sessions=$state/sessions"; do
   fi
 done
 
-# 3. User-owned config files (dsh-models keeps patching them; the symlink makes
+# 3. User-owned config files from the legacy layout (the symlink makes
 #    $DSH_HOME/<file> and ~/.config/dsh/<file> the same file).
 for f in settings.yaml cordis.patch.yml; do
   if [ -f "$data/$f" ] && [ ! -L "$data/$f" ]; then

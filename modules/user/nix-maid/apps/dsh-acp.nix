@@ -16,8 +16,9 @@ let
   #
   # The patch pins the @deepseek-ai/dsh-acp-app row: it ships with
   # deepseek-v4-flash, and that pinned model is what the session model picker
-  # reports as current. The deployment runs V4.1-Flash only (the global
-  # catalog is narrowed by dsh-models.nix), so the row must name the V4.1 id.
+  # reports as current. The ACP profile has no catalog narrowing of its own
+  # (that policy lives in the tui profile's `llmRows`), so the row must name the
+  # V4.1 id explicitly.
   # The manifest declares a version as well as a name: the harness's package
   # inventory reads the owning manifest of the modules a profile mounts by a
   # *relative* path, and a name without a version fails every request
@@ -50,7 +51,7 @@ let
     # dsh ACP profile patch layer (applied after the bundle patches).
     # Pin every session to the V4.1 route: the shipped @deepseek-ai/dsh-acp-app
     # row defaults to the retired deepseek-v4-flash id, which the model picker
-    # then reports as the current model. See dsh-models.nix for the catalog.
+    # then reports as the current model.
     - id: acp
       config:
         provider: deepseek-official
@@ -75,16 +76,13 @@ let
 in
 {
   # Runs on every rebuild (as the user, so the profile stays user-owned) and on
-  # every login — same pattern as dsh-models / dsh-tui.
+  # every login — same pattern as dsh-tui.
   system.activationScripts.dshAcp = systemdUser.mkUserActivation {
     inherit pkgs;
     user = mainUser;
     home = homeDir;
     script = ensure;
-    after = [
-      "users"
-      "dshModels"
-    ];
+    after = [ "users" ];
   };
 
   systemd.user.services.dsh-acp = systemdUser.mkUserOneshot {
