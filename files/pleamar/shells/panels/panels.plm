@@ -331,6 +331,10 @@ scene panels {
         pairing_id: text
         pairing_code: text
         pairing_name: text
+        // Why the last connect did not come up, as BlueZ said it (the patched engine carries it),
+        // and the adapter's own name. Both are empty on an engine without the patch.
+        error: text
+        adapter_name: text
     }
 
     // The drawer's own attempt: the row being connected or disconnected (`-1` when none),
@@ -348,6 +352,12 @@ scene panels {
     // re-pairing is not an undo.
     fact bt_forget = -1
     text bt_forget_name = ""
+    // Rename: which row (`-1` when none), the name it had, and the field the new one is typed
+    // into. `bluetooth.rename` sets BlueZ's `Alias` — a name local to this computer, not the name
+    // the device broadcasts — so the band says so.
+    fact bt_renaming = -1
+    text bt_rename_from = ""
+    text bt_new_name = ""
 
     // ----***--------------- the quick toggles (`toggles`)
     // The radio states come from the services the rest of the shell already trusts; the Wi-Fi
@@ -511,6 +521,9 @@ scene panels {
     event bt_scan ->
     event bt_device ->
     event bt_forget ->
+    event bt_rename_start ->
+    event bt_rename_confirm ->
+    event bt_rename_cancel ->
     event bt_confirm ->
     // The toggles', the notes' and the timer's own actions.
     event toggle_wifi ->

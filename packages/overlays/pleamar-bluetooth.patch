@@ -1,0 +1,116 @@
+--- a/src/platform/bluez.rs
++++ b/src/platform/bluez.rs
+@@ -1,9 +1,12 @@
+ //! Bluetooth, through BlueZ on the system bus: told of changes, not polled.
+ //!
+-//! `{ present, powered, discovering, devices = { { name, address, paired,
+-//!    connected, battery, icon }, … } }`: the first adapter, and the devices it
+-//! knows or sees, the connected first, then the paired. `battery` is 0..1, or
+-//! -1 when the device does not say. With no adapter, `{ present = false }`.
++//! `{ present, powered, discovering, adapter_name, error, devices = { { name,
++//!    address, paired, connected, battery, icon }, … } }`: the first adapter,
++//! and the devices it knows or sees, the connected first, then the paired.
++//! `battery` is 0..1, or -1 when the device does not say. `adapter_name` is
++//! the adapter's alias, and `error` why the last `connect` did not come up,
++//! as BlueZ said it (empty when the last one did, or when none has been
++//! tried). With no adapter, `{ present = false }`.
+ //! And what pairing asks of whoever sits there: `pairing` is `none`, or `pin`
+ //! or `passkey` (a code is to be typed: one the device shows, or the one typed
+ //! on it too), `confirm` (does `pairing_code` match the one the device shows?),
+@@ -15,7 +18,8 @@
+ //!
+ //! Commands (`bluetooth.*`): `power(on)`, `scan(on)`, `connect(address)` —it
+ //! pairs first if it has to, and trusts it; one pairing at a time—,
+-//! `disconnect(address)`, `forget(address)`. Connecting takes seconds: it goes
++//! `disconnect(address)`, `forget(address)`, `rename(address, name)` and
++//! `adapter_name(name)`. Connecting takes seconds: it goes
+ //! on its own thread, and the change arrives through the service. While
+ //! pairing, each naming the `pairing_id` it answers: `answer(id, code)` to a
+ //! `pin` or a `passkey`, `confirm(id)` to a `confirm` or an `authorize`, and
+@@ -40,6 +44,12 @@
+ const DEVICE: &str = "org.bluez.Device1";
+ const BATTERY: &str = "org.bluez.Battery1";
+ 
++/// Why the last `connect` did not come up, as BlueZ said it: the service's
++/// `error`. Cleared when a new attempt starts and when one succeeds. The
++/// engine's journal keeps the line; this puts the same fact where a scene can
++/// show it instead of guessing from a timeout.
++static LAST_ERROR: Mutex<String> = Mutex::new(String::new());
++
+ type Objects = HashMap<OwnedObjectPath, HashMap<String, HashMap<String, OwnedValue>>>;
+ 
+ fn objects(c: &Connection) -> Option<Objects> {
+@@ -68,6 +78,7 @@
+ /// showing a question nobody can answer any more.
+ fn absent() -> SysValue {
+     let mut v = vec![("present".into(), SysValue::Bool(false))];
++    v.extend(["adapter_name", "error"].map(|k| (k.into(), SysValue::Text(String::new()))));
+     v.extend(["pairing", "pairing_address", "pairing_name", "pairing_code"].map(|k| (k.into(), SysValue::Text(if k == "pairing" { "none" } else { "" }.into()))));
+     v.push(("pairing_id".into(), SysValue::Num(0.0)));
+     SysValue::Map(v)
+@@ -111,6 +122,8 @@
+         ("present".into(), SysValue::Bool(true)),
+         ("powered".into(), SysValue::Bool(flag(a, "Powered"))),
+         ("discovering".into(), SysValue::Bool(flag(a, "Discovering"))),
++        ("adapter_name".into(), SysValue::Text(word(a, "Alias"))),
++        ("error".into(), SysValue::Text(LAST_ERROR.lock().unwrap().clone())),
+         ("devices".into(), SysValue::List(devices.into_iter().map(|(_, _, v)| v).collect())),
+     ];
+     v.extend(pairing(&o));
+@@ -708,13 +721,24 @@
+             let paired = device_path(&o, address).and_then(|p| o.get(&p)?.get(DEVICE).map(|d| flag(d, "Paired"))).unwrap_or(false);
+             let pairing = if paired { None } else { Some(Pairing::begin(attempt)?) };
+             let address = address.clone();
++            // A new attempt starts with no reason from the last one, and the scene is told so
++            // before it can read a stale line: the service reports on signals, and this is not one.
++            *LAST_ERROR.lock().unwrap() = String::new();
++            tell();
+             // Pairing waits for the device: seconds, not for the logic to wait.
+             std::thread::Builder::new()
+                 .name("bluetooth connect".into())
+                 .spawn(move || {
+-                    if let Err(e) = connect(address.clone(), attempt, pairing) {
+-                        eprintln!("bluetooth · {address}: {e}");
++                    let outcome = connect(address.clone(), attempt, pairing);
++                    match &outcome {
++                        Err(e) => {
++                            eprintln!("bluetooth · {address}: {e}");
++                            *LAST_ERROR.lock().unwrap() = e.clone();
++                        }
++                        Ok(()) => *LAST_ERROR.lock().unwrap() = String::new(),
+                     }
++                    // A failed connect has no BlueZ property change of its own: wake the service.
++                    tell();
+                 })
+                 .map(|_| ())
+                 .map_err(|e| e.to_string())
+@@ -727,7 +751,23 @@
+             let path = device_path(&o, address).ok_or("that device is not known")?;
+             adapter.call_method("RemoveDevice", &(path,)).map(|_| ()).map_err(err)
+         }
+-        _ => Err(format!("'{what}' is not asked like that: bluetooth.power(true|false), bluetooth.scan(true|false), bluetooth.connect(address), bluetooth.disconnect(address), bluetooth.forget(address), bluetooth.answer(id, code), bluetooth.confirm(id), bluetooth.cancel(id)")),
++        ("bluetooth.rename", [SysValue::Text(address), SysValue::Text(alias)]) => {
++            // The local name of a paired device: BlueZ's `Alias`, not the name the device says.
++            let alias = alias.trim();
++            if alias.is_empty() {
++                return Err("a device name cannot be empty".into());
++            }
++            let path = device_path(&o, address).ok_or("that device is not known")?;
++            Proxy::new(&c, BLUEZ, path.as_str(), DEVICE).map_err(|e| e.to_string())?.set_property("Alias", alias).map_err(|e| e.to_string())
++        }
++        ("bluetooth.adapter_name", [SysValue::Text(alias)]) => {
++            let alias = alias.trim();
++            if alias.is_empty() {
++                return Err("the adapter name cannot be empty".into());
++            }
++            adapter.set_property("Alias", alias).map_err(|e| e.to_string())
++        }
++        _ => Err(format!("'{what}' is not asked like that: bluetooth.power(true|false), bluetooth.scan(true|false), bluetooth.connect(address), bluetooth.disconnect(address), bluetooth.forget(address), bluetooth.rename(address, name), bluetooth.adapter_name(name), bluetooth.answer(id, code), bluetooth.confirm(id), bluetooth.cancel(id)")),
+     }
+ }
+ 
+--- a/src/language/vocabulary.rs
++++ b/src/language/vocabulary.rs
+@@ -139 +139 @@
+-    ("bluetooth", &["present", "powered", "discovering", "devices", "pairing", "pairing_id", "pairing_address", "pairing_name", "pairing_code"]),
++    ("bluetooth", &["present", "powered", "discovering", "adapter_name", "error", "devices", "pairing", "pairing_id", "pairing_address", "pairing_name", "pairing_code"]),
