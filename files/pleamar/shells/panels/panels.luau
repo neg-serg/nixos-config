@@ -527,29 +527,143 @@ end)
 
 -- ==================== bluetooth ====================
 
--- The `bluetooth` drawer's commands. The page carries a row INDEX — the model is filled by the
--- service, not by this logic — so the addresses live here, from the same watch: `sys.call` takes the
--- address, and `devices` is the list the rows were drawn from.
+-- The `bluetooth` drawer's commands. The page carries a row INDEX — its rows are drawn from the
+-- service's `bt_devices` model — so the address is read back from that model: the row the press was
+-- on screen in is the record the command goes to. (`bt_raw` below is the same service's own order,
+-- kept for the pending/error watch; it is not the list the rows are indexed by.)
 local bt_raw = { devices = {} }
 
+-- One attempt at a time. `bluetooth.connect` answers before the device is up — the engine pairs and
+-- connects on a thread of its own, seconds later — and a failure reaches its journal, not this
+-- scene. So the attempt is kept here: which row, connect or disconnect, and a deadline. While it
+-- runs the row says so, and a second press is the same attempt rather than a new one; BlueZ used to
+-- answer that repeat with `br-connection-busy`, which looked like a button that did nothing.
+local bt_attempt = { address = nil, kind = nil, name = "", timer = nil }
+local BT_CONNECT_MS = 25000
+local BT_DISCONNECT_MS = 12000
+local BT_PAIR_MS = 30000
+
+local function bt_attempt_clear()
+    if bt_attempt.timer then cancel(bt_attempt.timer) end
+    bt_attempt.address, bt_attempt.kind, bt_attempt.name, bt_attempt.timer = nil, nil, "", nil
+    fact.bt_pending = -1
+    fact.bt_pending_kind = 0
+    text.bt_pending_name = ""
+end
+
+local function bt_attempt_failed(what)
+    local name = bt_attempt.name
+    bt_attempt_clear()
+    fact.bt_failed = true
+    text.bt_error = what
+    if name ~= "" then text.bt_error = what .. ": " .. name end
+end
+
+local function bt_attempt_arm(ms)
+    if not bt_attempt.address then return end
+    if bt_attempt.timer then cancel(bt_attempt.timer) end
+    local address = bt_attempt.address
+    bt_attempt.timer = after(ms, function()
+        if bt_attempt.address ~= address then return end
+        bt_attempt.timer = nil
+        -- A pairing question is BlueZ waiting for a person, not a connect that failed: give the
+        -- question its own window instead of calling the device dead while it waits.
+        if type(bt_raw.pairing) == "string" and bt_raw.pairing ~= "none" then
+            bt_attempt_arm(BT_PAIR_MS)
+            return
+        end
+        if bt_attempt.kind == "disconnect" then
+            bt_attempt_failed("still connected")
+        else
+            bt_attempt_failed("no answer in " .. tostring(math.floor(ms / 1000)) .. " s")
+        end
+    end)
+end
+
+-- Forget is Android's two-step: the × arms the row and says so, a second press inside the window
+-- does it. `bluetooth.forget` is BlueZ's RemoveDevice — the bond is gone and re-pairing is not an
+-- undo — so a single stray press must not be enough. The arm remembers the ADDRESS, not the row's
+-- place: the list reorders when a device connects, and a place is not a device.
+local bt_forget_armed = nil
+local bt_forget_timer = nil
+local BT_FORGET_MS = 4000
+
+local function bt_forget_clear()
+    if bt_forget_timer then cancel(bt_forget_timer) end
+    bt_forget_timer = nil
+    bt_forget_armed = nil
+    fact.bt_forget = -1
+    text.bt_forget_name = ""
+end
+
+local function bt_forget_arm(index, address, name)
+    bt_forget_clear()
+    bt_forget_armed = address
+    fact.bt_forget = index
+    text.bt_forget_name = name
+    bt_forget_timer = after(BT_FORGET_MS, function()
+        bt_forget_timer = nil
+        bt_forget_clear()
+    end)
+end
+
 sys.watch("bluetooth", function(b)
-    if type(b) == "table" then bt_raw = b end
+    if type(b) ~= "table" then return end
+    bt_raw = b
+    -- The page indexes a row; the command takes an address. The model is filled here from the same
+    -- list the addresses come from, so the index a press carries cannot name a different device.
+    if type(b.devices) == "table" then model.bt_devices = b.devices end
+    if not bt_attempt.address then return end
+    -- The radio went off under the attempt: there is nothing to connect to, and nothing to blame.
+    if b.powered ~= true then
+        bt_attempt_clear()
+        fact.bt_failed = false
+        text.bt_error = ""
+        return
+    end
+    local list = type(b.devices) == "table" and b.devices or {}
+    for _, d in ipairs(list) do
+        if d.address == bt_attempt.address then
+            local done = (bt_attempt.kind == "connect" and d.connected == true)
+                or (bt_attempt.kind == "disconnect" and d.connected ~= true)
+            if done then
+                bt_attempt_clear()
+                fact.bt_failed = false
+                text.bt_error = ""
+            end
+            return
+        end
+    end
 end)
 
 local function bt_device(index)
+    -- The rows are drawn from `bt_devices`, which this logic fills from the same watch it takes
+    -- the addresses from; the model is read back here, so the record and the index are one list.
+    -- The raw list remains a fallback for a press that arrives before the first watch.
+    local drawn = type(model.bt_devices) == "table" and model.bt_devices or {}
+    local rec = drawn[index + 1]
+    if type(rec) == "table" and type(rec.address) == "string" then return rec end
     local list = type(bt_raw.devices) == "table" and bt_raw.devices or {}
     return list[index + 1]
 end
 
 -- One argument, which is all a bluetooth command takes: `...` cannot be used inside the
--- closure Luau's pcall wants.
+-- closure Luau's pcall wants. The answer is returned so a command that is refused outright
+-- (busy, no adapter, an unknown device) can be said on the page instead of only in the log.
 local function bt_call(command, arg)
     local ok, err = pcall(function() sys.call(command, arg) end)
     if not ok then log("panels: " .. command .. " failed: " .. tostring(err)) end
+    return ok, err
 end
 
 on("bt_power", function()
     touch_drawer()
+    -- The radio is the one command that ends an attempt and an armed forget: whatever was
+    -- connecting is gone with it, and the row that was about to be forgotten is not.
+    bt_attempt_clear()
+    bt_forget_clear()
+    fact.bt_failed = false
+    text.bt_error = ""
     bt_call("bluetooth.power", not (bt_raw.powered == true))
 end)
 
@@ -560,12 +674,35 @@ end)
 
 on("bt_device", function(index)
     touch_drawer()
+    -- A press on the row is not the ×: an armed forget is over.
+    bt_forget_clear()
     local d = bt_device(index)
     if type(d) ~= "table" or type(d.address) ~= "string" then return end
-    if d.connected == true then
-        bt_call("bluetooth.disconnect", d.address)
+    -- One attempt runs at a time: a press while another runs is that attempt, not a second one.
+    -- Repeats used to reach BlueZ and come back busy with nothing on screen to show it.
+    if bt_attempt.address then return end
+    fact.bt_failed = false
+    text.bt_error = ""
+    local kind = "connect"
+    if d.connected == true then kind = "disconnect" end
+    bt_attempt.address, bt_attempt.kind = d.address, kind
+    bt_attempt.name = tostring(d.name or d.address)
+    fact.bt_pending = index
+    fact.bt_pending_kind = 0
+    if kind == "disconnect" then fact.bt_pending_kind = 1 end
+    text.bt_pending_name = bt_attempt.name
+    local ok, err = bt_call("bluetooth." .. kind, d.address)
+    if not ok then
+        local name = bt_attempt.name
+        bt_attempt_clear()
+        fact.bt_failed = true
+        text.bt_error = kind .. " failed: " .. tostring(err) .. " (" .. name .. ")"
+        return
+    end
+    if kind == "disconnect" then
+        bt_attempt_arm(BT_DISCONNECT_MS)
     else
-        bt_call("bluetooth.connect", d.address)
+        bt_attempt_arm(BT_CONNECT_MS)
     end
 end)
 
@@ -573,7 +710,22 @@ on("bt_forget", function(index)
     touch_drawer()
     local d = bt_device(index)
     if type(d) ~= "table" or type(d.address) ~= "string" then return end
-    bt_call("bluetooth.forget", d.address)
+    if d.paired ~= true then return end
+    if bt_forget_armed ~= d.address then
+        -- First press: arm this device, name it on the page, and wait for the second.
+        bt_forget_arm(index, d.address, tostring(d.name or d.address))
+        return
+    end
+    -- Second press on the same address: this is the forgetting.
+    bt_forget_clear()
+    if bt_attempt.address == d.address then bt_attempt_clear() end
+    fact.bt_failed = false
+    text.bt_error = ""
+    local ok, err = bt_call("bluetooth.forget", d.address)
+    if not ok then
+        fact.bt_failed = true
+        text.bt_error = "forget failed: " .. tostring(err)
+    end
 end)
 
 -- Only the two questions that are answered with a yes are answered here. `pin` and `passkey` need a

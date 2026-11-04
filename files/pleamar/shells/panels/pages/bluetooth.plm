@@ -29,14 +29,18 @@ part Bluetooth {
     // card's `move:` used the surface's own fit, and every card was shifted on a monitor whose fit
     // is not 1. Passing the value from here keeps one scale for the move and the drawing.
     let bluetooth.scale = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+    // The rows carry one glyph: the model no longer has a per-device image (an image field does
+    // not accept the record the watch hands over, and the logic fills the model now).
+    image bt_icon = icon "bluetooth-symbolic", 16, 16
 
     component BluetoothDrawer(scale: number) {
         let card.scale = scale
         size: 400 * scale, 420 * scale
 
         // The list starts under the header, and moves down while a pairing prompt
-        // is up: pick() of a number, so the rows never land on the band.
-        let list.y = pick(bt.pairing == none, 64, 172)
+        // is up: if() of a number, so the rows stay under the header and step
+        // down only while a question is on the band.
+        let list.y = if(bt.pairing == none, 64, 172)
 
         group {
             move: (screen.width - 400 * scale) / 2, (screen.height - 420 * scale) / 2 + (1 - lift) * 18 * scale
@@ -46,22 +50,27 @@ part Bluetooth {
             body {
                 color: live.coal
                 opacity: 92%
-                border: 1, mix(live.coal, live.ink, 12%)
-                rim: 0.07
                 shadow: 0, 18, 44, 45%
-                box { from: 0, 0; size: 400, 420; corner: 14 }
+                box { from: 0, 0; size: 400, 420; corner: 4 }
             }
             box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
 
             text "bluetooth" { at: 16, 20; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
             group { move: 338, 14
-                Switch(toggle: bt_power, on: bt.powered, label: pick(bt.powered, "Turn Bluetooth off", "Turn Bluetooth on"),
+                Switch(toggle: bt_power, on: bt.powered, label: pick(bt.powered, "Turn Bluetooth on", "Turn Bluetooth off"),
                     fill: live.slate, lit: live.accent, off: live.ink.off, on_tone: live.coal, scale: 1)
             }
 
             text "adapter off" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: not bt.powered }
-            text "scanning…" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.accent; show: bt.powered and bt.discovering }
-            text "{bt_devices.total} known device(s)" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: bt.powered and not bt.discovering }
+            // The attempt is the only state the service does not report while it runs: it answers a
+            // connect before the device is up, so the page says which row is being tried, and calls
+            // it failed only when the window closes without `connected` (the reason is in the
+            // engine's journal; the scene will not invent one).
+            text "connecting to {bt_pending_name}…" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.accent; show: bt.powered and bt_pending >= 0 and bt_pending_kind == 0 }
+            text "disconnecting from {bt_pending_name}…" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.accent; show: bt.powered and bt_pending >= 0 and bt_pending_kind == 1 }
+            text bt_error { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.warn; show: bt.powered and bt_pending < 0 and bt_failed }
+            text "scanning…" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.accent; show: bt.powered and bt_pending < 0 and not bt_failed and bt.discovering }
+            text "{bt_devices.total} known device(s)" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: bt.powered and bt_pending < 0 and not bt_failed and not bt.discovering }
             box { from: 16, 56; size: 368, 1; color: live.ink; opacity: ink.subtle }
 
             // ----***------------------------- what bluetoothd is asking
@@ -97,30 +106,48 @@ part Bluetooth {
             group list {
                 move: 0, list.y
                 for d in bt_devices {
-                    // The row's own band: a connected device is lit, a paired one is
-                    // flat, a nearby one is dim — the reference's three groups, read as
-                    // one line per device.
-                    body { color: pick(d.connected, live.accent, live.ink); opacity: pick(d.connected, 8%, 0%)
+                    // A connected row is lit; a paired one is flat; a nearby one (not paired) is
+                    // dim. The attempt that is running owns the row's status line, and every row is
+                    // inert until it settles: one command at a time is what the logic enforces, and
+                    // a second press is the same attempt, not a second one.
+                    body { color: live.accent; opacity: pick(d.connected, 0%, 8%)
                            box { from: 16, d.index * 34; size: 368, 30; corner: 8 } }
-                    image d.icon { at: 24, d.index * 34 + 9; size: 16, 16; tint: pick(d.connected, live.accent, live.ink.dim) }
+                    image bt_icon { at: 24, d.index * 34 + 9; size: 16, 16; tint: pick(d.connected, live.ink.dim, live.accent) }
                     text d.name { at: 48, d.index * 34 + 9; anchor: left center; width: 230; lines: 1; family: "Iosevka"; size: 11; color: live.ink }
                     text d.address { at: 48, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
-                    text pick(d.connected, "connected", "paired", "nearby") { at: 286, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; color: pick(d.connected, live.accent, live.ink.off) }
-                    text number(d.battery, 0, " %") { at: 376, d.index * 34 + 9; anchor: right center; family: "Iosevka"; size: 9; color: live.ink.dim; show: d.battery > 0 }
+                    // One state line per row: the service's three, and the attempt's two. A text
+                    // cannot be chosen by a nested condition (the language wants one `pick` of
+                    // texts, not `if`s), so each state is its own line with its own `show:`.
+                    text "connecting…" { at: 270, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; color: live.accent; show: bt_pending == d.index and bt_pending_kind == 0 }
+                    text "disconnecting…" { at: 270, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; color: live.accent; show: bt_pending == d.index and bt_pending_kind == 1 }
+                    text "connected" { at: 270, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; color: live.accent; show: bt_pending != d.index and d.connected }
+                    text "paired" { at: 270, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off; show: bt_pending != d.index and not d.connected and d.paired }
+                    text "nearby" { at: 270, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off; show: bt_pending != d.index and not d.connected and not d.paired }
+                    // The service's `battery` is 0..1 (or -1 when the device does not say), not a
+                    // percentage: printing it raw said "0.85 %".
+                    text number(d.battery * 100, 0, " %") { at: 376, d.index * 34 + 9; anchor: right center; family: "Iosevka"; size: 9; color: live.ink.dim; show: d.battery > 0 }
+                    // The × is the forget affordance, and it is drawn: a hint that names an
+                    // invisible target is a promise the hand cannot act on. It arms on the first
+                    // press and says so; the logic's second step is the only one that removes a bond.
+                    text "×" { at: 362, d.index * 34 + 22; anchor: center; family: "Iosevka"; size: 13; color: live.ink.off; show: d.paired and bt_forget != d.index }
+                    text "forget?" { at: 344, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; weight: 700; color: live.warn; show: bt_forget == d.index }
 
-                    zone box row { from: 16, d.index * 34; size: 320, 30; corner: 8; cursor: pointer; active: bt.powered
-                        label: pick(d.connected, "Disconnect {d.name}", "Connect {d.name}"); role: button }
-                    zone box forget { from: 344, d.index * 34; size: 40, 30; corner: 8; cursor: pointer; active: bt.powered and d.paired
-                        label: "Forget {d.name}"; role: button }
+                    zone box row { from: 16, d.index * 34; size: 320, 30; corner: 8; cursor: pointer; active: bt.powered and bt_pending < 0
+                        label: pick(d.connected, "Connect {d.name} ({d.address})", "Disconnect {d.name} ({d.address})"); role: button }
+                    zone box forget { from: 344, d.index * 34; size: 40, 30; corner: 8; cursor: pointer; active: bt.powered and bt_pending < 0 and d.paired
+                        label: pick(bt_forget == d.index, "Forget {d.name} ({d.address})", "Forget {d.name} ({d.address}) — press again"); role: button }
                     on press row { emit bt_device(d.index) }
                     on press forget { emit bt_forget(d.index) }
                 }
             }
 
             // ----***------------------------- the footer
-            text "press a device to connect · the × forgets a paired one" { at: 16, 400; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
-            text "scan" { at: 384, 400; anchor: right center; family: "Iosevka"; size: 9; weight: 700; color: pick(bt.discovering, live.accent, live.ink.dim); show: bt.powered }
-            zone box scan { from: 340, 388; size: 48, 24; corner: 12; cursor: pointer; label: pick(bt.discovering, "Stop scanning", "Scan for devices"); role: button; active: bt.powered }
+            text "press a device to connect or disconnect · × forgets a paired one" { at: 16, 400; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off; show: bt_forget < 0 }
+            // Android's confirmation, as a line rather than a dialog: the × is armed, the device
+            // is named, and the second press is the one that removes the bond.
+            text "press × again to forget {bt_forget_name}" { at: 16, 400; anchor: left center; family: "Iosevka"; size: 8; color: live.warn; show: bt_forget >= 0 }
+            text "scan" { at: 384, 400; anchor: right center; family: "Iosevka"; size: 9; weight: 700; color: pick(bt.discovering, live.ink.dim, live.accent); show: bt.powered }
+            zone box scan { from: 340, 388; size: 48, 24; corner: 12; cursor: pointer; label: pick(bt.discovering, "Scan for devices", "Stop scanning"); role: button; active: bt.powered }
             on press scan { emit bt_scan }
         }
     }
