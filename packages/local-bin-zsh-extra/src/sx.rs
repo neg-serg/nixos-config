@@ -7,8 +7,10 @@
 //! spawned with `-c <config> -g -f <list>`.
 //!
 //! The shell's process substitution cannot be reproduced without a shell, so
-//! the list goes to swayimg's stdin through its documented `-f -` form instead
-//! of a `/proc/self/fd/N` path. The observable gallery input is the same.
+//! the list is piped to swayimg's stdin and `-f` names `/proc/self/fd/0`: the
+//! child opens that path like a regular file and reads the list from the pipe.
+//! (`-f -` is not a stdin convention here — swayimg would look for a file
+//! literally named `-`.)
 //!
 //! `find` diagnostics (missing paths, permission errors, directory loops) keep
 //! the GNU wording under `LC_ALL=C`, and do not affect the exit status: the
@@ -102,7 +104,7 @@ fn main() {
         .arg(&config)
         .arg("-g")
         .arg("-f")
-        .arg("-")
+        .arg("/proc/self/fd/0")
         .stdin(Stdio::piped());
     let mut child = match command.spawn() {
         Ok(child) => child,

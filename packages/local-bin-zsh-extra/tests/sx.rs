@@ -1,7 +1,8 @@
 //! Hermetic tests for the `sx` port.
 //!
-//! swayimg is a fake that records its argv and the file list on stdin. The test
-//! tree is a temporary directory; no real gallery window is opened.
+//! swayimg is a fake that records its argv and the list read from the `-f`
+//! file. The test tree is a temporary directory; no real gallery window is
+//! opened.
 
 mod support;
 
@@ -16,8 +17,18 @@ const BIN: &str = env!("CARGO_BIN_EXE_sx");
 
 const SWAYIMG: &str = r#"#!/bin/sh
 { printf 'swayimg\n'; for a in "$@"; do printf 'ARG %s\n' "$a"; done; } >> "$FAKE_LOG_DIR/swayimg.argv"
+file=""
+previous=""
+for a in "$@"; do
+  if [ "$previous" = "-f" ]; then file=$a; fi
+  previous=$a
+done
 : > "$FAKE_LOG_DIR/swayimg.stdin"
-while IFS= read -r line || [ -n "$line" ]; do printf '%s\n' "$line" >> "$FAKE_LOG_DIR/swayimg.stdin"; done
+# Like swayimg, read the list from the path named by -f; "-" is a literal
+# filename there, so a `-f -` regression leaves the log empty.
+if [ -n "$file" ] && [ -r "$file" ]; then
+  while IFS= read -r line || [ -n "$line" ]; do printf '%s\n' "$line" >> "$FAKE_LOG_DIR/swayimg.stdin"; done < "$file"
+fi
 exit "${FAKE_SWAYIMG_CODE:-0}"
 "#;
 
@@ -94,7 +105,13 @@ fn no_arguments_defaults_to_the_current_directory() {
         case.argv("swayimg"),
         expected_argv(
             "swayimg",
-            &["-c", &config.to_string_lossy(), "-g", "-f", "-"]
+            &[
+                "-c",
+                &config.to_string_lossy(),
+                "-g",
+                "-f",
+                "/proc/self/fd/0"
+            ]
         )
     );
 }
@@ -225,7 +242,7 @@ fn an_empty_directory_still_launches_with_an_empty_list() {
                 &case.path("xdg/config/swayimg/init.lua").to_string_lossy(),
                 "-g",
                 "-f",
-                "-"
+                "/proc/self/fd/0"
             ]
         )
     );
