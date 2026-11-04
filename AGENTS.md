@@ -44,7 +44,7 @@ Quick Commands
 - GC: `sudo nix-collect-garbage -d && nix-collect-garbage -d`
 
 Project Structure
-- `flake.nix` — entry point (NixOS + home-manager)
+- `flake.nix` — entry point (NixOS + the nix-maid user layer)
 - `flake/` — flake helpers (`nixos.nix` with `trantorDomains`, `checks.nix`, ...)
 - `modules/` — system modules (features/, cli/, dev/, servers/, ...)
 - `hosts/trantor/` — host-specific config (services.nix, hardware.nix, networking.nix...)
@@ -52,8 +52,10 @@ Project Structure
 - `lib/` — shared Nix helpers (opts.nix, neg-helpers.nix, package-checks.nix, ...)
 - `secrets/` — SOPS-encrypted secrets
 - `files/` — config files (Hyprland, pleamar shell, scripts)
-- `docs/` — operational runbooks only (`docs/runbook-*.md`); everything else is documented in the
-  code it describes (module headers, option descriptions, comments)
+- `docs/` — three English shapes, one source of truth per topic: `docs/runbook-*.md` (operations,
+  index `docs/runbook-index.md`), `docs/howto/*.md` (cross-cutting workflows, index
+  `docs/howto/index.md`) and `docs/README.md`. Knowledge that belongs to a single module lives in
+  that module's header, not in `docs/` (see `docs/AGENTS.md`)
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
 - `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild, theming)
 - `.githooks/` — git hooks (enable with `just hooks-enable`)
@@ -83,8 +85,8 @@ General guidance
 - Avoid drive-by refactors; mention unrelated issues separately instead of fixing them silently.
 - Document behavior where it lives: module header comments, `mkOption` descriptions, and comments
   next to non-obvious code (the *why*, invariants, gotchas) — in English. `docs/` holds runbooks
-  (`docs/runbook-*.md`) only; do not add howtos, overviews or generated maps, fold that knowledge
-  into the code instead.
+  and cross-cutting howtos only; do not add overviews or generated maps, and fold single-module
+  knowledge into the code instead.
 - For WireGuard/VPN host vs user-level setup patterns, see `git log` and the module comments in
   `modules/system/net/vpn/`.
 - For verified step-by-step change workflows (add module/flag/package/host/script/secret, commit
