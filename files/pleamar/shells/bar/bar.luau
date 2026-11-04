@@ -269,6 +269,46 @@ sys.watch("files:" .. FILE, function()
     apply(raw)
 end)
 
+-- The customizer's writes (pages/bar.plm in `panels` says what the page shows). The file is
+-- mutated, never rebuilt: a key another version put there survives, and the watcher above applies
+-- the change to the drawing at once.
+local function settings_save(mutate)
+    local ok, got = pcall(function() return sys.ask("files.read", FILE, "json") end)
+    local settings = (ok and type(got) == "table") and got or {}
+    mutate(settings)
+    sys.call("files.write", FILE, settings)
+    apply(settings)
+end
+
+on("set_edge", function(payload)
+    local edge = payload == 1 and "bottom" or "top"
+    settings_save(function(settings) settings.edge = edge end)
+end)
+
+on("set_widget", function(payload)
+    if type(payload) ~= "number" then return end
+    local index = math.floor(payload / 2) + 1
+    local on = payload % 2 == 1
+    local name = WIDGETS[index]
+    if not name then return end
+    settings_save(function(settings)
+        local list = {}
+        for _, widget in ipairs(WIDGETS) do
+            -- Not `(widget == name) and on or …`: in Lua that falls through to the second
+            -- operand when `on` is false, so the widget being turned off stayed on.
+            local visible
+            if widget == name then
+                visible = on
+            else
+                visible = fact["widget." .. widget] == true
+            end
+            if visible then list[#list + 1] = widget end
+        end
+        settings.widgets = list
+    end)
+end)
+
+
 -- Writes arrive with the settings UI of a later slice: mutate `raw` (`raw[key]
 -- = value`) and `sys.call("files.write", FILE, raw)`, never a table built from
 -- scratch, so keys another version put there survive (INTERFACES §6.1). The

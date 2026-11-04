@@ -916,6 +916,67 @@ local function gh_load()
     end)
 end
 
+-- ==================== the bar's own settings ====================
+
+-- The bar's `WIDGETS`, in the order the scene paints them; the page toggles by index, so the
+-- list lives here as well as there. The state is read back with one `--say bar` call (a `get`,
+-- one answer a line) and the writes go the other way: the bar owns its file.
+local BAR_WIDGETS = {
+    "clock", "workspaces", "keyboard", "pill", "network", "bluetooth", "sysmon", "weather",
+    "media", "mpd", "volume", "mic", "genelec", "systray", "build",
+}
+local bar_on = {}
+
+local function bar_parse(out)
+    local lines = {}
+    for line in tostring(out or ""):gmatch("[^\r\n]+") do lines[#lines + 1] = line end
+    local edge = lines[1]
+    if edge == "top" or edge == "bottom" then fact.bar_edge = edge end
+    local rows = {}
+    for i, name in ipairs(BAR_WIDGETS) do
+        local on = (lines[i + 1] == "true")
+        bar_on[i] = on
+        rows[#rows + 1] = { name = name, on = on }
+    end
+    model.bar_widgets = rows
+end
+
+local function bar_state_load()
+    local args = { "--say", "bar", "get bar_edge" }
+    for _, name in ipairs(BAR_WIDGETS) do args[#args + 1] = "get widget." .. name end
+    run("pleamar", args, bar_parse)
+end
+
+on("bar_set_edge", function(which)
+    touch_drawer()
+    local payload = (which == 1) and 1 or 0
+    fact.bar_edge = (payload == 1) and "bottom" or "top"
+    local ok, err = pcall(function() sys.call("say", "bar", "emit set_edge " .. payload) end)
+    if not ok then log("panels: set_edge failed: " .. tostring(err)) end
+end)
+
+on("bar_set_widget", function(index)
+    touch_drawer()
+    if type(index) ~= "number" then return end
+    local at = math.floor(index) + 1
+    local name = BAR_WIDGETS[at]
+    if not name then return end
+    local next_on = not (bar_on[at] == true)
+    bar_on[at] = next_on
+    -- The page mirrors the press at once; the reload after the bar's answer corrects it if the
+    -- write did not take. A widget's place cannot be changed from here: the scene paints in the
+    -- order it is written.
+    local rows = {}
+    for i, widget in ipairs(BAR_WIDGETS) do
+        rows[#rows + 1] = { name = widget, on = bar_on[i] == true }
+    end
+    model.bar_widgets = rows
+    local payload = math.floor(index) * 2 + (next_on and 1 or 0)
+    local ok, err = pcall(function() sys.call("say", "bar", "emit set_widget " .. payload) end)
+    if not ok then log("panels: set_widget failed: " .. tostring(err)) end
+    after(400, bar_state_load)
+end)
+
 -- The drawers that need something done when they open: the binds are read fresh (the compositor's
 -- list may have changed since last time), the notes are re-read (a hand edit is honoured), and the
 -- do-not-disturb switch is asked what the notifications scene says now.
@@ -924,6 +985,7 @@ on("fact:drawer", function(value)
     if value == "notes" then notes_load() end
     if value == "toggles" then refresh_dnd() end
     if value == "github" then gh_load() end
+    if value == "bar" then bar_state_load() end
 end)
 
 notes_load()

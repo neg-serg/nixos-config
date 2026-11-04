@@ -1,0 +1,75 @@
+// pages/bar.plm — the bar's own settings (`drawer == bar`).
+//
+// Legacy: dhrruvsharma/shell's modules/customizer (BarFigure.qml, BarSpread,
+// BarWidthsSpread, the widget toggles) reduced to what the port's bar can really
+// do: the edge it sits on, and which widgets are drawn. The height, the gaps and
+// the animations are the reference's too, but this bar's surface is sized by a
+// literal (35 px, `surface.size` cannot follow a setting) and its widgets are
+// painted in the order the scene is written — so a page that offered them would
+// promise what the scene cannot keep. What it offers, it applies live: the bar
+// owns `settings.json`, the page sends it the change, its logic writes the file
+// and the watcher repaints.
+//
+// The widget list is the bar's `WIDGETS`, read back through `pleamar --say bar
+// get widget.<name>` when the page opens (one call, one value a line).
+
+part BarPage {
+    let bar.scale = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+
+    component BarDrawer(scale: number) {
+        let card.scale = scale
+        size: 420 * scale, 470 * scale
+
+        group {
+            move: (screen.width - 420 * card.scale) / 2, (screen.height - 470 * card.scale) / 2 + (1 - lift) * 18 * card.scale
+            scale: card.scale
+            opacity: lift
+
+            body {
+                color: live.coal
+                opacity: 92%
+                border: 1, mix(live.coal, live.ink, 12%)
+                rim: 0.07
+                shadow: 0, 18, 44, 45%
+                box { from: 0, 0; size: 420, 470; corner: 14 }
+            }
+            box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
+            text "bar" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
+            text "applied live · kept in bar/settings.json" { at: 16, 38; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+
+            // ---- the edge
+            text "edge" { at: 16, 64; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.dim }
+            body { color: live.accent; opacity: pick(bar_edge == top, 16%, 0%)
+                   box { from: 16, 76; size: 92, 26; corner: 8 } }
+            body { color: live.accent; opacity: pick(bar_edge == bottom, 16%, 0%)
+                   box { from: 112, 76; size: 92, 26; corner: 8 } }
+            text "top" { at: 62, 89; anchor: center; family: "Iosevka"; size: 11; color: pick(bar_edge == top, live.ink.dim, live.ink) }
+            text "bottom" { at: 158, 89; anchor: center; family: "Iosevka"; size: 11; color: pick(bar_edge == bottom, live.ink.dim, live.ink) }
+            zone box edge_top { from: 16, 76; size: 92, 26; corner: 8; cursor: pointer; label: "Bar at the top"; role: toggle; checked: bar_edge == top }
+            zone box edge_bottom { from: 112, 76; size: 92, 26; corner: 8; cursor: pointer; label: "Bar at the bottom"; role: toggle; checked: bar_edge == bottom }
+            on press edge_top { bar_edge = top; emit bar_set_edge(0) }
+            on press edge_bottom { bar_edge = bottom; emit bar_set_edge(1) }
+
+            box { from: 16, 124; size: 388, 1; color: live.ink; opacity: ink.subtle }
+            text "widgets" { at: 16, 142; anchor: left center; family: "Iosevka"; size: 10; color: live.ink.dim }
+
+            // ---- two columns of eight: the bar's own order, left to right
+            for w in bar_widgets {
+                let col = floor(w.index / 8)
+                let row = mod(w.index, 8)
+                let x = 16 + col * 200
+                let y = 158 + row * 34
+                text w.name { at: x, y + 10; anchor: left center; family: "Iosevka"; size: 11; color: pick(w.on, live.ink, live.ink.off) }
+                box { from: x + 150, y + 5; size: 26, 12; corner: 6; color: pick(w.on, live.accent, mix(live.coal, live.ink, 12%)) }
+                box { from: x + 150 + pick(w.on, 2, 16), y + 8; size: 6, 6; corner: 3; color: pick(w.on, live.on.accent, live.ink.off) }
+                zone box widget { from: x, y; size: 188, 28; corner: 8; cursor: pointer
+                    label: pick(w.on, "Hide {w.name}", "Show {w.name}"); role: toggle; checked: w.on }
+                on press widget { emit bar_set_widget(w.index) }
+            }
+
+            text "a widget's position follows the scene's order" { at: 16, 444; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
+        }
+    }
+
+    BarDrawer(bar.scale)
+}
