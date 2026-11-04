@@ -1274,11 +1274,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793695547,
-        "narHash": "sha256-0HG05MzkvS3gDGoWp2bswPyFC1tZEVaNSLjw5yYS5C8=",
+        "lastModified": 1793749424,
+        "narHash": "sha256-7q12XKJO88Xlea9QQWYyyBKxEZZEoTGfPBJF5sEOoHM=",
         "owner": "k4ditano",
         "repo": "pleamar-wm",
-        "rev": "d421a4ff823ac337cfff6fd2f2101cc7aa473812",
+        "rev": "f2d65120a5662acfce302619cc4e2c00285b1125",
         "type": "github"
       },
       "original": {
