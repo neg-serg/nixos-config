@@ -27,12 +27,13 @@ let
   llamaVulkan = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
 
   # Vision model (Vulkan/RADV): abliterated Qwen3-VL-8B — the base build
-  # refuses too much for this stack. Flags mirror modules/llm/llama-server.nix.
+  # refuses too much for this stack. 32k context, ~45 tok/s, ~3 GB of headroom.
   vision8b = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3-VL-8B-abliterated-Q4_K_M.gguf \
       --mmproj ${modelDir}/abliterated/mmproj-qwen3-vl-8b-ablit-f16.gguf \
-      --host 127.0.0.1 --port ''${PORT} -c 8192 -np 1
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 --jinja
   '';
 
   # Gemma 4 26B A4B — the MoE tier (25.2B total, 3.8B active), abliterated
@@ -50,7 +51,8 @@ let
   '';
 
   # gpt-oss-20b abliterated (MXFP4, 3.6B active) — the big uncensored tier:
-  # ~75-85 tok/s, tools, reasoning and arithmetic all survive the abliteration.
+  # ~75-85 tok/s at 64k, tools, reasoning and arithmetic all survive the
+  # abliteration. The KV cache is q8_0; f16 at 64k leaves no headroom.
   # `--reasoning-effort low` is mandatory: at the default effort the model
   # burns the whole token budget on reasoning and returns empty content, and
   # `--reasoning off` makes it worse.
@@ -58,19 +60,21 @@ let
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/gpt-oss-20b-abliterated-MXFP4.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -c 32768 -np 1 --flash-attn on --fit off --jinja \
+      -c 65536 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0 \
       --reasoning-effort low
   '';
 
   # Qwen3.6-35B-A3B abliterated (i1/IQ2_S) — the strongest model that fits the
-  # 16 GB card next to the desktop: ~48 tok/s at 32k, text-only. The dynamic
+  # 16 GB card next to the desktop: ~55 tok/s at 64k, text-only. The dynamic
   # IQ2 keeps attention and shared experts at higher precision; a Q3 build
   # (IQ3_XXS) would need ~13.6 GB and does not fit with Steam open.
   qwen36 = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3.6-35B-A3B-abliterated-IQ2_S.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -c 32768 -np 1 --flash-attn on --fit off --reasoning off --jinja
+      -c 65536 -np 1 --flash-attn on --fit off --reasoning off \
+      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 --jinja
   '';
 
   # Spark-X2.6-4B abliterated (Q4) — the CPU-only tier: no VRAM at all, so it
