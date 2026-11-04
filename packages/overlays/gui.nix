@@ -57,7 +57,11 @@ in
   # a pause the way the reference shell does (pleamar-media-state.patch adds `paused` and
   # `can_go_next` beside `can_seek`), and the transport's other two buttons are gated on answers
   # the service did not carry (pleamar-transport-flags.patch adds `can_go_prev`, `can_play` and
-  # `can_pause`, the reference's `MediaTransport.qml:71-76`). And the software renderer: `ash`
+  # `can_pause`, the reference's `MediaTransport.qml:71-76`). And where the song is: a song change is signalled with the new
+  # `Metadata` while the player still answers the previous song's `Position`, and a scene
+  # counting on from that reading sat four minutes off for the rest of the track
+  # (pleamar-media-position.patch answers 0 for a track that changed under it). And the
+  # software renderer: `ash`
   # resolves the DRM-modifier entry points when the device is made and *aborts* when the extension
   # is missing, so llvmpipe — and any ICD without `VK_EXT_image_drm_format_modifier` — died inside
   # `export_as` where the caller was ready to fall back to the system's swapchain
@@ -87,6 +91,7 @@ in
       ./pleamar-closed-surface.patch
       ./pleamar-media-state.patch
       ./pleamar-transport-flags.patch
+      ./pleamar-media-position.patch
       ./pleamar-soft-render.patch
       ./pleamar-lock-engage.patch
       ./pleamar-lock-full.patch
