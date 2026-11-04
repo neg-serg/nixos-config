@@ -29,50 +29,24 @@ let
   # modules/default.nix uses it to conditionally import domain aggregators.
   # -------------------------------------------------------------------------
 
-  # Core: always needed (feature flags, profiles, security, system foundation).
-  coreDomains = [
-    "core"
-    "features"
-    "profiles"
-    "nix"
-    "security"
-    "secrets"
-    "shell"
-    "system"
-    "hardware"
-    "monitoring"
-  ];
-
-  # Basic: core + CLI / text-mode tools. Enough for a minimal interactive system.
-  basicDomains = coreDomains ++ [
-    "cli"
-    "tools"
-    "text"
-    "fonts"
-    "documentation"
-  ];
-
-  # Full desktop: everything imported (current default).
-  allDomains = basicDomains ++ [
-    "appimage"
-    "apps"
-    "dev"
-    "emulators"
-    "flatpak"
-    "fun"
-    "games"
-    "llm"
-    "media"
-    "servers"
-    "torrent"
-    "user"
-  ];
+  # One domain = one directory under modules/ with a default.nix; the walk is
+  # modules/default.nix's importDir. Read the list from the tree instead of
+  # keeping it by hand: a new directory that nobody added to a hand-written list
+  # would simply not be imported, and the module system reports that as a
+  # missing option only when something references it (never, for a dead domain).
+  allDomains = builtins.attrNames (
+    lib.filterAttrs (
+      name: type: type == "directory" && builtins.pathExists (../modules + "/${name}/default.nix")
+    ) (builtins.readDir ../modules)
+  );
 
   # Trantor: full desktop minus domains with zero trantor references.
   # Excluded: appimage (no trantor usage), apps (obsidian via flatpak).
-  # Derived from allDomains so a domain added above is never silently missing
-  # here (the previous hand-written copy repeated the same tail).
-  trantorDomains = builtins.filter (d: d != "appimage" && d != "apps") allDomains;
+  excludedDomains = [
+    "appimage"
+    "apps"
+  ];
+  trantorDomains = builtins.filter (d: !(builtins.elem d excludedDomains)) allDomains;
 
   mkDomainFilter = domains: name: builtins.elem name domains;
 
