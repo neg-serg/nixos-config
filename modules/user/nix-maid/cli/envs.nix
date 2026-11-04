@@ -41,12 +41,14 @@ in
     # 16GB VRAM (RX 9070 XT): models ≤ ~9GB run fully on GPU; ≥17GB spill to CPU.
     #   qwen3:8b-q8_0                 (8.9GB) — fully on 16GB VRAM at 32k ctx, fast RU quality (default)
     #   qwen3.5:27b                   (17GB)  — best RU quality, but >16GB → CPU offload, slow
-    #   gemma4:12b                    (7.6GB) — fast, fits 16GB VRAM fully
-    #   gemma4:26b                    (17GB)  — Gemma 4 quality, multilingual (offload)
+    #   gemma4:12b                    (7.6GB) — fits VRAM, but ollama/ROCm is slow (~9 tok/s)
+    #   gemma4:26b                    (17GB)  — Gemma 4 quality, 2.5 tok/s (layer offload)
     #   qwen3:32b                     (20GB)  — solid, older gen (offload)
     #   llama3.3:70b-instruct-q5_K_M  (49GB, CPU) — max quality, slow (~2-4 tok/s)
     #   qwen3:235b-a22b               (142GB, CPU/RAM MoE) — heaviest, ~1 tok/s (future)
     #   qwen3.5:122b                  (76GB, 122B-A10B MoE Q4_K_M) — big new-gen, strong but slow (downloaded)
+    # llama-swap (127.0.0.1:9292) serves the same Gemma 4 models 3-10x faster
+    # on Vulkan; use it for interactive chat instead of the ollama tags.
     # Per-run override: RAG_LLM_MODEL=<model> rag-search search --llm "..."
     RAG_LLM_MODEL = "qwen3:8b-q8_0";
     __GL_VRR_ALLOWED = "1";

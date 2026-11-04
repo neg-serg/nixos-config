@@ -61,6 +61,43 @@ let
       --host 127.0.0.1 --port ''${PORT} -c 32768 -np 1 --jinja
   '';
 
+  # Gemma 4 26B A4B — the MoE tier (25.2B total, 3.8B active). Unsloth
+  # UD-Q3_K_XL: ~30-40 tok/s at 64k context. Q3 instead of the QAT Q4 because
+  # the desktop session holds ~3.5 GB of the 16 GB card: Q4 (13.2 GiB of
+  # weights) leaves no room for KV/compute after a swap and the Vulkan backend
+  # dies on the first request, while Q3 spills ~1 GB into GTT and stays up.
+  # Text-only on purpose: the 1.2 GB projector does not fit; the 12B below
+  # serves images. `--fit off` is required: with auto-fit, the VRAM still held
+  # by the model being swapped out makes llama.cpp silently offload a few
+  # layers, and a partially offloaded gemma4 backend dies on the first request.
+  gemma26b = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/gemma-4-26B-A4B-it-UD-Q3_K_XL.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 65536 -np 1 --flash-attn on --fit off \
+      --cache-type-k q8_0 --cache-type-v q8_0 --jinja
+  '';
+
+  # Gemma 4 12B Unified (dense) — the multimodal daily driver: the projector is
+  # only 168 MB, so 32k context fits with ~5 GB of VRAM left. ~29 tok/s.
+  gemma12b = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf \
+      --mmproj ${modelDir}/mmproj-gemma4-12b-F16.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off \
+      --cache-type-k q8_0 --cache-type-v q8_0 --jinja
+  '';
+
+  # gpt-oss-20b (MXFP4, 3.6B active) — the reasoning/tool tier and the fastest
+  # of the three: ~75 tok/s at 32k with ~1.4 GB of VRAM headroom.
+  gptoss = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/gpt-oss-20b-MXFP4.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off --jinja
+  '';
+
   ollamaUrl = "http://127.0.0.1:11434";
 
   systemdUser = config.lib.neg.systemdUser;
@@ -84,7 +121,12 @@ let
       is_gaming() {
         # Match on the full command line (argv[0] may be a wrapper or a
         # renamed binary); patterns are anchored to a path separator or space.
-        if pgrep -f '(^|/)(gamescope|wine|wine64|wineserver|wine-preloader|wine64-preloader|pressure-vessel-wrap|srt-bwrap|lutris|heroic)( |$)' >/dev/null 2>&1; then
+        # Do NOT match pressure-vessel / srt-bwrap: the Steam client itself
+        # keeps an srt-bwrap alive, so those matched permanently and unloaded
+        # every model every 20 s while Steam was open. Proton games are still
+        # caught below through their .exe process, native ones through their
+        # steamapps/common/ path.
+        if pgrep -f '(^|/)(gamescope|wine|wine64|wineserver|wine-preloader|wine64-preloader|lutris|heroic)( |$)' >/dev/null 2>&1; then
           return 0
         fi
         pgrep -f 'steamapps/common/|steam-launch-wrapper|\.exe' >/dev/null 2>&1
@@ -142,6 +184,22 @@ in
           aliases = [ "spark" ];
           ttl = 300;
         };
+        "gemma4-26b" = {
+          cmd = gemma26b;
+          aliases = [ "gemma4" ];
+          # Tightest model on the card (~200 MB free): release the VRAM soon.
+          ttl = 300;
+        };
+        "gemma4-12b" = {
+          cmd = gemma12b;
+          aliases = [ "gemma4-vision" ];
+          ttl = 600;
+        };
+        "gpt-oss-20b" = {
+          cmd = gptoss;
+          aliases = [ "gpt-oss" ];
+          ttl = 600;
+        };
 
       };
 
@@ -154,7 +212,6 @@ in
           "qwen3.8:27b"
           "qwen3.8:27b-plain"
           "qwen3:8b-ru"
-          "gemma4:12b"
         ];
       };
     };

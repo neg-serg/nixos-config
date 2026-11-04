@@ -48,6 +48,33 @@
 #       systemctl start llama-server          # 30b on 127.0.0.1:8080
 #       /zero/ai/llama/start-llama-server.sh  # same, manual run (optional port/model args)
 #
+# ### llama-swap (one OpenAI-compatible endpoint, 127.0.0.1:9292)
+#
+# - Module: `modules/llm/llama-swap.nix`; the `model` field selects a backend,
+#   one model is resident at a time (16 GB VRAM, ~3 GB of it is the desktop).
+# - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path for Gemma 4 on gfx1201:
+#   the same weights run 3-10x faster than through ollama's ROCm build, and
+#   `--cpu-moe` is a trap here (3-8 tok/s, expert weights become the bottleneck).
+# - Models (quant, measured VRAM/speed on 2026-11-04):
+#
+#   | model        | weights                                  | ctx | VRAM  | tok/s |
+#   | ------------ | ---------------------------------------- | --- | ----- | ----- |
+#   | gemma4-26b   | gemma-4-26B-A4B-it-UD-Q3_K_XL (MoE)      | 64k | 16.0G | 30-40 |
+#   | gemma4-12b   | gemma-4-12B-it-qat-UD-Q4_K_XL + mmproj   | 32k | 11.3G | 29    |
+#   | gpt-oss-20b  | gpt-oss-20b-MXFP4                        | 32k | 14.9G | 75    |
+#
+# - `gemma4-26b` runs Q3_K_XL, not the QAT Q4: the desktop session holds
+#   ~3.5 GB, so Q4 (13.2 GiB of weights) has no room left after a swap and the
+#   Vulkan backend dies on the first request; Q3 spills ~1 GB into GTT and
+#   stays up. It is text-only on purpose: the 1.2 GB projector does not fit;
+#   `gemma4-12b` takes images.
+# - All three start with `--fit off`. Auto-fit reads the VRAM of the model being
+#   swapped out as free, offloads a few layers, and gemma4 then crashes on the
+#   first request; a deterministic full load either fits or fails loudly.
+# - The ollama copies (`gemma4:26b` 17 GB, `gemma4:12b` 7.6 GB) stay for
+#   `rag-search`, but their ROCm path is slow (2.5 / 8.8 tok/s); for interactive
+#   work use the llama-swap names above.
+#
 # ### vLLM (OpenAI-compatible server, ROCm)
 #
 # - Module: `modules/llm/vllm.nix`; package: `pkgs.vllmRocmEnv`
@@ -150,8 +177,8 @@
 # | Model                          | Size                     | Role                                   |
 # | ------------------------------ | ------------------------ | -------------------------------------- |
 # | `qwen3.5:27b`                  | 17 GB                    | **default** — quality/speed/RU balance |
-# | `gemma4:12b`                   | 7.6 GB                   | fast, fully in VRAM                    |
-# | `gemma4:26b`                   | 17 GB                    | Gemma 4 quality                        |
+# | `gemma4:12b`                   | 7.6 GB                   | fits VRAM, but ollama/ROCm is slow (~9 tok/s) |
+# | `gemma4:26b`                   | 17 GB                    | Gemma 4 quality, 2.5 tok/s (offload)   |
 # | `qwen3:32b`                    | 20 GB                    | fallback, slightly older               |
 # | `llama3.3:70b-instruct-q5_K_M` | 49 GB (CPU)              | max quality, ~2-4 tok/s                |
 # | `qwen3:235b-a22b`              | 142 GB (CPU/RAM MoE)     | heaviest, ~1 tok/s — for the future    |
@@ -169,7 +196,9 @@
 # - `/zero/ai/ollama` — Ollama model store (437 GB, 23 models: qwen3 32b/235b-a22b, qwen3-coder 30b,
 #   qwen2.5-coder, qwen3-coder-next, deepcoder, devstral, qwq, gemma4, llama3.3 70b, qwen3.5 27b,
 #   qwen3-embedding, glm-ocr, abliterated variants, qwen3-vl/qwen2.5vl, …)
-# - `/zero/ai/llama` — llama-server (qwen3-vl) GGUF models (24 GB, exists)
+# - `/zero/ai/llama` — llama.cpp GGUFs (~220 GB, Flash-Next alone is 104 GB):
+#   qwen3-vl vision, qwen3.8-27B, GLM-4.7-Flash, Gemma 4 26B Q3 / 12B QAT,
+#   gpt-oss-20b, Spark-X2.5, Flash-Next
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
