@@ -247,7 +247,7 @@ fn same_file(left: &str, right: &str) -> bool {
 
 /// The scenes that draw with `lib/palette-live.plm`, by scene name (the folder
 /// under `~/.local/share/pleamar/` they read their own files from).
-const PALETTE_SCENES: [&str; 8] = [
+const PALETTE_SCENES: [&str; 9] = [
     "bar",
     "panels",
     "launcher",
@@ -256,6 +256,7 @@ const PALETTE_SCENES: [&str; 8] = [
     "picker",
     "widgets",
     "osd",
+    "headphones",
 ];
 
 fn data_home() -> Result<PathBuf, String> {
