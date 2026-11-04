@@ -33,6 +33,14 @@ in
   # Python libs for the CamillaGUI backend (camilladsp / camilladsp_plot modules)
   pycamilladsp = call (pkg "pycamilladsp") { };
   pycamilladsp-plot = call (pkg "pycamilladsp-plot") { };
+  # CamillaDSP itself: with the PipeWire ALSA plugin as its capture device the
+  # PCM fd stays readable while no frames are there, so `readi` answers EAGAIN
+  # and the backend retries without yielding — a whole core, measured 2026-11-04
+  # (1.29M retries in three seconds). The patch sleeps 1 ms per EAGAIN; see its
+  # comment for why that is the right layer.
+  camilladsp = prev.camilladsp.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [ ./camilladsp-eagain-wait.patch ];
+  });
   # VapourSynth NCNN (Vulkan) plugin: AI upscale/interp/denoise in VS (GPL-3)
   vsncnn = call (pkg "vsncnn") { };
   # scide's QtWebEngine help browser is unused (scnvim renders help itself).
