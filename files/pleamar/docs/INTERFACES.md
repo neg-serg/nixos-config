@@ -265,13 +265,12 @@ that is `radio off`, and the page says so instead of drawing an empty list.
 
 `bar` is the bar's own settings: the edge it sits on and which widgets are drawn, applied live. It
 cannot move a widget — the bar paints in the order its scene is written — and it does not offer the
-height, because the bar's surface is sized by a literal. The page asks the bar's logic
-(`say:bar`, events `set_edge` and `set_widget` with a packed payload) and the bar writes its own
-`settings.json`: one writer per folder (§1.2).
-It is also the shell's door: the bar's gear capsule (the reference's `Settings`) opens this page,
-and the toggles hub's `desktop widgets` row opens the widgets scene's own edit strip
-(`say:widgets`, `emit edit`) — so neither the bar's widgets nor the desktop ones depend
-on a key bind.
+height, because the bar's surface is sized by a literal. The page asks the bar's logic (`say:bar`,
+events `set_edge` and `set_widget` with a packed payload) and the bar writes its own
+`settings.json`: one writer per folder (§1.2). It is also the shell's door: the bar's gear capsule
+(the reference's `Settings`) opens this page, and the toggles hub's `desktop widgets` row opens the
+widgets scene's own edit strip (`say:widgets`, `emit edit`) — so neither the bar's widgets nor the
+desktop ones depend on a key bind.
 
 ## 2.3 Surfaces, screens and reserve
 
