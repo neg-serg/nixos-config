@@ -3,8 +3,6 @@
   inputs,
   nixpkgs,
   flakeLib,
-  mkTestHost,
-  mkSpecialArgs,
   pkgs,
   ...
 }:
@@ -53,13 +51,4 @@ in
       exec treefmt --config-file "$tmp_conf" --tree-root "$repo_root" "$@"
     '';
   };
-
-  checks = import ./checks.nix {
-    inherit
-      nixpkgs
-      self
-      mkTestHost
-      mkSpecialArgs
-      ;
-  } pkgs;
 }
