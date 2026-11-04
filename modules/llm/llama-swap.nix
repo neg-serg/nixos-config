@@ -62,6 +62,17 @@ let
       --reasoning-effort low
   '';
 
+  # Qwen3.6-35B-A3B abliterated (i1/IQ2_S) — the strongest model that fits the
+  # 16 GB card next to the desktop: ~48 tok/s at 32k, text-only. The dynamic
+  # IQ2 keeps attention and shared experts at higher precision; a Q3 build
+  # (IQ3_XXS) would need ~13.6 GB and does not fit with Steam open.
+  qwen36 = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/abliterated/Qwen3.6-35B-A3B-abliterated-IQ2_S.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off --reasoning off --jinja
+  '';
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -148,6 +159,13 @@ in
             "gpt-oss"
             "gpt-oss-20b"
             "uncensored"
+          ];
+        };
+        "qwen3.6-35b-abliterated" = {
+          cmd = qwen36;
+          aliases = [
+            "strong"
+            "qwen3.6"
           ];
         };
       };
