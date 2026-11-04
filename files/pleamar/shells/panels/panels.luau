@@ -117,7 +117,28 @@ local function read_settings()
     return raw
 end
 
-local function -- ==================== the night light ====================
+local function apply_settings()
+    local raw = read_settings()
+    raw_conf = raw
+    fact.close_on_escape = flag(raw.closeOnEscape, D.closeOnEscape)
+    fact.close_on_outside = flag(raw.closeOnOutside, D.closeOnOutside)
+    fact.zoom = num(raw.scale, 0.5, 2.0, D.scale)
+    fact.text_scale = num(raw.fontScale, 0.5, 2.0, D.fontScale)
+    fact.use_fahrenheit = flag(raw.useFahrenheit, D.useFahrenheit)
+    fact.night_light = flag(raw.nightLight, false)
+    conf.weatherCity = str(raw.weatherCity, D.weatherCity)
+    conf.calendarCountry = str(raw.calendarCountry, D.calendarCountry)
+    -- The two fields on the shell page show what the file says (a write of ours
+    -- arrives here too; the same string is not a caret reset).
+    text.city = conf.weatherCity
+    text.country = conf.calendarCountry
+end
+
+apply_settings()
+-- Another copy, or an editor, changed the file: re-read and re-apply.
+sys.watch("files:" .. FILE, function() apply_settings() end)
+
+-- ==================== the night light ====================
 -- `wlsunset` shifts the screen's temperature; it runs until killed, so it is one spawned process
 -- for as long as the switch is on. The scene owns it: this logic started it, this logic kills it.
 local night_pid = nil
@@ -139,26 +160,8 @@ local function night_apply(on)
 end
 
 apply_settings()
-night_apply(fact.night_light)
-    local raw = read_settings()
-    raw_conf = raw
-    fact.close_on_escape = flag(raw.closeOnEscape, D.closeOnEscape)
-    fact.close_on_outside = flag(raw.closeOnOutside, D.closeOnOutside)
-    fact.zoom = num(raw.scale, 0.5, 2.0, D.scale)
-    fact.text_scale = num(raw.fontScale, 0.5, 2.0, D.fontScale)
-    fact.use_fahrenheit = flag(raw.useFahrenheit, D.useFahrenheit)
-    fact.night_light = flag(raw.nightLight, false)
-    conf.weatherCity = str(raw.weatherCity, D.weatherCity)
-    conf.calendarCountry = str(raw.calendarCountry, D.calendarCountry)
-    -- The two fields on the shell page show what the file says (a write of ours
-    -- arrives here too; the same string is not a caret reset).
-    text.city = conf.weatherCity
-    text.country = conf.calendarCountry
-end
 
-apply_settings()
--- Another copy, or an editor, changed the file: re-read and re-apply.
-sys.watch("files:" .. FILE, function() apply_settings() end)
+night_apply(fact.night_light)
 
 -- ======================= small helpers =======================
 
