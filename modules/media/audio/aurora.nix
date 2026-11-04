@@ -67,6 +67,7 @@ in
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter [
       pkgs.neg.aurora # aurora: MPD player with a Vulkan UI (winit + ash + cosmic-text)
+      pkgs.neg.aurora-tools # headphones: the model catalogue CLI (apply/import/export)
       aurora-focus # what mod4+f runs: focus the player, or start it if it is not up
     ];
 

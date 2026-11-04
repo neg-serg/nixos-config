@@ -22,6 +22,7 @@
   libxrandr,
   libxi,
   src,
+  toolsOnly ? false,
 }:
 
 let
@@ -39,105 +40,134 @@ let
     libxrandr
     libxi
   ];
-in
-rustPlatform.buildRustPackage {
-  pname = "aurora";
-  version = "0.1.0";
+  player = rustPlatform.buildRustPackage {
+    pname = "aurora";
+    version = "0.1.0";
 
-  inherit src;
+    inherit src;
 
-  cargoLock.lockFile = "${src}/Cargo.lock";
+    cargoLock.lockFile = "${src}/Cargo.lock";
 
-  # One package, two binaries: `cargo build -p aurora` builds both `aurora` and
-  # `aurora-probe` — they are two `[[bin]]` targets of the root package. The
-  # workspace's eleven plugin crates are dependencies, not separate binaries.
-  cargoBuildFlags = [
-    "--locked"
-    "-p"
-    "aurora"
-  ];
+    # One package, two binaries: `cargo build -p aurora` builds both `aurora` and
+    # `aurora-probe` — they are two `[[bin]]` targets of the root package. The
+    # workspace's eleven plugin crates are dependencies, not separate binaries.
+    cargoBuildFlags = [
+      "--locked"
+      "-p"
+      "aurora"
+    ];
 
-  # The test suite is a development contract, not a packaging step: it asserts
-  # the layout against the user's own Iosevka build in ~/.local/share/fonts and
-  # drives a scripted UI against a stub MPD daemon. Neither belongs in a
-  # sandbox build, so the packaged binaries are what gets checked (the probe
-  # runs without a window).
-  doCheck = false;
+    # The test suite is a development contract, not a packaging step: it asserts
+    # the layout against the user's own Iosevka build in ~/.local/share/fonts and
+    # drives a scripted UI against a stub MPD daemon. Neither belongs in a
+    # sandbox build, so the packaged binaries are what gets checked (the probe
+    # runs without a window).
+    doCheck = false;
 
-  # FreeType is the text rasteriser (the glyphs are hinted the way Pango hints them), so the
-  # build asks pkg-config for it; zlib is freetype-sys's own dependency.
-  nativeBuildInputs = [
-    makeWrapper
-    pkg-config
-  ];
-  buildInputs = [
-    freetype
-    zlib
-  ];
+    # FreeType is the text rasteriser (the glyphs are hinted the way Pango hints them), so the
+    # build asks pkg-config for it; zlib is freetype-sys's own dependency.
+    nativeBuildInputs = [
+      makeWrapper
+      pkg-config
+    ];
+    buildInputs = [
+      freetype
+      zlib
+    ];
 
-  postFixup = ''
-    for prog in aurora aurora-probe; do
-      wrapProgram "$out/bin/$prog" \
-        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath runtimeLibs}"
-    done
-  '';
+    postFixup = ''
+      for prog in aurora aurora-probe; do
+        wrapProgram "$out/bin/$prog" \
+          --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath runtimeLibs}"
+      done
+    '';
 
-  # Desktop entry, so a launcher, a file manager and MPRIS's DesktopEntry
-  # property all resolve to this package.
-  postInstall = ''
-        install -Dm644 /dev/stdin $out/share/applications/aurora.desktop <<'DESKTOP'
-    [Desktop Entry]
-    Type=Application
-    Name=aurora
-    Comment=MPD client with a Vulkan UI
-    Exec=aurora
-    Icon=aurora
-    Terminal=false
-    Categories=AudioVideo;Audio;Player;
-    Keywords=mpd;music;player;audio;
-    StartupWMClass=aurora
-    DESKTOP
-        # The same four curtain ribbons the top bar and the window icon draw, as a scalable
-        # asset: one mark, three renderers, no file that can drift out of date.
-        install -Dm644 /dev/stdin $out/share/icons/hicolor/scalable/apps/aurora.svg <<'SVG'
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-      <style>
-        .tile { fill: #14161b; }
-        .ribbon { fill: url(#fade); }
-        .crest { fill: #8aa2c0; }
-      </style>
-      <defs>
-        <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
-          <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
-        </linearGradient>
-      </defs>
-      <rect class="tile" x="6" y="6" width="116" height="116" rx="28"/>
-      <rect class="ribbon" x="34" y="58" width="15" height="36" rx="3"/>
-      <rect class="ribbon" x="52" y="44" width="15" height="50" rx="3"/>
-      <rect class="crest" x="70" y="26" width="15" height="68" rx="3"/>
-      <rect class="ribbon" x="88" y="38" width="15" height="56" rx="3"/>
-    </svg>
-    SVG
-        install -Dm644 /dev/stdin $out/share/metainfo/aurora.metainfo.xml <<'META'
-    <?xml version="1.0" encoding="UTF-8"?>
-    <component type="desktop-application">
-      <id>aurora</id>
-      <name>aurora</name>
-      <summary>MPD client with its own Vulkan UI</summary>
-      <description>
-        <p>A local MPD front end drawn with winit, ash and cosmic-text: one draw
-        list per frame, a measured now-playing stack, plugins as workspace crates.</p>
-      </description>
-      <launchable type="desktop-id">aurora.desktop</launchable>
-      <provides><binary>aurora</binary></provides>
-    </component>
-    META
-  '';
+    # Desktop entry, so a launcher, a file manager and MPRIS's DesktopEntry
+    # property all resolve to this package.
+    postInstall = ''
+          install -Dm644 /dev/stdin $out/share/applications/aurora.desktop <<'DESKTOP'
+      [Desktop Entry]
+      Type=Application
+      Name=aurora
+      Comment=MPD client with a Vulkan UI
+      Exec=aurora
+      Icon=aurora
+      Terminal=false
+      Categories=AudioVideo;Audio;Player;
+      Keywords=mpd;music;player;audio;
+      StartupWMClass=aurora
+      DESKTOP
+          # The same four curtain ribbons the top bar and the window icon draw, as a scalable
+          # asset: one mark, three renderers, no file that can drift out of date.
+          install -Dm644 /dev/stdin $out/share/icons/hicolor/scalable/apps/aurora.svg <<'SVG'
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+        <style>
+          .tile { fill: #14161b; }
+          .ribbon { fill: url(#fade); }
+          .crest { fill: #8aa2c0; }
+        </style>
+        <defs>
+          <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+            <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
+          </linearGradient>
+        </defs>
+        <rect class="tile" x="6" y="6" width="116" height="116" rx="28"/>
+        <rect class="ribbon" x="34" y="58" width="15" height="36" rx="3"/>
+        <rect class="ribbon" x="52" y="44" width="15" height="50" rx="3"/>
+        <rect class="crest" x="70" y="26" width="15" height="68" rx="3"/>
+        <rect class="ribbon" x="88" y="38" width="15" height="56" rx="3"/>
+      </svg>
+      SVG
+          install -Dm644 /dev/stdin $out/share/metainfo/aurora.metainfo.xml <<'META'
+      <?xml version="1.0" encoding="UTF-8"?>
+      <component type="desktop-application">
+        <id>aurora</id>
+        <name>aurora</name>
+        <summary>MPD client with its own Vulkan UI</summary>
+        <description>
+          <p>A local MPD front end drawn with winit, ash and cosmic-text: one draw
+          list per frame, a measured now-playing stack, plugins as workspace crates.</p>
+        </description>
+        <launchable type="desktop-id">aurora.desktop</launchable>
+        <provides><binary>aurora</binary></provides>
+      </component>
+      META
+    '';
 
-  meta = lib.mkMeta {
-    description = "MPD client with a Vulkan UI (winit + ash + cosmic-text)";
-    license = lib.licenses.mit;
-    mainProgram = "aurora";
+    meta = lib.mkMeta {
+      description = "MPD client with a Vulkan UI (winit + ash + cosmic-text)";
+      license = lib.licenses.mit;
+      mainProgram = "aurora";
+    };
   };
-}
+
+  # The catalogue tools: the same pinned source, a different crate and a different closure. The
+  # `headphones` bin lives in `aurora-camilla`, speaks JSON over the daemon's websocket and needs
+  # none of the player's Vulkan stack; building it apart is what keeps `nix why-depends` honest.
+  tools = rustPlatform.buildRustPackage {
+    pname = "aurora-tools";
+    version = "0.1.0";
+
+    inherit src;
+
+    cargoLock.lockFile = "${src}/Cargo.lock";
+
+    cargoBuildFlags = [
+      "--locked"
+      "-p"
+      "aurora-camilla"
+      "--bin"
+      "headphones"
+    ];
+
+    doCheck = false;
+
+    meta = lib.mkMeta {
+      description = "aurora tools: the headphone model catalogue CLI";
+      license = lib.licenses.mit;
+      mainProgram = "headphones";
+    };
+  };
+in
+if toolsOnly then tools else player

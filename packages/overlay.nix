@@ -104,6 +104,10 @@ in
       aurora = final.callPackage ./aurora.nix {
         src = inputs.aurora-src;
       }; # aurora: local MPD player with a Vulkan UI
+      aurora-tools = final.callPackage ./aurora.nix {
+        src = inputs.aurora-src;
+        toolsOnly = true;
+      }; # aurora-tools: the headphone model catalogue CLI, without the player's Vulkan closure
       renoise-redux = final.callPackage ./renoise-redux {
         renoiseSrc = inputs.renoise-src;
       }; # Renoise Redux VST3 plugin (licensed build)
