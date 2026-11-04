@@ -95,7 +95,9 @@ printf '%s\n' "$OUT" | awk -v scene="$SCENE" '
 
     # -- which zones are widgets of the strip -----------------------------
     # `strip_hover` covers the whole strip (it is the pointer target, not a
-    # widget) and `tray_reveal` is a 4 px hotzone abutting the last widget.
+    # widget) and `tray_reveal` is the bottom-right reveal corner, which
+    # overlaps the last tile on purpose: hover there is per-zone, only a press
+    # goes to the tile, so the overlap is not a layout defect.
     m = 0
     for (i = 1; i <= n; i++) {
       if (zn[i] == "strip_hover" || zn[i] == "tray_reveal") continue
