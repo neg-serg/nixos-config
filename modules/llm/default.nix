@@ -66,8 +66,12 @@
 #   | ------------ | ---------------------------------------- | --- | ----- | ----- |
 #   | gemma4-26b   | gemma-4-26B-A4B-it-UD-Q3_K_XL (MoE)      | 64k | 16.0G | 30-40 |
 #   | gemma4-12b   | gemma-4-12B-it-qat-UD-Q4_K_XL + mmproj   | 32k | 11.3G | 29    |
-#   | gpt-oss-20b  | gpt-oss-20b-MXFP4                        | 32k | 14.9G | 75    |
+#   | gpt-oss-20b  | gpt-oss-20b-abliterated MXFP4            | 32k | 15.8G | 75-85 |
 #   | qwen3.8-4b   | Qwen3.8-4B-Distill-Heretic Q4 + mmproj   | 32k | 4.5G  | 56-60 |
+#
+# - `gpt-oss-20b-abliterated` needs `--reasoning-effort low`: at the default
+#   effort it spends the whole token budget on reasoning and returns empty
+#   content. With low effort it keeps tools, JSON and arithmetic intact.
 #
 # - `qwen3.8-4b-abliterated` is the uncensored 4B tier (text + vision, thinking
 #   off). It handles translation, summaries, JSON extraction, classification and
