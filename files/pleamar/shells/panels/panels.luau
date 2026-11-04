@@ -677,11 +677,12 @@ local function bt_device(index)
 end
 
 -- The arguments are passed through (a connect, a disconnect and a forget take one; a rename takes
--- two), and `...` cannot be used inside the closure Luau's pcall wants. The answer is returned so a
--- command that is refused outright (busy, no adapter, an unknown device) can be said on the page
--- instead of only in the log.
+-- two). `pcall` takes them itself: a closure cannot spell `...` for arguments it did not receive,
+-- and Luau refuses that at compile time, which takes the whole logic down with it. The answer is
+-- returned so a command that is refused outright (busy, no adapter, an unknown device) can be
+-- said on the page instead of only in the log.
 local function bt_call(command, ...)
-    local ok, err = pcall(function() sys.call(command, ...) end)
+    local ok, err = pcall(sys.call, command, ...)
     if not ok then log("panels: " .. command .. " failed: " .. tostring(err)) end
     return ok, err
 end
