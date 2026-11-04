@@ -17,9 +17,13 @@
 # The daemon starts with ~/.config/camilladsp/default.yml rather than `--wait`:
 # the insert has to be up before anything is played. Configs are user state
 # (the surfaces save and apply them), so default.yml is seeded once from
-# ./dsp/default.yml and never replaced afterwards; the statefile keeps the
-# active config across restarts. `Stop` from a surface exits the daemon and the
-# unit restarts it, i.e. the insert recovers by itself.
+# ./dsp/default.yml and never replaced afterwards. The command line wins over
+# the statefile's `config_path` (measured 2026-11-04: a config applied from a
+# surface is forgotten on the next start, and the daemon rewrites that field
+# with default.yml), so `default.yml` is the one place to tune; the statefile
+# carries volume, mute and the last applied path for the surfaces only.
+# `Stop` from a surface exits the daemon and the unit restarts it, i.e. the
+# insert recovers by itself.
 #
 # The config's chunksize follows the PipeWire graph quantum (256 frames, see
 # ./dsp/default.yml): the ALSA `pipewire` plugin refuses to hand out any other
@@ -33,7 +37,7 @@
 #   ~/.config/camilladsp/             configs the surfaces list and save
 #   ~/.config/camilladsp/default.yml  the config the daemon starts with
 #   ~/.config/camilladsp/coeffs/      FIR coefficients those configs reference
-#   ~/.local/state/camilladsp/        statefile (volume, mute, active config)
+#   ~/.local/state/camilladsp/        statefile (volume, mute, last applied path)
 #
 # The directories are user-writable on purpose: both surfaces save configs and
 # coefficients there, so they cannot be read-only store symlinks.
@@ -95,7 +99,13 @@ in
     port = lib.mkOption {
       type = lib.types.port;
       default = 1234;
-      description = "Port for the CamillaDSP websocket server (1234 is the upstream default).";
+      description = ''
+        Port for the CamillaDSP websocket server (1234 is the upstream default).
+        camillagui's backend config is baked into its package
+        (packages/camillagui/default.nix, `camilla_port: 1234`) and cannot read
+        this option: moving the port here also needs that patch, or the GUI
+        silently talks to nothing.
+      '';
     };
 
     logLevel = lib.mkOption {
@@ -158,6 +168,13 @@ in
           "audioGraph"
           "restartAlways"
         ];
+        # The daemon has to come back on its own: a WirePlumber restart takes the
+        # streams away and it exits, and a config that fails to load makes every
+        # start a failure. With the default 5 starts / 10 s limit and a 2 s
+        # delay, ~8 s of that parks the unit as failed for good — the router
+        # keeps the direct path alive meanwhile, so nothing is heard, but the
+        # DSP is gone until someone restarts it by hand. Unlimited starts.
+        unitConfig.StartLimitIntervalSec = 0;
         serviceConfig = {
           ExecStartPre = seedConfig;
           ExecStart = lib.concatStringsSep " " (
