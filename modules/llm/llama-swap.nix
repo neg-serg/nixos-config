@@ -82,6 +82,20 @@ let
       -c 32768 -np 1 --flash-attn on --fit off --jinja
   '';
 
+  # Qwen3.8-4B Distill Heretic — the uncensored small tier: a Qwen3.8
+  # distillation into Qwen3.5-4B, abliterated with Heretic v1.4.0. ~56-60 tok/s
+  # with text + vision at 32k. Thinking is off: at 4B it costs latency without
+  # helping the tasks this model is for (translation, summaries, JSON
+  # extraction, classification, short creative text). It is weak at arithmetic
+  # and multi-step reasoning — do not route those here.
+  qwenUncensored = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/abliterated/Qwen3.8-4B-Distill-Heretic-Q4_K_M.gguf \
+      --mmproj ${modelDir}/abliterated/qwen38-mmproj-f16.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off --reasoning off --jinja
+  '';
+
   ollamaUrl = "http://127.0.0.1:11434";
 
   systemdUser = config.lib.neg.systemdUser;
@@ -169,6 +183,10 @@ in
         "gpt-oss-20b" = {
           cmd = gptoss;
           aliases = [ "gpt-oss" ];
+        };
+        "qwen3.8-4b-abliterated" = {
+          cmd = qwenUncensored;
+          aliases = [ "uncensored" ];
         };
       };
 
