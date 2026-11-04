@@ -27,49 +27,26 @@ let
   modelDir = "/zero/ai/llama";
   llamaVulkan = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
 
-  # Vision model (Vulkan/RADV): flags mirror modules/llm/llama-server.nix.
+  # Vision model (Vulkan/RADV): abliterated Qwen3-VL-8B — the base build
+  # refuses too much for this stack. Flags mirror modules/llm/llama-server.nix.
   vision8b = ''
     ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/qwen3-vl-8b-instruct-q4_k_m.gguf \
-      --mmproj ${modelDir}/mmproj-qwen3-vl-8b-f16.gguf \
+      -m ${modelDir}/abliterated/Qwen3-VL-8B-abliterated-Q4_K_M.gguf \
+      --mmproj ${modelDir}/abliterated/mmproj-qwen3-vl-8b-ablit-f16.gguf \
       --host 127.0.0.1 --port ''${PORT} -c 8192 -np 1
   '';
 
-  # Spark-X2.5-4B (text, 4B, hybrid sliding-window attention, 1M native ctx):
-  # spark2_5 support is native in nixpkgs' llama.cpp (build 11429), so the
-  # stock Vulkan binary runs it; measured ~78 tok/s generation, 32k context
-  # costs ~2 GB of KV next to the 4.2 GB Q8_0 weights.
-  spark4b = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/Spark-X2.5-4B-Q8_0.gguf \
-      --host 127.0.0.1 --port ''${PORT} -c 32768 -np 1 --jinja
-  '';
-
-  # Gemma 4 26B A4B — the MoE tier (25.2B total, 3.8B active). Unsloth
-  # UD-Q3_K_XL: ~30-40 tok/s at 64k context. Q3 instead of the QAT Q4 because
-  # the desktop session holds ~3.5 GB of the 16 GB card: Q4 (13.2 GiB of
-  # weights) leaves no room for KV/compute after a swap and the Vulkan backend
-  # dies on the first request, while Q3 spills ~1 GB into GTT and stays up.
-  # Text-only on purpose: the 1.2 GB projector does not fit; the 12B below
-  # serves images. `--fit off` is required: with auto-fit, the VRAM still held
-  # by the model being swapped out makes llama.cpp silently offload a few
-  # layers, and a partially offloaded gemma4 backend dies on the first request.
+  # Gemma 4 26B A4B — the MoE tier (25.2B total, 3.8B active), abliterated
+  # (i1/IQ3_S). ~35 tok/s at 32k; text-only, the Qwen3-VL above handles images.
+  # The base QAT/Q3 weights are gone: everything served here is uncensored.
+  # `--fit off` is required: with auto-fit, the VRAM still held by the model
+  # being swapped out makes llama.cpp silently offload a few layers, and a
+  # partially offloaded gemma4 backend dies on the first request.
   gemma26b = ''
     ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/gemma-4-26B-A4B-it-UD-Q3_K_XL.gguf \
+      -m ${modelDir}/abliterated/Gemma-4-26B-A4B-abliterated-IQ3_S.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -c 65536 -np 1 --flash-attn on --fit off \
-      --cache-type-k q8_0 --cache-type-v q8_0 --jinja
-  '';
-
-  # Gemma 4 12B Unified (dense) — the multimodal daily driver: the projector is
-  # only 168 MB, so 32k context fits with ~5 GB of VRAM left. ~29 tok/s.
-  gemma12b = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf \
-      --mmproj ${modelDir}/mmproj-gemma4-12b-F16.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -c 32768 -np 1 --flash-attn on --fit off \
+      -c 32768 -np 1 --flash-attn on --fit off --reasoning off \
       --cache-type-k q8_0 --cache-type-v q8_0 --jinja
   '';
 
@@ -85,8 +62,6 @@ let
       -c 32768 -np 1 --flash-attn on --fit off --jinja \
       --reasoning-effort low
   '';
-
-  ollamaUrl = "http://127.0.0.1:11434";
 
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
@@ -153,24 +128,20 @@ in
       # enough not to reload between messages.
       globalTTL = 60;
       models = {
-        "qwen3-vl-8b" = {
+        "qwen3-vl-8b-abliterated" = {
           cmd = vision8b;
           aliases = [
             "vision"
             "vision-8b"
+            "qwen3-vl-8b"
           ];
         };
-        "spark-x2.5-4b" = {
-          cmd = spark4b;
-          aliases = [ "spark" ];
-        };
-        "gemma4-26b" = {
+        "gemma4-26b-abliterated" = {
           cmd = gemma26b;
-          aliases = [ "gemma4" ];
-        };
-        "gemma4-12b" = {
-          cmd = gemma12b;
-          aliases = [ "gemma4-vision" ];
+          aliases = [
+            "gemma4"
+            "gemma4-26b"
+          ];
         };
         "gpt-oss-20b-abliterated" = {
           cmd = gptoss;
@@ -182,16 +153,6 @@ in
         };
       };
 
-      # Ollama runs its own loading; expose it as a peer. Peer models are
-      # addressable as `ollama/<name>`, and unqualified when unique. Only
-      # models that fit the card are listed — a 17 GB ollama tag spills to CPU.
-      peers.ollama = {
-        proxy = ollamaUrl;
-        models = [
-          "llama3.2:1b" # small smoke-test model
-          "qwen3:8b-ru" # 5.2 GB, fully on the GPU
-        ];
-      };
     };
   };
 
