@@ -1,7 +1,7 @@
 # llama-swap — one OpenAI-compatible endpoint in front of the local model
 # stack. The `model` field of a request selects the backend: llama-swap starts
 # it (or proxies to it) and shuts the previously running one down; an idle
-# backend is unloaded after `globalTTL` (120 s). Only models that fit the 16 GB
+# backend is unloaded after `globalTTL` (60 s). Only models that fit the 16 GB
 # card are exposed here; the oversized ones stay as manual per-model units.
 # Clients use http://127.0.0.1:9292/v1.
 #
@@ -161,9 +161,11 @@ in
 
     settings = {
       healthCheckTimeout = 600;
-      # Idle backends unload after two minutes: the card is shared with the
-      # desktop (~3.5 GB) and with games, so nothing may sit on it unused.
-      globalTTL = 120;
+      # Idle backends unload after a minute: the card is shared with the
+      # desktop (~4 GB with Steam and Vivaldi) and with games, so nothing may
+      # sit on it unused. A cold load costs 8-20 s, so a minute is still long
+      # enough not to reload between messages.
+      globalTTL = 60;
       models = {
         "qwen3-vl-8b" = {
           cmd = vision8b;

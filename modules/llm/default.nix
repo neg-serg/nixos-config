@@ -52,7 +52,7 @@
 #
 # - Module: `modules/llm/llama-swap.nix`; the `model` field selects a backend,
 #   one model is resident at a time (16 GB VRAM, ~3.5 GB of it is the desktop).
-# - Idle backends are unloaded after `globalTTL` 120 s, and the game guard
+# - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
 #   unloads them at once when a game starts.
 # - Only models that fit the card are exposed here. `qwen3-vl-30b` (18 GB) and
 #   Flash-Next (111 GB, CPU-MoE) were removed from the router — they stay
