@@ -249,6 +249,9 @@ rec {
               - id: qwen3.6-35b-abliterated
                 name: Qwen3.6-35B abliterated
                 contextWindow: 65536
+              - id: qwen3.8-27b-abliterated
+                name: Qwen3.8-27B abliterated (quality, RU)
+                contextWindow: 16384
               - id: gpt-oss-20b-abliterated
                 name: gpt-oss-20b abliterated
                 contextWindow: 65536
