@@ -947,6 +947,14 @@ local function bar_state_load()
     run("pleamar", args, bar_parse)
 end
 
+-- The desktop widgets' strip is the widgets scene's own (`emit edit` there); the hub only opens it.
+-- The drawer closes so the strip is not left behind a modal.
+on("widgets_edit", function()
+    touch_drawer()
+    hide_drawer()
+    run("pleamar", { "--say", "widgets", "emit edit" }, function() end)
+end)
+
 on("bar_set_edge", function(which)
     touch_drawer()
     local payload = (which == 1) and 1 or 0

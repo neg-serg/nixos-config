@@ -22,6 +22,7 @@ import "../../lib/capsule.plm"
 //   pleamar --say picker "emit close_picker"     close
 //   pleamar --say picker "emit reload"           read the folder again
 //   pleamar --say picker "emit choose 3"         set the fourth card (0 is the first)
+//   pleamar --say picker "text query skull"      the finder: names only, the whole folder
 //   pleamar --say picker "emit open_settings"    the settings screen (the g key)
 //   pleamar --say picker "emit toggle_settings"  open/close the settings screen
 //   pleamar --say picker "fact order newest"     sort: newest first, or `name`
@@ -101,7 +102,7 @@ scene picker {
     // `ls` is the newest-first sort and nothing else: no service reports a file's modification
     // time, so the documented stopgap stands in for one (see picker.luau).
     permissions {
-        run: "pleamar-wallpaper-palettes", "pleamar-wallpaper-apply", "ls"
+        run: "pleamar-wallpaper-palettes", "pleamar-wallpaper-apply", "ls", "cat"
         services: "env", "files", "files.write"
     }
 
@@ -138,6 +139,8 @@ scene picker {
     text field_folder = ""
     text field_command = ""
     text note = ""
+    // The finder: a name filter over the whole folder, not only the page on screen.
+    text query = ""
 
     // The page on screen, a row of cards per record: a card is a component, and a component takes
     // its record from a `for` — never from a computed place — so the rows are what the model holds
@@ -147,6 +150,7 @@ scene picker {
             name: text
             picture: image 288, 180
             fav: bool
+            now: bool
             list sw max 4 { r: number; g: number; b: number }
         }
     }
@@ -234,6 +238,12 @@ scene picker {
                     }
                 }
             }
+            // The wallpaper the desktop is wearing right now: one dot, in the accent.
+            group current {
+                show: c.now
+                box { from: 10, 10; size: 22, 22; corner: 11; color: live.coal; opacity: 55% }
+                ellipse { at: 21, 21; radius: 4; color: live.accent }
+            }
             // A favourited card wears a star, on a disc dark enough to read over any picture.
             group marked {
                 show: c.fav
@@ -274,10 +284,21 @@ scene picker {
                 zone box body { from: 0, 0; size: DW, DH; corner: overlay.corner; role: region }
 
                 text "Wallpapers" { at: 32, 42; anchor: left center; size: 17; weight: 600; color: live.ink }
-                text folder { at: 32, 70; anchor: left center; width: DW - 260; lines: 1
+                text folder { at: 32, 70; anchor: left center; width: DW - 460; lines: 1
                               size: 11.5; color: live.ink.dim }
-                text status { at: DW - 32, 42; anchor: right center; width: 520; lines: 1; align: right
+                text status { at: DW - 32, 70; anchor: right center; width: 400; lines: 1; align: right
                               size: 11.5; color: live.ink.dim }
+
+                // The finder: typed here, filtered by picker.luau over the whole folder (489 names
+                // on this host), so one picture is not a walk through eight pages.
+                box { from: DW - 396, 26; size: 364, 30; corner: 8; color: live.ink; opacity: 6% }
+                text "find" { at: DW - 380, 41; anchor: left center; size: 9; color: live.ink.off }
+                input query {
+                    at: DW - 340, 33; width: 300
+                    size: 12; color: live.ink; family: "Iosevka"; selection: live.accent_deep
+                    placeholder: "name…"
+                    label: "Find a wallpaper"
+                }
 
                 // The deck: rows of cards the wheel and a drag scroll (`view:`), with the front
                 // card's row kept in sight by the rule below. A row is `cols` cards and as tall as

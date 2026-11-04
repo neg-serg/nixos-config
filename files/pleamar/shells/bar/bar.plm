@@ -912,6 +912,8 @@ scene bar {
     // asks and this logic writes. A payload is the index into `WIDGETS` (2 * i + on) for a widget,
     // and 0 (top) or 1 (bottom) for the edge.
     event set_widget ->
+    // The gear at the right end: the shell's settings (the bar's own page lives in `panels`).
+    event open_settings ->
     event set_edge ->
     event wheel_volume ->
     // The volume capsule's press: QS's `toggleRoute()` — `pwroute toggle`, the RME's AES/Analog pair.
@@ -1890,6 +1892,19 @@ scene bar {
             // are always there, as the microphone's glyph is.
             // The tile's own tones are the theme's: the plugin is a library and cannot read
             // `skin.*`, so the plate, the live.ink and the live.accent are handed to it here.
+            // The gear of the reference's `Settings` capsule: one press opens the bar's settings
+            // page in `panels`, which is also the door to the rest of the shell's pages.
+            row gear_slot { align: center
+                group gear { size: 28 * scale, strip * scale
+                    body { color: live.coal; opacity: 69%; border: 1, mix(live.coal, live.ink, 8%)
+                           box { from: 1, 1; size: 26 * scale, 23 * scale; corner: 6 * scale } }
+                    text "settings" { at: 14 * scale, strip / 2 * scale; anchor: center
+                        family: "Material Symbols Outlined"; size: 14 * scale; color: live.ink }
+                    zone box gearhit { from: 0, 0; size: 28 * scale, strip * scale; corner: corner; cursor: pointer
+                        label: "Settings"; role: button }
+                    on press gearhit { emit open_settings }
+                }
+            }
             row genelec_slot { show: widget.genelec
                 gen.Tile(row: strip, type_scale: text_scale, plate: live.coal, tone: live.ink, tone.dim: live.ink.dim, loud: live.accent) }
         }
