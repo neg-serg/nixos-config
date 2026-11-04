@@ -908,6 +908,11 @@ scene bar {
     on change media.hot { Spectrum.active = media.hot }
 
     event open_bluetooth ->
+    // The customizer's (pages/bar.plm in `panels`): the bar owns its settings file, so the page
+    // asks and this logic writes. A payload is the index into `WIDGETS` (2 * i + on) for a widget,
+    // and 0 (top) or 1 (bottom) for the edge.
+    event set_widget ->
+    event set_edge ->
     event wheel_volume ->
     // The volume capsule's press: QS's `toggleRoute()` — `pwroute toggle`, the RME's AES/Analog pair.
     // The mute it used to be is what bar.luau falls back to when there is no RME sink to move.

@@ -238,10 +238,9 @@ while that theme is in place (`pleamar-themes warm K`: 2700 warm, 6500 neutral, 
 2026-11-04 with a page and a bar capsule: the adapter's power, a scan, the devices (connected,
 paired, nearby) with connect/disconnect/forget, and the pairing prompt for the kinds answered with a
 yes (`confirm`, `authorize`); `pin` and `passkey` are typed into the band's field, and `display`
-needs no answer. A row press carries the model's index; the addresses are
-panels.luau's. `power` came back the same day 2026-11-04 with a page: the session menu (lock, sleep,
-log out, restart, shut down), opened by `M4+SH+Escape`; restart and shut down take a 600 ms hold and
-are `agent: no`.
+needs no answer. A row press carries the model's index; the addresses are panels.luau's. `power`
+came back the same day 2026-11-04 with a page: the session menu (lock, sleep, log out, restart, shut
+down), opened by `M4+SH+Escape`; restart and shut down take a 600 ms hold and are `agent: no`.
 
 A drawer's surface is the whole monitor (`size: full, full`) and the card is placed in `screen`
 coordinates by its page: a surface's `size:` takes a literal and never follows `zoom`, so a card

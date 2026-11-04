@@ -294,6 +294,12 @@ scene panels {
         include "pages/wifi.plm"
     }
 
+    surface bar_card { size: full, full
+                       level: overlay; reserve: 0; screens: each; keyboard: on_demand
+                       open: drawer == bar
+        include "pages/bar.plm"
+    }
+
     // Commands the logic runs (workers), services it listens to (audio, own
     // settings file) and commands it sends (audio.*). `ip` and `ping` are the connection's
     // own two probes while the network drawer is open — the same commands QS's
@@ -301,7 +307,7 @@ scene panels {
     // `wl-copy` is the reference's clipboard copy of the journal's problems (SystemMonitorPopup.qml:17-40
     // runs it every time the dashboard opens, so a paste into a chat carries the lines).
     permissions { run: "pleamar-sysmon", "pleamar-weather", "pleamar-calendar", "pleamar-journal", "pleamar-themes", "flow", "ip", "ping", "pleamar", "wl-copy", "systemctl", "hyprctl", "notify-send", "gh"
-                  services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*", "bluetooth", "bluetooth.*", "network.*", "say:notifications", "clock" }
+                  services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*", "bluetooth", "bluetooth.*", "network.*", "say:notifications", "say:bar", "clock" }
 
     // ----***--------------- bluetooth (the `bluetooth` drawer)
     // The adapter's state, the devices and what bluetoothd is asking, straight from the
@@ -373,8 +379,14 @@ scene panels {
     fact timer_seconds = 0
     text timer_text = "0:00"
 
+    // ----***--------------- the bar's own settings (`bar`)
+    // The bar owns `settings.json`; this page only asks it to change. The model is filled by
+    // panels.luau from `pleamar --say bar get widget.<name>` when the drawer opens.
+    model bar_widgets max 16 { name: text; on: bool }
+    fact bar_edge: top | bottom = bottom
+
     // ----***--------------- drawer state and settings
-    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell | power | bluetooth | toggles | keys | notes | timer | github | wifi = none
+    fact drawer: none | volume | network | media | calendar | weather | build | system | theme | shell | power | bluetooth | toggles | keys | notes | timer | github | wifi | bar = none
     // The socket takes the enum's value names (`--say panels "fact drawer weather"`), which is how
     // the bar opens a drawer; a separate numeric mirror was declared here and never written, and
     // its only reader opened the media card without the catcher, so the card could not be closed.
@@ -498,6 +510,9 @@ scene panels {
     event wifi_forget ->
     event wifi_connect ->
     event wifi_cancel ->
+    // The bar page's two: an edge, and a widget by its index in the bar's own list.
+    event bar_set_edge ->
+    event bar_set_widget ->
     event bt_cancel ->
 
     // Calendar navigation (panels.luau re-asks the worker for the month).
