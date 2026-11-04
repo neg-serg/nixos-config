@@ -1561,6 +1561,12 @@ hl.on("hyprland.start", function()
   -- setup helpers above are stubs, so the hyprexpo/hymission/... binds are
   -- no-ops until those plugins are ported.
 
+  -- The layout the shell's scenes start with, remembered for the reload handler
+  -- below: pleamar reads `screen.width` once per scene, so a scale change applied
+  -- later by `hyprctl reload` leaves every right-anchored row behind the surface
+  -- until the scene set is restarted.
+  hl.exec_cmd("pleamar-scale-guard --record")
+
   if loginPhase then
     -- Login phase: start the login layer instead of the desktop. Nothing of the
     -- session (target, shell, autostart apps) is started yet; the layer writes
@@ -1631,7 +1637,18 @@ end)
 -- (systemctl start is a no-op when the service is already active,
 -- so this never spawns more than one instance); pleamar-health.timer is the
 -- watchdog that brings back a scene which stopped answering on its own.
+--
+-- A reload is also where the monitor scale can change under the shell, and a
+-- scene reads `screen.width` exactly once. `pleamar-scale-guard --check`
+-- compares the live layout with the one `hyprland.start` recorded and, when it
+-- changed, hard-restarts the whole scene set (SIGKILL of each unit's cgroup, so
+-- the stale geometry cannot survive a polite stop). Measured 2026-11-05: a
+-- 1x -> 2x reload moved the bar's media capsule, gear and Genelec past its
+-- 1920 px surface, and the bar kept answering — a plain `start` cannot see
+-- that. The guard runs behind the login screen too, where it only records:
+-- the login layer owns the screen and no scene is up to restart.
 hl.on("config.reloaded", function()
+  hl.exec_cmd("pleamar-scale-guard --check")
   -- Not during the login phase: the marker still says "login", the login layer
   -- owns the screen, and a reload (or the desktop shell starting behind the
   -- login screen) would put the panel on top of it.
@@ -1641,6 +1658,9 @@ end)
 
 -- Keep the primary monitor as the home for all workspaces
 hl.on("monitor.added", function(monitor)
+  -- A new monitor changes the layout the scenes laid themselves out against;
+  -- the guard restarts the set only when the logical layout really changed.
+  hl.exec_cmd("pleamar-scale-guard --check")
   if not monitor or monitor.name ~= "DP-2" then return end
   hl.exec_cmd("systemctl --user restart hyprscratch.service")
   for _, ws in ipairs(hl.get_workspaces()) do
