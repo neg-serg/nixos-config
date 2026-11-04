@@ -219,7 +219,7 @@ order.
 and all of them live in the one `panels` process:
 
 `volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`, `shell`, `power`,
-`bluetooth`, `toggles`, `keys`, `notes`, `timer`, `github`, `wifi`.
+`bluetooth`, `toggles`, `keys`, `notes`, `timer`, `github`, `wifi`, `bar`.
 
 That is the whole list: the `drawer` fact names exactly the drawers that have a page behind them.
 `microphone`, `keyboard`, `tray` and `settings` were reserved names with no part, so a press on them
@@ -258,7 +258,18 @@ rules cannot run programs; the bar's *logic* does it with `run`/`spawn`, permiss
 The names `none`, `volume`, …, `system` are also the placeholders for the drawer titles: use the
 label texts in §8 (`Volume`, `Network`, `Media`, `Calendar`, `Weather`, `Build`, `System monitor`).
 
-### 2.3 Surfaces, screens and reserve
+#`wifi` is the networks page: the radio, a scan, the networks by strength with a press to join, a
+password band for a secured network never joined here, and forget on a saved one. It reports what
+the `network` service reports; on a host with no Wi-Fi manager (systemd-networkd alone on trantor)
+that is `radio off`, and the page says so instead of drawing an empty list.
+
+`bar` is the bar's own settings: the edge it sits on and which widgets are drawn, applied live. It
+cannot move a widget — the bar paints in the order its scene is written — and it does not offer the
+height, because the bar's surface is sized by a literal. The page asks the bar's logic
+(`say:bar`, events `set_edge` and `set_widget` with a packed payload) and the bar writes its own
+`settings.json`: one writer per folder (§1.2).
+
+## 2.3 Surfaces, screens and reserve
 
 - **A scene whose surfaces are all named has nowhere to put loose drawing.** Drawing declared at
   scene level — a scrim `box`, a `zone`, a component copy like `Panel()` — belongs to the scene's
