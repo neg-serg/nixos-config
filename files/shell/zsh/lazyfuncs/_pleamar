@@ -1,0 +1,248 @@
+#compdef pleamar
+
+# pleamar(1) completion: the deployed scenes, the options that take a file or a
+# fixed vocabulary, and the whole `--say` mini-language.
+#
+# `--say` takes the scene as one word and every command as one word of its own —
+# `pleamar --say widgets "emit toggle_clock"` — because the program splits the
+# command line itself, not the shell. The completion therefore rebuilds the
+# whole command word and `compadd -U` replaces it, keeping the quoting right.
+# The names come from the scene the runtime already knows: `pleamar --luau-types`
+# prints its facts, its texts and every event `emit` accepts (18 ms per TAB), and
+# the service blocks of its `.plm` are what `get` can read.
+
+_pleamar_dir() { print -r -- ${XDG_CONFIG_HOME:-$HOME/.config}/pleamar }
+
+_pleamar_scenes() { print -l -- $(_pleamar_dir)/shells/*(N:t) }
+
+_pleamar_commands() {
+  print -l -- emit fact text submit focus get describe press hold drag wheel \
+    type key wait watch hello probe quit
+}
+
+# One kind of name from the runtime's own definitions of a scene: the `fact:` and
+# `text:` tables, and the union of the names in `emit`'s signature (which is the
+# complete event set — the runtime compiles the scene to say so).
+_pleamar_names() {
+  local scene=$1 kind=$2
+  local file=$(_pleamar_dir)/shells/$scene/$scene.plm
+  local -a lines out
+  local line spec
+  local -i in=0
+  [[ -r $file ]] || return 0
+  lines=( ${(f)"$(pleamar --luau-types $file 2> /dev/null)"} )
+  if [[ $kind == events ]]; then
+    for line in ${lines[@]}; do
+      [[ $line == 'declare function emit(name:'* ]] || continue
+      spec=${line#*name: }
+      spec=${spec%%, payload*}
+      out=( ${(s:|:)spec} )
+      out=( ${out//\"/} )
+      print -l -- ${(u)${out// /}}
+      return 0
+    done
+    return 0
+  fi
+  for line in ${lines[@]}; do
+    if (( in )); then
+      [[ $line == '}'* ]] && break
+      [[ $line =~ '^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*):' ]] && out+=( $match[1] )
+    elif [[ $line == "declare $kind: {" ]]; then
+      in=1
+    fi
+  done
+  # The runtime's table leaves out the names with a dot (`fact media.pos`), so
+  # the declarations themselves are read too: they are the names a scene sets.
+  lines=( ${(f)"$(<$file)"} )
+  local re="^[[:space:]]*${kind}[[:space:]]+([A-Za-z0-9_.]+)"
+  for line in ${lines[@]}; do
+    [[ $line =~ $re ]] || continue
+    [[ $match[1] == *'$'* ]] && continue
+    out+=( $match[1] )
+  done
+  print -l -- ${(u)out}
+}
+
+# `<service>.<field>` as the scene's .plm declares it (`service bluetooth as bt {
+# powered: bool }`): what `get` answers with. Comments are cut first — they carry
+# no fields — and a block that opened without its `}` on the same line ends at
+# the line that starts with one.
+_pleamar_services() {
+  local scene=$1
+  local file=$(_pleamar_dir)/shells/$scene/$scene.plm
+  local -a lines
+  local line name alias body
+  local -i in=0
+  [[ -r $file ]] || return 0
+  lines=( ${(f)"$(<$file)"} )
+  for line in ${lines[@]}; do
+    line=${line%%//*}
+    if (( in )); then
+      _pleamar_service_fields "$name" "$alias" "$line"
+      [[ $line == *'}'* ]] && in=0
+      continue
+    fi
+    [[ $line =~ 'service[[:space:]]+([A-Za-z0-9_.]+)([[:space:]]+as[[:space:]]+([A-Za-z0-9_]+))?[[:space:]]*\{(.*)' ]] || continue
+    name=$match[1]
+    alias=$match[3]
+    body=$match[4]
+    _pleamar_service_fields "$name" "$alias" "$body"
+    [[ $body == *'}'* ]] || in=1
+  done
+}
+
+_pleamar_service_fields() {
+  local name=$1 alias=$2 body=$3
+  local -a parts
+  local part
+  parts=( ${(s:;:)body} )
+  for part in ${parts[@]}; do
+    [[ $part =~ '([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*:' ]] || continue
+    print -r -- "$name.$match[1]"
+    [[ -n $alias ]] && print -r -- "$alias.$match[1]"
+  done
+}
+
+# The names of the scene's `input` elements, which `submit` and `focus` take.
+_pleamar_inputs() {
+  local scene=$1
+  local file=$(_pleamar_dir)/shells/$scene/$scene.plm
+  local -a lines
+  local line
+  [[ -r $file ]] || return 0
+  lines=( ${(f)"$(<$file)"} )
+  for line in ${lines[@]}; do
+    [[ $line =~ '^[[:space:]]*input[[:space:]]+([A-Za-z_][A-Za-z0-9_]*)' ]] && print -r -- $match[1]
+  done
+}
+
+# The tail of `--say`: the scene, then one word per command.
+_pleamar_say() {
+  local -i say=$1
+  local -a typed scenes cands tok keep
+  local scene cur cmd part c
+  local -i pos
+
+  typed=( ${words[say + 1, CURRENT - 1]} )
+  if (( $#typed == 0 )); then
+    scenes=( ${(f)"$(_pleamar_scenes)"} )
+    compadd -- ${scenes[@]}
+    return
+  fi
+
+  scene=$typed[1]
+  cur=$PREFIX
+  tok=( ${(s: :)${cur% }} )
+  if [[ $cur == *' ' ]]; then
+    pos=$(( $#tok + 1 ))
+  else
+    pos=$#tok
+  fi
+  (( pos == 0 )) && pos=1
+  part=${tok[pos]:-}
+
+  if (( pos == 1 )); then
+    cands=( ${(f)"$(_pleamar_commands)"} )
+  elif (( pos == 2 )); then
+    cmd=$tok[1]
+    case $cmd in
+      emit) cands=( ${(f)"$(_pleamar_names $scene events)"} ) ;;
+      fact) cands=( ${(f)"$(_pleamar_names $scene fact)"} ) ;;
+      text) cands=( ${(f)"$(_pleamar_names $scene text)"} ) ;;
+      get) cands=(
+          ${(f)"$(_pleamar_names $scene fact)"}
+          ${(f)"$(_pleamar_names $scene text)"}
+          ${(f)"$(_pleamar_services $scene)"}
+        ) ;;
+      submit | focus) cands=( ${(f)"$(_pleamar_inputs $scene)"} ) ;;
+      *) return 1 ;;
+    esac
+    (( $#cands )) || return 1
+    cands=( ${(u)cands} )
+  else
+    return 1
+  fi
+
+  # `compadd -U` replaces the whole word with the candidate, so it does not
+  # filter by what is typed; the filtering is the loop's, on the token itself.
+  for c in ${cands[@]}; do
+    [[ $c == "${part}"* ]] && keep+=( $c )
+  done
+  (( $#keep )) || return 1
+  (( pos == 2 )) && keep=( ${keep[@]/#/$cmd } )
+  compadd -U -a keep
+}
+
+_pleamar() {
+  local prev=${words[CURRENT - 1]}
+  local -a opts
+  local -i i say=-1
+
+  case $prev in
+    --scene | --check | --approve | --luau-types)
+      _files -g '*.plm(-.)'
+      return
+      ;;
+    --docs)
+      compadd -- reference guide recipes logic measuring skill desktop
+      return
+      ;;
+    --highlight)
+      compadd -- vim vscode
+      return
+      ;;
+    --report)
+      compadd -- ${(f)"$(_pleamar_scenes)"}
+      return
+      ;;
+    --screen)
+      compadd -- all
+      return
+      ;;
+    --stall | --seconds | --margin | --mouse | --record | --answer-as)
+      return 1
+      ;;
+  esac
+
+  for (( i = 2; i < CURRENT; i++ )); do
+    [[ $words[i] == --say ]] && say=$i
+  done
+  if (( say > 0 )); then
+    _pleamar_say $say
+    return
+  fi
+
+  opts=(
+    '--scene:open a scene file'
+    '--check:read a scene and say whether it is fine'
+    '--approve:show the plugins a scene asks for, and ask to approve them'
+    '--grammar:print the words the language accepts'
+    '--luau-types:print editor definitions for a scene'
+    '--docs:print the documentation'
+    '--install-skill:teach the installed agents to build scenes'
+    '--autostart:start what ~/.config/pleamar/autostart says'
+    '--lsp:a language server on stdio'
+    '--highlight:write a syntax file for an editor'
+    '--version:print the version'
+    '--report:measure the scenes running and write a report'
+    '--say:reach a running scene by its name'
+    '--screen:monitors to open on'
+    '--stall:how long the logic blocks after every decision'
+    '--naive:the logic blocks the painting thread'
+    '--demo:open and close by itself'
+    '--mouse:fake mouse'
+    '--seconds:exit by itself after N seconds'
+    '--margin:top margin'
+    '--no-hud:without the frame graph'
+    '--answer-as:let --say reach a scene by this name'
+    '--record:print values on every frame'
+  )
+  _describe -t options 'pleamar option' opts
+  [[ $PREFIX == -* ]] || _files -g '*.plm(-.)'
+}
+
+if [ "$funcstack[1]" = "_pleamar" ]; then
+    _pleamar "$@"
+else
+    compdef _pleamar pleamar
+fi
