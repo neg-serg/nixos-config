@@ -20,11 +20,11 @@ part Toggles {
     let toggles.scale = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
 
     component TogglesDrawer(scale: number) {
-        size: 400 * scale, 460 * scale
+        size: 400 * scale, 494 * scale
 
         let s = scale
         group {
-            move: (screen.width - 400 * s) / 2, (screen.height - 460 * s) / 2 + (1 - lift) * 18 * s
+            move: (screen.width - 400 * s) / 2, (screen.height - 494 * s) / 2 + (1 - lift) * 18 * s
             scale: s
             opacity: lift
 
@@ -34,7 +34,7 @@ part Toggles {
                 border: 1, mix(live.coal, live.ink, 12%)
                 rim: 0.07
                 shadow: 0, 18, 44, 45%
-                box { from: 0, 0; size: 400, 460; corner: 14 }
+                box { from: 0, 0; size: 400, 494; corner: 14 }
             }
             box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
             text "toggles" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
@@ -81,17 +81,21 @@ part Toggles {
             zone box open_timer { from: 16, 294; size: 368, 30; corner: 8; cursor: pointer; label: "Timer"; role: button }
             zone box open_github { from: 16, 326; size: 368, 30; corner: 8; cursor: pointer; label: "Contributions"; role: button }
             zone box open_bar { from: 16, 358; size: 368, 30; corner: 8; cursor: pointer; label: "Bar settings"; role: button }
+            text "desktop widgets" { at: 16, 404; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text "›" { at: 384, 404; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
+            zone box open_desktop { from: 16, 390; size: 368, 30; corner: 8; cursor: pointer; label: "Desktop widgets"; role: button }
+            on press open_desktop { emit widgets_edit }
             on press open_keys { drawer = keys }
             on press open_notes { drawer = notes }
             on press open_timer { drawer = timer }
             on press open_github { drawer = github }
             on press open_bar { drawer = bar }
 
-            box { from: 16, 400; size: 368, 1; color: live.ink; opacity: ink.subtle }
-            text "session menu" { at: 16, 424; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
-            text "lock · sleep · log out · restart · shut down" { at: 16, 440; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
-            text "›" { at: 384, 424; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
-            zone box open_power { from: 16, 408; size: 368, 44; corner: 8; cursor: pointer; label: "Session menu"; role: button }
+            box { from: 16, 426; size: 368, 1; color: live.ink; opacity: ink.subtle }
+            text "session menu" { at: 16, 450; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text "lock · sleep · log out · restart · shut down" { at: 16, 466; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            text "›" { at: 384, 450; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
+            zone box open_power { from: 16, 434; size: 368, 44; corner: 8; cursor: pointer; label: "Session menu"; role: button }
             on press open_power { drawer = power }
             text "M4+SH+Y opens this page" { at: 384, 22; anchor: right center; family: "Iosevka"; size: 8; color: live.ink.off }
         }

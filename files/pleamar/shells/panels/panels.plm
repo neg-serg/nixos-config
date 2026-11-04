@@ -513,6 +513,8 @@ scene panels {
     // The bar page's two: an edge, and a widget by its index in the bar's own list.
     event bar_set_edge ->
     event bar_set_widget ->
+    // The hub's door to the desktop widgets: it opens their edit strip on the desktop.
+    event widgets_edit ->
     event bt_cancel ->
 
     // Calendar navigation (panels.luau re-asks the worker for the month).

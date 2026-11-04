@@ -733,6 +733,12 @@ on("toggle_media_panel", function() toggle_drawer("media") end)
 on("toggle_network_panel", function() toggle_drawer("network") end)
 -- The Bluetooth capsule's press: the drawer is the panels family's, and the bar only asks for it
 -- (the network capsule takes the same road). The panels unit is resident.
+-- The gear: the bar's own settings page (edge and widget toggles), which is the shell's door to
+-- the other pages as well. The panels unit is resident.
+on("open_settings", function()
+    pcall(sys.call, "say", "panels", "fact drawer bar")
+end)
+
 on("open_bluetooth", function()
     pcall(sys.call, "say", "panels", "fact drawer bluetooth")
 end)

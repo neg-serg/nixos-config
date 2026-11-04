@@ -71,6 +71,7 @@ local names = {}     -- every wallpaper in the folder, in name order
 local by_time = {}   -- the same names, newest file first (what `ls -t` answered)
 local favs = {}      -- name -> true, the ones marked favourite (from favourites.json)
 local vis = {}       -- what the deck shows: `names` in the sort's order, favourites first
+local current = ""  -- the wallpaper file the desktop wears (the theme pipeline's cache)
 local schemes = {}   -- name -> {{ r, g, b }, …}, what the reader has answered so far
 local reader = nil   -- the palettes process, while it runs
 -- Which read the reader on screen belongs to. A worker that is killed can still have a line in
@@ -131,7 +132,12 @@ end
 -- is — the reference's leading sort key and its Favourites source in one place.
 local function ordered()
     local out = {}
-    for i = 1, #names do out[i] = names[i] end
+    -- The finder filters the whole folder, so the deck is what the question asks for and not the
+    -- page that happened to be on screen when it was typed.
+    local q = tostring(text.query or ""):lower()
+    for i = 1, #names do
+        if q == "" or names[i]:lower():find(q, 1, true) then out[#out + 1] = names[i] end
+    end
     if fact.order == "newest" and #by_time > 0 then
         local rank = {}
         for i = 1, #by_time do rank[by_time[i]] = i end
@@ -309,6 +315,20 @@ end
 
 -- The cards of the page on screen: every one of them at once (the model is atomic), each with
 -- the chips the reader has answered for it so far — a card without a scheme yet just has none.
+-- The wallpaper the desktop wears, from the cache the theme pipeline leaves every time it paints
+-- one: the file's last line is its path. Read once when the deck opens, so the card is marked.
+local function read_current()
+    local home = nil
+    local ok_home, value = pcall(function() return sys.ask("env", "HOME") end)
+    if ok_home and type(value) == "string" and value ~= "" then home = value end
+    if not home then return end
+    run("cat", { home .. "/.cache/pleamar/wallpaper-path" }, function(out)
+        local path = trim(tostring(out or ""))
+        current = path:match("([^/]+)$") or ""
+        if listed then refresh() end
+    end)
+end
+
 local function publish()
     local at = fact.page * PAGE
     local rows = {}
@@ -322,6 +342,7 @@ local function publish()
                 name = name,
                 picture = dir .. "/" .. name,
                 fav = favs[name] == true,
+                now = (name == current),
                 sw = schemes[name] or {},
             }
             n = n + 1
@@ -566,10 +587,19 @@ end
 
 on("open_picker", function()
     if not listed then list() end
+    read_current()
     fact.open = true
 end)
 
 -- The folder may have changed on disk (a download, a new wallpaper): read it again.
+-- The finder's own trigger: a new question starts at the first page, since the old one may not
+-- exist in the new list.
+on("text:query", function()
+    fact.page = 0
+    fact.sel = 0
+    refresh()
+end)
+
 on("reload", function()
     list()
 end)
