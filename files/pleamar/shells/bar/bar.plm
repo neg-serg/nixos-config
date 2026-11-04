@@ -198,13 +198,16 @@ scene bar {
     let tray.slot = 22
     // The corner that reveals the tray: QS's `panelHotzoneWidth` 16 and `panelHotzoneHeight` 9
     // (Settings/Theme.qml:687-688), a hover target of its own over the panel's bottom-right corner
-    // (`Bar.qml:1246-1260`) and nothing else. Two things forced a different shape here. The
-    // reference's 16 x 9 box lands on the Genelec tile — measured with `pleamar --say bar describe`
-    // on 2026-11-02 the tile ends at x 1916 and the box began at 1904, so 108 px² were the tile's —
-    // and a widget above the corner takes the hover, which left a strip four pixels wide to hit. So
-    // the corner is that strip: the bar's whole height, the last four design px of the surface,
-    // flush against the edge where a hand reaching for the corner actually lands, and over nothing.
-    let tray.reveal.w = 4 * ui * user_scale
+    // (`Bar.qml:1246-1260`) and nothing else. The reference's box lands on the Genelec tile —
+    // measured with `pleamar --say bar describe` on 2026-11-02 the tile ends at x 1916 — and QS
+    // lets only the widget above it keep that hover, which left a strip four pixels wide here.
+    // Pleamar does not: every zone under the pointer gets its own `enter` and `leave` (measured on
+    // 0.7.7 with two overlapping zones; only the press goes to the later one). So the corner can
+    // cover the Genelec tile's right end without taking its tooltip or its presses, and 64 px is a
+    // corner a hand actually lands on instead of a four-pixel line. It stays inside the strip
+    // (h 25, not the surface's 35) so the pointer is on `strip.hover` and the bar keeps painting at
+    // 120 fps while the reveal animates; over the 10 px hotzone it would animate at the resting 12.
+    let tray.reveal.w = 64 * ui * user_scale
     let tray.reveal.h = 25 * ui * user_scale
     let sysmon.pairs = 1 + 1 + if(has.gpu, 1, 0) + 1 + if(io >= 0.03, 1, 0) + if(has.swap and swap >= 0.4, 1, 0)
     // The user's settings, merged by bar.luau: `scale` multiplies ui and the
@@ -304,6 +307,18 @@ scene bar {
     // `Services/TrayController.qml:17-50`; timers cannot run in a rule, so they are in bar.luau and
     // this fact is what it tells the scene.
     fact tray.expanded = false
+    // How the strip shows that fact: the icons travel out of their slots on this, and the row is
+    // only there while it is above zero (`show:` in Right()), so the reveal is one animated width
+    // instead of a jump. `ui.overlay` is the house's 180 ms — the tray answers a hand that has
+    // already arrived, so it has to be quick and still not snap; a longer spring read as lag.
+    prop tray.lift = 0 ~ui.overlay
+    follow tray.lift = if(tray.expanded, 1, 0)
+    // The menu's own arrival (same idea, one level up): the `barmenu` surface stays open until the
+    // plate has finished leaving (`open: tray_open or menu.lift > 0.01`), and the plate inside
+    // grows out of the corner it hangs from — 280 ms, the reference's `panelAnimStdMs`
+    // (`Settings/Theme.qml:717`) and the same time every drawer in `panels.plm` takes.
+    prop menu.lift = 0 ~280ms
+    follow menu.lift = if(tray_open, 1, 0)
     // The collapsed trigger (`collapsedTrayIcon`, SystemTray.qml:222): QS declares it and then keeps
     // it off the strip (`visible: false`, :219 — the tray is revealed by the hot corner instead), and
     // the port keeps that default. With the fact on, the bar shows the same button, which turns its
@@ -733,7 +748,10 @@ scene bar {
         // the bar's top — 39 px more lifted the menu clear off the strip it belongs to.
         margin: 0, 8, 0, 0
         level: overlay
-        open: tray_open
+        // Up while the menu is open, and while it is still leaving afterwards (`menu.lift` is the
+        // spring `open` waits for); a closed surface is neither seen nor pressed, so the window
+        // goes when the plate has actually gone.
+        open: tray_open or menu.lift > 0.01
         // The plate's width, measured rather than guessed: `tmw` is the longest label, shaped in
         // the rows' own face (14 px Iosevka), and 36 is what the plate and its rows take around
         // it — 8 px of plate on each side, 10 px of row on each side. The plate hangs from the
@@ -746,45 +764,57 @@ scene bar {
         // measured down from `menu.h`, and the rows start 6 px inside it.
         let menu.h = 300
         let menu.top = menu.h - tm.panel_h
-        body {
-            // The plate the bar's capsules wear, not a lonely grey slab: the same live.coal at the
-            // same 69 %, a faint rim, and the live.accent hairline down the left edge that the
-            // reference's menus carry.
-            color: live.coal
-            opacity: 69%
-            border: 1, mix(live.coal, live.ink, 8%)
-            // The surface is the ceiling; the plate hangs from its bottom, against the bar. Drawing
-            // it from the top left a gap between the menu and the strip it came out of.
-            box { from: menu.left, menu.top; size: menu.w, tm.panel_h; corner: 8 }
-            box { from: menu.left, menu.top + 6; size: 2, tm.panel_h - 12; corner: 1; color: live.accent }
-        }
-        // `view:` is the window the rows are seen through and `content:` the whole list, so a menu
-        // longer than 14 rows is scrolled with the wheel (a layout with `view:` is dragged and
-        // wheeled by the engine) instead of ending at the plate's edge.
-        column { at: menu.left + 8, menu.top + 6; gap: 0
-                 view: menu.w - 16, tm.panel_h - 12; content: 20 * tm.count
-            // One turn per row the item's menu has: a `group` so the wash, the label, the separator
-            // rule and the zone lie on top of each other (a `row` would lay them out sideways, and
-            // the zone used to land 284 px to the right of the line it was meant to catch).
-            for m in tray_menu {
-                group line { size: menu.w - 16, 20
-                    box { from: 0, 0; size: menu.w - 16, 20; corner: 4; color: live.ink; opacity: 6%; show: tm.hot == m.index + 1 }
-                    text m.label { at: 10 + m.depth * 12, 10; anchor: left center; size: 14 * text_scale; color: live.ink; family: "Iosevka"; width: menu.w - 36 - m.depth * 12; lines: 1; show: not m.sep }
-                    box { from: 10, 10; size: menu.w - 36, 1; color: live.ink; opacity: 12%; show: m.sep }
-                    // A line with children under it: the reference's own chevron, and no action of
-                    // its own — a dbusmenu parent is a container, not something to click.
-                    text "›" { at: menu.w - 30, 10; anchor: right center; size: 14 * text_scale; color: live.ink.dim; family: "Iosevka"; show: m.sub }
-                    // A separator is a hairline, not a button: the row's zone is not drawn for it,
-                    // so it is neither described as a pressable line nor wired to `tray.menu_click`
-                    // with a dbusmenu separator's id.
-                    // `agent: no`: this is another application's own menu, and §8.1 puts every row
-                    // that "closes a window or application" (Quit, Log out, Disconnect) behind that
-                    // flag — a hand may still press them, an agent may not. Nothing about a
-                    // dbusmenu row says whether it is destructive, so the whole menu is closed to
-                    // agents instead of guessed row by row.
-                    zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button; agent: no; show: not m.sep }
-                    on enter hit { tm.hot = m.index + 1 }
-                    on press hit { emit tray_click(m.index + 1) }
+        // The plate and its rows arrive and leave as one thing: the group's `opacity` melts them
+        // together, and the `scale` about the bottom-right corner — where the plate hangs against
+        // the bar — grows the menu out of the icon it belongs to instead of popping it in at full
+        // size. `pivot` is in the surface's coordinates, and 300, 300 is that corner.
+        group pop {
+            opacity: menu.lift
+            scale: 0.96 + 0.04 * menu.lift
+            pivot: 300, 300
+            body {
+                // The plate the bar's capsules wear, not a lonely grey slab: the same live.coal at the
+                // same 69 %, a faint rim, and the live.accent hairline down the left edge that the
+                // reference's menus carry.
+                color: live.coal
+                opacity: 69%
+                border: 1, mix(live.coal, live.ink, 8%)
+                // The surface is the ceiling; the plate hangs from its bottom, against the bar. Drawing
+                // it from the top left a gap between the menu and the strip it came out of.
+                box { from: menu.left, menu.top; size: menu.w, tm.panel_h; corner: 8 }
+                box { from: menu.left, menu.top + 6; size: 2, tm.panel_h - 12; corner: 1; color: live.accent }
+            }
+            // `view:` is the window the rows are seen through and `content:` the whole list, so a menu
+            // longer than 14 rows is scrolled with the wheel (a layout with `view:` is dragged and
+            // wheeled by the engine) instead of ending at the plate's edge.
+            column { at: menu.left + 8, menu.top + 6; gap: 0
+                     view: menu.w - 16, tm.panel_h - 12; content: 20 * tm.count
+                // One turn per row the item's menu has: a `group` so the wash, the label, the separator
+                // rule and the zone lie on top of each other (a `row` would lay them out sideways, and
+                // the zone used to land 284 px to the right of the line it was meant to catch).
+                for m in tray_menu {
+                    group line { size: menu.w - 16, 20
+                        box { from: 0, 0; size: menu.w - 16, 20; corner: 4; color: live.ink; opacity: 6%; show: tm.hot == m.index + 1 }
+                        text m.label { at: 10 + m.depth * 12, 10; anchor: left center; size: 14 * text_scale; color: live.ink; family: "Iosevka"; width: menu.w - 36 - m.depth * 12; lines: 1; show: not m.sep }
+                        box { from: 10, 10; size: menu.w - 36, 1; color: live.ink; opacity: 12%; show: m.sep }
+                        // A line with children under it: the reference's own chevron, and no action of
+                        // its own — a dbusmenu parent is a container, not something to click.
+                        text "›" { at: menu.w - 30, 10; anchor: right center; size: 14 * text_scale; color: live.ink.dim; family: "Iosevka"; show: m.sub }
+                        // A separator is a hairline, not a button: the row's zone is not drawn for it,
+                        // so it is neither described as a pressable line nor wired to `tray.menu_click`
+                        // with a dbusmenu separator's id.
+                        // `agent: no`: this is another application's own menu, and §8.1 puts every row
+                        // that "closes a window or application" (Quit, Log out, Disconnect) behind that
+                        // flag — a hand may still press them, an agent may not. Nothing about a
+                        // dbusmenu row says whether it is destructive, so the whole menu is closed to
+                        // agents instead of guessed row by row.
+                        // `show: tray_open` too: while the plate is fading out the surface is still
+                        // open (`open:` waits for `menu.lift`), and a row that could still be pressed
+                        // in that window would click a menu the hand has already dismissed.
+                        zone box hit { from: 0, 0; size: menu.w - 16, 20; corner: 4; cursor: pointer; label: m.label; role: button; agent: no; show: not m.sep and tray_open }
+                        on enter hit { tm.hot = m.index + 1 }
+                        on press hit { emit tray_click(m.index + 1) }
+                    }
                 }
             }
         }
@@ -1879,12 +1909,15 @@ scene bar {
             // the plugin's poll of the process; the row takes no space while nothing runs.
             row voice_slot { show: Voice.active
                 voice.Tile(type_scale: text_scale) }
-            // The icons, while the tray is out: `tray.expanded` is the whole state machine's answer
-            // (`SystemTray.qml:102-105` draws the box on the same property), so the strip keeps the
-            // reference's resting look — no tray at all — instead of showing it whenever the pointer
-            // is on the bar. No gap between the icons: `systemTrayTightSpacing` on this host.
-            row tray_slot { show: widget.systray and icons.count > 0 and tray.expanded; gap: 0; align: center
-                for r in icons { TrayIcon(r, scale) }
+            // The icons, while the tray is out: `tray.lift` is the whole state machine's answer,
+            // animated — it leaves zero only when the last icon has shrunk into its slot, so the
+            // row keeps the reference's resting look (no tray at all) without the jump a `show:`
+            // on `tray.expanded` gave it. Each slot's `scale` is the same multiplier, which is
+            // what animates the row's width: the capsules to the left travel with it instead of
+            // being re-laid out under the pointer. No gap between the icons:
+            // `systemTrayTightSpacing` on this host.
+            row tray_slot { show: widget.systray and icons.count > 0 and tray.lift > 0.001; gap: 0; align: center; opacity: tray.lift
+                for r in icons { TrayIcon(r, scale * tray.lift) }
             }
             // The collapsed trigger, to the right of the icons as in the reference (:216, declared
             // after the inline box). `tray_trigger` is false on this host, as the reference's own
@@ -2026,11 +2059,14 @@ scene bar {
     // drawing nothing. Here it is a zone like any other, declared with the strip's own hover target
     // so the widgets stay above it: a press in its box still reaches the capsule drawn over it
     // (Genelec), and its hover fires where a hand reaching for the bottom-right corner lands.
+    // The hover is not exclusive in this engine: a zone under the pointer gets its own `enter` and
+    // `leave` (measured on 0.7.7), so the box can be the comfortable 64 px of `tray.reveal` above —
+    // wide enough to overlap the Genelec tile and still leave the tile its own hover and presses —
+    // instead of the four-pixel line a corner exclusive to one widget came to.
     // Only while there is a tray to reveal: nothing is drawn for an empty one, and the state
     // machine has nothing to expand. It is not gated on `tray_trigger` either — that flag is off by
     // default and nothing sets it, which is how the corner came to be a dead zone and the tray
-    // unreachable with the mouse. The box is the four-pixel strip at the surface's right edge (see
-    // `tray.reveal` above): `pleamar --say bar describe` shows it clear of the Genelec tile.
+    // unreachable with the mouse.
     zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region; show: widget.systray and icons.count > 0 }
     on enter tray_reveal { emit tray_hot(1) }
     on leave tray_reveal { emit tray_hot(0) }

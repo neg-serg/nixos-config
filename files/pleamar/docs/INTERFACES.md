@@ -622,8 +622,8 @@ multiplies the sizes above | | `panel.computedFontScale` | `type.inline` | `0.6`
 `250` | | | `greeter.animSlowMs` | `anim.greeter.slow` | `500` | | | `greeter.lockAnimationMs` |
 `anim.lock` | `500` | | | `panel.pill.showDelayMs` | `pill.show` | `500` | | |
 `panel.pill.autoHidePauseMs` | `pill.pause` | `2500` | | | `panel.tray.longHoldMs` | `tray.long` |
-`2500` | | | `panel.tray.shortHoldMs` | `tray.short` | `1500` | | | `panel.tray.guardMs` |
-`tray.guard` | `120` | | | `panel.tray.overlayDismissDelayMs` | `tray.dismiss` | `5000` | | |
+`4000` | | | `panel.tray.shortHoldMs` | `tray.short` | `3000` | | | `panel.tray.guardMs` |
+`tray.guard` | `120` | | | `panel.tray.overlayDismissDelayMs` | `tray.dismiss` | `6000` | | |
 `panel.tray.inlinePadding` | `tray.pad` | `4` | | | `panel.volume.fullHideMs` | `volume.hide` |
 `800` | | | `panel.volume.mutedHideMs` | `volume.hide.muted` | `180000` | | |
 `panel.volume.offReminderCooldownMs` | `volume.off.cooldown` | `86400000` | | |

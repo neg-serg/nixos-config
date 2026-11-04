@@ -1610,13 +1610,16 @@ end)
 -- and what was pressed (`tray_toggle`, `tray_press`, `tray_menu`, `tray_close`), and reads back
 -- one fact — `tray.expanded` — to draw the icons or nothing.
 --
--- Durations, each with the token it is: `panel.tray.longHoldMs` 2500 (Settings/Theme.qml:721),
+-- Durations. The reference's own are `panel.tray.longHoldMs` 2500 (Settings/Theme.qml:721),
 -- `panel.tray.shortHoldMs` 1500 (:722), `panel.tray.guardMs` 120 (:723),
--- `panel.tray.overlayDismissDelayMs` 5000 (:724). palette.plm already carries the same four
--- (`tray.long`, `tray.short`, `tray.guard`, `tray.dismiss`), but a scene's import is not readable
--- from the logic, so they are written again here and the palette stays the one the drawing reads.
-local TRAY_LONG_HOLD, TRAY_SHORT_HOLD = 2500, 1500
-local TRAY_GUARD, TRAY_DISMISS = 120, 5000
+-- `panel.tray.overlayDismissDelayMs` 5000 (:724); the port keeps the guard and stretches the two
+-- holds and the dismissal (the tray used to fold 1.5 s after the pointer left the bar, which is
+-- faster than a hand can come back).
+-- palette.plm carries the same four (`tray.long`, `tray.short`, `tray.guard`, `tray.dismiss`), but
+-- a scene's import is not readable from the logic, so they are written again here and the palette
+-- stays the one the drawing reads — keep the two tables equal.
+local TRAY_LONG_HOLD, TRAY_SHORT_HOLD = 4000, 3000
+local TRAY_GUARD, TRAY_DISMISS = 120, 6000
 
 local trayOn = false        -- `expanded`        (SystemTray.qml:76)
 local trayHot = false       -- `hotHover`        (:25) — the corner over the bar's bottom right
@@ -1678,30 +1681,37 @@ local function trayCollapse()
     trayShow(false)
 end
 
---- `onLongHold` (SystemTray.qml:32): the menu has been gone for 2500 ms and the tray goes with it,
---- whatever the pointer is doing.
+--- `onLongHold` (SystemTray.qml:32): the menu has been gone for the long hold (4000 ms here) and the
+--- tray goes with it — in the reference whatever the pointer is doing; here not while the pointer is
+--- on the bar. Folding the tray under a hand that is still resting on the strip is the same
+--- unreachable tray this port started with, and the short hold owns the real exit: it starts when the
+--- pointer leaves, so "on the bar" means "the tray is there".
 local function startLongHold()
     stopLongHold()
     longT = after(TRAY_LONG_HOLD, function()
         longT = nil
         trayHold = false
+        if trayPanel or trayHot or trayOverIcons or fact.tray_open == true then return end
         trayCollapse()
     end)
 end
 
---- `onShortHold` (:33): the pointer left the corner and nothing else holds the tray.
+--- `onShortHold` (:33): the pointer left the corner and nothing else holds the tray. The wait is the
+--- port's longer one (3000, see the table above), and it is also what a pointer leaving the strip
+--- runs now: one hold owns both exits, so the tray lingers instead of vanishing under the hand.
 local function startShortHold()
     stopShortHold()
     trayShort = true
     shortT = after(TRAY_SHORT_HOLD, function()
         shortT = nil
         trayShort = false
-        if trayPanel or trayHot or trayHold then return end
+        if trayPanel or trayHot or trayHold or trayOverIcons or fact.tray_open == true then return end
         trayCollapse()
     end)
 end
 
---- `onCollapseDelay` (:34): a press outside the tray's menu gives it 5000 ms, not an instant exit.
+--- `onCollapseDelay` (:34): a press outside the tray's menu gives it the dismissal delay (6000 ms
+--- here), not an instant exit.
 local function startDismiss()
     stopDismiss()
     dismissT = after(TRAY_DISMISS, function()
@@ -1722,7 +1732,7 @@ end
 
 --- The menu's own visibility, and what QS does around it (SystemTray.qml:239-253): while it is
 --- open the tray cannot go away and both holds are called off; when it closes, `holdOpen` stays
---- set and the long hold runs, so the tray stands 2500 ms more and then leaves.
+--- set and the long hold runs, so the tray stands 4000 ms more and then leaves.
 setMenu = function(open)
     if fact.tray_open == open then return end
     fact.tray_open = open
@@ -1771,8 +1781,9 @@ on("tray_hot", function(hot)
 end)
 
 --- The icons themselves keep the tray out while the pointer is on them (the reference's inline
---- hover area, SystemTray.qml:129-132): entering brings it out, leaving takes it away at once
---- unless the strip, the corner, the menu or a short hold still want it.
+--- hover area, SystemTray.qml:129-132): entering brings it out; leaving starts the short hold, the
+--- same one a corner exit arms, so the pointer crossing off an icon onto the strip (or off the bar)
+--- is not an instant dismissal.
 on("tray_icons", function(over)
     local on = truthy(over)
     if trayOverIcons == on then return end
@@ -1781,20 +1792,21 @@ on("tray_icons", function(over)
         trayShow(true)
         return
     end
-    if trayPanel or trayHot or trayHold or trayShort then return end
-    trayCollapse()
+    if trayPanel or trayHot or trayHold then return end
+    startShortHold()
 end)
 
 --- The whole strip (`panelHover`): it never brings the tray out, it only keeps it up — leaving the
---- bar is what `Bar.qml:1284-1290` does after its 350 ms grace, and the grace is not reproduced,
---- so the tray goes as the pointer leaves.
+--- bar is what `Bar.qml:1284-1290` does after its 350 ms grace. The grace as such is not
+--- reproduced; the short hold (3 s) stands in for it, so the tray is still there when the pointer
+--- comes back rather than having folded away in the meantime.
 on("tray_panel", function(over)
     local on = truthy(over)
     if trayPanel == on then return end
     trayPanel = on
     if on then return end
     if trayHot or trayHold or trayShort or fact.tray_open == true then return end
-    trayCollapse()
+    startShortHold()
 end)
 
 --- A press on the collapsed trigger (SystemTray.qml:224-229): it turns the tray over and, when it
@@ -1882,7 +1894,7 @@ end)
 
 -- A press anywhere else is QS's dismissed overlay (SystemTray.qml:88-98): the menu goes first —
 -- and closing it is what arms the long hold, so that is the whole answer — while a tray without a
--- menu gets the 5000 ms collapse delay instead of being taken away under the pointer.
+-- menu gets the 6000 ms collapse delay instead of being taken away under the pointer.
 on("tray_close", function()
     if fact.tray_open then
         setMenu(false)
