@@ -3,11 +3,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793710975,
-        "narHash": "sha256-ZZ6uv2ec/5gyVfG80R89q1DA/02jnmuFwat71OTivTs=",
+        "lastModified": 1793813846,
+        "narHash": "sha256-LUmgTrKGqMaK8jJNc0EMiRt0wjD2brMlK8GHNjdRvB0=",
         "ref": "refs/heads/main",
-        "rev": "d8304972933e5b1b0f6d1c9647b2a36cdd8bfe9d",
-        "revCount": 581,
+        "rev": "20399e4a60680ee46c3bf31297245732447fd6cd",
+        "revCount": 617,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -1274,11 +1274,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793749424,
-        "narHash": "sha256-7q12XKJO88Xlea9QQWYyyBKxEZZEoTGfPBJF5sEOoHM=",
+        "lastModified": 1793806358,
+        "narHash": "sha256-9XPT/wXScvcY7aV4gu4MJt97jopA4sF2kbX3wf8s2TA=",
         "owner": "k4ditano",
         "repo": "pleamar-wm",
-        "rev": "f2d65120a5662acfce302619cc4e2c00285b1125",
+        "rev": "ec65aadd7227bf12025fa9a2b25b29ff49e7fbaa",
         "type": "github"
       },
       "original": {
@@ -1820,11 +1820,11 @@
     "wl": {
       "flake": false,
       "locked": {
-        "lastModified": 1789903371,
-        "narHash": "sha256-zp6Y2YZ0cfhuEEOdKUv1nydb6IvziXmVZy+r0qzr/w8=",
+        "lastModified": 1793810844,
+        "narHash": "sha256-KsdqxtlmiIhlb0XKnEe1rQYD8RU/0qbWVKuasVSoxIg=",
         "ref": "fix/layer-backdrop-damage",
-        "rev": "4e61aea7816614c84e7dcbac9e98817a32b86247",
-        "revCount": 77,
+        "rev": "efff944d529daf467086145141bb7b549891398c",
+        "revCount": 78,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/wl"
       },
