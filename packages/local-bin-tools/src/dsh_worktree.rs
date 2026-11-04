@@ -15,7 +15,7 @@ use sha1::{Digest, Sha1};
 
 const USAGE: &str = r#"dsh-worktree: git worktrees for parallel dsh sessions (one pane per task).
 Usage:
-  dsh-worktree new <name> [--from REF] [--open auto|herdr|kitty|zellij|print]
+  dsh-worktree new <name> [--from REF] [--open auto|herdr|kitty|print]
                           [--cmd CMD] [--copy RELPATH]... [--branch BR]
   dsh-worktree list
   dsh-worktree path <name>
@@ -28,9 +28,9 @@ Trees live outside the repository, under $DSH_WORKTREE_ROOT, so they never
 pollute `git status` of the main checkout.
 
 --open modes: herdr opens the checkout as a Herdr workspace grouped under the
-repository (herdr worktree open), kitty a new tab, zellij a new pane, print
-just echoes the command. auto prefers herdr inside a Herdr pane (HERDR_ENV=1),
-then kitty, then zellij, else print.
+repository (herdr worktree open), kitty a new tab, print just echoes the
+command. auto prefers herdr inside a Herdr pane (HERDR_ENV=1), then kitty,
+else print.
 
 Env:
   DSH_WORKTREE_ROOT         where trees live (default: ~/.dsh/worktrees)
@@ -170,15 +170,13 @@ fn resolve_open(requested: &str) -> String {
                     .unwrap_or(false)
             {
                 "kitty".to_string()
-            } else if !env_or("ZELLIJ", "").is_empty() {
-                "zellij".to_string()
             } else {
                 "print".to_string()
             }
         }
-        "herdr" | "kitty" | "zellij" | "print" => requested.to_string(),
+        "herdr" | "kitty" | "print" => requested.to_string(),
         other => die(&format!(
-            "unknown --open mode: {other} (auto|herdr|kitty|zellij|print)"
+            "unknown --open mode: {other} (auto|herdr|kitty|print)"
         )),
     }
 }
@@ -290,16 +288,6 @@ fn open_pane(mode: &str, name: &str, path: &str, cmd: &str, top: &str) {
                 die("kitty launch failed (is allow_remote_control on?)");
             }
             eprintln!("dsh-worktree: opened a kitty tab in {path}");
-        }
-        "zellij" => {
-            let mut command = Command::new("zellij");
-            command.args(["action", "new-pane", "--cwd", path, "--name", &label, "--"]);
-            command.args(&parts);
-            let status = command.stdout(Stdio::null()).status();
-            if !matches!(status, Ok(status) if status.success()) {
-                die("zellij launch failed (are you inside a zellij session?)");
-            }
-            eprintln!("dsh-worktree: opened a zellij pane in {path}");
         }
         _ => {
             eprintln!("dsh-worktree: cd {path} && {cmd}");

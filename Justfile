@@ -408,7 +408,7 @@ flag flag-path="features.cli.broot.enable":
 #                         tree without instantiating pkgs. Call it after every edit.
 #                         Key: the EVALUATION INPUT SET — every *.nix, flake.lock and
 #                         the non-Nix files a .nix file names literally (udev rules,
-#                         zellij config, sops paths, …), discovered per run. Editing
+#                         herdr config, sops paths, …), discovered per run. Editing
 #                         a doc, a QML or a .plm scene is a HIT; editing any *.nix is
 #                         a miss.
 #   just eval-gate --drv  tier B — the toplevel drvPath: ~3.7 s cold (down from

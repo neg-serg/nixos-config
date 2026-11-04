@@ -7,8 +7,8 @@ Static configuration files linked to user home via nix-maid.
 | Directory | Purpose | |-----------|---------| | `art/` | Art assets (fun extras) | | `cli/` |
 Terminal tools (ghostty, kanata, etc.) | | `config/` | Misc app configs (amfora, dosbox,
 rustmission) | | `dosemu/` | DOSBox / dosemu configs | | `fastfetch/` | Fastfetch config assets
-(skull) | | `git/` | Git config and ignore | | `gui/` | Hyprland, zellij, swayimg, vicinae configs |
-| `kitty/` | Kitty terminal | | `media/` | PipeWire / WirePlumber configs | | `mpv/` | MPV player
+(skull) | | `git/` | Git config and ignore | | `gui/` | Hyprland, swayimg, vicinae configs | |
+`kitty/` | Kitty terminal | | `media/` | PipeWire / WirePlumber configs | | `mpv/` | MPV player
 configs | | `nvim/` | Neovim configuration | | `obsidian-vault/` | Obsidian vault seed | |
 `patches/` | Patch files used by packages | | `pleamar/` | Shell scenes, libraries and the theme
 pipeline | | `rmpc/` | RMPC music client configs | | `shell/` | Zsh, bash, environment | |

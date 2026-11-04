@@ -99,7 +99,7 @@ yml = "rgb(54, 124, 176)"
 json = "rgb(54, 124, 176)"
 md = "rgb(0, 95, 175)"
 
-# Skin mapped to the neg.nvim palette (see files/gui/zellij/config.kdl):
+# Skin mapped to the neg.nvim palette (same tokens as files/herdr/config.toml):
 #   bg #040f1c  fg #a4b3c6  card #0c1c30  accent #005faf
 #   teal #007a66  lilac #c8a8ef  red #6b0f2a  light-blue #367cb0
 [skin]

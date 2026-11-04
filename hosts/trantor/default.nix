@@ -6,115 +6,6 @@
   inputs,
   ...
 }:
-let
-  # --- zellij: Russian-layout duplicate binds (ЙЦУКЕН) ------------------------
-  # GENERATED from lib/ru-keys.nix (single source of truth) — do not edit the
-  # generated chars. Latin binds live in files/gui/zellij/config.kdl with the
-  # zellijRuBinds.* markers; the daemon ru-layout already forces us in the
-  # terminal, so these duplicates only matter after a manual M4+S switch.
-  ruKeys = neg.ruKeys;
-
-  # Positional constructor for the table below: nixfmt keeps a three-name
-  # `inherit` on one line, so each record costs one line instead of five.
-  zellijBind = mod: key: action: { inherit mod key action; };
-
-  zellijRuBinds = {
-    focus = [
-      (zellijBind "Alt " "h" "MoveFocus \"left\"")
-      (zellijBind "Alt " "j" "MoveFocus \"down\"")
-      (zellijBind "Alt " "k" "MoveFocus \"up\"")
-      (zellijBind "Alt " "l" "MoveFocus \"right\"")
-      # Emacs-style focus (Alt + npfb)
-      (zellijBind "Alt " "n" "MoveFocus \"down\"")
-      (zellijBind "Alt " "p" "MoveFocus \"up\"")
-      (zellijBind "Alt " "f" "MoveFocus \"right\"")
-      (zellijBind "Alt " "b" "MoveFocus \"left\"")
-    ];
-    resize = [
-      (zellijBind "" "h" "Resize \"left\"")
-      (zellijBind "" "j" "Resize \"down\"")
-      (zellijBind "" "k" "Resize \"up\"")
-      (zellijBind "" "l" "Resize \"right\"")
-    ];
-    tab = [
-      (zellijBind "" "l" "GoToNextTab")
-      (zellijBind "" "h" "GoToPreviousTab")
-      (zellijBind "" "n" "NewTab; SwitchToMode \"normal\"")
-      (zellijBind "" "r" "SwitchToMode \"RenameTab\"; TabNameInput 0")
-    ];
-    scroll = [
-      (zellijBind "" "j" "ScrollDown")
-      (zellijBind "" "k" "ScrollUp")
-      # Emacs-style scroll (n/p)
-      (zellijBind "" "n" "ScrollDown")
-      (zellijBind "" "p" "ScrollUp")
-    ];
-    # Mode entries (Pane/Move keep zellij's own defaults inside the mode).
-    modes = [
-      (zellijBind "Alt " "y" "SwitchToMode \"pane\"")
-      (zellijBind "Alt " "m" "SwitchToMode \"move\"")
-    ];
-  };
-
-  # Generated blocks are indented to match the surrounding keybinds (8 spaces).
-  # Built with explicit strings: multi-line '' strings would strip the indent.
-  zellijRuBlock =
-    binds:
-    "        // Russian layout (ЙЦУКЕН) — GENERATED from lib/ru-keys.nix\n"
-    + "        // Table: docs/howto/hotkeys-ru-layout.md\n"
-    + lib.concatStringsSep "\n" (
-      map (d: "        bind \"${d.mod}${ruKeys.toRu d.key}\" { ${d.action}; }") binds
-    );
-
-  zellijConfig = builtins.readFile (config.lib.neg.path "files/gui/zellij/config.kdl");
-  zellijText = lib.pipe zellijConfig [
-    (
-      s:
-      builtins.replaceStrings
-        [
-          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.focus), see hosts/trantor/default.nix"
-        ]
-        [ (zellijRuBlock zellijRuBinds.focus) ]
-        s
-    )
-    (
-      s:
-      builtins.replaceStrings
-        [
-          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.resize), see hosts/trantor/default.nix"
-        ]
-        [ (zellijRuBlock zellijRuBinds.resize) ]
-        s
-    )
-    (
-      s:
-      builtins.replaceStrings
-        [
-          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.tab), see hosts/trantor/default.nix"
-        ]
-        [ (zellijRuBlock zellijRuBinds.tab) ]
-        s
-    )
-    (
-      s:
-      builtins.replaceStrings
-        [
-          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/trantor/default.nix"
-        ]
-        [ (zellijRuBlock zellijRuBinds.scroll) ]
-        s
-    )
-    (
-      s:
-      builtins.replaceStrings
-        [
-          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.modes), see hosts/trantor/default.nix"
-        ]
-        [ (zellijRuBlock zellijRuBinds.modes) ]
-        s
-    )
-  ];
-in
 {
   # unbound-hosts.nix is generated data (a list), imported by services/policy.nix —
   # not a module, so it stays out of the auto-import.
@@ -331,10 +222,8 @@ in
 
   environment.systemPackages = [
     pkgs.nodejs # Node.js — required by npx, MCP servers, git hooks
-    pkgs.zellij # Terminal workspace with batteries included (Rust)
     pkgs.wtype # Wayland keyboard input simulator (Ctrl+Space→Tab)
     pkgs.kanata # keyboard remapper (Caps→Ctrl, etc.)
     pkgs.podman # container management for distrobox (Docker-compatible)
   ];
-  environment.etc."zellij/config.kdl".text = zellijText;
 }
