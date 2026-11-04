@@ -3,6 +3,7 @@ language 0.4
 import "../../lib/palette.plm"
 import "../../theme.plm"
 import "../../lib/capsule.plm"
+import "../../lib/icons.plm"
 
 // lock.plm — the session lock / login scene of the pleamar shell (PH3-L).
 //

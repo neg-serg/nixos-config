@@ -3,6 +3,7 @@ language 0.4
 import "../../lib/palette.plm"
 import "../../theme.plm"
 import "../../lib/capsule.plm"
+import "../../lib/icons.plm"
 
 // preview.plm — the lock card in an ordinary window (scene `preview`; the IPC
 // name is the file stem, so `pleamar --say preview …` reaches it).
