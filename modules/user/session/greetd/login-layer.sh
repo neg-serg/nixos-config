@@ -87,6 +87,34 @@ mkdir -p "$STATE_DIR" 2> /dev/null || true
 
 LOG=/tmp/pleamar-login-layer.log
 
+# The palette. A scene's `import "../../theme.plm"` is resolved beside the path the file was
+# reached by, and the generated palette lives in ~/.config/pleamar/theme.plm (rewritten by
+# pleamar-theme from the current wallpaper). Reached through the checkout, the lock would read the
+# checkout's committed fallback instead, and the login would wear the default accent while the
+# session wears the wallpaper's. An import root of symlinks in the login's own state directory is
+# that path: the scenes stay live-linked to the tree, the palette is the generated one.
+#
+# The generated palette is checked with the scene first, and the tree's own is used when it does
+# not compile. The theme unit cannot run during the login phase, and a malformed palette must cost
+# the wallpaper's accent, not the login screen: nothing here is worth a lock face that cannot open.
+root="$STATE_DIR/tree"
+mkdir -p "$root" 2> /dev/null || true
+ln -sfn "$TREE/shells" "$root/shells"
+ln -sfn "$TREE/lib" "$root/lib"
+ln -sfn "$TREE/theme.plm" "$root/theme.plm"
+scene="$root/shells/lock/lock.plm"
+theme="${XDG_CONFIG_HOME:-$HOME/.config}/pleamar/theme.plm"
+if [ -r "$theme" ]; then
+  ln -sfn "$theme" "$root/theme.plm"
+  if "$PLEAMAR" --check "$scene" > /dev/null 2>&1; then
+    printf 'login layer: palette "%s"\n' "$theme" >> "$LOG"
+  else
+    ln -sfn "$TREE/theme.plm" "$root/theme.plm"
+    printf 'login layer: palette "%s" does not compile with the lock scene; the fallback is used\n' \
+      "$theme" >> "$LOG"
+  fi
+fi
+
 # The wallpaper behind the login screen. The daemon has to be painting before the
 # lock is released, or the desktop appears on the compositor's own background for
 # the ~2 s a cold Vulkan start takes. It cannot be started from hyprland.lua's
@@ -189,7 +217,7 @@ fi
 # attempt and by hyprland.lua's note, which is why the failure above left no
 # trace. The scene's own lines carry on after this header.
 started_at="$(wc -l < "$LOG" 2> /dev/null || echo 0)"
-"$PLEAMAR" --scene "$TREE/shells/lock/lock.plm" --no-hud --stall 0 >> "$LOG" 2>&1 &
+"$PLEAMAR" --scene "$scene" --no-hud --stall 0 >> "$LOG" 2>&1 &
 scene_pid=$!
 
 alive() { kill -0 "$scene_pid" 2> /dev/null; }
