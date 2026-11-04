@@ -748,6 +748,9 @@ on("open_bluetooth", function()
     pcall(sys.call, "say", "panels", "fact drawer bluetooth")
 end)
 
+on("toggle_bluetooth", function() toggle_drawer("bluetooth") end)
+on("toggle_bar_panel", function() toggle_drawer("bar") end)
+
 on("toggle_calendar_panel", function() toggle_drawer("calendar") end)
 on("toggle_weather_panel", function() toggle_drawer("weather") end)
 on("toggle_system_panel", function() toggle_drawer("system") end)

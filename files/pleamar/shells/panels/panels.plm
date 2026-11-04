@@ -310,18 +310,18 @@ scene panels {
                   services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*", "bluetooth", "bluetooth.*", "network.*", "say:notifications", "say:bar", "clock" }
 
     // ----***--------------- bluetooth (the `bluetooth` drawer)
-    // The adapter's state, the devices and what bluetoothd is asking, straight from the
-    // service: `devices` lands in the model by field name (reference, "Lists, into a
-    // model, with no logic"), so the page needs neither a worker nor a poll. The
-    // commands are panels.luau's: they take the ADDRESS, and a row press carries only
-    // its index, so the logic keeps its own table from the same watch.
+    // The adapter's state and what bluetoothd is asking come from the service. The device rows
+    // do not: the page indexes a row, and the index has to name the same device the address is
+    // taken from, so the LOGIC fills this model from the same watch it uses for the commands —
+    // a service-filled model cannot be read back from the logic, and that is how a press used to
+    // address the row next door. The icon field is gone with it: an image field does not accept
+    // the record the watch hands over, and a generic glyph is drawn instead.
     model bt_devices max 8 {
         name: text
         address: text
         paired: bool = false
         connected: bool = false
         battery: number = 0
-        icon: image 16, 16
     }
     service bluetooth as bt {
         present: bool
@@ -331,8 +331,23 @@ scene panels {
         pairing_id: text
         pairing_code: text
         pairing_name: text
-        devices: bt_devices
     }
+
+    // The drawer's own attempt: the row being connected or disconnected (`-1` when none),
+    // whether it is a connect (0) or a disconnect (1), and what the last one said. The service
+    // reports a finished connect only as `connected`; a failure reaches the engine's journal, not
+    // this scene, so the page says only what it can prove — that the device did not come up in
+    // the window (or that the command itself was refused).
+    fact bt_pending = -1
+    fact bt_pending_kind = 0
+    fact bt_failed = false
+    text bt_pending_name = ""
+    text bt_error = ""
+    // Forget is a two-step (the × arms, a second press does it): which row is armed, and its name
+    // for the line that says so. `bluetooth.forget` is BlueZ's RemoveDevice — the bond is gone, and
+    // re-pairing is not an undo.
+    fact bt_forget = -1
+    text bt_forget_name = ""
 
     // ----***--------------- the quick toggles (`toggles`)
     // The radio states come from the services the rest of the shell already trusts; the Wi-Fi

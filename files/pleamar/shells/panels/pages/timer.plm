@@ -28,10 +28,8 @@ part Timer {
             body {
                 color: live.coal
                 opacity: 92%
-                border: 1, mix(live.coal, live.ink, 12%)
-                rim: 0.07
                 shadow: 0, 18, 44, 45%
-                box { from: 0, 0; size: 320, 250; corner: 14 }
+                box { from: 0, 0; size: 320, 250; corner: 4 }
             }
             box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
             text "timer" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }

@@ -240,10 +240,10 @@ scene widgets {
             body {
                 color: live.coal
                 opacity: 74%
-                border: 1, mix(live.coal, live.ink, 10%)
-                rim: 0.07
+                border: 1, mix(live.coal, live.ink, 8%)
+                rim: 0.04
                 shadow: 0, 10, 28, 42%
-                box { from: 0, 0; size: w, h; corner: 12 }
+                box { from: 0, 0; size: w, h; corner: 8 }
             }
             // The accent mark the drawers carry at their top edge.
             box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
