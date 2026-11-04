@@ -716,6 +716,10 @@ scene bar {
     // cannot live inside a 39 logical px strip. Rows come from the item's own `menu` tree
     // (the engine's record carries it), two levels deep.
     surface barmenu {
+        // `on_demand`: the menu takes the keys when it is focused, which is what makes Escape
+        // reach the rule above. Not `exclusive` — that would hold the whole session's keyboard for
+        // as long as `tray_open` says so.
+        keyboard: on_demand
         // 300 = 12 px of plate padding plus 14 rows of 20 — the rows that fit at once, the same
         // count the reference shows. A longer menu scrolls inside the plate instead of losing its
         // tail (bar.luau's `TRAY_MENU_ROWS` clamps `tm.panel_h` to those 14 rows). A literal,
@@ -875,6 +879,12 @@ scene bar {
     // A press on one of the menu's lines: the number of the line, 1..8.
     event tray_click ->
     event tray_close ->
+    // Esc on the open tray menu. The menu's surface asks for the keyboard while it is open
+    // (`keyboard: on_demand` below), so the key reaches this scene's rules and not the application
+    // under it; the rule hands it to the logic's own close (the same one an outside press uses).
+    // The logic used to carry an `on("key")` handler for this, with no event declared and no
+    // surface asking for the keyboard — dead code that read as a working Escape.
+    on key Escape while tray_open { emit tray_close }
     event tray_menu ->
     // The three hover inputs of the reference's machine, each a `1` on entering and a `0` on
     // leaving: the reveal corner (`hotHover`, SystemTray.qml:25-50), the icons themselves (the
