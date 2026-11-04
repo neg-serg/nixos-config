@@ -67,15 +67,21 @@
 #   | gemma4-26b   | gemma-4-26B-A4B-it-UD-Q3_K_XL (MoE)      | 64k | 16.0G | 30-40 |
 #   | gemma4-12b   | gemma-4-12B-it-qat-UD-Q4_K_XL + mmproj   | 32k | 11.3G | 29    |
 #   | gpt-oss-20b  | gpt-oss-20b-MXFP4                        | 32k | 14.9G | 75    |
+#   | qwen3.8-4b   | Qwen3.8-4B-Distill-Heretic Q4 + mmproj   | 32k | 4.5G  | 56-60 |
 #
+# - `qwen3.8-4b-abliterated` is the uncensored 4B tier (text + vision, thinking
+#   off). It handles translation, summaries, JSON extraction, classification and
+#   short creative text; it fails simple arithmetic and invents facts, so keep
+#   reasoning, coding and factual work on the bigger models.
 # - `gemma4-26b` runs Q3_K_XL, not the QAT Q4: the desktop session holds
 #   ~3.5 GB, so Q4 (13.2 GiB of weights) has no room left after a swap and the
 #   Vulkan backend dies on the first request; Q3 spills ~1 GB into GTT and
 #   stays up. It is text-only on purpose: the 1.2 GB projector does not fit;
 #   `gemma4-12b` takes images.
-# - All three start with `--fit off`. Auto-fit reads the VRAM of the model being
-#   swapped out as free, offloads a few layers, and gemma4 then crashes on the
-#   first request; a deterministic full load either fits or fails loudly.
+# - The Gemma 4, gpt-oss and 4B commands start with `--fit off`. Auto-fit reads
+#   the VRAM of the model being swapped out as free, offloads a few layers, and
+#   gemma4 then crashes on the first request; a deterministic full load either
+#   fits or fails loudly.
 # - The ollama copies (`gemma4:26b` 17 GB, `gemma4:12b` 7.6 GB) stay for
 #   `rag-search`, but their ROCm path is slow (2.5 / 8.8 tok/s); for interactive
 #   work use the llama-swap names above.
