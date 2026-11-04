@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Syntax-check all non-Nix, non-Python, non-shell files in the repo.
-# Covers Lua, JavaScript, JSON, JSONC, YAML, TOML, and CSS.
+# Covers Lua/Luau, JavaScript, JSON, JSONC, YAML, TOML, and CSS.
 # Each section discovers files via `git ls-files`, skips gracefully when the
 # required tool is missing, and reports every failure before exiting non-zero.
 
@@ -60,8 +60,14 @@ has_cmd() { command -v "$1" > /dev/null 2>&1; }
 has_pyyaml() { python3 -c 'import yaml' 2> /dev/null; }
 
 # Section table: header|guard|guard-arg|checker|count-label|globs|skip-warning
+#
+# pleamar's scene logic (*.luau) is kept Lua 5.1-compatible so the same luajit
+# parse covers it. This is the only gate that sees a logic syntax error:
+# `pleamar --check` compiles the .plm alone, and a broken logic file leaves its
+# scene running with no handlers at all (measured: the panels scene died on a
+# `...` in a closure while every gate stayed green).
 sections=(
-  "Lua syntax|has_cmd|luajit|check_lua|Lua|*.lua|luajit not found; skipping Lua syntax check"
+  "Lua syntax|has_cmd|luajit|check_lua|Lua|*.lua *.luau|luajit not found; skipping Lua syntax check"
   "JavaScript syntax|has_cmd|node|check_js|JavaScript|*.js|node not found; skipping JavaScript syntax check"
   "JSON syntax|has_cmd|jq|check_json|JSON|*.json|jq not found; skipping JSON syntax check"
   "JSONC syntax|has_cmd|jq|check_jsonc|JSONC|*.jsonc|jq not found; skipping JSONC syntax check"
