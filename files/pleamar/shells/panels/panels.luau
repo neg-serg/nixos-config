@@ -956,6 +956,13 @@ local bar_on = {}
 local function bar_parse(out)
     local lines = {}
     for line in tostring(out or ""):gmatch("[^\r\n]+") do lines[#lines + 1] = line end
+    -- One answer a line, or the bar is not there (a `--say` to a closed scene exits 1 with an empty
+    -- stdout). A short answer used to be read as "every widget is off", so the page blanked itself
+    -- whenever the bar was restarting. Keep what the page had and say nothing.
+    if #lines < 1 + #BAR_WIDGETS then
+        log("panels: the bar did not answer with its settings")
+        return
+    end
     local edge = lines[1]
     if edge == "top" or edge == "bottom" then fact.bar_edge = edge end
     local rows = {}
