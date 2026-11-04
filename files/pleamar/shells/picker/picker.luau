@@ -130,13 +130,46 @@ end
 -- appeared after it answered) goes last, in name order, so the sort is always a total one.
 -- The favourites come first, in that same order, and with `only_favourites` they are all there
 -- is — the reference's leading sort key and its Favourites source in one place.
+-- The colour search: `#rrggbb`, `rrggbb` or `#rgb`, and a wallpaper matches when any of the
+-- colours its card shows is close to it. The distance is plain RGB, which is coarse but honest
+-- for "find me the blue ones": a tighter filter would need a perceptual space this scene has no
+-- business inventing (matugen's own roles are already the reference's idea of a palette).
+local function target_colour()
+    local hex = tostring(text.colour or ""):lower():gsub("#", "")
+    if #hex == 3 then
+        hex = hex:sub(1, 1) .. hex:sub(1, 1) .. hex:sub(2, 2) .. hex:sub(2, 2) .. hex:sub(3, 3) .. hex:sub(3, 3)
+    end
+    if #hex ~= 6 or not hex:match("^%x%x%x%x%x%x$") then return nil end
+    return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255
+end
+
+local CLOSE = 0.22  -- how far apart two colours may be and still count as the same request
+
+-- How close the request is to the nearest colour a card shows: the filter keeps what is inside
+-- `CLOSE`, and the deck is ordered by this, so "the blue ones" reads best-first.
+local function colour_distance(sw, tr, tg, tb)
+    local best = math.huge
+    for _, c in ipairs(sw or {}) do
+        local dr, dg, db = c.r - tr, c.g - tg, c.b - tb
+        local d = dr * dr + dg * dg + db * db
+        if d < best then best = d end
+    end
+    return best
+end
+
 local function ordered()
     local out = {}
     -- The finder filters the whole folder, so the deck is what the question asks for and not the
     -- page that happened to be on screen when it was typed.
     local q = tostring(text.query or ""):lower()
+    local tr, tg, tb = target_colour()
     for i = 1, #names do
-        if q == "" or names[i]:lower():find(q, 1, true) then out[#out + 1] = names[i] end
+        local name = names[i]
+        local by_name = (q == "" or name:lower():find(q, 1, true))
+        -- A colour request needs a palette: names the index has not reached yet stay out, and the
+        -- deck grows as the reader answers them (that is what the batch publish below is for).
+        local by_colour = (tr == nil) or (colour_distance(schemes[name], tr, tg, tb) <= CLOSE * CLOSE)
+        if by_name and by_colour then out[#out + 1] = name end
     end
     if fact.order == "newest" and #by_time > 0 then
         local rank = {}
@@ -144,6 +177,16 @@ local function ordered()
         table.sort(out, function(a, b)
             local ra, rb = rank[a] or math.huge, rank[b] or math.huge
             if ra ~= rb then return ra < rb end
+            return a < b
+        end)
+    end
+
+    -- A colour request reads best-first; the favourites still come first, because the block
+    -- below only appends what `out` already holds in this order.
+    if tr ~= nil then
+        table.sort(out, function(a, b)
+            local da, db = colour_distance(schemes[a], tr, tg, tb), colour_distance(schemes[b], tr, tg, tb)
+            if da ~= db then return da < db end
             return a < b
         end)
     end
@@ -380,7 +423,7 @@ function status()
 end
 
 -- One line of the reader: {"n": name, "c": {role: "#rrggbb", …}, …}
-local function read_line(line)
+local function read_line(line, quiet)
     line = trim(line)
     if line == "" then return end
     local ok, rec = pcall(json.decode, line)
@@ -398,7 +441,75 @@ local function read_line(line)
         end
     end
     schemes[rec.n] = sw
+    if not quiet then publish() end
+end
+
+-- The palette index of the whole folder, for the colour search: one reader, no names asked for,
+-- so the helper walks everything and its lines land in `schemes` as they come. The page reader
+-- below still runs for the cards, which only need their own page; this one is started the first
+-- time a colour is typed. What it answers is kept in `colours.json` in the scene's folder, so the
+-- next start has the index before the walk begins.
+local CACHE = "colours.json"
+local colour_reader = nil
+local colour_gen = 0
+
+local function cache_load()
+    local ok, got = pcall(function() return sys.ask("files.read", CACHE, "json") end)
+    if not ok or type(got) ~= "table" then return end
+    for name, list in pairs(got) do
+        if type(name) == "string" and type(list) == "table" then
+            local sw = {}
+            for _, c in ipairs(list) do
+                if type(c) == "table" and type(c[1]) == "number" then
+                    sw[#sw + 1] = { r = c[1], g = c[2], b = c[3] }
+                end
+            end
+            if #sw > 0 then schemes[name] = sw end
+        end
+    end
+end
+
+local function cache_save()
+    local out = {}
+    for name, list in pairs(schemes) do
+        local row = {}
+        for _, c in ipairs(list) do row[#row + 1] = { c.r, c.g, c.b } end
+        if #row > 0 then out[name] = row end
+    end
+    pcall(function() sys.call("files.write", CACHE, out) end)
+end
+
+local function refilter()
+    vis = ordered()
+    fact.pages = pages()
+    if fact.page > fact.pages - 1 then fact.page = fact.pages - 1 end
     publish()
+    status()
+end
+
+local function colour_index_start()
+    if colour_reader then return end
+    colour_gen = colour_gen + 1
+    local mine = colour_gen
+    local lines = 0
+    local ok, id = pcall(spawn, "pleamar-wallpaper-palettes", { dir }, function(line)
+        if mine ~= colour_gen then return end
+        lines = lines + 1
+        read_line(line, true)
+        if lines % 8 == 0 then refilter() end
+    end, function(_, code)
+        if mine ~= colour_gen then return end
+        colour_reader = nil
+        refilter()
+        cache_save()
+        if code ~= 0 then log("picker: the colour index exited with " .. tostring(code)) end
+    end)
+    if ok then
+        colour_reader = id
+    else
+        text.status = "the palette reader is not installed"
+        log("picker: " .. tostring(id))
+    end
 end
 
 -- The colour schemes of the page on screen. The reader answers the names it was given, out of
@@ -594,6 +705,13 @@ end)
 -- The folder may have changed on disk (a download, a new wallpaper): read it again.
 -- The finder's own trigger: a new question starts at the first page, since the old one may not
 -- exist in the new list.
+on("text:colour", function()
+    fact.page = 0
+    fact.sel = 0
+    refilter()
+    if target_colour() then colour_index_start() end
+end)
+
 on("text:query", function()
     fact.page = 0
     fact.sel = 0
@@ -718,3 +836,6 @@ end
 
 palette_load()
 every(2000, palette_load)
+
+-- The colour index of the last run, before the deck is first drawn.
+cache_load()

@@ -23,6 +23,8 @@ import "../../lib/capsule.plm"
 //   pleamar --say picker "emit reload"           read the folder again
 //   pleamar --say picker "emit choose 3"         set the fourth card (0 is the first)
 //   pleamar --say picker "text query skull"      the finder: names only, the whole folder
+//   pleamar --say picker "text colour 88c0d0"    the colour finder: palettes near that hex
+//   pleamar --say picker "fact show_colours false"  hide the chips under every card
 //   pleamar --say picker "emit open_settings"    the settings screen (the g key)
 //   pleamar --say picker "emit toggle_settings"  open/close the settings screen
 //   pleamar --say picker "fact order newest"     sort: newest first, or `name`
@@ -41,6 +43,13 @@ import "../../lib/capsule.plm"
 // logic does not know survives the write, because the table it read is what it writes back. The
 // screen is not the only way in: the logic watches the file, and an edit by hand lands the same
 // way, the folder it lists moving without a restart.
+//
+// The colour finder reads a `#rrggbb` (or `rrggbb`, or `#rgb`) and keeps the wallpapers whose
+// palette has a colour within 0.22 of it, best matches first. Its index is the helper's
+// own walk of the whole folder (one matugen dry run a wallpaper, three at a time), kept in
+// `colours.json` in this scene's folder: the first search builds it, the next ones start
+// from it. The chips under a card are the palette, and `c` (or the palette button) hides
+// them for a deck of plain pictures.
 //
 // What is not here yet: Wallhaven search and downloads, the live preview of a clip, the
 // fan-and-preview choreography of the reference. Wallpapers are images: an animated GIF/WebP or a
@@ -141,6 +150,12 @@ scene picker {
     text note = ""
     // The finder: a name filter over the whole folder, not only the page on screen.
     text query = ""
+    // The colour search: a `#rrggbb` (or `rrggbb`, or `#rgb`) that keeps the wallpapers whose
+    // palette has a close colour. The index for the whole folder is built on first use (one
+    // matugen dry run a wallpaper, three at a time) and cached in `colours.json` in this scene's
+    // own folder.
+    text colour = ""
+    fact show_colours = true
 
     // The page on screen, a row of cards per record: a card is a component, and a component takes
     // its record from a `for` — never from a computed place — so the rows are what the model holds
@@ -211,7 +226,7 @@ scene picker {
     // ---***------------------------------ the deck
     // One card: the wallpaper's picture, its name, and the colours it would give the desktop.
     // `chosen` is the scene's selection, so a card lights up as the keyboard reaches it.
-    component Card(c: record, at: number, chosen: number, pick: event) {
+    component Card(c: record, at: number, chosen: number, pick: event, chips: bool = true) {
         let CW = 288
         let CH = 180
 
@@ -230,7 +245,7 @@ scene picker {
             box { from: 0, 0; size: CW, CH; corner: 16; color: live.coal
                   opacity: (0.45 - 0.30 * lit) * (1 - hit.hover * 0.5) }
             // The wallpaper's palette: the scheme its card would give the desktop.
-            row chips { at: 12, CH - 28; gap: 4
+            row chips { at: 12, CH - 28; gap: 4; show: chips
                 for s in c.sw {
                     group { size: 30, 12
                         box { from: 0, 0; size: 30, 12; corner: 6; color: rgb(s.r, s.g, s.b)
@@ -289,8 +304,8 @@ scene picker {
                 text status { at: DW - 32, 70; anchor: right center; width: 400; lines: 1; align: right
                               size: 11.5; color: live.ink.dim }
 
-                // The finder: typed here, filtered by picker.luau over the whole folder (489 names
-                // on this host), so one picture is not a walk through eight pages.
+                // The finders: a palette button (the chips on or off), a colour and a name, both
+                // filtered by picker.luau over the whole folder (489 names on this host).
                 box { from: DW - 396, 26; size: 364, 30; corner: 8; color: live.ink; opacity: 6% }
                 text "find" { at: DW - 380, 41; anchor: left center; size: 9; color: live.ink.off }
                 input query {
@@ -299,6 +314,21 @@ scene picker {
                     placeholder: "name…"
                     label: "Find a wallpaper"
                 }
+                box { from: DW - 552, 26; size: 144, 30; corner: 8; color: live.ink; opacity: 6% }
+                text "hex" { at: DW - 540, 41; anchor: left center; size: 9; color: live.ink.off }
+                input colour {
+                    at: DW - 512, 33; width: 96
+                    size: 12; color: live.ink; family: "Iosevka"; selection: live.accent_deep
+                    placeholder: "#88c0d0"
+                    label: "Find by colour"
+                }
+                // The chips: on by default, and a press turns them off for a deck of plain pictures.
+                box { from: DW - 600, 26; size: 30, 30; corner: 8; color: live.ink; opacity: pick(show_colours, 12%, 0%) }
+                text "palette" { at: DW - 585, 41; anchor: center; family: "Material Symbols Outlined"; size: 14
+                                 color: pick(show_colours, live.accent, live.ink.off) }
+                zone box chips_toggle { from: DW - 600, 26; size: 30, 30; corner: 8; cursor: pointer
+                    label: pick(show_colours, "Hide the colour chips", "Show the colour chips"); role: toggle; checked: show_colours }
+                on press chips_toggle { toggle show_colours }
 
                 // The deck: rows of cards the wheel and a drag scroll (`view:`), with the front
                 // card's row kept in sight by the rule below. A row is `cols` cards and as tall as
@@ -307,7 +337,7 @@ scene picker {
                     for r in walls {
                         row { gap: 16
                             for cell in r.cells {
-                                Card(cell, r.index * cols + cell.index, sel, choose)
+                                Card(cell, r.index * cols + cell.index, sel, choose, chips: show_colours)
                             }
                         }
                     }
