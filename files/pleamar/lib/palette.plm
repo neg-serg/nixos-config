@@ -280,10 +280,14 @@ library Palette strict {
     let anim.lock = 500           // greeter.lockAnimationMs
     let pill.show = 500           // panel.pill.showDelayMs
     let pill.pause = 2500         // panel.pill.autoHidePauseMs
-    let tray.long = 2500          // panel.tray.longHoldMs
-    let tray.short = 1500         // panel.tray.shortHoldMs
+    // The tray's holds: the reference says `panel.tray.longHoldMs` 2500 and `.shortHoldMs` 1500, but
+    // a tray that folds 1.5 s after the pointer leaves the bar is one a hand cannot get back to in
+    // time; the port runs the short hold at 3000 and the long one at 4000. `bar.luau` repeats these
+    // numbers — a scene's import is not readable from the logic — so keep the two tables equal.
+    let tray.long = 4000          // panel.tray.longHoldMs
+    let tray.short = 3000         // panel.tray.shortHoldMs
     let tray.guard = 120          // panel.tray.guardMs
-    let tray.dismiss = 5000       // panel.tray.overlayDismissDelayMs
+    let tray.dismiss = 6000       // panel.tray.overlayDismissDelayMs
     let tray.pad = 4              // panel.tray.inlinePadding
     let volume.hide = 800         // panel.volume.fullHideMs
     let volume.hide.muted = 180000 // panel.volume.mutedHideMs
