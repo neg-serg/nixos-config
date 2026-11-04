@@ -73,13 +73,17 @@ let
       --cache-type-k q8_0 --cache-type-v q8_0 --jinja
   '';
 
-  # gpt-oss-20b (MXFP4, 3.6B active) — the reasoning/tool tier and the fastest
-  # of the three: ~75 tok/s at 32k with ~1.4 GB of VRAM headroom.
+  # gpt-oss-20b abliterated (MXFP4, 3.6B active) — the big uncensored tier:
+  # ~75-85 tok/s, tools, reasoning and arithmetic all survive the abliteration.
+  # `--reasoning-effort low` is mandatory: at the default effort the model
+  # burns the whole token budget on reasoning and returns empty content, and
+  # `--reasoning off` makes it worse.
   gptoss = ''
     ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/gpt-oss-20b-MXFP4.gguf \
+      -m ${modelDir}/abliterated/gpt-oss-20b-abliterated-MXFP4.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -c 32768 -np 1 --flash-attn on --fit off --jinja
+      -c 32768 -np 1 --flash-attn on --fit off --jinja \
+      --reasoning-effort low
   '';
 
   # Qwen3.8-4B Distill Heretic — the uncensored small tier: a Qwen3.8
@@ -180,9 +184,12 @@ in
           cmd = gemma12b;
           aliases = [ "gemma4-vision" ];
         };
-        "gpt-oss-20b" = {
+        "gpt-oss-20b-abliterated" = {
           cmd = gptoss;
-          aliases = [ "gpt-oss" ];
+          aliases = [
+            "gpt-oss"
+            "gpt-oss-20b"
+          ];
         };
         "qwen3.8-4b-abliterated" = {
           cmd = qwenUncensored;
