@@ -37,10 +37,9 @@ part Bluetooth {
         let card.scale = scale
         size: 400 * scale, 420 * scale
 
-        // The list starts under the header, and moves down while a pairing prompt
-        // is up: if() of a number, so the rows stay under the header and step
-        // down only while a question is on the band.
-        let list.y = if(bt.pairing == none, 64, 172)
+        // The list starts under the header, and moves down while a pairing prompt or the rename
+        // band is up: if() of a number, so the rows stay under the header the rest of the time.
+        let list.y = if(bt.pairing == none and bt_renaming < 0, 64, 172)
 
         group {
             move: (screen.width - 400 * scale) / 2, (screen.height - 420 * scale) / 2 + (1 - lift) * 18 * scale
@@ -63,12 +62,12 @@ part Bluetooth {
 
             text "adapter off" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: not bt.powered }
             // The attempt is the only state the service does not report while it runs: it answers a
-            // connect before the device is up, so the page says which row is being tried, and calls
-            // it failed only when the window closes without `connected` (the reason is in the
-            // engine's journal; the scene will not invent one).
+            // connect before the device is up. The error line is the engine's own reason when the
+            // local patch is in (its journal line, carried in `error`), and the scene's fallback
+            // otherwise — a window that closed without `connected`.
             text "connecting to {bt_pending_name}…" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.accent; show: bt.powered and bt_pending >= 0 and bt_pending_kind == 0 }
             text "disconnecting from {bt_pending_name}…" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.accent; show: bt.powered and bt_pending >= 0 and bt_pending_kind == 1 }
-            text bt_error { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.warn; show: bt.powered and bt_pending < 0 and bt_failed }
+            text bt_error { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.warn; width: 316; lines: 1; show: bt.powered and bt_pending < 0 and bt_failed }
             text "scanning…" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.accent; show: bt.powered and bt_pending < 0 and not bt_failed and bt.discovering }
             text "{bt_devices.total} known device(s)" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: bt.powered and bt_pending < 0 and not bt_failed and not bt.discovering }
             box { from: 16, 56; size: 368, 1; color: live.ink; opacity: ink.subtle }
@@ -102,6 +101,32 @@ part Bluetooth {
                 on change bt.pairing while bt.pairing == pin or bt.pairing == passkey { focus pair_code }
             }
 
+            // ----***------------------------- rename a paired device
+            // BlueZ's `Alias` is a name local to this computer, not the one the device
+            // broadcasts; the line says so. The field is the device's current name, and Enter or
+            // "save" writes it; "cancel" throws the typed one away.
+            group rename_band {
+                move: 16, 64
+                show: bt_renaming >= 0 and bt.pairing == none
+                body { color: live.accent; opacity: 10%
+                       box { from: 0, 0; size: 368, 96; corner: 10 } }
+                text "rename {bt_rename_from}" { at: 12, 18; anchor: left center; family: "Iosevka"; size: 11; weight: 600; color: live.ink }
+                text "local to this computer" { at: 12, 34; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.dim }
+                input bt_new_name {
+                    at: 12, 46; width: 260
+                    size: 13; color: live.ink; family: "Iosevka"; selection: live.accent_deep
+                    placeholder: "name"
+                    label: "New device name"
+                }
+                text "save" { at: 273, 76; anchor: center; family: "Iosevka"; size: 9; weight: 700; color: live.on.accent }
+                text "cancel" { at: 334, 76; anchor: center; family: "Iosevka"; size: 9; weight: 700; color: live.ink }
+                zone box rename_yes { from: 244, 64; size: 58, 24; corner: 12; cursor: pointer; label: "Save the new name"; role: button }
+                zone box rename_no { from: 308, 64; size: 52, 24; corner: 12; cursor: pointer; label: "Cancel rename"; role: button }
+                on press rename_yes { emit bt_rename_confirm }
+                on press rename_no { emit bt_rename_cancel }
+                on change bt_renaming while bt_renaming >= 0 { focus bt_new_name }
+            }
+
             // ----***------------------------- the devices
             group list {
                 move: 0, list.y
@@ -126,23 +151,26 @@ part Bluetooth {
                     // The service's `battery` is 0..1 (or -1 when the device does not say), not a
                     // percentage: printing it raw said "0.85 %".
                     text number(d.battery * 100, 0, " %") { at: 376, d.index * 34 + 9; anchor: right center; family: "Iosevka"; size: 9; color: live.ink.dim; show: d.battery > 0 }
-                    // The × is the forget affordance, and it is drawn: a hint that names an
-                    // invisible target is a promise the hand cannot act on. It arms on the first
-                    // press and says so; the logic's second step is the only one that removes a bond.
-                    text "×" { at: 362, d.index * 34 + 22; anchor: center; family: "Iosevka"; size: 13; color: live.ink.off; show: d.paired and bt_forget != d.index }
-                    text "forget?" { at: 344, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; weight: 700; color: live.warn; show: bt_forget == d.index }
+                    // Two affordances on the row's right edge: × forgets (two-step, see the logic),
+                    // the pencil renames. Both are drawn, and both say what they do in the footer.
+                    text "×" { at: 354, d.index * 34 + 22; anchor: center; family: "Iosevka"; size: 13; color: live.ink.off; show: d.paired and bt_forget != d.index and bt_pending < 0 }
+                    text "edit" { at: 374, d.index * 34 + 22; anchor: center; family: "Material Symbols Outlined"; size: 12; color: live.ink.off; show: d.paired and bt_forget != d.index and bt_pending < 0 }
+                    text "forget?" { at: 344, d.index * 34 + 22; anchor: left center; family: "Iosevka"; size: 8; weight: 700; color: live.warn; width: 40; show: bt_forget == d.index }
 
                     zone box row { from: 16, d.index * 34; size: 320, 30; corner: 8; cursor: pointer; active: bt.powered and bt_pending < 0
                         label: pick(d.connected, "Connect {d.name} ({d.address})", "Disconnect {d.name} ({d.address})"); role: button }
-                    zone box forget { from: 344, d.index * 34; size: 40, 30; corner: 8; cursor: pointer; active: bt.powered and bt_pending < 0 and d.paired
+                    zone box forget { from: 344, d.index * 34; size: 20, 30; corner: 8; cursor: pointer; active: bt.powered and bt_pending < 0 and d.paired
                         label: pick(bt_forget == d.index, "Forget {d.name} ({d.address})", "Forget {d.name} ({d.address}) — press again"); role: button }
+                    zone box rename { from: 364, d.index * 34; size: 20, 30; corner: 8; cursor: pointer; active: bt.powered and bt_pending < 0 and d.paired
+                        label: "Rename {d.name} ({d.address})"; role: button }
                     on press row { emit bt_device(d.index) }
                     on press forget { emit bt_forget(d.index) }
+                    on press rename { emit bt_rename_start(d.index) }
                 }
             }
 
             // ----***------------------------- the footer
-            text "press a device to connect or disconnect · × forgets a paired one" { at: 16, 400; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off; show: bt_forget < 0 }
+            text "press to connect or disconnect · the pencil renames · × forgets" { at: 16, 400; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off; show: bt_forget < 0 }
             // Android's confirmation, as a line rather than a dialog: the × is armed, the device
             // is named, and the second press is the one that removes the bond.
             text "press × again to forget {bt_forget_name}" { at: 16, 400; anchor: left center; family: "Iosevka"; size: 8; color: live.warn; show: bt_forget >= 0 }

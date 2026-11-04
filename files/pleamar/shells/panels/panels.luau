@@ -553,8 +553,19 @@ end
 
 local function bt_attempt_failed(what)
     local name = bt_attempt.name
+    -- The patched engine carries BlueZ's own words for the last failed connect; when it does,
+    -- that is the truth to show, and the timeout is only the fallback for an engine without it.
+    local why = type(bt_raw.error) == "string" and bt_raw.error or ""
     bt_attempt_clear()
     fact.bt_failed = true
+    if why ~= "" then
+        if name ~= "" then
+            text.bt_error = name .. ": " .. why
+        else
+            text.bt_error = why
+        end
+        return
+    end
     text.bt_error = what
     if name ~= "" then text.bt_error = what .. ": " .. name end
 end
@@ -607,6 +618,17 @@ local function bt_forget_arm(index, address, name)
     end)
 end
 
+-- Rename: a name local to this computer (BlueZ's `Alias`), not the one the device broadcasts. The
+-- band is a field and a yes; closing it throws the typed name away.
+local bt_rename_address = nil
+
+local function bt_rename_clear()
+    bt_rename_address = nil
+    fact.bt_renaming = -1
+    text.bt_rename_from = ""
+    text.bt_new_name = ""
+end
+
 sys.watch("bluetooth", function(b)
     if type(b) ~= "table" then return end
     bt_raw = b
@@ -619,6 +641,13 @@ sys.watch("bluetooth", function(b)
         bt_attempt_clear()
         fact.bt_failed = false
         text.bt_error = ""
+        return
+    end
+    -- The patched engine names the reason a connect failed. If the attempt is still armed, the
+    -- failure lands now instead of waiting for the window to close; the timeout stays the fallback.
+    local why = type(b.error) == "string" and b.error or ""
+    if bt_attempt.address and why ~= "" then
+        bt_attempt_failed(why)
         return
     end
     local list = type(b.devices) == "table" and b.devices or {}
@@ -647,11 +676,12 @@ local function bt_device(index)
     return list[index + 1]
 end
 
--- One argument, which is all a bluetooth command takes: `...` cannot be used inside the
--- closure Luau's pcall wants. The answer is returned so a command that is refused outright
--- (busy, no adapter, an unknown device) can be said on the page instead of only in the log.
-local function bt_call(command, arg)
-    local ok, err = pcall(function() sys.call(command, arg) end)
+-- The arguments are passed through (a connect, a disconnect and a forget take one; a rename takes
+-- two), and `...` cannot be used inside the closure Luau's pcall wants. The answer is returned so a
+-- command that is refused outright (busy, no adapter, an unknown device) can be said on the page
+-- instead of only in the log.
+local function bt_call(command, ...)
+    local ok, err = pcall(function() sys.call(command, ...) end)
     if not ok then log("panels: " .. command .. " failed: " .. tostring(err)) end
     return ok, err
 end
@@ -662,6 +692,7 @@ on("bt_power", function()
     -- connecting is gone with it, and the row that was about to be forgotten is not.
     bt_attempt_clear()
     bt_forget_clear()
+    bt_rename_clear()
     fact.bt_failed = false
     text.bt_error = ""
     bt_call("bluetooth.power", not (bt_raw.powered == true))
@@ -674,8 +705,9 @@ end)
 
 on("bt_device", function(index)
     touch_drawer()
-    -- A press on the row is not the ×: an armed forget is over.
+    -- A press on the row is not the ×: an armed forget is over, and so is a rename band.
     bt_forget_clear()
+    bt_rename_clear()
     local d = bt_device(index)
     if type(d) ~= "table" or type(d.address) ~= "string" then return end
     -- One attempt runs at a time: a press while another runs is that attempt, not a second one.
@@ -713,6 +745,7 @@ on("bt_forget", function(index)
     if d.paired ~= true then return end
     if bt_forget_armed ~= d.address then
         -- First press: arm this device, name it on the page, and wait for the second.
+        bt_rename_clear()
         bt_forget_arm(index, d.address, tostring(d.name or d.address))
         return
     end
@@ -726,6 +759,48 @@ on("bt_forget", function(index)
         fact.bt_failed = true
         text.bt_error = "forget failed: " .. tostring(err)
     end
+end)
+
+on("bt_rename_start", function(index)
+    touch_drawer()
+    local d = bt_device(index)
+    if type(d) ~= "table" or type(d.address) ~= "string" then return end
+    if d.paired ~= true then return end
+    -- One thing at a time: a connect that runs keeps the keyboard.
+    if bt_attempt.address then return end
+    bt_forget_clear()
+    bt_rename_address = d.address
+    fact.bt_renaming = index
+    text.bt_rename_from = tostring(d.name or d.address)
+    text.bt_new_name = text.bt_rename_from
+    fact.bt_failed = false
+    text.bt_error = ""
+end)
+
+local function bt_rename_do()
+    if not bt_rename_address then return end
+    local name = tostring(text.bt_new_name or ""):match("^%s*(.-)%s*$")
+    if name == "" then
+        fact.bt_failed = true
+        text.bt_error = "a device name cannot be empty"
+        return
+    end
+    local ok, err = bt_call("bluetooth.rename", bt_rename_address, name)
+    if not ok then
+        fact.bt_failed = true
+        text.bt_error = "rename failed: " .. tostring(err)
+        return
+    end
+    bt_rename_clear()
+    fact.bt_failed = false
+    text.bt_error = ""
+end
+
+on("bt_rename_confirm", bt_rename_do)
+on("submit:bt_new_name", bt_rename_do)
+
+on("bt_rename_cancel", function()
+    bt_rename_clear()
 end)
 
 -- Only the two questions that are answered with a yes are answered here. `pin` and `passkey` need a

@@ -76,7 +76,10 @@ in
   # (this one puts the clock at half the width and the card at 62 % of the height) lands half a
   # panel away, off the screen, with nothing said in the log. A `full` box now stands for the
   # face's own size, and the face prints its box and the corner it paints from
-  # (pleamar-lock-full.patch).
+  # (pleamar-lock-full.patch). And Bluetooth: a failed `connect` reached only the engine's journal,
+  # so a scene could not say why a device did not come up, and nothing could rename a paired device
+  # or the adapter; the service now carries `error` and `adapter_name`, and the commands `rename`
+  # and `adapter_name` (pleamar-bluetooth.patch).
   pleamar = inputs.pleamar.packages.${prev.stdenv.hostPlatform.system}.pleamar.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [
       # The one commit the pin used to carry in `neg-serg/pleamar`
@@ -95,6 +98,7 @@ in
       ./pleamar-soft-render.patch
       ./pleamar-lock-engage.patch
       ./pleamar-lock-full.patch
+      ./pleamar-bluetooth.patch
     ];
   });
 
