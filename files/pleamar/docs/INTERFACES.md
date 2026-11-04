@@ -268,6 +268,10 @@ cannot move a widget — the bar paints in the order its scene is written — an
 height, because the bar's surface is sized by a literal. The page asks the bar's logic
 (`say:bar`, events `set_edge` and `set_widget` with a packed payload) and the bar writes its own
 `settings.json`: one writer per folder (§1.2).
+It is also the shell's door: the bar's gear capsule (the reference's `Settings`) opens this page,
+and the toggles hub's `desktop widgets` row opens the widgets scene's own edit strip
+(`say:widgets`, `emit edit`) — so neither the bar's widgets nor the desktop ones depend
+on a key bind.
 
 ## 2.3 Surfaces, screens and reserve
 
