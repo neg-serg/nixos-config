@@ -1,9 +1,9 @@
 # llama-swap — one OpenAI-compatible endpoint in front of the local model
 # stack. The `model` field of a request selects the backend: llama-swap starts
 # it (or proxies to it) and shuts the previously running one down; an idle
-# backend is unloaded after `ttl`. This replaces starting llama-server
-# (Vulkan, vision) / llama-server-flash-next (ROCm) by hand and juggling ports;
-# clients use http://127.0.0.1:9292/v1.
+# backend is unloaded after `globalTTL` (120 s). Only models that fit the 16 GB
+# card are exposed here; the oversized ones stay as manual per-model units.
+# Clients use http://127.0.0.1:9292/v1.
 #
 # The per-model units stay available for manual use, but do not run them while
 # llama-swap owns the GPU (16 GB VRAM, one big model at a time).
@@ -21,34 +21,18 @@ let
   enabled = config.lib.neg.enabled "llm";
 
   # Models live on the zero ZFS pool, never in the store (multi-GB files).
+  # Only models that fit the 16 GB card are exposed here. qwen3-vl-30b (18 GB)
+  # and Flash-Next (111 GB, CPU-MoE) stay available as manual units
+  # (llama-server and llama-server-flash-next).
   modelDir = "/zero/ai/llama";
   llamaVulkan = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
-  llamaRocm = lib.getExe' pkgs.llama-cpp-qwen4exp-rocm "llama-server";
 
-  # Vision models (Vulkan/RADV): flags mirror modules/llm/llama-server.nix.
-  vision30b = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/qwen3-vl-30b-a3b-instruct-q4_k_m.gguf \
-      --mmproj ${modelDir}/mmproj-qwen3-vl-30b-a3b-f16.gguf \
-      --host 127.0.0.1 --port ''${PORT} -c 8192 -np 1
-  '';
+  # Vision model (Vulkan/RADV): flags mirror modules/llm/llama-server.nix.
   vision8b = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/qwen3-vl-8b-instruct-q4_k_m.gguf \
       --mmproj ${modelDir}/mmproj-qwen3-vl-8b-f16.gguf \
       --host 127.0.0.1 --port ''${PORT} -c 8192 -np 1
-  '';
-
-  # Flash-Next (ROCm, qwen4exp): flags mirror llama-server-flash-next.nix —
-  # PLE tensors on CPU, 8 GPU layers (verified safe on the RX 9070 XT), mmap.
-  flashNext = ''
-    ${llamaRocm} --device ROCm0 \
-      --model ${modelDir}/UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      --load-mode mmap --fit off --n-gpu-layers 8 --ctx-size 8192 \
-      --flash-attn off --cache-type-k f16 --cache-type-v f16 --cpu-moe \
-      -ot 'blk\.[0-9]+\.ple_value=CPU,blk\.[0-9]+\.ple_key=CPU' \
-      --jinja --chat-template-kwargs '{"reasoning_effort":"low"}'
   '';
 
   # Spark-X2.5-4B (text, 4B, hybrid sliding-window attention, 1M native ctx):
@@ -158,60 +142,44 @@ in
     port = 9292;
 
     settings = {
-      # Flash-Next mmaps a 111 GB GGUF (-ngl 8); a cold load can take minutes.
       healthCheckTimeout = 600;
+      # Idle backends unload after two minutes: the card is shared with the
+      # desktop (~3.5 GB) and with games, so nothing may sit on it unused.
+      globalTTL = 120;
       models = {
-        "qwen3-vl-30b" = {
-          cmd = vision30b;
-          aliases = [ "vision" ];
-          # Shorter than the other models: 16 GB VRAM is tight, and a game may
-          # start at any moment (the guard also unloads on game detection).
-          ttl = 300;
-        };
         "qwen3-vl-8b" = {
           cmd = vision8b;
-          aliases = [ "vision-8b" ];
-          ttl = 300;
-        };
-        "qwen3.8-flash-next" = {
-          cmd = flashNext;
-          # Cold start is ~1.5 min (111 GB mmap), so keep it longer than the
-          # vision models; the game guard still unloads it for games.
-          ttl = 600;
+          aliases = [
+            "vision"
+            "vision-8b"
+          ];
         };
         "spark-x2.5-4b" = {
           cmd = spark4b;
           aliases = [ "spark" ];
-          ttl = 300;
         };
         "gemma4-26b" = {
           cmd = gemma26b;
           aliases = [ "gemma4" ];
-          # Tightest model on the card (~200 MB free): release the VRAM soon.
-          ttl = 300;
         };
         "gemma4-12b" = {
           cmd = gemma12b;
           aliases = [ "gemma4-vision" ];
-          ttl = 600;
         };
         "gpt-oss-20b" = {
           cmd = gptoss;
           aliases = [ "gpt-oss" ];
-          ttl = 600;
         };
-
       };
 
       # Ollama runs its own loading; expose it as a peer. Peer models are
-      # addressable as `ollama/<name>`, and unqualified when unique.
+      # addressable as `ollama/<name>`, and unqualified when unique. Only
+      # models that fit the card are listed — a 17 GB ollama tag spills to CPU.
       peers.ollama = {
         proxy = ollamaUrl;
         models = [
           "llama3.2:1b" # small smoke-test model
-          "qwen3.8:27b"
-          "qwen3.8:27b-plain"
-          "qwen3:8b-ru"
+          "qwen3:8b-ru" # 5.2 GB, fully on the GPU
         ];
       };
     };

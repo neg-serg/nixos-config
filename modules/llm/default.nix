@@ -51,7 +51,12 @@
 # ### llama-swap (one OpenAI-compatible endpoint, 127.0.0.1:9292)
 #
 # - Module: `modules/llm/llama-swap.nix`; the `model` field selects a backend,
-#   one model is resident at a time (16 GB VRAM, ~3 GB of it is the desktop).
+#   one model is resident at a time (16 GB VRAM, ~3.5 GB of it is the desktop).
+# - Idle backends are unloaded after `globalTTL` 120 s, and the game guard
+#   unloads them at once when a game starts.
+# - Only models that fit the card are exposed here. `qwen3-vl-30b` (18 GB) and
+#   Flash-Next (111 GB, CPU-MoE) were removed from the router — they stay
+#   available as manual `llama-server` / `llama-server-flash-next` units.
 # - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path for Gemma 4 on gfx1201:
 #   the same weights run 3-10x faster than through ollama's ROCm build, and
 #   `--cpu-moe` is a trap here (3-8 tok/s, expert weights become the bottleneck).
