@@ -62,3 +62,10 @@ and `scripts/dev/check-pleamar-geometry.sh --describe FILE` checks a saved run i
   and `pleamar-measure` (`--report` + cgroup numbers into `tests/evidence/`) wrap this. They are
   hermetic by default (temp HOME/XDG sandbox); `--soft` renders on Mesa lavapipe when the GPU is not
   reachable (agent sandboxes).
+- `just pleamar-cpu` (`scripts/dev/pleamar-login-cpu.sh`) — what the shell spent on CPU at login. A
+  scene's `CPUUsageNSec` is cumulative from its unit's start, so the first minute is the only time
+  the login burst (compiling the `.plm`, spawning the workers, the first frames) is still the whole
+  number. `pleamar-login-cpu.timer` records every pleamar unit's counters a minute after the session
+  target, one file per login under `~/.local/state/pleamar/login-cpu/`; the command prints that
+  window next to the live counters (CPU seconds, % of one core, RSS and peak, restarts) and takes
+  `--json` or `--watch SECONDS` for a script or for right now.

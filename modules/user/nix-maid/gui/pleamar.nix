@@ -40,6 +40,12 @@
 # - `pleamar-health` + `pleamar-health.timer` — hang watchdog: probes every scene in
 #   `pleamarHealthScenes` (the bar and the panels; 2-minute period, first run after 5 minutes) and
 #   restarts the one that stops answering.
+# - `pleamar-login-cpu` + `pleamar-login-cpu.timer` — the login-window CPU record: a minute after
+#   the session target it writes one file per login under `~/.local/state/pleamar/login-cpu/`,
+#   holding the per-scene `systemctl show` counters. This is the only moment a scene's login burst
+#   is still the whole number (the counters are cumulative from the unit's start), so `just
+#   pleamar-cpu` renders that window next to the live counters — see the reader's header,
+#   `scripts/dev/pleamar-login-cpu.sh`.
 # - `pleamar-theme` — runs the theme pipeline (packages/pleamar-theme) on every wallpaper
 #   change, writing `~/.config/pleamar/theme.plm`; `pleamar-themes` writes the same file from a
 #   hand-written theme file (`list`, `apply`, `show`), so a theme is a file, not a wallpaper.
@@ -467,6 +473,47 @@ let
     done
   '';
 
+  # Login-window CPU record (`just pleamar-cpu`): one file per login, taken a minute after the
+  # session target. A scene's `CPUUsageNSec` is cumulative from its start, so the first minute
+  # is the only time the login burst is still the whole number; a live sample later reads the
+  # steady state instead. The reader (scripts/dev/pleamar-login-cpu.sh) parses the same
+  # `systemctl show` blocks it reads live, so the record is that dump plus the clocks the
+  # numbers are relative to — the format is documented at its `rec_meta`/`rec_units`, keep the
+  # two in sync.
+  pleamarLoginCpuRecord = pkgs.writeShellScript "pleamar-login-cpu-record" ''
+    set -euo pipefail
+
+    state="''${XDG_STATE_HOME:-$HOME/.local/state}/pleamar/login-cpu"
+    mkdir -p "$state"
+
+    # The reader tells "this login" apart by boot id and the session target's monotonic start,
+    # not by file age: one boot can carry several logins.
+    boot="$(cat /proc/sys/kernel/random/boot_id)"
+    session="$(systemctl --user show hyprland-session.target -p ActiveEnterTimestampMonotonic --value)"
+    # The boot clock, the one ActiveEnterTimestamp* counts in: the two differ only across a
+    # suspend, which cannot happen inside the login minute.
+    now="$(awk '{ printf "%.0f", $1 * 1000000 }' /proc/uptime)"
+    at="$(date +%Y-%m-%dT%H-%M-%S)"
+    file="$state/$at.rec"
+
+    {
+      printf '# pleamar-login-cpu record v1\n'
+      printf 'boot %s\nsession %s\nnow %s\nat %s\n' "$boot" "$session" "$now" "$at"
+      printf '%s\n' '--- units ---'
+      systemctl --user show 'pleamar-*.service' \
+        -p Id -p ActiveState -p CPUUsageNSec -p MemoryCurrent -p MemoryPeak -p NRestarts \
+        -p ActiveEnterTimestampMonotonic
+    } > "$file"
+
+    # Keep the last 20 logins: a record is a few kilobytes, and the history is what a
+    # regression is compared against.
+    kept=0
+    while IFS= read -r old; do
+      kept=$((kept + 1))
+      [ "$kept" -le 20 ] || rm -f "$old"
+    done < <(ls -1t "$state"/*.rec 2>/dev/null || true)
+  '';
+
   # Remove STALE nix-maid symlinks before activation redeploys them: a link
   # left behind by a renamed or removed scene/library must not dangle. Only
   # broken links go — deleting every link (the first version) pulled live
@@ -603,6 +650,20 @@ lib.mkIf pleamarEnabled (
               ExecStart = pleamarHealth;
             };
           };
+          pleamar-login-cpu = systemdUser.mkUserService {
+            description = "Record the shell's CPU counters a minute into the session";
+            presets = [ "oneshot" ];
+            # Its own timer fires it: the record has to land at a known session age, and a
+            # unit that slept to get there would sit in `activating` for that minute.
+            path = [
+              pkgs.coreutils # date, mkdir, ls, rm around the record file
+              pkgs.gawk # the boot clock out of /proc/uptime
+              pkgs.systemd # systemctl --user show, account and restart state
+            ];
+            serviceConfig = {
+              ExecStart = pleamarLoginCpuRecord;
+            };
+          };
           pleamar-cleanup-symlink = pleamarCleanup;
           pleamar-prune-static = pleamarPrune;
           pleamar-theme = systemdUser.mkUserService {
@@ -634,6 +695,24 @@ lib.mkIf pleamarEnabled (
         timerConfig = {
           OnBootSec = "5m";
           OnUnitActiveSec = "2m";
+        };
+      };
+
+      # One record per login, a minute in. The timer starts with the session target, so
+      # `OnActiveSec` counts from login rather than from boot; behind the login screen the
+      # condition holds it back, as it holds the scenes back.
+      systemd.user.timers.pleamar-login-cpu = {
+        description = "Timer: the shell's login-window CPU record";
+        wantedBy = [ "hyprland-session.target" ];
+        unitConfig.ConditionPathExists = loginPhaseGuard;
+        timerConfig = {
+          OnActiveSec = "1m";
+          # The default slack is a minute, which would put the "one minute" record anywhere
+          # in the second minute; the window is a rate, so its length has to be trustworthy.
+          AccuracySec = "1s";
+          Unit = "pleamar-login-cpu.service";
+          Persistent = false;
+          RemainAfterElapse = false;
         };
       };
 

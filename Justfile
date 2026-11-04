@@ -216,6 +216,16 @@ health:
 pleamar-geometry:
     bash "{{repo_root}}/scripts/dev/check-pleamar-geometry.sh"
 
+# What the shell spent on CPU at login, and what it spends now. `pleamar-login-cpu.timer`
+# records every scene's `systemctl show` counters a minute after the session target (they
+# are cumulative from each unit's start, so that window is the login burst); this renders
+# the record next to the live counters: CPU seconds, % of one core, RSS and peak, restarts,
+# and the rate since the record. `--json` for a script, `--watch SECONDS` for a live window —
+# the `@` keeps just's own command echo out of the stdout a pipe is reading.
+# Needs the live session; not part of `lint`.
+pleamar-cpu *ARGS:
+    @bash "{{repo_root}}/scripts/dev/pleamar-login-cpu.sh" {{ARGS}}
+
 # What each layer of this session calls a size: the panel's device px, the compositor's
 # scale, the logical px a scene draws its lengths in, and the shape of the wallpaper it
 # would be handed. Run it before writing a size into a scene, and when a log line's
