@@ -67,9 +67,9 @@
 #   | model        | weights                                  | ctx | VRAM  | tok/s |
 #   | ------------ | ---------------------------------------- | --- | ----- | ----- |
 #   | gemma4-26b   | Gemma-4-26B-A4B-abliterated IQ3_S (MoE)  | 32k | 16.2G | 30-35 |
-#   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      |  8k | 12.3G | 50    |
-#   | gpt-oss-20b  | gpt-oss-20b-abliterated MXFP4            | 32k | 15.8G | 75-85 |
-#   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 32k | 14.9G | 48    |
+#   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 32k | 12.6G | 45    |
+#   | gpt-oss-20b  | gpt-oss-20b-abliterated MXFP4            | 64k | 16.0G | 75-85 |
+#   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 64k | 15.2G | 55    |
 #   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 16k | 0G    | 22    |
 #
 # - `gpt-oss-20b-abliterated` needs `--reasoning-effort low`: at the default
@@ -84,6 +84,10 @@
 # - `tiny` (Spark-X2.6-4B abliterated, `cheap` alias) runs on 4 CPU threads
 #   with `-ngl 0`: zero VRAM, ~22 tok/s, so it does not compete with a game.
 #   The game guard skips it and still unloads every GPU model.
+# - Context is cheap on the hybrid-attention models: gpt-oss and Qwen3.6 went
+#   from 32k to 64k for <200 MB, with q8_0 KV and `-ub 1024` (prefill +29%).
+#   MTP speculation was tested and rejected: slower (46 vs 65 tok/s) and it
+#   answers wrong on quantized targets (llama.cpp issue #25618).
 # - The Gemma and gpt-oss commands start with `--fit off`: auto-fit reads the
 #   VRAM of the model being swapped out as free, offloads a few layers, and
 #   gemma4 then crashes on the first request.
