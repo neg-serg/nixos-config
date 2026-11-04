@@ -58,8 +58,8 @@
 #   this stack. Base files still lie on disk until they are deleted.
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
 #   unloads them at once when a game starts.
-# - Only models that fit the card are exposed here. `qwen3-vl-30b` (18 GB) and
-#   Flash-Next (111 GB, CPU-MoE) stay as manual `llama-server` units.
+# - Only models that fit the card are exposed here. `qwen3-vl-30b` (18 GB)
+#   stays as a manual `llama-server` unit.
 # - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path on gfx1201; `--cpu-moe`
 #   is a trap here (3-8 tok/s).
 # - Models (quant, measured on 2026-11-04):
@@ -112,7 +112,7 @@
 #
 # - Script: `packages/local-bin-desktop` (pic-ocr) (installed to `~/.local/bin`).
 # - Two engines: classic **tesseract** (eng+rus, fast) and local **neural** OCR via Ollama's
-#   `qwen3-vl:8b` (default; override with `PIC_OCR_NN_MODEL`). Neural images never leave the machine.
+#   `qwen3-vl-abliterated:8b` (default; override with `PIC_OCR_NN_MODEL`). Neural images never leave the machine.
 # - Usage: `pic-ocr [--engine=nn|tesseract|menu] IMAGE`; with no IMAGE it captures a region (`slurp`).
 #   Result goes to the clipboard + `notify-send`.
 # - Wired into the quickshell **ScreenshotToast**: after a Hyprland screenshot (`M4+SHIFT+R`,
@@ -177,20 +177,18 @@
 # - Index: `~/.local/share/rag-notes/index.sqlite` (sqlite + float32 vectors, numpy cosine).
 # - Pipeline: markdown chunking → `qwen3-embedding` (ollama, batched) → top-20 cosine → reranking
 #   `bge-reranker-v2-m3` (llama-server `--rerank`, starts on demand for search, ctx 8192).
-# - Answers: `--llm` via ollama; model — env `RAG_LLM_MODEL` (default `qwen3.5:27b`, set in
-#   modules/user/nix-maid/cli/envs.nix). Options (all already in the ollama store):
+# - Answers: `--llm` via ollama; model — env `RAG_LLM_MODEL` (default
+#   `qwen3-vl-abliterated:8b`, set in modules/user/nix-maid/cli/envs.nix).
+#   The censored base tags were removed from the store; what is left:
 #
-# | Model                          | Size                     | Role                                   |
-# | ------------------------------ | ------------------------ | -------------------------------------- |
-# | `qwen3.5:27b`                  | 17 GB                    | **default** — quality/speed/RU balance |
-# | `gemma4:12b`                   | 7.6 GB                   | fits VRAM, but ollama/ROCm is slow (~9 tok/s) |
-# | `gemma4:26b`                   | 17 GB                    | Gemma 4 quality, 2.5 tok/s (offload)   |
-# | `qwen3:32b`                    | 20 GB                    | fallback, slightly older               |
-# | `llama3.3:70b-instruct-q5_K_M` | 49 GB (CPU)              | max quality, ~2-4 tok/s                |
-# | `qwen3:235b-a22b`              | 142 GB (CPU/RAM MoE)     | heaviest, ~1 tok/s — for the future    |
-# | `qwen3.5:122b`                 | 76 GB (122B-A10B MoE Q4) | big new-gen, ~2-4 tok/s (downloaded)   |
+# | Model                                | Size  | Role                                  |
+# | ------------------------------------ | ----- | ------------------------------------- |
+# | `qwen3-vl-abliterated:8b`            | 8.0GB | **default** — uncensored, fully on GPU |
+# | `qwen3.8:27b`                        | 17GB  | kept for RU quality, spills to CPU    |
+# | `qwen3-vl:8b`                        | 6.1GB | base vision tag, kept for now         |
+# | `huihui_ai/qwen3-abliterated:30b-a3b`| 20GB  | uncensored, but 0.3 tok/s on 16GB     |
 #
-# One-off override: `RAG_LLM_MODEL=llama3.3:70b-instruct-q5_K_M rag-search search --llm "..."`
+# One-off override: `RAG_LLM_MODEL=qwen3.8:27b rag-search search --llm "..."`
 #
 #     rag-search index                    # reindex (~227 files, ~2400 chunks, ~5 min)
 #     rag-search search "how to set up tidal cycles" -n 5
@@ -199,12 +197,11 @@
 #
 # ## Layout on disk
 #
-# - `/zero/ai/ollama` — Ollama model store (437 GB, 23 models: qwen3 32b/235b-a22b, qwen3-coder 30b,
-#   qwen2.5-coder, qwen3-coder-next, deepcoder, devstral, qwq, gemma4, llama3.3 70b, qwen3.5 27b,
-#   qwen3-embedding, glm-ocr, abliterated variants, qwen3-vl/qwen2.5vl, …)
-# - `/zero/ai/llama` — llama.cpp GGUFs (~220 GB, Flash-Next alone is 104 GB):
-#   qwen3-vl vision, qwen3.8-27B, GLM-4.7-Flash, Gemma 4 26B Q3 / 12B QAT,
-#   gpt-oss-20b, Spark-X2.5, Flash-Next
+# - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
+#   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
+# - `/zero/ai/llama` — llama.cpp GGUFs (~120 GB): qwen3-vl 30b/8b, qwen3.8-27B,
+#   and the abliterated set (gpt-oss-20b, Gemma 26B IQ3, Gemma 26B MXFP4 for the
+#   24 GB box, Gemma E4B, Qwen3.5-4B, Qwen3.8-27B IQ3, Qwen3-VL-8B)
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by

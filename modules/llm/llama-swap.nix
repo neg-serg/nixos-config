@@ -22,8 +22,7 @@ let
 
   # Models live on the zero ZFS pool, never in the store (multi-GB files).
   # Only models that fit the 16 GB card are exposed here. qwen3-vl-30b (18 GB)
-  # and Flash-Next (111 GB, CPU-MoE) stay available as manual units
-  # (llama-server and llama-server-flash-next).
+  # stays available as a manual llama-server unit.
   modelDir = "/zero/ai/llama";
   llamaVulkan = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
 

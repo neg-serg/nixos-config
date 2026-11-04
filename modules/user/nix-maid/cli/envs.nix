@@ -37,20 +37,16 @@ in
     # LV2 plugin path: user plugins (~/.lv2: NAM neural amp modeler) + system dir
     LV2_PATH = "${homeDir}/.lv2:/run/current-system/sw/lib/lv2";
 
-    # RAG answer model (rag-search --llm). Options (all in the ollama store).
-    # 16GB VRAM (RX 9070 XT): models ≤ ~9GB run fully on GPU; ≥17GB spill to CPU.
-    #   qwen3:8b-q8_0                 (8.9GB) — fully on 16GB VRAM at 32k ctx, fast RU quality (default)
-    #   qwen3.5:27b                   (17GB)  — best RU quality, but >16GB → CPU offload, slow
-    #   gemma4:12b                    (7.6GB) — fits VRAM, but ollama/ROCm is slow (~9 tok/s)
-    #   gemma4:26b                    (17GB)  — Gemma 4 quality, 2.5 tok/s (layer offload)
-    #   qwen3:32b                     (20GB)  — solid, older gen (offload)
-    #   llama3.3:70b-instruct-q5_K_M  (49GB, CPU) — max quality, slow (~2-4 tok/s)
-    #   qwen3:235b-a22b               (142GB, CPU/RAM MoE) — heaviest, ~1 tok/s (future)
-    #   qwen3.5:122b                  (76GB, 122B-A10B MoE Q4_K_M) — big new-gen, strong but slow (downloaded)
-    # llama-swap (127.0.0.1:9292) serves the same Gemma 4 models 3-10x faster
-    # on Vulkan; use it for interactive chat instead of the ollama tags.
+    # RAG answer model (rag-search --llm) and neural OCR (pic-ocr). Both use
+    # abliterated models imported into ollama; the censored base tags are gone.
+    # 16GB VRAM (RX 9070 XT): models <= ~9GB run fully on GPU, bigger ones spill.
+    #   qwen3-vl-abliterated:8b  (8.0GB) — uncensored, fully on GPU, 25 tok/s (default)
+    #   qwen3.8:27b              (17GB)  — kept for RU quality, spills to CPU
+    # The huihui_ai abliterated 30B/35B MoE tags spill badly on 16GB (0.3 tok/s).
+    # llama-swap (127.0.0.1:9292) is the fast path for interactive chat.
     # Per-run override: RAG_LLM_MODEL=<model> rag-search search --llm "..."
-    RAG_LLM_MODEL = "qwen3:8b-q8_0";
+    RAG_LLM_MODEL = "qwen3-vl-abliterated:8b";
+    PIC_OCR_NN_MODEL = "qwen3-vl-abliterated:8b";
     __GL_VRR_ALLOWED = "1";
     GRIM_DEFAULT_DIR = "${homeDir}/pic/shots";
     LIBSEAT_BACKEND = "logind";
