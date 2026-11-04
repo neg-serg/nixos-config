@@ -452,6 +452,10 @@ end
 local CACHE = "colours.json"
 local colour_reader = nil
 local colour_gen = 0
+-- Whether the whole folder has been walked already. A colour search used to start the walk again
+-- every time the previous one had finished — 489 matugen dry runs for an answer the cache in
+-- `colours.json` already held. A `reload` (the folder may have changed) is what asks for a new one.
+local colour_done = false
 
 local function cache_load()
     local ok, got = pcall(function() return sys.ask("files.read", CACHE, "json") end)
@@ -488,7 +492,7 @@ local function refilter()
 end
 
 local function colour_index_start()
-    if colour_reader then return end
+    if colour_reader or colour_done then return end
     colour_gen = colour_gen + 1
     local mine = colour_gen
     local lines = 0
@@ -500,6 +504,7 @@ local function colour_index_start()
     end, function(_, code)
         if mine ~= colour_gen then return end
         colour_reader = nil
+        colour_done = true
         refilter()
         cache_save()
         if code ~= 0 then log("picker: the colour index exited with " .. tostring(code)) end
@@ -719,6 +724,8 @@ on("text:query", function()
 end)
 
 on("reload", function()
+    -- The folder may have changed under the deck: the colour index is stale with it.
+    colour_done = false
     list()
 end)
 
