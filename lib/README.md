@@ -54,6 +54,10 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
   every path resolves to a declared `features.<path>.enable` option (a typo or a missing `.enable`
   silently reads false); wired into `flake/checks.nix` as the `feature-flags` check against the
   feature option tree evaluated with `modules/core` + `modules/features`.
+- `disabled-modules-tests.nix` — eval-only guard over `modules/system/disabled-modules.nix`: every
+  active entry must resolve under the pinned `nixos/modules` (the module system silently ignores a
+  path that matches no module key) and no entry may appear twice; wired into `flake/checks.nix` as
+  the `disabled-modules` check.
 - `caches.nix` — shared binary-cache `trusted-public-keys` (official cache plus community mirrors);
   imported by `modules/nix/settings.nix`.
 - `python-packages.nix` — shared Python package list; single source for the system Python env

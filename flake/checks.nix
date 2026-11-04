@@ -62,6 +62,24 @@ let
     else
       builtins.throw "${name} check failures: ${t.report}";
 
+  # Shared shape of the script gates below: bash and coreutils are always in
+  # the environment, `deps` adds what the script itself shells out to, and the
+  # caller splices the script body (it still owns any tree copies it needs).
+  mkScriptCheck =
+    name: deps: script:
+    pkgs.runCommand "check-${name}"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+        ]
+        ++ deps;
+      }
+      ''
+        ${script}
+        touch $out
+      '';
+
 in
 {
   # ── Module-level checks ──────────────────────────────────────────
@@ -100,6 +118,17 @@ in
   # real trantor values with fzf itself.
 
   "fzf-opts-guard" = mkOkCheck "fzf-opts-guard" (import ../lib/fzf-opts-tests.nix);
+
+  # ── disabledModules guard ─────────────────────────────────────────
+  # nixpkgs matches an entry against module keys as a string and silently
+  # ignores a miss, so a module that moved upstream stops being disabled while
+  # the list still looks intentional. The suite resolves every entry against
+  # the pinned nixpkgs (and rejects duplicates); see
+  # lib/disabled-modules-tests.nix.
+
+  "disabled-modules" = mkOkCheck "disabled-modules" (
+    import ../lib/disabled-modules-tests.nix { inherit nixpkgs; }
+  );
 
   # ── neg-helpers by-name resolver guard ─────────────────────────────
   # neg.tree / neg.find back the "address a file by name" convention, and
@@ -187,22 +216,12 @@ in
   # each carries its own branch, and a dirty tree is not removed without
   # --force. It runs against a throwaway repository in $TMPDIR.
 
-  "dsh-worktree-guard" =
-    pkgs.runCommand "check-dsh-worktree"
-      {
-        nativeBuildInputs = [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.git
-        ];
-      }
-      ''
-        export HOME="$TMPDIR/home"
-        mkdir -p "$HOME"
-        # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
-        bash ${../scripts/dev}/check-dsh-worktree.sh ${pkgs.neg.local-bin-tools}/bin/dsh-worktree
-        touch $out
-      '';
+  "dsh-worktree-guard" = mkScriptCheck "dsh-worktree" [ pkgs.git ] ''
+    export HOME="$TMPDIR/home"
+    mkdir -p "$HOME"
+    # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
+    bash ${../scripts/dev}/check-dsh-worktree.sh ${pkgs.neg.local-bin-tools}/bin/dsh-worktree
+  '';
 
   # ── dsh-statusline guard ───────────────────────────────────────────
   # packages/local-bin-system (dsh-statusline) is the content half of the status
@@ -211,23 +230,12 @@ in
   # worktree naming, DSH_STATUSLINE_PARTS, and that a missing field degrades
   # instead of printing an empty line.
 
-  "dsh-statusline-guard" =
-    pkgs.runCommand "check-dsh-statusline"
-      {
-        nativeBuildInputs = [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.git
-          pkgs.jq
-        ];
-      }
-      ''
-        export HOME="$TMPDIR/home"
-        mkdir -p "$HOME"
-        # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
-        bash ${../scripts/dev}/check-dsh-statusline.sh ${pkgs.neg.local-bin-system}/bin/dsh-statusline
-        touch $out
-      '';
+  "dsh-statusline-guard" = mkScriptCheck "dsh-statusline" [ pkgs.git pkgs.jq ] ''
+    export HOME="$TMPDIR/home"
+    mkdir -p "$HOME"
+    # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
+    bash ${../scripts/dev}/check-dsh-statusline.sh ${pkgs.neg.local-bin-system}/bin/dsh-statusline
+  '';
 
   # ── nix-maid app directory guard ───────────────────────────────────
   # modules/user/nix-maid/apps/default.nix imports sibling directories via
@@ -238,22 +246,12 @@ in
   # A hand-rolled builtins.readDir filter would import every entry and break
   # evaluation with "Path '.../apps/<name>/default.nix' does not exist".
 
-  "nix-maid-app-dirs-guard" =
-    pkgs.runCommand "check-nix-maid-app-dirs"
-      {
-        nativeBuildInputs = [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.gnugrep
-        ];
-      }
-      ''
-        # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
-        bash ${../scripts/dev}/check-nix-maid-app-dirs.sh \
-          ${../modules/user/nix-maid/apps} \
-          ${../lib/neg-helpers.nix}
-        touch $out
-      '';
+  "nix-maid-app-dirs-guard" = mkScriptCheck "nix-maid-app-dirs" [ pkgs.gnugrep ] ''
+    # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
+    bash ${../scripts/dev}/check-nix-maid-app-dirs.sh \
+      ${../modules/user/nix-maid/apps} \
+      ${../lib/neg-helpers.nix}
+  '';
 
   # ── Relative-path guard ────────────────────────────────────────────
   # modules/, hosts/ and packages/ reach repo files through config.lib.neg.*,
@@ -264,61 +262,30 @@ in
   # exception only via a `# allow-relative: <reason>` /
   # `# allow-relative-file: <reason>` marker.
 
-  "relative-paths-guard" =
-    pkgs.runCommand "check-relative-paths"
-      {
-        nativeBuildInputs = [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.findutils
-          pkgs.gawk
-        ];
-      }
-      ''
-        mkdir -p "$TMPDIR/repo"
-        cp -r ${../modules} "$TMPDIR/repo/modules"
-        cp -r ${../hosts} "$TMPDIR/repo/hosts"
-        cp -r ${../packages} "$TMPDIR/repo/packages"
-        bash ${../scripts/dev}/check-relative-paths.sh "$TMPDIR/repo"
-        touch $out
-      '';
+  "relative-paths-guard" = mkScriptCheck "relative-paths" [ pkgs.findutils pkgs.gawk ] ''
+    mkdir -p "$TMPDIR/repo"
+    cp -r ${../modules} "$TMPDIR/repo/modules"
+    cp -r ${../hosts} "$TMPDIR/repo/hosts"
+    cp -r ${../packages} "$TMPDIR/repo/packages"
+    bash ${../scripts/dev}/check-relative-paths.sh "$TMPDIR/repo"
+  '';
 
   # ── Text gates from `just lint`, promoted into the flake ────────────
   # Same scripts the lint recipe runs; wired here so `nix flake check`
   # (the CI entry point) covers them too instead of relying on just.
   # Both cd into the root they are given and only need grep.
 
-  "package-annotations-guard" =
-    pkgs.runCommand "check-package-annotations"
-      {
-        nativeBuildInputs = [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.gnugrep
-        ];
-      }
-      ''
-        mkdir -p "$TMPDIR/repo"
-        cp -r ${../modules} "$TMPDIR/repo/modules"
-        bash ${../scripts/dev}/check-package-annotations.sh "$TMPDIR/repo"
-        touch $out
-      '';
+  "package-annotations-guard" = mkScriptCheck "package-annotations" [ pkgs.gnugrep ] ''
+    mkdir -p "$TMPDIR/repo"
+    cp -r ${../modules} "$TMPDIR/repo/modules"
+    bash ${../scripts/dev}/check-package-annotations.sh "$TMPDIR/repo"
+  '';
 
-  "hyprland-vars-guard" =
-    pkgs.runCommand "check-hyprland-vars"
-      {
-        nativeBuildInputs = [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.gnugrep
-        ];
-      }
-      ''
-        mkdir -p "$TMPDIR/repo/files/gui"
-        cp -r ${../files/gui/hypr} "$TMPDIR/repo/files/gui/hypr"
-        bash ${../scripts/dev}/check-hyprland-vars.sh "$TMPDIR/repo"
-        touch $out
-      '';
+  "hyprland-vars-guard" = mkScriptCheck "hyprland-vars" [ pkgs.gnugrep ] ''
+    mkdir -p "$TMPDIR/repo/files/gui"
+    cp -r ${../files/gui/hypr} "$TMPDIR/repo/files/gui/hypr"
+    bash ${../scripts/dev}/check-hyprland-vars.sh "$TMPDIR/repo"
+  '';
 
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "trantor"
