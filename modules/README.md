@@ -5,7 +5,7 @@ auto-imports all sibling `.nix` files and module subdirectories via `neg.importD
 
 ```
 modules/
-├── default.nix          # top-level: imports all domains (manual list with domainFilter)
+├── default.nix          # top-level: imports all domains (list derived from this tree)
 ├── features/            # feature flags (auto-import)
 ├── profiles/            # host profiles: feature presets + system toggles (auto-import)
 └── <domain>/            # one directory per domain
@@ -79,7 +79,8 @@ User config management — `apps/`, `cli/`, `gui/`, `web/`, `sys/`, `fun/`.
 
 1. Create a `.nix` file or subdirectory with `default.nix` inside the relevant domain.
 1. That's it — the domain's `default.nix` auto-imports everything via `neg.importDir`.
-1. For a new top-level domain, add it to `modules/default.nix`.
+1. For a new top-level domain, create the directory with a `default.nix` — the domain list is
+   derived from the tree in `flake/nixos.nix`, so there is no list to update.
 
 ## Import conventions
 
