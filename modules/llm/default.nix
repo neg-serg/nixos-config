@@ -51,39 +51,35 @@
 # ### llama-swap (one OpenAI-compatible endpoint, 127.0.0.1:9292)
 #
 # - Module: `modules/llm/llama-swap.nix`; the `model` field selects a backend,
-#   one model is resident at a time (16 GB VRAM, ~3.5 GB of it is the desktop).
+#   one model is resident at a time (16 GB VRAM, ~4 GB of it is the desktop).
+# - Every model the router serves is uncensored: abliterated Gemma 4 26B
+#   (i1/IQ3_S), Qwen3-VL-8B and gpt-oss-20b. The base Gemma/Qwen weights and
+#   the censored ollama peers were removed — aligned models refuse too much for
+#   this stack. Base files still lie on disk until they are deleted.
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
 #   unloads them at once when a game starts.
 # - Only models that fit the card are exposed here. `qwen3-vl-30b` (18 GB) and
-#   Flash-Next (111 GB, CPU-MoE) were removed from the router — they stay
-#   available as manual `llama-server` / `llama-server-flash-next` units.
-# - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path for Gemma 4 on gfx1201:
-#   the same weights run 3-10x faster than through ollama's ROCm build, and
-#   `--cpu-moe` is a trap here (3-8 tok/s, expert weights become the bottleneck).
-# - Models (quant, measured VRAM/speed on 2026-11-04):
+#   Flash-Next (111 GB, CPU-MoE) stay as manual `llama-server` units.
+# - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path on gfx1201; `--cpu-moe`
+#   is a trap here (3-8 tok/s).
+# - Models (quant, measured on 2026-11-04):
 #
 #   | model        | weights                                  | ctx | VRAM  | tok/s |
 #   | ------------ | ---------------------------------------- | --- | ----- | ----- |
-#   | gemma4-26b   | gemma-4-26B-A4B-it-UD-Q3_K_XL (MoE)      | 64k | 16.0G | 30-40 |
-#   | gemma4-12b   | gemma-4-12B-it-qat-UD-Q4_K_XL + mmproj   | 32k | 11.3G | 29    |
+#   | gemma4-26b   | Gemma-4-26B-A4B-abliterated IQ3_S (MoE)  | 32k | 16.2G | 30-35 |
+#   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      |  8k | 12.3G | 50    |
 #   | gpt-oss-20b  | gpt-oss-20b-abliterated MXFP4            | 32k | 15.8G | 75-85 |
 #
 # - `gpt-oss-20b-abliterated` needs `--reasoning-effort low`: at the default
 #   effort it spends the whole token budget on reasoning and returns empty
 #   content. With low effort it keeps tools, JSON and arithmetic intact.
-#   It is the uncensored tier (`uncensored` alias).
-# - `gemma4-26b` runs Q3_K_XL, not the QAT Q4: the desktop session holds
-#   ~3.5 GB, so Q4 (13.2 GiB of weights) has no room left after a swap and the
-#   Vulkan backend dies on the first request; Q3 spills ~1 GB into GTT and
-#   stays up. It is text-only on purpose: the 1.2 GB projector does not fit;
-#   `gemma4-12b` takes images.
-# - The Gemma 4 and gpt-oss commands start with `--fit off`. Auto-fit reads
-#   the VRAM of the model being swapped out as free, offloads a few layers, and
-#   gemma4 then crashes on the first request; a deterministic full load either
-#   fits or fails loudly.
-# - The ollama copies (`gemma4:26b` 17 GB, `gemma4:12b` 7.6 GB) stay for
-#   `rag-search`, but their ROCm path is slow (2.5 / 8.8 tok/s); for interactive
-#   work use the llama-swap names above.
+# - `gemma4-26b` is text-only (the projector does not fit next to 12.2 GB of
+#   weights); `qwen3-vl-8b` serves images and is the `vision` alias.
+# - The Gemma and gpt-oss commands start with `--fit off`: auto-fit reads the
+#   VRAM of the model being swapped out as free, offloads a few layers, and
+#   gemma4 then crashes on the first request.
+# - The ollama store still holds base models for `rag-search`; the router does
+#   not expose them.
 #
 # ### vLLM (OpenAI-compatible server, ROCm)
 #
