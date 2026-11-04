@@ -1,19 +1,24 @@
-// pages/card.plm — the login card: glass, avatar, identity, field, status.
+// pages/card.plm — the login card: glass, portrait, identity, field, status.
 //
 // The card of LockContent.qml, drawn with what the language has: a native glass
-// slab (box { glass: 100% … }) in place of shaders/glass_card.frag, an image
+// glass (`body { glass: 100% }`) in place of shaders/glass_card.frag, an image
 // rounded by a clip, and the password `input` — declared here, inside the
 // surface, because an input inside a component would be renamed by the copies
 // (`password#Card1`) and the logic could not read `text.password`.
 //
+// The composition is the port's own. The reference stacked a square avatar, one
+// identity line and a field; here the card is a taller plate with a round
+// portrait, the name and its machine on two lines, a hairline under them, and a
+// footer pill that carries the layout — the vertical rhythm is one column, so
+// the eye walks from the face to the field without a jump.
+//
 // Dropped from LockContent.qml, and why (README.md has the long form):
 //   · the five power buttons (screen off, media pause, suspend, reboot, power
-//     off) and the keyboard-layout chip: they need `run: "systemctl"` /
-//     `run: "hyprctl"` and the two-step agent policy, so they belong to the
-//     human-gated cutover, not to this scene;
-//   · the Caps Lock warning (the kernel exposes it as an LED, and the scene has
-//     no business reading /sys), the fingerprint hint, the hover tooltips and
-//     the user/session selector (greeter mode only);
+//     off): they need `run: "systemctl"` / `run: "hyprctl"` and the two-step
+//     agent policy, so they belong to the human-gated cutover, not to this scene;
+//   · the Caps Lock warning is the status line's (it is drawn, the reading of
+//     the LED stays in the keyboard worker), the fingerprint hint, the hover
+//     tooltips and the user/session selector (greeter mode only);
 //   · the caret is the input's own.
 //
 // The failure is visible three times over: the tint warms, the nudge plays and
@@ -29,6 +34,14 @@
 
 part Card {
 
+    // The plate's two stops and its frame, worked out once: a gradient's colours are names,
+    // not calls (the compiler reads them where it lays the gradient down), and the refusal
+    // tints a veil of its own instead of the stops, so the alarm can go to zero without a
+    // rewrite of the plate.
+    let plate_top = mix(skin.surface, skin.ink, 8%)
+    let plate_foot = mix(skin.surface, skin.coal, 38%)
+    let card_edge = mix(skin.coal, skin.ink, 14%)
+
     group card_block {
         // Centre of the card; `shake` is the refusal nudge (logical px), the
         // entrance slides up 18 px. The `scale` is `scaleNow` for this copy.
@@ -36,81 +49,119 @@ part Card {
         scale: ui_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)
         opacity: appear
 
-        // ------------------------------------------------------- the glass
+        // ------***---------------- the glass
         // Legacy glassTint #c20a0e14 — greeter.cardColor at lock.card.alpha — with the plate
         // taken from the wallpaper: `skin.surface` is the theme's colors.surfaceVariant, the
-        // role a raised surface carries, so a new wallpaper repaints the card. The refusal still
-        // warms it with `lock.danger`, which theme.plm has no role for. No frame: the glass
-        // paints its own rim; the drop shadow is a body's (`shadow:` is not a box property).
+        // role a raised surface carries, so a new wallpaper repaints the card. The gradient is
+        // a vertical falloff inside the plate (the raised role at the top edge, the shallowest
+        // mix of it with the background at the foot), which is what keeps a 480 px slab from
+        // reading as flat. A frame is 1 px of `skin.ink` mixed into `skin.coal`, the same
+        // hairline the shell's capsules wear; the glass paints its own rim above it.
         body {
-            color: mix(skin.surface, lock.danger, alarm * 0.25)
+            gradient: 0, -186 to 0, 186, plate_top, plate_foot
             opacity: lock.card.alpha
             glass: 100%
             refraction: lock.card.refraction
             dispersion: lock.card.dispersion
             frost: lock.glass.frost
             shine: pointer
-            shadow: 0, 10, 28, 45%
-            box { from: -240, -185; size: 480, 370; corner: 6 }
+            rim: 10%
+            border: 1, card_edge
+            shadow: 0, 22, 60, 55%
+            box { from: -240, -186; size: 480, 372; corner: 20 }
+        }
+        // The refusal's warming, as a veil over the plate: the palette has no error role, so
+        // `lock.danger` is the frozen greeter token and it is laid on, not mixed into the
+        // gradient (whose stops cannot take a call). At `alarm` 0 it paints nothing at all.
+        box alarm_veil {
+            from: -240, -186; size: 480, 372; corner: 20
+            color: lock.danger; opacity: alarm * 12%
         }
 
-        // ------------------------------------------------------- the avatar
-        // Rounded square, photo clipped inside, ring over it; the monogram is
-        // the fallback (LockContent.qml tries theme avatar → ~/.face →
-        // monogram; the integration publishes one path, see README.md).
+        // ------***---------------- the portrait
+        // Round, not the reference's rounded square: a face is looked at through a circle, and
+        // the ring it leaves is the one place the wallpaper palette can glow. The halo is the
+        // accent as a soft shadow behind the disc (no fill of its own, so the picture sits on
+        // light rather than on a plate); the monogram is the fallback when no avatar path is
+        // published (LockContent.qml tried theme avatar → ~/.face → monogram; the integration
+        // publishes one path, see README.md).
         group avatar_block {
-            move: 0, -103
+            move: 0, -110
 
+            body halo {
+                color: skin.accent; opacity: 30%
+                shadow: 0, 0, 46, 55%, skin.accent
+                box { from: -60, -60; size: 120, 120; corner: 60 }
+            }
             group portrait {
-                clip inset 0 box { from: -52, -52; size: 104, 104; corner: 16 }
-                image face { at: -52, -52; size: 104, 104; show: avatar_ok }
+                clip inset 0 ellipse { at: 0, 0; radius: 54 }
+                image face { at: -54, -54; size: 108, 108; fit: cover; show: avatar_ok }
             }
             box avatar_fallback {
-                from: -52, -52; size: 104, 104; corner: 16
-                color: skin.surface; opacity: 30%; show: not avatar_ok
+                from: -54, -54; size: 108, 108; corner: 54
+                color: mix(skin.surface, skin.coal, 45%); opacity: 90%; show: not avatar_ok
             }
             text monogram {
-                at: 0, 0; anchor: center; size: 46; weight: 500; color: skin.ink
+                // Two px down: a capital's ink sits above the centre of its line box (the
+                // descender is empty here), which measured 2 design px high in the ring.
+                at: 0, 2; anchor: center; size: 44; weight: 500; color: skin.ink
                 family: "Iosevka"; show: not avatar_ok
             }
-            // The ring is the greeter's white rim (`lock.edge`): the wallpaper palette carries no
-            // outline role, so the tone stays frozen and only the refusal recolours it.
+            // Two rims, the inner one carrying the wallpaper's accent: the greeter's own white
+            // outline (`lock.edge`) stays as the outer, softer ring, so the portrait keeps the
+            // composition's silhouette even where the palette's accent is close to the picture.
+            box ring_soft {
+                from: -59, -59; size: 118, 118; corner: 59
+                stroke: 1; color: lock.edge; opacity: 14%
+            }
             box avatar_ring {
-                from: -52, -52; size: 104, 104; corner: 16
-                stroke: 2; color: mix(lock.edge, lock.danger, alarm)
-                opacity: if(failed, 80%, lock.edge.alpha)
+                from: -55, -55; size: 110, 110; corner: 55
+                stroke: 2; color: mix(mix(skin.ink, skin.accent, 45%), lock.danger, alarm)
+                opacity: if(failed, 85%, 60%)
             }
         }
 
-        // --------------------------------------------------- user@host line
-        // Its top, not its centre: a `row` takes `at:` as its top-left corner and
-        // `anchor: center` only puts it across the card. So this is the reference's
-        // 150 design px under the card's top edge (-185 + 150 = -35), not a guess at a
-        // centre that would move with the row's height.
-        row identity { at: 0, -35; anchor: center; gap: 0
-            text user { size: 22; color: skin.ink; family: "Iosevka" }
-            text host { size: 22; color: skin.ink.dim; opacity: 60%; family: "Iosevka" }
+        // ------***------------ the identity
+        // Two lines instead of the reference's `user@host` row: the name is the one thing on a
+        // lock screen that is certainly yours, so it takes the reading size, and the machine goes
+        // under it in the theme's secondary ink. Both are `anchor: center` on the card's axis;
+        // the hairline under them separates the person from the way in.
+        text user {
+            at: 0, -32; anchor: center; size: 22; weight: 500
+            color: skin.ink; family: "Iosevka"
+            shadow: 0, 1, 2, if(skin.light, 0%, 45%), skin.coal
+        }
+        text host {
+            at: 0, -8; anchor: center; size: 12; color: skin.ink.dim; opacity: 70%
+            family: "Iosevka"; shadow: 0, 1, 2, if(skin.light, 0%, 40%), skin.coal
+        }
+        box seam_line {
+            from: -118, 8; size: 236, 1; color: skin.ink; opacity: 10%
         }
 
-        // ------------------------------------------------------- the field
-        // A glass well; the prompt glyph and the input sit on it. `skin.coal` is the theme's
+        // ------***---------------- the field
+        // A glass well; the padlock and the input sit on it. `skin.coal` is the theme's
         // colors.background, so the well sits below the card's plate in either theme — dark on a
-        // dark wallpaper, light on a light one. No frame: the well's own rim and the caret say
-        // "type here".
-        box field_bg {
-            from: -192, 12; size: 384, 58; corner: 8
-            color: skin.coal; opacity: 55%
+        // dark wallpaper, light on a light one. The 1 px frame is the same mix as the card's,
+        // which is what makes the well read as cut into the plate rather than laid on it.
+        body field_bg {
+            color: skin.coal; opacity: 62%
             glass: 100%; refraction: lock.field.refraction; frost: lock.glass.frost
+            border: 1, mix(skin.coal, skin.ink, 12%)
+            box { from: -192, 24; size: 384, 58; corner: 14 }
         }
-        text ">" {
-            at: -174, 41; anchor: left center; size: 20; color: skin.accent
-            opacity: if(busy, 90%, 35%); family: "Iosevka"
+        // The padlock is the shell's own `Icons.lock` (§ icons.plm): a symbolic glyph tinted with
+        // the palette's accent, brightening while PAM is running. The reference drew a text
+        // prompt (`>`); a lock is the one hint this field needs, and it costs one image.
+        image Icons.lock {
+            at: -172, 43; size: 20, 20; tint: skin.accent
+            opacity: if(busy, 100%, 65%)
         }
         // The password field: `secret: true` and `agent: no` are the policy
         // (INTERFACES.md §8.1, frozen label `Password`). The logic is the only
         // reader of `text.password`; drawing never shows it.
         input password {
-            at: -150, 30; width: 330; size: 22; weight: 500; color: skin.ink
+            at: -146, 42; width: 318; size: 21; weight: 500; color: skin.ink
             family: "Iosevka"; selection: skin.accent
             secret: true; label: "Password"; agent: no
             placeholder: "type the password"
@@ -118,42 +169,70 @@ part Card {
         // PAM is running: one accent line filling along the bottom edge of the
         // field (the legacy sweeping bar, as a fill — a sweep needs a loop).
         box field_progress {
-            from: -177, 65; size: 354 * busy_progress, 2; corner: 1
+            from: -177, 80; size: 354 * busy_progress, 2; corner: 1
             color: skin.accent; show: busy
         }
 
-        // ------------------------------------------- the keyboard-layout chip
-        // The reference's `layoutChip` (`LockContent.qml:964-990`): a pill under the field, on the
-        // left, saying which layout the next keystroke will type in — the one thing a lock screen
-        // must not leave to be discovered after a failed password. A press asks for the next layout
-        // (the compositor switches it; the worker reports the new one a moment later).
-        group chip {
-            show: kb_on
-            box chip_bg {
-                from: -192, 118; size: 90, 32; corner: 16
-                color: skin.ink; opacity: 8%
-            }
-            // 90 design px: "layout: ru" is ten glyphs of Iosevka at 15 (≈6.4 each) plus the
-            // pill's 13 px of padding on each side. The reference sized the pill to its label
-            // (`implicitWidth`), which a `box` cannot do; 90 fits a three-letter code too.
-            text "layout: {kb_layout}" {
-                at: -179, 134; anchor: left center; size: 15; family: "Iosevka"; color: skin.ink.dim
-            }
-            zone box chip_hit {
-                from: -192, 118; size: 90, 32; corner: 16; cursor: pointer
-                label: "Keyboard layout {kb_layout}"; role: button
-            }
-            on press chip_hit { emit toggle_layout }
-        }
-
-        // ---------------------------------------------------- the status line
+        // ------***------------- the status line
         // Keeps its place whether or not it says something: the card never
         // grows a row on a typo and never moves the field. It is the reference's one line under
         // the field (`LockContent.qml:244-253`): the failure first, then Caps Lock, then a note —
         // and the first two are warnings, so the line wears the danger colour for both.
         text status {
-            at: 0, 92; anchor: center; size: 16; family: "Iosevka"
+            at: 0, 104; anchor: center; size: 14; family: "Iosevka"
             color: if(status_danger, lock.danger, skin.ink.dim)
+            shadow: 0, 1, 2, if(skin.light, 0%, 55%), skin.coal
+        }
+
+        // ------***---- the keyboard-layout chip
+        // The reference's `layoutChip` (`LockContent.qml:964-990`): a pill under the field,
+        // saying which layout the next keystroke will type in — the one thing a lock screen
+        // must not leave to be discovered after a failed password. A press asks for the next
+        // layout (the compositor switches it; the worker reports the new one a moment later).
+        //
+        // It is the card's one control, so it is drawn as one and not as a caption with a
+        // rounded background: a glass pill of the field's family (the same hairline, its own
+        // refraction), the keyboard mark in the accent the padlock wears and the code on the
+        // reading size, centred in the footer. The mark carries the meaning, so no word is
+        // written beside it. Under the pointer the rim and the mark come up and a press
+        // ripples the glass, so the pill answers a hand instead of only describing a state.
+        group chip {
+            show: kb_on
+            body chip_bg {
+                color: mix(skin.coal, skin.surface, 45%)
+                opacity: 58% + 8% * chip_hit.hover
+                glass: 100%; refraction: 45%; frost: lock.glass.frost
+                rim: 8% + 18% * chip_hit.hover
+                ripple: 100%
+                border: 1, mix(skin.coal, skin.ink, 16%)
+                shadow: 0, 12, 30, 40%
+                box { from: -58, 124; size: 116, 40; corner: 20 }
+            }
+            // The row does the arithmetic: one gap, then the sum of the two children, so the pair
+            // stays centred around the pill's middle and a three-letter layout only moves the
+            // reading, not the composition.
+            row chip_row {
+                // 142, not the pill's middle: a row centres its children's line boxes, and the
+                // lowercase code's ink sits below that centre — 2 px is what put the ink on the
+                // pill's own middle.
+                at: 0, 142; anchor: center middle; gap: 9
+                // The mark sits in a cell of its own so it can be nudged down: a row puts its
+                // children on one line by their tops, and the code's box is taller than the
+                // picture — without the nudge the keyboard hangs 4 design px above the reading.
+                group mark {
+                    size: 20, 20
+                    image Icons.keyboard {
+                        at: 0, 4; size: 20, 20; tint: skin.accent
+                        opacity: 75% + 25% * chip_hit.hover
+                    }
+                }
+                text "{kb_layout}" { size: 19; weight: 500; color: skin.ink }
+            }
+            zone box chip_hit {
+                from: -58, 124; size: 116, 40; corner: 20; cursor: pointer
+                label: "Keyboard layout {kb_layout}"; role: button
+            }
+            on press chip_hit { emit toggle_layout }
         }
     }
 

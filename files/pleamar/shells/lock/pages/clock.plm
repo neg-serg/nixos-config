@@ -4,10 +4,10 @@
 // real glass that refracts the wallpaper behind it, four cathodes per tube and
 // a discharge around the lit numeral). None of that survives a scene shader —
 // no texture input, two colours, no per-cathode geometry — so the port keeps
-// the *reading*: the time huge and warm-lit, the date and greeting under it.
-// What stands in for the tube glass is a native glass slab (`box { glass: }`),
-// which bends the wallpaper the scene painted under it; the numeral's light is
-// the text's shadow halo. README.md records the drop.
+// the *reading*: the time huge and warm-lit, and under it the date and the greeting
+// on the same glass. What stands in for the tube glass is a native glass plate (a
+// `body` with `glass:`), which bends the wallpaper the scene painted under it and
+// carries the numerals' lit halo. README.md records the drop.
 //
 // The whole block is one group and its own origin is the block's TOP edge: `move`
 // puts that edge 11 % down the monitor — the reference's `anchors.topMargin: height *
@@ -15,11 +15,17 @@
 // measured down from it. Its `scale` is `scaleNow` (the per-monitor fit times the
 // user's uiScale), so every length inside is a design pixel.
 //
+// On the plate, under the accent rule, the date and the greeting share ONE row
+// ("Thu 05 Nov · Good night"): the reference stacked them as two centred lines,
+// which at 20 and 19 px read as one two-line sentence that happened to wrap. A
+// single row with a separator dot is the same two facts, and the rule over it keeps
+// the clock's block from ending on a hard edge.
+//
 // Colours follow the wallpaper, as on the card: the numerals and the greetings are `skin.ink`,
 // the date `skin.ink.dim`, the discharge halo `skin.accent` and the date's shadow `skin.coal`.
-// The tube glass keeps the greeter's `lock.widget` (#CEFFFF at 15 %): theme.plm carries no wash
-// or highlight role, so that tint stays frozen, and it is the numerals' ink that carries the
-// reading when a light wallpaper turns the whole face light.
+// The tube glass mixes the greeter's `lock.widget` (#CEFFFF) into the palette's darkest tone:
+// theme.plm carries no wash role, so the cyan comes from the frozen token and the depth from the
+// wallpaper — a 15 % wash with nothing under it disappears over a bright picture.
 
 part Clock {
 
@@ -27,35 +33,56 @@ part Clock {
         move: screen.width / 2, screen.height * 0.11
         scale: ui_scale * clamp(min(screen.width / design.width, screen.height / design.height), fit.min, fit.max)
 
-        // The tube row, approximated: a lit glass slab. `glass` bends the
-        // wallpaper painted under it; the numerals are drawn on top. The tint is the greeter's
-        // `lock.widget` wash and stays frozen (theme.plm has no wash role, see the header).
-        box tube_glass {
-            from: -272, 0; size: 544, 132; corner: 22
-            color: lock.widget
-            opacity: lock.widget.alpha
+        // The clock is one object: one glass plate the width of the card, the reading on it, the
+        // accent rule and then the date and the greeting. The greeter's own wash at 15 % is a
+        // tint with nothing under it, and a white numeral over a white sky cannot be read — so
+        // the wash is mixed into the palette's darkest role and drawn at a strength where its
+        // glass actually runs (below 30 % of glass times opacity nothing is bent, blurred or
+        // smoked). In the light theme the ink is dark, so the plate is milky. The 1 px frame is
+        // the shell's hairline and `rim` its lit edge: without a boundary a lit plate reads as
+        // a smudge.
+        body tube_glass {
+            color: mix(skin.coal, lock.widget, 40%)
+            opacity: 64%
             glass: 100%
             refraction: lock.clock.refraction
             frost: lock.glass.frost
+            milk: if(skin.light, 35%, 0%)
+            rim: 12%
+            border: 1, mix(skin.ink, skin.coal, 86%)
+            box { from: -240, 0; size: 480, 196; corner: 20 }
         }
 
+        // The numeral is the brightest thing on the screen: the accent halo under it is the
+        // tube's discharge, kept as a shadow so the glyph's own edge stays crisp. Its cut is
+        // measured, not guessed: a numeral's ink ends at the baseline, so centring the line box
+        // (62) left 56 px of plate above the ink and 97 below; 70 balances the two.
         text "{now.time}" {
-            at: 0, 58; anchor: center; size: 92; weight: 500; color: skin.ink; family: "Iosevka"
-            shadow: 0, 0, 30, 60%, skin.accent; show: clock_24h
+            at: 0, 70; anchor: center; size: 96; weight: 500; color: skin.ink; family: "Iosevka"
+            shadow: 0, 0, 26, 45%, skin.accent; show: clock_24h
         }
         text clock12 {
-            at: 0, 58; anchor: center; size: 92; weight: 500; color: skin.ink; family: "Iosevka"
-            shadow: 0, 0, 30, 60%, skin.accent; show: not clock_24h
-        }
-        text "{now.date}" {
-            at: 0, 150; anchor: center; size: 20; color: skin.ink.dim; family: "Iosevka"
-            shadow: 0, 1, 10, 50%, skin.coal
+            at: 0, 70; anchor: center; size: 96; weight: 500; color: skin.ink; family: "Iosevka"
+            shadow: 0, 0, 26, 45%, skin.accent; show: not clock_24h
         }
 
-        // The greeting of LockContent.qml (`greeting`), one line per window.
-        text "Good morning" { at: 0, 177; anchor: center; size: 19; color: skin.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 5 and now.hour < 12 }
-        text "Good afternoon" { at: 0, 177; anchor: center; size: 19; color: skin.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 12 and now.hour < 17 }
-        text "Good evening" { at: 0, 177; anchor: center; size: 19; color: skin.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 17 and now.hour < 23 }
-        text "Good night" { at: 0, 177; anchor: center; size: 19; color: skin.ink; opacity: 75%; family: "Iosevka"; show: now.hour >= 23 or now.hour < 5 }
+        // The rule: 48 px of accent at 55 %, the width of a word, between the reading and the
+        // date. It is what the eye uses to see that the two lines are one block.
+        box rule {
+            from: -24, 136; size: 48, 1; color: skin.accent; opacity: 55%
+        }
+
+        // The date and the greeting on one line, the separator quieter than either of them. One
+        // child per greeting and `show:` on each: a hidden child takes no room, so the row is
+        // exactly as wide as the two words that are in it and stays centred.
+        row dateline {
+            at: 0, 148; anchor: center; gap: 8
+            text "{now.date}" { size: 17; color: skin.ink.dim; family: "Iosevka"; shadow: 0, 1, 2, if(skin.light, 0%, 55%), skin.coal }
+            text "·" { size: 17; color: skin.ink.dim; opacity: 40%; family: "Iosevka"; shadow: 0, 1, 2, if(skin.light, 0%, 55%), skin.coal }
+            text "Good morning" { size: 17; color: skin.ink; opacity: 80%; family: "Iosevka"; shadow: 0, 1, 2, if(skin.light, 0%, 55%), skin.coal; show: now.hour >= 5 and now.hour < 12 }
+            text "Good afternoon" { size: 17; color: skin.ink; opacity: 80%; family: "Iosevka"; shadow: 0, 1, 2, if(skin.light, 0%, 55%), skin.coal; show: now.hour >= 12 and now.hour < 17 }
+            text "Good evening" { size: 17; color: skin.ink; opacity: 80%; family: "Iosevka"; shadow: 0, 1, 2, if(skin.light, 0%, 55%), skin.coal; show: now.hour >= 17 and now.hour < 23 }
+            text "Good night" { size: 17; color: skin.ink; opacity: 80%; family: "Iosevka"; shadow: 0, 1, 2, if(skin.light, 0%, 55%), skin.coal; show: now.hour >= 23 or now.hour < 5 }
+        }
     }
 }
