@@ -40,6 +40,13 @@
 # - `pleamar-health` + `pleamar-health.timer` — hang watchdog: probes every scene in
 #   `pleamarHealthScenes` (the bar and the panels; 2-minute period, first run after 5 minutes) and
 #   restarts the one that stops answering.
+# - `pleamar-scale-guard` — hard restart of the scene set when the monitor layout changes under it.
+#   `--check` (called from `files/gui/hypr/hyprland.lua` on `config.reloaded` and `monitor.added`)
+#   compares the live layout with the one recorded at `hyprland.start` and, on a change, SIGKILLs
+#   every scene unit's cgroup and starts it again; `--force` is the same restart by hand. Scenes read
+#   `screen.width` once, so a live scale change (`hyprctl reload` re-applies the monitor rule) leaves
+#   right-anchored rows past the surface: on 2026-11-05 a 1x -> 2x reload put the bar's media capsule,
+#   settings gear and Genelec tile off a 1920 px surface until the bar was restarted by hand.
 # - `pleamar-login-cpu` + `pleamar-login-cpu.timer` — the login-window CPU record: a minute after
 #   the session target it writes one file per login under `~/.local/state/pleamar/login-cpu/`,
 #   holding the per-scene `systemctl show` counters. This is the only moment a scene's login burst
@@ -473,6 +480,113 @@ let
     done
   '';
 
+  # The scene set, as units, for the hard restart below: one source (`pleamarScenes`) with the
+  # per-scene unit suffix, so the guard cannot drift from the units the module generates.
+  sceneUnits = lib.concatMapStringsSep " " (scene: "pleamar-${scene}.service") pleamarScenes;
+
+  # Hard restart of the scene set when the monitor layout changes under it. pleamar reads
+  # `screen.width`/`screen.height` once, when a scene loads: a compositor scale applied later
+  # (`hyprctl reload` re-applies the monitor rule in `files/gui/hypr/hyprland.lua`) shrinks the
+  # surface while every right-anchored row keeps the old width. On 2026-11-05 the 1x -> 2x reload
+  # moved the bar's media capsule, settings gear and Genelec tile past its 1920 px surface, and the
+  # scene kept answering the IPC probe — a graceful restart is enough for the bar, but the same
+  # stale geometry lives in every running scene and in the helpers they spawned, so the guard kills
+  # each unit's whole cgroup (SIGKILL, helpers included), clears a possible start limit, and starts
+  # it again. `hyprland.lua` records the layout at `hyprland.start` and checks it on
+  # `config.reloaded`/`monitor.added`; `--force` is the same restart by hand.
+  pleamarScaleGuard = pkgs.writeShellScriptBin "pleamar-scale-guard" ''
+    set -u
+
+    PATH=${
+      lib.makeBinPath [
+        pkgs.coreutils # timeout, date, mkdir: the guard's shell tools
+        pkgs.jq # reads the monitor layout out of `hyprctl -j monitors`
+        pkgs.hyprland # hyprctl: the live monitor layout
+        pkgs.systemd # systemctl --user: kill/stop/start of every scene unit
+      ]
+    }
+
+    runtime="''${XDG_RUNTIME_DIR:-/tmp}"
+    state="$runtime/pleamar/monitor-layout"
+    log_file="$runtime/pleamar/scale-guard.log"
+    login_marker="$runtime/pleamar-login/login-phase"
+    units="${sceneUnits}"
+
+    say() {
+      mkdir -p "$(dirname "$log_file")" 2>/dev/null || true
+      printf '%s %s\n' "$(date '+%F %T')" "$*" >> "$log_file" 2>/dev/null || true
+    }
+
+    # One signature for the whole layout: every enabled monitor's logical size. The scale is part
+    # of it through the division, which is exactly the number a scene's `screen.width` follows
+    # until it is restarted.
+    layout() {
+      timeout 5 hyprctl -j monitors 2>/dev/null | jq -r '
+        [ .[] | select(.disabled | not)
+          | "\(.name):\((.width / .scale) | floor)x\((.height / .scale) | floor)" ]
+        | sort | join(",")
+      ' 2>/dev/null
+    }
+
+    remember() {
+      mkdir -p "$(dirname "$state")" 2>/dev/null || true
+      printf '%s\n' "$1" > "$state" 2>/dev/null || true
+    }
+
+    hard_restart() {
+      say "layout $1 -> ''${2:-none}: killing the scene set"
+      for unit in $units; do
+        # Only a scene that is up carries the stale width. One that is down (not started yet, or
+        # deliberately stopped) must not be started by a layout change: it reads the new layout
+        # when it comes up. This also keeps a `monitor.added` seen during a compositor start from
+        # racing the session target.
+        unit_state="$(systemctl --user is-active "$unit" 2>/dev/null || true)"
+        case "$unit_state" in
+          active | activating | reloading) ;;
+          *) continue ;;
+        esac
+        # SIGKILL first: the stale width lives in the *running* process, and a scene that answers
+        # its IPC promptly would otherwise be stopped gracefully for nothing. `--kill-whom=all`
+        # takes the spawned helpers (cava, genlc, sysmon) with it, so none survives to be re-adopted.
+        systemctl --user kill --signal=SIGKILL --kill-whom=all "$unit" >/dev/null 2>&1 || true
+        # Settle the unit: an explicit stop cancels the auto-restart the kill queued, and
+        # reset-failed clears a start limit left by an earlier crash loop.
+        systemctl --user stop "$unit" >/dev/null 2>&1 || true
+        systemctl --user reset-failed "$unit" >/dev/null 2>&1 || true
+        systemctl --user start "$unit" >/dev/null 2>&1 || true
+      done
+      say "scene set started again"
+    }
+
+    current="$(layout)"
+    case "''${1:-}" in
+      --record)
+        [ -n "$current" ] && remember "$current"
+        ;;
+      --check)
+        [ -n "$current" ] || exit 0
+        previous="$(cat "$state" 2>/dev/null || true)"
+        previous="''${previous:-$current}"
+        if [ "$previous" = "$current" ]; then
+          remember "$current"
+          exit 0
+        fi
+        remember "$current"
+        # Behind the login screen nothing of the shell is up: the layer owns the screen, and the
+        # scene set starts with the next session at this layout.
+        [ -e "$login_marker" ] && exit 0
+        hard_restart "$previous" "$current"
+        ;;
+      --force)
+        hard_restart forced "$current"
+        ;;
+      *)
+        printf 'usage: pleamar-scale-guard --record | --check | --force\n' >&2
+        exit 2
+        ;;
+    esac
+  '';
+
   # Login-window CPU record (`just pleamar-cpu`): one file per login, taken a minute after the
   # session target. A scene's `CPUUsageNSec` is cumulative from its start, so the first minute
   # is the only time the login burst is still the whole number; a live sample later reads the
@@ -614,6 +728,7 @@ lib.mkIf pleamarEnabled (
       environment.systemPackages = [
         pkgs.pleamar # Wayland desktop shell runtime (bars/launchers/notifications as scenes)
         pkgs.neg.pleamar-harness # dev harnesses: PNG matrix, describe snapshots, cgroup budgets
+        pleamarScaleGuard # hard scene-set restart when the monitor layout changes
       ];
 
       # The lock scene checks the password through the PAM service the engine names in its
