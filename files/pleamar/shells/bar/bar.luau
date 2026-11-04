@@ -604,6 +604,11 @@ end)
 every(1000, function()
     if not mediaPlaying then return end
     mediaPos = mediaPos + 1
+    -- The position is only what the player said last, and a report that stops coming (a queue that
+    -- still calls itself playing, a player that lost its track) used to walk the readout past the
+    -- track's own length: 12:49 of a 7:53 track was on screen once.
+    local length = tonumber(mediaNow.length) or 0
+    if length > 0 and mediaPos > length then mediaPos = length end
     fact["media.pos"] = mediaPos
 end)
 
@@ -1869,13 +1874,8 @@ on("tray_click", function(n)
     raise_tray()
 end)
 
--- Esc closes the menu: the surface asks for the keyboard while it is open (`keyboard:
--- exclusive while tray_open`), so the key reaches this scene and not the application under it.
-on("key", function(name)
-    if name == "Escape" and fact.tray_open then
-        setMenu(false)
-    end
-end)
+-- Esc reaches the scene through bar.plm's `on key Escape while tray_open` rule (the menu surface
+-- is `keyboard: on_demand`), which emits `tray_close` — the same close an outside press asks for.
 
 -- A press anywhere else is QS's dismissed overlay (SystemTray.qml:88-98): the menu goes first —
 -- and closing it is what arms the long hold, so that is the whole answer — while a tray without a

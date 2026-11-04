@@ -189,6 +189,9 @@ sys.watch("media", media_apply)
 every(1000, function()
     if not fact.playing then return end
     mediaPos = mediaPos + 1
+    -- The readout stops at the track's length: the position only moves on reports, and one that
+    -- stops coming ran the clock past the end (the bar had the same defect).
+    if mediaLen > 0 and mediaPos > mediaLen then mediaPos = mediaLen end
     text["media.pos"] = clock_text(mediaPos)
     if mediaLen > 0 then
         fact["media.progress"] = math.min(math.max(mediaPos / mediaLen, 0), 1)
