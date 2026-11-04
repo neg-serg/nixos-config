@@ -1,0 +1,75 @@
+diff --git a/src/platform/mpris.rs b/src/platform/mpris.rs
+--- a/src/platform/mpris.rs
++++ b/src/platform/mpris.rs
+@@ -177,13 +177,16 @@
+     }
+ }
+ 
+-fn now(c: &Connection) -> SysValue {
++fn now(c: &Connection, last_track: &mut Option<String>) -> SysValue {
+     let field = |k: &str, v: SysValue| (k.to_owned(), v);
+     let Some((name, p, playing)) = active_player(c) else {
++        *last_track = None;
+         return SysValue::Map(vec![field("playing", SysValue::Bool(false)), field("paused", SysValue::Bool(false)), field("title", SysValue::Text(String::new())), field("artist", SysValue::Text(String::new())), field("album", SysValue::Text(String::new())), field("length", SysValue::Num(0.0)), field("position", SysValue::Num(0.0)), field("rate", SysValue::Num(1.0)), field("can_seek", SysValue::Bool(false)), field("can_go_next", SysValue::Bool(false)), field("can_go_prev", SysValue::Bool(false)), field("can_play", SysValue::Bool(false)), field("can_pause", SysValue::Bool(false)), field("art", SysValue::Text(String::new())), field("player", SysValue::Text(String::new())), field("players", SysValue::List(Vec::new()))]);
+     };
+     let metadata: HashMap<String, OwnedValue> = p.get_property("Metadata").unwrap_or_default();
+     let from_metadata = |k: &str| SysValue::Text(metadata.get(k).map(text).unwrap_or_default());
++    let track = metadata.get("mpris:trackid").and_then(track_id).map(|p| p.as_str().to_owned());
++    let position = track_position(position(&p), track, last_track);
+     SysValue::Map(vec![
+         field("playing", SysValue::Bool(playing)),
+         field("paused", SysValue::Bool(is_paused(&p))),
+@@ -191,7 +194,7 @@
+         field("artist", from_metadata("xesam:artist")),
+         field("album", from_metadata("xesam:album")),
+         field("length", SysValue::Num(metadata.get("mpris:length").map(seconds).unwrap_or(0.0))),
+-        field("position", SysValue::Num(position(&p))),
++        field("position", SysValue::Num(position)),
+         // The spec's default; a player that cannot change it may leave it out.
+         field("rate", SysValue::Num(p.get_property::<f64>("Rate").unwrap_or(1.0))),
+         field("can_seek", SysValue::Bool(can_seek(&p))),
+@@ -210,12 +213,26 @@
+     ])
+ }
+ 
++/// Where the song is, once the report's track is accounted for. A song change is signalled with
++/// the new `Metadata` and the player's *old* `Position`: MPD (through mpd-mpris) answered 244.00 s
++/// — the previous song's last second — while the title was already the next one, and a scene
++/// counting on from it was four minutes off for the rest of the track. Nothing corrects it either,
++/// because `Position` never signals a move: the next report is the next pause or seek. A song
++/// starts at 0. The first report of a scene keeps the reading, since the scene may be opened
++/// mid-song.
++fn track_position(read: f64, track: Option<String>, last: &mut Option<String>) -> f64 {
++    let changed = matches!((&*last, &track), (Some(prev), Some(now)) if prev != now);
++    *last = track;
++    if changed { 0.0 } else { read }
++}
++
+ pub fn service(dispatch: Box<dyn Fn(SysValue) + Send>) -> bool {
+     let Ok(c) = Connection::session() else { return false };
+     std::thread::Builder::new().name("media".into()).spawn(move || {
+         let mut last = String::new();
++        let mut last_track: Option<String> = None;
+         let mut report = |c: &Connection| {
+-            let v = now(c);
++            let v = now(c, &mut last_track);
+             let fingerprint = format!("{v:?}");
+             if fingerprint != last { last = fingerprint; dispatch(v) }
+         };
+@@ -436,4 +453,16 @@
+         assert!(art_path_in("data:image/svg+xml;base64,PHN2Zy8+", &dir).ends_with(".svg"));
+         let _ = std::fs::remove_dir_all(&dir);
+     }
++
++    #[test]
++    fn a_changed_track_starts_at_zero() {
++        let mut last = None;
++        // The first report of a scene keeps the reading: the scene may be opened mid-song.
++        assert_eq!(track_position(125.0, Some("/org/mpd/Tracks/1".into()), &mut last), 125.0);
++        assert_eq!(track_position(126.0, Some("/org/mpd/Tracks/1".into()), &mut last), 126.0);
++        // The next song's metadata arrives with the previous song's last second.
++        assert_eq!(track_position(244.0, Some("/org/mpd/Tracks/2".into()), &mut last), 0.0);
++        // A player that sends no trackid has nothing to compare against.
++        assert_eq!(track_position(3.0, None, &mut last), 3.0);
++    }
+ }
