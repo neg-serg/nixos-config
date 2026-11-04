@@ -68,6 +68,9 @@ part BarPage {
             }
 
             text "a widget's position follows the scene's order" { at: 16, 444; anchor: left center; family: "Iosevka"; size: 8; color: live.ink.off }
+            text "all settings ›" { at: 384, 444; anchor: right center; family: "Iosevka"; size: 9; weight: 700; color: live.accent }
+            zone box all_settings { from: 260, 432; size: 124, 24; corner: 8; cursor: pointer; label: "All settings"; role: button }
+            on press all_settings { drawer = toggles }
         }
     }
 
