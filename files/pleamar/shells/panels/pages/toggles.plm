@@ -2,10 +2,9 @@
 //
 // Legacy: dhrruvsharma/shell's control/Toggles.qml (the switches at the top of the
 // control centre) plus the control centre itself as a door: the pages this shell
-// grew — key binds, notes, the timer, the contributions, the bar's settings, the
-// desktop widgets — are opened from here, which is what makes them reachable
-// without a bind each. One bind of its own, `M4+SH+Y`, opens this drawer, and the
-// bar's gear opens it through the bar page.
+// grew — key binds, notes, the timer, the contributions, the bar's settings — are opened
+// from here, which is what makes them reachable without a bind each. One bind of its own,
+// `M4+SH+Y`, opens this drawer, and the bar's gear opens it through the bar page.
 //
 // The switches: Wi-Fi and Bluetooth are the radios' own commands; do not disturb is
 // the notifications scene's fact (`--say`); the night light is `wlsunset -t 3500 -T
@@ -74,32 +73,28 @@ part Toggles {
             text "timer" { at: 16, 360; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
             text "contributions" { at: 16, 390; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
             text "bar" { at: 16, 420; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
-            text "desktop widgets" { at: 16, 450; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
             text "›" { at: 384, 300; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
             text "›" { at: 384, 330; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
             text "›" { at: 384, 360; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
             text "›" { at: 384, 390; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
             text "›" { at: 384, 420; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
-            text "›" { at: 384, 450; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
 
             zone box open_keys { from: 16, 288; size: 368, 28; corner: 8; cursor: pointer; label: "Key binds"; role: button }
             zone box open_notes { from: 16, 318; size: 368, 28; corner: 8; cursor: pointer; label: "Notes"; role: button }
             zone box open_timer { from: 16, 348; size: 368, 28; corner: 8; cursor: pointer; label: "Timer"; role: button }
             zone box open_github { from: 16, 378; size: 368, 28; corner: 8; cursor: pointer; label: "Contributions"; role: button }
             zone box open_bar { from: 16, 408; size: 368, 28; corner: 8; cursor: pointer; label: "Bar settings"; role: button }
-            zone box open_desktop { from: 16, 438; size: 368, 28; corner: 8; cursor: pointer; label: "Desktop widgets"; role: button }
             on press open_keys { drawer = keys }
             on press open_notes { drawer = notes }
             on press open_timer { drawer = timer }
             on press open_github { drawer = github }
             on press open_bar { drawer = bar }
-            on press open_desktop { emit widgets_edit }
 
-            box { from: 16, 474; size: 368, 1; color: live.ink; opacity: ink.subtle }
-            text "session menu" { at: 16, 494; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
-            text "lock · sleep · log out · restart · shut down" { at: 16, 508; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
-            text "›" { at: 384, 494; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
-            zone box open_power { from: 16, 482; size: 368, 32; corner: 8; cursor: pointer; label: "Session menu"; role: button }
+            box { from: 16, 444; size: 368, 1; color: live.ink; opacity: ink.subtle }
+            text "session menu" { at: 16, 464; anchor: left center; family: "Iosevka"; size: 12; color: live.ink }
+            text "lock · sleep · log out · restart · shut down" { at: 16, 478; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off }
+            text "›" { at: 384, 464; anchor: right center; family: "Iosevka"; size: 16; color: live.accent }
+            zone box open_power { from: 16, 452; size: 368, 32; corner: 8; cursor: pointer; label: "Session menu"; role: button }
             on press open_power { drawer = power }
         }
     }

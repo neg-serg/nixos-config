@@ -29,7 +29,7 @@
 # ## Units and guards (when the flag is on)
 #
 # - `pleamar-<scene>.service` for every scene in `pleamarScenes` (`bar`, `panels`, `notifications`,
-#   `toast`, `launcher`, `widgets`, `osd`, `headphones`), each running
+#   `toast`, `launcher`, `osd`, `headphones`), each running
 #   `pleamar --scene ~/.config/pleamar/shells/<scene>/<scene>.plm --no-hud` with memory/CPU caps.
 #   `overlay` is an on-demand unit (`pleamarOnDemandUnits`) and `proof` is not started at all;
 #   `overview` is a deliberate omission (a resident process for one IPC verb costs more than the
@@ -48,6 +48,16 @@
 # - Login-phase guard: while `%t/pleamar-login/login-phase` exists the login layer owns the screen
 #   (`pleamar-login-layer`, which runs the lock scene by hand) and no session scene may start;
 #   systemd re-evaluates the condition once the marker is gone.
+#
+# ## Removed: the desktop widget layer
+#
+# `shells/widgets` (a clock, now-playing, a quote, a system monitor and the CAVA analyser on a
+# bottom layer under every window) was deleted on 2026-11-04. The owner never used it and every
+# widget was switched off in its settings, which left a resident scene whose surfaces drew
+# nothing. The port is in git history (`git show 23eaa8062:files/pleamar/shells/widgets`), the
+# panels' `desktop widgets` door in `pages/toggles.plm` went with it, and `pleamar-theme` no
+# longer pushes the palette into its folder. Bringing it back means restoring the scene, both
+# lists here, that row and the theme's scene list.
 #
 # ## Enable / disable
 #
@@ -105,10 +115,6 @@ let
     "notifications"
     "toast"
     "launcher"
-    # The desktop widgets (clock, now-playing, quote, system monitor, analyser): a
-    # bottom layer over the wallpaper, under every window. Its own scene, not part
-    # of the bar, because it draws when no panel is open.
-    "widgets"
     # The volume/brightness pill: watches `audio` and `brightness` and shows itself, so it
     # is resident — nothing else could start it on the change that has to raise it.
     "osd"
@@ -128,10 +134,8 @@ let
     "notifications"
     "toast"
     "launcher"
-    # The desktop layer is lost the same way a bar is when the compositor closes
-    # its surfaces; nothing else would bring it back. The OSD is a scene whose whole
-    # job is to be there when the volume moves, so it comes back too.
-    "widgets"
+    # The OSD is a scene whose whole job is to be there when the volume moves, so it
+    # comes back from any exit like the bar: nothing else would start it again.
     "osd"
     # The headphone drawer holds no session state (the catalogue is on disk and re-read on every
     # open), but a bind that reaches nothing after a compositor reload is a dead key; restart it.
