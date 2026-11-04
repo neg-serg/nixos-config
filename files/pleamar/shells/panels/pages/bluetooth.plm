@@ -22,7 +22,16 @@
 // (INTERFACES §9.2); the scale is the component parameter's default, per copy.
 
 part Bluetooth {
-    component BluetoothDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+
+    // The page's scale, read HERE, inside the named surface: a component's parameter default is
+    // re-read inside the component in the scene's main-surface scope, and in this scene the main
+    // surface is the full-monitor catcher — so the default came out 1.0 inside the card while the
+    // card's `move:` used the surface's own fit, and every card was shifted on a monitor whose fit
+    // is not 1. Passing the value from here keeps one scale for the move and the drawing.
+    let bluetooth.scale = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+
+    component BluetoothDrawer(scale: number) {
+        let card.scale = scale
         size: 400 * scale, 420 * scale
 
         // The list starts under the header, and moves down while a pairing prompt
@@ -31,6 +40,7 @@ part Bluetooth {
 
         group {
             move: (screen.width - 400 * scale) / 2, (screen.height - 420 * scale) / 2 + (1 - lift) * 18 * scale
+            scale: card.scale
             opacity: lift
 
             body {
@@ -44,7 +54,7 @@ part Bluetooth {
             box { from: 16, 0; size: 34, 1; color: live.accent; opacity: 70% }
 
             text "bluetooth" { at: 16, 20; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
-            group { move: 338, 9
+            group { move: 338, 14
                 Switch(toggle: bt_power, on: bt.powered, label: pick(bt.powered, "Turn Bluetooth off", "Turn Bluetooth on"),
                     fill: live.slate, lit: live.accent, off: live.ink.off, on_tone: live.coal, scale: 1)
             }
@@ -115,5 +125,5 @@ part Bluetooth {
         }
     }
 
-    BluetoothDrawer()
+    BluetoothDrawer(bluetooth.scale)
 }

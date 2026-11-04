@@ -13,11 +13,21 @@
 // panels.luau.
 
 part Wifi {
-    component WifiDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+
+    // The page's scale, read HERE, inside the named surface: a component's parameter default is
+    // re-read inside the component in the scene's main-surface scope, and in this scene the main
+    // surface is the full-monitor catcher — so the default came out 1.0 inside the card while the
+    // card's `move:` used the surface's own fit, and every card was shifted on a monitor whose fit
+    // is not 1. Passing the value from here keeps one scale for the move and the drawing.
+    let wifi.scale = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+
+    component WifiDrawer(scale: number) {
+        let card.scale = scale
         size: 420 * scale, 470 * scale
 
         group {
             move: (screen.width - 420 * scale) / 2, (screen.height - 470 * scale) / 2 + (1 - lift) * 18 * scale
+            scale: card.scale
             opacity: lift
 
             body {
@@ -32,7 +42,7 @@ part Wifi {
             text "wifi" { at: 16, 22; anchor: left center; family: "Iosevka"; size: 12; weight: 700; color: live.ink.dim }
             text pick(net.wifi, "radio off", "scanning…") { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: not (net.wifi and net.online) }
             text "{net.name} · {nets.total} network(s)" { at: 16, 42; anchor: left center; family: "Iosevka"; size: 9; color: live.ink.off; show: net.wifi and net.online }
-            group { move: 356, 9
+            group { move: 356, 14
                 Switch(toggle: wifi_power, on: net.wifi, label: "Wi-Fi", fill: live.slate, lit: live.accent, off: live.ink.off, on_tone: live.coal, scale: 1)
             }
             text "scan" { at: 404, 42; anchor: right center; family: "Iosevka"; size: 9; weight: 700; color: pick(net.wifi, live.ink.off, live.accent) }
@@ -94,5 +104,5 @@ part Wifi {
         }
     }
 
-    WifiDrawer()
+    WifiDrawer(wifi.scale)
 }

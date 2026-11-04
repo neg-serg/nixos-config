@@ -24,13 +24,23 @@
 // and closes the drawer for the one that does not end the session.
 
 part Power {
-    component PowerDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
+
+    // The page's scale, read HERE, inside the named surface: a component's parameter default is
+    // re-read inside the component in the scene's main-surface scope, and in this scene the main
+    // surface is the full-monitor catcher — so the default came out 1.0 inside the card while the
+    // card's `move:` used the surface's own fit, and every card was shifted on a monitor whose fit
+    // is not 1. Passing the value from here keeps one scale for the move and the drawing.
+    let power.scale = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
+
+    component PowerDrawer(scale: number) {
+        let card.scale = scale
         size: 460 * scale, 250 * scale
 
         group {
             // A modal, not a drawer: centred on the monitor, and the lift slides it
             // a few pixels up out of nothing rather than the whole card height.
             move: (screen.width - 460 * scale) / 2, (screen.height - 250 * scale) / 2 + (1 - lift) * 18 * scale
+            scale: card.scale
             opacity: lift
 
             // ----***----------------------------- the card
@@ -103,5 +113,5 @@ part Power {
         }
     }
 
-    PowerDrawer()
+    PowerDrawer(power.scale)
 }
