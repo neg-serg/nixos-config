@@ -88,6 +88,22 @@ CATALOG = {
         "chem": "-",
         "lean": "-",
     },
+    "qwen3.8-flash-next-abliterated": {
+        "aliases": ["qwen3.8-flash", "next"],
+        "role": "180B-A6B MoE, next tier",
+        "ctx": "32k",
+        "size": "78 GB",
+        "chem": "-",
+        "lean": "-",
+    },
+    "deepseek-v4-flash-abliterated": {
+        "aliases": ["ds4", "deepseek-v4"],
+        "role": "304B-A13B MoE, reasoning",
+        "ctx": "16k",
+        "size": "98 GB",
+        "chem": "-",
+        "lean": "-",
+    },
 }
 
 CHEM_SYSTEM = """Ты — химик. Обязательные проверки:
