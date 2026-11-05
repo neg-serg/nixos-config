@@ -136,13 +136,22 @@ in
       # Deliberately outside the system closure — it lives in the `ai` devshell
       # and behind the `docling` flake app; pdf2md resolves `docling` from PATH.
       #
+      # saxonche is the Schematron backend doclang wants for
+      # `doclang validate` without `--xsd-only` (the `schematron-saxon` extra);
+      # nixpkgs ships it, so the devshell can validate `.dclx` markup fully.
+      #
       # ignoreCollisions: in the pinned nixpkgs (docling 2.118.0) the full
       # package propagates `docling-slim` and BOTH install bin/docling-tools, so
       # buildEnv refuses the environment ("two given paths contain a conflicting
       # subpath", exit 25). The copies are the same version — keep the first.
-      docling-env = (final.python3.withPackages (ps: [ ps.docling ])).overrideAttrs (_: {
-        ignoreCollisions = true;
-      });
+      docling-env =
+        (final.python3.withPackages (ps: [
+          ps.docling
+          ps.saxonche
+        ])).overrideAttrs
+          (_: {
+            ignoreCollisions = true;
+          });
       local-bin-system = final.callPackage ./local-bin-system { }; # Rust ports of the system-level local-bin/bin helpers
       tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the Python tgchat after a fresh login)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
