@@ -24,14 +24,6 @@ STATE = os.path.expanduser("~/.local/state/llmctl")
 # Measured on trantor 2026-11-05: chem = six olympiad problems (13 values),
 # lean = seven core-Lean theorems (7 tasks).
 CATALOG = {
-    "gpt-oss-20b-abliterated": {
-        "aliases": ["gpt-oss", "gpt-oss-20b", "uncensored"],
-        "role": "tools / reasoning / Lean",
-        "ctx": "64k",
-        "size": "12 GB",
-        "chem": "7/13",
-        "lean": "6/7",
-    },
     "gemma4-26b-abliterated": {
         "aliases": ["gemma4", "gemma4-26b"],
         "role": "26B-A4B MoE, creative",
@@ -43,7 +35,7 @@ CATALOG = {
     "qwen3.6-35b-abliterated": {
         "aliases": ["strong", "qwen3.6"],
         "role": "strong general / chemistry",
-        "ctx": "64k",
+        "ctx": "96k",
         "size": "12 GB",
         "chem": "13/13",
         "lean": "1/7",
@@ -51,7 +43,7 @@ CATALOG = {
     "qwen3-vl-8b-abliterated": {
         "aliases": ["vision", "vision-8b", "qwen3-vl-8b"],
         "role": "fast / vision / chemistry",
-        "ctx": "32k",
+        "ctx": "64k",
         "size": "5 GB",
         "chem": "13/13",
         "lean": "0/7",
@@ -91,7 +83,7 @@ CATALOG = {
     "gpt-oss-120b-abliterated": {
         "aliases": ["gpt-oss-120", "big"],
         "role": "120B-A5B MoE, RAM tier",
-        "ctx": "16k",
+        "ctx": "32k",
         "size": "63 GB",
         "chem": "-",
         "lean": "2/7",
@@ -99,7 +91,7 @@ CATALOG = {
     "qwen3.8-flash-next-abliterated": {
         "aliases": ["qwen3.8-flash", "next"],
         "role": "180B-A6B MoE, next tier",
-        "ctx": "32k",
+        "ctx": "128k",
         "size": "78 GB",
         "chem": "-",
         "lean": "7/7",
