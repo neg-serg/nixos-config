@@ -6,10 +6,28 @@
 }:
 let
   cfg = config.features.net.proxy;
+
+  # Xray is a manual, rarely started core. Keep the CLI as an on-demand
+  # launcher and give the unit a wrapper that materialises the GC root before
+  # exec, so `systemctl start xray` keeps working while the binary stays out of
+  # the system closure.
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  xray = onDemand {
+    name = "xray";
+    attr = "xray";
+  };
+
+  # Systemd gets a wrapper rather than the launcher itself: the unit has no
+  # argv, so the daemon flags are baked here. Exec goes through the launcher,
+  # which materialises the root on the first start (as `neg`, HOME set by
+  # systemd).
+  xrayService = pkgs.writeShellScriptBin "xray-service" ''
+    exec ${xray}/bin/xray run -config /home/neg/.config/sing-box-tun/config.json
+  '';
 in
 lib.mkIf cfg.enable {
   environment.systemPackages = [
-    pkgs.xray # VLESS/Reality-capable proxy core
+    xray # VLESS/Reality-capable proxy core (built on first call)
   ];
 
   systemd.services.xray = {
@@ -26,7 +44,7 @@ lib.mkIf cfg.enable {
     serviceConfig = {
       Type = "simple";
       User = "neg";
-      ExecStart = "${lib.getExe pkgs.xray} run -config /home/neg/.config/sing-box-tun/config.json";
+      ExecStart = "${xrayService}/bin/xray-service";
     };
   };
 }
