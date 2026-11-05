@@ -7,6 +7,7 @@
 let
   enabled = config.lib.neg.enabled "media.audio.speech";
   systemdUser = config.lib.neg.systemdUser;
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
   eng = "/zero/ai/speech/engines"; # speech stack location (ZFS pool, main user-owned)
   # Inference only: nixpkgs builds piper with training extras (torch + triton,
   # ~3G) and Japanese dictionaries (~320M) by default; neither is used here.
@@ -47,7 +48,14 @@ in
     environment.systemPackages = [
       piper # CPU TTS fallback (piper-server on :8001) — note: pkgs.piper is a GTK mouse GUI!
       whisperCpp # GPU STT (whisper-cli, Vulkan backend — whisper-server on :8002)
-      pkgs.sherpa-onnx # speech toolkit (ASR/TTS/VAD + speaker diarization) for local experiments
+      # Speech toolkit (ASR/TTS/VAD + speaker diarization) for local
+      # experiments: the launcher builds it on first call. The sibling CLIs
+      # (sherpa-onnx-offline, -denoiser, …) are one `nix shell
+      # /etc/nixos#sherpa-onnx` away.
+      (onDemand {
+        name = "sherpa-onnx";
+        attr = "sherpa-onnx";
+      })
       pkgs.rocmPackages.rocm-smi # VRAM/GPU monitoring for the ROCm TTS stack (chatterbox)
       pkgs.ffmpeg # audio conversion for whisper-server (mp3/ogg → wav)
       pkgs.python312 # base interpreter for the chatterbox venv (keeps it GC-safe; torch cp312 wheels)

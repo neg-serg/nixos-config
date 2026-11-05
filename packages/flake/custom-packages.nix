@@ -94,6 +94,13 @@
   scdl = pkgs.scdl;
   gh = pkgs.gh;
   gh-enhance = pkgs.gh-enhance;
+  sherpa-onnx = pkgs.sherpa-onnx;
+
+  # Audio content materialised once per user by modules/media/audio/assets.nix
+  # into GC roots; the home-file symlinks point at $HOME, not at these paths.
+  dirt-samples = pkgs.neg.dirt-samples;
+  sc-faust = pkgs.sc-faust;
+  renoise-redux = pkgs.neg.renoise-redux;
   # Desktop utilities built on first launch instead of at switch time; the
   # launchers live in modules/user/nix-maid/apps/gui-apps.nix.
   showmethekey = pkgs.showmethekey; # on-screen keystroke overlay for screencasts (GTK4 + libinput)
