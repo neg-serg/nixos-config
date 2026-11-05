@@ -35,7 +35,9 @@
 #     ollama pull qwen3:32b
 #     ollama run qwen3:32b
 #
-# - colibrì (GLM-5.2 CPU engine) removed 2026-11-02; leftover weights: /zero/ai/glm52_i4
+# - colibrì (GLM-5.2 CPU engine) removed 2026-11-02; its weights were deleted
+#   2026-11-05 (358 GB back on `zero`). The empty `/zero/ai/glm52_i4` directory
+#   stays: `/zero/ai` is root-owned, so unlinking it needs root.
 #
 # ### llama-server (qwen3-vl vision, Vulkan/RADV)
 #
@@ -270,8 +272,9 @@
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
 #   tmpfiles)
-# - `/zero/ai/glm52_i4` — leftover colibrì int4 model (~384 GB, 144 shards); the engine was removed
-#   2026-11-02, the weights stay on disk until they are deleted by hand
+# - `/zero/ai/glm52_i4` — empty directory; the colibrì int4 weights were deleted
+#   2026-11-05 and `/zero/ai` is root-owned, so removing the directory itself
+#   needs root
 # - `/zero/ai/vllm` — vLLM: HF cache (`hf/`, weights + tokenizers), download dir (`hub/`) and the
 #   Triton kernel cache (`cache/`), created by the activation script
 #
@@ -327,7 +330,6 @@ in
         system.activationScripts.ai-model-dirs = lib.stringAfter [ "users" ] ''
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/image
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/embeddings
-          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/glm52_i4
           # music AI models (AMT weights, basic-pitch ONNX) — main user manages files
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/music
           # image processing models (rembg BiRefNet/u2net, upscalers) — main user manages files
