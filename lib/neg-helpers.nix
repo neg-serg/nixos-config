@@ -63,6 +63,13 @@ rec {
   # copy gains the `~Module signature appended~` trailer, a 0444 one does not)
   # and exits 0 either way.
   #
+  # Debug info is stripped before signing, not after: modules are built with
+  # `-g`, and DWARF records the build directory (DW_AT_comp_dir) as a path
+  # under linux-<ver>-dev. Nix turns that string into a store reference, so the
+  # kernel headers tree (~500 MiB) enters the runtime closure of
+  # /run/current-system although the module needs none of it. Stripping must
+  # come first anyway: kmodigest appends the signature to the file tail, and
+  # rewriting the ELF afterwards would drop it.
   # `dontStrip` is what keeps the signature there at all: otherwise fixupPhase
   # strips the just-appended trailer straight back off (63370 -> 63136 bytes,
   # no marker) and the module ships signed-on-paper only. The kernel's own
@@ -74,6 +81,9 @@ rec {
       preFixup = (old.preFixup or "") + ''
         while IFS= read -r -d "" ko; do
           chmod u+w "$ko"
+          # Drop DWARF before signing so the kernel build dir stops being a
+          # store reference (see above); symbols stay, only .debug_* goes.
+          ${pkgs.binutils}/bin/objcopy --strip-debug "$ko"
           ${pkgs.kmodigest}/bin/kmodigest "$ko"
         done < <(find "$out" -name '*.ko' -print0)
       '';
