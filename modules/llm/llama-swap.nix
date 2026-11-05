@@ -36,15 +36,20 @@ let
       -c 32768 -np 1 --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 --jinja
   '';
 
-  # Gemma 4 26B A4B — the MoE tier (25.2B total, 3.8B active), abliterated
-  # (i1/IQ3_S). ~35 tok/s at 32k; text-only, the Qwen3-VL above handles images.
+  # Gemma 4 26B A4B — the MoE tier (25.2B total, 3.8B active), abliterated.
+  # Q3_K_M on purpose: the IQ3_S build loops on multi-step prompts at greedy
+  # decoding — a cold prefill falls into a repetition basin (the same prompt
+  # with a warm prefix solves fine); repeat-penalty/DRY only mask it. Q3_K_M
+  # does not loop: a chemistry olympiad and a math problem both finish,
+  # ~105 tok/s at 32k. VRAM is tight (~16.2 GiB with the desktop open); if it
+  # spills, drop -c to 16384. Text-only, the Qwen3-VL above handles images.
   # The base QAT/Q3 weights are gone: everything served here is uncensored.
   # `--fit off` is required: with auto-fit, the VRAM still held by the model
   # being swapped out makes llama.cpp silently offload a few layers, and a
   # partially offloaded gemma4 backend dies on the first request.
   gemma26b = ''
     ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/abliterated/Gemma-4-26B-A4B-abliterated-IQ3_S.gguf \
+      -m ${modelDir}/abliterated/Gemma-4-26B-A4B-abliterated-Q3_K_M.gguf \
       --host 127.0.0.1 --port ''${PORT} \
       -c 32768 -np 1 --flash-attn on --fit off --reasoning off \
       --cache-type-k q8_0 --cache-type-v q8_0 --jinja
@@ -81,24 +86,34 @@ let
   # Qwen3.8-27B abliterated (IQ3_S, ~3.5 bpw) — the quality tier: dense 27B,
   # the highest bits-per-weight of anything served here, text-only. Dense
   # attention makes the KV cache expensive: q8_0 caches only leave room for
-  # ~8k, so both run q4_0 and the context stops at 16k (14.3 GiB total with
-  # the desktop open, measured 34 tok/s). At 32k the model spills and drops
-  # to ~4 tok/s. `--reasoning off` is mandatory: without it the reply arrives
-  # with an empty `content` (everything goes to reasoning).
+  # ~8k, so both run q4_0 and the context stops where the 16 GB card does:
+  # 24k = ~15 GiB with the desktop open, 30-36 tok/s at a 20k prompt (prefill
+  # ~980 tok/s; 32k spills to ~4 tok/s). 24k is the floor, not comfort — the
+  # agent harness prompt alone is ~20k tokens and 16k rejected it outright.
+  # `--reasoning off` is mandatory: without it the reply arrives with an
+  # empty `content` (everything goes to reasoning).
   qwen38 = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3.8-27B-abliterated-IQ3_S.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -c 16384 -np 1 --flash-attn on --fit off --reasoning off \
+      -c 24576 -np 1 --flash-attn on --fit off --reasoning off \
       --cache-type-k q4_0 --cache-type-v q4_0 --jinja
   '';
 
   # Spark-X2.6-4B abliterated (Q4) — the CPU-only tier: no VRAM at all, so it
   # can be used while a game owns the card. ~22 tok/s with 4 threads, which
   # leaves 28 of the 32 hardware threads to the game. The game guard skips it.
+  # 64k, not the 16k it started at: the model is 1M-native with sliding-window
+  # attention and its f16 KV is ~42 KB/token (5.2 GiB RSS at 64k, 3.3 GiB at
+  # 16k), while CPU prefill runs at 800-1000 tok/s, so a 20k prompt costs ~25 s
+  # once and is then served from the prompt cache. Generation slows with the
+  # context: ~22 tok/s short, ~8 tok/s on a 40k prompt. 16k could not hold the
+  # agent harness prompt at all (~20k tokens: system prompt + tools + skills),
+  # which showed up as `request (20126 tokens) exceeds the available context
+  # size (16384 tokens)`.
   tiny = ''
     ${llamaVulkan} -m ${modelDir}/abliterated/Spark-X2.6-4B-abliterated-Q4_K_M.gguf \
-      -ngl 0 -t 4 -c 16384 -np 1 --jinja --reasoning off \
+      -ngl 0 -t 4 -c 65536 -np 1 --jinja --reasoning off \
       --host 127.0.0.1 --port ''${PORT}
   '';
 

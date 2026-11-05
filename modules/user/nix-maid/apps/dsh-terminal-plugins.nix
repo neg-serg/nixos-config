@@ -256,7 +256,9 @@ rec {
                 contextWindow: 65536
               - id: qwen3.8-27b-abliterated
                 name: Qwen3.8-27B abliterated (quality, RU)
-                contextWindow: 16384
+                # 24k is this card's VRAM ceiling and the minimum that holds
+                # the ~20k-token harness prompt (see modules/llm/llama-swap.nix).
+                contextWindow: 24576
               - id: gpt-oss-20b-abliterated
                 name: gpt-oss-20b abliterated
                 contextWindow: 65536
@@ -271,7 +273,9 @@ rec {
                   - image
               - id: tiny
                 name: Spark 4B abliterated (CPU, no VRAM)
-                contextWindow: 16384
+                # CPU backend, 1M-native with SWA; 64k preallocates ~2.6 GiB
+                # of KV and keeps the ~20k-token harness prompt inside the window.
+                contextWindow: 65536
     # agent-default-model: deployment default for new sessions (module:
     # dsh-terminal-plugins.nix). Runtime switches revert on the next rebuild or
     # login, when the caretaker restores this row.

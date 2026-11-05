@@ -53,7 +53,7 @@
 # - Module: `modules/llm/llama-swap.nix`; the `model` field selects a backend,
 #   one model is resident at a time (16 GB VRAM, ~4 GB of it is the desktop).
 # - Every model the router serves is uncensored: abliterated Gemma 4 26B
-#   (i1/IQ3_S), Qwen3-VL-8B and gpt-oss-20b. The base Gemma/Qwen weights and
+#   (Q3_K_M), Qwen3-VL-8B and gpt-oss-20b. The base Gemma/Qwen weights and
 #   the censored ollama peers were removed — aligned models refuse too much for
 #   this stack. Base files still lie on disk until they are deleted.
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
@@ -66,22 +66,23 @@
 #
 #   | model        | weights                                  | ctx | VRAM  | tok/s |
 #   | ------------ | ---------------------------------------- | --- | ----- | ----- |
-#   | gemma4-26b   | Gemma-4-26B-A4B-abliterated IQ3_S (MoE)  | 32k | 16.2G | 30-35 |
+#   | gemma4-26b   | Gemma-4-26B-A4B-abliterated Q3_K_M (MoE)  | 32k | 16.2G | 105-110 |
 #   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 32k | 12.6G | 45    |
 #   | gpt-oss-20b  | gpt-oss-20b-abliterated MXFP4            | 64k | 16.0G | 75-85 |
 #   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 64k | 15.2G | 55    |
-#   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 16k | 14.3G | 34    |
-#   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 16k | 0G    | 22    |
+#   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 24k | 15.0G | 30-36 |
+#   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 64k | 0G    | 22    |
 #
 # - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
 #   ~3.5 bpw, the highest bits-per-weight served here. Dense KV is expensive,
-#   so both caches run q4_0 and the context stops at 16k (q8_0 KV fits only
-#   ~8k; 32k spills to ~4 tok/s). `--reasoning off` is mandatory — without it
-#   the reply carries an empty `content`.
+#   so both caches run q4_0 and the context stops at 24k (~15 GiB with the
+#   desktop open, 30-36 tok/s at a 20k prompt; 32k spills to ~4 tok/s). 24k is
+#   the minimum that holds the ~20k-token agent prompt. `--reasoning off` is
+#   mandatory — without it the reply carries an empty `content`.
 # - `gpt-oss-20b-abliterated` needs `--reasoning-effort low`: at the default
 #   effort it spends the whole token budget on reasoning and returns empty
 #   content. With low effort it keeps tools, JSON and arithmetic intact.
-# - `gemma4-26b` is text-only (the projector does not fit next to 12.2 GB of
+# - `gemma4-26b` is text-only (the projector does not fit next to 12.5 GB of
 #   weights); `qwen3-vl-8b` serves images and is the `vision` alias.
 # - `qwen3.6-35b-abliterated` (`strong` alias) is the strongest thing the card
 #   holds: 35B MoE, 3B active, dynamic IQ2. At IQ2 it can wander into
@@ -89,7 +90,11 @@
 #   tools default.
 # - `tiny` (Spark-X2.6-4B abliterated, `cheap` alias) runs on 4 CPU threads
 #   with `-ngl 0`: zero VRAM, ~22 tok/s, so it does not compete with a game.
-#   The game guard skips it and still unloads every GPU model.
+#   The game guard skips it and still unloads every GPU model. Its context
+#   is 64k: the KV is cheap (~42 KB/token, 5.2 GiB RSS) and CPU prefill runs
+#   at 800-1000 tok/s, while 16k could not even hold the agent harness prompt
+#   (~20k tokens) — see `modules/llm/llama-swap.nix`. Generation drops from
+#   ~22 tok/s short-context to ~8 tok/s on a 40k prompt.
 # - Context is cheap on the hybrid-attention models: gpt-oss and Qwen3.6 went
 #   from 32k to 64k for <200 MB, with q8_0 KV and `-ub 1024` (prefill +29%).
 #   MTP speculation was tested and rejected: slower (46 vs 65 tok/s) and it
