@@ -465,7 +465,61 @@ def grade_chem(idx, text):
     ]
 
 
+def _result_path(kind, started):
+    """One file per run, named so runs sort chronologically and never clash.
+
+    The old `{kind}-{epoch}.json` silently lost data: two runs that finished
+    inside the same second resolved to the same name and overwrote each other
+    (a partial chem record disappeared that way). Seconds plus pid keep both
+    concurrent and repeated runs apart.
+    """
+    stamp = time.strftime("%Y%m%d-%H%M%S", time.localtime(started))
+    path = os.path.join(STATE, f"{kind}-{stamp}-{os.getpid()}.json")
+    # The counter only fires for two runs in the same second from the same
+    # process (the CLI never does that), but it makes the name unique by
+    # construction instead of by assumption.
+    n = 1
+    while os.path.exists(path):
+        n += 1
+        path = os.path.join(STATE, f"{kind}-{stamp}-{os.getpid()}-{n}.json")
+    return path
+
+
+def _save_results(kind, models, started, results):
+    """Persist one bench run with provenance next to the per-model records.
+
+    `__meta__` sits beside the model keys rather than wrapping them, so the
+    flat records written before this field stay queryable by the same
+    `jq '.["model"]'` form. `seed` is null on purpose: the server default
+    (-1) draws a fresh random seed per request, i.e. every run is an
+    independent sample, not a replay of one.
+    """
+    os.makedirs(STATE, exist_ok=True)
+    path = _result_path(kind, started)
+    data = {
+        "__meta__": {
+            "kind": kind,
+            "started": time.strftime(
+                "%Y-%m-%dT%H:%M:%S", time.localtime(started)
+            ),
+            "finished": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "models": models,
+            "temperature": 0,
+            "cache_prompt": False,
+            "seed": None,
+            "url": BASE,
+            "pid": os.getpid(),
+        },
+        **results,
+    }
+    with open(path, "w") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    print(f"\nsaved {path}")
+    return path
+
+
 def bench_chem(models, use_prompt=False):
+    started = time.time()
     tasks = CHEM_STD + [CHEM_HARD]
     results = {}
     print(
@@ -511,11 +565,7 @@ def bench_chem(models, use_prompt=False):
             )
         print(f"  -> {vals}/{total}")
         results[model].append({"total": vals, "of": total})
-    os.makedirs(STATE, exist_ok=True)
-    path = os.path.join(STATE, f"chem-{int(time.time())}.json")
-    with open(path, "w") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
-    print(f"\nsaved {path}")
+    _save_results("chem", models, started, results)
     return results
 
 
@@ -568,6 +618,7 @@ def _lean_check(lean, task, code, path):
 
 
 def bench_lean(models):
+    started = time.time()
     lean = shutil.which("lean")
     if not lean:
         sys.exit(
@@ -605,11 +656,7 @@ def bench_lean(models):
                 )
             print(f"  -> {ok}/{len(LEAN_TASKS)}")
             results[model].append({"total": ok, "of": len(LEAN_TASKS)})
-    os.makedirs(STATE, exist_ok=True)
-    path = os.path.join(STATE, f"lean-{int(time.time())}.json")
-    with open(path, "w") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
-    print(f"\nsaved {path}")
+    _save_results("lean", models, started, results)
     return results
 
 
