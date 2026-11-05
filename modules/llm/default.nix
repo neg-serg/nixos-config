@@ -231,9 +231,45 @@
 #
 # - Embeddings: **qwen3-embedding** (already in the ollama store, Q4_K_M, 4096 dims) — use via
 #   `ollama pull qwen3-embedding` + `POST /api/embed` or OpenAI-compatible `/v1/embeddings`.
-# - Reranker: `bge-reranker-v2-m3-Q4_K_M.gguf` in `/zero/ai/embeddings` — served via llama.cpp
-#   `llama-server --rerank` or used directly with llama.cpp's embedding CLI.
+# - llama-swap also serves `Qwen3-Embedding-0.6B` (Apache-2.0, Q8_0 GGUF on /zero, last-token
+#   pooling, 1024 dims) as the `embed`/`embeddings` slot: `POST /v1/embeddings` to port 9292.
+#   It loads on demand and is unloaded by the TTL; the Ollama tag stays for rag-search, whose
+#   index is 4096-dim and would need a reindex to switch.
+# - Reranker: `bge-reranker-v2-m3-Q4_K_M.gguf` in `/zero/ai/embeddings` — `rag-search` starts it
+#   on demand on port 8083. It is deliberately NOT a llama-swap slot: llama-swap proxies the
+#   chat/embeddings endpoints but not `/v1/rerank` (the request hangs), and Qwen3-Reranker is a
+#   causal LM that needs yes/no chat-template scoring — `--pooling rank` on its GGUF produced
+#   near-zero, reversed scores, so bge is the llama.cpp-compatible choice.
 # - Both are multilingual (RU/EN); reranker should be the top-k filter before LLM context assembly.
+#
+# ### FIM completion (editor)
+#
+# - Service: `services.llama-fim` (`modules/llm/fim.nix`) — llama.cpp with Qwen2.5-Coder-1.5B
+#   Q8_0 (`/zero/ai/llama/fim`), port 8012, Vulkan device, 4k ctx. A **user** unit without
+#   `wantedBy`: Neovim starts it on VimEnter and stops it when the last nvim exits, so the
+#   1.5B model does not compete with the chat tiers for the card.
+# - Client: `minuet-ai.nvim` (`files/nvim/lua/plugins/completion/minuet.lua`) with the Qwen FIM
+#   tokens over `/v1/completions`; ghost text on `<M-CR>`, line on `<M-l>`, next/prev `<M-]>`/
+#   `<M-[>`, dismiss `<M-e>`. `<C-j>`/`<C-k>` stay with LuaSnip.
+# - `-c 4096` is enough: minuet sends 2048 characters of context (~500 tokens).
+#
+# ### OCR (documents)
+#
+# - `PaddleOCR-VL-1.6` (0.47B, Apache-2.0, GGUF + mmproj on /zero) is a llama-swap model:
+#   request `model: "ocr"` (aliases `paddleocr`, `document`) on port 9292 with an OpenAI image
+#   message and the prompt `OCR:` (also `Table Recognition:`, `Formula Recognition:`, `Chart
+#   Recognition:`, `Seal Recognition:`). llama.cpp merged the paddleocr arch (#18825); one page
+#   fits the 16k context. Verified on a rendered invoice: exact Russian text and totals.
+#
+# ### Speech recognition (sherpa-onnx, CPU)
+#
+# - `gigaam-asr FILE.wav` — GigaAM-v3 (MIT, ru/en; RNNT, int8 encoder) on `/zero/ai/asr/gigaam-v3`.
+# - `parakeet-asr FILE.wav` — Parakeet-TDT-0.6B-v3 (CC-BY-4.0, 25 European languages incl. ru/uk)
+#   on `/zero/ai/asr/parakeet-v3`.
+# - Both run through sherpa-onnx on the CPU (no VRAM, no torch): ~0.15 s / ~0.27 s for a 5.7 s
+#   clip on 2 threads (measured 2026-11-05). The binaries are wrappers around an on-demand
+#   launcher, so sherpa-onnx is built and GC-rooted on the first call
+#   (`modules/llm/asr.nix`). Models are plain ONNX files downloaded by hand, like the GGUFs.
 #
 # ### rag-search (vector search over notes)
 #
@@ -272,6 +308,9 @@
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
 #   tmpfiles)
+# - `/zero/ai/asr` — GigaAM-v3 and Parakeet-TDT-v3 ONNX models for sherpa-onnx (activation dir,
+#   files downloaded by hand)
+# - `/zero/ai/llama/{ocr,embed,fim}` — PaddleOCR-VL, Qwen3-Embedding-0.6B and the FIM coder GGUF .
 # - `/zero/ai/glm52_i4` — empty directory; the colibrì int4 weights were deleted
 #   2026-11-05 and `/zero/ai` is root-owned, so removing the directory itself
 #   needs root
@@ -285,7 +324,8 @@
 #   into the active store — all 23 models now visible to `ollama list`, no re-download.
 # - stable-diffusion.cpp: package added (Vulkan), models in `/zero/ai/image`.
 # - Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT), 8004 (vLLM,
-#   manual), 8080 (llama-server, manual)
+#   manual), 8012 (llama-fim, user unit started by nvim), 8080 (llama-server, manual),
+#   8083 (rag-search reranker, on demand), 9292 (llama-swap API: chat, ocr, embed)
 
 {
   neg,
@@ -340,6 +380,8 @@ in
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/whisperx
           # OCR models (marker/surya) — main user manages files
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/ocr
+          # speech recognition models (GigaAM, Parakeet via sherpa-onnx) — main user manages files
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/asr
           # vLLM weights, HF cache and Triton kernel cache — main user manages files
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/vllm
         '';
