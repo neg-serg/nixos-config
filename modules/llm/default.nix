@@ -304,13 +304,13 @@
 #
 # - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
 #   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
-# - `/zero/ai/llama` — llama.cpp GGUFs (~274 GB): qwen3-vl 30b/8b, qwen3.8-27B,
-#   the abliterated set (Gemma 26B IQ3, Gemma 26B MXFP4 for the
-#   24 GB box, Gemma E4B, Qwen3.5-4B, Qwen3.8-27B IQ3, Qwen3-VL-8B),
-#   gpt-oss-120b MXFP4 (63 GB) and Qwen3.8-Flash-Next IQ3_S (78 GB, two shards
-#   in `qwen38-flash-next-iq3s/`). The gpt-oss-20b MXFP4 file still sits here
-#   (12 GB) but is no longer served — it was dropped from the catalog after it
-#   failed the FP planning task (see the model blocks in `llama-swap.nix`).
+# - `/zero/ai/llama` — llama.cpp GGUFs (~240 GB): qwen3-vl 30b/8b, qwen3.8-27B,
+#   the abliterated set (Gemma 26B IQ3, Qwen3.5-4B, Qwen3.8-27B IQ3,
+#   Qwen3-VL-8B), gpt-oss-120b MXFP4 (63 GB) and Qwen3.8-Flash-Next IQ3_S
+#   (78 GB, two shards in `qwen38-flash-next-iq3s/`). 34 GB of dead weights
+#   (gpt-oss-20b, the 24 GB-box Gemma MXFP4 + its mmproj, Gemma E4B) were
+#   deleted on 2026-11-05; gpt-oss-20b also left the catalog after it failed
+#   the FP planning task, which now lives in `llmctl bench fp`.
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
@@ -323,6 +323,9 @@
 #   needs root
 # - `/zero/ai/vllm` — vLLM: HF cache (`hf/`, weights + tokenizers), download dir (`hub/`) and the
 #   Triton kernel cache (`cache/`), created by the activation script
+# - `/zero/ai/video/wangp` — WanGP (Wan2GP): git checkout, `venv` (torch+rocm7.1) and `ckpts/`
+#   weights for video/image/audio/3D generation; launcher `wangp` in `packages/local-bin/bin`.
+#   Created by the activation script, filled by hand (wheels and HF files, not a Nix package).
 #
 # ## Status on trantor
 #
@@ -391,6 +394,9 @@ in
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/asr
           # vLLM weights, HF cache and Triton kernel cache — main user manages files
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/vllm
+          # WanGP app tree (checkout + venv + weights) — the `wangp` launcher runs
+          # it; /zero/ai/video itself is root-owned, so only this leaf is ours.
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/video/wangp
         '';
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
       }

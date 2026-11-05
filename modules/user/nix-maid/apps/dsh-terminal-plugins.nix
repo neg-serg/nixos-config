@@ -254,6 +254,14 @@ rec {
               - id: qwen3.6-35b-abliterated
                 name: Qwen3.6-35B abliterated
                 contextWindow: 98304
+              - id: qwen3.8-flash-next-abliterated
+                name: Qwen3.8-Flash-Next 180B (thinking, 128k)
+                # Serves with thinking (xhigh, 4096-token budget); a hard
+                # question costs minutes at ~8 tok/s. See llama-swap.nix.
+                contextWindow: 131072
+              - id: gpt-oss-120b-abliterated
+                name: gpt-oss-120b (RAM tier, slow prefill)
+                contextWindow: 32768
               - id: qwen3.8-27b-abliterated
                 name: Qwen3.8-27B abliterated (quality, RU)
                 # 24k is this card's VRAM ceiling and the minimum that holds
