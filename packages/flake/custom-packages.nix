@@ -44,6 +44,11 @@
   genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
   renoise-osc = pkgs.neg.renoise-osc; # OSC client for Renoise: Lua eval, transport, mixer, recording
   wineapps = pkgs.neg.wineapps; # declarative Wine app manager (list/install/uninstall/run)
+  # On-demand companions of wineapps: the same toolchain, built by the launcher
+  # on first use instead of sitting in the system closure (wine's own closure is
+  # 1.7 GiB; the wineapps wrapper already embeds wine).
+  wine = pkgs.wineWow64Packages.stable; # Wine runtime (on-demand launcher)
+  winetricks = pkgs.winetricks; # Wine prefix setup helper (on-demand launcher)
   minibbs = pkgs.neg.minibbs; # tiny BBS-style message board (SQLite + HTTP)
   gen-unbound-hosts = pkgs.neg.local-bin-tools; # regenerate hosts/trantor/unbound-hosts.nix
   fetch-covers = pkgs.neg.local-bin-tools; # album covers for ~/music via sacad

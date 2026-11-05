@@ -16,12 +16,10 @@ let
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf (cfg.apps.winapps.enable or false) {
-      # Windows apps (Wine)
-      environment.systemPackages = [
-        pkgs.wineWow64Packages.stable # Open-source implementation of the Windows API
-      ];
-    })
+    # WinApps runs a Windows VM over RDP (modules/system/winapps.nix) and never
+    # touches Wine; the wine this block used to install was a leftover that kept
+    # the 1.7 GiB Wine closure in the system image. Wine now comes from the
+    # on-demand launchers in modules/system/wine-apps.nix when the user needs it.
     (lib.mkIf (cfg.fun.enable or false) {
       # Cursed-text generator: a Rust package now (packages/zalgo), so the
       # executable comes from the overlay instead of a script in hack-art.
