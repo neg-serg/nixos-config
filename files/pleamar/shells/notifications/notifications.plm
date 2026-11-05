@@ -109,7 +109,10 @@ scene notifications {
     // text rather than as cards (seen 2026-10-28). Mixing the palette's two
     // surface tokens keeps the card inside the theme's own colours while giving
     // it an edge to be seen against; `notify.accent` at 24 % is that edge.
-    let notify.card = mix(live.coal, live.slate, 55%)
+    // 15 % since 2026-11-05: the plate reads as near-coal, so the hairline and the
+    // urgency stripe carry the silhouette and the card stops lifting off the
+    // desktop it sits on. 55 % was the card's first value and was too light.
+    let notify.card = mix(live.coal, live.slate, 15%)
 
 
     // ---------------------------------------------------------------- data
