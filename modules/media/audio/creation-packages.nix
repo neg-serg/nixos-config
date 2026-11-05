@@ -15,6 +15,41 @@ let
   # audio-graph ordering and the restart policy live there.
   jackApp = config.lib.neg.jackApp;
 
+  # Renoise and Surge XT are built on first use. Surge XT is 609 MiB and is a
+  # plugin, not a library every session loads — but a DAW finds plugins while
+  # it scans at startup, so the Renoise launcher has to materialise the Surge
+  # root and prefix the plugin paths *before* Renoise execs. The system
+  # aggregation from modules/system/environment.nix stays as the tail.
+  renoise = pkgs.writeShellScriptBin "renoise" ''
+    set -eu
+    nix=${pkgs.nix}/bin/nix
+    nixStore=${pkgs.nix}/bin/nix-store
+    ensure() {
+      name=$1
+      root="$HOME/.local/state/nix-apps/$name"
+      if [ -e "$root" ]; then
+        return 0
+      fi
+      mkdir -p "$(dirname "$root")"
+      rm -f "$root"
+      out=$("$nix" build --no-link --print-out-paths "git+file:///etc/nixos#$name")
+      "$nixStore" --add-root "$root" --indirect --realise "$out" >/dev/null
+    }
+    ensure renoise
+    ensure surge-xt
+    surge="$HOME/.local/state/nix-apps/surge-xt"
+    export LV2_PATH="$surge/lib/lv2''${LV2_PATH:+:$LV2_PATH}"
+    export VST3_PATH="$surge/lib/vst3''${VST3_PATH:+:$VST3_PATH}"
+    export CLAP_PATH="$surge/lib/clap''${CLAP_PATH:+:$CLAP_PATH}"
+    exec "$HOME/.local/state/nix-apps/renoise/bin/renoise" "$@"
+  '';
+
+  surgeXt = onDemand {
+    name = "surge-xt";
+    attr = "surge-xt";
+    binary = "Surge XT";
+  };
+
   packages = [
     # -- Live Coding --
     pkgs.supercollider # SuperCollider IDE and audio engine
@@ -77,12 +112,9 @@ let
     # pkgs.ocenaudio # lightweight waveform editor — commented: fails to build
     pkgs.vital # spectral wavetable synth
     pkgs.dexed # DX7-compatible FM synth
-    pkgs.surge-xt # open-source wavetable/VA hybrid synth (VST3/CLAP/LV2) — MPE-capable
+    surgeXt # open-source wavetable/VA hybrid synth (VST3/CLAP/LV2) — MPE-capable, built on first use
     pkgs.odyssey # open-source ARP Odyssey-style VA synth (VST3/LV2)
-    (onDemand {
-      name = "renoise";
-      attr = "renoise";
-    }) # Renoise tracker — modern tracker-based DAW, built on first use
+    renoise # Renoise tracker + Surge XT on LV2/VST3/CLAP paths, both built on first use
     (pkgs.makeDesktopItem {
       name = "renoise";
       desktopName = "Renoise";
