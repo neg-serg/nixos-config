@@ -102,7 +102,10 @@ let
   # (only 4 layers are on the card), so memory is not the limit; prefill is,
   # at a few minutes per full window. 16k was the old value, too tight for any
   # multi-turn session that kept its history. Checked with a needle at 26,715
-  # tokens: found, prefill 112 tok/s, ~5 min. This tier IGNORES
+  # tokens: found, prefill 112 tok/s, ~5 min. Planning is not as depth-proof as
+  # the 180B: the same F6 case buried in 22k tokens scores 0.70 against 1.00
+  # short-context — rebuild and waves stay right, the cut-off bookkeeping does
+  # not. This tier IGNORES
   # `chat_template_kwargs.enable_thinking` — its thoughts are driven by
   # `--reasoning-effort` — so clients must leave max_tokens room for them; a
   # 24-token cap returns an empty `content` with everything in reasoning.
@@ -148,7 +151,9 @@ let
   # by contrast, is 5/5 either way (568 s off, 823 s on), so the earlier
   # "never finishes without thinking" note was an artefact of service restarts.
   # The 128k window was checked with a needle at 93,907 tokens: found, 87 tok/s
-  # prefill (18 min), 5.9 tok/s decode at that depth. The budget keeps a hard
+  # prefill (18 min), 5.9 tok/s decode at that depth. Planning survives depth
+  # too: the F6 build-plan case buried in 22,855 tokens still scores 1.00
+  # (10 min, 1.8k tokens), where the 120B drops to 0.70. The budget keeps a hard
   # prompt from running 20+ minutes at ~8 tok/s;
   # clients can opt out per request with
   # `chat_template_kwargs: {"enable_thinking": false}`.
@@ -205,7 +210,9 @@ let
   # q8_0 and the native 256k window costs ~9.3 GiB of the card (~11.7 GiB
   # total with the desktop). Verified end-to-end on a 104k-token prompt: the
   # needle came back, prefill 2890 tok/s (~36 s), decode 70 tok/s at that
-  # depth and ~95-100 short. The ~4 GiB left over is fine for the desktop
+  # depth and ~95-100 short. The 262k claim holds near the edge: a needle at
+  # 211,707 tokens came back correctly, prefill 1908 tok/s (111 s), decode
+  # 54 tok/s. The ~4 GiB left over is fine for the desktop
   # but not for a game plus OBS: drop to -c 131072 (~6.8 GiB) if a client
   # OOMs. `--reasoning off` is mandatory: with thinking on it spends the
   # whole token budget inside reasoning_content and returns empty content
