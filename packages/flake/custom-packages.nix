@@ -96,6 +96,8 @@
   gh-enhance = pkgs.gh-enhance;
   sherpa-onnx = pkgs.sherpa-onnx;
   neomutt = pkgs.neomutt; # terminal mail client (launcher in modules/user/mail.nix)
+  perf = pkgs.perf; # linux perf tooling (launcher in modules/monitoring/pkgs)
+  worktrunk = pkgs.worktrunk; # git worktree manager `wt` (launcher in modules/cli/dev.nix)
 
   # Docling (PDF/DOCX → Markdown with layout/table models): the python env is
   # ~3.9 GiB, so the `docling` launcher in modules/cli/ocr.nix builds it on
