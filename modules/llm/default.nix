@@ -58,11 +58,12 @@
 #   this stack. Base files still lie on disk until they are deleted.
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
 #   unloads them at once when a game starts.
-# - Only models that fit the card are exposed here. `qwen3-vl-30b` (18 GB)
-#   stays as a manual `llama-server` unit.
+# - One model is resident at a time. All of them fit the 16 GB card except the
+#   120B RAM tier (below); `qwen3-vl-30b` (18 GB) stays as a manual
+#   `llama-server` unit.
 # - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path on gfx1201; `--cpu-moe`
 #   is a trap here (3-8 tok/s).
-# - Models (quant, measured on 2026-11-04):
+# - Models (quant, measured on 2026-11-05):
 #
 #   | model        | weights                                  | ctx | VRAM  | tok/s |
 #   | ------------ | ---------------------------------------- | --- | ----- | ----- |
@@ -72,6 +73,7 @@
 #   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 64k | 15.2G | 55    |
 #   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 24k | 15.0G | 30-36 |
 #   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 64k | 0G    | 22    |
+#   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 16k | 9.7G  | 8.5   |
 #
 # - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
 #   ~3.5 bpw, the highest bits-per-weight served here. Dense KV is expensive,
@@ -95,6 +97,17 @@
 #   at 800-1000 tok/s, while 16k could not even hold the agent harness prompt
 #   (~20k tokens) — see `modules/llm/llama-swap.nix`. Generation drops from
 #   ~22 tok/s short-context to ~8 tok/s on a 40k prompt.
+# - `gpt-oss-120b-abliterated` (`gpt-oss-120`, `big` aliases) is the RAM tier:
+#   63.4 GB of MXFP4 weights on a 16 GB card. Four layers run on the GPU
+#   (~9.7 GiB), the other 32 stay mmap'd and are read from `/zero` page cache or
+#   NVMe on demand. `--n-cpu-moe` is deliberately NOT used: it mallocs the
+#   expert weights (~52 GB anonymous), which does not fit next to the desktop,
+#   and the 507 GB swap then sits in the hot path. Measured 2026-11-05 with the
+#   desktop open: 8.5 tok/s decode, 19 tok/s prefill on a 2k prompt (~100 s; a
+#   20k agent prompt needs ~18 min), 55 s cold load. Per-model `ttl` is 900 s,
+#   so an idle minute does not reload 63 GB. Decode is I/O-bound: the resident
+#   fraction of the weights sets the miss rate, so closing the desktop and
+#   letting more of the file sit in page cache lifts it (estimate ~12-14 tok/s).
 # - Context is cheap on the hybrid-attention models: gpt-oss and Qwen3.6 went
 #   from 32k to 64k for <200 MB, with q8_0 KV and `-ub 1024` (prefill +29%).
 #   MTP speculation was tested and rejected: slower (46 vs 65 tok/s) and it
@@ -223,9 +236,10 @@
 #
 # - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
 #   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
-# - `/zero/ai/llama` — llama.cpp GGUFs (~120 GB): qwen3-vl 30b/8b, qwen3.8-27B,
-#   and the abliterated set (gpt-oss-20b, Gemma 26B IQ3, Gemma 26B MXFP4 for the
-#   24 GB box, Gemma E4B, Qwen3.5-4B, Qwen3.8-27B IQ3, Qwen3-VL-8B)
+# - `/zero/ai/llama` — llama.cpp GGUFs (~196 GB): qwen3-vl 30b/8b, qwen3.8-27B,
+#   the abliterated set (gpt-oss-20b, Gemma 26B IQ3, Gemma 26B MXFP4 for the
+#   24 GB box, Gemma E4B, Qwen3.5-4B, Qwen3.8-27B IQ3, Qwen3-VL-8B) and
+#   gpt-oss-120b MXFP4 (63 GB, the RAM tier)
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
