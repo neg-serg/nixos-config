@@ -107,7 +107,9 @@ let
   # tokens: found, prefill 112 tok/s, ~5 min. Planning is not as depth-proof as
   # the 180B: the same F6 case buried in 22k tokens scores 0.70 against 1.00
   # short-context — rebuild and waves stay right, the cut-off bookkeeping does
-  # not. This tier IGNORES
+  # not. It is also the one tier whose fp score is not stable: two runs of
+  # `bench fp` gave 4.4 and 5.0 of 6 (different per-case misses), so 4.7 is the
+  # mean; the qwen tiers repeat exactly. This tier IGNORES
   # `chat_template_kwargs.enable_thinking` — its thoughts are driven by
   # `--reasoning-effort` — so clients must leave max_tokens room for them; a
   # 24-token cap returns an empty `content` with everything in reasoning.
