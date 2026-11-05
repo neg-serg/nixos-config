@@ -130,13 +130,14 @@ let
   #
   # Thinking is ON: xhigh effort, 4096-token budget, thoughts moved to
   # `reasoning_content` by `--reasoning-format deepseek` (without it the reply
-  # arrives with an empty `content`). Measured on the hard phosphorus task:
-  # ~3.7k tokens / 7.8 min, and all five reference values matched — the same
-  # task never finished with thinking off. On the `bench fp` cut-off case the
-  # flag is the difference between 0.5 and 1.0: with thinking the plan is exact
-  # (239 s, ~1.1k tokens), without it the model treats the spared dependent as
-  # if it had rerun. The budget is what keeps a hard prompt from running 20+
-  # minutes at ~8 tok/s; clients can opt out per request with
+  # arrives with an empty `content`). What it buys is planning, not chemistry:
+  # the `bench fp` cut-off case scores 1.0 with thinking (239 s, ~1.1k tokens)
+  # and 0.5 without it, where the model treats the spared dependent as if it
+  # had rerun. The hard phosphorus task is 5/5 either way — 568 s without
+  # thinking, 823 s with it — so the earlier "never finishes without thinking"
+  # note was an artefact of service restarts mid-run, not of the model. The
+  # budget keeps a hard prompt from running 20+ minutes at ~8 tok/s; clients
+  # can opt out per request with
   # `chat_template_kwargs: {"enable_thinking": false}`.
   qwen38next = ''
     ${llamaVulkan} --device Vulkan0 \
