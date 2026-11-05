@@ -96,14 +96,6 @@ CATALOG = {
         "chem": "-",
         "lean": "7/7",
     },
-    "deepseek-v4-flash-abliterated": {
-        "aliases": ["ds4", "deepseek-v4"],
-        "role": "304B-A13B MoE, reasoning",
-        "ctx": "16k",
-        "size": "98 GB",
-        "chem": "-",
-        "lean": "-",
-    },
 }
 
 CHEM_SYSTEM = """Ты — химик. Обязательные проверки:

@@ -107,20 +107,6 @@ let
       --cache-type-k q8_0 --cache-type-v q8_0 -ub 512
   '';
 
-  # DeepSeek-V4-Flash-0731 abliterated (Q2_K, 97.6 GB, one file, 43 layers).
-  # 304B total / 13B active, SWA-128 attention (cheap KV), MIT. Two layers on
-  # the card (~8.2 GiB model buffer, 11.5 GiB total) — a third one pushes VRAM
-  # to 15/15.9. Measured 2026-11-05: 2.9 tok/s decode (64 tokens), prompt eval
-  # ~2 tok/s cold; it is a reasoning model and `--reasoning off` is required,
-  # otherwise every generated token lands in `reasoning_content`.
-  ds4flash = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/abliterated/DeepSeek-V4-Flash-Q2_K-0731.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -ngl 2 -c 16384 -np 1 --flash-attn on --fit off --reasoning off --jinja \
-      --cache-type-k q8_0 --cache-type-v q8_0 -ub 512
-  '';
-
   # Qwen3.6-35B-A3B abliterated (i1/IQ2_S) — the strongest model that fits the
   # 16 GB card next to the desktop: ~55 tok/s at 64k, text-only. The dynamic
   # IQ2 keeps attention and shared experts at higher precision; a Q3 build
@@ -304,14 +290,6 @@ in
           aliases = [
             "qwen3.8-flash"
             "next"
-          ];
-        };
-        "deepseek-v4-flash-abliterated" = {
-          cmd = ds4flash;
-          ttl = 900;
-          aliases = [
-            "ds4"
-            "deepseek-v4"
           ];
         };
         "qwen3.8-27b-abliterated" = {
