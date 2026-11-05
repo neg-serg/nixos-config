@@ -29,7 +29,6 @@ in
       attr = "tmd-top";
     })
     pkgs.adguardian # terminal dashboard for AdGuard Home
-    pkgs.powertop # watch for power events
     pkgs.procdump # procdump for linux
     pkgs.sysstat # sar, iostat, mpstat, pidstat and friends
     pkgs.vmtouch # portable file system cache diagnostics and control
