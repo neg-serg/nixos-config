@@ -104,7 +104,7 @@ CATALOG = {
         "size": "78 GB",
         "chem": "13/13",
         "lean": "7/7",
-        "fp": "3.4/6",
+        "fp": "6.0/6*",
     },
 }
 
@@ -359,7 +359,9 @@ def print_models():
     print(
         "\n* = present in the live catalog. Scores are measured on trantor; "
         "chem = 6 olympiad problems (13 values), lean = 7 core-Lean "
-        "theorems, fp = 5 build-planning cases (partial credit)."
+        "theorems, fp = 6 build-planning cases (partial credit). * = fp with "
+        "the tier's own thinking config; every other fp score has thinking "
+        "pinned off for comparability."
     )
 
 
