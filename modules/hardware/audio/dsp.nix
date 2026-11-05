@@ -196,9 +196,9 @@ in
           # the daemon inherit this policy.
           CPUSchedulingPolicy = "fifo";
           CPUSchedulingPriority = 19;
-          # A period's worth of page faults is enough to miss the deadline, and
-          # the pipeline has been seen partially swapped (2.5 MB peak swap).
-          MemoryLock = true;
+          # Locking the daemon's pages would help the same way, but this systemd
+          # (262) has no `MemoryLock=` key — it reports the one that used to be
+          # here as unknown and ignores it — so the policy above is the protection.
           ExecStartPre = seedConfig;
           ExecStart = lib.concatStringsSep " " (
             [
