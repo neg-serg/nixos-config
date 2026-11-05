@@ -58,6 +58,7 @@
 let
   cfg = config.hardware.audio.dsp.camilladsp;
   systemdUser = config.lib.neg.systemdUser;
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
   homeDir = config.lib.neg.homeDir;
 
   # Kept in one place: the patched camillagui config above bakes in the same
@@ -152,9 +153,14 @@ in
         pkgs.brutefir # digital convolution engine for audio processing
         pkgs.camilladsp # flexible audio DSP engine for HTTP control
         pkgs.camillagui # web GUI for CamillaDSP (backend + prebuilt React frontend)
-        pkgs.lsp-plugins # Linux Studio Plugins collection
-        pkgs.yabridge # modern and transparent VST bridge
-        pkgs.yabridgectl # command-line tool for managing yabridge VSTs
+        # lsp-plugins moved to the Renoise launcher (it prefixes LV2/VST/VST3/
+        # CLAP paths with a GC-rooted copy); yabridgectl is an on-demand
+        # launcher — its wrapper pins yabridge and the bridge wine, so the
+        # first sync builds and roots the whole 1.7 GiB chain.
+        (onDemand {
+          name = "yabridgectl";
+          attr = "yabridgectl";
+        }) # manage yabridge VSTs, built on first use
       ];
     }
 

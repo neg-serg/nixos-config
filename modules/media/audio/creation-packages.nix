@@ -41,6 +41,14 @@ let
     export LV2_PATH="$surge/lib/lv2''${LV2_PATH:+:$LV2_PATH}"
     export VST3_PATH="$surge/lib/vst3''${VST3_PATH:+:$VST3_PATH}"
     export CLAP_PATH="$surge/lib/clap''${CLAP_PATH:+:$CLAP_PATH}"
+    # LSP plugins were in the system profile's lib/lv2; they are materialised
+    # here instead, so the collection costs nothing until Renoise starts.
+    ensure lsp-plugins
+    lsp="$HOME/.local/state/nix-apps/lsp-plugins"
+    export LV2_PATH="$lsp/lib/lv2''${LV2_PATH:+:$LV2_PATH}"
+    export VST_PATH="$lsp/lib/vst''${VST_PATH:+:$VST_PATH}"
+    export VST3_PATH="$lsp/lib/vst3''${VST3_PATH:+:$VST3_PATH}"
+    export CLAP_PATH="$lsp/lib/clap''${CLAP_PATH:+:$CLAP_PATH}"
     exec "$HOME/.local/state/nix-apps/renoise/bin/renoise" "$@"
   '';
 
