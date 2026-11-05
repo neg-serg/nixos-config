@@ -107,6 +107,43 @@
   dirt-samples = pkgs.neg.dirt-samples;
   sc-faust = pkgs.sc-faust;
   renoise-redux = pkgs.neg.renoise-redux;
+
+  # The full alsa-tools set (GTK/gst GUI utilities) — the system keeps only the
+  # three RME HDSPe binaries, the rest is one `nix shell /etc/nixos#alsa-tools`
+  # away.
+  alsa-tools = pkgs.alsa-tools;
+
+  # Manual proxy core; modules/system/net/proxy.nix wraps the service and the
+  # CLI around this attr so the binary is built on first start/use.
+  xray = pkgs.xray;
+
+  # Piper + whisper.cpp + their python env and ffmpeg, merged into one root that
+  # modules/media/audio/speech.nix materialises on first service start. The
+  # overrides must match what that module used to install: inference only (no
+  # torch/triton training extras, no Japanese dictionaries) and Vulkan whisper.
+  speech-stack =
+    let
+      piper = pkgs.piper-tts.override {
+        withTrain = false;
+        withJapanese = false;
+      };
+      whisper = pkgs.whisper-cpp.override { vulkanSupport = true; };
+      serverPy = pkgs.python3.withPackages (ps: [
+        ps.fastapi
+        ps.uvicorn
+        ps.pydantic
+        ps.python-multipart
+      ]);
+    in
+    pkgs.symlinkJoin {
+      name = "speech-stack";
+      paths = [
+        piper
+        whisper
+        serverPy
+        pkgs.ffmpeg
+      ];
+    };
   # Desktop utilities built on first launch instead of at switch time; the
   # launchers live in modules/user/nix-maid/apps/gui-apps.nix.
   showmethekey = pkgs.showmethekey; # on-screen keystroke overlay for screencasts (GTK4 + libinput)
