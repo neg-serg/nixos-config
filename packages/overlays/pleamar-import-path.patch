@@ -1,5 +1,5 @@
 diff --git a/src/language/mod.rs b/src/language/mod.rs
-index f0273b3..3385ec4 100644
+index df790bb..1e06212 100644
 --- a/src/language/mod.rs
 +++ b/src/language/mod.rs
 @@ -76,7 +76,7 @@ impl Reader {
@@ -44,7 +44,7 @@ index f0273b3..3385ec4 100644
              };
              if self.open_stack.contains(&target) {
                  return Err(CompileError::at(n.line, n.head[1].col, format!("'{which}' ends up importing itself: {}", self.open_stack.iter().chain([&target]).map(|p| p.file_name().unwrap_or_default().to_string_lossy()).collect::<Vec<_>>().join(" → "))));
-@@ -360,7 +371,9 @@ fn read_with(path: &str, unsaved: Vec<(PathBuf, String)>) -> Result<(Scene, Vec<
+@@ -362,7 +373,9 @@ fn read_with(path: &str, unsaved: Vec<(PathBuf, String)>) -> Result<(Scene, Vec<
  /// needs them even when the file is half-written and does not compile.
  fn read_with_symbols(path: &str, unsaved: Vec<(PathBuf, String)>) -> (Result<(Scene, Vec<PathBuf>), (Vec<CompileError>, Vec<(PathBuf, String)>)>, Vec<compiler::Symbol>) {
      let mut l = Reader { unsaved, ..Default::default() };
@@ -55,7 +55,7 @@ index f0273b3..3385ec4 100644
      let mut symbols = Vec::new();
      let compiled = (|| {
          l.open_stack.push(main.clone());
-@@ -512,3 +525,24 @@ mod tests {
+@@ -564,3 +577,24 @@ mod tests {
          }
      }
  }

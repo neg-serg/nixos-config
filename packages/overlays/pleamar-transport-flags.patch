@@ -1,8 +1,8 @@
 diff --git a/src/language/vocabulary.rs b/src/language/vocabulary.rs
-index 36da3e9..dfe20df 100644
+index dbf7e7e..b039a0f 100644
 --- a/src/language/vocabulary.rs
 +++ b/src/language/vocabulary.rs
-@@ -135,7 +135,7 @@ pub const SERVICES: &[(&str, &[&str])] = &[
+@@ -137,7 +137,7 @@ pub const SERVICES: &[(&str, &[&str])] = &[
      ("brightness", &["present", "level"]),
      ("network", &["online", "kind", "name", "strength", "wifi", "error", "networks"]),
      ("bluetooth", &["present", "powered", "discovering", "devices", "pairing", "pairing_id", "pairing_address", "pairing_name", "pairing_code"]),

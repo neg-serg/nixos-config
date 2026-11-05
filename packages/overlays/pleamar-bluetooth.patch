@@ -1,3 +1,18 @@
+diff --git a/src/language/vocabulary.rs b/src/language/vocabulary.rs
+index b039a0f..0eb5d85 100644
+--- a/src/language/vocabulary.rs
++++ b/src/language/vocabulary.rs
+@@ -136,7 +136,7 @@ pub const SERVICES: &[(&str, &[&str])] = &[
+     ("battery", &["present", "percent", "charging"]),
+     ("brightness", &["present", "level"]),
+     ("network", &["online", "kind", "name", "strength", "wifi", "error", "networks"]),
+-    ("bluetooth", &["present", "powered", "discovering", "devices", "pairing", "pairing_id", "pairing_address", "pairing_name", "pairing_code"]),
++    ("bluetooth", &["present", "powered", "discovering", "adapter_name", "error", "devices", "pairing", "pairing_id", "pairing_address", "pairing_name", "pairing_code"]),
+     ("media", &["playing", "paused", "title", "artist", "album", "length", "position", "rate", "can_seek", "can_go_next", "can_go_prev", "can_play", "can_pause", "art", "player", "players"]),
+     ("window", &["title", "class", "monitor", "fullscreen", "maximized", "list"]),
+     ("thumbnails", &["list", "capturing"]),
+diff --git a/src/platform/bluez.rs b/src/platform/bluez.rs
+index 92bdfef..f030e48 100644
 --- a/src/platform/bluez.rs
 +++ b/src/platform/bluez.rs
 @@ -1,9 +1,12 @@
@@ -27,7 +42,7 @@
  //! on its own thread, and the change arrives through the service. While
  //! pairing, each naming the `pairing_id` it answers: `answer(id, code)` to a
  //! `pin` or a `passkey`, `confirm(id)` to a `confirm` or an `authorize`, and
-@@ -40,6 +44,12 @@
+@@ -40,6 +44,12 @@ const ADAPTER: &str = "org.bluez.Adapter1";
  const DEVICE: &str = "org.bluez.Device1";
  const BATTERY: &str = "org.bluez.Battery1";
  
@@ -40,7 +55,7 @@
  type Objects = HashMap<OwnedObjectPath, HashMap<String, HashMap<String, OwnedValue>>>;
  
  fn objects(c: &Connection) -> Option<Objects> {
-@@ -68,6 +78,7 @@
+@@ -68,6 +78,7 @@ pub fn available() -> bool {
  /// showing a question nobody can answer any more.
  fn absent() -> SysValue {
      let mut v = vec![("present".into(), SysValue::Bool(false))];
@@ -48,7 +63,7 @@
      v.extend(["pairing", "pairing_address", "pairing_name", "pairing_code"].map(|k| (k.into(), SysValue::Text(if k == "pairing" { "none" } else { "" }.into()))));
      v.push(("pairing_id".into(), SysValue::Num(0.0)));
      SysValue::Map(v)
-@@ -111,6 +122,8 @@
+@@ -111,6 +122,8 @@ fn now(c: &Connection) -> SysValue {
          ("present".into(), SysValue::Bool(true)),
          ("powered".into(), SysValue::Bool(flag(a, "Powered"))),
          ("discovering".into(), SysValue::Bool(flag(a, "Discovering"))),
@@ -57,7 +72,7 @@
          ("devices".into(), SysValue::List(devices.into_iter().map(|(_, _, v)| v).collect())),
      ];
      v.extend(pairing(&o));
-@@ -708,13 +721,24 @@
+@@ -708,13 +721,24 @@ pub fn command(what: &str, args: &[SysValue]) -> Result<(), String> {
              let paired = device_path(&o, address).and_then(|p| o.get(&p)?.get(DEVICE).map(|d| flag(d, "Paired"))).unwrap_or(false);
              let pairing = if paired { None } else { Some(Pairing::begin(attempt)?) };
              let address = address.clone();
@@ -84,7 +99,7 @@
                  })
                  .map(|_| ())
                  .map_err(|e| e.to_string())
-@@ -727,7 +751,23 @@
+@@ -727,7 +751,23 @@ pub fn command(what: &str, args: &[SysValue]) -> Result<(), String> {
              let path = device_path(&o, address).ok_or("that device is not known")?;
              adapter.call_method("RemoveDevice", &(path,)).map(|_| ()).map_err(err)
          }
@@ -109,8 +124,3 @@
      }
  }
  
---- a/src/language/vocabulary.rs
-+++ b/src/language/vocabulary.rs
-@@ -139 +139 @@
--    ("bluetooth", &["present", "powered", "discovering", "devices", "pairing", "pairing_id", "pairing_address", "pairing_name", "pairing_code"]),
-+    ("bluetooth", &["present", "powered", "discovering", "adapter_name", "error", "devices", "pairing", "pairing_id", "pairing_address", "pairing_name", "pairing_code"]),

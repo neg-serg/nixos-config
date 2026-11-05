@@ -1,8 +1,8 @@
 diff --git a/src/platform/mod.rs b/src/platform/mod.rs
-index 7e7502b..daeab8b 100644
+index af81a89..72b9313 100644
 --- a/src/platform/mod.rs
 +++ b/src/platform/mod.rs
-@@ -300,11 +300,19 @@ pub fn popup(k: usize, what: Option<([i32; 4], (f32, f32))>) {
+@@ -332,11 +332,19 @@ pub fn popup(k: usize, what: Option<([i32; 4], (f32, f32))>) {
  /// On Wayland it's `ext-session-lock`: the compositor guarantees it, not the drawing.
  /// On Windows it will be `LockWorkStation`, which brings its own screen; on macOS, the
  /// screen saver with password.
@@ -26,10 +26,10 @@ index 7e7502b..daeab8b 100644
  
  /// The render has let go of the sheet of surface `id`, and with it of its
 diff --git a/src/platform/wayland.rs b/src/platform/wayland.rs
-index a864088..0f07c24 100644
+index a12485a..b52967a 100644
 --- a/src/platform/wayland.rs
 +++ b/src/platform/wayland.rs
-@@ -1116,8 +1116,10 @@ static LOCKS: std::sync::OnceLock<Locks> = std::sync::OnceLock::new();
+@@ -1443,8 +1443,10 @@ static LOCKS: std::sync::OnceLock<Locks> = std::sync::OnceLock::new();
  
  /// `Some((bounds, origin, screens))` engages the lock of surface `which`; `None`
  /// releases it. The render calls it, having already released what it painted before releasing it.
@@ -42,7 +42,7 @@ index a864088..0f07c24 100644
      let mut engaged = c.engaged.lock().unwrap();
      let Some((bounds, origin, screens)) = what else {
          if let Some(e) = engaged.take() {
-@@ -1126,16 +1128,16 @@ pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), Screens)>
+@@ -1453,16 +1455,16 @@ pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), Screens)>
              let _ = c.connection.flush();
              println!("lock   · unlocked");
          }
@@ -62,7 +62,7 @@ index a864088..0f07c24 100644
          }
      };
      // One face per monitor, and all at once: until they're all there, the
-@@ -1158,6 +1160,7 @@ pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), Screens)>
+@@ -1485,6 +1487,7 @@ pub fn lock_screen(which: usize, what: Option<((u32, u32), (f32, f32), Screens)>
      drop(monitors);
      *engaged = Some(Engaged { which, bounds, origin, screens, lock, faces, retiring: Vec::new() });
      let _ = c.connection.flush();
@@ -70,7 +70,7 @@ index a864088..0f07c24 100644
  }
  
  /// The lock face of one monitor: the scene, if `shows`, or else a plain black
-@@ -1653,6 +1656,11 @@ pub fn run_event_loop(wanted: Vec<Surface>, extra_height: u32, instance: wgpu::I
+@@ -2041,6 +2044,11 @@ pub fn run_event_loop(wanted: Vec<Surface>, extra_height: u32, instance: wgpu::I
      if state.placed.is_empty() {
          eprintln!("warning: none of the monitors asked for ({:?}) is plugged in; waiting for one to appear", state.wanted.iter().map(|s| &s.screens).collect::<Vec<_>>());
      }
@@ -82,7 +82,7 @@ index a864088..0f07c24 100644
      while !state.quit {
          // The compositor went away (its session ended): nothing left to show on.
          if let Err(e) = events.blocking_dispatch(&mut state) {
-@@ -1740,6 +1748,14 @@ impl smithay_client_toolkit::session_lock::SessionLockHandler for State {
+@@ -2127,6 +2135,14 @@ impl smithay_client_toolkit::session_lock::SessionLockHandler for State {
      }
      /// It didn't grant it —there's already another locker—, or it has ended it.
      fn finished(&mut self, _: &Connection, _: &QueueHandle<Self>, _: smithay_client_toolkit::session_lock::SessionLock) {
@@ -98,10 +98,10 @@ index a864088..0f07c24 100644
          let _ = self.to_render.send(ToRender::LockScreen(false));
      }
 diff --git a/src/render.rs b/src/render.rs
-index e0686b5..fb0eef9 100644
+index e7ef8ef..388b5a9 100644
 --- a/src/render.rs
 +++ b/src/render.rs
-@@ -3526,9 +3526,16 @@ pub fn run(
+@@ -3877,9 +3877,16 @@ pub fn run(
          for (k, wants) in want {
              let was = locks.contains(&k);
              if wants && !was {

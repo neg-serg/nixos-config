@@ -1,7 +1,8 @@
 diff --git a/src/platform/wayland.rs b/src/platform/wayland.rs
+index b52967a..66d618f 100644
 --- a/src/platform/wayland.rs
 +++ b/src/platform/wayland.rs
-@@ -1942,7 +1942,22 @@
+@@ -2182,7 +2182,22 @@ impl smithay_client_toolkit::session_lock::SessionLockHandler for State {
          }
          // Its box, centred on THIS monitor: what's left over around it is also
          // seen, so the background is painted large and each monitor shows its own part.

@@ -1,8 +1,8 @@
 diff --git a/src/gpu.rs b/src/gpu.rs
-index a52152f..4cfd1a7 100644
+index e5916c2..2c28358 100644
 --- a/src/gpu.rs
 +++ b/src/gpu.rs
-@@ -4052,6 +4052,12 @@ impl Sheet {
+@@ -5199,6 +5199,12 @@ impl Sheet {
      pub fn keyboard(&self, t: Keyboard) {
          self.window.keyboard(t);
      }
@@ -16,10 +16,10 @@ index a52152f..4cfd1a7 100644
  
  /// Header, frame history and, at the end, the lens: whether there is a background to show.
 diff --git a/src/platform/mod.rs b/src/platform/mod.rs
-index 35ee464..7e7502b 100644
+index eabed15..aa968c6 100644
 --- a/src/platform/mod.rs
 +++ b/src/platform/mod.rs
-@@ -1019,6 +1019,10 @@ pub trait PlatformWindow: Send {
+@@ -1091,6 +1091,10 @@ pub trait PlatformWindow: Send {
      /// Grab or release the keyboard with the scene running: a launcher wants it
      /// entirely while it's open, and not at all when it isn't.
      fn keyboard(&self, t: crate::scene::Keyboard);
@@ -31,10 +31,10 @@ index 35ee464..7e7502b 100644
      /// the one about to be presented. Where that's unknown, it doesn't report, and the clock sets the pace.
      fn request_frame(&self) {}
 diff --git a/src/platform/wayland.rs b/src/platform/wayland.rs
-index 2bdfa68..7e90534 100644
+index 5c67d1a..27a834c 100644
 --- a/src/platform/wayland.rs
 +++ b/src/platform/wayland.rs
-@@ -631,6 +631,11 @@ impl PlatformWindow for WaylandWindow {
+@@ -852,6 +852,11 @@ impl PlatformWindow for WaylandWindow {
      /// Committed now, like the input region: a surface that has just closed
      /// paints no more frames, and a keyboard it was lent stayed lent —what
      /// was typed after closing Marea's calendar kept going to her—.
@@ -47,7 +47,7 @@ index 2bdfa68..7e90534 100644
          if let Some(layer) = &self.layer {
              layer.set_keyboard_interactivity(keyboard_interactivity(t));
 diff --git a/src/render.rs b/src/render.rs
-index 84649bd..d957300 100644
+index 1269589..6cef8ca 100644
 --- a/src/render.rs
 +++ b/src/render.rs
 @@ -4555,6 +4555,10 @@ pub fn run(
