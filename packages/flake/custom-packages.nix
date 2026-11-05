@@ -1,5 +1,9 @@
 { pkgs, ... }:
 {
+  # Kept out of the system profile: yt-dlp drags a 692 MiB python closure.
+  # The on-demand launcher (modules/user/nix-maid/web/yt-dlp.nix) builds this
+  # attr on first use and GC-roots it under ~/.local/state/nix-apps.
+  yt-dlp = pkgs.yt-dlp;
   adguardian-term = pkgs.adguardian;
   hxtools = pkgs.hxtools; # Collection of small tools over the years by j.eng
 
