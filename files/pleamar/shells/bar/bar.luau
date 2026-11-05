@@ -1914,7 +1914,10 @@ local function open_tray_menu(key)
     -- The other half of the one-overlay rule: a menu opening dismisses the drawer, exactly as
     -- `registerOverlay` dismisses the overlay that was active. No silence when nothing is open —
     -- the scene is asked and answers `none`.
-    sys.call("say", "panels", "fact drawer none")
+    -- `panels` is on demand and normally stopped (2026-11-05), and `say` to a scene that is not
+    -- running raises for the caller (`--docs reference`); a drawer that is not there cannot be
+    -- dismissed, so the failure is swallowed — like the other `say panels` calls in this file.
+    pcall(sys.call, "say", "panels", "fact drawer none")
     local ok, tree = pcall(function() return sys.ask("tray.menu", key) end)
     if not ok then
         tray_menu_ids = {}
