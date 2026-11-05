@@ -86,16 +86,20 @@ let
   # ~6.9 GiB model buffer, ~10.5 GiB total with the desktop) and the other 32
   # stay mmap'd, read from page cache / NVMe on demand. 5.1B active gives
   # 6-8.5 tok/s decode on a cold page cache and ~11.5 once the file is warm
-  # (measured 2026-11-05), but prefill is CPU-bound at ~19 tok/s: a 2k prompt
-  # costs ~100 s, a 20k agent prompt ~18 min. NOT --n-cpu-moe here: it mallocs
+  # (measured 2026-11-05). Prefill is CPU/IO-bound and cache-dependent: 55 tok/s
+  # on the first cold-cache request, then 130-146 tok/s with the expert pages
+  # warm (re-measured 2026-11-05 at 1.4k/5.4k/11.3k prompts), so a full 32k
+  # prompt is ~4 min warm and ~10 cold. The old "19 tok/s / 18 min" figure was
+  # a cold-cache measurement and overstates the cost by 4x. NOT --n-cpu-moe
+  # here: it mallocs
   # the expert weights, and ~52 GB of anonymous memory does not fit next to the
   # desktop, so the 507 GB swap becomes the hot path (measured 25-27 -> 7.55
   # tok/s in llama.cpp#26110). mmap'd pages, by contrast, are evictable.
   # `-ngl 4`, not 5: at 5 the card sat at 96% with the desktop open. 32k of the
   # 131k-native window: the KV is ~20 KB/token at q8_0 and lives mostly in RAM
-  # (only 4 layers are on the card), so memory is not the limit — prefill is,
-  # and a full 32k prompt still costs ~28 min at 19 tok/s. 16k was the old
-  # value, too tight for any multi-turn session that keeps its history.
+  # (only 4 layers are on the card), so memory is not the limit; prefill is,
+  # at a few minutes per full window. 16k was the old value, too tight for any
+  # multi-turn session that kept its history.
   gptoss120 = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/gpt-oss-120b-abliterated-MXFP4_MOE.gguf \
@@ -130,14 +134,15 @@ let
   #
   # Thinking is ON: xhigh effort, 4096-token budget, thoughts moved to
   # `reasoning_content` by `--reasoning-format deepseek` (without it the reply
-  # arrives with an empty `content`). What it buys is planning, not chemistry:
-  # the `bench fp` cut-off case scores 1.0 with thinking (239 s, ~1.1k tokens)
-  # and 0.5 without it, where the model treats the spared dependent as if it
-  # had rerun. The hard phosphorus task is 5/5 either way — 568 s without
-  # thinking, 823 s with it — so the earlier "never finishes without thinking"
-  # note was an artefact of service restarts mid-run, not of the model. The
-  # budget keeps a hard prompt from running 20+ minutes at ~8 tok/s; clients
-  # can opt out per request with
+  # arrives with an empty `content`). What it buys is planning, not chemistry.
+  # `llmctl bench fp`: 6.00/6 with thinking against 3.40/6 pinned off — every
+  # case exact, ~24 min for the six (F3 alone 10 min), and the best score in
+  # the fleet (the next best model is 4.4/6). Without thinking the same model
+  # rebuilds spared dependents and misses the waves. The hard phosphorus task,
+  # by contrast, is 5/5 either way (568 s off, 823 s on), so the earlier
+  # "never finishes without thinking" note was an artefact of service restarts.
+  # The budget keeps a hard prompt from running 20+ minutes at ~8 tok/s;
+  # clients can opt out per request with
   # `chat_template_kwargs: {"enable_thinking": false}`.
   qwen38next = ''
     ${llamaVulkan} --device Vulkan0 \
