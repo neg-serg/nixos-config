@@ -96,6 +96,12 @@
   gh-enhance = pkgs.gh-enhance;
   sherpa-onnx = pkgs.sherpa-onnx;
 
+  # Audio/AV on-demand launchers: Surge XT (plugin, 609 MiB) is put on the
+  # plugin path by the Renoise launcher, ffmpeg-full is the Vulkan/CUDA build.
+  surge-xt = pkgs.surge-xt;
+  realesrgan-ncnn-vulkan = pkgs.realesrgan-ncnn-vulkan;
+  ffmpeg-full = pkgs.ffmpeg-full;
+
   # Audio content materialised once per user by modules/media/audio/assets.nix
   # into GC roots; the home-file symlinks point at $HOME, not at these paths.
   dirt-samples = pkgs.neg.dirt-samples;

@@ -3,6 +3,11 @@
 # The launcher references only nix; the first run builds the matching flake
 # package and registers a GC root under $HOME, later runs exec the binary
 # directly. Rebuild/update by removing the root directory and running again.
+#
+# `--print-out-paths` prints one line per *output*, and multi-output packages
+# (ffmpeg-full has out/dev/bin/man) would otherwise feed several paths into
+# `nix-store --add-root` — it rejects the newline-joined string. Pick the output
+# that actually carries bin/<binary> instead.
 { pkgs }:
 {
   name,
@@ -14,7 +19,13 @@ pkgs.writeShellScriptBin name ''
   if [ ! -e "$root" ]; then
     mkdir -p "$(dirname "$root")"
     rm -f "$root"
-    out=$(${pkgs.nix}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#${attr}")
+    out=$(${pkgs.nix}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#${attr}" |
+      while IFS= read -r candidate; do
+        if [ -x "$candidate/bin/${binary}" ]; then
+          printf '%s\n' "$candidate"
+          break
+        fi
+      done)
     ${pkgs.nix}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
   fi
   exec "$root/bin/${binary}" "$@"
