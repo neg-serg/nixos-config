@@ -9,6 +9,7 @@
   ...
 }:
 let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
   packages = [
     # -- Analysis --
     pkgs.dr14_tmeter # measure dynamic range DR14 style
@@ -29,7 +30,12 @@ let
     # -- Network --
     pkgs.nicotine-plus # Soulseek client
     pkgs.waves # keyboard-driven terminal music player with Soulseek/Last.fm
-    pkgs.scdl # SoundCloud downloader
+    # SoundCloud downloader: occasional by nature, so the launcher builds it on
+    # first call instead of carrying it through every switch.
+    (onDemand {
+      name = "scdl";
+      attr = "scdl";
+    })
 
     # -- Tagging --
     pkgs.id3v2 # low-level ID3 tag editor

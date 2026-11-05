@@ -81,6 +81,19 @@
   tshark = pkgs.tshark;
   strace-tui = pkgs.strace-tui; # syscall-trace explorer (TUI/JSON) for strace output
   galaxy-buds-client = pkgs.galaxy-buds-client;
+
+  # Rarely used CLIs whose launchers live in the system modules: the first call
+  # builds the package and registers a GC root under $HOME, so their closures
+  # stay out of system-path (and out of every switch).
+  sysdig = pkgs.sysdig;
+  tmd-top = pkgs.tmd-top;
+  amnezia-vpn = pkgs.amnezia-vpn;
+  wayback = pkgs.wayback;
+  lnav = pkgs.lnav;
+  tdl = pkgs.tdl;
+  scdl = pkgs.scdl;
+  gh = pkgs.gh;
+  gh-enhance = pkgs.gh-enhance;
   # Desktop utilities built on first launch instead of at switch time; the
   # launchers live in modules/user/nix-maid/apps/gui-apps.nix.
   showmethekey = pkgs.showmethekey; # on-screen keystroke overlay for screencasts (GTK4 + libinput)

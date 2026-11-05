@@ -1,7 +1,11 @@
 {
+  config,
   pkgs,
   ...
 }:
+let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+in
 {
   programs = {
     mtr = {
@@ -18,7 +22,12 @@
     pkgs.perf # linux profile tools
     pkgs.linuxPackages_latest.turbostat # cpu monitor
     pkgs.bandwhich # real-time per-process and per-connection bandwidth monitor
-    pkgs.tmd-top # real-time per-IP network traffic monitor (TUI; run with sudo)
+    # Per-IP traffic monitor (TUI, run with sudo). The launcher builds it on
+    # first call — as root the first time, into /root/.local/state/nix-apps.
+    (onDemand {
+      name = "tmd-top";
+      attr = "tmd-top";
+    })
     pkgs.adguardian # terminal dashboard for AdGuard Home
     pkgs.powertop # watch for power events
     pkgs.procdump # procdump for linux
