@@ -209,7 +209,9 @@ def api(path, payload=None, timeout=900):
     return json.loads(raw) if raw else {}
 
 
-def chat(model, messages, max_tokens=1024, temperature=0, cache=True):
+def chat(
+    model, messages, max_tokens=1024, temperature=0, cache=True, extra=None
+):
     body = {
         "model": model,
         "messages": messages,
@@ -218,6 +220,8 @@ def chat(model, messages, max_tokens=1024, temperature=0, cache=True):
     }
     if not cache:
         body["cache_prompt"] = False
+    if extra:
+        body.update(extra)
     t0 = time.perf_counter()
     d = api("/v1/chat/completions", body)
     wall = time.perf_counter() - t0
@@ -652,6 +656,287 @@ def bench_lean(models):
     return results
 
 
+# -------------------------------------------------------------------- fp bench
+
+# A build-system planning task, the one an FP/olympiad round would pose: given
+# a task graph, current file hashes, the previous manifest and the hashes a
+# rebuild would produce, emit the rebuild plan. The hard part is early cut-off:
+# a task that reruns but produces the same hash must not wake its dependents.
+# `sameOutput` lists exactly those tasks, so the answer is a JSON object that
+# grades exactly — no model-written code is ever executed.
+FP_RULES = """Ты — планировщик инкрементальной сборки. Отвечай ТОЛЬКО одним JSON-объектом, без markdown и пояснений.
+
+Входные данные:
+- roots: цели. Планируются только задачи, достижимые из roots по входам-задачам.
+- tasks: [{"id":..., "inputs":[...]}] — вход это имя файла ИЛИ id задачи; порядок входов значим.
+- hashes: файл -> хэш; значение null значит, что файл удалён.
+- prev: id -> {"out": хэш, "inputs": [хэши входов прошлой сборки]}.
+- newOut: id -> хэш, который задача выдала бы, если её запустить сейчас.
+
+Правила:
+1) Задача t пересобирается тогда и только тогда, когда t отсутствует в prev ИЛИ вектор текущих хэшей её входов не равен prev[t].inputs.
+2) Хэш входа-файла f = hashes[f]. Хэш входа-задачи d = prev[d].out, если d не пересобирается, иначе newOut[d].
+3) Выход пересобранной задачи = newOut[t]; непересобранной = prev[t].out.
+4) cut-off: если пересобранная t даёт newOut[t] == prev[t].out, её зависимые видят прежний хэш и, если больше ничего не изменилось, не пересобираются. Сама такая t попадает в sameOutput.
+5) waves: wave(t) = 0, если среди зависимостей нет пересобираемых, иначе 1 + max(wave(d)) по пересобираемым зависимостям.
+6) rebuilt, sameOutput, gc — отсортированные по id массивы; out — объект id -> итоговый хэш, только для достижимых задач.
+7) Ошибки: цикл -> {"error":"cycle","cycle":[ids]} (начинать с лексикографически минимального id цикла); повтор входа -> {"error":"duplicate_input","task":id,"input":name}; вход, который не является ни задачей, ни ключом hashes -> {"error":"unknown_input","task":id,"input":name}.
+8) gc — отсортированный список задач, недостижимых из roots.
+
+Формат успешного ответа: {"rebuilt":[...],"waves":[[...]],"sameOutput":[...],"out":{...},"gc":[...]}"""
+
+FP_CASES = [
+    (
+        "F1 cut-off",
+        {
+            "roots": ["app"],
+            "tasks": [
+                {"id": "gen", "inputs": ["tools/gen@v3"]},
+                {"id": "lib", "inputs": ["src/lib.c"]},
+                {"id": "app", "inputs": ["gen", "lib", "src/main.c"]},
+            ],
+            "hashes": {
+                "tools/gen@v3": "t3",
+                "src/lib.c": "f1",
+                "src/main.c": "f0",
+            },
+            "prev": {
+                "gen": {"out": "G1", "inputs": ["t3"]},
+                "lib": {"out": "L1", "inputs": ["f0"]},
+                "app": {"out": "A1", "inputs": ["G1", "L1", "f0"]},
+            },
+            "newOut": {"gen": "G1", "lib": "L1", "app": "A9"},
+        },
+        {
+            "rebuilt": ["lib"],
+            "waves": [["lib"]],
+            "sameOutput": ["lib"],
+            "out": {"app": "A1", "gen": "G1", "lib": "L1"},
+            "gc": [],
+        },
+    ),
+    (
+        "F2 propagate",
+        {
+            "roots": ["app"],
+            "tasks": [
+                {"id": "gen", "inputs": ["tools/gen@v3"]},
+                {"id": "lib", "inputs": ["src/lib.c"]},
+                {"id": "app", "inputs": ["gen", "lib", "src/main.c"]},
+            ],
+            "hashes": {
+                "tools/gen@v3": "t3",
+                "src/lib.c": "f1",
+                "src/main.c": "f0",
+            },
+            "prev": {
+                "gen": {"out": "G1", "inputs": ["t3"]},
+                "lib": {"out": "L1", "inputs": ["f0"]},
+                "app": {"out": "A1", "inputs": ["G1", "L1", "f0"]},
+            },
+            "newOut": {"gen": "G1", "lib": "L2", "app": "A9"},
+        },
+        {
+            "rebuilt": ["app", "lib"],
+            "waves": [["lib"], ["app"]],
+            "sameOutput": [],
+            "out": {"app": "A9", "gen": "G1", "lib": "L2"},
+            "gc": [],
+        },
+    ),
+    (
+        "F3 new+gc",
+        {
+            "roots": ["hook"],
+            "tasks": [
+                {"id": "base", "inputs": []},
+                {"id": "lib", "inputs": ["base", "src/lib.c"]},
+                {"id": "cli", "inputs": ["lib"]},
+                {"id": "docs", "inputs": ["README.md"]},
+                {"id": "hook", "inputs": ["cli", "docs"]},
+                {"id": "old", "inputs": ["lib"]},
+            ],
+            "hashes": {"src/lib.c": "f1", "README.md": "r1"},
+            "prev": {
+                "base": {"out": "B1", "inputs": []},
+                "lib": {"out": "L1", "inputs": ["B1", "f0"]},
+                "cli": {"out": "C1", "inputs": ["L1"]},
+                "hook": {"out": "H1", "inputs": ["C1", "R0"]},
+            },
+            "newOut": {
+                "base": "B1",
+                "lib": "L2",
+                "cli": "C2",
+                "docs": "D1",
+                "hook": "H2",
+            },
+        },
+        {
+            "rebuilt": ["cli", "docs", "hook", "lib"],
+            "waves": [["docs", "lib"], ["cli"], ["hook"]],
+            "sameOutput": [],
+            "out": {
+                "base": "B1",
+                "cli": "C2",
+                "docs": "D1",
+                "hook": "H2",
+                "lib": "L2",
+            },
+            "gc": ["old"],
+        },
+    ),
+    (
+        "F4 deleted",
+        {
+            "roots": ["app"],
+            "tasks": [
+                {"id": "gen", "inputs": ["tools/gen@v3"]},
+                {"id": "lib", "inputs": ["src/lib.c"]},
+                {"id": "app", "inputs": ["gen", "lib", "src/main.c"]},
+            ],
+            "hashes": {
+                "tools/gen@v3": "t3",
+                "src/lib.c": "f0",
+                "src/main.c": None,
+            },
+            "prev": {
+                "gen": {"out": "G1", "inputs": ["t3"]},
+                "lib": {"out": "L1", "inputs": ["f0"]},
+                "app": {"out": "A1", "inputs": ["G1", "L1", "f0"]},
+            },
+            "newOut": {"gen": "G1", "lib": "L1", "app": "A9"},
+        },
+        {
+            "rebuilt": ["app"],
+            "waves": [["app"]],
+            "sameOutput": [],
+            "out": {"app": "A9", "gen": "G1", "lib": "L1"},
+            "gc": [],
+        },
+    ),
+    (
+        "F5 cycle",
+        {
+            "roots": ["a"],
+            "tasks": [
+                {"id": "a", "inputs": ["b"]},
+                {"id": "b", "inputs": ["c"]},
+                {"id": "c", "inputs": ["a"]},
+            ],
+            "hashes": {},
+            "prev": {},
+            "newOut": {},
+        },
+        {"error": "cycle", "cycle": ["a", "b", "c"]},
+    ),
+]
+
+FP_WEIGHTS = [
+    ("rebuilt", 0.4),
+    ("waves", 0.2),
+    ("sameOutput", 0.2),
+    ("out", 0.1),
+    ("gc", 0.1),
+]
+
+
+def _fp_json(text):
+    """Pull the first complete JSON object out of a reply.
+
+    Models fence it, prefix it with prose, or answer twice; taking the first
+    balanced object is the least surprising rule and keeps grading exact.
+    """
+    text = re.sub(r"```(?:json)?", "", text or "")
+    start = depth = 0
+    for i, ch in enumerate(text):
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0 and start is not None:
+                try:
+                    return json.loads(text[start : i + 1])
+                except ValueError:
+                    start = None
+    return None
+
+
+def _fp_grade(expected, got):
+    if got is None:
+        return 0.0, "no-json"
+    if "error" in expected:
+        if got.get("error") != expected["error"]:
+            return 0.0, f"want error {expected['error']}"
+        if expected.get("cycle") and got.get("cycle") != expected["cycle"]:
+            return 0.0, "cycle wrong"
+        return 1.0, "ok"
+    score, missed = 0.0, []
+    for field, weight in FP_WEIGHTS:
+        if got.get(field) == expected[field]:
+            score += weight
+        else:
+            missed.append(field)
+    return round(score, 2), "ok" if not missed else "miss:" + ",".join(missed)
+
+
+def bench_fp(models):
+    """Build-planning bench: five cases, exact JSON, partial credit per field.
+
+    Thinking is switched off per request (`enable_thinking`), the same way the
+    older `--reasoning off` tiers serve: the task tests the algorithm, and a
+    4096-token think on every case would add ~8 minutes per model without
+    changing which plan comes out. `llmctl ask` on the thinking tiers is where
+    that trade-off gets measured instead.
+    """
+    started = time.time()
+    results = {}
+    print(f"\nFP-планировщик: {len(FP_CASES)} задач, {len(models)} моделей")
+    for model in models:
+        results[model] = []
+        total = 0.0
+        print(f"\n== {model}")
+        for label, spec, expected in FP_CASES:
+            messages = [
+                {"role": "system", "content": FP_RULES},
+                {"role": "user", "content": "Вход:\n" + json.dumps(spec)},
+            ]
+            try:
+                r = chat(
+                    model,
+                    messages,
+                    max_tokens=6000,
+                    cache=False,
+                    extra={"chat_template_kwargs": {"enable_thinking": False}},
+                )
+                got = _fp_json(r["content"]) or _fp_json(r["reasoning"])
+            except Exception as exc:  # noqa: BLE001
+                print(f"  {label:14s} FAILED {exc}")
+                results[model].append(
+                    {"label": label, "error": str(exc), "score": 0.0}
+                )
+                continue
+            score, note = _fp_grade(expected, got)
+            total += score
+            print(
+                f"  {label:14s} {score:4.2f}  {note:24s} " f"{r['wall']:5.0f}s"
+            )
+            results[model].append(
+                {
+                    "label": label,
+                    "score": score,
+                    "note": note,
+                    "wall": r["wall"],
+                    "got": got,
+                }
+            )
+        results[model].append({"total": round(total, 2), "of": len(FP_CASES)})
+        print(f"  -> {total:.2f}/{len(FP_CASES)}")
+    _save_results("fp", models, started, results)
+    return results
+
+
 # ----------------------------------------------------------------------- menu
 
 
@@ -681,6 +966,7 @@ def cmd_menu(_args):
         "unload",
         "bench chem",
         "bench lean",
+        "bench fp",
     ]
     if not shutil.which("fzf"):
         sys.exit("fzf not installed")
@@ -704,6 +990,8 @@ def cmd_menu(_args):
         bench_chem(select_models(None))
     elif sel == "bench lean":
         bench_lean(select_models(None))
+    elif sel == "bench fp":
+        bench_fp(select_models(None))
 
 
 def select_models(spec):
@@ -743,7 +1031,7 @@ def main():
     s.add_argument("--max", type=int, default=8192)
     s.add_argument("--temp", type=float, default=0.0)
     s = sub.add_parser("bench", help="бенчмарки")
-    s.add_argument("kind", choices=["chem", "lean", "all"])
+    s.add_argument("kind", choices=["chem", "lean", "fp", "all"])
     s.add_argument("--models", help="список через запятую (имя или alias)")
     s.add_argument(
         "--prompt", action="store_true", help="chem: с system prompt"
@@ -769,6 +1057,8 @@ def main():
             bench_chem(models, use_prompt=args.prompt)
         if args.kind in ("lean", "all"):
             bench_lean(models)
+        if args.kind in ("fp", "all"):
+            bench_fp(models)
 
 
 if __name__ == "__main__":
