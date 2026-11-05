@@ -123,6 +123,7 @@
 #   `ttl` is 900 s, so an idle minute does not reload 63 GB. Decode is I/O-bound:
 #   the resident fraction of the weights sets the miss rate, so closing the
 #   desktop and letting more of the file sit in page cache lifts it further.
+#   Core-Lean bench (`llmctl bench lean`, 2026-11-05): 2/7 — not a Lean model.
 # - `qwen3.8-flash-next-abliterated` (`qwen3.8-flash`, `next` aliases) is the
 #   next tier: 78 GB split GGUF (Swift IQ3_S of the huihui v2 abliteration;
 #   pass the -00001 shard), 180B total but 6B active, 262k-native. Four layers
@@ -130,7 +131,9 @@
 #   mmap'd from `/zero`. Measured 2026-11-05: 5.9 tok/s decode on a cold page
 #   cache. `--reasoning off` is mandatory — it thinks by default and returns an
 #   empty `content`. The repo also ships an mmproj, so vision can be added
-#   without another model.
+#   without another model. It is also the core-Lean tier: 7/7 on
+#   `llmctl bench lean` (2026-11-05), the only streaming model that solved all
+#   seven tasks — the 120B scores 2/7, so route Lean work here.
 # - `deepseek-v4-flash-abliterated` (`ds4`, `deepseek-v4` aliases) is the
 #   reasoning tier: 97.6 GB Q2_K (antirez quants, no expert ablated), 304B
 #   total / 13B active, SWA-128 so the KV is cheap. Two layers on the card

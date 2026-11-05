@@ -86,7 +86,7 @@ CATALOG = {
         "ctx": "16k",
         "size": "63 GB",
         "chem": "-",
-        "lean": "-",
+        "lean": "2/7",
     },
     "qwen3.8-flash-next-abliterated": {
         "aliases": ["qwen3.8-flash", "next"],
@@ -94,7 +94,7 @@ CATALOG = {
         "ctx": "32k",
         "size": "78 GB",
         "chem": "-",
-        "lean": "-",
+        "lean": "7/7",
     },
     "deepseek-v4-flash-abliterated": {
         "aliases": ["ds4", "deepseek-v4"],
