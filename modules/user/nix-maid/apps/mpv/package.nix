@@ -9,6 +9,22 @@
 let
   r = neg.rooted repoRoot;
 
+  # Repo-local mpv scripts (files/mpv/*.lua): each becomes one
+  # `$out/share/mpv/scripts/<name>.lua` for the wrapper below.
+  mkRepoScript =
+    name:
+    pkgs.stdenv.mkDerivation {
+      pname = "mpv-script-${name}";
+      version = "0.1.0";
+      src = r.path "files/mpv/${name}.lua";
+      scriptName = "${name}.lua";
+      dontUnpack = true;
+      installPhase = ''
+        mkdir -p $out/share/mpv/scripts
+        cp $src $out/share/mpv/scripts/$scriptName
+      '';
+    };
+
   # --- Scripts & Package ---
   scriptPkgs = [
     pkgs.mpvScripts.cutter # cut/extract video segments from mpv
@@ -17,17 +33,8 @@ let
     pkgs.mpvScripts.sponsorblock # skip sponsors on YouTube videos
     pkgs.mpvScripts.thumbfast # instant thumbnails in seek bar
     pkgs.mpvScripts.uosc # modern minimalist UI with controls
-    (pkgs.stdenv.mkDerivation {
-      pname = "mpv-hdr-auto-switch";
-      version = "0.1.0";
-      src = r.path "files/mpv/hdr-auto-switch.lua";
-      scriptName = "hdr-auto-switch.lua"; # auto-switch Hyprland cm to HDR on HDR content
-      dontUnpack = true;
-      installPhase = ''
-        mkdir -p $out/share/mpv/scripts
-        cp $src $out/share/mpv/scripts/$scriptName
-      '';
-    })
+    (mkRepoScript "hdr-auto-switch") # auto-switch Hyprland cm to HDR on HDR content
+    (mkRepoScript "trash") # move the current file to /tmp/trash (D)
   ];
 
   mpvUnwrapped =
