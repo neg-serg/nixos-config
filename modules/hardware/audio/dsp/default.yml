@@ -1,11 +1,12 @@
 # CamillaDSP insert: PipeWire in, PipeWire out.
 #
-# Both ends are the ALSA `pipewire` PCM, i.e. two ordinary PipeWire streams.
-# `camilladsp-route` wires those streams between the game-stereo loopback and
-# the RME AES pair (see modules/hardware/audio/dsp.nix), so the two device
-# names below are the contract the router matches on: point either end at
-# another device and the insert stops carrying audio while the router falls
-# back to the direct loopback -> RME path.
+# Both ends use the native PipeWire backend: two filter nodes in the graph
+# (`camilladsp-capture`, `camilladsp-playback`, one `node_group_name` so a single
+# driver schedules both in the same cycle). `camilladsp-route` wires their ports
+# between the game-stereo loopback and the RME AES pair (see
+# modules/hardware/audio/dsp.nix), so the two node names below are the contract
+# the router matches on: point an end at another device and the insert stops
+# carrying audio while the router falls back to the direct loopback -> RME path.
 #
 # The main fader needs no filter: CamillaDSP 4 applies it to the whole pipeline
 # (`SetVolume` from camillagui or aurora's camilla tab), so this passthrough is
@@ -14,21 +15,29 @@
 # ~/.config/camilladsp/coeffs.
 devices:
   samplerate: 48000
-  # CamillaDSP derives the ALSA ring from this: the buffer is the next power of
-  # two at or above 3x chunksize, and the period is buffer/8. One graph quantum
-  # (256, cf. files/media/pipewire/pipewire.conf.d/clock-rate.conf) is the only
-  # value that reads cleanly: the ALSA `pipewire` plugin hands out reads of the
-  # quantum, not of the requested chunksize, so 512 (a 2048-frame ring, 42.7 ms,
-  # underruns down from ~3 to ~1 per 3 minutes of MPD playback) logged "Capture
-  # read 256 frames instead of the requested 512" ~34 times a second and filled
-  # the journal. A bigger ring needs the graph quantum raised with it, and the
-  # RME runs 256-frame periods.
-  chunksize: 256
+  # The native backend's `chunksize` is the DSP's own block and it scales the
+  # rings: the playback ring is 7x chunksize, prefilled with max(target_level,
+  # 3x chunksize) frames, and drained at the graph rate. 512 measured best here
+  # — 6 dropped chunks in 47 s of playback against 27 in 60 s at 256 — giving a
+  # 3584-frame ring (75 ms of slack) prefilled to 1536 frames (32 ms) with a
+  # 10.7 ms block. The ALSA `pipewire` PCM plugin the insert used before could
+  # not do this: it handed out reads of the graph quantum (256) and warned on
+  # every chunk larger than that, ~34 times a second.
+  chunksize: 512
+  # `target_level` is the other half of the buffer: the samples kept in the
+  # playback ring when the next chunk arrives (the default is the chunksize).
+  # CamillaDSP refuses anything above 1536, and 3x chunksize already prefills
+  # that much at 512, so it is left at the default. Both nodes share one graph
+  # cycle and one clock, so no rate adjust is needed.
   capture:
-    type: Alsa
+    type: PipeWire
     channels: 2
-    device: "pipewire"
+    node_name: camilladsp-capture
+    node_description: CamillaDSP Capture
+    node_group_name: camilladsp
   playback:
-    type: Alsa
+    type: PipeWire
     channels: 2
-    device: "pipewire"
+    node_name: camilladsp-playback
+    node_description: CamillaDSP Playback
+    node_group_name: camilladsp

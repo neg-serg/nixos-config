@@ -33,12 +33,19 @@ in
   # Python libs for the CamillaGUI backend (camilladsp / camilladsp_plot modules)
   pycamilladsp = call (pkg "pycamilladsp") { };
   pycamilladsp-plot = call (pkg "pycamilladsp-plot") { };
-  # CamillaDSP itself: with the PipeWire ALSA plugin as its capture device the
-  # PCM fd stays readable while no frames are there, so `readi` answers EAGAIN
-  # and the backend retries without yielding — a whole core, measured 2026-11-04
-  # (1.29M retries in three seconds). The patch sleeps 1 ms per EAGAIN; see its
-  # comment for why that is the right layer.
+  # CamillaDSP itself, built with the native PipeWire backend (`pipewire-backend`):
+  # the insert is two filter nodes in the graph instead of the ALSA `pipewire`
+  # PCM plugin, which hands out reads of the graph quantum and cannot take a
+  # bigger chunksize without a warning per read.
+  #
+  # The patch below belongs to the ALSA backend: with the PipeWire ALSA plugin as
+  # its capture device the PCM fd stays readable while no frames are there, so
+  # `readi` answers EAGAIN and the backend retries without yielding — a whole
+  # core, measured 2026-11-04 (1.29M retries in three seconds). It stays for
+  # configs that still use that path.
   camilladsp = prev.camilladsp.overrideAttrs (old: {
+    buildInputs = (old.buildInputs or [ ]) ++ [ prev.pipewire ];
+    cargoBuildFeatures = (old.cargoBuildFeatures or [ ]) ++ [ "pipewire-backend" ];
     patches = (old.patches or [ ]) ++ [ ./camilladsp-eagain-wait.patch ];
   });
   # VapourSynth NCNN (Vulkan) plugin: AI upscale/interp/denoise in VS (GPL-3)

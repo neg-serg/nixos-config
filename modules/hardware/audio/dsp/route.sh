@@ -1,9 +1,8 @@
 # Keep the CamillaDSP insert wired: game-stereo -> DSP -> RME AES.
 #
-# Both ends of the DSP config are the ALSA `pipewire` PCM, so the insert is two
-# PipeWire streams that exist only while a config is running and are recreated
-# on every reload (camilladsp closes and reopens both devices). A one-shot unit
-# cannot own that wiring; this loop does:
+# Both ends of the DSP config are the native PipeWire backend, so the insert is
+# two filter nodes that exist only while a config is running and are recreated
+# on every reload. A one-shot unit cannot own that wiring; this loop does:
 #
 #   * streams present -> route game-stereo's loopback outputs into the capture
 #     stream, route the playback stream to the RME AES pair, and drop the
@@ -29,8 +28,8 @@ date="@date@/bin/date"
 
 RME=alsa_output.pci-0000_05_00.0.pro-output-0
 GAME=playback.game-stereo
-CAP=alsa_capture.camilladsp
-PB=alsa_playback.camilladsp
+CAP=camilladsp-capture
+PB=camilladsp-playback
 AES_L=$RME:playback_AUX2
 AES_R=$RME:playback_AUX3
 # WirePlumber auto-links the loopback to the RME's first (analog) pair on every

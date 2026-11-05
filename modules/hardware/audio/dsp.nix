@@ -6,11 +6,12 @@
 #
 #     apps -> game-stereo (the default PipeWire sink) -> camilladsp -> RME AES
 #
-# Both ends of the DSP config are the ALSA `pipewire` PCM, so the insert is two
-# PipeWire streams and needs no ALSA loopback (this kernel has none): the
-# `camilladsp-route` unit moves the links when the streams appear and restores
+# Both ends of the DSP config are the native PipeWire backend — two filter
+# nodes, `camilladsp-capture` and `camilladsp-playback`, in one node group — so
+# the insert needs no ALSA loopback (this kernel has none): the
+# `camilladsp-route` unit moves the links when the nodes appear and restores
 # the direct loopback -> RME path when they vanish (daemon down, config reload),
-# so a broken DSP cannot cost the machine its sound. The device names in the
+# so a broken DSP cannot cost the machine its sound. The node names in the
 # config are therefore a contract — point an end at another device and the DSP
 # stops carrying audio while the direct path takes over.
 #
@@ -25,15 +26,16 @@
 # `Stop` from a surface exits the daemon and the unit restarts it, i.e. the
 # insert recovers by itself.
 #
-# The ALSA ring comes from `chunksize` (see ./dsp/default.yml): the buffer is
-# the next power of two at or above 3x chunksize and the period is buffer/8.
-# It has to stay one graph quantum (256 frames). A 512 chunksize does give a
-# 2048-frame ring (42.7 ms) and fewer underruns (~1 per 3 minutes of MPD
-# playback instead of ~3), but the ALSA `pipewire` plugin hands out reads of
-# the quantum, not of the requested chunksize: CamillaDSP then logs "Capture
-# read 256 frames instead of the requested 512" on every read, ~34 a second,
-# and fills the journal. The ring is not the knob to reach for here — the
-# graph quantum is, and the RME runs 256-frame periods.
+# The graph quantum is 256 frames and the RME runs 256-frame periods; the DSP's
+# `chunksize` is its own block and it scales the rings (7x chunksize, prefilled
+# with max(target_level, 3x chunksize), drained at the graph rate). 512 measured
+# best here — 6 dropped chunks in 47 s of playback against 27 in 60 s at 256 —
+# with a 10.7 ms block and a 32 ms prefill; `target_level` is capped at 1536.
+# The ALSA `pipewire` PCM plugin the insert used before could not take a chunk
+# larger than the quantum — it handed out reads of 256 frames and CamillaDSP
+# logged "Capture read 256 frames instead of the requested 512" ~34 times a
+# second — and its ring came from chunksize, so buffer and block could not be
+# tuned apart: that is why the insert moved to the native backend.
 #
 # Layout (XDG; the packaged camillagui is patched to the same paths and aurora's
 # camilla tab resolves $XDG_CONFIG_HOME/camilladsp first, so one tree serves
