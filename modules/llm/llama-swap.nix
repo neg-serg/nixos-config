@@ -126,15 +126,31 @@ let
   # reading expert weights from RAM, not by GPU compute. Speculative decoding
   # does not pay either — a Qwen3.5-4B draft (same 248320 vocab) costs 9%
   # because acceptance is low, `--spec-type ngram-simple` is noise, and
-  # `draft-mtp` is rejected (no MTP head in this GGUF). `--reasoning off` is
-  # mandatory: it thinks by default and the reply arrives with an empty
-  # `content`.
+  # `draft-mtp` is rejected (no MTP head in this GGUF).
+  #
+  # Context is 128k of the 262k native window. The KV is cheap because only
+  # the 12 full-attention layers keep keys (`full_attention_interval` 4, 2 KV
+  # heads x 256 dims), so q8_0 costs ~4 GiB at 128k, ~8 GiB at 262k, and a
+  # fully used 262k window would need a ~33 min prefill at 133 tok/s — not
+  # usable. Depth does not slow decode down (tg32: 8.4 at d32768 vs 9.1 at
+  # d8192), and 128k idles at 9.9 GiB VRAM with the desktop, ~6 GiB of
+  # headroom (the game guard unloads the model before a game anyway).
+  #
+  # Thinking is ON: xhigh effort, 4096-token budget, thoughts moved to
+  # `reasoning_content` by `--reasoning-format deepseek` (without it the reply
+  # arrives with an empty `content`). Measured on the hard phosphorus task:
+  # ~3.7k tokens / 7.8 min, and all five reference values matched — the same
+  # task never finished with thinking off. The budget is what keeps a hard
+  # prompt from running 20+ minutes at ~8 tok/s; clients can opt out per
+  # request with `chat_template_kwargs: {"enable_thinking": false}`.
   qwen38next = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/qwen38-flash-next-iq3s/Swift-Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -ngl 4 -c 32768 -np 1 --flash-attn on --fit off --reasoning off --jinja \
-      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024
+      -ngl 4 -c 131072 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 \
+      --reasoning-format deepseek --reasoning-effort xhigh \
+      --reasoning-budget 4096
   '';
 
   # Qwen3.6-35B-A3B abliterated (i1/IQ2_S) — the strongest model that fits the
