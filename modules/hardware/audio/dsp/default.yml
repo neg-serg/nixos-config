@@ -25,10 +25,13 @@ devices:
   # every chunk larger than that, ~34 times a second.
   chunksize: 512
   # `target_level` is the other half of the buffer: the samples kept in the
-  # playback ring when the next chunk arrives (the default is the chunksize).
-  # CamillaDSP refuses anything above 1536, and 3x chunksize already prefills
-  # that much at 512, so it is left at the default. Both nodes share one graph
-  # cycle and one clock, so no rate adjust is needed.
+  # playback ring when the next chunk arrives (the default is 3x chunksize,
+  # i.e. the 1536-frame, 32 ms prefill above). CamillaDSP caps it at 6x
+  # chunksize — 3072 here — and the deeper prefills do buy silence: on a steady
+  # tone 2048 left five dropped chunks in 33 s and 3072 one (at start-up),
+  # against six in 47 s at this default, at 64 ms of delay instead of 32. The
+  # default is deliberate; raise it when the latency can be spent. Both nodes
+  # share one graph cycle and one clock, so no rate adjust is needed.
   capture:
     type: PipeWire
     channels: 2
