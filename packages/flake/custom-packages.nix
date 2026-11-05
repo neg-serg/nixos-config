@@ -81,6 +81,11 @@
   tshark = pkgs.tshark;
   strace-tui = pkgs.strace-tui; # syscall-trace explorer (TUI/JSON) for strace output
   galaxy-buds-client = pkgs.galaxy-buds-client;
+  # Desktop utilities built on first launch instead of at switch time; the
+  # launchers live in modules/user/nix-maid/apps/gui-apps.nix.
+  showmethekey = pkgs.showmethekey; # on-screen keystroke overlay for screencasts (GTK4 + libinput)
+  localsend = pkgs.localsend; # AirDrop-style LAN file transfer (Flutter)
+  losslesscut-bin = pkgs.losslesscut-bin; # lossless video/audio cutter (prebuilt Electron)
   vial = pkgs.vial;
   ddcui = pkgs.ddcui;
   virt-manager = pkgs.virt-manager;
