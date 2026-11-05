@@ -95,7 +95,7 @@ CATALOG = {
         "size": "63 GB",
         "chem": "8/13",
         "lean": "2/7",
-        "fp": "4.4/6",
+        "fp": "4.7/6",
     },
     "qwen3.8-flash-next-abliterated": {
         "aliases": ["qwen3.8-flash", "next"],
@@ -375,7 +375,9 @@ def print_models():
         "chem = 6 olympiad problems (13 values), lean = 7 core-Lean "
         "theorems, fp = 6 build-planning cases (partial credit). * = fp with "
         "the tier's own thinking config; every other fp score has thinking "
-        "pinned off for comparability."
+        "pinned off for comparability. gpt-oss-120b is the only model whose "
+        "fp score moved between runs (4.4 and 5.0 of 6, so 4.7 is the mean); "
+        "the qwen tiers repeat exactly."
     )
 
 
