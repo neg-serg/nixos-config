@@ -443,6 +443,7 @@ const quickmarks = {
   'A': { name: 'ArtStation', url: 'https://magazine.artstation.com/' },
   'E': { name: 'ProjectEuler', url: 'https://projecteuler.net/' },
   'L': { name: 'LibGen', url: 'https://libgen.li' },
+  'T': { name: 'Torrentela', url: 'https://torrentela.com' },
   'c': { name: 'Twitch Cooller', url: 'https://twitch.tv/cooller' },
   'g': { name: 'Gmail', url: 'https://gmail.com' },
   'h': { name: 'SciHub', url: 'https://sci-hub.hkvisa.net/' },
