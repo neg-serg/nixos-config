@@ -31,6 +31,7 @@ CATALOG = {
         "size": "12 GB",
         "chem": "12/13",
         "lean": "2/7",
+        "fp": "2.7/5",
     },
     "qwen3.6-35b-abliterated": {
         "aliases": ["strong", "qwen3.6"],
@@ -39,6 +40,7 @@ CATALOG = {
         "size": "12 GB",
         "chem": "13/13",
         "lean": "1/7",
+        "fp": "1.1/5",
     },
     "qwen3-vl-8b-abliterated": {
         "aliases": ["vision", "vision-8b", "qwen3-vl-8b"],
@@ -47,6 +49,7 @@ CATALOG = {
         "size": "5 GB",
         "chem": "13/13",
         "lean": "0/7",
+        "fp": "-",
     },
     "qwen3.8-27b-abliterated": {
         "aliases": ["qwen3.8", "ru"],
@@ -55,6 +58,7 @@ CATALOG = {
         "size": "11 GB",
         "chem": "12/13",
         "lean": "4/7",
+        "fp": "3.5/5",
     },
     "qwen3.5-4b-abliterated": {
         "aliases": ["qwen3.5", "quick"],
@@ -63,6 +67,7 @@ CATALOG = {
         "size": "12 GB",
         "chem": "4/13",
         "lean": "0/7",
+        "fp": "-",
     },
     "tiny": {
         "aliases": ["cheap", "spark-cpu"],
@@ -71,6 +76,7 @@ CATALOG = {
         "size": "2.6 GB",
         "chem": "-",
         "lean": "-",
+        "fp": "-",
     },
     "igpu": {
         "aliases": ["spark-igpu", "cheap-igpu"],
@@ -79,22 +85,25 @@ CATALOG = {
         "size": "2.6 GB",
         "chem": "-",
         "lean": "-",
+        "fp": "-",
     },
     "gpt-oss-120b-abliterated": {
         "aliases": ["gpt-oss-120", "big"],
         "role": "120B-A5B MoE, RAM tier",
         "ctx": "32k",
         "size": "63 GB",
-        "chem": "-",
+        "chem": "8/13",
         "lean": "2/7",
+        "fp": "3.4/5",
     },
     "qwen3.8-flash-next-abliterated": {
         "aliases": ["qwen3.8-flash", "next"],
         "role": "180B-A6B MoE, next tier",
         "ctx": "128k",
         "size": "78 GB",
-        "chem": "-",
+        "chem": "13/13",
         "lean": "7/7",
+        "fp": "3.3/5",
     },
 }
 
@@ -319,18 +328,21 @@ def print_status():
 def print_models():
     live = set(model_names())
     print(
-        f"{'NAME':32s} {'ROLE':28s} {'CTX':>4s} {'VRAM':>6s} {'CHEM':>6s} {'LEAN':>5s}  ALIASES"
+        f"{'NAME':32s} {'ROLE':28s} {'CTX':>4s} {'VRAM':>6s} {'CHEM':>6s} "
+        f"{'LEAN':>5s} {'FP':>5s}  ALIASES"
     )
     for name, meta in CATALOG.items():
         mark = "*" if name in live else " "
         print(
             f"{mark}{name:31s} {meta['role']:28s} {meta['ctx']:>4s} "
-            f"{meta['size']:>6s} {meta['chem']:>6s} {meta['lean']:>5s}  "
+            f"{meta['size']:>6s} {meta['chem']:>6s} {meta['lean']:>5s} "
+            f"{meta['fp']:>5s}  "
             f"{', '.join(meta['aliases'])}"
         )
     print(
         "\n* = present in the live catalog. Scores are measured on trantor; "
-        "chem = 6 olympiad problems, lean = 7 core-Lean theorems."
+        "chem = 6 olympiad problems (13 values), lean = 7 core-Lean "
+        "theorems, fp = 5 build-planning cases (partial credit)."
     )
 
 
@@ -635,6 +647,14 @@ def bench_lean(models):
                         [{"role": "user", "content": prompt}],
                         max_tokens=2000,
                         cache=False,
+                        # Thinking has to be off: the cap is 2000 tokens and a
+                        # thinking tier spends all of them on thoughts, so the
+                        # reply carries no code at all (measured: 2/7 with
+                        # thinking on, 7/7 off on qwen3.8-flash-next). The
+                        # bench grades compiled code, not prose.
+                        extra={
+                            "chat_template_kwargs": {"enable_thinking": False}
+                        },
                     )
                     code = _extract_code(r["content"])
                 except Exception as exc:  # noqa: BLE001
