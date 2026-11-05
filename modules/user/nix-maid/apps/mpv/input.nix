@@ -30,6 +30,8 @@ let
     (mpvRuBind "m" "no-osd cycle mute; script-binding uosc/flash-volume")
     (mpvRuBind "A" "cycle audio 1")
     (mpvRuBind "R" "cycle_values window-scale 2 0.5 1")
+    # D: move the current file to /tmp/trash (files/mpv/trash.lua)
+    (mpvRuBind "D" "script-message trash-move")
     (mpvRuBind "j" "cycle sub")
     (mpvRuBind "s" "cycle sub")
     (mpvRuBind "Ctrl+h" "multiply speed 1/1.1")
