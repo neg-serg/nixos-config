@@ -109,6 +109,13 @@ in
       ./pleamar-lock-engage.patch
       ./pleamar-lock-full.patch
       ./pleamar-bluetooth.patch
+      # The telltale: a scene's own `rate:` slows the clock on purpose (the bar rests at 12 fps,
+      # the osd at 5), and it compared every frame against the screen's period, so each one of
+      # them looked late — 873k "slow frame" lines in one session, one per frame per scene, which
+      # buried the real hitches. The pace it compares against is now the one `cycle.watch` already
+      # uses: the monitor's real refresh, raised to 1/`rate:` when the scene sets one. Backport of
+      # upstream c59f9ee (shipped in v0.7.13); drop this patch when the pin moves past it.
+      ./pleamar-slow-frame-pace.patch
     ];
   });
 
