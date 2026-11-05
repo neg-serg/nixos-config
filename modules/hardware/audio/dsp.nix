@@ -25,10 +25,16 @@
 # `Stop` from a surface exits the daemon and the unit restarts it, i.e. the
 # insert recovers by itself.
 #
-# The config's chunksize follows the PipeWire graph quantum (256 frames, see
-# ./dsp/default.yml): the ALSA `pipewire` plugin refuses to hand out any other
-# period size, so a mismatched chunksize only buys jitter and a warning per
-# chunk.
+# The ALSA ring comes from `chunksize` (see ./dsp/default.yml): the buffer is
+# the next power of two at or above 3x chunksize and the period is buffer/8.
+# 512 therefore means a 2048-frame ring (42.7 ms) with a 256-frame period — the
+# graph quantum PipeWire is pinned to, so the plugin grants the period asked
+# for. It kept 1024 frames (21 ms) at chunksize 256, which underran roughly
+# once a minute during MPD playback at light load; 2048 cut that to one in
+# three minutes and the RME driver stayed at 0 xruns. The bigger ring also
+# shows up as a 512-frame latency suggestion on both streams, above the graph
+# quantum: that is fine while the quantum comes from the config floor, but do
+# not let a follower ask for it and then drive the graph at 512.
 #
 # Layout (XDG; the packaged camillagui is patched to the same paths and aurora's
 # camilla tab resolves $XDG_CONFIG_HOME/camilladsp first, so one tree serves

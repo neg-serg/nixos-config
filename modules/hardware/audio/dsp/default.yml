@@ -14,11 +14,16 @@
 # ~/.config/camilladsp/coeffs.
 devices:
   samplerate: 48000
-  # One graph quantum: files/media/pipewire/pipewire.conf.d/clock-rate.conf
-  # locks PipeWire to 256-frame periods, and the ALSA `pipewire` plugin hands
-  # out periods of exactly that size — any other chunksize makes CamillaDSP log
-  # a short-read warning per chunk. Change both together.
-  chunksize: 256
+  # CamillaDSP derives the ALSA ring from this: the buffer is the next power of
+  # two at or above 3x chunksize, and the period is buffer/8. 512 therefore
+  # gives a 2048-frame buffer (42.7 ms) with a 256-frame period — exactly the
+  # graph quantum that files/media/pipewire/pipewire.conf.d/clock-rate.conf
+  # locks PipeWire to, so the ALSA `pipewire` plugin hands back the period this
+  # asks for (any other period makes it log a short-read warning per chunk).
+  # 256 kept the ring at 1024 frames (21 ms) and still underran about once a
+  # minute under load; 1024 would ask for a 512-frame period and a 4096-frame
+  # buffer (85 ms) — only if 2048 keeps underrunning.
+  chunksize: 512
   capture:
     type: Alsa
     channels: 2
