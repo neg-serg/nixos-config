@@ -59,8 +59,8 @@
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
 #   unloads them at once when a game starts.
 # - One model is resident at a time. All of them fit the 16 GB card except the
-#   120B RAM tier (below); `qwen3-vl-30b` (18 GB) stays as a manual
-#   `llama-server` unit.
+#   streaming tiers (120B, Qwen3.8-Flash-Next, DeepSeek V4); `qwen3-vl-30b`
+#   (18 GB) stays a manual unit.
 # - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path on gfx1201; `--cpu-moe`
 #   is a trap here (3-8 tok/s).
 # - Models (quant, measured on 2026-11-05):
@@ -74,7 +74,9 @@
 #   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 24k | 15.0G | 30-36 |
 #   | qwen3.5-4b   | Qwen3.5-4B-abliterated Q8_0 (dense)     | 256k| 11.7G | 95-100 |
 #   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 64k | 0G    | 22    |
-#   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 16k | 9.7G  | 8.5   |
+#   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 16k | 6.9G  | 6-11.5 |
+#   | qwen3.8-next | Qwen3.8-Flash-Next abl-v2 IQ3_S          | 32k | 4.8G  | 5.9   |
+#   | deepseek-v4  | DeepSeek-V4-Flash-0731 abl Q2_K          | 16k | 8.2G  | 2.9   |
 #
 # - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
 #   ~3.5 bpw, the highest bits-per-weight served here. Dense KV is expensive,
@@ -111,15 +113,31 @@
 #   content.
 # - `gpt-oss-120b-abliterated` (`gpt-oss-120`, `big` aliases) is the RAM tier:
 #   63.4 GB of MXFP4 weights on a 16 GB card. Four layers run on the GPU
-#   (~9.7 GiB), the other 32 stay mmap'd and are read from `/zero` page cache or
-#   NVMe on demand. `--n-cpu-moe` is deliberately NOT used: it mallocs the
-#   expert weights (~52 GB anonymous), which does not fit next to the desktop,
-#   and the 507 GB swap then sits in the hot path. Measured 2026-11-05 with the
-#   desktop open: 8.5 tok/s decode, 19 tok/s prefill on a 2k prompt (~100 s; a
-#   20k agent prompt needs ~18 min), 55 s cold load. Per-model `ttl` is 900 s,
-#   so an idle minute does not reload 63 GB. Decode is I/O-bound: the resident
-#   fraction of the weights sets the miss rate, so closing the desktop and
-#   letting more of the file sit in page cache lifts it (estimate ~12-14 tok/s).
+#   (~6.9 GiB model buffer, ~10.5 GiB total with the desktop), the other 32 stay
+#   mmap'd and are read from `/zero` page cache or NVMe on demand. `--n-cpu-moe`
+#   is deliberately NOT used: it mallocs the expert weights (~52 GB anonymous),
+#   which does not fit next to the desktop, and the 507 GB swap then sits in the
+#   hot path. Measured 2026-11-05 with the desktop open: 6-8.5 tok/s decode on a
+#   cold page cache, 11.5 once the file is warm, 19 tok/s prefill on a 2k prompt
+#   (~100 s; a 20k agent prompt needs ~18 min), 55-85 s cold load. Per-model
+#   `ttl` is 900 s, so an idle minute does not reload 63 GB. Decode is I/O-bound:
+#   the resident fraction of the weights sets the miss rate, so closing the
+#   desktop and letting more of the file sit in page cache lifts it further.
+# - `qwen3.8-flash-next-abliterated` (`qwen3.8-flash`, `next` aliases) is the
+#   next tier: 78 GB split GGUF (Swift IQ3_S of the huihui v2 abliteration;
+#   pass the -00001 shard), 180B total but 6B active, 262k-native. Four layers
+#   on the card (~4.8 GiB buffer, 8.1 GiB total with the desktop), the rest
+#   mmap'd from `/zero`. Measured 2026-11-05: 5.9 tok/s decode on a cold page
+#   cache. `--reasoning off` is mandatory — it thinks by default and returns an
+#   empty `content`. The repo also ships an mmproj, so vision can be added
+#   without another model.
+# - `deepseek-v4-flash-abliterated` (`ds4`, `deepseek-v4` aliases) is the
+#   reasoning tier: 97.6 GB Q2_K (antirez quants, no expert ablated), 304B
+#   total / 13B active, SWA-128 so the KV is cheap. Two layers on the card
+#   (~8.2 GiB buffer, 11.5 GiB total; a third hits 15/15.9). Measured
+#   2026-11-05: 2.9 tok/s decode and ~2 tok/s prompt eval on a cold cache — the
+#   slowest tier. `--reasoning off` is mandatory, otherwise every generated
+#   token lands in `reasoning_content` and `content` stays empty.
 # - Context is cheap on the hybrid-attention models: gpt-oss and Qwen3.6 went
 #   from 32k to 64k for <200 MB, with q8_0 KV and `-ub 1024` (prefill +29%).
 #   MTP speculation was tested and rejected: slower (46 vs 65 tok/s) and it
@@ -248,10 +266,11 @@
 #
 # - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
 #   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
-# - `/zero/ai/llama` — llama.cpp GGUFs (~196 GB): qwen3-vl 30b/8b, qwen3.8-27B,
+# - `/zero/ai/llama` — llama.cpp GGUFs (~372 GB): qwen3-vl 30b/8b, qwen3.8-27B,
 #   the abliterated set (gpt-oss-20b, Gemma 26B IQ3, Gemma 26B MXFP4 for the
-#   24 GB box, Gemma E4B, Qwen3.5-4B, Qwen3.8-27B IQ3, Qwen3-VL-8B) and
-#   gpt-oss-120b MXFP4 (63 GB, the RAM tier)
+#   24 GB box, Gemma E4B, Qwen3.5-4B, Qwen3.8-27B IQ3, Qwen3-VL-8B),
+#   gpt-oss-120b MXFP4 (63 GB), Qwen3.8-Flash-Next IQ3_S (78 GB, two shards in
+#   `qwen38-flash-next-iq3s/`) and DeepSeek-V4-Flash Q2_K (98 GB)
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by

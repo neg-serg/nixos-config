@@ -74,14 +74,15 @@ let
 
   # gpt-oss-120b abliterated (MXFP4, 63.4 GB) — the RAM tier: the model is 4x
   # the card, so only 4 layers run on the GPU (attention + their expert layers,
-  # ~9.7 GiB VRAM) and the other 32 stay mmap'd, read from page cache / NVMe on
-  # demand. 5.1B active gives ~8.5 tok/s decode on /zero (measured 2026-11-05),
-  # but prefill is CPU-bound at ~19 tok/s: a 2k prompt costs ~100 s, a 20k
-  # agent prompt ~18 min. NOT --n-cpu-moe here: it mallocs the expert weights,
-  # and ~52 GB of anonymous memory does not fit next to the desktop, so the
-  # 507 GB swap becomes the hot path (measured 25-27 -> 7.55 tok/s in
-  # llama.cpp#26110). mmap'd pages, by contrast, are evictable. `-ngl 4`, not
-  # 5: at 5 the card sat at 96% with the desktop open.
+  # ~6.9 GiB model buffer, ~10.5 GiB total with the desktop) and the other 32
+  # stay mmap'd, read from page cache / NVMe on demand. 5.1B active gives
+  # 6-8.5 tok/s decode on a cold page cache and ~11.5 once the file is warm
+  # (measured 2026-11-05), but prefill is CPU-bound at ~19 tok/s: a 2k prompt
+  # costs ~100 s, a 20k agent prompt ~18 min. NOT --n-cpu-moe here: it mallocs
+  # the expert weights, and ~52 GB of anonymous memory does not fit next to the
+  # desktop, so the 507 GB swap becomes the hot path (measured 25-27 -> 7.55
+  # tok/s in llama.cpp#26110). mmap'd pages, by contrast, are evictable.
+  # `-ngl 4`, not 5: at 5 the card sat at 96% with the desktop open.
   gptoss120 = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/gpt-oss-120b-abliterated-MXFP4_MOE.gguf \
@@ -89,6 +90,35 @@ let
       -ngl 4 -c 16384 -np 1 --flash-attn on --fit off --jinja \
       --cache-type-k q8_0 --cache-type-v q8_0 -ub 512 \
       --reasoning-effort low
+  '';
+
+  # Qwen3.8-Flash-Next abliterated v2 (Swift IQ3_S, 78 GB in two shards, split
+  # GGUF: point llama.cpp at -00001). 180B total but only 6B active (125B core
+  # + n-gram embedding table), 262k context. Four layers stay on the card
+  # (~4.8 GiB model buffer, 8.1 GiB total with the desktop), the rest is mmap'd
+  # from /zero. Measured 2026-11-05: 5.9 tok/s decode on a cold page cache
+  # (48 tokens), expected 6-9 once warm. `--reasoning off` is mandatory: it
+  # thinks by default and the reply arrives with an empty `content`.
+  qwen38next = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/abliterated/qwen38-flash-next-iq3s/Swift-Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -ngl 4 -c 32768 -np 1 --flash-attn on --fit off --reasoning off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0 -ub 512
+  '';
+
+  # DeepSeek-V4-Flash-0731 abliterated (Q2_K, 97.6 GB, one file, 43 layers).
+  # 304B total / 13B active, SWA-128 attention (cheap KV), MIT. Two layers on
+  # the card (~8.2 GiB model buffer, 11.5 GiB total) — a third one pushes VRAM
+  # to 15/15.9. Measured 2026-11-05: 2.9 tok/s decode (64 tokens), prompt eval
+  # ~2 tok/s cold; it is a reasoning model and `--reasoning off` is required,
+  # otherwise every generated token lands in `reasoning_content`.
+  ds4flash = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/abliterated/DeepSeek-V4-Flash-Q2_K-0731.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -ngl 2 -c 16384 -np 1 --flash-attn on --fit off --reasoning off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0 -ub 512
   '';
 
   # Qwen3.6-35B-A3B abliterated (i1/IQ2_S) — the strongest model that fits the
@@ -268,6 +298,22 @@ in
             "big"
           ];
         };
+        "qwen3.8-flash-next-abliterated" = {
+          cmd = qwen38next;
+          ttl = 900;
+          aliases = [
+            "qwen3.8-flash"
+            "next"
+          ];
+        };
+        "deepseek-v4-flash-abliterated" = {
+          cmd = ds4flash;
+          ttl = 900;
+          aliases = [
+            "ds4"
+            "deepseek-v4"
+          ];
+        };
         "qwen3.8-27b-abliterated" = {
           cmd = qwen38;
           aliases = [
@@ -282,6 +328,7 @@ in
             "quick"
           ];
         };
+
         "tiny" = {
           cmd = tiny;
           aliases = [
