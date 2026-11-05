@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
 import urllib.request
 
 BASE = os.environ.get("LLMCTL_URL", "http://127.0.0.1:9292")
@@ -232,7 +233,23 @@ def chat(
     if extra:
         body.update(extra)
     t0 = time.perf_counter()
-    d = api("/v1/chat/completions", body)
+    d = None
+    for attempt in range(3):
+        try:
+            d = api("/v1/chat/completions", body)
+            break
+        except urllib.error.HTTPError as exc:
+            # llama-swap answers 500 "group: starting <model> failed: aborted"
+            # when a model start is cancelled under it (observed on the first
+            # request after a switch or an unload); the next attempt usually
+            # lands. Retry 5xx only — a 4xx is the caller's mistake.
+            if exc.code < 500 or attempt == 2:
+                raise
+            time.sleep(5 * (attempt + 1))
+        except urllib.error.URLError:
+            if attempt == 2:
+                raise
+            time.sleep(5 * (attempt + 1))
     wall = time.perf_counter() - t0
     msg = (d.get("choices") or [{}])[0].get("message") or {}
     return {
