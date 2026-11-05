@@ -132,9 +132,12 @@ let
   # `reasoning_content` by `--reasoning-format deepseek` (without it the reply
   # arrives with an empty `content`). Measured on the hard phosphorus task:
   # ~3.7k tokens / 7.8 min, and all five reference values matched — the same
-  # task never finished with thinking off. The budget is what keeps a hard
-  # prompt from running 20+ minutes at ~8 tok/s; clients can opt out per
-  # request with `chat_template_kwargs: {"enable_thinking": false}`.
+  # task never finished with thinking off. On the `bench fp` cut-off case the
+  # flag is the difference between 0.5 and 1.0: with thinking the plan is exact
+  # (239 s, ~1.1k tokens), without it the model treats the spared dependent as
+  # if it had rerun. The budget is what keeps a hard prompt from running 20+
+  # minutes at ~8 tok/s; clients can opt out per request with
+  # `chat_template_kwargs: {"enable_thinking": false}`.
   qwen38next = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/qwen38-flash-next-iq3s/Swift-Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf \
