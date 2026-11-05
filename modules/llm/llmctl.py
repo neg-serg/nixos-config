@@ -32,7 +32,7 @@ CATALOG = {
         "size": "12 GB",
         "chem": "12/13",
         "lean": "2/7",
-        "fp": "2.7/5",
+        "fp": "3.0/6",
     },
     "qwen3.6-35b-abliterated": {
         "aliases": ["strong", "qwen3.6"],
@@ -41,7 +41,7 @@ CATALOG = {
         "size": "12 GB",
         "chem": "13/13",
         "lean": "1/7",
-        "fp": "1.1/5",
+        "fp": "1.2/6",
     },
     "qwen3-vl-8b-abliterated": {
         "aliases": ["vision", "vision-8b", "qwen3-vl-8b"],
@@ -59,7 +59,7 @@ CATALOG = {
         "size": "11 GB",
         "chem": "12/13",
         "lean": "4/7",
-        "fp": "3.5/5",
+        "fp": "3.7/6",
     },
     "qwen3.5-4b-abliterated": {
         "aliases": ["qwen3.5", "quick"],
@@ -95,7 +95,7 @@ CATALOG = {
         "size": "63 GB",
         "chem": "8/13",
         "lean": "2/7",
-        "fp": "3.4/5",
+        "fp": "4.4/6",
     },
     "qwen3.8-flash-next-abliterated": {
         "aliases": ["qwen3.8-flash", "next"],
@@ -104,7 +104,7 @@ CATALOG = {
         "size": "78 GB",
         "chem": "13/13",
         "lean": "7/7",
-        "fp": "3.3/5",
+        "fp": "3.4/6",
     },
 }
 
@@ -947,14 +947,14 @@ def _fp_grade(expected, got):
     return round(score, 2), "ok" if not missed else "miss:" + ",".join(missed)
 
 
-def bench_fp(models):
-    """Build-planning bench: five cases, exact JSON, partial credit per field.
+def bench_fp(models, thinking=False):
+    """Build-planning bench: six cases, exact JSON, partial credit per field.
 
-    Thinking is switched off per request (`enable_thinking`), the same way the
-    older `--reasoning off` tiers serve: the task tests the algorithm, and a
-    4096-token think on every case would add ~8 minutes per model without
-    changing which plan comes out. `llmctl ask` on the thinking tiers is where
-    that trade-off gets measured instead.
+    Thinking is off per request by default (`enable_thinking`): the task tests
+    the algorithm, and a 4096-token think on every case adds minutes per case.
+    `thinking=True` leaves the tier's own config alone, which is the only way
+    to measure what the thoughts are worth — on the cut-off cases they flip a
+    0.5 into a 1.0.
     """
     started = time.time()
     results = {}
@@ -969,12 +969,17 @@ def bench_fp(models):
                 {"role": "user", "content": "Вход:\n" + json.dumps(spec)},
             ]
             try:
+                extra = (
+                    None
+                    if thinking
+                    else {"chat_template_kwargs": {"enable_thinking": False}}
+                )
                 r = chat(
                     model,
                     messages,
-                    max_tokens=6000,
+                    max_tokens=9000 if thinking else 6000,
                     cache=False,
-                    extra={"chat_template_kwargs": {"enable_thinking": False}},
+                    extra=extra,
                 )
                 got = _fp_json(r["content"]) or _fp_json(r["reasoning"])
             except Exception as exc:  # noqa: BLE001
@@ -1102,6 +1107,11 @@ def main():
     s.add_argument(
         "--prompt", action="store_true", help="chem: с system prompt"
     )
+    s.add_argument(
+        "--thinking",
+        action="store_true",
+        help="fp: оставить раздумья модели (медленно, но честно)",
+    )
     sub.add_parser("menu", help="интерактивное меню (fzf)")
 
     args = p.parse_args()
@@ -1124,7 +1134,7 @@ def main():
         if args.kind in ("lean", "all"):
             bench_lean(models)
         if args.kind in ("fp", "all"):
-            bench_fp(models)
+            bench_fp(models, thinking=args.thinking)
 
 
 if __name__ == "__main__":
