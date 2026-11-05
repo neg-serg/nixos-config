@@ -5,22 +5,17 @@
 #          (LogFilterPatterns=), but only for system services — user units are
 #          explicitly unsupported, so anything logged from the user bus stays.
 #
+# Note: dbus-broker's "Ignoring duplicate name" noise comes from the *user*
+# bus (dbus-broker.service under user@1000.service) and cannot be filtered
+# here; the system bus logs none of it. The real fix is nixpkgs issue #303078
+# (open PRs #549241 and #573943).
+#
 # Patterns are POSIX ERE matched against MESSAGE. They are written without
 # literal spaces (`[[:space:]]`): the unit value is a whitespace-separated
 # list, so a pattern containing a space would be split into two patterns and
 # neither would match.
 { ... }:
 {
-  systemd.services.dbus-broker.serviceConfig.LogFilterPatterns = [
-    # Every package with a D-Bus service file is linked both into
-    # /run/current-system/sw/share and into the dbus-consolidated tree, so
-    # dbus-broker-launch reports the same name twice on every startup.
-    "^Ignoring[[:space:]]duplicate[[:space:]]name"
-    # adw-bluetooth 1.2.0 installs com.ezratweaver.AdwBluetoothDaemon.dbus.service;
-    # the file name must equal the bus name (no `.dbus` suffix). Harmless: the
-    # daemon is started by its systemd user unit, not by D-Bus activation.
-    "^Service[[:space:]]file[[:space:]].*is[[:space:]]not[[:space:]]named[[:space:]]after[[:space:]]the[[:space:]]D-Bus[[:space:]]name"
-  ];
   systemd.services.systemd-logind.serviceConfig.LogFilterPatterns = [
     # logind parses /boot/loader/entries for `reboot --boot-loader-entry`, and
     # NixOS generation titles ("Generation N NixOS Zokor ...") are not valid
