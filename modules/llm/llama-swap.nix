@@ -34,7 +34,9 @@ let
   # to the desktop, where 32k left 3.5 GiB sitting idle. Images eat thousands
   # of tokens, so the window is what the model is for. ~45 tok/s. Checked with
   # a real image plus ~50k tokens of text: 49,836 prompt tokens, 1763 tok/s
-  # prefill, both shapes and colours read correctly.
+  # prefill, both shapes and colours read correctly. Text is fine too: the code
+  # K7Q-42 was read correctly from a rendered image, with and without 31.6k
+  # tokens of text in front of it (2229 tok/s prefill).
   vision8b = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3-VL-8B-abliterated-Q4_K_M.gguf \
