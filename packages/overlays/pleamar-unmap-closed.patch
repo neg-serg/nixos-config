@@ -1,0 +1,110 @@
+diff --git a/src/gpu.rs b/src/gpu.rs
+index 567b6a8..4af91e9 100644
+--- a/src/gpu.rs
++++ b/src/gpu.rs
+@@ -2981,6 +2981,9 @@ pub struct Sheet {
+     /// screen (`blocks_on_screen`): at three, it is `unseen`.
+     pub missed: u32,
+     pub cleared: bool,
++    /// Whether it has been taken out of the compositor's frame while closed (`unmap`): the flag
++    /// keeps the commit from repeating and is cleared when it opens again.
++    pub unmapped: bool,
+     pub view: View,
+     target: Target,
+     /// A surface painted in frames of our own keeps the system's swapchain
+@@ -3699,7 +3702,7 @@ impl Gpu {
+         });
+         let (layer_views, layer_group) = Self::make_layers(&self.device, &self.pipeline, self.format, 1, 1, 1);
+         let mut l = Sheet {
+-            id: n.id, frame_no: 0, painted_as: Vec::new(), damage_log: Default::default(), known_as: (0, (0, 0)), kept: None, idle_kept_frames: 0, name: n.name, mhz: n.mhz, scale: n.scale, drives_pace: true, open: true, unseen: false, missed: 0, cleared: false, view: n.view,
++            id: n.id, frame_no: 0, painted_as: Vec::new(), damage_log: Default::default(), known_as: (0, (0, 0)), kept: None, idle_kept_frames: 0, name: n.name, mhz: n.mhz, scale: n.scale, drives_pace: true, open: true, unseen: false, missed: 0, cleared: false, unmapped: false, view: n.view,
+             target: n.target, spare: None, window: n.window, px: (0, 0), uniforms, uniform_group, layer_views, layer_group, layers: 0, idle_layer_frames: 0, blur_rects: Vec::new(), lens: None, own: None, idle_own_frames: 0, wants_lens: false, capture: BackdropCapture::Idle, glass_box: None, glass_rects: Vec::new(), glass_src: Vec::new(), asked_box: [0; 4], capture_asked: std::time::Instant::now(), rate_last: None, capture_taken: long_ago(), capture_owed: false, capture_forced: false, glass_grew: false, watch_replaced: false, owed_damage: Vec::new(), painted_now: false, painted: None, input_region: vec![[-1, -1, -1, -1]], presented: false, keyboard_mode: None,
+         };
+         // Frames of our own where the platform makes them, so the compositor
+@@ -5189,6 +5192,11 @@ impl Sheet {
+     pub fn hide(&self) {
+         self.window.hide();
+     }
++
++    /// Closed, it leaves the compositor's frame rather than keeping an empty buffer mapped.
++    pub fn unmap(&self) {
++        self.window.unmap();
++    }
+ }
+ 
+ /// Header, frame history and, at the end, the lens: whether there is a background to show.
+diff --git a/src/platform/mod.rs b/src/platform/mod.rs
+index 9d9910f..40cf5c2 100644
+--- a/src/platform/mod.rs
++++ b/src/platform/mod.rs
+@@ -1103,6 +1103,10 @@ pub trait PlatformWindow: Send {
+     /// is not seen and cannot be pressed, which `open:` promises and, before this, did not do —
+     /// a menu's catcher stayed a target for the whole monitor and swallowed every click.
+     fn hide(&self) {}
++    /// Take the surface out of the compositor's frame while it is closed: no buffer at all, so
++    /// it is not composited —nor blurred— until it opens again. An empty frame leaves a mapped
++    /// layer behind, and a mapped layer costs the compositor on every damage at any size.
++    fn unmap(&self) {}
+     /// That the system report (`ToRender::Frame`) when it wants the frame after
+     /// the one about to be presented. Where that's unknown, it doesn't report, and the clock sets the pace.
+     fn request_frame(&self) {}
+diff --git a/src/platform/wayland.rs b/src/platform/wayland.rs
+index b517e41..dfb1eb0 100644
+--- a/src/platform/wayland.rs
++++ b/src/platform/wayland.rs
+@@ -749,6 +749,24 @@ impl PlatformWindow for WaylandWindow {
+         self.commit();
+     }
+ 
++    /// And out of the frame, not only the input: an empty buffer leaves the layer mapped, and a
++    /// mapped layer is composited —and blurred— on every damage even when it shows nothing.
++    /// No buffer at all unmaps it; the next presented frame attaches one and maps it again.
++    fn unmap(&self) {
++        // Only a layer: a popup's parent owns its configure, and the closed sheets are layers.
++        if self.layer.is_none() {
++            return;
++        }
++        self.wl.attach(None, 0, 0);
++        self.commit();
++        // And the bufferless commit that makes the compositor arrange it again: Hyprland clears
++        // its `configured` flag on the unmap (LayerShell.cpp), and a layer surface may only take
++        // a buffer back after it has been configured — and acked — once more. Without this the
++        // next frame's buffer is attached to an unconfigured surface and the compositor kills
++        // the client ("layerSurface was not configured, but a buffer was attached").
++        self.commit();
++    }
++
+     fn keyboard(&self, t: Keyboard) {
+         if let Some(layer) = &self.layer {
+             layer.set_keyboard_interactivity(keyboard_interactivity(t));
+diff --git a/src/render.rs b/src/render.rs
+index e4fcdd6..46283e9 100644
+--- a/src/render.rs
++++ b/src/render.rs
+@@ -4762,6 +4762,7 @@ pub fn run(
+             open_changed |= is_open != l.open;
+             if is_open {
+                 l.cleared = false;
++                l.unmapped = false;
+             } else if l.lens.is_some() {
+                 // Closed it shows no glass: its canvas and its background, out.
+                 l.cancel_backdrop();
+@@ -4939,6 +4940,18 @@ pub fn run(
+         for l in &mut sheets {
+             // Closed, it is painted once, empty, and that is it: that, yes, always, whether something changes or not.
+             if !l.open && std::mem::replace(&mut l.cleared, true) {
++                // And then it leaves the compositor's frame. Kept mapped, an empty buffer is
++                // composited —and blurred— on every damage even when it shows nothing: the closed
++                // drawer scene's 19 full-monitor cards were a quarter of the GPU (measured
++                // 2026-11-05). Only a surface that has presented is taken out — one unmapped
++                // before its first configure gets the next frame's buffer attached without one,
++                // and Hyprland kills the client ("layerSurface was not configured, but a buffer
++                // was attached", the bar's catcher and menu at start, 2026-11-05).
++                if l.presented && !l.unmapped {
++                    l.painted = None;
++                    l.unmapped = true;
++                    l.unmap();
++                }
+                 continue;
+             }
+             // And what the compositor blurs behind it goes with that empty

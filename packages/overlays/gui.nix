@@ -92,6 +92,16 @@ in
       ./pleamar-right-click.patch
       ./pleamar-dbusmenu.patch
       ./pleamar-closed-surface.patch
+      # Closed surfaces are taken out of the compositor instead of keeping an empty buffer
+      # mapped: Hyprland composites —and, on the `pleamar` namespace, blurs— every mapped
+      # layer on every damage, so the 19 full-monitor cards of a closed drawer scene are a
+      # quarter of the GPU on an idle desktop (measured 2026-11-05: 26.4% of Hyprland's GPU
+      # time against 0.8% with the scenes stopped). Hyprland clears its `configured` flag on
+      # the unmap, so the surface also commits once more without a buffer: the compositor
+      # arranges it and sends a new configure, which the toolkit acks, and only then may a
+      # frame's buffer come back ("layerSurface was not configured, but a buffer was
+      # attached" otherwise).
+      ./pleamar-unmap-closed.patch
       ./pleamar-media-state.patch
       ./pleamar-transport-flags.patch
       ./pleamar-media-position.patch
