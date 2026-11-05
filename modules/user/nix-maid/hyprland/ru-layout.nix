@@ -39,6 +39,27 @@ lib.mkIf enabled {
     path = [ pkgs.hyprland ];
     serviceConfig = {
       Type = "simple";
+      # The daemon reads the layout set from Hyprland at start; the first boot
+      # attempt ran before the compositor answered and exited with "You need to
+      # configure layouts on Hyprland". Wait for the IPC endpoint first.
+      ExecStartPre = lib.getExe (
+        pkgs.writeShellApplication {
+          name = "ru-layout-wait-hyprland";
+          runtimeInputs = [
+            pkgs.coreutils
+            pkgs.hyprland
+          ];
+          text = ''
+            for _ in $(seq 1 100); do
+              if hyprctl -j monitors >/dev/null 2>&1; then
+                exit 0
+              fi
+              sleep 0.1
+            done
+            exit 0
+          '';
+        }
+      );
       ExecStart = lib.getExe pkgs.hyprland-per-window-layout;
       RestartSec = 2;
     };
