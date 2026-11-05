@@ -17,7 +17,10 @@ in
     pkgs.btop # even more fancy top
     pkgs.iotop # top for iops
     pkgs.iperf # modern iperf3 bandwidth measurement
-    pkgs.perf # linux profile tools
+    (onDemand {
+      name = "perf";
+      attr = "perf";
+    }) # linux perf tooling, built on first call
     pkgs.bandwhich # real-time per-process and per-connection bandwidth monitor
     # Per-IP traffic monitor (TUI, run with sudo). The launcher builds it on
     # first call — as root the first time, into /root/.local/state/nix-apps.
