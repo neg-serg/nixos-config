@@ -252,6 +252,13 @@ def chat(
                     pass
             except OSError:
                 pass
+            # Wait until the router reports no resident model: retrying while
+            # the previous backend is still stopping re-creates the race (the
+            # new llama-server starts and dies on a VRAM allocation, which
+            # reaches the client as 502 "proxy error: EOF").
+            deadline = time.time() + 120
+            while time.time() < deadline and running():
+                time.sleep(2)
             time.sleep(5 * (attempt + 1))
         except urllib.error.URLError:
             if attempt == 2:
