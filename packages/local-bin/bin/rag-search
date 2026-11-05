@@ -45,7 +45,7 @@ INDEX_DB = os.path.join(INDEX_DIR, "index.sqlite")
 RERANK_MODEL = os.environ.get(
     "RAG_RERANK_MODEL", "/zero/ai/embeddings/bge-reranker-v2-m3-Q4_K_M.gguf"
 )
-RERANK_PORT = int(os.environ.get("RAG_RERANK_PORT", "8083"))
+RERANK_PORT = int(os.environ.get("RAG_RERANK_PORT", "8013"))
 LLM_MODEL = os.environ.get("RAG_LLM_MODEL", "qwen3:8b")
 RERANK_URL = f"http://127.0.0.1:{RERANK_PORT}"
 BATCH = 16          # embedding batch size
@@ -428,7 +428,7 @@ def cmd_reranker(args):
             http_json(f"{RERANK_URL}/shutdown", timeout=5)
         except (urllib.error.URLError, OSError, ValueError):
             pass
-        print("Reranker stopped (if it was running)")
+        print("Reranker endpoint shut down; llama-rerank.service needs `systemctl start llama-rerank`")
         return 0
     if args.action == "status":
         print("running" if reranker_status() else "not running")

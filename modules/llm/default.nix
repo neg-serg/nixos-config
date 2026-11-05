@@ -235,11 +235,13 @@
 #   pooling, 1024 dims) as the `embed`/`embeddings` slot: `POST /v1/embeddings` to port 9292.
 #   It loads on demand and is unloaded by the TTL; the Ollama tag stays for rag-search, whose
 #   index is 4096-dim and would need a reindex to switch.
-# - Reranker: `bge-reranker-v2-m3-Q4_K_M.gguf` in `/zero/ai/embeddings` — `rag-search` starts it
-#   on demand on port 8083. It is deliberately NOT a llama-swap slot: llama-swap proxies the
-#   chat/embeddings endpoints but not `/v1/rerank` (the request hangs), and Qwen3-Reranker is a
-#   causal LM that needs yes/no chat-template scoring — `--pooling rank` on its GGUF produced
-#   near-zero, reversed scores, so bge is the llama.cpp-compatible choice.
+# - Reranker: `bge-reranker-v2-m3-Q4_K_M.gguf` in `/zero/ai/embeddings`, served by the
+#   `llama-rerank` system service (`modules/llm/rerank.nix`) on port 8013 with rank pooling,
+#   always on. It is deliberately NOT a llama-swap slot: llama-swap proxies the chat/embeddings
+#   endpoints but not `/v1/rerank` (the request hangs), and Qwen3-Reranker is a causal LM that
+#   needs yes/no chat-template scoring — `--pooling rank` on its GGUF produced near-zero,
+#   reversed scores, so bge is the llama.cpp-compatible choice. `rag-search` points at 8013 by
+#   default and still spawns its own instance when the service is down.
 # - Both are multilingual (RU/EN); reranker should be the top-k filter before LLM context assembly.
 #
 # ### FIM completion (editor)
@@ -260,6 +262,9 @@
 #   message and the prompt `OCR:` (also `Table Recognition:`, `Formula Recognition:`, `Chart
 #   Recognition:`, `Seal Recognition:`). llama.cpp merged the paddleocr arch (#18825); one page
 #   fits the 16k context. Verified on a rendered invoice: exact Russian text and totals.
+# - `ocr FILE...` (`modules/cli/ocr.nix`) is the CLI over that slot: images directly, PDFs page
+#   by page via pdftoppm; `--table/--formula/--chart/--seal` switch the prompt, `-o out.md`
+#   writes a file.
 #
 # ### Speech recognition (sherpa-onnx, CPU)
 #
@@ -325,7 +330,7 @@
 # - stable-diffusion.cpp: package added (Vulkan), models in `/zero/ai/image`.
 # - Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT), 8004 (vLLM,
 #   manual), 8012 (llama-fim, user unit started by nvim), 8080 (llama-server, manual),
-#   8083 (rag-search reranker, on demand), 9292 (llama-swap API: chat, ocr, embed)
+#   8013 (llama-rerank, also the rag-search default), 9292 (llama-swap API: chat, ocr, embed)
 
 {
   neg,
