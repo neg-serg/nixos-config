@@ -64,6 +64,14 @@ CATALOG = {
         "chem": "12/13",
         "lean": "4/7",
     },
+    "qwen3.5-4b-abliterated": {
+        "aliases": ["qwen3.5", "quick"],
+        "role": "dense 4B Q8, long ctx",
+        "ctx": "256k",
+        "size": "12 GB",
+        "chem": "4/13",
+        "lean": "0/7",
+    },
     "tiny": {
         "aliases": ["cheap", "spark-cpu"],
         "role": "CPU-only fallback",

@@ -120,6 +120,24 @@ let
       --cache-type-k q4_0 --cache-type-v q4_0 --jinja
   '';
 
+  # Qwen3.5-4B abliterated (Q8_0) — the fast, long-context tier: dense 4B,
+  # hybrid attention (8 of 32 layers full), so KV is only ~17 KiB/token at
+  # q8_0 and the native 256k window costs ~9.3 GiB of the card (~11.7 GiB
+  # total with the desktop). Verified end-to-end on a 104k-token prompt: the
+  # needle came back, prefill 2890 tok/s (~36 s), decode 70 tok/s at that
+  # depth and ~95-100 short. The ~4 GiB left over is fine for the desktop
+  # but not for a game plus OBS: drop to -c 131072 (~6.8 GiB) if a client
+  # OOMs. `--reasoning off` is mandatory: with thinking on it spends the
+  # whole token budget inside reasoning_content and returns empty content
+  # (observed at 6000 tokens, finish=length).
+  qwen35_4b = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/abliterated/Qwen3.5-4B-abliterated-Q8_0.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 262144 -np 1 --flash-attn on --fit off --reasoning off \
+      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 --jinja
+  '';
+
   # Spark-X2.6-4B abliterated (Q4) — the CPU-only tier: no VRAM at all, so it
   # can be used while a game owns the card. ~22 tok/s with 4 threads, which
   # leaves 28 of the 32 hardware threads to the game. The game guard skips it.
@@ -255,6 +273,13 @@ in
           aliases = [
             "qwen3.8"
             "ru"
+          ];
+        };
+        "qwen3.5-4b-abliterated" = {
+          cmd = qwen35_4b;
+          aliases = [
+            "qwen3.5"
+            "quick"
           ];
         };
         "tiny" = {

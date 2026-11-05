@@ -72,6 +72,7 @@
 #   | gpt-oss-20b  | gpt-oss-20b-abliterated MXFP4            | 64k | 16.0G | 75-85 |
 #   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 64k | 15.2G | 55    |
 #   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 24k | 15.0G | 30-36 |
+#   | qwen3.5-4b   | Qwen3.5-4B-abliterated Q8_0 (dense)     | 256k| 11.7G | 95-100 |
 #   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 64k | 0G    | 22    |
 #   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 16k | 9.7G  | 8.5   |
 #
@@ -97,6 +98,17 @@
 #   at 800-1000 tok/s, while 16k could not even hold the agent harness prompt
 #   (~20k tokens) — see `modules/llm/llama-swap.nix`. Generation drops from
 #   ~22 tok/s short-context to ~8 tok/s on a 40k prompt.
+# - `qwen3.5-4b-abliterated` (`qwen3.5`, `quick` aliases) is the fast,
+#   long-context tier: dense 4B at Q8_0, hybrid attention (8 of 32 layers
+#   full), 95-100 tok/s short-context and the native 256k window for ~11.7 GiB
+#   of the card. Verified on a 104k-token prompt: correct needle, 2890 tok/s
+#   prefill (~36 s), 70 tok/s decode; ~95-100 short. The benchmarks say it is
+#   the speed option, not the smart one: 4/13 chemistry (8/13 with the `--chem`
+#   prompt) and 0/7 Lean, while `qwen3-vl-8b` scores 13/13 at 45 tok/s. On CPU
+#   it manages 11 tok/s (8 threads pinned, no FA) — half of `tiny` — so it
+#   stays a GPU model. `--reasoning off` is mandatory: with thinking on it
+#   burns the whole budget inside `reasoning_content` and returns empty
+#   content.
 # - `gpt-oss-120b-abliterated` (`gpt-oss-120`, `big` aliases) is the RAM tier:
 #   63.4 GB of MXFP4 weights on a 16 GB card. Four layers run on the GPU
 #   (~9.7 GiB), the other 32 stay mmap'd and are read from `/zero` page cache or
