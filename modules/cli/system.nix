@@ -15,16 +15,13 @@ in
     pkgs.pv # monitor the progress of data through a pipeline
     pkgs.reptyr # tool for taking an existing running program and attaching it to a new terminal
 
-    # System monitoring
-    pkgs.goaccess # real-time web log analyzer and interactive viewer
-    pkgs.kmon # Linux kernel management and monitoring TUI
     # Log viewer: kept in the `tools` devshell for project work and built on
-    # demand here, so the binary is not part of every switch.
+    # demand here, so the binary is not part of every switch. The other
+    # monitoring tools live in modules/cli/monitoring.nix.
     (onDemand {
       name = "lnav";
       attr = "lnav";
     })
-    pkgs.zfxtop # system monitor with focus on process grouping and ZFX style
 
     # Containers
     pkgs.oxker # TUI to view and control containers (Docker API; /var/run/docker.sock points at the podman socket)
