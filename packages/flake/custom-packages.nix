@@ -1,5 +1,10 @@
 { pkgs, ... }:
 {
+  # Audio tools kept out of the system closure: `vital` is built on first use
+  # by the vital-standalone unit, `flucoma` is materialised by
+  # modules/media/audio/assets.nix for the SuperCollider plugin path.
+  vital = pkgs.vital; # spectral wavetable synth (957 MiB closure)
+  flucoma = pkgs.flucoma; # FluCoMa corpus-manipulation UGens for SuperCollider
   # Kept out of the system profile: yt-dlp drags a 692 MiB python closure.
   # The on-demand launcher (modules/user/nix-maid/web/yt-dlp.nix) builds this
   # attr on first use and GC-roots it under ~/.local/state/nix-apps.

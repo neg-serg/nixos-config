@@ -27,6 +27,7 @@ let
     "dirt-samples"
     "sc-faust"
     "renoise-redux"
+    "flucoma"
   ];
 
   ensure = pkgs.writeShellScriptBin "audio-assets-ensure" ''

@@ -69,7 +69,6 @@ let
     pkgs.scmir # SCMIR — music IR analysis library (onsets, pitch, chroma) + CLI tools
     pkgs.atk-sc3 # Ambisonic Toolkit — First Order Ambisonics soundfield tools (SC quark)
     pkgs.vstplugin # host VST2/VST3 plugins inside scsynth
-    pkgs.flucoma # FluCoMa — corpus-based music toolkit (57 UGens: analysis, ML, transformation)
     pkgs.safetynet # SafetyNet SC quark — protect against dangerous audio signals
     pkgs.ddwplug # ddwPlug SC quark — dynamic per-note synth patching
     pkgs.miscellaneous-lib # miSCellaneous_lib SC quark — patterns, granulation, live coding
@@ -108,9 +107,12 @@ let
 
     # -- Pro Audio (from flake/devshells/pro-audio.nix; latency/quantum
     #    settings intentionally NOT touched) --
+    # vital and flucoma moved to that devshell on 2026-11-06: the synth is
+    # launched from the shell or through `vital-standalone` (which still bakes
+    # in the package), and FluCoMa is a live-coding dependency rather than a
+    # system one.
     pkgs.glicol-cli # audio DSL for generative compositions
     # pkgs.ocenaudio # lightweight waveform editor — commented: fails to build
-    pkgs.vital # spectral wavetable synth
     pkgs.dexed # DX7-compatible FM synth
     surgeXt # open-source wavetable/VA hybrid synth (VST3/CLAP/LV2) — MPE-capable, built on first use
     pkgs.odyssey # open-source ARP Odyssey-style VA synth (VST3/LV2)
@@ -142,7 +144,16 @@ in
     # black window on Wayland/XWayland (JUCE/OpenGL rendering). Not autostarted.
     systemd.user.services.vital-standalone = jackApp.mkPwJackUnit {
       description = "Vital standalone synthesizer (pw-jack, software GL)";
-      command = "${pkgs.vital}/bin/Vital";
+      # On-demand: vital's 957 MiB closure is not in the system image. The first
+      # start builds `#vital` and GC-roots it at ~/.local/state/nix-apps/vital;
+      # pw-jack wraps the launcher and the environment survives its exec.
+      command = "${
+        onDemand {
+          name = "vital";
+          attr = "vital";
+          binary = "Vital";
+        }
+      }/bin/vital";
       environment = "WAYLAND_DISPLAY=wayland-1 LIBGL_ALWAYS_SOFTWARE=1";
     };
 
