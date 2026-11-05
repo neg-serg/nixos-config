@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
+let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+in
 {
   environment.systemPackages = [
     pkgs.ouch # archive extractor/creator
@@ -12,6 +15,11 @@
     pkgs.unzip # zip archive operations
     pkgs.xz # xz archiver
     pkgs.zip # zip archiver
-    pkgs.wayback # self-hosted web archiving toolkit (Internet Archive / archive.today / IPFS)
+    # Self-hosted web archiving toolkit (Internet Archive / archive.today /
+    # IPFS): a few lookups a year, so the binary is built on first call.
+    (onDemand {
+      name = "wayback";
+      attr = "wayback";
+    })
   ];
 }

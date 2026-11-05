@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
+let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+in
 {
   environment.systemPackages = [
     # Process management
@@ -15,7 +18,12 @@
     # System monitoring
     pkgs.goaccess # real-time web log analyzer and interactive viewer
     pkgs.kmon # Linux kernel management and monitoring TUI
-    pkgs.lnav # Log File Navigator - advanced log viewer for terminal
+    # Log viewer: kept in the `tools` devshell for project work and built on
+    # demand here, so the binary is not part of every switch.
+    (onDemand {
+      name = "lnav";
+      attr = "lnav";
+    })
     pkgs.zfxtop # system monitor with focus on process grouping and ZFX style
 
     # Containers

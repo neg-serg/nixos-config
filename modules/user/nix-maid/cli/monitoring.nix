@@ -92,6 +92,8 @@ let
     nvml_measure_pcie_speeds = true;
     gpu_mirror_graph = true;
   };
+
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 in
 {
   config = lib.mkMerge [
@@ -99,7 +101,13 @@ in
       environment.systemPackages = [
         pkgs.btop # A monitor of resources (CPU, Memory, Network)
         pkgs.hwatch # Modern alternative to watch command with history
-        pkgs.sysdig # System-wide visibility tool
+        # System-wide visibility tool: needs a probe module built for the
+        # running kernel, which this host does not build; the launcher keeps
+        # the userspace part out of every switch.
+        (onDemand {
+          name = "sysdig";
+          attr = "sysdig";
+        })
       ]
       ++ (lib.optionals config.lib.neg.wifiEnabled [
         pkgs.wavemon # Wireless device monitoring
