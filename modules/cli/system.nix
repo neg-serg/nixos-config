@@ -30,9 +30,7 @@ in
     pkgs.oxker # TUI to view and control containers (Docker API; /var/run/docker.sock points at the podman socket)
 
     # Shell enhancements
-    pkgs.blesh # full-featured line editor written in pure Bash (syntax highlighting, etc.)
     pkgs.expect # tool for automating interactive applications
-    pkgs.readline # GNU library for command-line editing
     pkgs.rlwrap # readline wrapper that provides editing and history for any command
   ];
 }
