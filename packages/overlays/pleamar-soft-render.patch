@@ -1,8 +1,8 @@
 diff --git a/src/dmabuf.rs b/src/dmabuf.rs
-index 20ceeb1..47986d1 100644
+index acb9ad1..a4a921b 100644
 --- a/src/dmabuf.rs
 +++ b/src/dmabuf.rs
-@@ -675,6 +675,17 @@ unsafe fn export_image(hal: &wgpu::hal::vulkan::Device, extent: wgpu::Extent3d,
+@@ -682,6 +682,17 @@ unsafe fn export_image(hal: &wgpu::hal::vulkan::Device, extent: wgpu::Extent3d,
      let raw = hal.raw_device();
      let instance = hal.shared_instance().raw_instance();
      let pd = hal.raw_physical_device();
@@ -19,4 +19,4 @@ index 20ceeb1..47986d1 100644
 +    }
      // Of the layouts the compositor takes, those the card paints in (or reads
      // from), of one plane.
-     let (usage, need) = if read {
+     let (usage, need) = if read && copy_src {

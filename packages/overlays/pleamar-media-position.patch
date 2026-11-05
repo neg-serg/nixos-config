@@ -1,7 +1,8 @@
 diff --git a/src/platform/mpris.rs b/src/platform/mpris.rs
+index 6f26c82..1e48cf1 100644
 --- a/src/platform/mpris.rs
 +++ b/src/platform/mpris.rs
-@@ -177,13 +177,16 @@
+@@ -177,13 +177,16 @@ fn jump(to: f64, now: f64, length: f64, track: Option<OwnedObjectPath>) -> Jump
      }
  }
  
@@ -19,7 +20,7 @@ diff --git a/src/platform/mpris.rs b/src/platform/mpris.rs
      SysValue::Map(vec![
          field("playing", SysValue::Bool(playing)),
          field("paused", SysValue::Bool(is_paused(&p))),
-@@ -191,7 +194,7 @@
+@@ -191,7 +194,7 @@ fn now(c: &Connection) -> SysValue {
          field("artist", from_metadata("xesam:artist")),
          field("album", from_metadata("xesam:album")),
          field("length", SysValue::Num(metadata.get("mpris:length").map(seconds).unwrap_or(0.0))),
@@ -28,7 +29,7 @@ diff --git a/src/platform/mpris.rs b/src/platform/mpris.rs
          // The spec's default; a player that cannot change it may leave it out.
          field("rate", SysValue::Num(p.get_property::<f64>("Rate").unwrap_or(1.0))),
          field("can_seek", SysValue::Bool(can_seek(&p))),
-@@ -210,12 +213,26 @@
+@@ -210,12 +213,26 @@ fn now(c: &Connection) -> SysValue {
      ])
  }
  
@@ -56,7 +57,7 @@ diff --git a/src/platform/mpris.rs b/src/platform/mpris.rs
              let fingerprint = format!("{v:?}");
              if fingerprint != last { last = fingerprint; dispatch(v) }
          };
-@@ -436,4 +453,16 @@
+@@ -436,4 +453,16 @@ mod tests {
          assert!(art_path_in("data:image/svg+xml;base64,PHN2Zy8+", &dir).ends_with(".svg"));
          let _ = std::fs::remove_dir_all(&dir);
      }
