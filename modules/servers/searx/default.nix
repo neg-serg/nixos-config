@@ -32,6 +32,9 @@ in
           secret_key = "@SEARX_SECRET_KEY@";
           bind_address = "127.0.0.1";
           port = 7777;
+          # Localhost-only instance behind no reverse proxy: botdetection would
+          # log "X-Forwarded-For nor X-Real-IP header is set!" on every request.
+          limiter = false;
         };
         search = {
           formats = [
@@ -39,6 +42,18 @@ in
             "json"
           ];
         };
+        # torch and ahmia need a Tor proxy that is not configured here, so they
+        # fail at startup and flood the journal ("set engine to inactive").
+        engines = [
+          {
+            name = "torch";
+            disabled = true;
+          }
+          {
+            name = "ahmia";
+            disabled = true;
+          }
+        ];
       };
     };
   };

@@ -74,6 +74,10 @@ in
         (loginLimit "@audio" "memlock" "-" "4194304")
         (loginLimit mainUser "rtprio" "-" "95")
         (loginLimit mainUser "memlock" "-" "4194304")
+        # PipeWire's mod.rt lowers its threads to nice -11 directly and warns
+        # when RLIMIT_NICE forbids it; RTKit still grants RT/nice via D-Bus, so
+        # this only silences the fallback warning and makes the direct path work.
+        (loginLimit mainUser "nice" "-" "-19")
         (loginLimit "@realtime" "rtprio" "-" "95")
         (loginLimit "@pipewire" "rtprio" "-" "95")
         (loginLimit "@pipewire" "nice" "-" "-19")
