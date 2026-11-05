@@ -339,8 +339,12 @@ def cmd_use(args):
 
 
 def cmd_unload(_args):
+    # llama-swap answers /unload with the plain text "OK", not JSON, so this
+    # bypasses api(); POST is rejected with 405, GET is the form the game
+    # guard uses too.
     try:
-        api("/unload", timeout=15)
+        with urllib.request.urlopen(BASE + "/unload", timeout=15) as resp:
+            resp.read()
     except Exception as exc:  # noqa: BLE001
         sys.exit(f"unload failed: {exc}")
     time.sleep(1)
