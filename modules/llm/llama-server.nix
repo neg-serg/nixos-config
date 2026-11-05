@@ -12,13 +12,10 @@ let
   # they are multi-GB and GC would not help). Never on system disks.
   modelDir = "/zero/ai/llama";
 
-  modelFile =
-    if cfg.model == "30b" then
-      "qwen3-vl-30b-a3b-instruct-q4_k_m.gguf"
-    else
-      "qwen3-vl-8b-instruct-q4_k_m.gguf";
-  mmprojFile =
-    if cfg.model == "30b" then "mmproj-qwen3-vl-30b-a3b-f16.gguf" else "mmproj-qwen3-vl-8b-f16.gguf";
+  # The 30B vision weights (18 GB) were removed on 2026-11-06: they do not fit
+  # the 16 GB card next to the desktop, so the unit only serves the 8B model.
+  modelFile = "qwen3-vl-8b-instruct-q4_k_m.gguf";
+  mmprojFile = "mmproj-qwen3-vl-8b-f16.gguf";
 in
 {
   options.services.llama-server = {
@@ -42,17 +39,6 @@ in
       description = "Port for the OpenAI-compatible endpoint (bound to 127.0.0.1).";
     };
 
-    model = lib.mkOption {
-      type = lib.types.enum [
-        "30b"
-        "8b"
-      ];
-      default = "30b";
-      description = ''
-        Which GGUF to serve: `30b` (qwen3-vl-30b-a3b, default) or `8b`
-        (qwen3-vl-8b). Files must exist in `/zero/ai/llama/`.
-      '';
-    };
   };
 
   config = lib.mkIf (enabled && cfg.enable) {

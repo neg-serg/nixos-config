@@ -44,10 +44,10 @@
 # - Module: `modules/llm/llama-server.nix`
 # - Engine: `pkgs.llama-cpp-vulkan`, GPU-backed (RX 9070 XT, RADV).
 # - Role: local vision engine for the `vision-review` skill — images never leave the machine.
-# - Model dir: `/zero/ai/llama` (qwen3-vl 30b/8b GGUF + mmproj) — on the `zero` ZFS pool, never on
+# - Model dir: `/zero/ai/llama` (qwen3-vl-8b GGUF + mmproj) — on the `zero` ZFS pool, never on
 #   system disks.
 # - Deliberately not auto-started; start on demand:
-#       systemctl start llama-server          # 30b on 127.0.0.1:8080
+#       systemctl start llama-server          # 8b on 127.0.0.1:8080
 #       /zero/ai/llama/start-llama-server.sh  # same, manual run (optional port/model args)
 #
 # ### llama-swap (one OpenAI-compatible endpoint, 127.0.0.1:9292)
@@ -62,8 +62,8 @@
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
 #   unloads them at once when a game starts.
 # - One model is resident at a time. All of them fit the 16 GB card except the
-#   streaming tiers (120B, Qwen3.8-Flash-Next); `qwen3-vl-30b` (18 GB) stays a
-#   manual unit.
+#   streaming tiers (120B, Qwen3.8-Flash-Next); the 8B vision unit on :8080 is
+#   separate and started by hand.
 # - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path on gfx1201; `--cpu-moe`
 #   is a trap here (3-8 tok/s).
 # - Models (quant, measured on 2026-11-05):
@@ -304,7 +304,7 @@
 #
 # - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
 #   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
-# - `/zero/ai/llama` — llama.cpp GGUFs (~240 GB): qwen3-vl 30b/8b, qwen3.8-27B,
+# - `/zero/ai/llama` — llama.cpp GGUFs (~190 GB): qwen3-vl-8b, qwen3.8-27B,
 #   the abliterated set (Gemma 26B IQ3, Qwen3.5-4B, Qwen3.8-27B IQ3,
 #   Qwen3-VL-8B), gpt-oss-120b MXFP4 (63 GB) and Qwen3.8-Flash-Next IQ3_S
 #   (78 GB, two shards in `qwen38-flash-next-iq3s/`). 34 GB of dead weights
