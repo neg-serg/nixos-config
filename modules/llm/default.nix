@@ -346,6 +346,31 @@
 }:
 let
   cfg = config.services.ollama;
+
+  # On-demand: the 548 MiB ROCm closure lives in a GC root, not in the system
+  # image. The daemon runs as the `ollama` user, which cannot fetch the flake
+  # (Nix refuses a git repository it does not own), so a oneshot running as the
+  # main user materialises the root at a shared path and overrides ExecStart.
+  # The launcher stays on PATH for the `ollama` CLI (its own root under $HOME).
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  ollamaLauncher = onDemand {
+    name = "ollama";
+    attr = "ollama";
+  };
+
+  nixAppsRoot = "/var/lib/nix-apps";
+  ollamaRoot = "${nixAppsRoot}/ollama";
+  ollamaEnsure = pkgs.writeShellScriptBin "ollama-ensure" ''
+    set -eu
+    root=${lib.escapeShellArg ollamaRoot}
+    if [ -e "$root" ]; then
+      exit 0
+    fi
+    mkdir -p ${nixAppsRoot}
+    rm -f "$root"
+    out=$(${pkgs.nix}/bin/nix build --no-link --print-out-paths 'git+file:///etc/nixos#ollama')
+    ${pkgs.nix}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
+  '';
 in
 {
   imports = neg.importDir {
@@ -357,17 +382,41 @@ in
       {
         services.ollama = {
           enable = lib.mkDefault true;
-          package = pkgs.ollama-rocm;
+          package = ollamaLauncher; # CLI on PATH, built on first use
           # RX 9070 XT (Navi 48, gfx1201) — native ROCm support, no override
           user = "ollama";
           group = "ollama";
           modelsDir = "/zero/ai/ollama"; # existing 413G model store on the zero pool
         };
 
+        systemd.services.ollama-ensure = {
+          description = "Materialise the on-demand ollama root (GC root at ~/.local/state/nix-apps)";
+          wantedBy = [ "multi-user.target" ];
+          before = [ "ollama.service" ];
+          after = [
+            "network.target"
+            "systemd-tmpfiles-setup.service"
+          ];
+          serviceConfig = {
+            Type = "oneshot";
+            User = config.lib.neg.mainUser;
+          };
+          script = "${ollamaEnsure}/bin/ollama-ensure";
+        };
+
+        systemd.services.ollama = {
+          wants = [ "ollama-ensure.service" ];
+          after = [ "ollama-ensure.service" ];
+          serviceConfig.ExecStart = lib.mkForce "${ollamaRoot}/bin/ollama serve";
+        };
+
         # Recursively fix ownership of the existing model store for the ollama
         # service user, and keep the main user in the ollama group so neg can
         # still manage model files.
         systemd.tmpfiles.rules = [
+          # Shared on-demand root for the daemon: writable by the main user
+          # (the ollama-ensure oneshot), readable/executable for the ollama user.
+          "d /var/lib/nix-apps 0755 ${config.lib.neg.mainUser} ${config.lib.neg.mainUser} -"
           "d /zero/ai 0755 root root -"
           "d /zero/ai/ollama 0770 ollama ollama -"
           "Z /zero/ai/ollama 0770 ollama ollama -"

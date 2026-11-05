@@ -10,7 +10,10 @@ let
   enabled = config.lib.neg.enabled "llm";
   base = "qwen3:8b";
   model = "qwen3:8b-ru";
-  ollama = lib.getExe pkgs.ollama-rocm;
+  # The daemon's on-demand root, materialised by ollama-ensure.service before
+  # ollama.service starts (modules/llm/default.nix); `ollama create` only needs
+  # the CLI, and the unit runs after the API is up.
+  ollama = "/var/lib/nix-apps/ollama/bin/ollama";
   r = neg.rooted repoRoot;
   modelfile = r.path "files/ai/Modelfile.qwen3-8b-ru";
   modelfileOut = "/zero/ai/ollama/Modelfile.qwen3-8b-ru";
