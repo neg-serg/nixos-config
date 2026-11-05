@@ -745,7 +745,10 @@ def main():
     s.add_argument(
         "--chem", action="store_true", help="включить химический system prompt"
     )
-    s.add_argument("--max", type=int, default=1024)
+    # The thinking tiers serve with a reasoning budget, so the cap has to leave
+    # room for thoughts plus the answer; a 1024 default would cut every hard
+    # question off mid-thinking and return an empty `content`.
+    s.add_argument("--max", type=int, default=8192)
     s.add_argument("--temp", type=float, default=0.0)
     s = sub.add_parser("bench", help="бенчмарки")
     s.add_argument("kind", choices=["chem", "lean", "all"])
