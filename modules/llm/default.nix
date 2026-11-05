@@ -73,7 +73,7 @@
 #   | gemma4-26b   | Gemma-4-26B-A4B-abliterated Q3_K_M (MoE)  | 32k | 16.2G | 105-110 |
 #   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 64k | 14.8G | 45    |
 #   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 96k | 15.1G | 55    |
-#   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 24k | 15.0G | 30-36 |
+#   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 32k | 13.8G | 30-36 |
 #   | qwen3.5-4b   | Qwen3.5-4B-abliterated Q8_0 (dense)     | 256k| 11.7G | 95-100 |
 #   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 64k | 0G    | 22    |
 #   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 32k | 6.9G  | 6-11.5 |
@@ -81,9 +81,9 @@
 #
 # - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
 #   ~3.5 bpw, the highest bits-per-weight served here. Dense KV is expensive,
-#   so both caches run q4_0 and the context stops at 24k (~15 GiB with the
-#   desktop open, 30-36 tok/s at a 20k prompt; 32k spills to ~4 tok/s). 24k is
-#   the minimum that holds the ~20k-token agent prompt. `--reasoning off` is
+#   so both caches run q4_0 and the context is 32k (13.75 GiB with the desktop,
+#   30.5 tok/s at a 9.5k prompt). The old "32k spills" claim came from a
+#   measurement taken while another model was resident. `--reasoning off` is
 #   mandatory — without it the reply carries an empty `content`.
 # - `gpt-oss-120b-abliterated` needs `--reasoning-effort low`: at the default
 #   effort it spends the whole token budget on reasoning and returns empty

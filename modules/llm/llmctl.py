@@ -54,7 +54,7 @@ CATALOG = {
     "qwen3.8-27b-abliterated": {
         "aliases": ["qwen3.8", "ru"],
         "role": "dense 27B quality",
-        "ctx": "24k",
+        "ctx": "32k",
         "size": "11 GB",
         "chem": "12/13",
         "lean": "4/7",
