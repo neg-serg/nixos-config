@@ -26,6 +26,14 @@ local LEVEL_RANGE = 255  -- cava's ascii data_format writes 0..255 per bar
 -- cava's own grammar: a raw ascii stream, one line of `;`-separated values per
 -- frame. The smoothing half is the QS config untouched; `data_format = ascii`
 -- is what turns the 8-bit stream into lines (the QS version read bytes).
+--
+-- `active=0` keeps cava a passive PipeWire client: with the default (1) cava
+-- asks for an always-process stream, which pins the graph and the RME clock
+-- awake forever and has PipeWire count an xrun on every graph cycle — cava
+-- buffers 512 frames against the 256-frame quantum, so pw-top showed ~187
+-- xruns/s even in silence. Passive means only "do not keep the graph alive for
+-- me": cava is still scheduled and receives data whenever something plays
+-- (measured: 1684 xruns in 10 s active vs 0 passive, same band values).
 local CAVA_CONFIG = table.concat({
     "[general]",
     "bars=" .. BARS,
@@ -35,6 +43,8 @@ local CAVA_CONFIG = table.concat({
     "monstercat=0",
     "gravity=20000",
     "noise_reduction=5",
+    "[input]",
+    "active=0",
     "[output]",
     "method=raw",
     "data_format=ascii",
