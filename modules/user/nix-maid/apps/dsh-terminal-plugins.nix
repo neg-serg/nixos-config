@@ -99,6 +99,11 @@ rec {
     # OSC 99/9 straight to stdout: control-only, never the text grid. Injects no
     # service — the host event bus is the only seam.
     "dsh-notify-input"
+    # Ctrl+Alt+<digit> model switching in the TUI. The shortcut seam is public,
+    # but the live channel is host-internal: the plugin imports its registry by
+    # a relative path into the installed bundle (see the package header for the
+    # upgrade check).
+    "dsh-model-hotkeys"
   ];
 
   # Loader rows for the plugins above, mirroring the web profile's patch layer

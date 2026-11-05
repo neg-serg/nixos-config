@@ -1,0 +1,12 @@
+{
+  "name": "dsh-model-hotkeys",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ctrl+Alt+<digit> switches the live model in the dsh TUI (DeepSeek + the local llama-swap routes).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
