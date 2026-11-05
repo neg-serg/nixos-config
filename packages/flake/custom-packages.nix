@@ -97,6 +97,11 @@
   sherpa-onnx = pkgs.sherpa-onnx;
   neomutt = pkgs.neomutt; # terminal mail client (launcher in modules/user/mail.nix)
 
+  # Docling (PDF/DOCX → Markdown with layout/table models): the python env is
+  # ~3.9 GiB, so the `docling` launcher in modules/cli/ocr.nix builds it on
+  # first use instead of carrying it in every system generation.
+  docling-env = pkgs.neg.docling-env;
+
   # Audio/AV on-demand launchers: Surge XT (plugin, 609 MiB) is put on the
   # plugin path by the Renoise launcher, ffmpeg-full is the Vulkan/CUDA build.
   surge-xt = pkgs.surge-xt;
