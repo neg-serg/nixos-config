@@ -101,7 +101,11 @@ let
   # 131k-native window: the KV is ~20 KB/token at q8_0 and lives mostly in RAM
   # (only 4 layers are on the card), so memory is not the limit; prefill is,
   # at a few minutes per full window. 16k was the old value, too tight for any
-  # multi-turn session that kept its history.
+  # multi-turn session that kept its history. Checked with a needle at 26,715
+  # tokens: found, prefill 112 tok/s, ~5 min. This tier IGNORES
+  # `chat_template_kwargs.enable_thinking` — its thoughts are driven by
+  # `--reasoning-effort` — so clients must leave max_tokens room for them; a
+  # 24-token cap returns an empty `content` with everything in reasoning.
   gptoss120 = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/gpt-oss-120b-abliterated-MXFP4_MOE.gguf \
@@ -143,7 +147,9 @@ let
   # rebuilds spared dependents and misses the waves. The hard phosphorus task,
   # by contrast, is 5/5 either way (568 s off, 823 s on), so the earlier
   # "never finishes without thinking" note was an artefact of service restarts.
-  # The budget keeps a hard prompt from running 20+ minutes at ~8 tok/s;
+  # The 128k window was checked with a needle at 93,907 tokens: found, 87 tok/s
+  # prefill (18 min), 5.9 tok/s decode at that depth. The budget keeps a hard
+  # prompt from running 20+ minutes at ~8 tok/s;
   # clients can opt out per request with
   # `chat_template_kwargs: {"enable_thinking": false}`.
   qwen38next = ''
