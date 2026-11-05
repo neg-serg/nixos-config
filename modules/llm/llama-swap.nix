@@ -32,7 +32,9 @@ let
   # layers are full attention with 8 KV heads x 128 dims, so the KV is
   # ~78 KB/token at q8_0 — 64k costs ~4.8 GiB and leaves ~1.1 GiB of VRAM next
   # to the desktop, where 32k left 3.5 GiB sitting idle. Images eat thousands
-  # of tokens, so the window is what the model is for. ~45 tok/s.
+  # of tokens, so the window is what the model is for. ~45 tok/s. Checked with
+  # a real image plus ~50k tokens of text: 49,836 prompt tokens, 1763 tok/s
+  # prefill, both shapes and colours read correctly.
   vision8b = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3-VL-8B-abliterated-Q4_K_M.gguf \
@@ -162,7 +164,9 @@ let
   # only the 10 full-attention layers keep keys (`full_attention_interval` 4,
   # 2 KV heads x 256 dims), so the KV is ~11 KB/token and 96k costs ~1 GiB —
   # measured 15.1 GiB total with the desktop, 0.8 GiB of headroom. 128k loads
-  # (15.4 GiB) but leaves 0.5 GiB, too tight next to a browser.
+  # (15.4 GiB) but leaves 0.5 GiB, too tight next to a browser. The window was
+  # checked end-to-end: a needle at 86,307 tokens came back correctly, prefill
+  # 2595 tok/s, decode 105 tok/s.
   qwen36 = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3.6-35B-A3B-abliterated-IQ2_S.gguf \
