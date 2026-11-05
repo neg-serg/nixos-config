@@ -74,7 +74,7 @@ in
         # System packages
         environment.systemPackages = [
           pkgs.isync # Free IMAP and Maildir mailbox synchronizer
-          pkgs.neomutt # Command-line mail reader based on Mutt
+          # neomutt is an on-demand launcher in modules/user/mail.nix.
           pkgs.msmtp # An SMTP client
           pkgs.notmuch # Thread-based email indexer, searcher and tagger
           pkgs.goimapnotify # Execute scripts on IMAP IDLE (new mail)
