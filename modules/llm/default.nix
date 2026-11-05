@@ -59,8 +59,8 @@
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
 #   unloads them at once when a game starts.
 # - One model is resident at a time. All of them fit the 16 GB card except the
-#   streaming tiers (120B, Qwen3.8-Flash-Next, DeepSeek V4); `qwen3-vl-30b`
-#   (18 GB) stays a manual unit.
+#   streaming tiers (120B, Qwen3.8-Flash-Next); `qwen3-vl-30b` (18 GB) stays a
+#   manual unit.
 # - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path on gfx1201; `--cpu-moe`
 #   is a trap here (3-8 tok/s).
 # - Models (quant, measured on 2026-11-05):
@@ -76,7 +76,6 @@
 #   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 64k | 0G    | 22    |
 #   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 16k | 6.9G  | 6-11.5 |
 #   | qwen3.8-next | Qwen3.8-Flash-Next abl-v2 IQ3_S          | 32k | 4.8G  | 5.9   |
-#   | deepseek-v4  | DeepSeek-V4-Flash-0731 abl Q2_K          | 16k | 8.2G  | 2.9   |
 #
 # - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
 #   ~3.5 bpw, the highest bits-per-weight served here. Dense KV is expensive,
@@ -134,13 +133,6 @@
 #   without another model. It is also the core-Lean tier: 7/7 on
 #   `llmctl bench lean` (2026-11-05), the only streaming model that solved all
 #   seven tasks — the 120B scores 2/7, so route Lean work here.
-# - `deepseek-v4-flash-abliterated` (`ds4`, `deepseek-v4` aliases) is the
-#   reasoning tier: 97.6 GB Q2_K (antirez quants, no expert ablated), 304B
-#   total / 13B active, SWA-128 so the KV is cheap. Two layers on the card
-#   (~8.2 GiB buffer, 11.5 GiB total; a third hits 15/15.9). Measured
-#   2026-11-05: 2.9 tok/s decode and ~2 tok/s prompt eval on a cold cache — the
-#   slowest tier. `--reasoning off` is mandatory, otherwise every generated
-#   token lands in `reasoning_content` and `content` stays empty.
 # - Context is cheap on the hybrid-attention models: gpt-oss and Qwen3.6 went
 #   from 32k to 64k for <200 MB, with q8_0 KV and `-ub 1024` (prefill +29%).
 #   MTP speculation was tested and rejected: slower (46 vs 65 tok/s) and it
@@ -269,11 +261,11 @@
 #
 # - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
 #   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
-# - `/zero/ai/llama` — llama.cpp GGUFs (~372 GB): qwen3-vl 30b/8b, qwen3.8-27B,
+# - `/zero/ai/llama` — llama.cpp GGUFs (~274 GB): qwen3-vl 30b/8b, qwen3.8-27B,
 #   the abliterated set (gpt-oss-20b, Gemma 26B IQ3, Gemma 26B MXFP4 for the
 #   24 GB box, Gemma E4B, Qwen3.5-4B, Qwen3.8-27B IQ3, Qwen3-VL-8B),
-#   gpt-oss-120b MXFP4 (63 GB), Qwen3.8-Flash-Next IQ3_S (78 GB, two shards in
-#   `qwen38-flash-next-iq3s/`) and DeepSeek-V4-Flash Q2_K (98 GB)
+#   gpt-oss-120b MXFP4 (63 GB) and Qwen3.8-Flash-Next IQ3_S (78 GB, two shards
+#   in `qwen38-flash-next-iq3s/`)
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
