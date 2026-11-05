@@ -1,8 +1,9 @@
 # llama-swap — one OpenAI-compatible endpoint in front of the local model
 # stack. The `model` field of a request selects the backend: llama-swap starts
 # it (or proxies to it) and shuts the previously running one down; an idle
-# backend is unloaded after `globalTTL` (60 s). Only models that fit the 16 GB
-# card are exposed here; the oversized ones stay as manual per-model units.
+# backend is unloaded after `globalTTL` (60 s) or the model's own `ttl`. All
+# models fit the 16 GB card except the 120B RAM tier; `qwen3-vl-30b` stays a
+# manual per-model unit.
 # Clients use http://127.0.0.1:9292/v1.
 #
 # The per-model units stay available for manual use, but do not run them while
@@ -68,6 +69,25 @@ let
       --host 127.0.0.1 --port ''${PORT} \
       -c 65536 -np 1 --flash-attn on --fit off --jinja \
       --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 \
+      --reasoning-effort low
+  '';
+
+  # gpt-oss-120b abliterated (MXFP4, 63.4 GB) — the RAM tier: the model is 4x
+  # the card, so only 4 layers run on the GPU (attention + their expert layers,
+  # ~9.7 GiB VRAM) and the other 32 stay mmap'd, read from page cache / NVMe on
+  # demand. 5.1B active gives ~8.5 tok/s decode on /zero (measured 2026-11-05),
+  # but prefill is CPU-bound at ~19 tok/s: a 2k prompt costs ~100 s, a 20k
+  # agent prompt ~18 min. NOT --n-cpu-moe here: it mallocs the expert weights,
+  # and ~52 GB of anonymous memory does not fit next to the desktop, so the
+  # 507 GB swap becomes the hot path (measured 25-27 -> 7.55 tok/s in
+  # llama.cpp#26110). mmap'd pages, by contrast, are evictable. `-ngl 4`, not
+  # 5: at 5 the card sat at 96% with the desktop open.
+  gptoss120 = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/abliterated/gpt-oss-120b-abliterated-MXFP4_MOE.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -ngl 4 -c 16384 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0 -ub 512 \
       --reasoning-effort low
   '';
 
@@ -218,6 +238,16 @@ in
           aliases = [
             "strong"
             "qwen3.6"
+          ];
+        };
+        "gpt-oss-120b-abliterated" = {
+          cmd = gptoss120;
+          # 63 GB + ~55 s cold start: keep it resident for 15 min instead of
+          # letting the 60 s global TTL force a reload between messages.
+          ttl = 900;
+          aliases = [
+            "gpt-oss-120"
+            "big"
           ];
         };
         "qwen3.8-27b-abliterated" = {

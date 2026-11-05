@@ -72,6 +72,14 @@ CATALOG = {
         "chem": "-",
         "lean": "-",
     },
+    "gpt-oss-120b-abliterated": {
+        "aliases": ["gpt-oss-120", "big"],
+        "role": "120B-A5B MoE, RAM tier",
+        "ctx": "16k",
+        "size": "63 GB",
+        "chem": "-",
+        "lean": "-",
+    },
 }
 
 CHEM_SYSTEM = """Ты — химик. Обязательные проверки:
