@@ -95,6 +95,7 @@
   gh = pkgs.gh;
   gh-enhance = pkgs.gh-enhance;
   sherpa-onnx = pkgs.sherpa-onnx;
+  neomutt = pkgs.neomutt; # terminal mail client (launcher in modules/user/mail.nix)
 
   # Audio/AV on-demand launchers: Surge XT (plugin, 609 MiB) is put on the
   # plugin path by the Renoise launcher, ffmpeg-full is the Vulkan/CUDA build.
