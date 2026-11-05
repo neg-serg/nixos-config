@@ -46,8 +46,8 @@ lib.mkIf enabled {
         pkgs.writeShellApplication {
           name = "ru-layout-wait-hyprland";
           runtimeInputs = [
-            pkgs.coreutils
-            pkgs.hyprland
+            pkgs.coreutils # seq for the wait loop
+            pkgs.hyprland # hyprctl: wait until the IPC endpoint answers
           ];
           text = ''
             for _ in $(seq 1 100); do
