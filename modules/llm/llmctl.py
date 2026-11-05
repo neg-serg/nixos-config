@@ -866,6 +866,35 @@ FP_CASES = [
         },
         {"error": "cycle", "cycle": ["a", "b", "c"]},
     ),
+    (
+        # The cut-off sits in the middle of a chain here, not at its head: the
+        # rebuilt task keeps the old hash, so the task above it must neither
+        # rerun nor change its output. Models that conflate "reran" with
+        # "changed" rebuild `top` and report T9.
+        "F6 mid-chain",
+        {
+            "roots": ["top"],
+            "tasks": [
+                {"id": "gen", "inputs": ["src.c"]},
+                {"id": "mid", "inputs": ["gen"]},
+                {"id": "top", "inputs": ["mid"]},
+            ],
+            "hashes": {"src.c": "f1"},
+            "prev": {
+                "gen": {"out": "G1", "inputs": ["f0"]},
+                "mid": {"out": "M1", "inputs": ["G1"]},
+                "top": {"out": "T1", "inputs": ["M1"]},
+            },
+            "newOut": {"gen": "G2", "mid": "M1", "top": "T9"},
+        },
+        {
+            "rebuilt": ["gen", "mid"],
+            "waves": [["gen"], ["mid"]],
+            "sameOutput": ["mid"],
+            "out": {"gen": "G2", "mid": "M1", "top": "T1"},
+            "gc": [],
+        },
+    ),
 ]
 
 FP_WEIGHTS = [
