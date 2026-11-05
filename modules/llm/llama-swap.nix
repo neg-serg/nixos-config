@@ -3,7 +3,7 @@
 # it (or proxies to it) and shuts the previously running one down; an idle
 # backend is unloaded after `globalTTL` (60 s) or the model's own `ttl`. All
 # models fit the 16 GB card except the 120B RAM tier and the `igpu` host-RAM
-# tier; `qwen3-vl-30b` stays a manual per-model unit.
+# tier; the 8B vision unit on :8080 is manual and separate.
 # Clients use http://127.0.0.1:9292/v1.
 #
 # The per-model units stay available for manual use, but do not run them while
@@ -22,8 +22,9 @@ let
   enabled = config.lib.neg.enabled "llm";
 
   # Models live on the zero ZFS pool, never in the store (multi-GB files).
-  # Only models that fit the 16 GB card are exposed here. qwen3-vl-30b (18 GB)
-  # stays available as a manual llama-server unit.
+  # Only models that fit the 16 GB card are exposed here. The 30B vision
+  # weights (18 GB) were removed on 2026-11-06; the manual llama-server unit
+  # serves the 8B model on :8080.
   modelDir = "/zero/ai/llama";
   llamaVulkan = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
 
