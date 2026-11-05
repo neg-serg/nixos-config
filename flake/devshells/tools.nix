@@ -26,6 +26,7 @@
     pkgs.bcc # BPF Compiler Collection tools
     pkgs.slskd # Soulseek P2P music sharing daemon
     pkgs.lldb # LLVM debugger
+    pkgs.delve # Go DAP adapter (nvim-dap); moved out of system-path
     pkgs.stress-ng # system stress testing tool
     pkgs.pueue # shell command queue daemon
     pkgs.gron # JSON to greppable flat format converter

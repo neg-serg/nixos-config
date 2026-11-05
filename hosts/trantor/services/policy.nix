@@ -187,8 +187,7 @@ lib.mkMerge [
     environment.systemPackages = lib.mkAfter (
       [ pkgs.openrgb ] # per-device RGB controller UI
       ++ lib.optionals config.features.dev.rust.enable [
-        pkgs.rustup # Rust toolchain manager (rustc, cargo, rust-analyzer via rustup)
-        pkgs.rust-analyzer # Rust LSP server
+        pkgs.rustup # Rust toolchain manager (rustc, cargo; the LSP lives in the `rust` devshell)
       ]
       ++ [
         (pkgs.writeShellScriptBin "cpu-boost" ''
