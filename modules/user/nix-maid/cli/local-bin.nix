@@ -28,6 +28,19 @@
           "@GCC_LIB_DIR@" = "${pkgs.gcc.cc.lib}/lib"; # libstdc++/libgomp for the torch wheels
           "@ZLIB_LIB_DIR@" = "${pkgs.zlib}/lib"; # libz
           "@ZSTD_LIB_DIR@" = "${pkgs.zstd.out}/lib"; # libzstd (torch >= 2.13 links it)
+          # WanGP's wheels need more than gcc's libs: one search path, built here
+          # so the launcher names a single token. torch wants libstdc++/libgomp,
+          # opencv (pulled by insightface/rembg) wants libGL and libglib, the
+          # audio models want portaudio and libsndfile.
+          "@WAN2GP_LIBS@" = lib.makeLibraryPath [
+            pkgs.gcc.cc.lib # libstdc++/libgomp
+            pkgs.zlib # libz
+            pkgs.zstd.out # libzstd (torch >= 2.13 links it)
+            pkgs.glib # libglib-2.0
+            pkgs.libglvnd # libGL
+            pkgs.portaudio # libportaudio (sounddevice)
+            pkgs.libsndfile # libsndfile (soundfile)
+          ];
           # The music-AI venv tree lives outside the repo; the scripts used to
           # spell the path out 19 times. Rendered output is unchanged (the
           # substitution is the same string), so this only moves the one place

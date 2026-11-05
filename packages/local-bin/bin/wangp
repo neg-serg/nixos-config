@@ -1,0 +1,65 @@
+#!/bin/sh
+# wangp: WanGP (Wan2GP) — the "GPU poor" generative super-app on the RX 9070 XT.
+#
+# One Gradio UI over video (Wan 2.1/2.2, LTX, HunyuanVideo, MiniMax H3), image
+# (Flux, Qwen-Image, SDXL, Z-Image), audio/TTS (IndexTTS, YuE, Ace-Step) and 3D
+# (Hunyuan3D 2.1, TRELLIS, TripoSG) models. Unlike ComfyUI there is no graph to
+# wire: the app picks the checkpoint variant for the detected hardware, streams
+# weights to the card through `mmgp` memory profiles, and downloads only the
+# files the chosen model needs, so a 22B video model still runs on 16 GB.
+#
+# This is the counterpart of `comfyui`: it does not replace the hand-built
+# workflows (the wallpaper clip was rendered there, HunyuanVideo 1.5 I2V), it is
+# where a model is *tried* before a workflow is worth building.
+#
+# Where it lives (outside the repo, like ComfyUI and the torch venvs):
+#
+#   /zero/ai/video/wangp/            git checkout of deepbeepmeep/Wan2GP
+#     venv/                          uv venv, CPython 3.11, torch+rocm7.1
+#     ckpts/                         weights, fetched on first use of a model
+#     outputs/                       generated media
+#
+# The directory is created by the activation script (module `llm`, "Layout on
+# disk"); the checkout, the venv and the weights are managed by hand, because
+# they are gigabytes of Python wheels and HF files, not a Nix package.
+#
+# Install / update, once the directory exists:
+#
+#   git -C /zero/ai/video/wangp clone --depth 1 \
+#       https://github.com/deepbeepmeep/Wan2GP.git .    # first time only
+#   uv venv --python 3.11 /zero/ai/video/wangp/venv
+#   uv pip install --python /zero/ai/video/wangp/venv/bin/python \
+#       torch torchvision torchaudio \
+#       --index-url https://download.pytorch.org/whl/rocm7.1
+#   uv pip install --python /zero/ai/video/wangp/venv/bin/python -r requirements.txt
+#
+# Usage:
+#
+#   wangp                              # web UI on http://127.0.0.1:7860
+#   wangp --server-name 0.0.0.0        # also reachable from the LAN (no auth by default)
+#   wangp --process queue.zip          # headless batch of a queue saved in the UI
+#   wangp --help                       # every wgp.py flag
+#
+# NixOS glue: the pip wheels link libraries the NixOS sandbox does not put on
+# the default search path, hence the LD_LIBRARY_PATH line (@WAN2GP_LIBS@ is
+# rendered by modules/user/nix-maid/cli/local-bin.nix). HSA_OVERRIDE_GFX_VERSION
+# is the same gfx1201 workaround the ComfyUI launcher needs: the ROCm wheels do
+# not know Navi 48 yet. MIOPEN_FIND_MODE=FAST skips the convolutions benchmark
+# that otherwise adds minutes to the first VAE decode at a new resolution.
+set -eu
+
+WANGP_DIR="${WANGP_DIR:-/zero/ai/video/wangp}"
+
+if [ ! -x "$WANGP_DIR/venv/bin/python" ]; then
+  echo "wangp: no venv at $WANGP_DIR/venv — see the install block in $0" >&2
+  exit 1
+fi
+
+export LD_LIBRARY_PATH="@WAN2GP_LIBS@:${LD_LIBRARY_PATH:-}"
+export HSA_OVERRIDE_GFX_VERSION="${HSA_OVERRIDE_GFX_VERSION:-12.0.0}"
+export MIOPEN_FIND_MODE="${MIOPEN_FIND_MODE:-FAST}"
+# The app runs out of its own directory (it resolves `ckpts/`, `outputs/`,
+# `mmgp/` and the vendored kernels relative to wgp.py).
+cd "$WANGP_DIR"
+
+exec "$WANGP_DIR/venv/bin/python" wgp.py "$@"
