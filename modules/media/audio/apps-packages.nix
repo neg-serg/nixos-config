@@ -12,7 +12,10 @@ let
   onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
   packages = [
     # -- Analysis --
-    pkgs.dr14_tmeter # measure dynamic range DR14 style
+    (onDemand {
+      name = "dr14_tmeter";
+      attr = "dr14_tmeter";
+    }) # DR14 dynamic-range meter, built on first use
     pkgs.essentia-extractor # bulk audio feature extractor (HQ descriptors)
     pkgs.sonic-visualiser # annotate spectra/sonograms
   ]

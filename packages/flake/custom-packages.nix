@@ -48,6 +48,10 @@
   # on first use instead of sitting in the system closure (wine's own closure is
   # 1.7 GiB; the wineapps wrapper already embeds wine).
   wine = pkgs.wineWow64Packages.stable; # Wine runtime (on-demand launcher)
+  yabridgectl = pkgs.yabridgectl; # VST bridge manager; its wrapper pins yabridge + wine
+  lsp-plugins = pkgs.lsp-plugins; # Linux Studio Plugins (LV2/VST/VST3/CLAP) for Renoise
+  dr14_tmeter = pkgs.dr14_tmeter; # DR14 dynamic-range meter (analysis CLI)
+  carapace = pkgs.carapace; # multi-shell argument completer, called by zsh
   winetricks = pkgs.winetricks; # Wine prefix setup helper (on-demand launcher)
   minibbs = pkgs.neg.minibbs; # tiny BBS-style message board (SQLite + HTTP)
   gen-unbound-hosts = pkgs.neg.local-bin-tools; # regenerate hosts/trantor/unbound-hosts.nix
