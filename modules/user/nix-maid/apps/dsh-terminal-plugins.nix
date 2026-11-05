@@ -276,6 +276,79 @@ rec {
                 # CPU backend, 1M-native with SWA; 64k preallocates ~2.6 GiB
                 # of KV and keeps the ~20k-token harness prompt inside the window.
                 contextWindow: 65536
+          # ── free-tier fallbacks (2026-11-05) ───────────────────────────────
+          # Declared unconditionally and key-gated at request time: an unset
+          # key fails that route only, never the loader. `free-llm-check`
+          # probes every route with a tool call and reports which are armed.
+          # Keys live in ~/.config/dsh/free-llm.env, sourced by the dsh wrapper
+          # (dsh.nix), which also routes Node's fetch through the local
+          # sing-box HTTP inbound — both gemini and openrouter are blocked on
+          # a direct connection from this region.
+          #
+          # pollinations: anonymous, no signup, one reply per 45 seconds per
+          # IP — a last-resort single shot, not an agent loop.
+          #
+          # gemini: free tier of the Gemini API. gemini-3.8-flash is free of
+          # charge and tool-capable, but the free tier trains on what it is
+          # sent — do not put private code through it.
+          #
+          # openrouter: the :free variants, 20 req/min and 50 req/day (1000/day
+          # after a one-time 10 USD credit purchase). Tool support is per model;
+          # the three listed below were tool-capable on 2026-11-05.
+          pollinations:
+            displayName: Pollinations (free, no key)
+            api: openai-completions
+            baseURL: https://text.pollinations.ai/openai
+            apiKeyEnv: POLLINATIONS_API_KEY
+            defaultContextWindow: 32768
+            defaultMaxTokens: 8192
+            models:
+              - id: openai-fast
+                name: GPT-OSS 20B (free, 1 req/45s)
+                contextWindow: 32768
+          gemini:
+            displayName: Gemini API (free tier)
+            api: openai-completions
+            baseURL: https://generativelanguage.googleapis.com/v1beta/openai/
+            apiKeyEnv: GEMINI_API_KEY
+            defaultContextWindow: 1048576
+            defaultMaxTokens: 65536
+            models:
+              - id: gemini-3.8-flash
+                name: Gemini 3.8 Flash (free tier)
+                contextWindow: 1048576
+                input:
+                  - text
+                  - image
+              - id: gemini-3.5-flash-lite
+                name: Gemini 3.5 Flash-Lite (free tier)
+                contextWindow: 1048576
+                input:
+                  - text
+                  - image
+          openrouter:
+            displayName: OpenRouter free models
+            api: openai-completions
+            baseURL: https://openrouter.ai/api/v1
+            apiKeyEnv: OPENROUTER_API_KEY
+            defaultContextWindow: 262144
+            defaultMaxTokens: 8192
+            models:
+              - id: nvidia/nemotron-3-ultra-550b-a55b:free
+                name: Nemotron 3 Ultra 550B (free)
+                contextWindow: 1000000
+              - id: nvidia/nemotron-3.5-super-vl:free
+                name: Nemotron 3.5 Super VL (free, vision)
+                contextWindow: 1000000
+                input:
+                  - text
+                  - image
+              - id: google/gemma-4-26b-a4b-it:free
+                name: Gemma 4 26B (free)
+                contextWindow: 262144
+                input:
+                  - text
+                  - image
     # agent-default-model: deployment default for new sessions (module:
     # dsh-terminal-plugins.nix). Runtime switches revert on the next rebuild or
     # login, when the caretaker restores this row.
