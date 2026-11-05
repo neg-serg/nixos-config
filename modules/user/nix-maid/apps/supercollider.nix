@@ -44,6 +44,11 @@ let
   scExt = pkg: name: "${pkg}/share/SuperCollider/extensions/${name}";
   scExtUpper = pkg: name: "${pkg}/share/SuperCollider/Extensions/${name}";
 
+  # Content packages are not part of the system closure: modules/media/audio/assets.nix
+  # materialises them into ~/.local/state/nix-apps (login oneshot) and the
+  # symlinks/env below point at those GC roots instead of at store paths.
+  assetsRoot = "${config.lib.neg.homeDir}/.local/state/nix-apps";
+
   # Server-side UGen plugins (.so) — scsynth finds them via SC_PLUGIN_PATH
   # (colon-separated dir list: SC3-Plugins + the ported third-party plugins).
   # Used both by sessionVariables and the supercollider-engine unit env.
@@ -62,7 +67,7 @@ let
     "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
     "${pkgs.mdugens}/lib/SuperCollider/plugins" # MDUGens: TPTFilter/SOSBank UGens (PlateReverb etc.)
     "${pkgs.portedplugins}/lib/SuperCollider/plugins" # portedplugins: VA filters, Fverb reverb
-    "${pkgs.sc-faust}/lib/SuperCollider/plugins" # sc_faust: Faust JIT compiler UGen
+    "${assetsRoot}/sc-faust/lib/SuperCollider/plugins" # sc_faust: Faust JIT compiler UGen
   ];
 
 in
@@ -145,7 +150,7 @@ in
         "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/SuperDirtMixer.quark";
       # Dirt-Samples at a stable path — the notes startup script (which cannot
       # interpolate nix store paths) loads samples from here.
-      ".local/share/SuperCollider/Dirt-Samples".source = "${pkgs.neg.dirt-samples}/share/Dirt-Samples";
+      ".local/share/SuperCollider/Dirt-Samples".source = "${assetsRoot}/dirt-samples/share/Dirt-Samples";
       # Ported third-party UGen plugin classes (.sc files; the .so plugins are
       # found via SC_PLUGIN_PATH above). Each package installs its own quark
       # layout under share/SuperCollider/extensions/<QuarkName>/.
@@ -157,7 +162,7 @@ in
       "${ext}/DWGReverb".source = scExt pkgs.neg.dwg-reverb "DWGReverb";
       "${ext}/mdugens".source = scExt pkgs.mdugens "mdugens";
       "${ext}/portedplugins".source = scExt pkgs.portedplugins "portedplugins";
-      "${ext}/sc_faust".source = scExt pkgs.sc-faust "sc_faust";
+      "${ext}/sc_faust".source = "${assetsRoot}/sc-faust/share/SuperCollider/extensions/sc_faust";
       "${ext}/GutterSynth".source = scExt pkgs.guttersynth-sc "GutterSynth";
       # MyUGens installs its classes under a shared Myplugins/ parent dir
       "${ext}/Myplugins".source = scExtUpper pkgs.my-ugens "Myplugins";
@@ -171,7 +176,7 @@ in
       "${ext}/atk-sc3".source = scExt pkgs.atk-sc3 "atk-sc3";
       "${ext}/VSTPlugin".source = scExtUpper pkgs.vstplugin "VSTPlugin";
       # Renoise Redux VST3 at the standard user VST3 path (hosts scan ~/.vst3)
-      ".vst3/renoise_redux.vst3".source = "${pkgs.neg.renoise-redux}/lib/vst3/renoise_redux.vst3";
+      ".vst3/renoise_redux.vst3".source = "${assetsRoot}/renoise-redux/lib/vst3/renoise_redux.vst3";
       # Protoplug VST2 (Lua live-coding plugins; VST2 hosts scan ~/.vst).
       # Dest names must be space-free: nix-maid's tmpfiles renderer writes
       # L+ lines without quoting, and systemd-tmpfiles splits on whitespace

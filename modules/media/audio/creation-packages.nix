@@ -54,7 +54,10 @@ let
     '')
     pkgs.neg.tidalctl # TidalCycles session controller — engine start/stop/status, editor, recording
     pkgs.neg.superdirt # SuperDirt — sample-based SuperCollider audio engine (TidalCycles / raw SC live coding)
-    pkgs.neg.dirt-samples # SuperDirt audio sample library
+    # Dirt-Samples moved out of the closure: modules/media/audio/assets.nix
+    # materialises it into ~/.local/state/nix-apps and supercollider.nix points
+    # the SC extension symlink there (535 MiB off every switch together with
+    # sc-faust and Renoise Redux).
     pkgs.pipewire.jack # PipeWire JACK compatibility (libjack.so, pw-jack) — needed by SuperCollider
     # -- Session Management --
     pkgs.new-session-manager # NSM — session manager for audio apps (JACK/PipeWire)
