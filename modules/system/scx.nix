@@ -13,7 +13,20 @@
 let
   cfg = config.features.optimization.scx;
   systemdUser = config.lib.neg.systemdUser;
-  schedBin = "${lib.getBin pkgs.scx.rustscheds}/bin/${cfg.scheduler}";
+  # The service runs exactly one scheduler, but nixpkgs' `scx.rustscheds`
+  # ships every sched_ext scheduler (102 MiB on disk, 216 MiB of nar).
+  # scx_lavd — the one this host uses — is 13 MiB of that. Keep only the
+  # configured binary: the copy keeps its own RPATH, so it still finds libelf/
+  # zlib/glibc and nothing else is needed at runtime.
+  schedBin =
+    let
+      src = lib.getBin pkgs.scx.rustscheds;
+    in
+    "${
+      pkgs.runCommand "scx-${cfg.scheduler}" { } ''
+        install -Dm755 ${src}/bin/${cfg.scheduler} $out/bin/${cfg.scheduler}
+      ''
+    }/bin/${cfg.scheduler}";
 in
 {
   options.features.optimization.scx = {
