@@ -5,12 +5,24 @@
   neg,
   ...
 }:
-
+let
+  # yt-dlp pulls a 692 MiB closure (151 store paths, mostly its python deps),
+  # so the binary stays out of the system profile: the launcher builds the
+  # flake attr `yt-dlp` (packages/flake/custom-packages.nix) on first use and
+  # GC-roots it under ~/.local/state/nix-apps. `nix run .#yt-dlp` reaches the
+  # same package; the zsh `yt` alias and `clip` still find it on PATH.
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+in
 {
   config = lib.mkIf (config.lib.neg.enabled "web" && config.lib.neg.enabled "web.tools") (
     lib.mkMerge [
       {
-        environment.systemPackages = [ pkgs.yt-dlp ]; # Command-line program to download videos from YouTube and other sites
+        environment.systemPackages = [
+          (onDemand {
+            name = "yt-dlp";
+            attr = "yt-dlp";
+          }) # video downloader, built on first use
+        ];
       }
       (neg.mkHomeFiles {
         # Note: native downloader used intentionally — aria2c's --all-proxy
