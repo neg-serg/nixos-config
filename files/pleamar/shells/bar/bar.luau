@@ -666,15 +666,16 @@ end)
 -- The bar opens drawers in the `panels` scene: the cover opens the now-playing
 -- card, the network capsule opens the flow dashboard — QS's two side panels.
 -- That scene is not resident (its only surface is the drawer itself), so it
--- exits a couple of seconds after the last drawer closes; starting the unit and
+-- exits a few seconds after the last drawer closes; starting the unit and
 -- saying where to go is one step. The fact has to arrive *after* the scene has
 -- loaded: a `--say` that lands while it is still starting is overwritten by its
 -- own defaults (drawer = none), no surface opens, and the scene exits. So wait
 -- past the load, then keep asserting the fact for a moment — it is a state, not
 -- a press, and saying it twice costs nothing.
--- The drawer is a fact in the panels scene, which runs all the time: the press sends it and
--- nothing else. This used to start the unit, sleep a whole 1.1 s "so it is up", and only then talk
--- to it — a click that arrived in its frame and was answered a second later.
+-- The drawer is a fact in the on-demand panels scene: the press sends it, starts the unit when
+-- the `--say` answers nothing, and keeps asserting the fact until it lands (the loops below).
+-- The fixed 1.1 s "so it is up" sleep this used to have is gone: the scene answers about 170 ms
+-- after the start (measured 2026-11-05), and the retries cost a fraction of that.
 local PLEAMAR = "/run/current-system/sw/bin/pleamar"
 
 -- QS's `OverlayManager.registerOverlay` dismisses whatever was open before it
@@ -692,7 +693,7 @@ local function open_drawer(name)
         "-c",
         "\'" .. PLEAMAR .. "\' --say panels \'fact drawer " .. name .. "\' >/dev/null 2>&1 && exit 0; "
             .. "systemctl --user start pleamar-panels.service; "
-            .. "for i in 1 2 3 4 5 6 7 8 9 10; do "
+            .. "i=0; while [ \"$i\" -lt 40 ]; do i=$((i + 1)); "
             .. "\'" .. PLEAMAR .. "\' --say panels \'fact drawer " .. name .. "\' >/dev/null 2>&1 && exit 0; "
             .. "sleep 0.05; done",
     })
@@ -717,7 +718,7 @@ local function toggle_drawer(name)
             .. '"' .. PLEAMAR .. '" --say panels \'fact drawer none\' >/dev/null 2>&1; exit 0; fi; '
             .. '"' .. PLEAMAR .. '" --say panels \'fact drawer ' .. name .. '\' >/dev/null 2>&1 && exit 0; '
             .. "systemctl --user start pleamar-panels.service; "
-            .. "for i in 1 2 3 4 5 6 7 8 9 10; do "
+            .. "i=0; while [ \"$i\" -lt 40 ]; do i=$((i + 1)); "
             .. '"' .. PLEAMAR .. '" --say panels \'fact drawer ' .. name .. '\' >/dev/null 2>&1 && exit 0; '
             .. "sleep 0.05; done",
     })

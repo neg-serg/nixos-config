@@ -352,6 +352,32 @@ local function touch_drawer()
     if drawer_timer then cancel(drawer_timer) end
     drawer_timer = after(DRAWER_IDLE_MS, hide_drawer)
 end
+
+-- The scene is on demand (2026-11-05): it leaves when the last drawer closes, or the unit stays
+-- up with its 19 full-monitor surfaces mapped for nothing. The wait is re-armed on every change
+-- of the fact, so moving to another drawer (or reopening one) cancels the quit; a start that is
+-- never given a drawer quits too, since the fact is `none` from the load.
+local SCENE_LINGER_MS = 4000
+local quit_timer = nil
+
+local function arm_quit()
+    if quit_timer then
+        cancel(quit_timer)
+        quit_timer = nil
+    end
+    if fact.drawer ~= "none" then return end
+    quit_timer = after(SCENE_LINGER_MS, function()
+        quit_timer = nil
+        if fact.drawer == "none" then
+            -- The scene's own CLI: `quit` goes through the render, so the last cycle is reported
+            -- and the unit sees a clean exit (`Restart=on-failure` leaves it down).
+            run("pleamar", { "--say", "panels", "quit" })
+        end
+    end)
+end
+
+arm_quit()
+
 local function pick_rec(raw, model_rec, i)
     local rec = nil
     if type(raw) == "table" then rec = raw[i + 1] end
@@ -2411,6 +2437,14 @@ on("fact:drawer", function(v)
     end
     if v ~= "none" then
         drawer_timer = after(DRAWER_IDLE_MS, hide_drawer)
+    end
+    -- The close starts the scene's own leave; every other value cancels it, so a press that
+    -- moves to another drawer (or reopens this one) is not the last word.
+    if v == "none" then
+        arm_quit()
+    elseif quit_timer then
+        cancel(quit_timer)
+        quit_timer = nil
     end
     if v == "weather" then
         -- The card is never a blank plate while the worker answers: placeholders and a line that
