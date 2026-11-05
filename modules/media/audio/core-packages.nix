@@ -14,6 +14,25 @@ let
   glmUsbmonPriv = pkgs.writeShellScriptBin "glm-usbmon-priv" (
     builtins.readFile ./core-packages/glm-usbmon-priv.sh
   );
+
+  # Only the HDSPe mixer and control panel are wanted here. The full alsa-tools
+  # set drags GTK4/GStreamer/dev outputs into the closure (1.4 GiB total; 57 MiB
+  # of it gtk4-dev referenced from the package's own binaries) for utilities
+  # this host never runs. hdsploader goes too: it is the *old* HDSP PCI firmware
+  # loader (multiface/digiface), while this host runs an HDSPe AIO Pro whose
+  # firmware the kernel module handles; and its binary hardcodes absolute
+  # firmware paths inside the original package.
+  #
+  # `strip --strip-debug` drops the DWARF build paths, `patchelf --shrink-rpath`
+  # drops the RPATH entry pointing at alsa-tools/lib. Both were store references
+  # to the original package, which is what kept its dev outputs in the closure.
+  alsaToolsHdsp = pkgs.runCommand "alsa-tools-hdsp" { } ''
+    for b in hdspmixer hdspconf; do
+      install -Dm755 ${pkgs.alsa-tools}/bin/$b $out/bin/$b
+      ${pkgs.binutils}/bin/strip --strip-debug $out/bin/$b
+      ${pkgs.patchelf}/bin/patchelf --shrink-rpath $out/bin/$b
+    done
+  '';
 in
 {
   environment.systemPackages = lib.mkAfter [
@@ -23,7 +42,7 @@ in
 
     # -- RME HDSPe --
     pkgs.hdspeconf # HDSPe matrix mixer & config (for snd-hdspe driver)
-    pkgs.alsa-tools # hdspmixer, hdsploader (RME HDSPe userland tools)
+    alsaToolsHdsp # hdspmixer, hdspconf (RME HDSPe userland tools)
 
     # -- Mixer --
     pkgs.hyprpwcenter # PipeWire control center — the session mixer (M4+C+p scratchpad)

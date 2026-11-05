@@ -9,23 +9,39 @@ let
   systemdUser = config.lib.neg.systemdUser;
   onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
   eng = "/zero/ai/speech/engines"; # speech stack location (ZFS pool, main user-owned)
-  # Inference only: nixpkgs builds piper with training extras (torch + triton,
-  # ~3G) and Japanese dictionaries (~320M) by default; neither is used here.
-  piper = pkgs.piper-tts.override {
-    withTrain = false;
-    withJapanese = false;
-  };
-
-  # Shared python for the thin FastAPI wrappers (piper-server.py / whisper-server.py).
-  # Chatterbox uses its own pip venv (torch ROCm wheels) — see the setup script.
-  serverPy = pkgs.python3.withPackages (ps: [
-    ps.fastapi
-    ps.uvicorn
-    ps.pydantic
-    ps.python-multipart # UploadFile parsing in whisper-server.py
-  ]);
-
-  whisperCpp = pkgs.whisper-cpp.override { vulkanSupport = true; }; # GPU STT via Vulkan (RADV), gfx1201
+  # Piper, whisper.cpp and their python env are NOT in the system closure: the
+  # `speech-stack` flake attr (see packages/flake/custom-packages.nix) merges
+  # them with ffmpeg, and this wrapper materialises that root on the first
+  # service start (~/.local/state/nix-apps/speech-stack), puts it on PATH and
+  # starts the requested server. The engines themselves live on /zero.
+  speechStack = pkgs.writeShellScriptBin "speech-stack" ''
+    set -eu
+    root="$HOME/.local/state/nix-apps/speech-stack"
+    if [ ! -e "$root" ]; then
+      mkdir -p "$(dirname "$root")"
+      rm -f "$root"
+      out=$(${pkgs.nix}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#speech-stack")
+      ${pkgs.nix}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
+    fi
+    export PATH="$root/bin''${PATH:+:$PATH}"
+    case "''${1:-}" in
+      piper)
+        shift
+        exec python ${eng}/piper-server.py --port 8001 --voices-dir ${eng}/voices "$@"
+        ;;
+      whisper)
+        shift
+        exec python ${eng}/whisper-server.py \
+          --port 8002 --host 127.0.0.1 \
+          --model ${eng}/voices/ggml-large-v3-turbo.bin \
+          --whisper-bin "$root/bin/whisper-cli" "$@"
+        ;;
+      *)
+        echo "usage: speech-stack piper|whisper" >&2
+        exit 2
+        ;;
+    esac
+  '';
 
   # Chatterbox runs pip-installed torch ROCm wheels inside a venv; those wheels
   # are manylinux ELFs and need nixpkgs' libstdc++/libzstd (not on NixOS default
@@ -46,8 +62,9 @@ in
 {
   config = lib.mkIf enabled {
     environment.systemPackages = [
-      piper # CPU TTS fallback (piper-server on :8001) — note: pkgs.piper is a GTK mouse GUI!
-      whisperCpp # GPU STT (whisper-cli, Vulkan backend — whisper-server on :8002)
+      # Piper (CPU TTS on :8001) and whisper.cpp (GPU STT on :8002) are built
+      # from the on-demand speech stack by their units, not installed here.
+      #
       # Speech toolkit (ASR/TTS/VAD + speaker diarization) for local
       # experiments: the launcher builds it on first call. The sibling CLIs
       # (sherpa-onnx-offline, -denoiser, …) are one `nix shell
@@ -57,9 +74,9 @@ in
         attr = "sherpa-onnx";
       })
       pkgs.rocmPackages.rocm-smi # VRAM/GPU monitoring for the ROCm TTS stack (chatterbox)
-      pkgs.ffmpeg # audio conversion for whisper-server (mp3/ogg → wav)
       pkgs.python312 # base interpreter for the chatterbox venv (keeps it GC-safe; torch cp312 wheels)
       pkgs.aubio # audio onset/beat/tempo analysis (aubioonset/aubiotrack CLIs) for music tools
+      speechStack # manual entry point: speech-stack piper|whisper (materialises the stack)
     ];
 
     # User services (run as neg on login). Chatterbox needs the pip venv created
@@ -76,8 +93,7 @@ in
           Type = "simple";
           RestartSec = 5;
           MemoryMax = "1G";
-          Environment = "PATH=${piper}/bin:${pkgs.ffmpeg}/bin";
-          ExecStart = "${serverPy}/bin/python ${eng}/piper-server.py --port 8001 --voices-dir ${eng}/voices";
+          ExecStart = "${speechStack}/bin/speech-stack piper";
         };
       };
       whisper-stt = systemdUser.mkUserService {
@@ -91,8 +107,7 @@ in
           Type = "simple";
           RestartSec = 5;
           MemoryMax = "4G";
-          Environment = "PATH=${pkgs.ffmpeg}/bin";
-          ExecStart = "${serverPy}/bin/python ${eng}/whisper-server.py --port 8002 --host 127.0.0.1 --model ${eng}/voices/ggml-large-v3-turbo.bin --whisper-bin ${whisperCpp}/bin/whisper-cli";
+          ExecStart = "${speechStack}/bin/speech-stack whisper";
         };
       };
       # On demand, never at login: the venv loads torch on the GPU and holds
