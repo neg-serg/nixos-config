@@ -114,18 +114,27 @@ let
   '';
 
   # Qwen3.8-Flash-Next abliterated v2 (Swift IQ3_S, 78 GB in two shards, split
-  # GGUF: point llama.cpp at -00001). 180B total but only 6B active (125B core
-  # + n-gram embedding table), 262k context. Four layers stay on the card
-  # (~4.8 GiB model buffer, 8.1 GiB total with the desktop), the rest is mmap'd
-  # from /zero. Measured 2026-11-05: 5.9 tok/s decode on a cold page cache
-  # (48 tokens), expected 6-9 once warm. `--reasoning off` is mandatory: it
-  # thinks by default and the reply arrives with an empty `content`.
+  # GGUF: point llama.cpp at -00001). 180B total but only 6B active: 48 layers
+  # of ~0.95 GiB (the hot set, ~45 GiB; a token reads ~0.82 GiB of it — 10 of
+  # 512 experts across 48 layers) plus a 26.8 GiB per-token embedding table
+  # (320M rows, one row touched per token, so it stays cold). Four layers stay
+  # on the card (~4.8 GiB buffer, 8.1 GiB with the desktop), the rest is mmap'd
+  # from /zero. Measured 2026-11-05 with `llama-bench` (tg64, q8_0 KV, fa on):
+  # decode 4.6 tok/s cold / 7.7 warm at -ub 512, 8.4-9.1 at -ub 1024; prefill
+  # (pp1024) 80 tok/s at -ub 512, 133 at -ub 1024. `-ub 2048` is a trap (41
+  # tok/s) and `-ngl` 8/10 buys nothing (7.6/7.4 warm): decode is bound by
+  # reading expert weights from RAM, not by GPU compute. Speculative decoding
+  # does not pay either — a Qwen3.5-4B draft (same 248320 vocab) costs 9%
+  # because acceptance is low, `--spec-type ngram-simple` is noise, and
+  # `draft-mtp` is rejected (no MTP head in this GGUF). `--reasoning off` is
+  # mandatory: it thinks by default and the reply arrives with an empty
+  # `content`.
   qwen38next = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/qwen38-flash-next-iq3s/Swift-Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf \
       --host 127.0.0.1 --port ''${PORT} \
       -ngl 4 -c 32768 -np 1 --flash-attn on --fit off --reasoning off --jinja \
-      --cache-type-k q8_0 --cache-type-v q8_0 -ub 512
+      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024
   '';
 
   # Qwen3.6-35B-A3B abliterated (i1/IQ2_S) — the strongest model that fits the
