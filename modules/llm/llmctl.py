@@ -241,10 +241,17 @@ def chat(
         except urllib.error.HTTPError as exc:
             # llama-swap answers 500 "group: starting <model> failed: aborted"
             # when a model start is cancelled under it (observed on the first
-            # request after a switch or an unload); the next attempt usually
-            # lands. Retry 5xx only — a 4xx is the caller's mistake.
+            # request after a switch or an unload, and it can wedge for a
+            # minute). Retry 5xx only — a 4xx is the caller's mistake — and
+            # unload in between: an explicit unload clears the wedged state,
+            # which is what made the same request succeed by hand.
             if exc.code < 500 or attempt == 2:
                 raise
+            try:
+                with urllib.request.urlopen(BASE + "/unload", timeout=15):
+                    pass
+            except OSError:
+                pass
             time.sleep(5 * (attempt + 1))
         except urllib.error.URLError:
             if attempt == 2:
