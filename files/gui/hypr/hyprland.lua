@@ -589,6 +589,13 @@ hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Ob
 -- now).
 -- Keys the wheel sends as Next/Prev are the same volume steps, not track skips, as before.
 -- `--by=-1`, not `--by -1`: the attached form keeps the parser from reading `-1` as a flag.
+-- The roller on the ASUSTek ROG SPEEDNOVA receiver never reaches these keys (2026-11-05): with
+-- kanata and neru stopped and every device ungrabbed, turning it delivered no evdev event on the
+-- receiver's Consumer Control node and no HID report 0x01 on its if03 interface — the report its
+-- own descriptor uses for Volume Increment/Decrement (0xE9/0xEA), Mute (0xE2) and Next/Prev
+-- (0xB5/0xB6). Only the keyboard's vendor chatter (0x04 0x70/0x72, 0x04 0x71 …) is on the wire.
+-- The binds themselves are sound: an injected KEY_VOLUMEUP (`ydotool key 115:1 115:0`) moved the
+-- monitors through the plugin. Check the roller's mode or its wired connection — not this file.
 local GENELEC_UP = 'timeout 3 pleamar --say bar "emit Genelec.turn 1" || genlc volume --by=1'
 local GENELEC_DOWN = 'timeout 3 pleamar --say bar "emit Genelec.turn -1" || genlc volume --by=-1'
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd(GENELEC_UP), { repeating = true, locked = true })
