@@ -1,9 +1,13 @@
 # OCR tooling: Tesseract engine (eng/rus/osd) and ocrmypdf for PDFs.
 #
-# Docling (PDF/DOCX → Markdown, layout + table models) is no longer part of the
-# system closure: its python env is ~3.9 GiB and only needed on demand. Run it
-# as `nix run .#docling -- file.pdf` or from the `ai` devshell, where `docling`
-# is on PATH; pdf2md (packages/local-bin-system) resolves it from PATH too.
+# Docling (PDF/DOCX → Markdown, layout + table models) stays out of the system
+# closure: its python env is ~3.9 GiB. The `docling` launcher below builds the
+# flake attr `docling-env` on first use and GC-roots it under $HOME; `nix run
+# .#docling -- file.pdf` and the `ai` devshell reach the same env; pdf2md
+# (packages/local-bin-system) resolves `docling` from PATH.
+#
+# The first conversion downloads ~500 MiB of layout/table models into
+# ~/.cache/huggingface; later runs are offline.
 { pkgs, config, ... }:
 let
   # Default tesseract ships eng only; rus needed for Russian text, osd for
@@ -24,5 +28,9 @@ in
       name = "ocrmypdf";
       attr = "ocrmypdf";
     }) # add searchable text layer to PDFs via OCR, built on first use
+    (onDemand {
+      name = "docling";
+      attr = "docling-env";
+    }) # PDF/DOCX → Markdown with layout/table models, built on first use
   ];
 }
