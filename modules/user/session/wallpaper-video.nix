@@ -72,6 +72,23 @@
 # pins the window behind the desktop via the declaration in `files/gui/hypr/hyprwinwrap.lua`. The
 # service is behind `features.gui.wallpaperVideo` (default off): wl-daemon is the normal wallpaper
 # owner and the pinned window would cover its still image, so the two are meant to run one at a time.
+#
+# ## WanGP — the other app on the same card
+#
+# `wangp` (`packages/local-bin/bin/wangp`) starts WanGP, the ready-made Gradio UI over the same kind
+# of models: Wan 2.2, LTX, HunyuanVideo, MiniMax H3 for video; Flux/Qwen-Image/SDXL for stills; YuE,
+# IndexTTS, Ace-Step for audio; Hunyuan3D/TRELLIS/TripoSG for meshes. It lives at
+# `/zero/ai/video/wangp` (checkout + `venv` with torch+rocm7.1 + `ckpts/`), a sibling of the ComfyUI
+# tree, and the directory is created by the activation script in `modules/llm`.
+#
+# When to reach for which: ComfyUI is where a graph is *built* and tuned (the wallpaper clip was
+# rendered there); WanGP is where a model is *tried* — it picks the checkpoint variant for the card,
+# streams weights through `mmgp` memory profiles and downloads only the files the chosen model
+# needs, so a 22B video model still fits 16 GB. It does not read ComfyUI's model folders: the two
+# keep separate `ckpts/`, and the same weights are not shared.
+#
+# The card cannot serve both: the desktop alone holds ~13 GB of the 17 GB, so run one app at a time
+# (and `nightjob preflight --need-gb 12` reports what holds the rest).
 
 ##
 # Module: user/session/wallpaper-video
