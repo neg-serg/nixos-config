@@ -176,6 +176,24 @@ in
         # DSP is gone until someone restarts it by hand. Unlimited starts.
         unitConfig.StartLimitIntervalSec = 0;
         serviceConfig = {
+          # The insert is a hard real-time client of the graph: every 5.33 ms
+          # (quantum 256 at 48 kHz) this process has to move 256 frames through
+          # both ALSA `pipewire` PCMs. Under CPU load its default SCHED_OTHER
+          # threads miss that deadline: measured with 64 CPU hogs and a tone,
+          # 20 xruns in 14 s on the capture stream, and at ~3x oversubscription
+          # the PCM returns -EIO from snd_pcm_wait, which CamillaDSP treats as
+          # fatal ("Playback error"). The daemon then exits, the router flips
+          # to the direct path, and systemd restarts it — an audible gap.
+          # At FIFO 19 the same test gave 7 xruns and no crash. 19 stays below
+          # PipeWire's own audio threads (the server data loop is FIFO 20 via
+          # rtkit) and far below the HDSPe IRQ thread (50), so the graph still
+          # wins; the user manager's RLIMIT_RTPRIO is 95. Threads created by
+          # the daemon inherit this policy.
+          CPUSchedulingPolicy = "fifo";
+          CPUSchedulingPriority = 19;
+          # A period's worth of page faults is enough to miss the deadline, and
+          # the pipeline has been seen partially swapped (2.5 MB peak swap).
+          MemoryLock = true;
           ExecStartPre = seedConfig;
           ExecStart = lib.concatStringsSep " " (
             [
