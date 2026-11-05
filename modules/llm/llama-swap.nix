@@ -2,8 +2,8 @@
 # stack. The `model` field of a request selects the backend: llama-swap starts
 # it (or proxies to it) and shuts the previously running one down; an idle
 # backend is unloaded after `globalTTL` (60 s) or the model's own `ttl`. All
-# models fit the 16 GB card except the 120B RAM tier; `qwen3-vl-30b` stays a
-# manual per-model unit.
+# models fit the 16 GB card except the 120B RAM tier and the `igpu` host-RAM
+# tier; `qwen3-vl-30b` stays a manual per-model unit.
 # Clients use http://127.0.0.1:9292/v1.
 #
 # The per-model units stay available for manual use, but do not run them while
@@ -171,6 +171,26 @@ let
       --host 127.0.0.1 --port ''${PORT}
   '';
 
+  # Spark-X2.6-4B on the iGPU (Radeon 610M, Granite Ridge, 2 CU) — the third
+  # tier: no dGPU VRAM at all, so it can serve while the 16 GB card is busy
+  # (and while `tiny` is not the flavour you want). Measured on 2026-11-05 with
+  # this exact GGUF: decode 10.9 tok/s, i.e. the same as `tiny` on 4 threads
+  # (10.7), but prefill is ~10x slower (73 vs 742 tok/s) — the APU is
+  # bandwidth-bound on shared DDR5 and RADV has no coopmat path for RDNA2.
+  # Hence 8k, not 64k: a 20k prompt (the agent harness) costs ~4.5 min here
+  # versus ~27 s on CPU. Use it for short-output work — labels, JSON
+  # extraction, tagging — not for prompt-heavy requests. Vulkan1 is the 610M;
+  # Vulkan0 is the RX 9070 XT (`llama-server --list-devices`). `-t 4` caps
+  # host-side work only, once the layers live on the APU. The game guard still
+  # unloads this model while a game runs (it competes for the same memory
+  # bandwidth); only `tiny` is exempt.
+  igpu = ''
+    ${llamaVulkan} --device Vulkan1 -ngl 99 \
+      -m ${modelDir}/abliterated/Spark-X2.6-4B-abliterated-Q4_K_M.gguf \
+      -t 4 -c 8192 -np 1 --jinja --reasoning off \
+      --host 127.0.0.1 --port ''${PORT}
+  '';
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -312,6 +332,14 @@ in
           aliases = [
             "cheap"
             "spark-cpu"
+          ];
+        };
+
+        "igpu" = {
+          cmd = igpu;
+          aliases = [
+            "spark-igpu"
+            "cheap-igpu"
           ];
         };
       };
