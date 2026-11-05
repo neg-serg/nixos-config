@@ -81,7 +81,16 @@ buildNpmPackage {
         nodejsRuntime.libraryPath
         (lib.getExe dsh-patch)
       ]
-      (builtins.readFile ./post-install.sh);
+      (builtins.readFile ./post-install.sh)
+    + ''
+      # @deepseek-ai/libreoffice-kit-wasm rides along in the lockfile but nothing
+      # in lib/node_modules references it (checked with `rg -a` over the whole
+      # tree, package.json files included). It carries a 128 MiB soffice.wasm
+      # plus 23 MiB soffice.data — pure dead weight in every switch and in the
+      # dsh profile. Remove the directory, not just the assets, so an upgrade
+      # that starts to import it fails loudly instead of silently losing files.
+      rm -rf "$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/libreoffice-kit-wasm"
+    '';
 
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`.
   # The lockfile carries two security overrides: fflate 0.8.2 -> 0.8.3
