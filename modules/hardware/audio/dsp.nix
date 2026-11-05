@@ -27,14 +27,13 @@
 #
 # The ALSA ring comes from `chunksize` (see ./dsp/default.yml): the buffer is
 # the next power of two at or above 3x chunksize and the period is buffer/8.
-# 512 therefore means a 2048-frame ring (42.7 ms) with a 256-frame period — the
-# graph quantum PipeWire is pinned to, so the plugin grants the period asked
-# for. It kept 1024 frames (21 ms) at chunksize 256, which underran roughly
-# once a minute during MPD playback at light load; 2048 cut that to one in
-# three minutes and the RME driver stayed at 0 xruns. The bigger ring also
-# shows up as a 512-frame latency suggestion on both streams, above the graph
-# quantum: that is fine while the quantum comes from the config floor, but do
-# not let a follower ask for it and then drive the graph at 512.
+# It has to stay one graph quantum (256 frames). A 512 chunksize does give a
+# 2048-frame ring (42.7 ms) and fewer underruns (~1 per 3 minutes of MPD
+# playback instead of ~3), but the ALSA `pipewire` plugin hands out reads of
+# the quantum, not of the requested chunksize: CamillaDSP then logs "Capture
+# read 256 frames instead of the requested 512" on every read, ~34 a second,
+# and fills the journal. The ring is not the knob to reach for here — the
+# graph quantum is, and the RME runs 256-frame periods.
 #
 # Layout (XDG; the packaged camillagui is patched to the same paths and aurora's
 # camilla tab resolves $XDG_CONFIG_HOME/camilladsp first, so one tree serves
