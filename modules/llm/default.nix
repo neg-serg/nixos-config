@@ -55,7 +55,8 @@
 # - Module: `modules/llm/llama-swap.nix`; the `model` field selects a backend,
 #   one model is resident at a time (16 GB VRAM, ~4 GB of it is the desktop).
 # - Every model the router serves is uncensored: abliterated Gemma 4 26B
-#   (Q3_K_M), Qwen3-VL-8B and gpt-oss-20b. The base Gemma/Qwen weights and
+#   (Q3_K_M), Qwen3-VL-8B, gpt-oss-120b and the Qwen tiers. The base Gemma/Qwen
+#   weights and
 #   the censored ollama peers were removed — aligned models refuse too much for
 #   this stack. Base files still lie on disk until they are deleted.
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
@@ -70,14 +71,13 @@
 #   | model        | weights                                  | ctx | VRAM  | tok/s |
 #   | ------------ | ---------------------------------------- | --- | ----- | ----- |
 #   | gemma4-26b   | Gemma-4-26B-A4B-abliterated Q3_K_M (MoE)  | 32k | 16.2G | 105-110 |
-#   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 32k | 12.6G | 45    |
-#   | gpt-oss-20b  | gpt-oss-20b-abliterated MXFP4            | 64k | 16.0G | 75-85 |
-#   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 64k | 15.2G | 55    |
+#   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 64k | 14.8G | 45    |
+#   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 96k | 15.1G | 55    |
 #   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 24k | 15.0G | 30-36 |
 #   | qwen3.5-4b   | Qwen3.5-4B-abliterated Q8_0 (dense)     | 256k| 11.7G | 95-100 |
 #   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 64k | 0G    | 22    |
-#   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 16k | 6.9G  | 6-11.5 |
-#   | qwen3.8-next | Qwen3.8-Flash-Next abl-v2 IQ3_S          | 32k | 4.8G  | 5.9   |
+#   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 32k | 6.9G  | 6-11.5 |
+#   | qwen3.8-next | Qwen3.8-Flash-Next abl-v2 IQ3_S          | 128k| 6.0G  | 5.9   |
 #
 # - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
 #   ~3.5 bpw, the highest bits-per-weight served here. Dense KV is expensive,
@@ -85,7 +85,7 @@
 #   desktop open, 30-36 tok/s at a 20k prompt; 32k spills to ~4 tok/s). 24k is
 #   the minimum that holds the ~20k-token agent prompt. `--reasoning off` is
 #   mandatory — without it the reply carries an empty `content`.
-# - `gpt-oss-20b-abliterated` needs `--reasoning-effort low`: at the default
+# - `gpt-oss-120b-abliterated` needs `--reasoning-effort low`: at the default
 #   effort it spends the whole token budget on reasoning and returns empty
 #   content. With low effort it keeps tools, JSON and arithmetic intact.
 # - `gemma4-26b` is text-only (the projector does not fit next to 12.5 GB of
@@ -305,10 +305,12 @@
 # - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
 #   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
 # - `/zero/ai/llama` — llama.cpp GGUFs (~274 GB): qwen3-vl 30b/8b, qwen3.8-27B,
-#   the abliterated set (gpt-oss-20b, Gemma 26B IQ3, Gemma 26B MXFP4 for the
+#   the abliterated set (Gemma 26B IQ3, Gemma 26B MXFP4 for the
 #   24 GB box, Gemma E4B, Qwen3.5-4B, Qwen3.8-27B IQ3, Qwen3-VL-8B),
 #   gpt-oss-120b MXFP4 (63 GB) and Qwen3.8-Flash-Next IQ3_S (78 GB, two shards
-#   in `qwen38-flash-next-iq3s/`)
+#   in `qwen38-flash-next-iq3s/`). The gpt-oss-20b MXFP4 file still sits here
+#   (12 GB) but is no longer served — it was dropped from the catalog after it
+#   failed the FP planning task (see the model blocks in `llama-swap.nix`).
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by

@@ -253,21 +253,18 @@ rec {
             models:
               - id: qwen3.6-35b-abliterated
                 name: Qwen3.6-35B abliterated
-                contextWindow: 65536
+                contextWindow: 98304
               - id: qwen3.8-27b-abliterated
                 name: Qwen3.8-27B abliterated (quality, RU)
                 # 24k is this card's VRAM ceiling and the minimum that holds
                 # the ~20k-token harness prompt (see modules/llm/llama-swap.nix).
                 contextWindow: 24576
-              - id: gpt-oss-20b-abliterated
-                name: gpt-oss-20b abliterated
-                contextWindow: 65536
               - id: gemma4-26b-abliterated
                 name: Gemma 4 26B abliterated
                 contextWindow: 32768
               - id: qwen3-vl-8b-abliterated
                 name: Qwen3-VL-8B abliterated (vision)
-                contextWindow: 32768
+                contextWindow: 65536
                 input:
                   - text
                   - image

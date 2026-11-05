@@ -28,13 +28,17 @@ let
   llamaVulkan = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
 
   # Vision model (Vulkan/RADV): abliterated Qwen3-VL-8B — the base build
-  # refuses too much for this stack. 32k context, ~45 tok/s, ~3 GB of headroom.
+  # refuses too much for this stack. 64k of the 262k-native window: all 36
+  # layers are full attention with 8 KV heads x 128 dims, so the KV is
+  # ~78 KB/token at q8_0 — 64k costs ~4.8 GiB and leaves ~1.1 GiB of VRAM next
+  # to the desktop, where 32k left 3.5 GiB sitting idle. Images eat thousands
+  # of tokens, so the window is what the model is for. ~45 tok/s.
   vision8b = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3-VL-8B-abliterated-Q4_K_M.gguf \
       --mmproj ${modelDir}/abliterated/mmproj-qwen3-vl-8b-ablit-f16.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -c 32768 -np 1 --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 --jinja
+      -c 65536 -np 1 --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 --jinja
   '';
 
   # PaddleOCR-VL-1.6 (0.47B, Apache-2.0) — document parsing: layout, tables,
@@ -77,22 +81,6 @@ let
       --cache-type-k q8_0 --cache-type-v q8_0 --jinja
   '';
 
-  # gpt-oss-20b abliterated (MXFP4, 3.6B active) — the big uncensored tier:
-  # ~75-85 tok/s at 64k, tools, reasoning and arithmetic all survive the
-  # abliteration. The KV cache is q8_0; f16 at 64k leaves no headroom, and -ub
-  # 1024 lifts prefill from 4075 to 4546 tok/s for 170 MB.
-  # `--reasoning-effort low` is mandatory: at the default effort the model
-  # burns the whole token budget on reasoning and returns empty content, and
-  # `--reasoning off` makes it worse.
-  gptoss = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/abliterated/gpt-oss-20b-abliterated-MXFP4.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -c 65536 -np 1 --flash-attn on --fit off --jinja \
-      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 \
-      --reasoning-effort low
-  '';
-
   # gpt-oss-120b abliterated (MXFP4, 63.4 GB) — the RAM tier: the model is 4x
   # the card, so only 4 layers run on the GPU (attention + their expert layers,
   # ~6.9 GiB model buffer, ~10.5 GiB total with the desktop) and the other 32
@@ -103,12 +91,16 @@ let
   # the expert weights, and ~52 GB of anonymous memory does not fit next to the
   # desktop, so the 507 GB swap becomes the hot path (measured 25-27 -> 7.55
   # tok/s in llama.cpp#26110). mmap'd pages, by contrast, are evictable.
-  # `-ngl 4`, not 5: at 5 the card sat at 96% with the desktop open.
+  # `-ngl 4`, not 5: at 5 the card sat at 96% with the desktop open. 32k of the
+  # 131k-native window: the KV is ~20 KB/token at q8_0 and lives mostly in RAM
+  # (only 4 layers are on the card), so memory is not the limit — prefill is,
+  # and a full 32k prompt still costs ~28 min at 19 tok/s. 16k was the old
+  # value, too tight for any multi-turn session that keeps its history.
   gptoss120 = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/gpt-oss-120b-abliterated-MXFP4_MOE.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -ngl 4 -c 16384 -np 1 --flash-attn on --fit off --jinja \
+      -ngl 4 -c 32768 -np 1 --flash-attn on --fit off --jinja \
       --cache-type-k q8_0 --cache-type-v q8_0 -ub 512 \
       --reasoning-effort low
   '';
@@ -154,14 +146,19 @@ let
   '';
 
   # Qwen3.6-35B-A3B abliterated (i1/IQ2_S) — the strongest model that fits the
-  # 16 GB card next to the desktop: ~55 tok/s at 64k, text-only. The dynamic
-  # IQ2 keeps attention and shared experts at higher precision; a Q3 build
-  # (IQ3_XXS) would need ~13.6 GB and does not fit with Steam open.
+  # 16 GB card next to the desktop: ~55 tok/s, text-only, and after gpt-oss-20b
+  # was dropped it is the fast general tier. The dynamic IQ2 keeps attention
+  # and shared experts at higher precision; a Q3 build (IQ3_XXS) would need
+  # ~13.6 GB and does not fit with Steam open. 96k of the 262k-native window:
+  # only the 10 full-attention layers keep keys (`full_attention_interval` 4,
+  # 2 KV heads x 256 dims), so the KV is ~11 KB/token and 96k costs ~1 GiB —
+  # measured 15.1 GiB total with the desktop, 0.8 GiB of headroom. 128k loads
+  # (15.4 GiB) but leaves 0.5 GiB, too tight next to a browser.
   qwen36 = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3.6-35B-A3B-abliterated-IQ2_S.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -c 65536 -np 1 --flash-attn on --fit off --reasoning off \
+      -c 98304 -np 1 --flash-attn on --fit off --reasoning off \
       --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 --jinja
   '';
 
@@ -323,14 +320,6 @@ in
           aliases = [
             "gemma4"
             "gemma4-26b"
-          ];
-        };
-        "gpt-oss-20b-abliterated" = {
-          cmd = gptoss;
-          aliases = [
-            "gpt-oss"
-            "gpt-oss-20b"
-            "uncensored"
           ];
         };
         "qwen3.6-35b-abliterated" = {
