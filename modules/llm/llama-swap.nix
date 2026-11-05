@@ -37,6 +37,27 @@ let
       -c 32768 -np 1 --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 --jinja
   '';
 
+  # PaddleOCR-VL-1.6 (0.47B, Apache-2.0) — document parsing: layout, tables,
+  # formulas, handwritten scans. A specialized doc-VLM; a general vision model
+  # loses structure. llama-server learned the paddleocr arch (#18825), and the
+  # GGUF carries its chat template. One page fits 16k with room to spare.
+  ocr = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/ocr/PaddleOCR-VL-1.6-GGUF.gguf \
+      --mmproj ${modelDir}/ocr/PaddleOCR-VL-1.6-GGUF-mmproj.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 16384 -np 1 --flash-attn on --jinja
+  '';
+
+  # Qwen3-Embedding-0.6B (Apache-2.0) — retrieval embeddings. Qwen3 uses
+  # last-token pooling, which the GGUF metadata does not set by itself.
+  embed = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/embed/Qwen3-Embedding-0.6B-Q8_0.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 8192 -np 1 --embeddings --pooling last
+  '';
+
   # Gemma 4 26B A4B — the MoE tier (25.2B total, 3.8B active), abliterated.
   # Q3_K_M on purpose: the IQ3_S build loops on multi-step prompts at greedy
   # decoding — a cold prefill falls into a repetition basin (the same prompt
@@ -341,6 +362,22 @@ in
             "spark-igpu"
             "cheap-igpu"
           ];
+        };
+
+        # Specialized small models: loaded on a request, unloaded after the
+        # TTL. The editor's FIM backend is a separate service (modules/llm/fim.nix).
+        "ocr" = {
+          cmd = ocr;
+          ttl = 600;
+          aliases = [
+            "paddleocr"
+            "document"
+          ];
+        };
+        "embed" = {
+          cmd = embed;
+          ttl = 600;
+          aliases = [ "embeddings" ];
         };
       };
 
