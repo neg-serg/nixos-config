@@ -8,6 +8,10 @@
       # gate tooling.
       joern = mkBool "enable Joern code analysis platform" true;
     };
+    # Craft Anything: manual reverse-engineering workbench. The binaries are
+    # on-demand launchers (modules/dev/craft-anything.nix), so enabling it
+    # costs the system closure nothing until the first run.
+    craftAnything.enable = mkBool "enable Craft Anything (reverse-engineering workbench + rebuild assistant)" false;
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       herdr.enable = mkBool "install Herdr (terminal workspace manager / runtime for AI coding agents) with its neg config" false;

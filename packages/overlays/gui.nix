@@ -41,6 +41,7 @@ in
   atrium = callPkg (pkg "atrium") { }; # Wayland multiseat display manager
   wordcraft = callPkg (pkg "wordcraft") { }; # Word-style word processor (docx/odt/rtf) + converter CLI
   sonda = callPkg (pkg "sonda") { }; # file manager for pleamar-wm that searches files by what they hold
+  craft-anything = callPkg (pkg "craft-anything") { }; # reverse-engineering workbench + rebuild assistant (desktop app, CLI, MCP server)
 
   # pleamar — Wayland desktop shell runtime (bars, launchers, notification
   # centres, docks, lock screens as animated scenes). Rev-pinned input in
