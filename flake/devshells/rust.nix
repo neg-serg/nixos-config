@@ -7,6 +7,7 @@ in
 {
   nativeBuildInputs = [
     pkgs.rustup # manage Rust channels/components
+    pkgs.rust-analyzer # Rust LSP (rustaceanvim); lives here, not in system-path
     pkgs.graphviz # dot backend for rustaceanvim crateGraph
     pkgs.bacon # background rust code checker
     pkgs.evcxr # Rust REPL

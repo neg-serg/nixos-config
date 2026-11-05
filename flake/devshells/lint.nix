@@ -28,5 +28,7 @@
     pkgs.rustfmt # rust formatting check
     # TOML
     pkgs.taplo # TOML formatter/linter
+    # Prose
+    pkgs.vale # prose linter (nvim-lint); moved out of system-path
   ];
 }

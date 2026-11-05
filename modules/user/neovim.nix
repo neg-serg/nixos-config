@@ -71,13 +71,14 @@ lib.mkIf devEnabled (
         pkgs.fd # fast file finder (snacks files picker)
 
         # LSP servers — via nixpkgs, not Mason (Mason binaries break on NixOS:
-        # ELF binaries lack /lib64/ld-linux, npm shebangs lack /usr/bin/env)
-        pkgs.marksman # Markdown
+        # ELF binaries lack /lib64/ld-linux, npm shebangs lack /usr/bin/env).
+        # Language-scoped servers are not installed system-wide; they come from
+        # the devshell for that language: marksman/lemminx from the default
+        # shell (flake/devshells/base.nix), clangd/CMake from `cpp`,
+        # rust-analyzer from `rust`, delve from `tools`, vale from `lint`.
+        # What stays below is needed in every session, whatever the project.
         pkgs.texlab # LaTeX (VimTeX); the toolchain itself lives in the `latex` devshell
         pkgs.lua-language-server # Lua
-        # C/C++ clangd/clang-format live in the `cpp` devshell: open a C/C++
-        # project from `nix develop .#cpp` (or direnv) to get them.
-        pkgs.lemminx # XML
         pkgs.bash-language-server # Bash
         pkgs.pyright # Python
         pkgs.typescript-language-server # TypeScript/JavaScript
@@ -91,7 +92,6 @@ lib.mkIf devEnabled (
         pkgs.docker-language-server # Dockerfile LSP
         # CMake LSP/formatter live in the `cpp` devshell together with CMake.
         pkgs.systemd-lsp # Systemd unit LSP
-        pkgs.rust-analyzer # Rust LSP (for rustaceanvim)
 
         # Treesitter: the main branch of nvim-treesitter builds parsers with the
         # CLI (`require('nvim-treesitter').install{...}`); without it no parser
@@ -106,17 +106,15 @@ lib.mkIf devEnabled (
         pkgs.stylua # Lua formatter
         pkgs.selene # Lua linter (blazing fast, Rust)
         pkgs.hadolint # Dockerfile linter
-        pkgs.vale # Prose linter
         pkgs.yamllint # YAML linter
         pkgs.black # Python formatter (conform.nvim + just lint)
         pkgs.luajit # Lua syntax checker (just lint)
         pkgs.qt6.qtdeclarative # qmlformat: QML syntax checker (just lint)
-        pkgs.mypy # Optional static typing for Python (nvim-lint)
 
         # DAP debug adapters (nvim-dap) + lazygit (Snacks.lazygit)
         # lldb/lldb-dap live in the `cpp` devshell; Rust work already uses
         # codelldb from the `rust` devshell.
-        pkgs.delve # Go DAP adapter (nvim-dap)
+        # delve (Go DAP adapter) is provided by the `tools` devshell.
         ((pkgs.python3.withPackages (ps: [ ps.debugpy ])).overrideAttrs (o: {
           meta = (o.meta or { }) // {
             priority = 1;
