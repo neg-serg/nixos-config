@@ -155,6 +155,18 @@ in
       # run pipewire on default.target, this fixes xdg-portal startup delay
       systemd.user.services.pipewire.wantedBy = [ "default.target" ];
 
+      # Journal: the idle RME capture node re-syncs its ALSA follower DLL every
+      # few seconds, and spa.alsa logs each correction ("hw:0,0c: follower
+      # delay ... resync") plus the companion spa.audioconvert "out of
+      # buffers". Neither node.pause-on-idle nor
+      # session.suspend-timeout-seconds takes that node out of the graph
+      # (measured 2026-11-05), and systemd's LogFilterPatterns= does not apply
+      # to user units, so use PipeWire's own topic filter: WARN by default,
+      # ERROR-only for the two noisy topics. The session exports
+      # PIPEWIRE_DEBUG=0 (nix-maid env), which switches all daemon logging
+      # off — this unit-scoped value overrides it, so real warnings come back.
+      systemd.user.services.pipewire.environment.PIPEWIRE_DEBUG = "2,spa.alsa:1,spa.audioconvert:1";
+
       # WirePlumber queries UPower for battery info; make sure UPower is up first
       systemd.user.services.wireplumber.after = [ "upower.service" ];
       systemd.user.services.wireplumber.wants = [ "upower.service" ];
