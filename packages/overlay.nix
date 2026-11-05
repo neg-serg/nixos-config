@@ -36,6 +36,7 @@ let
   gui = importOv ./overlays/gui.nix;
   dev = importOv ./overlays/dev.nix;
   fixTinycc = importOv ./overlays/fix-tinycc.nix;
+  trim = importOv ./overlays/trim.nix;
   fixSources = importOv ./overlays/fix-sources.nix;
   aurPorted = import ./overlays/aur-ported.nix final finalPrev;
   vendored = importOvP ./overlays/vendored-sources.nix;
@@ -52,6 +53,7 @@ in
   // dev
   // gui
   // fixTinycc
+  // trim
   // fixSources
   // aurPorted
   // vendored
