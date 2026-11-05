@@ -98,3 +98,8 @@ gpucore.*
 # it also kept `just agent-switch` refusing — the verified toplevel and the tree's
 # re-evaluation disagreed whenever the socket existed.
 *.sock
+
+# Documentation is deliberately local-only (outside this repo) and was purged
+# from the published history. Never track a docs/ tree here again; the guard
+# also catches an accidental `git add -A` of a recreated docs directory.
+docs/
