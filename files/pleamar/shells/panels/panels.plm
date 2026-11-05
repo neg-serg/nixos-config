@@ -135,20 +135,21 @@ scene panels {
     // blitted at the screen's 240 Hz for a scene with nothing on screen (measured 2026-10-27,
     // same drawers opened and closed in both runs: 2423 frames in 10 s and 2 % of a core before,
     // 305 and 0 % after; the memory did not move — 79.8 MiB against 78.3 — because a closed
-    // sheet keeps its buffers either way). So the catcher is up exactly while a drawer is, and
-    // what keeps the scene alive with every surface closed is the one-pixel keeper under it: a
-    // scene whose last surface closes exits a second or so later, and then
-    // `pleamar --say panels "fact drawer media"` would have to land in the handful of
-    // milliseconds between the end of the load and that exit.
+    // sheet keeps its buffers either way). So the catcher is up exactly while a drawer is.
+    // No keeper keeps the scene alive: it is started on demand (`pleamar-panels`, or the bar's
+    // `open_drawer`/`toggle_drawer`) and exits a few seconds after the last drawer closes. Its
+    // 19 full-monitor surfaces stay mapped while it runs, and a mapped layer is composited —and
+    // blurred— by the compositor on every damage, so a resident drawer scene costs a quarter of
+    // the GPU with nothing of it on screen (measured 2026-11-05: 26.4% of Hyprland's GPU time
+    // against 0.8% with the scene stopped). The press that opens a drawer lands after the load;
+    // the caller retries the fact until the scene answers (`bar.luau`, `pleamar-panels`).
     // A surface per drawer, sized exactly to the card it draws — the reference's
     // shape (one window per popup), and the only arrangement where the glass
     // edge falls on the card's own boundary: drawn inside one big layer,
     // Hyprland's blur leaves a visible seam around the plate.
-    // The keeper: one pixel, no body, no input — the scene's reason to stay loaded while no
-    // drawer is open. Behind everything, so it is never in the way. What it costs is the pace
-    // declared on the catcher below, not a rate of its own: `rate:` is the scene's, and the
-    // surface that drives the pace only decides which frames are asked for.
-    surface keeper { size: 1, 1; anchor: top_left; level: background; reserve: 0; screens: each }
+    // The keeper: deleted with the resident drawer scene (2026-11-05) — it existed only to keep
+    // a scene that nobody asked to see loaded. The idle rate on the catcher below is still the
+    // pace until the last surface closes and the scene exits.
 
     // The unnamed full-monitor surface is the catcher — the press outside that
     // dismisses the drawer. It paints nothing, so it is up only while it has something to
@@ -691,11 +692,9 @@ scene panels {
     // The catcher lives on the scene's own surface while every drawer is a surface of its own, and
     // surfaces stack in declaration order — that, not this zone's position inside the scene, is
     // what keeps a press inside a drawer from dismissing it.
-    // A drawer scene with nothing drawn stops itself after a second or two, and
-    // the fact that opens a drawer would then have to land in a window of
-    // milliseconds. One design pixel at 2 % keeps the scene resident without
-    // being visible; the cards are the only thing the eye sees.
-    box { from: 0, 0; size: 1, 1; color: live.coal; opacity: 2% }
+    // The scene is on demand and leaves on its own once the last drawer has been closed for a few
+    // seconds (`panels.luau`'s `arm_quit`), so nothing here has to keep it resident: the loose
+    // 1 × 1 pixel that used to do that went with the keeper surface.
 
     zone box catcher { from: 0, 0; size: screen.width, screen.height
         label: "Dismiss drawer"; role: region; show: drawer != none }

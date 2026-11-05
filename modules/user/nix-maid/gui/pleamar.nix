@@ -28,9 +28,15 @@
 #
 # ## Units and guards (when the flag is on)
 #
-# - `pleamar-<scene>.service` for every scene in `pleamarScenes` (`bar`, `panels`, `notifications`,
+# - `pleamar-<scene>.service` for every scene in `pleamarScenes` (`bar`, `notifications`,
 #   `toast`, `launcher`, `osd`, `headphones`), each running
 #   `pleamar --scene ~/.config/pleamar/shells/<scene>/<scene>.plm --no-hud` with memory/CPU caps.
+#   `panels` is an on-demand unit too (`pleamarOnDemandUnits`): a drawer scene keeps 19
+#   full-monitor layer surfaces mapped, and Hyprland composites —and blurs— every mapped layer on
+#   each damage, so a resident drawer costs about a quarter of the GPU with nothing of it on screen
+#   (measured 2026-11-05: 26.4% of Hyprland's GPU time against 0.8% with the scenes stopped). It
+#   exits a few seconds after the last drawer closes; the bar's drawer calls and `pleamar-panels` (what
+#   the compositor binds run) start it again and retry until it answers.
 #   `overlay` is an on-demand unit (`pleamarOnDemandUnits`) and `proof` is not started at all;
 #   `overview` is a deliberate omission (a resident process for one IPC verb costs more than the
 #   bind). `lock` gets a unit too, but from `pleamarOnDemandUnits`: the scene is born locked
@@ -116,15 +122,15 @@ let
   pickerEnabled = config.lib.neg.wallpaperPickerEnabled;
 
   # ── Scenes ────────────────────────────────────────────────────────────────
-  # The single scene list: the per-scene units, the deployed links and the
-  # generated autostart file all derive from it. Later phases append names here
-  # (bar, notifications, …) — nothing else in this module needs editing.
+  # The single autostart scene list: the per-scene units and the generated autostart file derive
+  # from it. `panels` is the one scene deliberately left out — it is on demand (below), because a
+  # resident drawer scene keeps 19 full-monitor surfaces mapped for nothing. Later phases append
+  # names here (bar, notifications, …) — nothing else in this module needs editing.
   # `proof` is the PH0 pipeline probe: it stays out of autostart on purpose.
   # `overview` is deliberately absent: its first version is a thin `hypr-expo toggle`
   # and a resident process just to answer one IPC verb would cost more than the bind;
   pleamarScenes = [
     "bar"
-    "panels"
     "notifications"
     "toast"
     "launcher"
@@ -143,7 +149,6 @@ let
   # here — a drawer scene may close itself and must not be resurrected.
   pleamarResidentScenes = [
     "bar"
-    "panels" # a compositor reload closes its layer surfaces, and the drawer scene exits 0
     "notifications"
     "toast"
     "launcher"
@@ -341,8 +346,9 @@ let
         # `on-failure` is not enough for a scene the session cannot lose: when
         # Hyprland restarts it closes its clients, the scene exits 0, and the
         # bar stays gone until somebody starts it by hand. The bar and the
-        # always-resident scenes come back from any exit; `panels` keeps the
-        # failure-only policy, since it is the one scene that may close itself.
+        # resident scenes come back from any exit; an on-demand scene (`panels`
+        # and the units below) keeps the failure-only policy, so its own clean
+        # exit after the last drawer closes leaves it down until it is asked for.
         Restart = if builtins.elem scene pleamarResidentScenes then "always" else "on-failure";
         RestartSec = 5;
         # Starter ceilings (PH0) measured wrong: every scene sat pinned at the
@@ -392,6 +398,13 @@ let
   # with a config switch: the Quickshell layer it replaced was deleted on 2026-11-02,
   # so git history is the only way back to it.
   pleamarOnDemandUnits = {
+    # The drawer scene: 19 full-monitor surfaces, mapped for as long as the process lives, so it
+    # is up only while a drawer is (see the header). It exits on its own once the last drawer
+    # closes, and `Restart=on-failure` from `pleamarSceneUnit` leaves a clean exit down.
+    pleamar-panels = (pleamarSceneUnit "panels") // {
+      wantedBy = [ ];
+      partOf = [ ];
+    };
     pleamar-lock = (pleamarSceneUnit "lock") // {
       wantedBy = [ ];
       partOf = [ ];
@@ -480,9 +493,12 @@ let
     done
   '';
 
-  # The scene set, as units, for the hard restart below: one source (`pleamarScenes`) with the
-  # per-scene unit suffix, so the guard cannot drift from the units the module generates.
-  sceneUnits = lib.concatMapStringsSep " " (scene: "pleamar-${scene}.service") pleamarScenes;
+  # The scene set, as units, for the hard restart below: the autostart scenes plus the on-demand
+  # drawer scene, with the per-scene unit suffix, so the guard cannot drift from the units the
+  # module generates. A stopped unit is skipped by the guard, so `panels` costs nothing while no
+  # drawer is open and is restarted when a layout change lands mid-drawer.
+  guardedScenes = pleamarScenes ++ [ "panels" ];
+  sceneUnits = lib.concatMapStringsSep " " (scene: "pleamar-${scene}.service") guardedScenes;
 
   # Hard restart of the scene set when the monitor layout changes under it. pleamar reads
   # `screen.width`/`screen.height` once, when a scene loads: a compositor scale applied later
@@ -585,6 +601,31 @@ let
         exit 2
         ;;
     esac
+  '';
+
+  # The front door to the on-demand `panels` scene for callers that are not the bar: the two
+  # compositor binds used to say `pleamar --say panels …` straight into a scene that no longer
+  # lives between drawers. Starting the unit and retrying the fact is what the bar carries inline
+  # (`bar.luau`'s `open_drawer`/`toggle_drawer`); this is the same sequence as a command, so a
+  # bind stays one line. The scene answers about 170 ms after the start (measured 2026-11-05),
+  # and the loop gives it two seconds before it gives up.
+  pleamarPanels = pkgs.writeShellScriptBin "pleamar-panels" ''
+    set -u
+    pleamar=${lib.getExe pkgs.pleamar}
+    systemctl=${lib.getExe' pkgs.systemd "systemctl"}
+    sleep=${lib.getExe' pkgs.coreutils "sleep"}
+
+    if ! "$pleamar" --say panels 'get drawer' >/dev/null 2>&1; then
+      "$systemctl" --user start pleamar-panels.service || exit 1
+      i=0
+      while [ "$i" -lt 100 ]; do
+        "$pleamar" --say panels 'get drawer' >/dev/null 2>&1 && break
+        "$sleep" 0.02
+        i=$((i + 1))
+      done
+    fi
+
+    exec "$pleamar" --say panels "$@"
   '';
 
   # Login-window CPU record (`just pleamar-cpu`): one file per login, taken a minute after the
@@ -729,6 +770,7 @@ lib.mkIf pleamarEnabled (
         pkgs.pleamar # Wayland desktop shell runtime (bars/launchers/notifications as scenes)
         pkgs.neg.pleamar-harness # dev harnesses: PNG matrix, describe snapshots, cgroup budgets
         pleamarScaleGuard # hard scene-set restart when the monitor layout changes
+        pleamarPanels # start the on-demand drawer scene and send it one command
       ];
 
       # The lock scene checks the password through the PAM service the engine names in its
