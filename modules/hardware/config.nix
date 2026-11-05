@@ -3,6 +3,7 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }:
 let
@@ -65,7 +66,22 @@ in
       };
 
       # Adwaita Bluetooth — GNOME-style BT device manager (tray applet + daemon)
-      services.adw-bluetooth.enable = true;
+      services.adw-bluetooth = {
+        enable = true;
+        # Upstream installs
+        # share/dbus-1/services/com.ezratweaver.AdwBluetoothDaemon.dbus.service,
+        # but dbus-broker requires the service file name to equal the bus name
+        # (no `.dbus` suffix) and otherwise ignores the activation entry,
+        # logging "is not named after the D-Bus name" on every bus start. The
+        # daemon itself is started by its systemd user unit, so this only fixes
+        # the journal (and D-Bus activation, should it ever be used).
+        package = pkgs.adw-bluetooth.overrideAttrs (old: {
+          postInstall = (old.postInstall or "") + ''
+            mv "$out/share/dbus-1/services/com.ezratweaver.AdwBluetoothDaemon.dbus.service" \
+              "$out/share/dbus-1/services/com.ezratweaver.AdwBluetoothDaemon.service"
+          '';
+        });
+      };
     })
   ];
 }
