@@ -63,7 +63,7 @@ let
     "${pkgs.my-ugens}/lib/SuperCollider/plugins"
     "${pkgs.softcut-sc}/lib/SuperCollider/plugins"
     "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin/plugins"
-    "${pkgs.flucoma}/lib/SuperCollider/plugins" # FluCoMa: corpus manipulation UGens
+    "${assetsRoot}/flucoma/lib/SuperCollider/plugins" # FluCoMa: corpus manipulation UGens (GC root from assets.nix)
     "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
     "${pkgs.mdugens}/lib/SuperCollider/plugins" # MDUGens: TPTFilter/SOSBank UGens (PlateReverb etc.)
     "${pkgs.portedplugins}/lib/SuperCollider/plugins" # portedplugins: VA filters, Fverb reverb
@@ -194,7 +194,7 @@ in
       "${ext}/ddwPlug".source = scExt pkgs.ddwplug "ddwPlug";
       "${ext}/miSCellaneous_lib".source = scExt pkgs.miscellaneous-lib "miSCellaneous_lib";
       "${ext}/ixiQuarks".source = scExt pkgs.ixiquarks "ixiQuarks";
-      "${ext}/FluCoMa".source = scExt pkgs.flucoma "FluCoMa";
+      "${ext}/FluCoMa".source = "${assetsRoot}/flucoma/share/SuperCollider/extensions/FluCoMa";
     };
   };
 }
