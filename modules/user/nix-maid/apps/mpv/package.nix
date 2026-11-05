@@ -47,9 +47,17 @@ let
           + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
       });
 
+  # `youtubeSupport = false` drops the upstream wrapper's PATH suffix with
+  # yt-dlp. That suffix is what kept a 692 MiB python closure (151 store paths)
+  # in every system generation; yt-dlp itself now comes from the on-demand
+  # launcher in modules/user/nix-maid/web/yt-dlp.nix, which sits in the system
+  # PATH, so mpv's ytdl_hook still finds it — it builds on the first URL that
+  # needs it. Upstream mpv only uses this flag for that fallback path; the
+  # ytdl_hook script itself stays compiled in.
   mpvPackage = pkgs.mpv.override {
     mpv-unwrapped = mpvUnwrapped;
     scripts = scriptPkgs;
+    youtubeSupport = false;
   };
 in
 {

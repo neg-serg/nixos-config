@@ -10,7 +10,8 @@ let
   # so the binary stays out of the system profile: the launcher builds the
   # flake attr `yt-dlp` (packages/flake/custom-packages.nix) on first use and
   # GC-roots it under ~/.local/state/nix-apps. `nix run .#yt-dlp` reaches the
-  # same package; the zsh `yt` alias and `clip` still find it on PATH.
+  # same package; the zsh `yt` alias, `clip` and mpv's ytdl_hook (the wrapper
+  # now builds without `youtubeSupport`) all find it on PATH.
   onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 in
 {
