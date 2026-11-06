@@ -1,8 +1,10 @@
 {
   pkgs,
+  config,
   ...
 }:
 let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
   # Wrap dsh so it loads DEEPSEEK_API_KEY from the sops secret itself, rather
   # than relying on shell init — works even from a terminal opened before the
   # secret was wired (a shell only sources .zshenv at startup).
@@ -68,7 +70,10 @@ in
   environment.systemPackages = [
     dshWrapped # DeepSeek Harness agent CLI (dsh) — wrapped to load the DeepSeek API key
     freeLlmCheck # free-tier LLM route smoke test (tool-call probe per provider)
-    pkgs.pnpm # pnpm package manager (used by `dsh plugin --profile <name> add`)
+    (onDemand {
+      name = "pnpm";
+      attr = "pnpm";
+    }) # pnpm for `dsh plugin`, built on first use
     pkgs.gnumake # make — required by node-gyp when pnpm builds native deps (node-pty) in a profile
   ];
 }
