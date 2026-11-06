@@ -24,7 +24,8 @@ commands:
 A root is a GC root: it pins the store path of one flake attr until
 `nix-apps update` re-points it or `nix-apps clean` removes it. The first
 call of a launcher after a clean builds the app again; `update` re-points
-without waiting for that call.
+without waiting for that call, and creates a missing per-user root when
+the name resolves to a flake attr (pre-warm a launcher that was never run).
 EOF
 }
 
@@ -134,6 +135,17 @@ update_one() {
   fi
 }
 
+create_user_root() {
+  local name="$1" attr="$2" path="$user_root/$1" out picked
+  out=$(nix build --no-link --print-out-paths "$flake#$attr")
+  picked=$(pick_output "$name" "$out")
+  [ -n "$picked" ] || die "no output for $attr"
+  mkdir -p "$user_root"
+  rm -f "$path"
+  nix-store --add-root "$path" --indirect --realise "$picked" > /dev/null
+  printf '%-26s %-7s created %s\n' "$name" user "${picked##*/}"
+}
+
 cmd_update() {
   local want scope name path found
   if [ "$#" -eq 0 ]; then
@@ -149,7 +161,13 @@ cmd_update() {
       found=1
       update_one "$scope" "$name" "$path"
     done < <(each_root)
-    [ "$found" = 1 ] || printf 'nix-apps: no root named %s\n' "$want" >&2
+    if [ "$found" = 0 ]; then
+      if attr=$(resolve_attr "$want"); then
+        create_user_root "$want" "$attr"
+      else
+        printf 'nix-apps: no root named %s\n' "$want" >&2
+      fi
+    fi
   done
 }
 
