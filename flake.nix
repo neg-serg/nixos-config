@@ -83,8 +83,11 @@
     };
     # lusty: own repo on github (source of truth).
     # Re-lock after pushes: nix flake lock --update-input lusty (via proxy).
+    # nixpkgs follows the top-level pin: one evaluation, one toolchain, and the
+    # package is built against the same glibc the session runs.
     lusty = {
       url = "github:neg-serg/lusty";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     neg-pkgs = {
       url = "github:neg-serg/nixos-pkgs";
@@ -149,6 +152,8 @@
     };
     tailray = {
       url = "github:NotAShelf/tailray";
+      # Same rule as every other input: build against the system nixpkgs.
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     steam-config-nix = {
       url = "github:unazikx/steam-config-nix/feat/winetricks";
@@ -180,6 +185,11 @@
     nix-cache-pin = {
       url = "github:neg-serg/nix-cache-pin";
       inputs.nixpkgs.follows = "nixpkgs";
+      # harbor-rs is the fork's own helper input; it used to pin an August
+      # nixpkgs, which only ever mattered to its dev tooling. Follow the system
+      # pin so no input in the tree carries a second nixpkgs (which also keeps
+      # the lock free of an unused snapshot).
+      inputs.harbor-rs.inputs.nixpkgs.follows = "nixpkgs";
     };
     # Waylandar — standalone Wayland calendar widget + dashboard (Quickshell + Python).
     # Local clone ~/src/waylandar is at the same rev; nixpkgs follows the top-level
