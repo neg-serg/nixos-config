@@ -30,6 +30,12 @@
     nix-src = {
       url = "github:DeterminateSystems/nix-src/74d688aa7b83ee1894ac1881eb3421b4c3fe3677";
       inputs.nixpkgs.follows = "nixpkgs";
+      # nix-src's other nixpkgs inputs are test fixtures of Nix's own test
+      # suite (`nix flake check` upstream), not build inputs: nothing here runs
+      # them, so point them at the system pin too. The lock then carries no
+      # extra nixpkgs snapshots at all.
+      inputs.nixpkgs-23-11.follows = "nixpkgs";
+      inputs.nixpkgs-regression.follows = "nixpkgs";
     };
     # Moved to nixos-unstable (2026-08) for newer Hyprland/color-mgmt
     # (ICC + HDR). Deliberate, even though it re-locks nixpkgs: the pin from
