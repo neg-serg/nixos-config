@@ -118,36 +118,36 @@ let
         # The older wrappers in packages/overlay.nix and neg-serg/nixos-pkgs do
         # `args: prev.buildFHSEnv (args // {...})`, which throws "expected a set
         # but found a function" when called with the new function-style argument.
-        # Rebuild buildFHSEnv from the stock nixpkgs one (instead of the composed,
-        # wrapped one) and inject the /sbin/ldconfig Steam RT3 fix here.
         #
-        # Applied last so it wins over both broken wrappers.
-        (_final: _prev: {
+        # This overlay is last, so it wins over both wrappers. It re-calls the
+        # stock nixpkgs implementation against THIS fixpoint: `prev.callPackage`
+        # binds `pkgsHostTarget` (what multiPkgs/targetPkgs are called with) to
+        # prev, which is final for every package except buildFHSEnv itself. The
+        # /sbin/ldconfig Steam RT3 fix is kept for both argument styles.
+        #
+        # Before this, the stock function came from a fresh
+        # `import inputs.nixpkgs { config.allowUnfree = true; }`: a second
+        # evaluation of nixpkgs without the flake overlays. Every FHS package an
+        # overlay changes (llvm, mesa, the fonts, the python toolchain) was built
+        # twice — once for the system, once for the FHS env — and the duplicates
+        # sat in the system closure beside their originals.
+        (_final: prev: {
           buildFHSEnv =
             let
-              # Stock nixpkgs buildFHSEnv, but with allowUnfree so steam's FHS
-              # env (which includes the unfree steam-unwrapped) evaluates.
-              orig =
-                (import inputs.nixpkgs {
-                  inherit system;
-                  config.allowUnfree = true;
-                }).buildFHSEnv;
+              stock = prev.callPackage (prev.path + "/pkgs/build-support/build-fhsenv-bubblewrap") { };
               ldconfigFix = ''
                 if [ -L $out/usr/sbin/ldconfig ] && [ -f $out/usr/bin/ldconfig ]; then
                   cp -f $out/usr/bin/ldconfig $out/usr/sbin/ldconfig
                 fi
               '';
+              fix =
+                a:
+                a
+                // {
+                  extraBuildCommands = (a.extraBuildCommands or "") + ldconfigFix;
+                };
             in
-            args:
-            orig (
-              if builtins.isFunction args then
-                (
-                  final:
-                  (args final) // { extraBuildCommands = ((args final).extraBuildCommands or "") + ldconfigFix; }
-                )
-              else
-                (args // { extraBuildCommands = (args.extraBuildCommands or "") + ldconfigFix; })
-            );
+            args: stock (if builtins.isFunction args then (pkgs: fix (args pkgs)) else fix args);
         })
       ];
       config = {
