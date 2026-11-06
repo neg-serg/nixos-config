@@ -61,6 +61,7 @@
   # recipe is called here against the stock `hyprlandPlugins` set (the overlay
   # passes exactly that too). Same nixpkgs -> same Hyprland/lua -> the .so is
   # ABI-compatible with the session compositor.
+  hyprshell = pkgs.hyprshell; # GTK4 window switcher + app launcher, built on first use
   hyprcapture =
     let
       src = pkgs.fetchFromGitHub {
