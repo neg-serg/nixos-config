@@ -76,6 +76,7 @@
   exiftool = pkgs.exiftool; # EXIF inspector for scripts and screenshot helpers
   tgchat = pkgs.neg.tgchat; # Telegram chat access for the agent (Telethon session)
   tgchat-rs = pkgs.neg.tgchat-rs; # Telegram chat access on a grammers session
+  khal = pkgs.khal; # CLI calendar application (+ ikhal)
   hyprcapture =
     let
       src = pkgs.fetchFromGitHub {
