@@ -9,6 +9,10 @@
 }:
 let
   enabled = config.lib.neg.enabled "gui";
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
   packages = [
     # -- Color --
     pkgs.lutgen # procedurally render LUTs for stylizing
@@ -22,7 +26,10 @@ let
     pkgs.scour # SVG minifier to shrink UI assets
 
     # -- Metadata --
-    pkgs.exiftool # swiss-army EXIF inspector used in scripts
+    (onDemand {
+      name = "exiftool";
+      attr = "exiftool";
+    }) # swiss-army EXIF inspector used in scripts, built on first use
     pkgs.exiv2 # CLI for editing EXIF/IPTC/XMP metadata
     pkgs.mediainfo # dump container/codec metadata for photos/videos
 

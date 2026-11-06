@@ -73,6 +73,7 @@
   searxng = pkgs.searxng; # SearXNG metasearch, run from /var/lib/nix-apps/searx
   protontricks = pkgs.protontricks; # winetricks wrapper for Proton
   sonic-visualiser = pkgs.sonic-visualiser; # spectra/sonogram analyser
+  exiftool = pkgs.exiftool; # EXIF inspector for scripts and screenshot helpers
   hyprcapture =
     let
       src = pkgs.fetchFromGitHub {
