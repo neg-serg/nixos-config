@@ -38,6 +38,7 @@ die() {
 map_attr() {
   case "$1" in
     docling) printf '%s\n' docling-env ;;
+    searx) printf '%s\n' searxng ;;
     *) printf '%s\n' "$1" ;;
   esac
 }

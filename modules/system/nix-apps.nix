@@ -25,7 +25,7 @@
 # Adding an app: expose a flake attr (packages/flake/custom-packages.nix) and
 # wrap it through lib/on-demand-app.nix; the CLI discovers it by root name. Where
 # the attr name differs from the root name, add the pair to map_attr() in
-# nix-apps.sh (docling → docling-env today).
+# nix-apps.sh (docling → docling-env, searx → searxng today).
 #
 # Root names that have no flake attr (vivaldi, telegram-desktop, xray, ...) are
 # materialised by their own ensure scripts; `status` reports them as `external`
@@ -48,5 +48,11 @@
       # writeShellApplication adds one, so drop the duplicate here.
       text = lib.removePrefix "#!/usr/bin/env bash\n" (builtins.readFile ./nix-apps.sh);
     })
+  ];
+
+  # Shared base for system-service roots (ollama, searx): the ensure oneshots
+  # run as the main user and must be able to add roots there.
+  systemd.tmpfiles.rules = [
+    "d /var/lib/nix-apps 0755 ${config.lib.neg.mainUser} ${config.lib.neg.mainUser} -"
   ];
 }
