@@ -618,6 +618,20 @@ renoise-osc args="":
 renoise-record args="":
     @renoise-record {{ args }}
 
+# --- On-demand apps ---------------------------------------------------------------
+
+# List the on-demand GC roots and the store paths they pin
+apps:
+    @nix-apps list
+
+# Compare every root with the current flake (current/stale/external)
+apps-status:
+    @nix-apps status
+
+# Rebuild roots from the current flake (all managed, or the names given)
+apps-update *names:
+    @nix-apps update {{ names }}
+
 # --- Keyboard (QMK) ---------------------------------------------------------------
 
 # Build and flash the Wellum keymap onto both Ferris Sweep halves (RP2040)

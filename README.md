@@ -382,6 +382,23 @@ just deploy
 just hooks-enable
 ```
 
+### 📦 On-demand Apps (GC Roots)
+
+Heavy apps stay out of the system closure: `lib/on-demand-app.nix` builds the
+flake attr on first use and pins the resulting store path to a GC root under
+`~/.local/state/nix-apps` (per user) or `/var/lib/nix-apps` (system services).
+The `nix-apps` CLI maintains those pins, so an app can be refreshed without
+waiting for its next launch:
+
+```bash
+nix-apps status        # which roots went stale after `just update`
+nix-apps update        # re-point every managed root
+nix-apps update vivaldi
+nix-apps clean renoise # drop the pin; the store path survives until GC
+```
+
+`just apps`, `just apps-status` and `just apps-update` wrap the same commands.
+
 ### 🔄 Local Gates (no CI service)
 
 > [!IMPORTANT]

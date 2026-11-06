@@ -2,7 +2,9 @@
 #
 # The launcher references only nix; the first run builds the matching flake
 # package and registers a GC root under $HOME, later runs exec the binary
-# directly. Rebuild/update by removing the root directory and running again.
+# directly. Refresh a root with `nix-apps update <name>` (modules/system/
+# nix-apps.nix) instead of deleting it: the CLI rebuilds from the current
+# flake, re-points the root and keeps the old path until the next GC.
 #
 # `--print-out-paths` prints one line per *output*, and multi-output packages
 # (ffmpeg-full has out/dev/bin/man) would otherwise feed several paths into
