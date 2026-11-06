@@ -55,6 +55,7 @@
   # Ollama's ROCm build: the service and the model-ensure script both reach it
   # through the on-demand launcher, so the 548 MiB closure sits in a GC root.
   ollama = pkgs.ollama-rocm; # the custom ROCm build (packages/ollama-qwen38)
+  mangohud = pkgs.mangohud; # gaming HUD; launcher aliases mangoapp/mangohudctl/mangoplot
   winetricks = pkgs.winetricks; # Wine prefix setup helper (on-demand launcher)
   minibbs = pkgs.neg.minibbs; # tiny BBS-style message board (SQLite + HTTP)
   gen-unbound-hosts = pkgs.neg.local-bin-tools; # regenerate hosts/trantor/unbound-hosts.nix
