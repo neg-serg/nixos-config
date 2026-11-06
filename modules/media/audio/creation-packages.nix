@@ -9,7 +9,10 @@
 }:
 let
   enabled = config.lib.neg.enabled "media.audio.creation";
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 
   # pw-jack launcher unit (lib/jack-app.nix): ExecStart under pw-jack, the
   # audio-graph ordering and the restart policy live there.
@@ -22,8 +25,8 @@ let
   # aggregation from modules/system/environment.nix stays as the tail.
   renoise = pkgs.writeShellScriptBin "renoise" ''
     set -eu
-    nix=${pkgs.nix}/bin/nix
-    nixStore=${pkgs.nix}/bin/nix-store
+    nix=${config.nix.package}/bin/nix
+    nixStore=${config.nix.package}/bin/nix-store
     ensure() {
       name=$1
       root="$HOME/.local/state/nix-apps/$name"
@@ -92,7 +95,7 @@ let
         exit 1
       fi
       export TIDAL_GHCI_SYSTEM=1
-      exec ${pkgs.nix}/bin/nix develop "path:/etc/nixos#haskell" -c tidal-ghci "$@"
+      exec ${config.nix.package}/bin/nix develop "path:/etc/nixos#haskell" -c tidal-ghci "$@"
     '')
     pkgs.neg.tidalctl # TidalCycles session controller — engine start/stop/status, editor, recording
     pkgs.neg.superdirt # SuperDirt — sample-based SuperCollider audio engine (TidalCycles / raw SC live coding)

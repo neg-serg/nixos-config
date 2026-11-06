@@ -868,14 +868,14 @@ let
     if [ ! -e "$root" ]; then
       mkdir -p "$(dirname "$root")"
       rm -f "$root"
-      out=$(${pkgs.nix}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#hyprcapture" |
+      out=$(${config.nix.package}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#hyprcapture" |
         while IFS= read -r candidate; do
           if [ -x "$candidate/bin/hyprcapture-ui" ]; then
             printf '%s\n' "$candidate"
             break
           fi
         done)
-      ${pkgs.nix}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
+      ${config.nix.package}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
     fi
     plugin="$root/lib/libhyprcapture.so"
 

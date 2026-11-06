@@ -33,6 +33,7 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }:
 {
@@ -40,7 +41,7 @@
     (pkgs.writeShellApplication {
       name = "nix-apps";
       runtimeInputs = [
-        pkgs.nix # flake evaluation and nix-store --add-root
+        config.nix.package # flake evaluation and nix-store --add-root
         pkgs.coreutils # readlink, rm, head
       ];
       # The file keeps its own shebang so shellcheck can lint it standalone;

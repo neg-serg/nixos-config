@@ -8,7 +8,10 @@ let
   guiEnabled = config.lib.neg.enabled "gui";
   wifiEnabled = config.lib.neg.enabled "net.wifi";
   menuPkgs = if guiEnabled && !devSpeed && wifiEnabled then [ pkgs.iwmenu ] else [ ]; # Launcher-driven Wi-Fi manager for Linux
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 in
 {
   environment.systemPackages = [

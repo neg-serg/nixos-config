@@ -23,7 +23,10 @@ let
   apps = cfg.apps or { };
   mainUser = config.lib.neg.mainUser;
 
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 
   # The three commands the module provides, each built on first use and
   # GC-rooted under ~/.local/state/nix-apps. `wineapps` embeds wine in its own

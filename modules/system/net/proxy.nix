@@ -11,7 +11,10 @@ let
   # launcher and give the unit a wrapper that materialises the GC root before
   # exec, so `systemctl start xray` keeps working while the binary stays out of
   # the system closure.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
   xray = onDemand {
     name = "xray";
     attr = "xray";

@@ -21,7 +21,10 @@
 }:
 let
   enabled = config.lib.neg.enabled "llm";
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
   modelDir = "/zero/ai/asr";
 
   sherpa = onDemand {

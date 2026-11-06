@@ -34,7 +34,10 @@
   ...
 }:
 let
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 in
 {
   config = lib.mkIf (config.lib.neg.enabled "gui" && config.features.gui.sonda.enable) {

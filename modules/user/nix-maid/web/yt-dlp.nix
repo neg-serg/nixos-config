@@ -12,7 +12,10 @@ let
   # GC-roots it under ~/.local/state/nix-apps. `nix run .#yt-dlp` reaches the
   # same package; the zsh `yt` alias, `clip` and mpv's ytdl_hook (the wrapper
   # now builds without `youtubeSupport`) all find it on PATH.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 in
 {
   config = lib.mkIf (config.lib.neg.enabled "web" && config.lib.neg.enabled "web.tools") (

@@ -16,7 +16,10 @@
 # mangoapp, mangohudctl and mangoplot in one output, and gamescope's
 # `--mangoapp` looks up `mangoapp` by name. `binary` covers the case where the
 # launcher name is not the binary name (vital -> Vital).
-{ pkgs }:
+{
+  pkgs,
+  nix ? pkgs.nix,
+}:
 {
   name,
   attr,
@@ -31,14 +34,14 @@ let
     if [ ! -e "$root" ]; then
       mkdir -p "$(dirname "$root")"
       rm -f "$root"
-      out=$(${pkgs.nix}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#${attr}" |
+      out=$(${nix}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#${attr}" |
         while IFS= read -r candidate; do
           if [ -x "$candidate/bin/${binary}" ]; then
             printf '%s\n' "$candidate"
             break
           fi
         done)
-      ${pkgs.nix}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
+      ${nix}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
     fi
     case "$(basename "$0")" in
       ${name}) exec "$root/bin/${binary}" "$@" ;;

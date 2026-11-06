@@ -7,7 +7,10 @@ let
   # carapace is sourced on every zsh start; the launcher adds one `test -e` to
   # that path and keeps its 102 MiB out of the system closure. The first call
   # after a GC builds the package and GC-roots it under ~/.local/state/nix-apps.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 in
 {
   environment.systemPackages = [
