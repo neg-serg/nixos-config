@@ -417,9 +417,7 @@ in
         # service user, and keep the main user in the ollama group so neg can
         # still manage model files.
         systemd.tmpfiles.rules = [
-          # Shared on-demand root for the daemon: writable by the main user
-          # (the ollama-ensure oneshot), readable/executable for the ollama user.
-          "d /var/lib/nix-apps 0755 ${config.lib.neg.mainUser} ${config.lib.neg.mainUser} -"
+          # /var/lib/nix-apps itself is owned by modules/system/nix-apps.nix.
           "d /zero/ai 0755 root root -"
           "d /zero/ai/ollama 0770 ollama ollama -"
           "Z /zero/ai/ollama 0770 ollama ollama -"
