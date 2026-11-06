@@ -83,7 +83,7 @@
   features.net.ceno.enable = true; # Ceno/Ouinet P2P client (censorship-circumvention node)
   features.net.proxy.enable = true; # sing-box SOCKS5 proxy (+ xray.service), no full-TUN mode
   features.virt.docker.enable = true; # Podman + docker-compat stack (for the Ceno/Ouinet container)
-  features.dev.ai.rocm.enable = true; # ROCm PyTorch (gfx1201) for GPU fine-tuning (kernel side: features.hardware.amdgpu.rocm)
+  features.dev.ai.rocm.enable = true; # ROCm training tooling: nightjob + rocm-smi (torch comes from `nightjob env init` wheels)
   features.dev.unity.enable = true; # unityhub-proxy / unity-proxy: Unity Hub + `unity` CLI through the SOCKS5 proxy
   features.dev.java.enable = false; # no Java work here — keeps the ~630M Maven/JDK stack out of the closure
   features.dev.craftAnything.enable = true; # reverse-engineering workbench (GUI + CLI + MCP), built on first use
@@ -171,9 +171,6 @@
   features.dev.ai.herdr.enable = true; # Herdr — agent runtime: workspaces/panes for dsh sessions, state sidebar
   features.dev.pkgs.joern = false; # Joern (2.9 GB JVM stack) off: not used on this host
   features.llm.enable = true; # Local LLM stack: Ollama (ROCm, models on /zero/ai/ollama), voxinput
-  # vLLM pulls an 11 GB ROCm Python env into the profile and is never auto-started; the module
-  # stays (start it there when wanted), the host keeps the package out of the system.
-  services.vllm.enable = false;
   features.cli.broot.enable = true;
   features.text.wordcraft.enable = true; # WordCraft — Word-style word processor, replaces LibreOffice
   features.hardware.usbAutomount.enable = true;

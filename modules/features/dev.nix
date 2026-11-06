@@ -15,7 +15,7 @@
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       herdr.enable = mkBool "install Herdr (terminal workspace manager / runtime for AI coding agents) with its neg config" false;
-      rocm.enable = mkBool "install PyTorch with ROCm (gfx1201) + torch-rocm CLI for GPU fine-tuning" false;
+      rocm.enable = mkBool "install ROCm training tooling (nightjob GPU runner + rocm-smi); the torch env is a pip venv (`nightjob env init`)" false;
     };
     rust = {
       enable = mkBool "enable Rust tooling (rustup, rust-analyzer)" true;

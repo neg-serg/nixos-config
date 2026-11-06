@@ -21,12 +21,6 @@ in
 
     # Heavy tools deliberately kept out of the system closure; run them with
     # `nix run .#<name>` or from their devshell.
-    torch-rocm = {
-      type = "app";
-      program = "${pkgs.writeShellScriptBin "torch-rocm" ''
-        exec env -u PYTHONPATH ${pkgs.torchRocmEnv}/bin/python "$@"
-      ''}/bin/torch-rocm";
-    };
     midi-transcribe = {
       type = "app";
       program = "${pkgs.neg.midi-transcribe}/bin/midi-transcribe";
