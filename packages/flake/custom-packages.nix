@@ -56,6 +56,25 @@
   # through the on-demand launcher, so the 548 MiB closure sits in a GC root.
   ollama = pkgs.ollama-rocm; # the custom ROCm build (packages/ollama-qwen38)
   mangohud = pkgs.mangohud; # gaming HUD; launcher aliases mangoapp/mangohudctl/mangoplot
+  # The plugin is normally built by the nix-maid Hyprland overlay inside the
+  # NixOS pkgs; the on-demand launcher needs a flake attr, so the same upstream
+  # recipe is called here against the stock `hyprlandPlugins` set (the overlay
+  # passes exactly that too). Same nixpkgs -> same Hyprland/lua -> the .so is
+  # ABI-compatible with the session compositor.
+  hyprcapture =
+    let
+      src = pkgs.fetchFromGitHub {
+        owner = "gfhdhytghd";
+        repo = "HyprCapture";
+        rev = "v0.6.0-v0.57.0";
+        hash = "sha256-M3YB76XNiuN37ARgicl5ImEhiRHgNvxWu9OtxyhunsI=";
+      };
+    in
+    pkgs.callPackage "${src}/nix/package.nix" {
+      inherit src;
+      lua = pkgs.lua5_5;
+      hyprlandPlugins = pkgs.hyprlandPlugins;
+    }; # screenshot/recording plugin, materialised on first session start
   winetricks = pkgs.winetricks; # Wine prefix setup helper (on-demand launcher)
   minibbs = pkgs.neg.minibbs; # tiny BBS-style message board (SQLite + HTTP)
   gen-unbound-hosts = pkgs.neg.local-bin-tools; # regenerate hosts/trantor/unbound-hosts.nix
