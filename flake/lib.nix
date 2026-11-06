@@ -30,6 +30,16 @@ let
         || (pkg.pname or "") == "geekbench-ai"; # proprietary AI benchmark (user-requested install)
       overlays = [
         bintoolsBootstrapFix
+        # The session starts the compositor without uwsm: `programs.hyprland`
+        # defaults `withUWSM` to false on 0.57, and start-hyprland is called
+        # directly. `pkgs.hyprland` would otherwise keep the default uwsm build,
+        # so every helper that references it (hyprctl wrappers, user units, the
+        # login plugin) pulled a second compositor build into the closure. Pin
+        # the package set to the build the session runs; the module's own
+        # `override { withUWSM = false; }` is idempotent on top of it.
+        (_final: prev: {
+          hyprland = prev.hyprland.override { withUWSM = false; };
+        })
         # CachyOS kernel packages — overlays.default builds against OUR nixpkgs
         # rev (the pinned overlay would hijack the whole flake nixpkgs pin and
         # break the Hyprland 0.56.2 setup); kernels are exposed as pkgs.cachyosKernels.*.
