@@ -222,6 +222,61 @@ scene_pid=$!
 
 alive() { kill -0 "$scene_pid" 2> /dev/null; }
 
+# ---- what the login costs on CPU (and who else is spending it) ----------------
+#
+# The frame log above answers "how fast", not "how much", and no other instrument can answer
+# it for this phase: the lock scene is not a unit, so neither `systemctl show` nor the
+# `pleamar-login-cpu` record (it reads the session's scenes a minute after the password) ever
+# sees it. A login after a cold boot is also the one moment the machine is busy for another
+# reason — podman, adguard, koito, the nix daemon and the rest of the boot start beside this
+# screen — so a sample that named only the scene could not tell the greeter from its
+# neighbours. Each line therefore carries the scene, the whole machine and the three busiest
+# processes, and every login names its uptime: a boot login is the one with a small number
+# there, a logout login has minutes or hours.
+#
+# One /proc read and one ps every five seconds, capped at two minutes, and the loop leaves as
+# soon as the scene is gone. Nothing here is on the handover path: a sampler that cannot run
+# costs the log a line, not the login.
+printf 'login layer: login at %s s of uptime (boot %s)\n' \
+  "$(awk '{ printf "%.0f", $1 }' /proc/uptime 2> /dev/null || echo unknown)" \
+  "$(cat /proc/sys/kernel/random/boot_id 2> /dev/null || echo unknown)" >> "$LOG"
+
+(
+  # Busy and total jiffies of the whole machine, then the scene's own four fields: utime,
+  # stime and the children it has waited for. A scene's workers are its children, so one
+  # number is the whole scene.
+  cpu_counters() {
+    awk '/^cpu /{ idle=$5+$6; total=0; for (i=2;i<=NF;i++) total+=$i; printf "%.0f %.0f", total-idle, total }' /proc/stat
+  }
+  scene_jiffies() {
+    awk '{ printf "%.0f", $14+$15+$16+$17 }' "/proc/$scene_pid/stat" 2> /dev/null || echo 0
+  }
+  # % of ONE core: the scene's delta divided by what one CPU spent in that interval (the
+  # machine's total over all of them). `ps` gives a lifetime average, which is the useful
+  # figure at boot: a job started ten seconds ago that has been busy since reads high.
+  ncpu="$(nproc 2> /dev/null || echo 1)"
+  read -r busy0 total0 <<< "$(cpu_counters)"
+  scene0="$(scene_jiffies)"
+  t=0
+  while [ "$t" -lt 120 ]; do
+    sleep 5
+    t=$((t + 5))
+    kill -0 "$scene_pid" 2> /dev/null || exit 0
+    read -r busy1 total1 <<< "$(cpu_counters)"
+    scene1="$(scene_jiffies)"
+    top="$(ps -eo pcpu=,comm= --sort=-pcpu 2> /dev/null | head -3 \
+      | awk '{ printf "%s %.1f%%%s", $2, $1, (NR < 3 ? ", " : "") }')"
+    awk -v t="$t" -v s0="$scene0" -v s1="$scene1" -v b0="$busy0" -v b1="$busy1" \
+      -v t0="$total0" -v t1="$total1" -v n="$ncpu" -v top="$top" 'BEGIN{
+        d=t1-t0; per=(d>0 ? d/n : 0);
+        printf "cpu · t=%ds · scene %.2f%% of a core · system %.0f%% · top: %s\n",
+               t, (per>0 ? (s1-s0)/per*100 : 0), (d>0 ? (b1-b0)/d*100 : 0), top }' >> "$LOG"
+    busy0=$busy1
+    total0=$total1
+    scene0=$scene1
+  done
+) > /dev/null 2>&1 &
+
 # ---- what was actually drawn (best effort, never fatal) ----------------------
 #
 # A lock face draws the scene's box CENTRED on its monitor — the runtime's
