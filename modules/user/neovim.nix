@@ -15,6 +15,10 @@ let
   nvimSrcEntries = builtins.readDir nvimConf;
   nvimSrcNames = builtins.filter (name: name != "lazy-lock.json") (builtins.attrNames nvimSrcEntries);
   nvimHomeFiles = neg.mkDirLinks ".config/nvim" nvimConf nvimSrcNames;
+
+  # texlab: a 63 MiB LSP needed only when a LaTeX buffer attaches, so Neovim
+  # resolves it from an on-demand launcher instead of the system image.
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 in
 lib.mkIf devEnabled (
   lib.mkMerge [
@@ -77,7 +81,10 @@ lib.mkIf devEnabled (
         # shell (flake/devshells/base.nix), clangd/CMake from `cpp`,
         # rust-analyzer from `rust`, delve from `tools`, vale from `lint`.
         # What stays below is needed in every session, whatever the project.
-        pkgs.texlab # LaTeX (VimTeX); the toolchain itself lives in the `latex` devshell
+        (onDemand {
+          name = "texlab";
+          attr = "texlab";
+        }) # LaTeX (VimTeX), built on first use; the toolchain lives in the `latex` devshell
         pkgs.lua-language-server # Lua
         pkgs.bash-language-server # Bash
         pkgs.pyright # Python

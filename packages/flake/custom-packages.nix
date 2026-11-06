@@ -69,6 +69,7 @@
   # On-demand roots whose launchers live in modules/ (the attr alone is not in
   # the system closure).
   vkmark = pkgs.vkmark; # Vulkan benchmark for GPU stability runs
+  texlab = pkgs.texlab; # LaTeX LSP server for Neovim
   searxng = pkgs.searxng; # SearXNG metasearch, run from /var/lib/nix-apps/searx
   hyprcapture =
     let
