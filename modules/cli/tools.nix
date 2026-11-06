@@ -77,8 +77,14 @@ in
     pkgs.neg.duf # better df (fork with plain style support)
     pkgs.neg.termeverything # Wayland compositor that renders GUI windows in the terminal
     pkgs.neg.lusty # native file/buffer picker for Neovim (Lusty successor)
-    pkgs.neg.tgchat # Telegram chat access for the agent (Telethon, user session)
-    pkgs.neg.tgchat-rs # Telegram chat access on a grammers session — replaces tgchat after the first `tgchat-rs login`
+    (onDemand {
+      name = "tgchat";
+      attr = "tgchat";
+    }) # Telegram chat access for the agent (Telethon, user session), built on first use
+    (onDemand {
+      name = "tgchat-rs";
+      attr = "tgchat-rs";
+    }) # Telegram chat access on a grammers session — replaces tgchat after the first `tgchat-rs login`
     pkgs.neg.tint # Colouriser for CLI output — token scanners + per-tool rulesets, wired into zsh
     pkgs.procs # modern 'ps' replacement
     pkgs.pwgen # password generator
