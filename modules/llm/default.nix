@@ -390,7 +390,7 @@ in
         };
 
         systemd.services.ollama-ensure = {
-          description = "Materialise the on-demand ollama root (GC root at ~/.local/state/nix-apps)";
+          description = "Materialise the on-demand ollama root (GC root at /var/lib/nix-apps)";
           wantedBy = [ "multi-user.target" ];
           before = [ "ollama.service" ];
           after = [
