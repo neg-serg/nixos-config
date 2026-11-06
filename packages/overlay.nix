@@ -41,24 +41,101 @@ let
   aurPorted = import ./overlays/aur-ported.nix final finalPrev;
   vendored = importOvP ./overlays/vendored-sources.nix;
 
+  # Rust slimming: see packages/rust-slim.nix for the two measured levers.
+  # The name lists are the single place that knows which packages are Rust —
+  # `neg` names live under pkgs.neg, `top` names are the top-level attributes
+  # the chunk overlays define (elio/graf/huebox/lazytail are defined below and
+  # wrapped at their definition instead).
+  rustSlim = import ./rust-slim.nix;
+  rustNegNames = [
+    "aurora"
+    "aurora-tools"
+    "blizzard"
+    "dnsglobe"
+    "dsh-patch"
+    "game"
+    "hwctl"
+    "hypr-focus"
+    "hypr-rearrange"
+    "hypr-win-list"
+    "lazytail"
+    "local-bin-audio"
+    "local-bin-desktop"
+    "local-bin-misc"
+    "local-bin-scripts"
+    "local-bin-system"
+    "local-bin-tools"
+    "local-bin-zsh"
+    "local-bin-zsh-extra"
+    "minibbs"
+    "music-apply-tags"
+    "music-index-tools"
+    "nixbuild-status"
+    "pleamar-calendar"
+    "pleamar-fixtures"
+    "pleamar-harness"
+    "pleamar-journal"
+    "pleamar-kbdlayout"
+    "pleamar-picker"
+    "pleamar-sysmon"
+    "pleamar-theme"
+    "pleamar-weather"
+    "questyle-ctl"
+    "renoise-osc"
+    "scratchpad-geometry"
+    "shtoy"
+    "sing-box-proxy"
+    "swayimg-actions"
+    "telegram-notify"
+    "tgchat-rs"
+    "tidalctl"
+    "tint"
+    "topowall"
+    "vivaldi-prefs"
+    "wallpaper-palettes"
+    "wineapps"
+    "zalgo"
+  ];
+  rustTopNames = [
+    "craft-anything"
+    "genlc"
+    "mpd-voice"
+    "nixie"
+    "pw-audioshare"
+    "pwroute"
+    "sonda"
+    "tint"
+    "wl"
+    "wordcraft"
+    "zalgo"
+  ];
+  chunks =
+    functions
+    // tools
+    // media
+    // dev
+    // gui
+    // fixTinycc
+    // trim
+    // fixSources
+    // aurPorted
+    // vendored
+    // disableChecks;
+  slimChunks =
+    chunks
+    // builtins.listToAttrs (
+      map (n: {
+        name = n;
+        value = rustSlim chunks.${n};
+      }) rustTopNames
+    );
+
   # WARNING: disableChecks MUST be last in the merge chain (//) below.
   # It calls overrideAttrs which resets any prior overrides on the same package.
   disableChecks = import ./overlays/disable-checks.nix inputs final finalPrev;
 in
 # Standard overlay pattern: merge top-level attributes
-(
-  functions
-  // tools
-  // media
-  // dev
-  // gui
-  // fixTinycc
-  // trim
-  // fixSources
-  // aurPorted
-  // vendored
-  // disableChecks
-)
+slimChunks
 // {
 
   # vcv-rack's Makefile declares no dependency between the plugin sub-make
@@ -84,94 +161,105 @@ in
     exec ${final.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@"
   '';
 
-  # Merge all pkgs.neg sub-attributes from individual overlays
+  # Merge all pkgs.neg sub-attributes from individual overlays, then slim the
+  # Rust ones (packages/rust-slim.nix).
   neg =
-    (functions.neg or { })
-    // (tools.neg or { })
-    // (media.neg or { })
-    // (dev.neg or { })
-    // (gui.neg or { })
-    // {
-      game = final.callPackage ./game { }; # Unified game launcher
-      joern = final.callPackage ./joern { }; # Open-source code analysis platform
-      superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
-      superdirt-mixer = final.callPackage ./superdirt-mixer { }; # graphical mixer UI quark for SuperDirt orbits (gain/pan/reverb/EQ/compressor)
-      equi = final.callPackage ./equi { inherit (final.neg.functions) mkScQuark; }; # EQui SC quark (parametric EQ) — SuperDirtMixer dependency
-      jsonlib = final.callPackage ./jsonlib { inherit (final.neg.functions) mkScQuark; }; # JSONlib SC quark (JSON en/decoder) — SuperDirtMixer dependency
-      dwg-reverb = final.callPackage ./dwg-reverb { }; # compiled SC UGen plugin: virtual room reverb (early reflections + FDN late reverb)
-      dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
-      vowel = final.callPackage ./vowel { inherit (final.neg.functions) mkScQuark; }; # Vowel SC quark (formant tables) used by SuperDirt
-      dsh-patch = final.callPackage ./dsh-patch { }; # count-asserted patcher for dsh bundles and profiles
-      dsh = final.callPackage ./dsh { inherit (final.neg) dsh-patch; }; # DeepSeek Harness agent CLI (dsh)
-      aurora = final.callPackage ./aurora.nix {
-        src = inputs.aurora-src;
-      }; # aurora: local MPD player with a Vulkan UI
-      aurora-tools = final.callPackage ./aurora.nix {
-        src = inputs.aurora-src;
-        toolsOnly = true;
-      }; # aurora-tools: the headphone model catalogue CLI, without the player's Vulkan closure
-      renoise-redux = final.callPackage ./renoise-redux {
-        renoiseSrc = inputs.renoise-src;
-      }; # Renoise Redux VST3 plugin (licensed build)
-      protoplug = final.callPackage ./protoplug { }; # Lua live-coding VST2 plugins (Fx + Gen, MIT)
-      midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
-      virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
-      questyle-ctl = final.callPackage ./questyle-ctl { }; # USB/ALSA/PipeWire + vendor HID channel of the Questyle QCC dongle
-      pleamar-fixtures = final.callPackage ./pleamar-fixtures { }; # D-Bus fixtures for the pleamar engine (MPRIS player, nested tray item)
-      pleamar-sysmon = final.callPackage ./pleamar-sysmon { }; # pleamar system monitor worker (procfs/sysfs, JSON lines)
-      pleamar-weather = final.callPackage ./pleamar-weather { }; # pleamar weather worker (Open-Meteo/MET Norway/wttr.in, JSON lines)
-      pleamar-kbdlayout = final.callPackage ./pleamar-kbdlayout { }; # pleamar keyboard-layout worker (hyprctl, JSON lines)
-      pleamar-journal = final.callPackage ./pleamar-journal { }; # pleamar journal snapshot command (journalctl, one JSON line)
-      pleamar-theme = final.callPackage ./pleamar-theme { }; # pleamar theme pipeline (wallpaper colours -> theme.plm)
-      pleamar-calendar = final.callPackage ./pleamar-calendar { }; # pleamar calendar worker (khal, holidays, production calendar, JSON lines)
-      pleamar-picker = final.callPackage ./pleamar-picker { }; # picker scene commands (wallpaper still/apply, deck CLI)
-      pleamar-harness = final.callPackage ./pleamar-harness { }; # pleamar developer harnesses (measure, describe-snap, smoke) as Rust binaries
-      local-bin-scripts = final.callPackage ./local-bin-scripts { }; # Rust ports of the small local-bin helper scripts
-      local-bin-desktop = final.callPackage ./local-bin-desktop { }; # Rust ports of the desktop/media local-bin helpers
-      local-bin-audio = final.callPackage ./local-bin-audio { }; # Rust ports of the audio helpers (audio-diag, jam, sc-live, ...)
-      local-bin-misc = final.callPackage ./local-bin-misc { }; # Rust ports of the last local-bin helpers (pb, any, v, pw-jack wrappers)
-      local-bin-zsh = final.callPackage ./local-bin-zsh { }; # Rust ports of the last zsh helpers (iommu-info, music-rename, music-tui, pl, read_documents)
-      local-bin-zsh-extra = final.callPackage ./local-bin-zsh-extra { }; # Rust ports of gh-issues-export, mpd_del_album, sx, sys-relief, vol, win-vm
-      # Docling (~3.9 GiB with its layout/table models): PDF/DOCX → Markdown.
-      # Deliberately outside the system closure — it lives in the `ai` devshell
-      # and behind the `docling` flake app; pdf2md resolves `docling` from PATH.
-      #
-      # saxonche is the Schematron backend doclang wants for
-      # `doclang validate` without `--xsd-only` (the `schematron-saxon` extra);
-      # nixpkgs ships it, so the devshell can validate `.dclx` markup fully.
-      #
-      # ignoreCollisions: in the pinned nixpkgs (docling 2.118.0) the full
-      # package propagates `docling-slim` and BOTH install bin/docling-tools, so
-      # buildEnv refuses the environment ("two given paths contain a conflicting
-      # subpath", exit 25). The copies are the same version — keep the first.
-      docling-env =
-        (final.python3.withPackages (ps: [
-          ps.docling
-          ps.saxonche
-        ])).overrideAttrs
-          (_: {
-            ignoreCollisions = true;
-          });
-      local-bin-system = final.callPackage ./local-bin-system { }; # Rust ports of the system-level local-bin/bin helpers
-      tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the Python tgchat after a fresh login)
-      wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
-      renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)
-      scratchpad-geometry = final.callPackage ./scratchpad-geometry { }; # persist Hyprland scratchpad rects across show/hide
-      hypr-rearrange = final.callPackage ./hypr-rearrange { }; # move windows to the workspaces the config routes them to
-      hypr-win-list = final.callPackage ./hypr-win-list { }; # Hyprland window picker for vicinae dmenu
-      minibbs = final.callPackage ./minibbs { }; # tiny BBS-style message board (SQLite + HTTP)
-      telegram-notify = final.callPackage ./telegram-notify { }; # Telegram notifications: calendar digest, pill reminder, crash-loop alerts
-      zalgo = final.callPackage ./zalgo { }; # cursed-text generator (combining marks on stdin)
-      blizzard = final.callPackage ./blizzard { }; # animated black-metal blizzard WebP generator (fastfetch logos)
-      music-apply-tags = final.callPackage ./music-apply-tags { }; # write ML mood/style into audio tags (was scripts/dev/music-apply-tags.py)
-      music-index-tools = final.callPackage ./music-index-tools { }; # build/query the MERT similarity index (Rust; embeddings via music-embed)
-      vivaldi-prefs = final.callPackage ./vivaldi-prefs { }; # re-assert managed Vivaldi preferences
-      wallpaper-palettes = final.callPackage ./wallpaper-palettes { }; # matugen schemes per wallpaper (picker cards)
-      local-bin-tools = final.callPackage ./local-bin-tools { }; # small $PATH helpers (fetch-covers, gen-unbound-hosts, menu-search, ren, …)
-      shtoy = final.callPackage ./shtoy { }; # run Shadertoy shaders in esshader (Rust port of the local-bin helper)
-      sing-box-proxy = final.callPackage ./sing-box-proxy { }; # sing-box proxy controller (Rust port of local-bin/bin/proxy)
-      swayimg-actions = final.callPackage ./swayimg-actions { }; # rotate/move/copy/wallpaper/range actions for swayimg (Rust port of the local-bin helper)
-    };
+    let
+      base =
+        (functions.neg or { })
+        // (tools.neg or { })
+        // (media.neg or { })
+        // (dev.neg or { })
+        // (gui.neg or { })
+        // {
+          game = final.callPackage ./game { }; # Unified game launcher
+          joern = final.callPackage ./joern { }; # Open-source code analysis platform
+          superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
+          superdirt-mixer = final.callPackage ./superdirt-mixer { }; # graphical mixer UI quark for SuperDirt orbits (gain/pan/reverb/EQ/compressor)
+          equi = final.callPackage ./equi { inherit (final.neg.functions) mkScQuark; }; # EQui SC quark (parametric EQ) — SuperDirtMixer dependency
+          jsonlib = final.callPackage ./jsonlib { inherit (final.neg.functions) mkScQuark; }; # JSONlib SC quark (JSON en/decoder) — SuperDirtMixer dependency
+          dwg-reverb = final.callPackage ./dwg-reverb { }; # compiled SC UGen plugin: virtual room reverb (early reflections + FDN late reverb)
+          dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
+          vowel = final.callPackage ./vowel { inherit (final.neg.functions) mkScQuark; }; # Vowel SC quark (formant tables) used by SuperDirt
+          dsh-patch = final.callPackage ./dsh-patch { }; # count-asserted patcher for dsh bundles and profiles
+          dsh = final.callPackage ./dsh { inherit (final.neg) dsh-patch; }; # DeepSeek Harness agent CLI (dsh)
+          aurora = final.callPackage ./aurora.nix {
+            src = inputs.aurora-src;
+          }; # aurora: local MPD player with a Vulkan UI
+          aurora-tools = final.callPackage ./aurora.nix {
+            src = inputs.aurora-src;
+            toolsOnly = true;
+          }; # aurora-tools: the headphone model catalogue CLI, without the player's Vulkan closure
+          renoise-redux = final.callPackage ./renoise-redux {
+            renoiseSrc = inputs.renoise-src;
+          }; # Renoise Redux VST3 plugin (licensed build)
+          protoplug = final.callPackage ./protoplug { }; # Lua live-coding VST2 plugins (Fx + Gen, MIT)
+          midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
+          virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
+          questyle-ctl = final.callPackage ./questyle-ctl { }; # USB/ALSA/PipeWire + vendor HID channel of the Questyle QCC dongle
+          pleamar-fixtures = final.callPackage ./pleamar-fixtures { }; # D-Bus fixtures for the pleamar engine (MPRIS player, nested tray item)
+          pleamar-sysmon = final.callPackage ./pleamar-sysmon { }; # pleamar system monitor worker (procfs/sysfs, JSON lines)
+          pleamar-weather = final.callPackage ./pleamar-weather { }; # pleamar weather worker (Open-Meteo/MET Norway/wttr.in, JSON lines)
+          pleamar-kbdlayout = final.callPackage ./pleamar-kbdlayout { }; # pleamar keyboard-layout worker (hyprctl, JSON lines)
+          pleamar-journal = final.callPackage ./pleamar-journal { }; # pleamar journal snapshot command (journalctl, one JSON line)
+          pleamar-theme = final.callPackage ./pleamar-theme { }; # pleamar theme pipeline (wallpaper colours -> theme.plm)
+          pleamar-calendar = final.callPackage ./pleamar-calendar { }; # pleamar calendar worker (khal, holidays, production calendar, JSON lines)
+          pleamar-picker = final.callPackage ./pleamar-picker { }; # picker scene commands (wallpaper still/apply, deck CLI)
+          pleamar-harness = final.callPackage ./pleamar-harness { }; # pleamar developer harnesses (measure, describe-snap, smoke) as Rust binaries
+          local-bin-scripts = final.callPackage ./local-bin-scripts { }; # Rust ports of the small local-bin helper scripts
+          local-bin-desktop = final.callPackage ./local-bin-desktop { }; # Rust ports of the desktop/media local-bin helpers
+          local-bin-audio = final.callPackage ./local-bin-audio { }; # Rust ports of the audio helpers (audio-diag, jam, sc-live, ...)
+          local-bin-misc = final.callPackage ./local-bin-misc { }; # Rust ports of the last local-bin helpers (pb, any, v, pw-jack wrappers)
+          local-bin-zsh = final.callPackage ./local-bin-zsh { }; # Rust ports of the last zsh helpers (iommu-info, music-rename, music-tui, pl, read_documents)
+          local-bin-zsh-extra = final.callPackage ./local-bin-zsh-extra { }; # Rust ports of gh-issues-export, mpd_del_album, sx, sys-relief, vol, win-vm
+          # Docling (~3.9 GiB with its layout/table models): PDF/DOCX → Markdown.
+          # Deliberately outside the system closure — it lives in the `ai` devshell
+          # and behind the `docling` flake app; pdf2md resolves `docling` from PATH.
+          #
+          # saxonche is the Schematron backend doclang wants for
+          # `doclang validate` without `--xsd-only` (the `schematron-saxon` extra);
+          # nixpkgs ships it, so the devshell can validate `.dclx` markup fully.
+          #
+          # ignoreCollisions: in the pinned nixpkgs (docling 2.118.0) the full
+          # package propagates `docling-slim` and BOTH install bin/docling-tools, so
+          # buildEnv refuses the environment ("two given paths contain a conflicting
+          # subpath", exit 25). The copies are the same version — keep the first.
+          docling-env =
+            (final.python3.withPackages (ps: [
+              ps.docling
+              ps.saxonche
+            ])).overrideAttrs
+              (_: {
+                ignoreCollisions = true;
+              });
+          local-bin-system = final.callPackage ./local-bin-system { }; # Rust ports of the system-level local-bin/bin helpers
+          tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the Python tgchat after a fresh login)
+          wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
+          renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)
+          scratchpad-geometry = final.callPackage ./scratchpad-geometry { }; # persist Hyprland scratchpad rects across show/hide
+          hypr-rearrange = final.callPackage ./hypr-rearrange { }; # move windows to the workspaces the config routes them to
+          hypr-win-list = final.callPackage ./hypr-win-list { }; # Hyprland window picker for vicinae dmenu
+          minibbs = final.callPackage ./minibbs { }; # tiny BBS-style message board (SQLite + HTTP)
+          telegram-notify = final.callPackage ./telegram-notify { }; # Telegram notifications: calendar digest, pill reminder, crash-loop alerts
+          zalgo = final.callPackage ./zalgo { }; # cursed-text generator (combining marks on stdin)
+          blizzard = final.callPackage ./blizzard { }; # animated black-metal blizzard WebP generator (fastfetch logos)
+          music-apply-tags = final.callPackage ./music-apply-tags { }; # write ML mood/style into audio tags (was scripts/dev/music-apply-tags.py)
+          music-index-tools = final.callPackage ./music-index-tools { }; # build/query the MERT similarity index (Rust; embeddings via music-embed)
+          vivaldi-prefs = final.callPackage ./vivaldi-prefs { }; # re-assert managed Vivaldi preferences
+          wallpaper-palettes = final.callPackage ./wallpaper-palettes { }; # matugen schemes per wallpaper (picker cards)
+          local-bin-tools = final.callPackage ./local-bin-tools { }; # small $PATH helpers (fetch-covers, gen-unbound-hosts, menu-search, ren, …)
+          shtoy = final.callPackage ./shtoy { }; # run Shadertoy shaders in esshader (Rust port of the local-bin helper)
+          sing-box-proxy = final.callPackage ./sing-box-proxy { }; # sing-box proxy controller (Rust port of local-bin/bin/proxy)
+          swayimg-actions = final.callPackage ./swayimg-actions { }; # rotate/move/copy/wallpaper/range actions for swayimg (Rust port of the local-bin helper)
+        };
+    in
+    base
+    // builtins.listToAttrs (
+      map (n: {
+        name = n;
+        value = rustSlim base.${n};
+      }) rustNegNames
+    );
 
   jack-keyboard = final.callPackage ./jack-keyboard { }; # virtual MIDI keyboard for JACK/PipeWire synth hosts
 
@@ -181,11 +269,11 @@ in
 
   # lazytail: terminal log viewer (ratatui) with live filtering, follow mode and
   # an MCP server — see packages/lazytail/default.nix
-  lazytail = final.callPackage ./lazytail { };
+  lazytail = rustSlim (final.callPackage ./lazytail { });
 
   # elio: three-pane terminal file manager (places / files / preview) with inline
   # image previews, archive handling and trash — see packages/elio/default.nix
-  elio = final.callPackage ./elio { };
+  elio = rustSlim (final.callPackage ./elio { });
 
   # tewi: TUI client for Transmission/qBittorrent/Deluge daemons
   # (python app, deps from nixpkgs + local geoip2fast, see packages/tewi/default.nix)
@@ -193,11 +281,11 @@ in
 
   # huebox: terminal theme editor (ratatui TUI) — live preview, line-level
   # push of the palette into the terminal config — see packages/huebox/default.nix
-  huebox = final.callPackage ./huebox { };
+  huebox = rustSlim (final.callPackage ./huebox { });
 
   # graf: terminal force-directed graph of markdown wikilinks (ratatui canvas +
   # fdg-sim physics) — see packages/graf/default.nix
-  graf = final.callPackage ./graf { };
+  graf = rustSlim (final.callPackage ./graf { });
 
   # Code200x Unicode font family by James Kass — Code2000 (BMP), Code2001
   # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H).
