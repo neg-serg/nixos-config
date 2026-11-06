@@ -10,6 +10,21 @@ in
   # (wrapRuntimeDeps); the config runs hyprland-guiutils instead, so keep
   # qtutils out of the closure.
   hyprland = prev.hyprland.override { wrapRuntimeDeps = false; };
+  # nixpkgs records propagatedBuildInputs as their *dev* outputs (make-derivation
+  # maps them through getDev), so an icon theme's fallback propagation dragged
+  # build-time dev trees into every runtime closure that wants it:
+  # kora-icon-theme -> breeze-icons-dev -> qtsvg-dev -> qtbase-dev ->
+  # vulkan-headers, plus gtk3-dev/icu4c-dev/hicolor-dev — 78 exclusive paths and
+  # 133 MiB that nothing else needs. Kora only wants the fallback themes
+  # themselves (its index.theme inherits "breeze,hicolor"), so propagate their
+  # out outputs instead: getDev of a store-path string is that string.
+  kora-icon-theme = prev.kora-icon-theme.overrideAttrs (_: {
+    propagatedBuildInputs = [
+      "${prev.adwaita-icon-theme}"
+      "${prev.kdePackages.breeze-icons}"
+      "${prev.hicolor-icon-theme}"
+    ];
+  });
   # hyprland-guiutils — not in the pinned nixpkgs yet, pinned locally (see
   # packages/hyprland-guiutils). It supersedes hyprland-qtutils and ships the
   # same five binaries (hyprland-dialog, -donate-screen, -update-screen,
