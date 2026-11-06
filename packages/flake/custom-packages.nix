@@ -71,6 +71,7 @@
   vkmark = pkgs.vkmark; # Vulkan benchmark for GPU stability runs
   texlab = pkgs.texlab; # LaTeX LSP server for Neovim
   searxng = pkgs.searxng; # SearXNG metasearch, run from /var/lib/nix-apps/searx
+  protontricks = pkgs.protontricks; # winetricks wrapper for Proton
   hyprcapture =
     let
       src = pkgs.fetchFromGitHub {

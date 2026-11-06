@@ -10,6 +10,13 @@
 }:
 let
   cfg = config.profiles.games or { };
+
+  # Same on-demand root the fun module uses; both modules only contribute the
+  # PATH wrapper, so the launcher derivation is identical and deduplicated.
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 in
 {
   imports = [
@@ -131,7 +138,11 @@ in
         };
 
     environment.systemPackages = [
-      pkgs.protontricks # winetricks-like helper tailored for Steam Proton
+      (onDemand {
+        name = "protontricks";
+        attr = "protontricks";
+        aliases = [ "protontricks-launch" ];
+      }) # winetricks-like helper tailored for Steam Proton, built on first use
     ];
 
     # Expose udev rules/devices used by various game controllers
