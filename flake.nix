@@ -62,6 +62,11 @@
     };
     raise = {
       url = "github:neg-serg/raise";
+      # Without follows the input pins its own nixpkgs, and every raise build
+      # carried a second toolchain into the system closure: glibc 2.40 (31 MiB)
+      # plus gcc-14.3-lib, libidn2, libunistring — 41 MiB reachable only through
+      # raise. Its naersk build works against the system nixpkgs.
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     wl = {
       # Temporary: the layer-surface damage fix on top of main — a wallpaper that
