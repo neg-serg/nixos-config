@@ -73,8 +73,13 @@ let
   # panel's pill state (capsule + vdirsyncer calendar event), and a
   # panel-side mark/unmark edits the same Telegram reminder message, so
   # the pill can be confirmed from either source.
+  # The same poll loop answers text messages: /status is a deterministic
+  # monitoring snapshot and every other text is answered by the local
+  # llama-swap model (packages/telegram-notify/src/ask.rs). The endpoint is
+  # loopback-only, so the snapshot never leaves the host.
   # Rust bridge (pkgs.neg.telegram-notify): it takes the two secrets, the panel
-  # paths and the owning user from the environment, which the wrapper exports.
+  # paths, the owning user and the model endpoint from the environment, which
+  # the wrapper exports.
   pillBotScript = pkgs.writeShellScript "telegram-pill-bot" ''
     export PILL_BOT_TOKEN_PATH=${config.trantor.telegram.botTokenPath}
     export PILL_BOT_CHAT_ID_PATH=${config.trantor.telegram.chatIdPath}
@@ -84,6 +89,9 @@ let
     export PILL_BOT_OWNER=${pillPanelUser}
     export PILL_BOT_STATE_DIR=/var/lib/telegram-pill-bot
     export PILL_BOT_LAST_MESSAGE=/var/lib/telegram-pill-reminder/last-message.json
+    export PILL_BOT_LLM_URL=${config.trantor.telegram.llmEndpoint}
+    export PILL_BOT_LLM_MODEL=${config.trantor.telegram.llmModel}
+    export PILL_BOT_ALERTMANAGER_URL=http://127.0.0.1:${toString config.monitoring.alertmanager.port}/api/v2/alerts
     exec ${lib.getExe' pkgs.neg.telegram-notify "telegram-pill-bot"} "$@"
   '';
 
@@ -213,12 +221,16 @@ in
           };
         };
 
-        # Telegram pill bot: long-polls callback queries for the reminder button.
+        # Telegram bot: long-polls callback queries for the reminder button
+        # and text messages for /status and the local-model Q&A.
         systemd.services."telegram-pill-bot" = {
-          description = "Telegram pill confirm button handler";
+          description = "Telegram bot: pill buttons, /status and local-model Q&A";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
+          # The /status snapshot shells out to zpool; the other tools it uses
+          # (systemctl, df, date, id) are already on the unit PATH.
+          path = [ pkgs.zfs ];
           # Same sandbox as the bridge, except that this one legitimately
           # writes into the panel: it rewrites the panel's pill state and
           # the vdirsyncer .ics (read-only home plus those two paths). It

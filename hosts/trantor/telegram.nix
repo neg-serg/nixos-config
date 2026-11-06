@@ -53,6 +53,27 @@ in
       type = lib.types.str;
       description = "Decrypted Telegram chat id path (owner root, mode 0400).";
     };
+
+    llmEndpoint = lib.mkOption {
+      type = lib.types.str;
+      default = "http://127.0.0.1:9292";
+      description = ''
+        OpenAI-compatible base URL of the local model stack used for free-text
+        answers in the Telegram chat. Loopback only: the monitoring snapshot
+        and the question stay on the host.
+      '';
+    };
+
+    llmModel = lib.mkOption {
+      type = lib.types.str;
+      default = "qwen3.5-4b-abliterated";
+      description = ''
+        llama-swap model answering free-text questions. The default is the
+        fast 4B tier (thinking off, ~95 tok/s): an answer arrives in seconds
+        and leaves most of the card to the desktop. A larger tier works but
+        pays with load time and VRAM.
+      '';
+    };
   };
 
   config = lib.mkIf config.trantor.telegram.enable {
