@@ -5,11 +5,27 @@
   config,
   ...
 }:
+let
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+
+  # One on-demand root, four commands: gamescope's `--mangoapp` looks up
+  # `mangoapp` by name, Steam launch options use `mangohud`, and the aliases
+  # cover the HUD controls. The launcher creates the root on first use.
+  mangohud = onDemand {
+    name = "mangohud";
+    attr = "mangohud";
+    aliases = [
+      "mangoapp"
+      "mangohudctl"
+      "mangoplot"
+    ];
+  };
+in
 {
   config = lib.mkMerge [
     {
       environment.systemPackages = [
-        pkgs.mangohud # Gaming HUD (was zen5 opt)
+        mangohud # Gaming HUD, built on first use (was zen5 opt)
       ];
     }
     (lib.mkIf (config.lib.neg.enabled "games.oss") {
