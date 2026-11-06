@@ -72,6 +72,7 @@
   texlab = pkgs.texlab; # LaTeX LSP server for Neovim
   searxng = pkgs.searxng; # SearXNG metasearch, run from /var/lib/nix-apps/searx
   protontricks = pkgs.protontricks; # winetricks wrapper for Proton
+  sonic-visualiser = pkgs.sonic-visualiser; # spectra/sonogram analyser
   hyprcapture =
     let
       src = pkgs.fetchFromGitHub {

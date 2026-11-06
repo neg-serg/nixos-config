@@ -20,7 +20,26 @@ let
       attr = "dr14_tmeter";
     }) # DR14 dynamic-range meter, built on first use
     pkgs.essentia-extractor # bulk audio feature extractor (HQ descriptors)
-    pkgs.sonic-visualiser # annotate spectra/sonograms
+    (onDemand {
+      name = "sonic-visualiser";
+      attr = "sonic-visualiser";
+    }) # annotate spectra/sonograms, built on first use
+    # Its desktop file lives inside the on-demand root; recreate the menu entry.
+    # The icon name only resolves inside that root, so the menu shows the theme
+    # fallback until the icon is shipped separately.
+    (pkgs.makeDesktopItem {
+      name = "sonic-visualiser";
+      desktopName = "Sonic Visualiser";
+      comment = "View and analyse the contents of music audio files";
+      exec = "sonic-visualiser %U";
+      icon = "sonic-visualiser";
+      categories = [
+        "AudioVideo"
+        "Audio"
+        "Graphics"
+      ];
+      mimeTypes = [ "audio/x-wav" ];
+    })
   ]
   ++ [
 
