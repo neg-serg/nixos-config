@@ -353,8 +353,11 @@
 #   in sync with `files/gui/hypr/hyprcapture.lua`.
 # - **Verified at install time** (2026-10-16): the package builds against this nixpkgs' Hyprland
 #   0.56.2, `libhyprcapture.so` exports `pluginInit`/`pluginExit`/`pluginAPIVersion`, the embedded
-#   helper path points at the package's own `bin/hyprcapture-ui`, and the closure carries the TFLite
-#   AEC runtime, the DTLN models and the gain-map HEIC codec. A nested-instance smoke test is not
+#   helper path points at the package's own `bin/hyprcapture-ui`. The 217 MiB closure (TFLite AEC
+#   runtime, DTLN models, gain-map HEIC codec) is not in the system image: the helper builds the
+#   flake attr `hyprcapture` on the first load after a clean/GC and pins it at
+#   `~/.local/state/nix-apps/hyprcapture`; the flake attr calls the same upstream recipe as the
+#   overlay (identical drvPath), so the on-demand build is the ABI-correct plugin. A nested-instance smoke test is not
 #   possible from the agent sandbox (no `/dev/dri` access — aquamarine's `CBackend::create()` fails
 #   there). The load itself was verified in the live session after the switch to generation 2154:
 #   `hyprcapture.service` exited 0 (`$XDG_RUNTIME_DIR/hyprcapture-setup.log` logs `ok` twice),
@@ -854,7 +857,27 @@ let
   # harmlessly.
   hyprcaptureSetup = pkgs.writeShellScriptBin "hyprcapture-setup" ''
     hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
-    plugin=${pkgs.hyprlandPlugins.hyprcapture}/lib/libhyprcapture.so
+
+    # The plugin (217 MiB with its TFLite runtime and models) is not in the
+    # system closure: the first load after a clean/GC builds the flake attr and
+    # pins it under the per-user on-demand root. The retry loop below then polls
+    # `hyprctl plugin list`, so the build happens inside the same window as the
+    # load retries. The package embeds its own bin/hyprcapture-ui path, which is
+    # the same store path the root pins.
+    root="$HOME/.local/state/nix-apps/hyprcapture"
+    if [ ! -e "$root" ]; then
+      mkdir -p "$(dirname "$root")"
+      rm -f "$root"
+      out=$(${pkgs.nix}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#hyprcapture" |
+        while IFS= read -r candidate; do
+          if [ -x "$candidate/bin/hyprcapture-ui" ]; then
+            printf '%s\n' "$candidate"
+            break
+          fi
+        done)
+      ${pkgs.nix}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
+    fi
+    plugin="$root/lib/libhyprcapture.so"
 
     exec >> "''${XDG_RUNTIME_DIR:-/tmp}/hyprcapture-setup.log" 2>&1
     echo "--- $(date '+%F %T') hyprcapture-setup"
