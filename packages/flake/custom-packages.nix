@@ -63,6 +63,9 @@
   # ABI-compatible with the session compositor.
   hyprshell = pkgs.hyprshell; # GTK4 window switcher + app launcher, built on first use
   terrascope = pkgs.neg.terrascope; # interactive terminal world map, built on first use
+  pnpm = pkgs.pnpm; # package manager for `dsh plugin`
+  ast-grep = pkgs.ast-grep; # structural search for the dsh-ast-grep plugin
+  sops = pkgs.sops; # secrets editor (sops-nix uses its own binary)
   hyprcapture =
     let
       src = pkgs.fetchFromGitHub {
