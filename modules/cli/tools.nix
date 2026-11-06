@@ -84,7 +84,10 @@ in
 
     # Wallpaper / cartography
     pkgs.neg.topowall # topographic contour wallpapers from real elevation data (GPU render)
-    pkgs.neg.terrascope # interactive world map in the terminal (braille; live weather/aircraft/earthquakes)
+    (onDemand {
+      name = "terrascope";
+      attr = "terrascope";
+    }) # interactive world map in the terminal (braille; live weather/aircraft/earthquakes)
 
     # Python
     (pkgs.python3.withPackages (ps: [ ps.pexpect ])) # python3 with pexpect for expect-style automation
