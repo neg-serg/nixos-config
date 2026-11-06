@@ -43,6 +43,10 @@ scene preview {
 
     include "pages/state.plm"
 
+    // The same pacing contract as the lock scene (see lock.plm): fast only while typing; the
+    // rules live in pages/card.plm beside the field they watch.
+    fact typing = false
+
     surface preview_window {
         size: 1280, 720
         kind: window
@@ -51,7 +55,7 @@ scene preview {
         // The same pace as the lock scene (see lock.plm): the preview is the harness for the
         // login, and a harness that burns the monitor's refresh is what made the measured cost
         // of the greeter look like the cost of a game.
-        rate: 60, 15 while appear > 0.99 and shake == 0 and not busy
+        rate: 60, 3 while appear > 0.99 and shake == 0 and not busy and not typing
 
         include "pages/backdrop.plm"
         include "pages/clock.plm"

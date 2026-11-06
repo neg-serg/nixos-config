@@ -110,6 +110,25 @@ clock12()
 
 -- ------------------------------------------------------------- the card state
 local busy = false
+
+-- ------------------------------------------------------------- the scene's pace
+-- The lock scene's `rate:` line only needs the display's rate while somebody is typing: poll the
+-- field and mirror a change into the scene fact `typing`, which falls back after the echo stops.
+-- A scene rule cannot name `text.password` (the input is secret and lives in the surface's
+-- scope); the logic is its only reader, so the poll lives here.
+local typing_gen = 0
+local last_password = ""
+every(80, function()
+    local now = text.password or ""
+    if now == last_password then return end
+    last_password = now
+    typing_gen = typing_gen + 1
+    local mine = typing_gen
+    fact.typing = true
+    after(700, function()
+        if mine == typing_gen then fact.typing = false end
+    end)
+end)
 local armed = true
 
 -- The reference's one line under the field (`LockContent.qml:244-253`): the failure first, then

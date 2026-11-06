@@ -73,6 +73,12 @@ scene lock {
     // `pleamar --say lock "emit unlocked"`, and `fact locked false` keeps working by hand.
     fact unlocked = false
 
+    // The login screen only needs the fast pace while somebody is typing: `change` fires on
+    // every keystroke, `still` puts the scene back to rest 600 ms after the last one. The rate
+    // line in the surface turns that into 60 fps for the echo and a low rate for a still screen
+    // (a 4K panel pays for every full-frame repaint of the backdrop shader).
+    fact typing = false
+
     include "pages/state.plm"
 
     // One lock face per monitor, which is what `kind: lock` is: the protocol gives it a copy on
@@ -91,16 +97,16 @@ scene lock {
         // screen half a panel off (`pleamar-lock-full.patch`); a face now also prints
         // its box and the corner it paints from, and the login layer reports them.
         size: full, full
-        // The pace. Every other scene of the shell writes one (`rate: 240, 12 while …`); this
-        // one ran at the monitor's rate, so a 4K panel at 240 Hz repainted the full-screen
-        // backdrop shader and the glass 240 times a second for a screen that changes once a
-        // minute. Measured on the preview shown at 1920x1080: 3 % of one core, and 69 % of the
-        // card busy, for a still picture. With the pace the same scene idles at 23 frames a
-        // second over 15 s — 1.2 % of one core — and keeps 60 while something moves: the
-        // entrance, the refusal nudge, a PAM run, keys being echoed. The rest of the time a
-        // caret, a minute clock and a keystroke echo need 15 frames — the idle pace the bar
-        // and the panels already use.
-        rate: 60, 15 while appear > 0.99 and shake == 0 and not busy
+        // The pace. This scene used to run at the monitor's rate, so a 4K panel at 240 Hz
+        // repainted the full-screen backdrop shader and the glass 240 times a second for a
+        // screen that changes once a minute (measured at 1920x1080: 69 % of the card busy for a
+        // still picture). It then idled at 15; both are still too much for a 4K panel, where
+        // every frame is a full-screen shader pass. The idle rate is 3 now, and the one thing
+        // that needs the display's rate — the keystroke echo — raises the scene's `typing` fact
+        // from the logic (lock.luau polls the field; a scene rule cannot name a secret input's
+        // text), so a login that waits costs next to nothing and typing is still answered at 60.
+        // Measured on the preview at 720p: 4 % of the card busy idle, 10 % while typing.
+        rate: 60, 3 while appear > 0.99 and shake == 0 and not busy and not typing
         open: locked
         keyboard: exclusive while locked
         agent: hidden
