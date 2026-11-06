@@ -4,6 +4,9 @@
 #   digest (khal → telegram-send), the 12:00 pill reminder with its "Mark taken"
 #   button (Bot API through curl, marker file for at-most-once sending) and the
 #   crash-loop scanner that reads NRestarts from both systemd managers.
+#   `telegram-pill-bot` also serves free-text questions: `/status` renders a
+#   deterministic monitoring snapshot and everything else is answered by the
+#   local llama-swap model.
 #
 # Rust, no crates. The sender/curl invocation stays external on purpose: the
 # repo already ships `telegram-send` with the socks-proxy retry policy, and the
@@ -21,7 +24,7 @@ rustPlatform.buildRustPackage {
   cargoLock.lockFile = ./Cargo.lock;
 
   meta = lib.mkMeta {
-    description = "Telegram notifications for trantor (calendar, pill, crash-loop)";
+    description = "Telegram notifications and local-model Q&A for trantor";
     homepage = "https://github.com/neg-serg/nixos-config";
     license = lib.licenses.mit;
     mainProgram = "telegram-calendar-reminder";

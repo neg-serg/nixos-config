@@ -358,6 +358,16 @@ pub mod json {
                 '\r' => out.push_str("\\r"),
                 '\t' => out.push_str("\\t"),
                 ch if (ch as u32) < 0x20 => out.push_str(&format!("\\u{:04x}", ch as u32)),
+                // JSON `\u` escapes are UTF-16 code units, so an astral
+                // character needs a surrogate pair. One `\u1f4ca` is invalid
+                // JSON and would make a request body (e.g. a Telegram
+                // question with an emoji) unparseable for llama-swap.
+                ch if (ch as u32) > 0xffff => {
+                    let code = ch as u32 - 0x10000;
+                    let high = 0xd800 + (code >> 10);
+                    let low = 0xdc00 + (code & 0x3ff);
+                    out.push_str(&format!("\\u{high:04x}\\u{low:04x}"));
+                }
                 ch if (ch as u32) > 0x7e => out.push_str(&format!("\\u{:04x}", ch as u32)),
                 ch => out.push(ch),
             }
@@ -558,6 +568,11 @@ mod tests {
         );
         // Non-ASCII becomes \u escapes, like json.dumps' default.
         assert_eq!(json::Value::Str("✅".into()).dump(None), "\"\\u2705\"");
+        // Astral characters become a UTF-16 surrogate pair.
+        assert_eq!(
+            json::Value::Str("📊".into()).dump(None),
+            "\"\\ud83d\\udcca\""
+        );
     }
 
     #[test]

@@ -7,6 +7,12 @@
 //! the very same Telegram message, restoring the button when the dose is
 //! unmarked, so the pill can be confirmed from either side.
 //!
+//! The same poll loop also answers text messages: `/status` renders a
+//! deterministic monitoring snapshot and every other text is answered by the
+//! local llama-swap model (see `ask.rs`). This binary is the only `getUpdates`
+//! consumer for the shared bot token, so the Q&A handler has to live here
+//! rather than in a second poller.
+//!
 //! Configuration comes from the environment:
 //!   PILL_BOT_TOKEN_PATH        decrypted bot token (root, 0400)
 //!   PILL_BOT_CHAT_ID_PATH      decrypted chat id (root, 0400)
@@ -16,6 +22,8 @@
 //!   PILL_BOT_PANEL_STATE_LEGACY  pre-rename state, read while the new one is absent
 //!   PILL_BOT_ICS_DIR           vdirsyncer collection for the "taken" events
 //!   PILL_BOT_OWNER             desktop user owning those files
+//!   PILL_BOT_LLM_URL, PILL_BOT_LLM_MODEL, PILL_BOT_LLM_TIMEOUT
+//!   PILL_BOT_ALERTMANAGER_URL  active alerts for the snapshot
 //!   PILL_BOT_CURL, PILL_BOT_PROXY, PILL_BOT_API_BASE
 //!   PILL_BOT_ONCE=1            process one poll batch and exit (tests)
 //!   PILL_BOT_SLEEP             pause between iterations, seconds (default 5)
@@ -24,13 +32,15 @@
 #[path = "lib.rs"]
 mod shared;
 
+mod ask;
+
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use shared::json::Value;
 
-const DEFAULT_CURL: &str = "/run/current-system/sw/bin/curl";
+pub(crate) const DEFAULT_CURL: &str = "/run/current-system/sw/bin/curl";
 const DEFAULT_PROXY: &str = "socks5h://127.0.0.1:10808";
 const DEFAULT_API_BASE: &str = "https://api.telegram.org";
 const DEFAULT_STATE_DIR: &str = "/var/lib/telegram-pill-bot";
@@ -47,7 +57,7 @@ extern "C" {
     fn chmod(path: *const u8, mode: u32) -> i32;
 }
 
-fn env_or(name: &str, fallback: &str) -> String {
+pub(crate) fn env_or(name: &str, fallback: &str) -> String {
     match std::env::var(name) {
         Ok(value) if !value.is_empty() => value,
         _ => fallback.to_string(),
@@ -89,7 +99,7 @@ fn date_arg(format: &str) -> String {
 }
 
 /// `YYYY-MM-DD HH:MM TZ`, the stamp written into the pill log.
-fn stamp_now() -> String {
+pub(crate) fn stamp_now() -> String {
     let stamp = date_arg("+%Y-%m-%d %H:%M %Z");
     if stamp.is_empty() {
         date_arg("+%Y-%m-%d %H:%M")
@@ -113,7 +123,8 @@ fn clock_now() -> String {
 
 // -- API ---------------------------------------------------------------
 
-struct Api {
+#[derive(Clone)]
+pub(crate) struct Api {
     curl: String,
     proxy: String,
     token: String,
@@ -131,10 +142,19 @@ impl Api {
     }
 
     /// One Bot API call; returns stdout when curl exits 0.
-    fn call(&self, method: &str, params: &[(&str, String)]) -> Option<String> {
+    pub(crate) fn call(&self, method: &str, params: &[(&str, String)]) -> Option<String> {
         let url = format!("{}/bot{}/{}", self.base, self.token, method);
         let mut command = Command::new(&self.curl);
-        command.args(["-s", "--proxy", &self.proxy, "--max-time", "70", "-K", "-"]);
+        command.args(["-s", "--max-time", "70"]);
+        // A loopback base is a test stub or a local Bot API server: the
+        // production sing-box proxy cannot be assumed to exist there (and
+        // socks5h would resolve 127.0.0.1 through the proxy).
+        let loopback =
+            self.base.starts_with("http://127.0.0.1") || self.base.starts_with("http://localhost");
+        if !loopback {
+            command.args(["--proxy", &self.proxy]);
+        }
+        command.args(["-K", "-"]);
         for (key, value) in params {
             command.args(["--data-urlencode", &format!("{key}={value}")]);
         }
@@ -451,7 +471,7 @@ fn write_offset(offset: i64) {
 
 // -- main --------------------------------------------------------------
 
-fn handle_update(update: &Value, api: &Api, chat_id: &str, today: &str) {
+fn handle_update(update: &Value, api: &Api, chat_id: &str, today: &str, once: bool) {
     let Value::Object(entries) = update else {
         return;
     };
@@ -480,6 +500,12 @@ fn handle_update(update: &Value, api: &Api, chat_id: &str, today: &str) {
                 id(chat, "type")
             );
         }
+        // Plain texts are questions for the local model (or /status, /help);
+        // the callback handling below continues to own button presses.
+        if let Some(message) = message {
+            ask::handle_message(api, chat_id, message, once);
+        }
+        return;
     }
     let Some(Value::Object(callback)) = callback else {
         return;
@@ -623,7 +649,7 @@ fn main() -> std::process::ExitCode {
                         offset = offset.max(id);
                     }
                 }
-                handle_update(update, &api, &chat_id, &today);
+                handle_update(update, &api, &chat_id, &today, once);
                 handled += 1;
             }
         }
