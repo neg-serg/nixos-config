@@ -1,8 +1,7 @@
-inputs: final: prev:
+_inputs: final: prev:
 let
   call = final.neg.functions.callPkg;
   pkg = final.neg.functions.pkg;
-  paths = final.neg.functions.paths;
 in
 {
   # bpftrace 0.25+ works with LLVM 22; use same version as the rest of the config
@@ -42,20 +41,4 @@ in
       find $out -name run.py -exec sed -i "s/NO_FILES = '(no files to check)'/NO_FILES = '(no files to check) '/" {} +
     '';
   });
-
-  # boost 1.79 libc++15 patch: boost.org now serves a 302 redirect (hash mismatch);
-  # vendored in packages/torch-rocm/.
-  boost179 = prev.boost179.overrideAttrs (old: {
-    patches =
-      builtins.filter (p: (builtins.match ".*libcpp15.*" (p.name or "")) == null) (old.patches or [ ])
-      ++ [ (paths.path "packages/torch-rocm/boost-libcpp15.patch") ];
-  });
-
-  # ROCm PyTorch env (gfx1201). See packages/torch-rocm/default.nix.
-  torchRocmEnv = import (pkg "torch-rocm") { inherit inputs; };
-
-  # ROCm vLLM env (gfx1201) — OpenAI-compatible server, reuses the torch-rocm
-  # closure. See packages/vllm-rocm/default.nix.
-  vllmRocmEnv = import (pkg "vllm-rocm") { inherit inputs paths; };
-
 }

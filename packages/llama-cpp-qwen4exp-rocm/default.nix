@@ -57,7 +57,7 @@ in
       runHook postCheck
     '';
 
-    # nixpkgs-torch's llama-cpp pins the hash of *its* tools/ui npm deps
+    # nixpkgs' llama-cpp pins the hash of *its* tools/ui npm deps
     # (a17M…); the qwen4exp branch ships its own package-lock.json, so the
     # vendored deps hash differs. Value produced by the builder for this src.
     npmDepsHash = "sha256-2Q7XhaLAArmviOLdQsNbYTfdyDE5pW9lR26cRHEVl9k=";

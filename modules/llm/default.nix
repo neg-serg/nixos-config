@@ -145,27 +145,6 @@
 # - The ollama store still holds base models for `rag-search`; the router does
 #   not expose them.
 #
-# ### vLLM (OpenAI-compatible server, ROCm)
-#
-# - Module: `modules/llm/vllm.nix`; package: `pkgs.vllmRocmEnv`
-#   (`packages/vllm-rocm/default.nix` — vLLM 0.24.0 built against the ROCm torch 2.12.0
-#   closure of `torch-rocm`, gfx1201).
-# - Role: the throughput/high-concurrency server (continuous batching, paged attention,
-#   OpenAI-compatible API) — the Ollama/llama.cpp alternatives here are single-stream and
-#   the colibrì engine is disk-bound. Same weights, much faster under parallel load.
-# - Built from source, no binary cache for the HIP kernels: the first build takes tens of
-#   minutes, everything after that is store reuse. Coherent GPU kernel changes in
-#   `packages/vllm-rocm/default.nix`'s header.
-# - Model store: `/zero/ai/vllm` (HF cache + Triton kernel cache) — never on system disks.
-# - VRAM is shared with the desktop session and Ollama (~5.5 GB in use at idle), so
-#   `services.vllm.gpuMemoryUtilization` defaults to 0.6 instead of vLLM's 0.92 — at 0.92 the
-#   engine aborts at startup ("free memory … less than desired"). `ollama stop <model>` before
-#   raising it.
-# - Deliberately not auto-started:
-#       systemctl start vllm                  # service model on 127.0.0.1:8004
-#       vllm serve Qwen/Qwen3-8B-AWQ --port 8004   # one-off, any model
-#       curl http://127.0.0.1:8004/v1/models
-#
 # ### voxinput (voice → text)
 #
 # - Module: `modules/llm/pkgs.nix`
@@ -321,8 +300,6 @@
 # - `/zero/ai/glm52_i4` — empty directory; the colibrì int4 weights were deleted
 #   2026-11-05 and `/zero/ai` is root-owned, so removing the directory itself
 #   needs root
-# - `/zero/ai/vllm` — vLLM: HF cache (`hf/`, weights + tokenizers), download dir (`hub/`) and the
-#   Triton kernel cache (`cache/`), created by the activation script
 # - `/zero/ai/video/wangp` — WanGP (Wan2GP): git checkout, `venv` (torch+rocm7.1) and `ckpts/`
 #   weights for video/image/audio/3D generation; launcher `wangp` in `packages/local-bin/bin`.
 #   Created by the activation script, filled by hand (wheels and HF files, not a Nix package).
@@ -333,8 +310,8 @@
 # - Ollama: enabled; merged the orphaned 413 GB store (was nested under `/zero/ai/ollama/models/`)
 #   into the active store — all 23 models now visible to `ollama list`, no re-download.
 # - stable-diffusion.cpp: package added (Vulkan), models in `/zero/ai/image`.
-# - Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT), 8004 (vLLM,
-#   manual), 8012 (llama-fim, user unit started by nvim), 8080 (llama-server, manual),
+# - Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT),
+#   8012 (llama-fim, user unit started by nvim), 8080 (llama-server, manual),
 #   8013 (llama-rerank, also the rag-search default), 9292 (llama-swap API: chat, ocr, embed)
 
 {
@@ -442,8 +419,6 @@ in
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/ocr
           # speech recognition models (GigaAM, Parakeet via sherpa-onnx) — main user manages files
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/asr
-          # vLLM weights, HF cache and Triton kernel cache — main user manages files
-          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/vllm
           # WanGP app tree (checkout + venv + weights) — the `wangp` launcher runs
           # it; /zero/ai/video itself is root-owned, so only this leaf is ours.
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/video/wangp

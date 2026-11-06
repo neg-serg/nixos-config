@@ -42,8 +42,10 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    # torch-rocm (a 7.7G Python env) moved to the `rocm` devshell and the
-    # `nix run .#torch-rocm` app; only the monitoring CLI stays in the closure.
+    # The Nix ROCm torch env is gone (it only ever served the manual devshell and
+    # a second, older torch): training builds its own venv from the official ROCm
+    # wheels through `nightjob env init`, so only the monitoring CLI and nightjob
+    # stay in the closure.
     environment.systemPackages = [
       pkgs.rocmPackages.rocm-smi # ROCm System Management Interface
       nightjob # overnight GPU jobs: VRAM preflight, systemd runner, report
