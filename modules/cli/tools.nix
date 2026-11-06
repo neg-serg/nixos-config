@@ -28,7 +28,10 @@ let
     '';
   });
   hishtoryPkg = pkgs.hishtory or null; # Your shell history: synced, queryable, and in context
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 in
 {
   environment.shellAliases = {

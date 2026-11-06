@@ -20,7 +20,10 @@ let
   enabled = config.lib.neg.enabled "media.audio.musicTagging";
   user = config.lib.neg.mainUser;
   autoIndex = cfg.autoIndex;
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
   # Per-user unit constructor (lib/systemd-user.nix, see modules/AGENTS.md).
   systemdUser = config.lib.neg.systemdUser;
 

@@ -12,7 +12,10 @@ let
   # closure. The first run builds the matching flake package and registers a GC
   # root in $HOME; later runs exec the binary directly. The wrapper itself
   # references only nix, so system-path stays small.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 
   telegram = onDemand {
     name = "telegram-desktop";

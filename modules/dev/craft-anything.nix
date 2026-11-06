@@ -24,7 +24,10 @@
 }:
 let
   enabled = config.lib.neg.enabled "dev.craftAnything";
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 in
 {
   config = lib.mkIf enabled {

@@ -7,7 +7,10 @@
 let
   enabled = config.lib.neg.enabled "media.audio.speech";
   systemdUser = config.lib.neg.systemdUser;
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
   eng = "/zero/ai/speech/engines"; # speech stack location (ZFS pool, main user-owned)
   # Piper, whisper.cpp and their python env are NOT in the system closure: the
   # `speech-stack` flake attr (see packages/flake/custom-packages.nix) merges

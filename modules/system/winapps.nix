@@ -8,7 +8,10 @@ let
   winappsCfg = config.features.apps.winapps or { };
   enabled = winappsCfg.enable or false;
   vmProfile = (config.profiles.vm or { enable = false; }).enable;
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 
   # App configs from local files
   appDir = config.lib.neg.path "files/winapps/apps";

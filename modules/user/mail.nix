@@ -6,7 +6,10 @@
 }:
 let
   enabled = config.lib.neg.enabled "mail";
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
+    inherit pkgs;
+    nix = config.nix.package;
+  };
 in
 {
   # Core mail CLI clients install at the system level so they are available

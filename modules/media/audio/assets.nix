@@ -32,8 +32,8 @@ let
 
   ensure = pkgs.writeShellScriptBin "audio-assets-ensure" ''
     set -eu
-    nix=${pkgs.nix}/bin/nix
-    nixStore=${pkgs.nix}/bin/nix-store
+    nix=${config.nix.package}/bin/nix
+    nixStore=${config.nix.package}/bin/nix-store
 
     # Roots are pinned to the nixpkgs revision that first built them, so after a
     # flake update they keep the old, still-working revision GC-rooted.
