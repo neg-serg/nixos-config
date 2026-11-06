@@ -47,7 +47,14 @@ let
     exec "$root/bin/${binary}" "$@"
   '';
 in
-pkgs.runCommand "${name}-launchers" { } ''
+(pkgs.runCommand "${name}-launchers" { } ''
   mkdir -p $out/bin
   ${lib.concatMapStrings (n: "ln -s ${dispatch} $out/bin/${n}\n  ") ([ name ] ++ aliases)}
-''
+'').overrideAttrs
+  (old: {
+    # lib.getExe (the ollama module does that) otherwise warns about a missing
+    # mainProgram on every evaluation.
+    meta = (old.meta or { }) // {
+      mainProgram = name;
+    };
+  })
