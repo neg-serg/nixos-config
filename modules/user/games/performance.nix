@@ -14,6 +14,10 @@ let
   # Usage: gpu-oc <sclk-offset> <vddgfx-offset>  (e.g. gpu-oc 300 -100)
   #        gpu-oc reset                          (reset to stock)
   gpuOc = pkgs.writeShellScriptBin "gpu-oc" (builtins.readFile ./performance/gpu-oc.sh);
+
+  # Vulkan benchmark: a 79 MiB closure used only for GPU stability runs, so it
+  # is built on first use instead of sitting in the system image.
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 in
 {
   config = lib.mkIf cfg.enable {
@@ -70,7 +74,10 @@ in
         pkgs.ryzenadj # AMD CPU overclocking (PBO, curve optimizer) via SMU
         pkgs.stress-ng # CPU/RAM stress testing for stability verification
         pkgs.glmark2 # OpenGL benchmark for GPU stability/performance
-        pkgs.vkmark # Vulkan benchmark for GPU stability/performance
+        (onDemand {
+          name = "vkmark";
+          attr = "vkmark";
+        }) # Vulkan benchmark for GPU stability/performance, built on first use
         pkgs.s-tui # terminal stress + monitoring UI with live graphs (OCCT-like)
         pkgs.mprime # Prime95 CPU stress test (Mersenne torture)
         pkgs.stressapptest # Google stressapptest — RAM/CPU stability test
