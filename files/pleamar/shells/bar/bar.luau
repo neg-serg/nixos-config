@@ -1388,6 +1388,17 @@ local function tip_line(i)
         end
         lines[#lines + 1] = "Click — stop recording"
         return table.concat(lines, "\n")
+    elseif i == 14 then
+        -- The LLM capsule (bar.plm): the full id, the router's state, the card
+        -- and the system RAM the model's tier may be living in.
+        local lines = { "Local model: " .. (text.llm_full ~= "" and text.llm_full or "?") }
+        if text.llm_state ~= "" then lines[#lines + 1] = "State: " .. text.llm_state end
+        lines[#lines + 1] = "VRAM: " .. (text.llm_vram ~= "" and text.llm_vram or "?")
+            .. " / " .. (text.llm_vram_total ~= "" and text.llm_vram_total or "?") .. " GiB"
+        lines[#lines + 1] = string.format("GPU: %d %%, RAM: %.1f GiB",
+            math.floor((fact.gpu or 0) * 100 + 0.5), tonumber(fact.ram_used_gib) or 0)
+        lines[#lines + 1] = "Loaded: " .. (text.llm_time ~= "" and text.llm_time or "0:00")
+        return table.concat(lines, "\n")
     elseif i == 5 then
         local parts = { "Weather" }
         if text["weather.temp"] ~= "" then parts[#parts + 1] = text["weather.temp"] end
@@ -2463,13 +2474,45 @@ local function applySample(data)
         fact["has.gpu"] = true
         fact.gpu = clamp01(gpu.percent / 100)
     end
+
+    -- The local model, from the worker's llama-swap probe (bar.plm's
+    -- `llm_*` names). `active` is false whenever the router has nothing
+    -- resident; the capsule then takes no space. The id is shortened for the
+    -- capsule only — the tooltip keeps the full one.
+    local llm = data.llm
+    if type(llm) == "table" then
+        local model = tostring(llm.model or "")
+        local active = llm.active == true and model ~= ""
+        if fact.llm_active ~= active then fact.llm_active = active end
+        if active then
+            local short = model:gsub("%-abliterated$", "")
+            text.llm_model = short
+            text.llm_full = model
+            text.llm_state = tostring(llm.state or "")
+            local used = tonumber(llm.vram_used_gib) or 0
+            local total = tonumber(llm.vram_total_gib) or 0
+            text.llm_vram = used > 0 and string.format("%.1fG", used) or ""
+            text.llm_vram_total = total > 0 and string.format("%.1f", total) or ""
+            local seconds = math.max(0, math.floor(tonumber(llm.loaded_sec) or 0))
+            text.llm_time = string.format("%d:%02d", math.floor(seconds / 60), seconds % 60)
+        else
+            text.llm_model = ""
+            text.llm_full = ""
+            text.llm_state = ""
+            text.llm_vram = ""
+            text.llm_vram_total = ""
+            text.llm_time = ""
+        end
+    end
 end
 
 local function sysmon_start()
     if sysmon_handle or sysmon_restart then return end
     -- `--interval-ms` sets the worker's own cadence; stdin stays open so it does
-    -- not read EOF and exit after the handshake (INTERFACES.md §7).
-    local ok, handle = pcall(spawn, "pleamar-sysmon", { "--interval-ms", tostring(SYS_INTERVAL_MS) }, function(line)
+    -- not read EOF and exit after the handshake (INTERFACES.md §7). The
+    -- `--llm-url` makes the same worker report llama-swap's resident model, so
+    -- the bar pays no extra process for the LLM capsule.
+    local ok, handle = pcall(spawn, "pleamar-sysmon", { "--interval-ms", tostring(SYS_INTERVAL_MS), "--llm-url", "http://127.0.0.1:9292/running" }, function(line)
         local parsed, msg = pcall(json.decode, line)
         if not parsed or type(msg) ~= "table" or type(msg.data) ~= "table" then return end
         applySample(msg.data)
