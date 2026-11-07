@@ -68,6 +68,11 @@ in
         inherit paths;
       };
 
+      # mkCraftApp: shared builder for the ArtCraft desktop apps (VectorCraft,
+      # FigCraft, SoundCraft, DeckCraft, GridCraft, SolidCraft) — one egui/wgpu
+      # workspace shape each, see packages/lib/mkCraftApp.nix.
+      mkCraftApp = prev.callPackage (paths.path "packages/lib/mkCraftApp.nix") { };
+
       inherit mkMeta;
     };
   };

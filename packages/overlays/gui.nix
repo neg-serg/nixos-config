@@ -58,6 +58,18 @@ in
   sonda = callPkg (pkg "sonda") { }; # file manager for pleamar-wm that searches files by what they hold
   craft-anything = callPkg (pkg "craft-anything") { }; # reverse-engineering workbench + rebuild assistant (desktop app, CLI, MCP server)
 
+  # ArtCraft suite: the six creative/office apps are on-demand roots
+  # (modules/user/nix-maid/apps/craft-apps.nix) built on first launch, so the
+  # system generation carries launchers and desktop entries only. Four of the
+  # names shadow older nixpkgs recipes on purpose — the overlay builds the
+  # newest upstream tags.
+  vectorcraft = callPkg (pkg "vectorcraft") { }; # vector illustration editor (SVG/PDF) + converter CLI
+  figcraft = callPkg (pkg "figcraft") { }; # interface design and prototyping
+  soundcraft = callPkg (pkg "soundcraft") { }; # digital audio workstation
+  deckcraft = callPkg (pkg "deckcraft") { }; # presentations and slide shows
+  gridcraft = callPkg (pkg "gridcraft") { }; # spreadsheet workbooks
+  solidcraft = callPkg (pkg "solidcraft") { }; # parametric 3D CAD + headless CLI/MCP
+
   # pleamar — Wayland desktop shell runtime (bars, launchers, notification
   # centres, docks, lock screens as animated scenes). Rev-pinned input in
   # flake.nix; nixpkgs follows the top-level pin so the Rust build reuses the

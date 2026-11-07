@@ -184,6 +184,7 @@
   features.llm.enable = true; # Local LLM stack: Ollama (ROCm, models on /zero/ai/ollama), voxinput
   features.cli.broot.enable = true;
   features.text.wordcraft.enable = true; # WordCraft — Word-style word processor, replaces LibreOffice
+  features.apps.craftApps.enable = true; # ArtCraft suite (vector/design/DAW/slides/sheets/CAD) as on-demand launchers
   features.hardware.usbAutomount.enable = true;
   features.hardware.bluetooth.enable = true; # BlueZ — BT audio + HID (gamepads/keyboards/mice), needs kernel BT_HIDP/UHID
   # MediaTek MT7927/MT6639 WiFi: in-tree since 7.3 — the mt76 mt7925e driver is
