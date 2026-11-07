@@ -76,7 +76,6 @@ while read -r model size; do
 done << 'MODELS'
 qwen3:8b 5.2
 qwen3:8b-q8_0 8.9
-qwen3:8b-ru 5.2
 qwen3:32b 20
 qwen3.5:27b 17
 qwen3.5:122b 76
