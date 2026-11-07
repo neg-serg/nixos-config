@@ -388,6 +388,19 @@ audio-cpp-models *ARGS:
 music-mtg-setup *ARGS:
     bash "{{repo_root}}/scripts/dev/music-mtg-setup.sh" {{ARGS}}
 
+# Create/fill the MOSS-Music-8B venv (the model's custom transformers 4.57.1
+# code on CPU torch) and fetch its Instruct bf16 weights (18.1 GiB). There is no
+# ggml port for it, so the moss-music wrapper runs the reference PyTorch code.
+music-moss-setup *ARGS:
+    bash "{{repo_root}}/scripts/dev/moss-music-setup.sh" {{ARGS}}
+
+music-moss-venv *ARGS:
+    bash "{{repo_root}}/scripts/dev/moss-music-setup.sh" --only venv {{ARGS}}
+
+# --set thinking|both also fetches the chain-of-thought variant (18.1 GiB each).
+music-moss-models *ARGS:
+    bash "{{repo_root}}/scripts/dev/moss-music-setup.sh" --only models {{ARGS}}
+
 # Refresh every derived music artefact in one incremental pass: MERT index ->
 # MTG tags -> mood/genre playlists (the weekly timer runs the same script).
 # --check / --dry-run are read-only; see docs/howto/local-music-ai.md.
