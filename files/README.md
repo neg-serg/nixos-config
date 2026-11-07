@@ -9,11 +9,10 @@ Terminal tools (ghostty, kanata, etc.) | | `config/` | Misc app configs (amfora,
 rustmission) | | `dosemu/` | DOSBox / dosemu configs | | `fastfetch/` | Fastfetch config assets
 (skull) | | `git/` | Git config and ignore | | `gui/` | Hyprland, swayimg, vicinae configs | |
 `kitty/` | Kitty terminal | | `media/` | PipeWire / WirePlumber configs | | `mpv/` | MPV player
-configs | | `nvim/` | Neovim configuration | | `obsidian-vault/` | Obsidian vault seed | |
-`patches/` | Patch files used by packages | | `pleamar/` | Shell scenes, libraries and the theme
-pipeline | | `shell/` | Zsh, bash, environment | | `tealdeer/` | Tealdeer (tldr) config | |
-`transmission/` | Transmission daemon configs | | `vale/` | Vale prose linter styles | | `vivaldi/`
-| Vivaldi browser configs
+configs | | `nvim/` | Neovim configuration | | `patches/` | Patch files used by packages | |
+`pleamar/` | Shell scenes, libraries and the theme pipeline | | `shell/` | Zsh, bash, environment |
+| `tealdeer/` | Tealdeer (tldr) config | | `transmission/` | Transmission daemon configs | | `vale/`
+| Vale prose linter styles | | `vivaldi/` | Vivaldi browser configs
 
 Plus top-level `surfingkeys.js` (hand-written Surfingkeys config, wired via
 `packages/overlays/gui.nix`).
