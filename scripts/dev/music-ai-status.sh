@@ -207,6 +207,28 @@ if [[ "$mtg" -lt 4 ]]; then
 fi
 note "$status" "models" "$detail"
 
+# --- music understanding (MOSS-Music, chordotomy) -------------------------
+# Both are opt-in and live outside the repo: MOSS is 18.1 GiB of bf16 weights
+# plus its own venv (no ggml port exists, so it runs on PyTorch/CPU), and
+# chordotomy is a uv tool with one 81 MB checkpoint. Absent means "not
+# installed yet", so this is a hint rather than a fault.
+MOSS_BASE="${MOSS_MUSIC_BASE:-${MUSIC_AI_BASE:-/zero/ai/music-ai}/moss-music}"
+MOSS_VENV="${MOSS_MUSIC_VENV:-${MUSIC_AI_BASE:-/zero/ai/music-ai}/venv-moss}"
+moss_venv=0
+[[ -x "$MOSS_VENV/bin/python" ]] && moss_venv=1
+moss_weights=0
+[[ -f "$MOSS_BASE/Instruct/model.safetensors.index.json" ]] && moss_weights=1
+chord_tool=0
+command -v chordotomy > /dev/null 2>&1 && chord_tool=1
+chord_weights=0
+[[ -f "$HOME_DIR/.cache/chordotomy/beat_this-final0.ckpt" ]] && chord_weights=1
+detail="MOSS: venv $(say "$moss_venv"), weights $(say "$moss_weights"); chordotomy: tool $(say "$chord_tool"), weights $(say "$chord_weights")"
+if [[ "$moss_venv$moss_weights$chord_tool$chord_weights" == "1111" ]]; then
+  note ok "music analysis" "$detail"
+else
+  note warn "music analysis" "$detail — just music-moss-setup / just music-chordotomy-setup"
+fi
+
 # --- GPU engine (audio.cpp + Audio Flamingo Next) -------------------------
 # The engine fails as ErrorDeviceLost when something else holds the VRAM, and
 # that something is usually ollama. Say so here instead of at the first run.
