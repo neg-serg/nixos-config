@@ -1,6 +1,11 @@
 #!/bin/sh
 # demucs: music source separation (htdemucs_ft). Splits into vocals/drums/bass/other.
 # Usage: demucs [--two-stems vocals] input.wav [-o outdir]
+# Six stems (adds guitar and piano) come from the same tool:
+#   demucs -n htdemucs_6s track.flac -o out/   # 19.9 s per 60 s clip, CPU
+# Measured 2026-11-08: htdemucs_ft 16.2 s and htdemucs_6s 19.9 s for a 60 s
+# clip, i.e. 3-3.7x realtime on the CPU. audio.cpp's GGUF separators are
+# slower here (31.7 s / 33.9 s) — see the note in `stems`.
 set -eu
 
 BASE="@MUSIC_AI_BASE@"

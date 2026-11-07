@@ -2,19 +2,38 @@
 # stems: vocal/instrumental separation via BS-RoFormer (viperx ep_317, SOTA vocals).
 # Better than demucs for isolating a voice; demucs still better for 4-stem (drums/bass).
 # Usage: stems input.wav [-o outdir] [--two-stems vocals|instrumental]
+# Measured 2026-11-08 on a 60 s clip: 17.4 s on the CPU (3.5x realtime, model
+# load included). The GGUF route through audio.cpp is NOT an upgrade: its
+# separation graph runs host-side (no GPU offload in the logs), htdemucs there
+# took 31.7 s for the same clip against 16.2 s for torch CPU demucs_ft, and the
+# bs_roformer-ep368 run produced nothing in 4 min while llama-swap held
+# 12.8 GiB of the card. Do not re-wire this to audio.cpp without a measurement.
 set -e
-[ -n "$1" ] && [ -f "$1" ] || { echo "usage: stems input.wav [-o outdir] [--two-stems vocals|instrumental]" >&2; exit 2; }
-IN="$1"; shift
+[ -n "$1" ] && [ -f "$1" ] || {
+  echo "usage: stems input.wav [-o outdir] [--two-stems vocals|instrumental]" >&2
+  exit 2
+}
+IN="$1"
+shift
 OUT=/tmp/stems
 TWO="vocals"
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    -o) OUT="$2"; shift 2 ;;
-    --two-stems) TWO="$2"; shift 2 ;;
-    *) echo "stems: unknown option $1" >&2; exit 2 ;;
+    -o)
+      OUT="$2"
+      shift 2
+      ;;
+    --two-stems)
+      TWO="$2"
+      shift 2
+      ;;
+    *)
+      echo "stems: unknown option $1" >&2
+      exit 2
+      ;;
   esac
 done
 export LD_LIBRARY_PATH="@GCC_LIB_DIR@:@ZLIB_LIB_DIR@:@ZSTD_LIB_DIR@:${LD_LIBRARY_PATH:-}"
 mkdir -p "$OUT"
 # GPU (ROCm torch in venv-demucs): fp16 gives ~4x speedup (16s vs 64s on 40s audio).
-exec @MUSIC_AI_BASE@/venv-demucs/bin/audio-separator   --model_filename model_bs_roformer_ep_317_sdr_12.9755.ckpt   --output_dir "$OUT" --single_stem "$TWO" --use_native_fp16 "$IN"
+exec @MUSIC_AI_BASE@/venv-demucs/bin/audio-separator --model_filename model_bs_roformer_ep_317_sdr_12.9755.ckpt --output_dir "$OUT" --single_stem "$TWO" --use_native_fp16 "$IN"
