@@ -42,6 +42,15 @@ esc() {
   printf '%s' "$1" | jq -Rsr '@html' | sed 's/&apos;/\&#39;/g'
 }
 
+# `nix store diff-closures` writes SGR colour codes even into a pipe (it has no
+# --color flag and ignores NO_COLOR/CLICOLOR), and the watcher feeds its lines
+# into these reports. Telegram, ntfy and notify-send do not render them: the
+# ESC byte is dropped somewhere and the recipient sees a literal "[32;1m".
+# Strip the escapes once, before either shape builds its blocks.
+strip_ansi() {
+  printf '%s' "$1" | sed -E 's/\x1b\[[0-9;]*m//g'
+}
+
 # One line of a bullet section. A short first token that looks like a git hash
 # is rendered as inline code; everything else stays text and is escaped.
 bullet() {
@@ -87,6 +96,8 @@ section_plain() {
 
 render() { # <html|plain>
   local shape=$1 out="" sep="" name text block
+  title=$(strip_ansi "$title")
+  meta=$(strip_ansi "$meta")
   if [ "$shape" = html ]; then
     out="$(printf '%s <b>%s</b>' "$icon" "$(esc "$title")")"$'\n'
     out+="$(printf '<i>%s</i>' "$(esc "$meta")")"
@@ -94,7 +105,7 @@ render() { # <html|plain>
   fi
   while [ "$#" -ge 3 ]; do
     name=$2
-    text=$3
+    text=$(strip_ansi "$3")
     shift 2
     if [ -n "$text" ]; then
       if [ "$shape" = html ]; then
