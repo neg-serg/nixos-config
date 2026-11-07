@@ -1719,18 +1719,17 @@
     "wl": {
       "flake": false,
       "locked": {
-        "lastModified": 1793810844,
-        "narHash": "sha256-KsdqxtlmiIhlb0XKnEe1rQYD8RU/0qbWVKuasVSoxIg=",
-        "ref": "fix/layer-backdrop-damage",
-        "rev": "efff944d529daf467086145141bb7b549891398c",
-        "revCount": 78,
-        "type": "git",
-        "url": "ssh://git@github.com/neg-serg/wl"
+        "lastModified": 1794071447,
+        "narHash": "sha256-8Sm6JWbEPT4OImPjCefGdz54NYcwiHdXcu5cVq04Q28=",
+        "owner": "neg-serg",
+        "repo": "wl",
+        "rev": "460b17b10cebaaa064529a59f3d3164c4567abf2",
+        "type": "github"
       },
       "original": {
-        "ref": "fix/layer-backdrop-damage",
-        "type": "git",
-        "url": "ssh://git@github.com/neg-serg/wl"
+        "owner": "neg-serg",
+        "repo": "wl",
+        "type": "github"
       }
     }
   },

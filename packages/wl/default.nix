@@ -21,12 +21,11 @@ rustPlatform.buildRustPackage rec {
   # off→on): the recovery itself still runs, the message is just demoted to
   # debug so it only shows with RUST_LOG=debug.
   #
-  # vulkan-device-lost.patch: a transition left running while a plain `wl img`
-  # / `wl restore` (TransitionType::None) replaces the wallpaper kept sampling
-  # the destroyed old texture (radv GPUVM fault, CLIENT_ID TCP → device lost).
+  # The old vulkan-device-lost.patch is gone: upstream main now cancels an
+  # in-flight transition before replacing the wallpaper (cancel_transition), and
+  # null handles keep the teardown double-free safe.
   patches = [
     ./silence-surface-recovery-log.patch
-    ./vulkan-device-lost.patch
   ];
 
   nativeBuildInputs = [
