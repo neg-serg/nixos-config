@@ -6,7 +6,9 @@
 # hands the verified store path to the root-owned nixos-agent-rollout service
 # (modules/security/agent-switch.nix) — the same path an agent uses by hand in
 # .agent/workflows/rebuild.md, now on a timer. The report goes to ntfy, the
-# desktop and Telegram.
+# desktop and Telegram. Telegram is the one channel the user unit cannot reach
+# on its own: the bot token is root-only (0400), so the watcher queues the
+# message and a root oneshot drains the queue through the shared sender.
 #
 # Why: every change used to end with "now run the switch yourself". The human
 # was the last step of every rollout; the timer removes that step while keeping
@@ -48,8 +50,46 @@
   ...
 }:
 let
-  inherit (lib) mkIf getExe escapeShellArg;
+  inherit (lib)
+    mkIf
+    getExe
+    escapeShellArg
+    ;
   cfg = config.features.system.rolloutWatch;
+
+  # Telegram delivery needs the bot token, which is a root-only secret (owner
+  # root, mode 0400 in hosts/trantor/telegram.nix): the user-level watcher
+  # cannot call the shared sender. It queues a message into a group-writable
+  # inbox instead, and a path unit starts a root oneshot that drains the queue
+  # through that sender. The only privilege the queue adds is "the desktop user
+  # can send a Telegram message as the bot", which is what any notification
+  # channel already allows.
+  telegramEnabled = cfg.telegramSender != null;
+  telegramInbox = "/var/lib/nixos-rollout-telegram/inbox";
+  telegramGroup = config.users.users.${config.lib.neg.mainUser}.group;
+
+  telegramDrain = pkgs.writeShellApplication {
+    name = "nixos-rollout-telegram-drain";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      set -euo pipefail
+      sender=${escapeShellArg (if telegramEnabled then getExe cfg.telegramSender else "/bin/false")}
+      inbox=${escapeShellArg telegramInbox}
+
+      # The path unit fires on every new file; drain whatever is queued and
+      # delete each message even when delivery fails (a failing Telegram must
+      # not turn into an ever-retrying queue).
+      shopt -s nullglob
+      for msg in "$inbox"/msg-*; do
+        title=$(head -n 1 "$msg")
+        body=$(tail -n +2 "$msg")
+        if ! "$sender" "$title" "$body" 6; then
+          echo "telegram: delivery failed for $msg" >&2
+        fi
+        rm -f "$msg"
+      done
+    '';
+  };
 
   # Regex prefixes, not globs: the same list filters `git diff --name-only`.
   riskyPattern = builtins.concatStringsSep "|" (map (p: "^" + lib.escapeRegex p) cfg.riskyPaths);
@@ -78,9 +118,7 @@ let
       branch=${escapeShellArg cfg.branch}
       risky_pattern=${escapeShellArg riskyPattern}
       ntfy_url=${escapeShellArg (if cfg.ntfyUrl == null then "" else cfg.ntfyUrl)}
-      telegram_send=${
-        escapeShellArg (if cfg.telegramSender == null then "" else getExe cfg.telegramSender)
-      }
+      telegram_inbox=${escapeShellArg (if telegramEnabled then telegramInbox else "")}
       desktop_notify=${if cfg.desktopNotify then "1" else "0"}
 
       state=''${ROLLOUT_WATCH_STATE_DIR:-''${XDG_STATE_HOME:-$HOME/.local/state}/nixos-rollout-watch}
@@ -142,11 +180,28 @@ let
           fi
         fi
 
-        if [ -n "$telegram_send" ] && [ -x "$telegram_send" ]; then
-          if ! "$telegram_send" "$title" "''${body:0:900}" 3 > /dev/null 2>&1; then
-            log "notify: telegram delivery failed"
-          fi
+        if [ -n "$telegram_inbox" ]; then
+          publish_telegram "$title" "''${body:0:900}"
         fi
+      }
+
+      # The bot token is a root-only secret (owner root, mode 0400), so the
+      # user-level watcher cannot call telegram-send itself. It drops a message
+      # file into a group-writable inbox; the root-owned
+      # nixos-rollout-telegram service is started by a path unit and drains it.
+      # The file is written under a dot name first (the path unit matches
+      # `msg-*`) and renamed, so the drain never sees a half-written message.
+      publish_telegram() {
+        local title=$1 body=$2
+        if [ ! -d "$telegram_inbox" ] || [ ! -w "$telegram_inbox" ]; then
+          log "notify: telegram inbox unavailable ($telegram_inbox)"
+          return 0
+        fi
+        local stamp tmp
+        stamp=$(date +%s%N)-$$
+        tmp="$telegram_inbox/.tmp-$stamp"
+        printf '%s\n%s\n' "$title" "$body" > "$tmp"
+        mv "$tmp" "$telegram_inbox/msg-$stamp"
       }
 
       short() { printf '%s' "''${1:0:8}"; }
@@ -357,7 +412,7 @@ let
     '';
   };
 in
-mkIf cfg.enable {
+mkIf cfg.enable ({
   systemd.user.services.nixos-rollout-watch = {
     description = "Deploy committed ${config.networking.hostName} changes via nixos-agent-rollout";
     serviceConfig = {
@@ -383,4 +438,32 @@ mkIf cfg.enable {
     };
     wantedBy = [ "timers.target" ];
   };
-}
+  # Telegram queue: only when a sender is configured. mkIf, not
+  # `optionalAttrs` — the latter forces cfg.telegramSender while the module's
+  # config attrset is being built, which recurses through the host's
+  # `lib.mkIf config.trantor.telegram.enable config.trantor.telegram.sender`.
+  #
+  # The inbox is the only interface between the user-level watcher and the
+  # root-level sender: group-writable by the desktop user, nothing else.
+  systemd.tmpfiles.rules = mkIf telegramEnabled [
+    "d /var/lib/nixos-rollout-telegram 0750 root ${telegramGroup} - -"
+    "d ${telegramInbox} 0770 root ${telegramGroup} - -"
+  ];
+
+  systemd.services.nixos-rollout-telegram = mkIf telegramEnabled {
+    description = "Send queued rollout reports to Telegram";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = getExe telegramDrain;
+      # A failed delivery is logged and dropped; retrying a dead proxy would
+      # only block the next report behind a stuck unit.
+      Restart = "no";
+    };
+  };
+
+  systemd.paths.nixos-rollout-telegram = mkIf telegramEnabled {
+    description = "Start the Telegram drain when a rollout report is queued";
+    pathConfig.PathExistsGlob = "${telegramInbox}/msg-*";
+    wantedBy = [ "paths.target" ];
+  };
+})
