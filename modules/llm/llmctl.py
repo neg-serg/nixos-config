@@ -34,15 +34,6 @@ CATALOG = {
         "lean": "2/7",
         "fp": "3.0/6",
     },
-    "qwen3.6-35b-abliterated": {
-        "aliases": ["strong", "qwen3.6"],
-        "role": "strong general / chemistry",
-        "ctx": "96k",
-        "size": "12 GB",
-        "chem": "13/13",
-        "lean": "1/7",
-        "fp": "1.2/6",
-    },
     "qwen3-vl-8b-abliterated": {
         "aliases": ["vision", "vision-8b", "qwen3-vl-8b"],
         "role": "fast / vision / chemistry",
@@ -60,15 +51,6 @@ CATALOG = {
         "chem": "12/13",
         "lean": "4/7",
         "fp": "3.7/6",
-    },
-    "qwen3.5-4b-abliterated": {
-        "aliases": ["qwen3.5", "quick"],
-        "role": "dense 4B Q8, long ctx",
-        "ctx": "256k",
-        "size": "12 GB",
-        "chem": "4/13",
-        "lean": "0/7",
-        "fp": "-",
     },
     "tiny": {
         "aliases": ["cheap", "spark-cpu"],
@@ -106,11 +88,86 @@ CATALOG = {
         "lean": "7/7",
         "fp": "6.0/6*",
     },
+    "mistral/labs-leanstral-1-5": {
+        "aliases": ["leanstral", "lean"],
+        "role": "Lean 4 via Mistral API",
+        "ctx": "256k",
+        "size": "remote",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    "ui-tars-1.5-7b": {
+        "aliases": ["uitars", "ui-tars"],
+        "role": "GUI agent VLM",
+        "ctx": "32k",
+        "size": "7.6 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    "oprover-8b": {
+        "aliases": ["oprover", "prover"],
+        "role": "Lean 4 agentic prover, 8B",
+        "ctx": "32k",
+        "size": "6.7 GB",
+        "chem": "-",
+        "lean": "0/7",
+        "fp": "-",
+    },
+    "deepseek-prover-v2-7b": {
+        "aliases": ["deepseek-prover", "dsprover"],
+        "role": "Lean 4 whole-proof, 7B",
+        "ctx": "32k",
+        "size": "7.3 GB",
+        "chem": "-",
+        "lean": "5/7",
+        "fp": "-",
+    },
+    "devstral-small-2-24b": {
+        "aliases": ["devstral", "coder"],
+        "role": "24B agentic coding (SWE)",
+        "ctx": "32k",
+        "size": "9.4 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
     "arduinollm-7b": {
         "aliases": ["embedded", "arduino"],
         "role": "7B embedded code (Arduino/ESP32/Pi)",
         "ctx": "32k",
         "size": "5.4 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    "k8s-qwen2.5-0.5b": {
+        "aliases": ["k8s", "kubectl"],
+        "role": "0.5B k8s: kubectl commands",
+        "ctx": "32k",
+        "size": "0.5 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    "magos-k8s-0.6b": {
+        "aliases": ["magos", "k8s-diag"],
+        "role": "0.6B k8s RCA (kubehealth)",
+        "ctx": "8k",
+        "size": "0.6 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    # Runs on the other machine (RX 7900 XTX, 24 GB): llama-swap only routes to
+    # it over ssh/proxy, so the cold load is ~3.5 min and the "VRAM" figure is
+    # the remote card's, not trantor's.
+    "gyro-coder": {
+        "aliases": ["gyro", "gyrocoder"],
+        "role": "125B MoE coder (7900 XTX box, remote)",
+        "ctx": "64k",
+        "size": "19.9 GB remote",
         "chem": "-",
         "lean": "-",
         "fp": "-",
@@ -386,7 +443,10 @@ def print_models():
         "the tier's own thinking config; every other fp score has thinking "
         "pinned off for comparability. gpt-oss-120b is the only model whose "
         "fp score moved between runs (4.4 and 5.0 of 6, so 4.7 is the mean); "
-        "the qwen tiers repeat exactly."
+        "the qwen tiers repeat exactly. The Lean prover (oprover) is "
+        "trained against Mathlib, which this host does not have, so its "
+        "core-only score understates it and is not comparable with the "
+        "general tiers."
     )
 
 

@@ -1,9 +1,10 @@
 # llama-swap — one OpenAI-compatible endpoint in front of the local model
 # stack. The `model` field of a request selects the backend: llama-swap starts
 # it (or proxies to it) and shuts the previously running one down; an idle
-# backend is unloaded after `globalTTL` (60 s) or the model's own `ttl`. All
-# models fit the 16 GB card except the 120B RAM tier and the `igpu` host-RAM
-# tier; the 8B vision unit on :8080 is manual and separate.
+# backend is unloaded after `globalTTL` (60 s) or the model's own `ttl`. Small
+# models fit the 16 GB card whole; the RAM tiers (gpt-oss-120b, qwen3.8-flash)
+# mmap most weights from /zero; `igpu` is the APU tier. The 8B vision unit on
+# :8080 is manual and separate.
 # Clients use http://127.0.0.1:9292/v1.
 #
 # The per-model units stay available for manual use, but do not run them while
@@ -22,7 +23,8 @@ let
   enabled = config.lib.neg.enabled "llm";
 
   # Models live on the zero ZFS pool, never in the store (multi-GB files).
-  # Only models that fit the 16 GB card are exposed here. The 30B vision
+  # Anything that fits the 16 GB card is served whole; the RAM tiers keep only
+  # a few layers on the card and mmap the rest from /zero. The 30B vision
   # weights (18 GB) were removed on 2026-11-06; the manual llama-server unit
   # serves the 8B model on :8080.
   modelDir = "/zero/ai/llama";
@@ -172,23 +174,33 @@ let
       --reasoning-budget 4096
   '';
 
-  # Qwen3.6-35B-A3B abliterated (i1/IQ2_S) — the strongest model that fits the
-  # 16 GB card next to the desktop: ~55 tok/s, text-only, and after gpt-oss-20b
-  # was dropped it is the fast general tier. The dynamic IQ2 keeps attention
-  # and shared experts at higher precision; a Q3 build (IQ3_XXS) would need
-  # ~13.6 GB and does not fit with Steam open. 96k of the 262k-native window:
-  # only the 10 full-attention layers keep keys (`full_attention_interval` 4,
-  # 2 KV heads x 256 dims), so the KV is ~11 KB/token and 96k costs ~1 GiB —
-  # measured 15.1 GiB total with the desktop, 0.8 GiB of headroom. 128k loads
-  # (15.4 GiB) but leaves 0.5 GiB, too tight next to a browser. The window was
-  # checked end-to-end: a needle at 86,307 tokens came back correctly, prefill
-  # 2595 tok/s, decode 105 tok/s.
-  qwen36 = ''
+  # OProver-8B (Apache-2.0) — Qwen3-8B continued-pretrained and RL'd on Lean 4
+  # (the OProofs corpus). It is trained for the agentic loop: retrieve verified
+  # proofs, attempt, read the compiler error, repair — so it wants Lean
+  # feedback in the prompt, not a one-shot chat. Q6_K (6.7 GB) fits the card
+  # whole with ~2.5 GiB of q8_0 KV at 32k and scores within 1.5 points of the
+  # 32B (MiniF2F Pass@32 91.8 vs 93.3). The 32B Q4_K_M is 19.8 GB: it does not
+  # fit 16 GB and would decode from RAM, so the 8B is the local pick. Thinking
+  # is off: the prover answers with a whole proof, and the lean bench caps the
+  # reply at 2000 tokens.
+  oprover = ''
     ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/abliterated/Qwen3.6-35B-A3B-abliterated-IQ2_S.gguf \
+      -m ${modelDir}/oprover/OProver-8B.Q6_K.gguf \
       --host 127.0.0.1 --port ''${PORT} \
-      -c 98304 -np 1 --flash-attn on --fit off --reasoning off \
-      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 --jinja
+      -c 32768 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0 --reasoning off
+  '';
+
+  # DeepSeek-Prover-V2-7B — the 2025 whole-proof baseline, kept for comparison
+  # with the 2026 provers. Q8_0 (7.3 GB) fits the card whole, so there is no
+  # reason to quantize it further. The GGUF carries the `<｜User｜>` template;
+  # prompt it with a complete Lean statement, as the bench does.
+  dsprover = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/deepseek-prover/DeepSeek-Prover-V2-7B-Q8_0.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0
   '';
 
   # Qwen3.8-27B abliterated (IQ3_S, ~3.5 bpw) — the quality tier: dense 27B,
@@ -208,26 +220,6 @@ let
       --host 127.0.0.1 --port ''${PORT} \
       -c 32768 -np 1 --flash-attn on --fit off --reasoning off \
       --cache-type-k q4_0 --cache-type-v q4_0 --jinja
-  '';
-
-  # Qwen3.5-4B abliterated (Q8_0) — the fast, long-context tier: dense 4B,
-  # hybrid attention (8 of 32 layers full), so KV is only ~17 KiB/token at
-  # q8_0 and the native 256k window costs ~9.3 GiB of the card (~11.7 GiB
-  # total with the desktop). Verified end-to-end on a 104k-token prompt: the
-  # needle came back, prefill 2890 tok/s (~36 s), decode 70 tok/s at that
-  # depth and ~95-100 short. The 262k claim holds near the edge: a needle at
-  # 211,707 tokens came back correctly, prefill 1908 tok/s (111 s), decode
-  # 54 tok/s. The ~4 GiB left over is fine for the desktop
-  # but not for a game plus OBS: drop to -c 131072 (~6.8 GiB) if a client
-  # OOMs. `--reasoning off` is mandatory: with thinking on it spends the
-  # whole token budget inside reasoning_content and returns empty content
-  # (observed at 6000 tokens, finish=length).
-  qwen35_4b = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/abliterated/Qwen3.5-4B-abliterated-Q8_0.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -c 262144 -np 1 --flash-attn on --fit off --reasoning off \
-      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 --jinja
   '';
 
   # Spark-X2.6-4B abliterated (Q4) — the CPU-only tier: no VRAM at all, so it
@@ -299,6 +291,97 @@ let
       --cache-type-k q8_0 --cache-type-v q8_0
   '';
 
+  # Devstral Small 2 24B (Apache-2.0) — the agentic coding tier: Mistral's
+  # SWE agent model (68.0% SWE-bench Verified, 55.7% multilingual), dense 24B
+  # on the Mistral Small 3.1 geometry (40 layers, 8 KV heads x 128 dims) with
+  # the Ministral 3 rope scaling (yarn over a 384k native window). Served at
+  # 32k: the card is the limit, not the model. UD-IQ3_XXS (~3.5 bpw) because
+  # Q4_K_M is 14.3 GB of weights and does not fit next to the desktop; KV is
+  # q4_0 because q8_0 adds 2.8 GiB at 32k where q4_0 costs ~1.4 GiB.
+  #
+  # Measured 2026-11-08 with this exact command: 8 s to healthy with the file
+  # in page cache, 13.1 GiB of VRAM next to a 2.8 GiB desktop (13.4 peak,
+  # ~2 GiB of headroom), 1121 tok/s prefill and 48.7 tok/s decode on a short
+  # prompt. `--jinja` is enough for the Mistral tool format: a request that
+  # passes `tools` comes back as `tool_calls` with `arguments` as a JSON
+  # string, so an agent harness needs no template hack.
+  #
+  # One-shot quality probe at this quant: it wrote a panic-free,
+  # allocation-free `parse_version` that compiles, but accepted empty
+  # components (`".."` -> `Some((0,0,0))`) and refused values above 1e9 that
+  # still fit u32. Review the diffs it produces — this tier trades the last
+  # bit of quality for fitting the card.
+  #
+  # Text-only on purpose: the release is vision-capable and the GGUF ships an
+  # mmproj, but the projector is another ~0.9 GB and the `vision` tier owns
+  # that job. Instruct model, so no reasoning flags apply.
+  devstral = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/devstral/Devstral-Small-2-24B-Instruct-2512-UD-IQ3_XXS.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q4_0 --cache-type-v q4_0
+  '';
+
+  # Two Kubernetes specialists, both Q8_0 and new to the fleet: ~0.7 GiB of
+  # weights together plus ~0.65 GiB of q8_0 KV. A 0.5B and a 0.6B beat the
+  # general tiers here only at their own lane, and neither is abliterated —
+  # these are the only published weights of the fine-tunes, and kubectl/YAML
+  # is not where refusals live. Pick by job: `k8s-qwen2.5-0.5b` turns a
+  # request into a kubectl line, `magos-k8s-0.6b` diagnoses a broken cluster
+  # given the evidence.
+  #
+  # k8s_Qwen2.5-0.5B-Instruct (Apache-2.0) — Qwen2.5-0.5B-Instruct tuned on
+  # chowmean/kubernetes_commands. In practice it is a `kubectl` command
+  # generator in the trained shape ("Command: kubectl … / Description: …"):
+  # straightforward verbs come out right (`kubectl scale deployment web
+  # --replicas=5 -n shop`), the edges are the dataset's — "list pods not
+  # Running" returns `--field-selector=status.phase!=Running -n *` instead of
+  # `-A`, it bolts on `-n prod`, and a YAML-manifest request still comes back
+  # as a command with an invented `--memory=`/`--max-size=` flag. The base
+  # model is multilingual, so Russian prompts are answered in Russian, but
+  # poorly (it defined a Deployment as "a namespace holding the state of all
+  # containers"). Use it as a fast English kubectl-syntax helper — not as the
+  # YAML tier and not for explanations.
+  # 32k is the native Qwen2.5 window (KV ~6 KB/token at q8_0, ~0.2 GiB);
+  # measured 2026-11-08: +694 MiB of VRAM with the desktop open, 183-382 tok/s
+  # decode, 2.0k tok/s prefill, cold start under 2 s.
+  k8s05 = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/k8s/k8s-Qwen2.5-0.5B-Instruct.Q8_0.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0
+  '';
+
+  # magos-k8s-0.6b (Apache-2.0) — Qwen3-0.6B with a full SFT stage (LoRA
+  # merged) on ~24.5k kubehealth sessions, built as the local model behind
+  # kubehealth: given collected evidence (events, describe, warnings on owned
+  # objects, logs) it answers "what is wrong, the evidence, the fix, how sure"
+  # in plain text, and calls four read-only tools when the cause sits in
+  # another object (get_pod_logs, get_object_describe, get_object_events,
+  # get_correlated_events). Thinking is ON: `--reasoning-format deepseek`
+  # moves the thoughts to `reasoning_content`, and clients turn them off for
+  # short notes with `chat_template_kwargs: {"enable_thinking": false}`. The
+  # card asks for greedy or 0.2-0.3 sampling with repetition_penalty 1.0.
+  # 8k, not the 40960 the GGUF declares: kubehealth compresses evidence to 8k
+  # and the fine-tune was trained at 4096 seq len, so a longer window only
+  # invites prompts outside its shape. Measured 2026-11-08: +1064 MiB of VRAM
+  # (0.64 GB of weights + ~0.45 GiB of KV at 8k), 264-372 tok/s decode and
+  # 10.3k tok/s prefill once the swap settles. Open-ended advice is its weak
+  # spot: asked for the first checks on CrashLoopBackOff it drifts to
+  # kubelet/kube-system nonsense; handed real evidence it names OOMKilled and
+  # writes the fix. It needs a harness that feeds it the evidence and the tool
+  # definitions — standalone, a 0.6B loses the thread.
+  magos = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/k8s/magos-k8s-0.6b-q8_0.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 8192 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0 \
+      --reasoning-format deepseek
+  '';
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -357,6 +440,33 @@ let
       done
     '';
   };
+
+  # Gyro-Coder (Qwen3.8-Flash-Next, 125B MoE at 2.125 bpw) does not run on this
+  # host: its 19.9 GiB of weights need the 24 GB card in the other machine
+  # (192.168.0.144, RX 7900 XTX), which reads them read-only over SMB from
+  # /zero/ai/llama/gyro-coder. llama-swap is only the router: `cmd` starts the
+  # container there over ssh and stays attached so the log stream and the
+  # process lifecycle stay visible, `proxy` sends the requests straight to it,
+  # `cmdStop` stops the container on unload. Nothing here touches trantor's own
+  # 16 GB card, so this tier never competes with the local models.
+  #
+  # Two reasons the model entry below differs from the local ones: the remote
+  # server has a fixed port instead of ${PORT} (hence `proxy`), and a cold load
+  # is ~3.5 min -- weights arrive over the LAN and the shaders warm up -- so its
+  # TTL is 15 min rather than the 60 s global one.
+  # llama-swap execs `cmd` directly -- no shell -- so this has to be a plain
+  # argv: absolute ssh path, simple flags, one-word remote command. The real
+  # container invocation lives in /usr/local/bin/gyro-coder-start on the other
+  # machine (a shell-style cmd with quotes and `|| true` fails with
+  # `exec: "ssh": executable file not found in $PATH`).
+  # accept-new: unknown hosts are trusted once, a *changed* host key still fails.
+  gyroCoder = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 gyro-coder-start
+  '';
+
+  gyroCoderStop = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 gyro-coder-stop
+  '';
 in
 {
   services.llama-swap = lib.mkIf enabled {
@@ -387,13 +497,6 @@ in
             "gemma4-26b"
           ];
         };
-        "qwen3.6-35b-abliterated" = {
-          cmd = qwen36;
-          aliases = [
-            "strong"
-            "qwen3.6"
-          ];
-        };
         "gpt-oss-120b-abliterated" = {
           cmd = gptoss120;
           # 63 GB + ~55 s cold start: keep it resident for 15 min instead of
@@ -412,6 +515,22 @@ in
             "next"
           ];
         };
+        "oprover-8b" = {
+          cmd = oprover;
+          ttl = 600;
+          aliases = [
+            "oprover"
+            "prover"
+          ];
+        };
+        "deepseek-prover-v2-7b" = {
+          cmd = dsprover;
+          ttl = 600;
+          aliases = [
+            "deepseek-prover"
+            "dsprover"
+          ];
+        };
         "qwen3.8-27b-abliterated" = {
           cmd = qwen38;
           aliases = [
@@ -419,14 +538,6 @@ in
             "ru"
           ];
         };
-        "qwen3.5-4b-abliterated" = {
-          cmd = qwen35_4b;
-          aliases = [
-            "qwen3.5"
-            "quick"
-          ];
-        };
-
         "tiny" = {
           cmd = tiny;
           aliases = [
@@ -453,8 +564,37 @@ in
           ];
         };
 
+        "devstral-small-2-24b" = {
+          cmd = devstral;
+          # A daily coding driver, not a one-off probe: keep it resident for
+          # ten minutes so the 60 s global TTL does not reload it between
+          # messages (a cold load is ~8 s of 9.4 GB from /zero).
+          ttl = 600;
+          aliases = [
+            "devstral"
+            "coder"
+          ];
+        };
+
         # Specialized small models: loaded on a request, unloaded after the
         # TTL. The editor's FIM backend is a separate service (modules/llm/fim.nix).
+        "k8s-qwen2.5-0.5b" = {
+          cmd = k8s05;
+          # Specialist, not a daily driver: a longer TTL only wastes the card.
+          ttl = 600;
+          aliases = [
+            "k8s"
+            "kubectl"
+          ];
+        };
+        "magos-k8s-0.6b" = {
+          cmd = magos;
+          ttl = 600;
+          aliases = [
+            "magos"
+            "k8s-diag"
+          ];
+        };
         "ocr" = {
           cmd = ocr;
           ttl = 600;
@@ -467,6 +607,24 @@ in
           cmd = embed;
           ttl = 600;
           aliases = [ "embeddings" ];
+        };
+
+        # The only remote tier: started and stopped over ssh on the 7900 XTX
+        # box, requests go straight to it through `proxy`. 15 min TTL because a
+        # cold load costs ~3.5 min; `llmctl unload` still frees the card at once.
+        # On the remote side a 1-minute watchdog stops the container if this
+        # router disappears, so a crash or reboot here cannot strand 21 GiB of
+        # VRAM on a machine nobody can reach.
+        "gyro-coder" = {
+          cmd = gyroCoder;
+          cmdStop = gyroCoderStop;
+          proxy = "http://192.168.0.144:8090";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "gyro"
+            "gyrocoder"
+          ];
         };
       };
 
