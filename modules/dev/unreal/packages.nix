@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  useSteamRun ? true,
   ...
 }:
 let
@@ -31,9 +30,6 @@ let
     pkgs._7zz # extract 7z-packed marketplace assets (binary: 7zz)
     pkgs.rsync # sync intermediate files to sandboxes
     pkgs.which # ensure /usr/bin/which exists during scripts
-  ]
-  ++ lib.optionals useSteamRun [
-    pkgs.steam-run # run UE editor with Steam runtime libs
   ];
 in
 {
