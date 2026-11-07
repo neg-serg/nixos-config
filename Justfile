@@ -342,6 +342,15 @@ update:
     fi; \
     XDG_CACHE_HOME="$cache" nix flake update
 
+# Bump only the inputs that point at neg's own repositories (raise, wl, lusty,
+# neg-pkgs, hyprscratch, rsmetrx, nix-cache-pin), keep each bump only when the
+# toplevel still evaluates, and commit flake.lock without pushing. Heavy inputs
+# (aurora-src, iosevka-neg) are opt-in; rollout-watch deploys the commit on its
+# next tick.
+# Usage: just bump-own [--all] [--no-commit]
+bump-own *ARGS:
+    bash "{{repo_root}}/scripts/dev/flake-bump-own.sh" {{ARGS}}
+
 # Search a nix-cache-pin pin for binary-cache hits without touching the tree.
 # The CLI edits ./flake.nix of the flake it runs in, so run this from the repo
 # root. Pins live in flake/cache-pin.nix; pass extra CLI flags (--plan,
