@@ -536,6 +536,41 @@ mod tests {
     }
 
     #[test]
+    fn llm_object_rides_in_the_full_sample() {
+        let data = Sample {
+            cpu: "{}".to_string(),
+            mem: "{}".to_string(),
+            swap: "{}".to_string(),
+            disk: "{}".to_string(),
+            gpu: "{}".to_string(),
+            temp: "{}".to_string(),
+            full: "{\"ts\":1,\"cpu\":{}}".to_string(),
+        };
+        let mut out = Vec::new();
+        write_sample(
+            &mut out,
+            Topic::Sysmon,
+            1000,
+            &data,
+            Some("{\"active\":true}"),
+        )
+        .expect("write");
+        let text = String::from_utf8(out).expect("utf8");
+        assert!(
+            text.trim_end().ends_with(",\"llm\":{\"active\":true}}}"),
+            "{text}"
+        );
+
+        let mut out = Vec::new();
+        write_sample(&mut out, Topic::Llm, 1000, &data, None).expect("write");
+        let text = String::from_utf8(out).expect("utf8");
+        assert!(
+            text.trim_end().ends_with("\"data\":{\"active\":false}}"),
+            "{text}"
+        );
+    }
+
+    #[test]
     fn bad_lines_and_unknown_commands_are_answered() {
         let fixture = fixture("command-bad");
         let mut session = session(&fixture);
