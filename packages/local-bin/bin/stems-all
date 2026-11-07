@@ -1,0 +1,119 @@
+#!/bin/sh
+# stems-all: split a track into stems with HT-Demucs, laid out for other tools.
+#
+#   stems-all FILE               # 4 stems: vocals, drums, bass, other
+#   stems-all --stems 6 FILE     # + guitar, piano (htdemucs_6s, the weaker model)
+#   stems-all -o DIR FILE
+#   stems-all --merge-rest FILE  # also write the mix minus vocals
+#
+# Default output: ./<name>.stems/{vocals,drums,bass,other}.wav — one flat
+# directory, which is what basic-pitch / transcribe-high / a DAW wants, instead
+# of demucs's own out/htdemucs_ft/<name>/ tree.
+#
+# Which model for what: HT-Demucs is the 4-stem baseline; for a voice alone
+# `stems` (BS-RoFormer ep_317) is better and just as fast, so the common
+# workflow is `stems` for the vocal and this for the rhythm section. 6 stems
+# trades quality for guitar/piano separation — 6s is an older checkpoint.
+# Measured 2026-11-08: htdemucs_ft 16.2 s and htdemucs_6s 19.9 s per 60 s clip
+# on the CPU (3-3.7x realtime); no GPU involved.
+set -eu
+
+BASE="@MUSIC_AI_BASE@"
+# The demucs venv is a torch wheel build: it needs libstdc++/libgomp (gcc),
+# libz and libzstd from the store, the same set the `demucs` wrapper exports.
+export LD_LIBRARY_PATH="@ZSTD_LIB_DIR@:@ZLIB_LIB_DIR@:@GCC_LIB_DIR@:${LD_LIBRARY_PATH:-}"
+STEMS=4
+OUT=""
+MERGE=0
+IN=""
+
+usage() {
+  sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+  exit "${1:-0}"
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -o | --out-dir)
+      OUT="${2:?-o needs a directory}"
+      shift 2
+      ;;
+    --stems)
+      STEMS="${2:?--stems needs 4 or 6}"
+      shift 2
+      ;;
+    --merge-rest)
+      MERGE=1
+      shift
+      ;;
+    -h | --help) usage 0 ;;
+    -*)
+      echo "stems-all: unknown option $1" >&2
+      usage 2
+      ;;
+    *)
+      [ -z "$IN" ] || {
+        echo "stems-all: one input file at a time" >&2
+        exit 2
+      }
+      IN="$1"
+      shift
+      ;;
+  esac
+done
+
+[ -n "$IN" ] || usage 2
+[ -f "$IN" ] || {
+  echo "stems-all: no such file: $IN" >&2
+  exit 2
+}
+
+case "$STEMS" in
+  4) MODEL="htdemucs_ft" ;;
+  6) MODEL="htdemucs_6s" ;;
+  *)
+    echo "stems-all: --stems must be 4 or 6 (got '$STEMS')" >&2
+    exit 2
+    ;;
+esac
+
+name="$(basename "$IN")"
+name="${name%.*}"
+[ -n "$OUT" ] || OUT="./$name.stems"
+mkdir -p "$OUT"
+
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/stems-all.XXXXXX")"
+trap 'rm -rf "$WORK"' EXIT INT TERM
+
+"$BASE/venv-demucs/bin/python" -m demucs -n "$MODEL" --out "$WORK/out" "$IN"
+
+SRC="$WORK/out/$MODEL/$name"
+[ -d "$SRC" ] || {
+  echo "stems-all: demucs wrote no stems (looked for $SRC)" >&2
+  exit 2
+}
+
+for f in "$SRC"/*.wav; do
+  [ -f "$f" ] || continue
+  mv -f "$f" "$OUT/"
+done
+
+if [ "$MERGE" = 1 ] && [ -f "$OUT/vocals.wav" ]; then
+  # The mix minus vocals: everything else summed back, sample-accurate because
+  # all stems come from the same pass.
+  i=0
+  inputs=""
+  for f in "$OUT"/*.wav; do
+    case "$(basename "$f")" in vocals.wav) continue ;; esac
+    inputs="$inputs -i $f"
+    i=$((i + 1))
+  done
+  if [ "$i" -gt 0 ]; then
+    # shellcheck disable=SC2086
+    ffmpeg -hide_banner -loglevel error -y $inputs \
+      -filter_complex "amix=inputs=$i:normalize=0" "$OUT/instrumental.wav"
+  fi
+fi
+
+ls -1 "$OUT" | sed 's/^/  /'
+echo "stems-all: $MODEL -> $OUT" >&2
