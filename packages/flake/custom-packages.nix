@@ -72,6 +72,9 @@
   texlab = pkgs.texlab; # LaTeX LSP server for Neovim
   android-tools = pkgs.android-tools; # adb/fastboot, built by the launcher in modules/dev/android
   scrcpy = pkgs.scrcpy; # Android display/control over USB/TCP (launcher in modules/hardware/webcam)
+  hw-probe = pkgs.hw-probe; # hardware inventory probe (launcher in modules/system/pkgs.nix)
+  espanso = pkgs.espanso; # text expander (launcher in modules/user/nix-maid/cli/espanso.nix)
+  proton-ge-bin = pkgs.proton-ge-bin; # GE-Proton, materialised into Steam's compat dir by a login unit
   searxng = pkgs.searxng; # SearXNG metasearch, run from /var/lib/nix-apps/searx
   protontricks = pkgs.protontricks; # winetricks wrapper for Proton
   sonic-visualiser = pkgs.sonic-visualiser; # spectra/sonogram analyser
