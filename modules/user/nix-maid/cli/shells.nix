@@ -13,7 +13,6 @@ let
   # config keeps using the store copy above.
   shellFilesLive = config.lib.neg.live "files/shell";
   kittyConfLive = config.lib.neg.live "files/kitty";
-  irisConfigLive = config.lib.neg.live "files/iris";
 
   # --- Inputrc ---
   inputrc = builtins.readFile (config.lib.neg.path "files/cli/inputrc");
@@ -126,8 +125,6 @@ in
       ".config/aliae/config.yaml".text = aliaeConfig;
       ".config/dircolors/dircolors".source = config.lib.neg.live "files/shell/dircolors/dircolors";
       ".config/zsh".source = zshConfigSource;
-      ".config/iris/config.toml".source = "${irisConfigLive}/config.toml";
-      ".config/iris/theme.toml".source = "${irisConfigLive}/theme.toml";
       ".config/bash/oh-my-posh.bash".source = "${shellFilesLive}/bash/oh-my-posh.bash";
       ".config/zsh-native-syntax".source = zshNativeSyntaxTheme;
       # --- Terminal & Specific Shell Configs ---

@@ -1,8 +1,3 @@
-# iris is temporarily disabled (2026-10-13). When enabled it wraps the
-# interactive shell (execs it) and must be sourced first, before zinit/p10k;
-# the child shell then runs the rest of this file. Re-enable by uncommenting:
-# source "${ZDOTDIR}/iris.zsh"
-
 source @zinit@/share/zinit/zinit.zsh
 [[ -f /etc/NIXOS ]] && fpath=(${ZDOTDIR}/lazyfuncs ${XDG_CONFIG_HOME}/zsh-nix $fpath)
 zi ice depth'1' lucid
