@@ -79,16 +79,49 @@ let
       # The path unit fires on every new file; drain whatever is queued and
       # delete each message even when delivery fails (a failing Telegram must
       # not turn into an ever-retrying queue).
+      #
+      # Two shapes arrive here: the current one starts with a marker line and
+      # carries an HTML body (bold sections, inline code, an expandable log),
+      # and the pre-2026-11 one is "<title>\n<body>" plain text. Both are
+      # delivered, so a message queued by the previous generation during the
+      # switch that installs this script is not lost.
       shopt -s nullglob
       for msg in "$inbox"/msg-*; do
-        title=$(head -n 1 "$msg")
-        body=$(tail -n +2 "$msg")
-        if ! "$sender" "$title" "$body" 6; then
-          echo "telegram: delivery failed for $msg" >&2
+        if [ "$(head -n 1 "$msg")" = "#html" ]; then
+          # telegram-send reads the finished body from a file and posts it with
+          # parse_mode=HTML; the marker line is not part of the message.
+          body=$(mktemp)
+          tail -n +2 "$msg" > "$body"
+          if ! "$sender" --html-file "$body" 6; then
+            echo "telegram: delivery failed for $msg" >&2
+          fi
+          rm -f "$body"
+        else
+          title=$(head -n 1 "$msg")
+          body=$(tail -n +2 "$msg")
+          if ! "$sender" "$title" "$body" 6; then
+            echo "telegram: delivery failed for $msg" >&2
+          fi
         fi
         rm -f "$msg"
       done
     '';
+  };
+
+  # Renders one rollout report in the two shapes the channels need: the HTML
+  # body Telegram parses (a bold title with a status emoji, one bold header per
+  # section, bullet lines with the commit hashes in inline code, the failure log
+  # in an expandable block quotation) and the compact plain body for ntfy and
+  # the desktop toast. Kept as a script file because its escaping has to be
+  # right on its own: a commit subject or a log line with <, & or a quote must
+  # not break the markup.
+  reportScript = pkgs.writeShellApplication {
+    name = "nixos-rollout-report";
+    runtimeInputs = [
+      pkgs.jq # @html escaping for the Bot API parse mode
+      pkgs.gnused # the numeric apostrophe entity in esc()
+    ];
+    text = builtins.readFile ./rollout-report.sh;
   };
 
   # Regex prefixes, not globs: the same list filters `git diff --name-only`.
@@ -106,7 +139,8 @@ let
       pkgs.util-linux # flock: one watcher at a time
       pkgs.systemd # systemctl: trigger and wait for the rollout
       pkgs.gnugrep # grep -E for the risky-path filter
-      pkgs.coreutils # readlink, seq, sleep, tail
+      pkgs.coreutils # readlink, seq, sleep, tail, cut
+      reportScript # renders the plain and HTML report bodies
     ];
     text = ''
       # Test seams (used while developing the watcher, not by the timer):
@@ -148,9 +182,25 @@ let
       # egresses through the user socks proxy) or desktop must not change the
       # rollout outcome. The text is Russian: these messages are read by the
       # human, unlike the repo's docs and comments.
+      #
+      # notify <kind> <title> <priority> <tags> [<section> <text>]...
+      #
+      # kind picks the status emoji (applied, blocked, failed-*); the section
+      # pairs go to nixos-rollout-report, which renders the plain body for ntfy
+      # and the desktop toast and the HTML body for Telegram: "@note" is one
+      # unlabelled line, "Журнал" the expandable log, any other name a bold
+      # header with bullet lines. ntfy and the toast get the body capped, since
+      # both show a summary; Telegram gets all of it, and the sender splits a
+      # message only when it exceeds the Bot API limit.
       notify() {
-        local title=$1 body=$2 prio=''${3:-default} tags=''${4:-}
-        body=''${body:0:1500}
+        local kind=$1 title=$2 prio=$3 tags=$4
+        shift 4
+        local meta
+        meta=$(date '+%Y-%m-%d %H:%M %Z')
+        local plain html
+        plain=$(nixos-rollout-report plain "$kind" "$title" "$meta" "$@")
+        html=$(nixos-rollout-report html "$kind" "$title" "$meta" "$@")
+        plain=''${plain:0:1500}
 
         # Test seam: the manual checks in this module's header run the watcher
         # against a scratch repo and must not page a phone.
@@ -164,7 +214,7 @@ let
           if [ -n "$tags" ]; then
             args+=(-H "Tags: $tags")
           fi
-          if ! curl "''${args[@]}" --data-binary "$body" "$ntfy_url" > /dev/null 2>&1; then
+          if ! curl "''${args[@]}" --data-binary "$plain" "$ntfy_url" > /dev/null 2>&1; then
             log "notify: ntfy delivery failed"
           fi
         fi
@@ -175,13 +225,13 @@ let
             low) urgency=low ;;
             high | urgent) urgency=critical ;;
           esac
-          if ! notify-send -a nixos-rollout -u "$urgency" "$title" "$body" > /dev/null 2>&1; then
+          if ! notify-send -a nixos-rollout -u "$urgency" "$title" "$plain" > /dev/null 2>&1; then
             log "notify: no desktop session for notify-send"
           fi
         fi
 
         if [ -n "$telegram_inbox" ]; then
-          publish_telegram "$title" "''${body:0:900}"
+          publish_telegram "$html"
         fi
       }
 
@@ -191,8 +241,10 @@ let
       # nixos-rollout-telegram service is started by a path unit and drains it.
       # The file is written under a dot name first (the path unit matches
       # `msg-*`) and renamed, so the drain never sees a half-written message.
+      # The first line marks the body as HTML: an emoji or a bold tag would not
+      # identify it, and the drain must still accept the older plain shape.
       publish_telegram() {
-        local title=$1 body=$2
+        local html=$1
         if [ ! -d "$telegram_inbox" ] || [ ! -w "$telegram_inbox" ]; then
           log "notify: telegram inbox unavailable ($telegram_inbox)"
           return 0
@@ -200,20 +252,33 @@ let
         local stamp tmp
         stamp=$(date +%s%N)-$$
         tmp="$telegram_inbox/.tmp-$stamp"
-        printf '%s\n%s\n' "$title" "$body" > "$tmp"
+        printf '#html\n%s\n' "$html" > "$tmp"
         mv "$tmp" "$telegram_inbox/msg-$stamp"
       }
 
       short() { printf '%s' "''${1:0:8}"; }
 
+      # The report lists at most 12 commits of the range and says how many are
+      # left: a notification is a summary, but it must not pretend the range
+      # ended where the list does.
       commits_since() {
-        local from=$1 to=$2
+        local from=$1 to=$2 all total
         if [ -n "$from" ] && git -C "$repo" cat-file -e "$from^{commit}" 2> /dev/null; then
-          git -C "$repo" log --format='%h %s' --reverse "$from..$to" | head -10 || true
+          all=$(git -C "$repo" log --format='%h %s' --reverse "$from..$to" || true)
         else
-          git -C "$repo" log -1 --format='%h %s' "$to" || true
+          all=$(git -C "$repo" log -1 --format='%h %s' "$to" || true)
+        fi
+        total=$(printf '%s\n' "$all" | grep -c . || true)
+        printf '%s\n' "$all" | head -12
+        if [ "$total" -gt 12 ]; then
+          printf '… ещё %s\n' "$((total - 12))"
         fi
       }
+
+      # Last lines of a check/build log for a failure report: the human needs
+      # the failing line, not the rebuild trace. Lines are cut so one long nix
+      # error cannot eat the expandable quotation.
+      log_tail() { tail -n 12 "$1" 2> /dev/null | cut -c1-200 || true; }
 
       head_rev=$(git -C "$repo" rev-parse HEAD)
       branch_now=$(git -C "$repo" symbolic-ref --quiet --short HEAD || true)
@@ -274,13 +339,10 @@ let
           record blocked
           log "blocked: manual-only paths changed:"
           log "$risky"
-          notify "$host: выкатка $(short "$head_rev") ждёт ручного switch" \
-            "$(commits_since "$base" "$head_rev")
-
-      Затронуты пути под ручным контролем:
-      $risky
-
-      Автодеплой систему не тронул. Выкатить: just switch-sudo" high warning
+          notify blocked "$host: выкатка $(short "$head_rev") ждёт ручного switch" high warning \
+            "Коммиты" "$(commits_since "$base" "$head_rev")" \
+            "Пути под ручным контролем" "$risky" \
+            "@note" "Автодеплой систему не тронул. Выкатить: just switch-sudo"
           exit 0
         fi
       fi
@@ -288,10 +350,9 @@ let
       log "gate: just check"
       if ! ( cd "$repo" && just check ) > "$state/check.log" 2>&1; then
         record failed-check
-        notify "$host: выкатка $(short "$head_rev") не прошла just check" \
-          "Проверки упали, система не тронута.
-
-      $(tail -c 1200 "$state/check.log")" high warning
+        notify failed-check "$host: выкатка $(short "$head_rev") не прошла just check" high warning \
+          "@note" "Проверки упали, система не тронута." \
+          "Журнал" "$(log_tail "$state/check.log")"
         exit 1
       fi
 
@@ -299,10 +360,9 @@ let
       if ! nix build "$repo#nixosConfigurations.$host.config.system.build.toplevel" \
         --out-link "$state/toplevel" > "$state/build.log" 2>&1; then
         record failed-build
-        notify "$host: выкатка $(short "$head_rev") не собралась" \
-          "Сборка упала, система не тронута.
-
-      $(tail -c 1200 "$state/build.log")" high warning
+        notify failed-build "$host: выкатка $(short "$head_rev") не собралась" high warning \
+          "@note" "Сборка упала, система не тронута." \
+          "Журнал" "$(log_tail "$state/build.log")"
         exit 1
       fi
       built=$(readlink -f "$state/toplevel")
@@ -338,8 +398,8 @@ let
       if ! systemctl start "$unit"; then
         rm -f "$repo/.agent/switch-request"
         record failed-activate
-        notify "$host: активация $(short "$head_rev") не запустилась" \
-          "nixos-agent-rollout не стартовал; система на прежнем поколении." high warning
+        notify failed-start "$host: активация $(short "$head_rev") не запустилась" high warning \
+          "@note" "nixos-agent-rollout не стартовал; система на прежнем поколении."
         exit 1
       fi
 
@@ -374,23 +434,25 @@ let
         write_state base "$head_rev"
         write_state current "$new_current"
 
-        diff=$(nix store diff-closures "$current" "$built" 2> /dev/null | head -8 || true)
-        body="Коммиты:
-      $(commits_since "$base" "$head_rev")
-
-      Изменения:
-      ''${diff:-нет}"
+        # Every changed package, up to 12 lines, then the count that is left:
+        # the diff of a full system rebuild is a page long, and the report is a
+        # summary. The list is not silently cut.
+        changes_all=$(nix store diff-closures "$current" "$built" 2> /dev/null || true)
+        changes=$(printf '%s\n' "$changes_all" | head -12)
+        changes_total=$(printf '%s\n' "$changes_all" | grep -c . || true)
+        if [ "$changes_total" -gt 12 ]; then
+          changes+=$'\n'"… ещё $((changes_total - 12))"
+        fi
+        note="''${elapsed}s"
         if [ "$(readlink -f "$current/kernel")" != "$(readlink -f "$built/kernel")" ] ||
           [ "$(readlink -f "$current/initrd")" != "$(readlink -f "$built/initrd")" ]; then
-          body+="
-
-      Ядро или initrd сменились: нужна перезагрузка."
+          note+=$'\n'"Ядро или initrd сменились: нужна перезагрузка."
         fi
-        body+="
-
-      Время: ''${elapsed}s"
         log "activated $built in ''${elapsed}s"
-        notify "$host: выкатка $(short "$head_rev") применена" "$body" default white_check_mark
+        notify applied "$host: выкатка $(short "$head_rev") применена" default white_check_mark \
+          "Коммиты" "$(commits_since "$base" "$head_rev")" \
+          "Изменения" "''${changes:-нет}" \
+          "@note" "$note"
         exit 0
       fi
 
@@ -407,10 +469,9 @@ let
       rm -f "$repo/.agent/switch-request"
       record failed-activate
       log "activation failed; the system stayed at $current"
-      notify "$host: активация $(short "$head_rev") упала" \
-        "Система осталась на $current.
-      Журнал: journalctl -u nixos-agent-rollout-work -n 40
-      Откат, если профиль уже сдвинулся: sudo nixos-rebuild switch --rollback" urgent warning
+      notify failed-activate "$host: активация $(short "$head_rev") упала" urgent warning \
+        "@note" "Система осталась на прежнем поколении. Журнал: journalctl -u nixos-agent-rollout-work -n 40" \
+        "@note" "Откат, если профиль уже сдвинулся: sudo nixos-rebuild switch --rollback"
       exit 1
     '';
   };

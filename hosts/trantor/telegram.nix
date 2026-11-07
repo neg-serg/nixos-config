@@ -37,10 +37,13 @@ in
     sender = lib.mkOption {
       type = lib.types.package;
       description = ''
-        `telegram-send <msg> [detail] [attempts]` wrapper: posts to the chat
-        from the SOPS secrets through the local sing-box socks proxy, retrying
-        up to <attempts> (default 6) times with 5s pauses and a 5s connect /
-        15s total timeout per attempt.
+        `telegram-send` wrapper. Plain form: `telegram-send <msg> [detail]
+        [attempts]`; HTML form: `telegram-send --html-file <path|-> [attempts]`,
+        which posts with parse_mode=HTML and splits a body over the Bot API
+        4096-character limit between lines, falling back to plain text if the
+        markup is rejected. Both forms go from the SOPS secrets through the
+        local sing-box socks proxy, retrying up to <attempts> (default 6)
+        times with 5s pauses and a 5s connect / 15s total timeout per attempt.
       '';
     };
 
@@ -98,6 +101,7 @@ in
       runtimeInputs = [
         pkgs.curl # HTTP(S) client for the Telegram Bot API
         pkgs.coreutils # date, seq, sleep for the retry loop and timestamps
+        pkgs.gnused # strip_html: the plain-text fallback for rejected markup
       ];
       text = builtins.readFile (
         pkgs.replaceVars ./telegram/send.sh {
