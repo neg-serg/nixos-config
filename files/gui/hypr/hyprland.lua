@@ -159,6 +159,14 @@ hl.monitor({ output = "DP-1", disabled = true })
 -- DP-4: second cable (motherboard iGPU) to the same MPG321UX panel — a phantom
 -- 4K60 screen that only shows if the monitor OSD input is switched. Keep disabled.
 hl.monitor({ output = "DP-4", disabled = true })
+-- Valve Index (EDID make "Valve") reports the DP non-desktop flag. Hyprland
+-- does not drive such outputs as monitors: it offers them to SteamVR through
+-- wp_drm_lease_v1. The offer is skipped when a monitor rule disables the
+-- connector, and the name-based DP-1/DP-4 rules above can match the headset
+-- depending on which port it lands on. Keep an explicit enabled rule for it —
+-- rules are matched last-to-first, so this one wins. It matches nothing while
+-- no HMD is connected; the HMD is leased regardless of the mode/position here.
+hl.monitor({ output = "desc:Valve", disabled = false })
 
 
 -- ---------------------------------------------------------------------
