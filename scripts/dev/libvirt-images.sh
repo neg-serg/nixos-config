@@ -77,7 +77,7 @@ cmd_snapshot() {
   snap="$(snapshot_name "${1:-manual}")"
   zfs snapshot "$snap"
   printf 'created %s\n' "$snap"
-  printf 'restore example: sudo %s restore %s winapps.qcow2\n' "$0" "$snap"
+  printf 'restore example: sudo %s restore %s windows.qcow2\n' "$0" "$snap"
 }
 
 cmd_check() {

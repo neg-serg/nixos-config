@@ -13,8 +13,7 @@ configs | | `nvim/` | Neovim configuration | | `obsidian-vault/` | Obsidian vaul
 `patches/` | Patch files used by packages | | `pleamar/` | Shell scenes, libraries and the theme
 pipeline | | `rmpc/` | RMPC music client configs | | `shell/` | Zsh, bash, environment | |
 `tealdeer/` | Tealdeer (tldr) config | | `transmission/` | Transmission daemon configs | | `vale/` |
-Vale prose linter styles | | `virt/` | Virtualisation configs (libvirt domains) | | `vivaldi/` |
-Vivaldi browser configs | | `winapps/` | WinApps (RDP bridge) app configs |
+Vale prose linter styles | | `vivaldi/` | Vivaldi browser configs
 
 Plus top-level `surfingkeys.js` (hand-written Surfingkeys config, wired via
 `packages/overlays/gui.nix`).

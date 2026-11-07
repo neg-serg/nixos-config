@@ -65,14 +65,10 @@ in
       assertions =
         let
           gui = config.features.gui;
-          guiApps = config.features.apps;
         in
         [
           (assertParent gui.enable gui.vicinae.enable
             "features.gui.vicinae.enable requires features.gui.enable = true"
-          )
-          (assertParent gui.enable guiApps.winapps.enable
-            "features.apps.winapps.enable requires features.gui.enable = true"
           )
         ];
     }
