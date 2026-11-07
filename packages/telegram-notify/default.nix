@@ -7,6 +7,11 @@
 #   `telegram-pill-bot` also serves free-text questions: `/status` renders a
 #   deterministic monitoring snapshot and everything else is answered by the
 #   local llama-swap model.
+#   The same bot owns the notes surface (`src/notes.rs`): `/note`, `/notes`,
+#   `/nb` plus the matching model tools create, read, append, search, tag and
+#   delete notes in the user's zk notebook, and run `nb` to pull/commit/push
+#   it. Writes drop from the unit's root to the notebook owner through
+#   `runuser`, so new notes stay neg-owned.
 #
 # Rust, no crates. The sender/curl invocation stays external on purpose: the
 # repo already ships `telegram-send` with the socks-proxy retry policy, and the

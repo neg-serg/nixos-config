@@ -23,11 +23,16 @@
 //!   PILL_BOT_OWNER         user owning the notebook (set by the unit)
 //!   PILL_BOT_HOME          that user's home (default /home/$PILL_BOT_OWNER)
 //!   PILL_BOT_NB            the `nb` sync script (default ~/.local/bin/nb)
-//!   PILL_BOT_ZK            zk binary (default `zk` from PATH)
 //!   PILL_BOT_RG            ripgrep binary (default `rg` from PATH)
 //!   PILL_BOT_RUNUSER       privilege drop helper (default `runuser`)
 //!   PILL_BOT_NB_TIMEOUT    seconds before `nb` is killed (default 90)
 //!   PILL_BOT_NOTES_TOOLS=0 disable the model tools
+//!
+//! New notes are written by the bot itself rather than by `zk new`: the
+//! notebook's filename template uses `{{slug}}`, which zk 0.15.7 does not
+//! provide, so `zk new` would create an empty `.md` name. The bot slugifies
+//! the title (Cyrillic transliterated, like the rest of the notebook),
+//! renders `.zk/templates/note.md` and fills in fresh frontmatter.
 
 use std::fs;
 use std::io::Write;
@@ -321,43 +326,185 @@ fn create(title: &str, body: &str) -> String {
     if title.is_empty() {
         return HELP.to_string();
     }
-    let zk = env_or("PILL_BOT_ZK", "zk");
-    let output = match run_owner(
-        &zk,
-        &["new", "--title", &title, "--print-path", "--no-input"],
-    ) {
-        Ok(output) => output,
-        Err(error) => return format!("⚠️ {error}"),
-    };
-    if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr);
-        return format!("⚠️ zk new: {}", cut(error.trim(), 400));
+    // `zk new` cannot name the file here: this notebook's config uses the
+    // `{{slug}}` variable, which zk 0.15.7 does not provide (it renders an
+    // empty name). The bot therefore writes the note itself, keeping the
+    // notebook's own template and filling in fresh frontmatter.
+    let slug = slugify(&title);
+    let mut path = root.join(format!("{slug}.md"));
+    let mut counter = 2;
+    while path.exists() {
+        if counter > 50 {
+            return format!("⚠️ Не удалось подобрать имя для «{title}».");
+        }
+        path = root.join(format!("{slug}-{counter}.md"));
+        counter += 1;
     }
-    let printed = String::from_utf8_lossy(&output.stdout);
-    let Some(line) = printed
-        .lines()
-        .rev()
-        .map(str::trim)
-        .find(|line| !line.is_empty())
-    else {
-        return "⚠️ zk new не вернул путь заметки.".to_string();
-    };
-    let path = PathBuf::from(line);
-    let path = if path.is_absolute() {
-        path
-    } else {
-        root.join(path)
-    };
+    let template = fs::read_to_string(root.join(".zk/templates/note.md")).ok();
+    let mut text = render_note(template.as_deref(), &title);
     let body = body.trim();
     if !body.is_empty() {
-        if let Err(error) = append_raw(&path, body) {
-            return format!(
-                "📝 Заметка создана: {}\n⚠️ тело не дописано: {error}",
-                relative(&path)
-            );
-        }
+        text.push('\n');
+        text.push_str(body);
+        text.push('\n');
+    }
+    if let Err(error) = write_note_file(&path, &text) {
+        return format!("⚠️ Не удалось создать заметку: {error}");
     }
     format!("📝 Заметка создана: {}\n{title}", relative(&path))
+}
+
+/// Write a brand-new note as the notebook owner. The unit runs as root, so a
+/// plain write would leave a root-owned file; the file is chowned to the owner
+/// and removed again if that fails.
+fn write_note_file(path: &Path, text: &str) -> Result<(), String> {
+    fs::write(path, text).map_err(|error| error.to_string())?;
+    let user = owner();
+    if !is_root() || user.is_empty() {
+        return Ok(());
+    }
+    let status = Command::new("chown")
+        .arg(format!("{user}:"))
+        .arg(path)
+        .status()
+        .map_err(|error| format!("chown: {error}"))?;
+    if status.success() {
+        return Ok(());
+    }
+    let _ = fs::remove_file(path);
+    Err(format!("chown {user} не удался"))
+}
+
+fn render_note(template: Option<&str>, title: &str) -> String {
+    let created = date_format("+%Y-%m-%dT%H:%M:%S%:z");
+    let day = date_format("+%Y-%m-%d");
+    let uuid = date_format("+%Y%m%d%H%M%S");
+    let title_yaml = yaml_escape(title);
+    let base = match template {
+        // The raw title goes into the body heading; `refresh_frontmatter`
+        // re-renders the `title:` line with YAML escaping.
+        Some(template) => template.replace("{{title}}", title),
+        None => format!(
+            "---\ncreated: \"{created}\"\ntitle: \"{title_yaml}\"\ndate: {day}\nuuid: {uuid}\ntags: []\ntype:\n---\n\n# {title}\n"
+        ),
+    };
+    refresh_frontmatter(&base, &title_yaml, &created, &day, &uuid)
+}
+
+/// The notebook template hardcodes the creation date and uuid; replace those
+/// in the frontmatter block so every note gets its own.
+fn refresh_frontmatter(text: &str, title: &str, created: &str, day: &str, uuid: &str) -> String {
+    let Some(rest) = text.strip_prefix("---\n") else {
+        return text.to_string();
+    };
+    let Some(end) = rest.find("\n---") else {
+        return text.to_string();
+    };
+    let (front, tail) = rest.split_at(end);
+    let lines: Vec<String> = front
+        .lines()
+        .map(|line| {
+            let key = line
+                .split_once(':')
+                .map(|(key, _)| key.trim())
+                .unwrap_or("");
+            match key {
+                "title" => format!("title: \"{title}\""),
+                "created" => format!("created: \"{created}\""),
+                "date" => format!("date: {day}"),
+                "uuid" => format!("uuid: {uuid}"),
+                _ => line.to_string(),
+            }
+        })
+        .collect();
+    format!(
+        "---\n{}\n{}",
+        lines.join("\n"),
+        tail.trim_start_matches('\n')
+    )
+}
+
+fn yaml_escape(text: &str) -> String {
+    text.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+/// Lowercase, no spaces, ASCII: the notebook's filenames are transliterated
+/// slugs (`spor-o-depressii.md`), so Russian titles need the same treatment.
+fn slugify(title: &str) -> String {
+    let mut words: Vec<String> = Vec::new();
+    let mut current = String::new();
+    for character in title.chars() {
+        let lower = character.to_lowercase().next().unwrap_or(character);
+        if lower.is_ascii_alphanumeric() {
+            current.push(lower);
+        } else if let Some(latin) = transliterate(lower) {
+            current.push_str(latin);
+        } else if !current.is_empty() {
+            words.push(std::mem::take(&mut current));
+        }
+    }
+    if !current.is_empty() {
+        words.push(current);
+    }
+    let slug = cut(&words.join("-"), 60);
+    let slug = slug.trim_matches('-').to_string();
+    if slug.is_empty() {
+        "note".to_string()
+    } else {
+        slug
+    }
+}
+
+fn transliterate(character: char) -> Option<&'static str> {
+    Some(match character {
+        'а' => "a",
+        'б' => "b",
+        'в' => "v",
+        'г' => "g",
+        'д' => "d",
+        'е' | 'ё' => "e",
+        'ж' => "zh",
+        'з' => "z",
+        'и' => "i",
+        'й' => "y",
+        'к' => "k",
+        'л' => "l",
+        'м' => "m",
+        'н' => "n",
+        'о' => "o",
+        'п' => "p",
+        'р' => "r",
+        'с' => "s",
+        'т' => "t",
+        'у' => "u",
+        'ф' => "f",
+        'х' => "kh",
+        'ц' => "ts",
+        'ч' => "ch",
+        'ш' => "sh",
+        'щ' => "shch",
+        'ъ' | 'ь' => "",
+        'ы' => "y",
+        'э' => "e",
+        'ю' => "yu",
+        'я' => "ya",
+        'і' => "i",
+        'ї' => "yi",
+        'є' => "ye",
+        'ґ' => "g",
+        _ => return None,
+    })
+}
+
+fn date_format(format: &str) -> String {
+    for candidate in ["/run/current-system/sw/bin/date", "date"] {
+        if let Ok(output) = Command::new(candidate).arg(format).output() {
+            if output.status.success() {
+                return String::from_utf8_lossy(&output.stdout).trim().to_string();
+            }
+        }
+    }
+    String::new()
 }
 
 fn show(path: &str) -> String {
@@ -406,7 +553,10 @@ fn remove(path: &str, confirmed: bool) -> String {
     if let Err(error) = fs::remove_file(&path) {
         return format!("⚠️ Не удалось удалить {rel}: {error}");
     }
-    format!("🗑️ Удалено: {rel}\nВернуть: git -C {} checkout -- {rel}", notebook().display())
+    format!(
+        "🗑️ Удалено: {rel}\nВернуть: git -C {} checkout -- {rel}",
+        notebook().display()
+    )
 }
 
 fn search(query: &str) -> String {
@@ -737,10 +887,7 @@ fn tool(
                                     .collect(),
                             ),
                         ),
-                        (
-                            "additionalProperties".to_string(),
-                            Value::Bool(false),
-                        ),
+                        ("additionalProperties".to_string(), Value::Bool(false)),
                     ]),
                 ),
             ]),
@@ -761,10 +908,7 @@ pub fn call_tool(name: &str, arguments: &str) -> String {
             &text_arg(&arguments, "title"),
             &text_arg(&arguments, "body"),
         ),
-        "notes_append" => append(
-            &text_arg(&arguments, "path"),
-            &text_arg(&arguments, "text"),
-        ),
+        "notes_append" => append(&text_arg(&arguments, "path"), &text_arg(&arguments, "text")),
         "notes_sync" => sync(),
         other => format!("неизвестный инструмент: {other}"),
     };
@@ -814,8 +958,8 @@ fn resolve_in(root: &Path, requested: &str) -> Result<PathBuf, String> {
     if candidate.extension().is_none() {
         candidate.set_extension("md");
     }
-    let canonical = fs::canonicalize(&candidate)
-        .map_err(|_| format!("нет такой заметки: {requested}"))?;
+    let canonical =
+        fs::canonicalize(&candidate).map_err(|_| format!("нет такой заметки: {requested}"))?;
     if !canonical.starts_with(&canonical_root) {
         return Err("путь ведёт за пределы каталога заметок".to_string());
     }
@@ -1043,7 +1187,10 @@ mod tests {
 
     #[test]
     fn routes_note_commands() {
-        assert_eq!(parse("/note купить хлеб"), Some(new_action("купить хлеб", "")));
+        assert_eq!(
+            parse("/note купить хлеб"),
+            Some(new_action("купить хлеб", ""))
+        );
         assert_eq!(
             parse("/note заголовок\nвторая строка"),
             Some(new_action("заголовок", "вторая строка"))
@@ -1067,11 +1214,20 @@ mod tests {
             })
         );
         assert_eq!(parse("/note"), Some(Action::Help));
-        assert_eq!(parse("/notes чат gpt"), Some(Action::Search("чат gpt".to_string())));
+        assert_eq!(
+            parse("/notes чат gpt"),
+            Some(Action::Search("чат gpt".to_string()))
+        );
         assert_eq!(parse("/notes"), Some(Action::Recent(DEFAULT_RECENT)));
         assert_eq!(parse("/notes recent 3"), Some(Action::Recent(3)));
-        assert_eq!(parse("/notes tag linux"), Some(Action::Tag("linux".to_string())));
-        assert_eq!(parse("/notes #linux"), Some(Action::Tag("linux".to_string())));
+        assert_eq!(
+            parse("/notes tag linux"),
+            Some(Action::Tag("linux".to_string()))
+        );
+        assert_eq!(
+            parse("/notes #linux"),
+            Some(Action::Tag("linux".to_string()))
+        );
         assert_eq!(parse("/nb"), Some(Action::Sync));
         assert_eq!(parse("/sync@trantor_bot"), Some(Action::Sync));
         assert_eq!(parse("/status"), None);
@@ -1113,11 +1269,13 @@ mod tests {
         for tool in tools {
             assert_eq!(tool.get("type").and_then(Value::as_str), Some("function"));
             let function = tool.get("function").expect("function");
-            assert!(function
-                .get("parameters")
-                .and_then(|parameters| parameters.get("type"))
-                .and_then(Value::as_str)
-                == Some("object"));
+            assert!(
+                function
+                    .get("parameters")
+                    .and_then(|parameters| parameters.get("type"))
+                    .and_then(Value::as_str)
+                    == Some("object")
+            );
         }
     }
 
@@ -1140,6 +1298,12 @@ mod tests {
         )
         .expect("note");
         fs::write(root.join("inbox.md"), "# inbox\nproxy notes\n").expect("note");
+        fs::create_dir_all(root.join(".zk/templates")).expect("template dir");
+        fs::write(
+            root.join(".zk/templates/note.md"),
+            "---\ncreated: \"2000-01-01T00:00:00+00:00\"\ntitle: \"{{title}}\"\ndate: 2000-01-01\nuuid: 200001010000\ntags: []\ntype:\n---\n\n# {{title}}\n",
+        )
+        .expect("template");
         std::env::set_var("PILL_BOT_NOTES_DIR", &root);
         std::env::remove_var("PILL_BOT_OWNER");
 
@@ -1155,8 +1319,36 @@ mod tests {
         assert!(tag.contains("reference/ssh.md"), "{tag}");
         assert!(!tag.contains("inbox.md"), "{tag}");
 
+        let created = execute(&Action::New {
+            title: "Спор о депрессии".to_string(),
+            body: "quick thought".to_string(),
+        });
+        assert!(created.contains("spor-o-depressii.md"), "{created}");
+        let note = fs::read_to_string(root.join("spor-o-depressii.md")).expect("created note");
+        assert!(note.contains("title: \"Спор о депрессии\""), "{note}");
+        assert!(note.contains("# Спор о депрессии"), "{note}");
+        assert!(note.contains("quick thought"), "{note}");
+        assert!(!note.contains("2000-01-01"), "{note}");
+
+        let duplicate = execute(&Action::New {
+            title: "Спор о депрессии".to_string(),
+            body: String::new(),
+        });
+        assert!(duplicate.contains("spor-o-depressii-2.md"), "{duplicate}");
+
+        let shown = execute(&Action::Show("spor-o-depressii.md".to_string()));
+        assert!(shown.contains("quick thought"), "{shown}");
+
         std::env::remove_var("PILL_BOT_NOTES_DIR");
         let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn slugify_transliterates_and_falls_back() {
+        assert_eq!(slugify("Спор о депрессии"), "spor-o-depressii");
+        assert_eq!(slugify("SSH через прокси"), "ssh-cherez-proksi");
+        assert_eq!(slugify("!!!"), "note");
+        assert!(slugify(&"word ".repeat(30)).len() <= 60);
     }
 
     #[test]

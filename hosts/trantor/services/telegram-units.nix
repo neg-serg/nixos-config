@@ -50,6 +50,13 @@ let
   pillPanelIcsDir = "/home/neg/.config/vdirsyncer/calendars/pills";
   pillPanelUser = "neg";
 
+  # Personal wiki the bot reads and writes: the zk notebook plus the `nb`
+  # sync script. The unit runs as root, so the bot drops to the desktop user
+  # for every write and for zk/nb (new notes must stay neg-owned, and git
+  # needs that user's HOME for its SSH config and key).
+  notesDir = "/home/neg/notes";
+  notesUserBin = "/home/neg/.local/bin/nb";
+
   # Daily 12:00 pill reminder: sends a Telegram message with an inline
   # "Mark taken" button; telegram-pill-bot turns a press into confirmation.
   # The message is skipped when the panel already recorded today's dose,
@@ -77,6 +84,10 @@ let
   # monitoring snapshot and every other text is answered by the local
   # llama-swap model (packages/telegram-notify/src/ask.rs). The endpoint is
   # loopback-only, so the snapshot never leaves the host.
+  # It also serves the notes commands (/note, /notes, /nb) and the model's
+  # notes tools: those write to the zk notebook as the desktop user, and `nb`
+  # pulls/commits/pushes it (git over the sing-box proxy, like the user's own
+  # shell). The notes directory is the only extra writable path.
   # Rust bridge (pkgs.neg.telegram-notify): it takes the two secrets, the panel
   # paths, the owning user and the model endpoint from the environment, which
   # the wrapper exports.
@@ -87,6 +98,9 @@ let
     export PILL_BOT_PANEL_STATE_LEGACY=${pillPanelLegacyStateFile}
     export PILL_BOT_ICS_DIR=${pillPanelIcsDir}
     export PILL_BOT_OWNER=${pillPanelUser}
+    export PILL_BOT_HOME=/home/${pillPanelUser}
+    export PILL_BOT_NOTES_DIR=${notesDir}
+    export PILL_BOT_NB=${notesUserBin}
     export PILL_BOT_STATE_DIR=/var/lib/telegram-pill-bot
     export PILL_BOT_LAST_MESSAGE=/var/lib/telegram-pill-reminder/last-message.json
     export PILL_BOT_LLM_URL=${config.trantor.telegram.llmEndpoint}
@@ -222,21 +236,32 @@ in
         };
 
         # Telegram bot: long-polls callback queries for the reminder button
-        # and text messages for /status and the local-model Q&A.
+        # and text messages for /status, the notes commands and the
+        # local-model Q&A.
         systemd.services."telegram-pill-bot" = {
-          description = "Telegram bot: pill buttons, /status and local-model Q&A";
+          description = "Telegram bot: pill buttons, /status, notes and local-model Q&A";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
-          # The /status snapshot shells out to zpool; the other tools it uses
-          # (systemctl, df, date, id) are already on the unit PATH.
-          path = [ pkgs.zfs ];
+          # /status shells out to zpool; notes need zk and ripgrep, and `nb`
+          # runs git/ssh (through the user's ProxyCommand and hence nc).
+          # systemctl, df, date and id are already on the unit PATH.
+          path = [
+            pkgs.zfs
+            pkgs.zk
+            pkgs.ripgrep
+            pkgs.git
+            pkgs.util-linux # runuser: drop from root to the notebook owner
+            pkgs.openssh
+            pkgs.netcat-openbsd # ssh ProxyCommand for github.com
+          ];
           # Same sandbox as the bridge, except that this one legitimately
-          # writes into the panel: it rewrites the panel's pill state and
-          # the vdirsyncer .ics (read-only home plus those two paths). It
-          # runs as root and chown()s those files to neg, so the capability
-          # set is left at systemd's default here — narrowing it is the next
-          # step, once a real button press has been traced.
+          # writes into the panel and the notes notebook: it rewrites the
+          # panel's pill state and the vdirsyncer .ics, and edits notes as
+          # neg (read-only home plus those paths). It runs as root and
+          # chown()s the panel files to neg, so the capability set is left at
+          # systemd's default here — narrowing it is the next step, once a
+          # real button press has been traced.
           serviceConfig = commonHardening // {
             ExecStart = "${pillBotScript}";
             Restart = "always";
@@ -246,9 +271,13 @@ in
             # The state directory, not the file: on the first boot after the
             # rename the file does not exist yet and `-` would leave the whole
             # directory read-only, so the bot could not write its own state.
+            # The notes tree is a writable island inside the read-only home:
+            # zk edits `.zk/notebook.db` there, and `git pull/push` writes its
+            # objects and refs into the same repository.
             ReadWritePaths = [
               "-${pillPanelStateDir}"
               "-${pillPanelIcsDir}"
+              "-${notesDir}"
             ];
           };
         };

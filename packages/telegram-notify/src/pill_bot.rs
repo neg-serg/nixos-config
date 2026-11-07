@@ -24,6 +24,8 @@
 //!   PILL_BOT_OWNER             desktop user owning those files
 //!   PILL_BOT_LLM_URL, PILL_BOT_LLM_MODEL, PILL_BOT_LLM_TIMEOUT
 //!   PILL_BOT_ALERTMANAGER_URL  active alerts for the snapshot
+//!   PILL_BOT_NOTES_DIR, PILL_BOT_NB, PILL_BOT_HOME  notes notebook access
+//!                              (see `notes.rs`; the unit sets them)
 //!   PILL_BOT_CURL, PILL_BOT_PROXY, PILL_BOT_API_BASE
 //!   PILL_BOT_ONCE=1            process one poll batch and exit (tests)
 //!   PILL_BOT_SLEEP             pause between iterations, seconds (default 5)
@@ -33,6 +35,7 @@
 mod shared;
 
 mod ask;
+mod notes;
 
 use std::io::Write;
 use std::path::{Path, PathBuf};
