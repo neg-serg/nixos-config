@@ -11,6 +11,8 @@ language 0.4
 // Reading order, left to right, is the legacy one:
 //   left row:  clock · workspaces · pill · keyboard · network · sysmon · weather
 //   right row: media · MPD · voice (while the command runs) · tray · mic · volume · Genelec
+//   centre:    the build badge, and — while a take runs — the screen-recording
+//              capsule (red dot and clock) with its four-bar sound meter
 // This slice draws clock/date, the workspace tabs, the network capsule (left)
 // and the volume capsule (right). The other modules come later; each has a
 // marked extension point below.
@@ -239,6 +241,26 @@ scene bar {
     fact widget.mic = true
     fact widget.genelec = true
     fact widget.build = true
+    // ------------------------------------------------- screen recording
+    // A take's live state, polled once a second from the recorder's own pidfile
+    // and state file (bar.luau). `rec.sec` is the clock the capsule prints; it
+    // also drives the dot's heartbeat, so no `time` is named here — a scene that
+    // names one never rests, and a blinking dot is not worth the whole bar at
+    // 120 fps. The four `rec.bar*` facts are the analysers' bands (0..1), and
+    // `rec.level` is their loudest for the tooltip. While no take runs the poll
+    // finds no pidfile, nothing is spawned and the bar draws no capsule at all.
+    fact rec_active = false
+    fact rec_audio = false
+    fact rec.sec = 0
+    fact rec.level = 0
+    fact rec.bar1 = 0
+    fact rec.bar2 = 0
+    fact rec.bar3 = 0
+    fact rec.bar4 = 0
+    text rec_time = "0:00"
+    // One impulse per elapsed second; the halo behind the dot follows it down.
+    prop rec.beat = 0 ~quick
+    on change rec.sec { impulse rec.beat 20 }
     // The pill's state, mirrored out of the plugin by the rules below. A plugin's facts and texts are
     // live for this scene and stale for its logic (measured 2026-10-31), and the card is built by the
     // logic — so the scene copies them into names the logic owns. `takenAt` is a text and a rule can
@@ -518,6 +540,9 @@ scene bar {
     event toggle_shell_panel ->
     // The build badge's pointer, for its tooltip (QS's `PanelTooltip` over `capsule.hovered`).
     event build_hover ->
+    // A press on the recording capsule. `screenrec stop`, not the toggle: a press
+    // that raced the recorder's own stop must not start a new take.
+    event stop_recording ->
     // The workspace capsule asked for hyprexpo (QS: `Services.Expo.toggle()`), and the
     // keyboard capsule for the next layout of the boards (`KeyboardLayoutHypr`'s
     // `switchKeyboardLayout()`; the logic spells out why it is `all` and not `current`).
@@ -832,7 +857,11 @@ scene bar {
     // capsule's route toggle (the RME's AES/Analog pair); `ip` reads the interfaces — the
     // link, and the tunnel's name — and `ping` is the internet's own probe, exactly the two
     // commands QS's Connectivity.qml runs for the same two questions.
-    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pleamar-sysmon", "pwroute", "systemctl", "window-activate", "nixbuild-status", "mpc", "genlc", "playerctl", "ffprobe"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "bluetooth", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write", "say:panels", "nixbuild-status" }
+    // The recording capsule reads the recorder's pidfile and state through
+    // `cat`/`ps`, stops a take with `screenrec`, and follows the two recorded
+    // sources with `cava` instances of its own; `wpctl` names the default
+    // microphone cava should listen to.
+    permissions { run: "cat", "hyprctl", "hypr-expo", "ip", "ping", "dash", "curl", "date", "nc", "pleamar", "pleamar-sysmon", "pwroute", "systemctl", "window-activate", "nixbuild-status", "mpc", "genlc", "playerctl", "ffprobe", "screenrec", "cava", "wpctl", "ps"; services: "clock", "workspaces", "workspaces.focus", "audio", "audio.*", "network", "bluetooth", "tray", "tray.activate", "tray.context", "tray.menu_click", "media", "media.*", "env", "files", "files.write", "say:panels", "nixbuild-status" }
 
     // ------------------------------------------------------------------ data
     // One record per workspace; `active` says whether that one is the active
@@ -2075,16 +2104,111 @@ scene bar {
     on enter tray_reveal { emit tray_hot(1) }
     on leave tray_reveal { emit tray_hot(0) }
 
+    // ---------------------------------------------------- centre: a take
+    // The recording capsule: the palette's alert red as a dot with a one-second
+    // heartbeat behind it, and the clock in Iosevka beside it. The plate, the
+    // 23 px face and the 6 px radius are the strip's own (the build badge next
+    // to it uses the same ones), so the centre does not become a different
+    // species of widget while something records.
+    component RecCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        let pad = 6
+        let dot = 7
+        let dot.gap = 6
+        // Six glyphs: `M:SS` up to `999:59`; 14 px Iosevka advances 7 px, so the
+        // box never has to change width while the clock runs.
+        let timer.w = 44
+        let w = pad + dot + dot.gap + timer.w + pad
+        size: w * scale, strip * scale
+        group zoom {
+            scale: scale
+            body {
+                color: live.coal
+                opacity: 69%
+                border: 1, mix(live.coal, live.ink, 8%)
+                box { from: 0, 1; size: w, 23; corner: 6 }
+            }
+            // The halo is the heartbeat: `rec.beat` is impulsed once a second by
+            // the rule at the top of the file and decays on `quick`, so the ring
+            // swells exactly as often as the clock ticks.
+            ellipse { at: pad + dot / 2, strip / 2; radius: dot / 2 + 1.5 + max(0, rec.beat); color: live.warn; opacity: 22% }
+            ellipse { at: pad + dot / 2, strip / 2; radius: dot / 2; color: live.warn }
+            // `live.ink`, not the red: the clock is information, the dot is the
+            // state. 14 px is the bar's reading size and the box is right there.
+            text "{rec_time}" { at: pad + dot + dot.gap, strip / 2; anchor: left center; size: 14 * text_scale; weight: 600; color: live.ink; family: "Iosevka"; width: timer.w; lines: 1 }
+            // The whole plate stops the take: `screenrec stop` is idempotent, so
+            // a press that races the recorder's own stop cannot start another.
+            zone box rec { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Screen recording {rec_time}, click to stop"; role: button }
+            on enter rec { emit tip(13) }
+            on leave rec { emit tip_hide }
+            on press rec { emit stop_recording }
+        }
+    }
+
+    // The sound take: four bars, the meter 11 px wide inside a 21 px plate —
+    // icon-sized, the promise the capsule makes. Each bar is a cava band of the
+    // two sources the recorder mixes (microphone and system output), the sockets
+    // stay visible at rest so silence still reads as a meter, and the colour
+    // climbs from the palette's highlight to its alert red with the level.
+    component RecAudio(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        let pad = 5
+        let bar.w = 2
+        let bar.gap = 1
+        let meter.w = 4 * bar.w + 3 * bar.gap
+        let w = 2 * pad + meter.w
+        let base = strip / 2 + 7
+        let floor = 2
+        let span = 12
+        let x1 = pad
+        let x2 = x1 + bar.w + bar.gap
+        let x3 = x2 + bar.w + bar.gap
+        let x4 = x3 + bar.w + bar.gap
+        let h1 = floor + min(1, max(0, rec.bar1)) * span
+        let h2 = floor + min(1, max(0, rec.bar2)) * span
+        let h3 = floor + min(1, max(0, rec.bar3)) * span
+        let h4 = floor + min(1, max(0, rec.bar4)) * span
+        size: w * scale, strip * scale
+        group zoom {
+            scale: scale
+            body {
+                color: live.coal
+                opacity: 69%
+                border: 1, mix(live.coal, live.ink, 8%)
+                box { from: 0, 1; size: w, 23; corner: 6 }
+            }
+            box { from: x1, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
+            box { from: x2, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
+            box { from: x3, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
+            box { from: x4, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
+            box { from: x1, base - h1; size: bar.w, h1; corner: 1; color: mix(live.highlight, live.warn, rec.bar1) }
+            box { from: x2, base - h2; size: bar.w, h2; corner: 1; color: mix(live.highlight, live.warn, rec.bar2) }
+            box { from: x3, base - h3; size: bar.w, h3; corner: 1; color: mix(live.highlight, live.warn, rec.bar3) }
+            box { from: x4, base - h4; size: bar.w, h4; corner: 1; color: mix(live.highlight, live.warn, rec.bar4) }
+        }
+    }
+
     Left()
     Right()
 
-    // The build badge, in the middle of the strip: QS puts `BuildStatus` on a panel of its own
-    // centred along the bottom edge, so its capsule stands where the bar's centre is — not at
-    // the end of a row where it shoved the weather and the clock around every time a build
-    // started. It takes no space at rest (`Build.busy` is false while nothing runs), and a
-    // press on it toggles the build drawer (QS: `autoToggleOnTap` on BuildStatus).
-    row build_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; show: widget.build and Build.busy
-        build.Tile(toggle_build_panel, build_hover, type_scale: text_scale)
+    // The centre of the strip: QS puts `BuildStatus` on a panel of its own
+    // centred along the bottom edge, so its capsule stands where the bar's
+    // centre is — not at the end of a row where it shoved the weather and the
+    // clock around every time a build started. The recording capsules stand
+    // beside it in the same row: a take is something the bar should say where
+    // the eye already is. The row takes no space at rest (no build, no take),
+    // and a press on the build badge toggles the build drawer (QS:
+    // `autoToggleOnTap` on BuildStatus).
+    let center.gap = 6 * ui * user_scale * mon_scale[min(screen.index, 3)]
+    row center_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; gap: center.gap
+        show: rec_active or (widget.build and Build.busy)
+        RecCapsule() { show: rec_active }
+        // A `show:` written on a copy of a strict-library component is read
+        // inside the library, where this scene's `widget.build` and the
+        // plugin's `Build.busy` do not exist — the wrapper row carries the
+        // condition instead (the `pill_slot` rule in `Left`).
+        row build_slot { show: widget.build and Build.busy
+            build.Tile(toggle_build_panel, build_hover, type_scale: text_scale)
+        }
+        RecAudio() { show: rec_active and rec_audio }
         // A zone that goes away takes its pointer with it and `leave` never comes: a build that ends
         // under the cursor takes its card too (the rule the audio capsules carry).
         on change Build.busy while not Build.busy { emit tip_hide }

@@ -1376,6 +1376,18 @@ local function tip_line(i)
     -- logic (measured 2026-10-31), and a branch here read exactly those.
     elseif i == 12 then
         return text.tip_title ~= "" and text.tip_title or "Tray item"
+    elseif i == 13 then
+        -- The recording capsule (bar.plm): the clock the capsule prints, whether
+        -- the take carries sound, and the one action the plate offers.
+        local lines = { "Recording " .. (text.rec_time ~= "" and text.rec_time or "0:00") }
+        if fact.rec_audio == true then
+            local pct = math.floor((tonumber(fact["rec.level"]) or 0) * 100 + 0.5)
+            lines[#lines + 1] = string.format("Sound: %d %%", pct)
+        else
+            lines[#lines + 1] = "Video only"
+        end
+        lines[#lines + 1] = "Click — stop recording"
+        return table.concat(lines, "\n")
     elseif i == 5 then
         local parts = { "Weather" }
         if text["weather.temp"] ~= "" then parts[#parts + 1] = text["weather.temp"] end
@@ -2472,3 +2484,250 @@ local function sysmon_start()
 end
 
 sysmon_start()
+
+-- ---------------------------------------------------------- screen recording
+-- The recording capsules in `bar.plm` need three answers, once a second: is a
+-- take running, does it carry sound, and for how long. The recorder's own two
+-- state files answer them, so this logic keeps no recorder state of its own and
+-- a take started before the scene (or by the compositor bind) is visible at
+-- once:
+--
+--   /tmp/wf-recorder-$USER.pid   the wf-recorder PID (screenrec's contract)
+--   /tmp/wf-recorder-$USER.json  video/audio paths, the start epoch and the
+--                                sound sidecar's PID (screenrec writes it)
+--
+-- The PID is trusted only when `/proc/<pid>/comm` says `wf-recorder` (the same
+-- check the toggle makes), and the sidecar only when its comm says `ffmpeg`.
+--
+-- The four sound bars are the two sources the recorder mixes: the microphone
+-- and the system output. Two passive cava instances read exactly those sources
+-- while the take has sound, the same analyser the media capsule already uses;
+-- the microphone's node name comes from WirePlumber, the output is cava's own
+-- default (the monitor of the default sink). Nothing runs at rest.
+local REC_POLL_MS = 1000
+
+local recUser = sys.ask("env", "USER")
+local recPidfile = "/tmp/wf-recorder-" .. tostring(recUser or "") .. ".pid"
+local recStatefile = "/tmp/wf-recorder-" .. tostring(recUser or "") .. ".json"
+local recPolling = false
+local recAudio = false
+local recGeneration = 0
+local recMicCava = nil
+local recSysCava = nil
+local recMicLevels = { 0, 0, 0, 0 }
+local recSysLevels = { 0, 0, 0, 0 }
+local recLastBars = { -1, -1, -1, -1 }
+local recLastLevel = -1
+
+if not recUser then
+    log("recording: USER is not in the scene environment; the capsules stay off")
+end
+
+local function recFact(name, value)
+    if fact[name] ~= value then fact[name] = value end
+end
+
+-- `gsub` returns the replacement count as a second value; parentheses keep the
+-- string alone, and `tonumber` would otherwise take that count as a base.
+local function rec_trim(value)
+    return (tostring(value or ""):gsub("%s+$", ""))
+end
+
+-- `M:SS`, total minutes: a take can run for hours and the capsule's box is six
+-- glyphs wide, so no hour field ever has to appear or disappear.
+local function rec_time(seconds)
+    local whole = math.max(0, math.floor(tonumber(seconds) or 0))
+    return string.format("%d:%02d", math.floor(whole / 60), whole % 60)
+end
+
+local function rec_publish()
+    local peak = 0
+    for i = 1, 4 do
+        local level = clamp01(math.max(recMicLevels[i] or 0, recSysLevels[i] or 0))
+        if level > peak then peak = level end
+        if recLastBars[i] ~= level then
+            recLastBars[i] = level
+            fact["rec.bar" .. i] = level
+        end
+    end
+    if recLastLevel ~= peak then
+        recLastLevel = peak
+        fact["rec.level"] = peak
+    end
+end
+
+local function rec_cava_config(source)
+    local lines = {
+        "[general]",
+        "bars=4",
+        "framerate=15",
+        -- autosens would normalise every band to full scale in a few seconds
+        -- (measured: a 660 Hz tone lit all four after six seconds), which is the
+        -- opposite of "louder or quieter"; a fixed sensitivity and the square
+        -- root below keep the meter proportional to the recorded signal.
+        "autosens=0",
+        "sensitivity=150",
+        "[smoothing]",
+        "monstercat=0",
+        "gravity=40",
+        "noise_reduction=2",
+        "[input]",
+        "method=pipewire",
+        "active=0",
+    }
+    if source and source ~= "" then lines[#lines + 1] = "source=" .. source end
+    for _, line in ipairs({
+        "[output]",
+        "method=raw",
+        "data_format=ascii",
+        "channels=mono",
+        "mono_option=average",
+        "",
+    }) do
+        lines[#lines + 1] = line
+    end
+    return table.concat(lines, "\n")
+end
+
+local function rec_cava_line(line, target)
+    local seen = 0
+    for token in line:gmatch("[^;]+") do
+        seen = seen + 1
+        if seen > 4 then break end
+        local raw = tonumber(token)
+        -- cava reports 0..255; the square root is the perceptual scale a
+        -- four-pixel bar needs (a full-scale sine reads ~0.38, a quiet room 0).
+        target[seen] = raw and math.sqrt(clamp01(raw / 255)) or 0
+    end
+    for i = seen + 1, 4 do target[i] = 0 end
+    rec_publish()
+end
+
+local function rec_cava_start(source, target)
+    local ok, id = pcall(spawn, "cava", { "-p", "/dev/stdin" }, function(line)
+        rec_cava_line(line, target)
+    end, function(_, code)
+        if code ~= 0 then log("recording: cava exited with " .. tostring(code)) end
+    end, { input = rec_cava_config(source) })
+    if ok and id then return id end
+    log("recording: cava could not be started")
+    return nil
+end
+
+local function rec_audio_stop()
+    recGeneration = recGeneration + 1
+    if recMicCava then
+        pcall(kill, recMicCava)
+        recMicCava = nil
+    end
+    if recSysCava then
+        pcall(kill, recSysCava)
+        recSysCava = nil
+    end
+    for i = 1, 4 do
+        recMicLevels[i] = 0
+        recSysLevels[i] = 0
+    end
+    rec_publish()
+end
+
+local function rec_audio_start()
+    recGeneration = recGeneration + 1
+    local generation = recGeneration
+    if not recSysCava then recSysCava = rec_cava_start(nil, recSysLevels) end
+    -- cava's `source` is the node name, which is why the default source has to
+    -- be asked for: cava's own default is the *sink* monitor, the other half.
+    run("wpctl", { "inspect", "@DEFAULT_AUDIO_SOURCE@" }, function(out, code)
+        if generation ~= recGeneration then return end
+        local name = (code == 0) and (out or ""):match('node%.name%s*=%s*"([^"]+)"') or nil
+        if not name or recMicCava then return end
+        recMicCava = rec_cava_start(name, recMicLevels)
+    end)
+end
+
+local function rec_apply(active, audio, elapsed)
+    recFact("rec_active", active)
+    recFact("rec_audio", audio)
+    recFact("rec.sec", elapsed)
+    local clock = rec_time(elapsed)
+    if text.rec_time ~= clock then text.rec_time = clock end
+
+    if active and audio and not recAudio then
+        recAudio = true
+        rec_audio_start()
+    elseif recAudio and (not active or not audio) then
+        recAudio = false
+        rec_audio_stop()
+    end
+end
+
+-- `/proc/<pid>/comm` of a process this logic did not start. A reused PID is
+-- why every check names the program it expects; the file is read through
+-- `cat`, the one file reader the scene already runs for `/proc/net/dev`.
+local function rec_comm(pid, then_fn)
+    run("cat", { "/proc/" .. tostring(pid) .. "/comm" }, function(out, code)
+        local comm = ""
+        if code == 0 then comm = rec_trim(out) end
+        then_fn(comm)
+    end)
+end
+
+local function rec_poll()
+    if recPolling then return end
+    recPolling = true
+    local function done()
+        recPolling = false
+    end
+    run("cat", { recPidfile }, function(out, code)
+        local pid = (code == 0) and tonumber(rec_trim(out)) or nil
+        if not pid or pid <= 0 then
+            rec_apply(false, false, 0)
+            done()
+            return
+        end
+        rec_comm(pid, function(comm)
+            if comm ~= "wf-recorder" then
+                rec_apply(false, false, 0)
+                done()
+                return
+            end
+            -- `etimes` is whole seconds since the process started: the clock
+            -- keeps running even when the state file is missing (a take from a
+            -- previous screenrec build has no sound sidecar to describe).
+            run("ps", { "-o", "etimes=", "-p", tostring(pid) }, function(psout, pscode)
+                local elapsed = 0
+                if pscode == 0 then
+                    elapsed = tonumber(rec_trim(psout)) or 0
+                end
+                run("cat", { recStatefile }, function(stateout, statecode)
+                    local state = nil
+                    if statecode == 0 then
+                        local ok, decoded = pcall(json.decode, stateout)
+                        if ok and type(decoded) == "table" then state = decoded end
+                    end
+                    local audio_pid = state and tonumber(state.audio_pid) or 0
+                    if not audio_pid or audio_pid <= 0 then
+                        rec_apply(true, false, elapsed)
+                        done()
+                        return
+                    end
+                    rec_comm(audio_pid, function(audio_comm)
+                        rec_apply(true, audio_comm == "ffmpeg", elapsed)
+                        done()
+                    end)
+                end)
+            end)
+        end)
+    end)
+end
+
+every(REC_POLL_MS, rec_poll)
+rec_poll()
+
+-- A press on the capsule stops the take; `screenrec stop` is idempotent and
+-- never starts one, unlike the bare toggle the compositor binds run.
+on("stop_recording", function()
+    run("screenrec", { "stop" }, function(_, code)
+        if code ~= 0 then log("recording: stop exited with " .. tostring(code)) end
+    end)
+end)
