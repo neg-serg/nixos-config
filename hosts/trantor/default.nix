@@ -92,6 +92,16 @@
   # pulls qemu_kvm plus the libvirtd stack (~500 MiB of system closure) for VMs
   # that are shut off. The VM images under /var/lib/libvirt are untouched.
   features.virt.libvirtd.enable = false;
+  # Auto-rollout: the watcher in modules/user/nix-maid/sys/user-services/
+  # rollout-watch.nix deploys new commits every two minutes through
+  # nixos-agent-rollout and reports to ntfy + desktop + Telegram. Changes under
+  # secrets/, the VPN module and modules/security/ only produce a "switch by
+  # hand" report instead of being applied.
+  features.system.rolloutWatch = {
+    enable = true;
+    ntfyUrl = "http://127.0.0.1:2586/system";
+    telegramSender = lib.mkIf config.trantor.telegram.enable config.trantor.telegram.sender;
+  };
   # Declarative Wine apps — features.wine.apps.<id>; managed via the `wineapps`
   # CLI (list/install/uninstall/run). Workflow: see the wine-apps DSH skill.
   features.wine.enable = true;

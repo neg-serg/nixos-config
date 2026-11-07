@@ -105,3 +105,24 @@ were removed on purpose (`modules/security/default.nix` — passwordless arbitra
 activated flake is user-writable), and `features.security.tpmSudo` is off on this host. The
 agent-switch mechanism is the one deliberate exception, and it is narrow: a single polkit rule for
 one unit and the `start` verb, verified artifact only. Never add `-n` to other sudo commands.
+
+## Automatic rollout (watcher)
+
+`features.system.rolloutWatch` (enabled on trantor, `hosts/trantor/default.nix`) runs
+`nixos-rollout-watch` every two minutes in the user manager
+(`modules/user/nix-maid/sys/user-services/rollout-watch.nix`). For a new commit on a clean `main` it
+runs `just check`, builds the host toplevel and writes the verified store path to
+`.agent/switch-request` — the same request an agent makes by hand above — then starts
+`nixos-agent-rollout` itself and waits for the result. The report goes to ntfy, the desktop and
+Telegram.
+
+Changes under `secrets/`, `modules/system/net/vpn/`, `modules/security/` and the watcher itself are
+**not** deployed automatically: the report asks for `just switch-sudo` instead, because a wrong
+secret/VPN/security-module change can lock the host out.
+
+- state (`head`, `status`, `base`, the last `check.log`/`build.log`):
+  `~/.local/state/nixos-rollout-watch/`
+- journal: `journalctl --user -u nixos-rollout-watch`
+- pause: `systemctl --user stop nixos-rollout-watch.timer`
+- a manual switch, an agent rollout or a rollback between two ticks rebases the watcher on HEAD and
+  sends nothing — it never deploys over a deliberate human action.
