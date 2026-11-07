@@ -253,7 +253,10 @@ let
         exit 0
       fi
 
-      if [ -n "$(git -C "$repo" status --porcelain)" ]; then
+      # Untracked files do not reach a git flake's source, so a stray file in
+      # the checkout must not stall the watcher for ever (it would, if it
+      # counted as dirt): only tracked modifications are uncommitted work.
+      if [ -n "$(git -C "$repo" status --porcelain --untracked-files=no)" ]; then
         log "working tree is dirty: not deploying uncommitted work"
         exit 0
       fi
