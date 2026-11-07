@@ -261,6 +261,20 @@ scene bar {
     // One impulse per elapsed second; the halo behind the dot follows it down.
     prop rec.beat = 0 ~quick
     on change rec.sec { impulse rec.beat 20 }
+    // ------------------------------------------------------ local LLM
+    // The model llama-swap has resident, from `pleamar-sysmon`'s `llm` object:
+    // the worker asks `/running` and reads the DRM card's VRAM counters, so the
+    // capsule names the model that is actually holding the card rather than
+    // guessing from a process. `llm_time` is the clock since the model first
+    // appeared; the short name is the id with its `-abliterated` suffix gone,
+    // and the full id rides in the tooltip.
+    fact llm_active = false
+    text llm_model = ""
+    text llm_full = ""
+    text llm_state = ""
+    text llm_vram = ""
+    text llm_vram_total = ""
+    text llm_time = ""
     // The pill's state, mirrored out of the plugin by the rules below. A plugin's facts and texts are
     // live for this scene and stale for its logic (measured 2026-10-31), and the card is built by the
     // logic — so the scene copies them into names the logic owns. `takenAt` is a text and a rule can
@@ -2186,20 +2200,57 @@ scene bar {
         }
     }
 
+    // ---------------------------------------------------- centre: a model
+    // The resident llama-swap model. The glyph is tinted by the GPU's busy
+    // share, so a generating model leans toward the alert red while one that is
+    // merely held stays in the accent; the two rows are the network capsule's
+    // 9.6 px readout — the id above, the card's used VRAM and the clock since
+    // the model appeared below.
+    component LlmCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        let pad = 6
+        let icon = 14
+        let icon.gap = 6
+        let text.w = 68
+        let w = pad + icon + icon.gap + text.w + pad
+        size: w * scale, strip * scale
+        group zoom {
+            scale: scale
+            body {
+                color: live.coal
+                opacity: 69%
+                border: 1, mix(live.coal, live.ink, 8%)
+                box { from: 0, 1; size: w, 23; corner: 6 }
+            }
+            text "psychology" { at: pad, strip / 2; anchor: left center; family: "Material Symbols Outlined"; size: icon; color: mix(live.accent, live.warn, min(1, max(0, gpu))) }
+            // 9.6 px is the same readout size as the network capsule's two rows;
+            // the id is elided inside `text.w` when a tier name is long, and the
+            // tooltip carries the whole id.
+            text "{llm_model}" { at: pad + icon + icon.gap, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.ink; family: "Iosevka"; width: text.w; lines: 1 }
+            text "{llm_vram}" { at: pad + icon + icon.gap, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.accent_hover; family: "Iosevka"; lines: 1 }
+            text "{llm_time}" { at: w - pad, strip / 2 + 4; anchor: right center; size: 9.6 * text_scale; color: live.ink.off; family: "Iosevka"; width: 30; lines: 1 }
+            // Read-only, but a hover area: the tooltip is where the full id,
+            // the TTL state and the RAM figure belong.
+            zone box llm { from: 0, 0; size: w, strip; corner: corner; label: "Local LLM {llm_model}"; role: region }
+            on enter llm { emit tip(14) }
+            on leave llm { emit tip_hide }
+        }
+    }
+
     Left()
     Right()
 
     // The centre of the strip: QS puts `BuildStatus` on a panel of its own
     // centred along the bottom edge, so its capsule stands where the bar's
     // centre is — not at the end of a row where it shoved the weather and the
-    // clock around every time a build started. The recording capsules stand
-    // beside it in the same row: a take is something the bar should say where
-    // the eye already is. The row takes no space at rest (no build, no take),
-    // and a press on the build badge toggles the build drawer (QS:
-    // `autoToggleOnTap` on BuildStatus).
+    // clock around every time a build started. The activity capsules stand
+    // beside it in the same row: a resident model or a recording take is
+    // something the bar should say where the eye already is. The row takes no
+    // space at rest, and a press on the build badge toggles the build drawer
+    // (QS: `autoToggleOnTap` on BuildStatus).
     let center.gap = 6 * ui * user_scale * mon_scale[min(screen.index, 3)]
     row center_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; gap: center.gap
-        show: rec_active or (widget.build and Build.busy)
+        show: llm_active or rec_active or (widget.build and Build.busy)
+        LlmCapsule() { show: llm_active }
         RecCapsule() { show: rec_active }
         // A `show:` written on a copy of a strict-library component is read
         // inside the library, where this scene's `widget.build` and the
