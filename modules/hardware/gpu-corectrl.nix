@@ -27,6 +27,11 @@
 }:
 let
   cfg = config.hardware.gpu.corectrl or { };
+
+  # The GUI is opened by hand and its exclusive closure is 92.2 MiB
+  # (mesa-demos included), so it is built on first use. The polkit rule below
+  # matches the helper's action id, not a path, so it works unchanged.
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 in
 {
   options.hardware.gpu.corectrl = {
@@ -48,7 +53,12 @@ in
   };
 
   config = lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [ pkgs.corectrl ]; # GUI for AMD/Intel GPU oveclocking and fan control
+    environment.systemPackages = [
+      (onDemand {
+        name = "corectrl";
+        attr = "corectrl";
+      }) # GUI for AMD GPU overclocking and fan control, built on first use
+    ];
 
     # Polkit rule to allow the helper for selected group
     environment.etc."polkit-1/rules.d/60-corectrl.rules".text = ''

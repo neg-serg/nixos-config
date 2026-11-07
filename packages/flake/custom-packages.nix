@@ -74,6 +74,8 @@
   scrcpy = pkgs.scrcpy; # Android display/control over USB/TCP (launcher in modules/hardware/webcam)
   hw-probe = pkgs.hw-probe; # hardware inventory probe (launcher in modules/system/pkgs.nix)
   espanso = pkgs.espanso; # text expander (launcher in modules/user/nix-maid/cli/espanso.nix)
+  hdspeconf = pkgs.hdspeconf; # RME HDSPe matrix mixer (launcher in modules/media/audio/core-packages.nix)
+  corectrl = pkgs.corectrl; # AMD GPU overclock/fan GUI (launcher in modules/user/games/performance.nix)
   proton-ge-bin = pkgs.proton-ge-bin; # GE-Proton, materialised into Steam's compat dir by a login unit
   searxng = pkgs.searxng; # SearXNG metasearch, run from /var/lib/nix-apps/searx
   protontricks = pkgs.protontricks; # winetricks wrapper for Proton
