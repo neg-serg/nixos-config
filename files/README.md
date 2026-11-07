@@ -18,10 +18,6 @@ Vale prose linter styles | | `vivaldi/` | Vivaldi browser configs
 Plus top-level `surfingkeys.js` (hand-written Surfingkeys config, wired via
 `packages/overlays/gui.nix`).
 
-`x11/` is a **deletion candidate** (2026-10-19): eight icons from an unpacked X11/conky rice, no
-reference from any `.nix`/`.lua`/`.md` and no link into the home config, so nothing of it reaches a
-generation. Details and the removal note: `files/x11/DELETION-CANDIDATE.md`.
-
 ## Usage
 
 Files are linked via nix-maid helpers:
