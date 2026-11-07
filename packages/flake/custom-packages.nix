@@ -266,6 +266,15 @@
   craft-anything = pkgs.craft-anything; # reverse-engineering workbench + rebuild assistant (GUI + CLI + MCP)
   sonda = pkgs.sonda; # file manager searching files by what they contain (EmbeddingGemma 2 on llama.cpp)
   graf = pkgs.graf; # terminal force-directed graph of markdown wikilinks (TUI)
+
+  # ArtCraft suite (on-demand roots: the launchers in
+  # modules/user/nix-maid/apps/craft-apps.nix build these on first use).
+  vectorcraft = pkgs.vectorcraft; # vector illustration editor (SVG/PDF) + converter CLI
+  figcraft = pkgs.figcraft; # interface design and prototyping
+  soundcraft = pkgs.soundcraft; # digital audio workstation
+  deckcraft = pkgs.deckcraft; # presentations and slide shows
+  gridcraft = pkgs.gridcraft; # spreadsheet workbooks
+  solidcraft = pkgs.solidcraft; # parametric 3D CAD + headless CLI/MCP
   ttf-code2000 = pkgs.ttf-code2000; # Code2000 shareware Unicode TrueType font
   ttf-code2001 = pkgs.ttf-code2001; # Code2001 freeware font: Plane 1 ancient scripts
   ttf-code2002 = pkgs.ttf-code2002; # Code2002 freeware font: Plane 2 rare CJK
