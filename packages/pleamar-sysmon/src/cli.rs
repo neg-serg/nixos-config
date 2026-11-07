@@ -25,7 +25,7 @@ Options:
   --llm-url URL        also probe llama-swap's /running endpoint (http:// only)
   -h, --help           this text
 
-Topics: sysmon (full sample), cpu, mem, swap, disk, gpu, temp.
+Topics: sysmon (full sample), cpu, mem, swap, disk, gpu, temp, llm.
 Commands: subscribe, unsubscribe, set, sample, stop (one JSON object per
 stdin line; every command is answered with an ack or an error line).
 
