@@ -88,15 +88,6 @@ CATALOG = {
         "lean": "7/7",
         "fp": "6.0/6*",
     },
-    "mistral/labs-leanstral-1-5": {
-        "aliases": ["leanstral", "lean"],
-        "role": "Lean 4 via Mistral API",
-        "ctx": "256k",
-        "size": "remote",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
-    },
     "ui-tars-1.5-7b": {
         "aliases": ["uitars", "ui-tars"],
         "role": "GUI agent VLM",
