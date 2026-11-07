@@ -22,6 +22,7 @@ Options:
   --no-gpu             report gpu as an error object without looking
   --temp-path PATH     read a millidegree temperature from PATH
   --no-temp            report temp as an error object without looking
+  --llm-url URL        also probe llama-swap's /running endpoint (http:// only)
   -h, --help           this text
 
 Topics: sysmon (full sample), cpu, mem, swap, disk, gpu, temp.
@@ -47,6 +48,7 @@ pub struct Options {
     pub io_max_kibps: u64,
     pub gpu: PathChoice,
     pub temp: PathChoice,
+    pub llm_url: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -76,6 +78,7 @@ pub fn parse<I: IntoIterator<Item = OsString>>(args: I) -> ParseResult {
     let mut io_max_raw = String::from("512000");
     let mut gpu = PathChoice::Discover;
     let mut temp = PathChoice::Discover;
+    let mut llm_url: Option<String> = None;
 
     let mut index = 0;
     while index < args.len() {
@@ -121,6 +124,13 @@ pub fn parse<I: IntoIterator<Item = OsString>>(args: I) -> ParseResult {
                 temp = PathChoice::Explicit(String::new());
                 index += 1;
             }
+            "--llm-url" => {
+                if index + 1 >= args.len() {
+                    return ParseResult::Error("--llm-url needs a value".to_string());
+                }
+                llm_url = Some(lossy(&args[index + 1]));
+                index += 2;
+            }
             "-h" | "--help" => return ParseResult::Help,
             _ => {
                 return ParseResult::Error(format!("unknown option '{option}' (see --help)"));
@@ -150,12 +160,19 @@ pub fn parse<I: IntoIterator<Item = OsString>>(args: I) -> ParseResult {
         return ParseResult::Error("--io-max-kibps must be a positive integer".to_string());
     }
 
+    if let Some(url) = llm_url.as_deref() {
+        if !url.starts_with("http://") || url.len() == "http://".len() {
+            return ParseResult::Error("--llm-url must be an http:// URL".to_string());
+        }
+    }
+
     ParseResult::Run(Options {
         interval_ms,
         once,
         io_max_kibps,
         gpu,
         temp,
+        llm_url,
     })
 }
 
@@ -189,6 +206,7 @@ mod tests {
         assert_eq!(options.io_max_kibps, 512000);
         assert_eq!(options.gpu, PathChoice::Discover);
         assert_eq!(options.temp, PathChoice::Discover);
+        assert_eq!(options.llm_url, None);
     }
 
     #[test]
@@ -203,12 +221,18 @@ mod tests {
             "/tmp/gpu",
             "--temp-path",
             "/tmp/temp",
+            "--llm-url",
+            "http://127.0.0.1:9292/running",
         ]);
         assert_eq!(options.interval_ms, 250);
         assert!(options.once);
         assert_eq!(options.io_max_kibps, 1024);
         assert_eq!(options.gpu, PathChoice::Explicit("/tmp/gpu".to_string()));
         assert_eq!(options.temp, PathChoice::Explicit("/tmp/temp".to_string()));
+        assert_eq!(
+            options.llm_url.as_deref(),
+            Some("http://127.0.0.1:9292/running")
+        );
     }
 
     #[test]

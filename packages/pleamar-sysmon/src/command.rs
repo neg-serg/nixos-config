@@ -3,13 +3,14 @@
 
 use std::io::{self, Write};
 
+use crate::llm::LlmProbe;
 use crate::sample::{self, ProcPaths, Sample};
 use crate::state::StateFile;
 
 pub const WORKER: &str = "sysmon";
 
 pub const HANDSHAKE: &str =
-    "{\"ok\":true,\"worker\":\"sysmon\",\"version\":1,\"topics\":[\"sysmon\",\"cpu\",\"mem\",\"swap\",\"disk\",\"gpu\",\"temp\"]}";
+    "{\"ok\":true,\"worker\":\"sysmon\",\"version\":1,\"topics\":[\"sysmon\",\"cpu\",\"mem\",\"swap\",\"disk\",\"gpu\",\"temp\",\"llm\"]}";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Topic {
@@ -20,10 +21,11 @@ pub enum Topic {
     Disk,
     Gpu,
     Temp,
+    Llm,
 }
 
 impl Topic {
-    pub const ALL: [Topic; 7] = [
+    pub const ALL: [Topic; 8] = [
         Topic::Sysmon,
         Topic::Cpu,
         Topic::Mem,
@@ -31,6 +33,7 @@ impl Topic {
         Topic::Disk,
         Topic::Gpu,
         Topic::Temp,
+        Topic::Llm,
     ];
 
     pub fn name(self) -> &'static str {
@@ -42,6 +45,7 @@ impl Topic {
             Topic::Disk => "disk",
             Topic::Gpu => "gpu",
             Topic::Temp => "temp",
+            Topic::Llm => "llm",
         }
     }
 
@@ -57,6 +61,9 @@ pub struct Config {
     pub gpu_path: Option<String>,
     pub temp_path: Option<String>,
     pub proc_paths: ProcPaths,
+    /// `llama-swap`'s `/running` endpoint, when the caller wants the local
+    /// model in the sample (the bar does; a plain sysmon does not).
+    pub llm_url: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -77,15 +84,18 @@ pub struct Session {
     state: StateFile,
     subscriptions: Vec<Subscription>,
     last_sample_ms: u64,
+    llm: Option<LlmProbe>,
 }
 
 impl Session {
     pub fn new(config: Config, state: StateFile, start_ms: u64) -> Self {
+        let llm = config.llm_url.as_deref().and_then(LlmProbe::new);
         Self {
             config,
             state,
             subscriptions: Vec::new(),
             last_sample_ms: start_ms,
+            llm,
         }
     }
 
@@ -270,11 +280,12 @@ impl Session {
         ) {
             Ok(data) => {
                 self.last_sample_ms = now_ms;
+                let llm = self.llm.as_mut().map(|probe| probe.object(ts_secs));
                 for index in due {
                     let interval_ms = self.subscriptions[index].interval_ms;
                     let topic = self.subscriptions[index].topic;
                     self.subscriptions[index].next_ms = now_ms.saturating_add(interval_ms);
-                    write_sample(out, topic, now_ms, &data)?;
+                    write_sample(out, topic, now_ms, &data, llm.as_deref())?;
                 }
             }
             Err(()) => write_sample_error(out, now_ms)?,
@@ -401,13 +412,36 @@ fn write_error<W: Write>(out: &mut W, message: &str) -> io::Result<()> {
     )
 }
 
-fn write_sample<W: Write>(out: &mut W, topic: Topic, t: u64, data: &Sample) -> io::Result<()> {
+fn write_sample<W: Write>(
+    out: &mut W,
+    topic: Topic,
+    t: u64,
+    data: &Sample,
+    llm: Option<&str>,
+) -> io::Result<()> {
+    let payload = match topic {
+        // The full sample is pre-rendered; the LLM object rides beside the
+        // other sections so a client that never asked for it pays nothing but
+        // the bytes. `llm` as its own topic is the same object alone.
+        Topic::Sysmon => match llm {
+            Some(object) if data.full.ends_with('}') => {
+                let mut full = data.full[..data.full.len() - 1].to_string();
+                full.push_str(",\"llm\":");
+                full.push_str(object);
+                full.push('}');
+                full
+            }
+            _ => data.full.clone(),
+        },
+        Topic::Llm => llm.unwrap_or("{\"active\":false}").to_string(),
+        _ => data.data_for(topic.name()).to_string(),
+    };
     writeln!(
         out,
         "{{\"ok\":true,\"worker\":\"{WORKER}\",\"topic\":\"{}\",\"t\":{},\"data\":{}}}",
         topic.name(),
         t,
-        data.data_for(topic.name())
+        payload
     )
 }
 
@@ -465,6 +499,7 @@ mod tests {
                     swaps,
                     diskstats,
                 },
+                llm_url: None,
             },
             _directory: directory,
         }
@@ -496,7 +531,7 @@ mod tests {
     fn handshake_is_the_frozen_line() {
         assert_eq!(
             HANDSHAKE,
-            "{\"ok\":true,\"worker\":\"sysmon\",\"version\":1,\"topics\":[\"sysmon\",\"cpu\",\"mem\",\"swap\",\"disk\",\"gpu\",\"temp\"]}"
+            "{\"ok\":true,\"worker\":\"sysmon\",\"version\":1,\"topics\":[\"sysmon\",\"cpu\",\"mem\",\"swap\",\"disk\",\"gpu\",\"temp\",\"llm\"]}"
         );
     }
 
