@@ -30,6 +30,7 @@
 //!   PILL_BOT_RAG_INDEX     embedding index watched for staleness
 //!                          (default ~/.local/share/rag-notes/index.sqlite)
 //!   PILL_BOT_RAG_N         semantic hits to return (default 5)
+//!   PILL_BOT_RAG_TIMEOUT   seconds before `rag-search` is killed (default 120)
 //!   PILL_BOT_RUNUSER       privilege drop helper (default `runuser`)
 //!   PILL_BOT_NB_TIMEOUT    seconds before `nb` is killed (default 90)
 //!   PILL_BOT_NOTES_TOOLS=0 disable the model tools
@@ -44,6 +45,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::shared::json::{self, Value};
@@ -52,7 +54,9 @@ use crate::{env_or, stamp_now, Api};
 const DEFAULT_NOTEBOOK: &str = "/home/neg/notes";
 const DEFAULT_RECENT: usize = 10;
 const MAX_RECENT: usize = 25;
-const MAX_TITLE_CHARS: usize = 120;
+/// The title becomes a filename and a heading; the limit is in bytes because
+/// `cut` works on byte offsets (120 bytes ≈ 60 Cyrillic characters).
+const MAX_TITLE_BYTES: usize = 120;
 const MAX_QUERY_CHARS: usize = 200;
 const MAX_SEARCH_HITS: usize = 8;
 /// Telegram splits long answers anyway, but a whole book would become a dozen
@@ -62,12 +66,16 @@ const MAX_SHOW_CHARS: usize = 12_000;
 const MAX_TOOL_RESULT: usize = 6_000;
 const MAX_SYNC_REPORT: usize = 3_000;
 
+/// One `getUpdates` loop serves callbacks too, so a second `/nb` must not
+/// start a concurrent git operation in the same repository.
+static SYNCING: AtomicBool = AtomicBool::new(false);
+
 const HELP: &str = "📝 Заметки (~/notes):\n\n\
 /note <текст> — новая заметка, заголовок из первой строки.\n\
 /note new <заголовок> — пустая заметка по шаблону zk.\n\
 /note show <путь> — показать заметку.\n\
 /note append <путь> <текст> — дописать с датой.\n\
-/note rm <путь> --yes — удалить (в git остаётся история).\n\
+/note rm <путь> --yes — удалить; несинхронизированную — ещё и --force.\n\
 /notes <запрос> — поиск по тексту и именам; /notes — последние.\n\
 /notes find <запрос> — семантический поиск (RAG, эмбеддинги).\n\
 /notes recent [N] — последние N заметок.\n\
@@ -79,10 +87,20 @@ const HELP: &str = "📝 Заметки (~/notes):\n\n\
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
     Help,
-    New { title: String, body: String },
+    New {
+        title: String,
+        body: String,
+    },
     Show(String),
-    Append { path: String, text: String },
-    Remove { path: String, confirmed: bool },
+    Append {
+        path: String,
+        text: String,
+    },
+    Remove {
+        path: String,
+        confirmed: bool,
+        force: bool,
+    },
     Search(String),
     Semantic(String),
     Recent(usize),
@@ -98,18 +116,59 @@ pub fn handle_message(api: &Api, chat_id: &str, text: &str, reply_to: Option<i64
     };
     match action {
         Action::Sync => {
+            if SYNCING.swap(true, Ordering::SeqCst) {
+                crate::ask::deliver(
+                    api,
+                    chat_id,
+                    "⏳ Синхронизация уже идёт — дождись ответа.",
+                    reply_to,
+                    None,
+                );
+                return true;
+            }
             // A push can wait on the network for a minute; the poll loop must
             // keep answering callback presses while it runs.
-            let api = api.clone();
-            let chat_id = chat_id.to_string();
+            let thread_api = api.clone();
+            let thread_chat = chat_id.to_string();
             let spawned = std::thread::Builder::new()
                 .name("telegram-notes-sync".into())
                 .spawn(move || {
                     let reply = sync();
-                    crate::ask::deliver(&api, &chat_id, &reply, None, None);
+                    SYNCING.store(false, Ordering::SeqCst);
+                    crate::ask::deliver(&thread_api, &thread_chat, &reply, reply_to, None);
                 });
             if spawned.is_err() {
+                SYNCING.store(false, Ordering::SeqCst);
                 eprintln!("notes: cannot spawn the sync thread");
+                crate::ask::deliver(
+                    api,
+                    chat_id,
+                    "⚠️ Не удалось запустить синхронизацию.",
+                    reply_to,
+                    None,
+                );
+            }
+        }
+        // The embedding call can take seconds and its timeout is minutes; keep
+        // it out of the getUpdates loop for the same reason as `/nb`.
+        Action::Semantic(query) => {
+            let thread_api = api.clone();
+            let thread_chat = chat_id.to_string();
+            let spawned = std::thread::Builder::new()
+                .name("telegram-notes-semantic".into())
+                .spawn(move || {
+                    let reply = semantic_search(&query);
+                    crate::ask::deliver(&thread_api, &thread_chat, &reply, reply_to, None);
+                });
+            if spawned.is_err() {
+                eprintln!("notes: cannot spawn the semantic-search thread");
+                crate::ask::deliver(
+                    api,
+                    chat_id,
+                    "⚠️ Не удалось запустить семантический поиск.",
+                    reply_to,
+                    None,
+                );
             }
         }
         action => {
@@ -179,18 +238,21 @@ fn parse_note(rest: &str) -> Action {
             if path.is_empty() {
                 Action::Help
             } else {
+                let flags: Vec<&str> = extra.split_whitespace().collect();
                 Action::Remove {
                     path,
-                    confirmed: extra
-                        .split_whitespace()
-                        .any(|word| matches!(word, "--yes" | "-y" | "да")),
+                    confirmed: flags
+                        .iter()
+                        .any(|word| matches!(*word, "--yes" | "-y" | "да")),
+                    force: flags.iter().any(|word| matches!(*word, "--force" | "-f")),
                 }
             }
         }
-        // Anything else after `/note` is a quick capture: first line becomes
-        // the title, the rest the body appended under the template heading.
+        // Anything else after `/note` is a quick capture: the first line
+        // becomes the title and every remaining byte lands in the body, so a
+        // long one-liner is not silently truncated.
         _ => {
-            let (title, body) = split_title_body(rest);
+            let (title, body) = quick_capture(rest);
             Action::New { title, body }
         }
     }
@@ -254,9 +316,32 @@ fn split_title_body(text: &str) -> (String, String) {
     }
 }
 
+/// `/note <text>`: the first line is the heading, but anything that does not
+/// fit into the 120-byte title limit is kept in the body instead of being
+/// dropped. The same applies to the rest of a long first line.
+fn quick_capture(text: &str) -> (String, String) {
+    let text = text.trim();
+    let first_end = text.find('\n').unwrap_or(text.len());
+    let first = text[..first_end].trim_end();
+    let rest = text[first_end..].trim();
+    let (raw_title, truncated) = cut_with_flag(first, MAX_TITLE_BYTES);
+    let title = raw_title.trim().to_string();
+    if !truncated {
+        return (title, rest.to_string());
+    }
+    let mut body = first[raw_title.len()..].trim_start().to_string();
+    if !rest.is_empty() {
+        if !body.is_empty() {
+            body.push('\n');
+        }
+        body.push_str(rest);
+    }
+    (title, body.trim().to_string())
+}
+
 fn clean_title(input: &str) -> String {
     let line = input.lines().next().unwrap_or("").trim();
-    cut(line, MAX_TITLE_CHARS)
+    cut(line, MAX_TITLE_BYTES)
 }
 
 // -- environment -------------------------------------------------------
@@ -318,6 +403,21 @@ fn run_owner(program: &str, args: &[&str]) -> Result<Output, String> {
         .map_err(|error| format!("{program}: {error}"))
 }
 
+/// Like `run_owner`, but under coreutils `timeout`: a stuck ollama/reranker
+/// must not pin a worker forever. Falls back to an untimed run when `timeout`
+/// itself is missing.
+fn run_owner_timeout(program: &str, seconds: &str, args: &[&str]) -> Result<Output, String> {
+    match owner_command("timeout")
+        .arg(seconds)
+        .arg(program)
+        .args(args)
+        .output()
+    {
+        Ok(output) => Ok(output),
+        Err(_) => run_owner(program, args),
+    }
+}
+
 // -- execution ---------------------------------------------------------
 
 pub fn execute(action: &Action) -> String {
@@ -326,7 +426,11 @@ pub fn execute(action: &Action) -> String {
         Action::New { title, body } => create(title, body),
         Action::Show(path) => show(path),
         Action::Append { path, text } => append(path, text),
-        Action::Remove { path, confirmed } => remove(path, *confirmed),
+        Action::Remove {
+            path,
+            confirmed,
+            force,
+        } => remove(path, *confirmed, *force),
         Action::Search(query) => search(query),
         Action::Semantic(query) => semantic_search(query),
         Action::Recent(limit) => recent(*limit),
@@ -557,24 +661,61 @@ fn append(path: &str, text: &str) -> String {
     format!("✏️ Дописано в {}", relative(&path))
 }
 
-fn remove(path: &str, confirmed: bool) -> String {
+#[derive(Debug, PartialEq)]
+enum RemoveCheck {
+    NeedConfirm,
+    Untracked,
+    Ready,
+}
+
+/// A note created on the phone is untracked until `/nb` commits it; deleting
+/// it with the usual confirmation would destroy the only copy while promising
+/// a `git checkout` that cannot work. `--force` is the explicit way out.
+fn remove_check(tracked: bool, confirmed: bool, force: bool) -> RemoveCheck {
+    if !confirmed {
+        RemoveCheck::NeedConfirm
+    } else if !tracked && !force {
+        RemoveCheck::Untracked
+    } else {
+        RemoveCheck::Ready
+    }
+}
+
+fn is_tracked(rel: &str) -> bool {
+    run_owner("git", &["ls-files", "--error-unmatch", "--", rel])
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+fn remove(path: &str, confirmed: bool, force: bool) -> String {
     let path = match resolve(path) {
         Ok(path) => path,
         Err(error) => return format!("⚠️ {error}"),
     };
     let rel = relative(&path);
-    if !confirmed {
-        return format!(
-            "⚠️ Удалить «{rel}»?\nПодтверди: /note rm {rel} --yes\n(заметка в git — историю можно вернуть)"
-        );
+    let tracked = is_tracked(&rel);
+    match remove_check(tracked, confirmed, force) {
+        RemoveCheck::NeedConfirm => {
+            format!("⚠️ Удалить «{rel}»?\nПодтверди: /note rm \"{rel}\" --yes")
+        }
+        RemoveCheck::Untracked => format!(
+            "⚠️ «{rel}» ещё не в git (не было /nb): удаление безвозвратно.\n\
+Если точно: /note rm \"{rel}\" --yes --force"
+        ),
+        RemoveCheck::Ready => {
+            if let Err(error) = fs::remove_file(&path) {
+                return format!("⚠️ Не удалось удалить {rel}: {error}");
+            }
+            if tracked {
+                format!(
+                    "🗑️ Удалено: {rel}\nВернуть: git -C {} checkout -- \"{rel}\"",
+                    notebook().display()
+                )
+            } else {
+                format!("🗑️ Удалено безвозвратно (не была в git): {rel}")
+            }
+        }
     }
-    if let Err(error) = fs::remove_file(&path) {
-        return format!("⚠️ Не удалось удалить {rel}: {error}");
-    }
-    format!(
-        "🗑️ Удалено: {rel}\nВернуть: git -C {} checkout -- {rel}",
-        notebook().display()
-    )
 }
 
 fn search(query: &str) -> String {
@@ -685,7 +826,8 @@ fn search(query: &str) -> String {
 
     if hits.is_empty() {
         return format!(
-            "🔎 «{}» — ничего не нашёл.\n/notes — последние заметки, /notes recent N — больше.",
+            "🔎 «{}» — ничего не нашёл.\n/notes — последние, /notes find «{}» — семантический поиск.",
+            cut(&query, 80),
             cut(&query, 80)
         );
     }
@@ -735,10 +877,14 @@ fn semantic_search(query: &str) -> String {
         args.push("--no-rerank");
     }
     args.push(query);
-    let output = match run_owner(&rag, &args) {
+    let timeout = env_or("PILL_BOT_RAG_TIMEOUT", "120");
+    let output = match run_owner_timeout(&rag, &timeout, &args) {
         Ok(output) => output,
         Err(error) => return format!("⚠️ RAG не запустился: {error}"),
     };
+    if output.status.code() == Some(124) {
+        return format!("⚠️ RAG не ответил за {timeout} с — ollama или реранкер завис.");
+    }
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     if !output.status.success() {
@@ -859,7 +1005,7 @@ fn rag_header_path(line: &str) -> Option<String> {
 }
 
 fn reranker_running(rag: &str) -> bool {
-    run_owner(rag, &["status"])
+    run_owner_timeout(rag, "20", &["status"])
         .ok()
         .filter(|output| output.status.success())
         .map(|output| String::from_utf8_lossy(&output.stdout).contains("Reranker: running"))
@@ -950,8 +1096,9 @@ fn tag_search(tag: &str) -> String {
 }
 
 /// Run `nb` (pull, refresh, commit, push) as the notebook owner. The script is
-/// deliberately tolerant — it exits 0 even when the push fails — so the tail of
-/// its output is the report: a silent run means nothing changed.
+/// deliberately tolerant — it exits 0 even when a git step fails — so the
+/// verdict has to look at the output too, and the tail (not the head) is what
+/// matters: git prints the failure last.
 fn sync() -> String {
     let root = notebook();
     if !root.is_dir() {
@@ -983,16 +1130,46 @@ fn sync() -> String {
         }
     }
     let code = output.status.code().unwrap_or(-1);
-    let body = if report.trim().is_empty() {
-        "без вывода (изменений нет)".to_string()
+    let report = report.trim();
+    let failed = nb_report_failed(output.status.success(), code, report);
+    let body = if report.is_empty() {
+        if failed {
+            "вывода нет".to_string()
+        } else {
+            "без вывода (изменений нет)".to_string()
+        }
     } else {
-        cut(report.trim(), MAX_SYNC_REPORT)
+        tail(report, MAX_SYNC_REPORT)
     };
-    if output.status.success() {
-        format!("🔄 nb: ok\n\n{body}")
+    if failed {
+        format!("⚠️ nb: похоже, не всё прошло (exit {code}) — проверь вывод\n\n{body}")
     } else {
-        format!("⚠️ nb: exit {code}\n\n{body}")
+        format!("🔄 nb: ok\n\n{body}")
     }
+}
+
+/// `nb` ignores every git status; a successful exit therefore does not mean
+/// that the pull, commit or push worked.
+fn nb_report_failed(success: bool, code: i32, report: &str) -> bool {
+    if !success || code == 124 {
+        return true;
+    }
+    let lower = report.to_lowercase();
+    ["fatal:", "error:", "conflict (", "automatic merge failed"]
+        .iter()
+        .any(|needle| lower.contains(needle))
+}
+
+/// Last `limit` bytes on a character boundary, with a marker when shortened.
+fn tail(text: &str, limit: usize) -> String {
+    if text.len() <= limit {
+        return text.to_string();
+    }
+    let mut start = text.len() - limit;
+    while start < text.len() && !text.is_char_boundary(start) {
+        start += 1;
+    }
+    format!("…{}", &text[start..])
 }
 
 // -- model tools -------------------------------------------------------
@@ -1004,8 +1181,39 @@ pub fn tools_enabled() -> bool {
     )
 }
 
-pub fn tools_json() -> Value {
-    Value::Array(vec![
+/// Read-only tools are always available; the write tools are exposed only when
+/// the user's message asks for a write. A 4B model that has just read a note
+/// can otherwise be talked into "adding" something by the note itself.
+pub fn write_intent(question: &str) -> bool {
+    const VERBS: &[&str] = &[
+        "запиши",
+        "записать",
+        "создай",
+        "создать",
+        "добавь",
+        "добавить",
+        "допиши",
+        "дописать",
+        "сохрани",
+        "сохранить",
+        "занеси",
+        "внеси",
+        "синхронизируй",
+        "синхронизировать",
+        "сделай заметк",
+        "создай заметк",
+        "новую заметк",
+        "обнови заметк",
+        "save",
+        "append",
+        "sync notes",
+    ];
+    let question = question.to_lowercase();
+    VERBS.iter().any(|verb| question.contains(verb))
+}
+
+pub fn tools_json(write_allowed: bool) -> Value {
+    let mut tools = vec![
         tool(
             "notes_search",
             "Найти заметки в ~/notes по точным словам или имени файла. Быстро, но не понимает синонимы.",
@@ -1030,7 +1238,9 @@ pub fn tools_json() -> Value {
             &[("path", "string", "Путь к заметке, например reference/ssh.md.")],
             &["path"],
         ),
-        tool(
+    ];
+    if write_allowed {
+        tools.push(tool(
             "notes_create",
             "Создать новую заметку в ~/notes по шаблону zk. Используй только по прямой просьбе пользователя.",
             &[
@@ -1038,8 +1248,8 @@ pub fn tools_json() -> Value {
                 ("body", "string", "Текст заметки (может быть пустым)."),
             ],
             &["title"],
-        ),
-        tool(
+        ));
+        tools.push(tool(
             "notes_append",
             "Дописать текст с датой в существующую заметку.",
             &[
@@ -1047,14 +1257,15 @@ pub fn tools_json() -> Value {
                 ("text", "string", "Что дописать."),
             ],
             &["path", "text"],
-        ),
-        tool(
+        ));
+        tools.push(tool(
             "notes_sync",
             "Синхронизировать заметки: nb (pull, zk index, commit, push).",
             &[],
             &[],
-        ),
-    ])
+        ));
+    }
+    Value::Array(tools)
 }
 
 fn tool(
@@ -1110,16 +1321,49 @@ fn tool(
     ])
 }
 
+/// Tool-side read: unlike `/note show`, the model must know when it got only
+/// a prefix, otherwise it will confidently answer about a note it has not seen
+/// in full. The header is rendered before the body so the final result cap
+/// cannot cut the notice off.
+fn read_note_for_model(path: &str) -> String {
+    let path = match resolve(path) {
+        Ok(path) => path,
+        Err(error) => return format!("⚠️ {error}"),
+    };
+    let text = match fs::read_to_string(&path) {
+        Ok(text) => text,
+        Err(error) => return format!("⚠️ Не читается {}: {error}", relative(&path)),
+    };
+    let total = text.chars().count();
+    let budget = MAX_TOOL_RESULT.saturating_sub(400);
+    let (body, truncated) = cut_with_flag(&text, budget);
+    if truncated {
+        format!(
+            "📄 {} — показаны первые {} из {} символов (заметка обрезана)\n\n{}",
+            relative(&path),
+            body.chars().count(),
+            total,
+            body
+        )
+    } else {
+        format!("📄 {}\n\n{}", relative(&path), body)
+    }
+}
+
 /// Execute one `tool_call`. Arguments are a JSON object produced by the model;
 /// malformed arguments become an error string that the model can read and
-/// correct on the next round.
-pub fn call_tool(name: &str, arguments: &str) -> String {
+/// correct on the next round. `write_allowed` is re-checked here because a
+/// server is free to return a tool call that was not in the offered list.
+pub fn call_tool(name: &str, arguments: &str, write_allowed: bool) -> String {
+    if !write_allowed && matches!(name, "notes_create" | "notes_append" | "notes_sync") {
+        return "⚠️ запись в заметки недоступна: пользователь не просил их менять".to_string();
+    }
     let arguments = json::parse(arguments).unwrap_or(Value::Object(vec![]));
     let result = match name {
         "notes_search" => search(&text_arg(&arguments, "query")),
         "notes_semantic" => semantic_search(&text_arg(&arguments, "query")),
         "notes_recent" => recent(int_arg(&arguments, "count", DEFAULT_RECENT)),
-        "notes_read" => show(&text_arg(&arguments, "path")),
+        "notes_read" => read_note_for_model(&text_arg(&arguments, "path")),
         "notes_create" => create(
             &text_arg(&arguments, "title"),
             &text_arg(&arguments, "body"),
@@ -1427,6 +1671,15 @@ mod tests {
             Some(Action::Remove {
                 path: "junk.md".to_string(),
                 confirmed: true,
+                force: false,
+            })
+        );
+        assert_eq!(
+            parse("/note rm junk.md --yes --force"),
+            Some(Action::Remove {
+                path: "junk.md".to_string(),
+                confirmed: true,
+                force: true,
             })
         );
         assert_eq!(parse("/note"), Some(Action::Help));
@@ -1483,7 +1736,7 @@ mod tests {
 
     #[test]
     fn tool_schema_is_valid_json() {
-        let body = tools_json().dump(None);
+        let body = tools_json(true).dump(None);
         let parsed = json::parse(&body).expect("tool schema must be valid json");
         let tools = parsed.as_array().expect("array of tools");
         assert_eq!(tools.len(), 7);
@@ -1498,6 +1751,98 @@ mod tests {
                     == Some("object")
             );
         }
+        // Read-only questions must not expose create/append/sync to the model.
+        let read_only = tools_json(false);
+        let tools = read_only.as_array().expect("array of tools");
+        assert_eq!(tools.len(), 4);
+        let names: Vec<&str> = tools
+            .iter()
+            .filter_map(|tool| tool.get("function"))
+            .filter_map(|function| function.get("name"))
+            .filter_map(Value::as_str)
+            .collect();
+        assert_eq!(
+            names,
+            vec![
+                "notes_search",
+                "notes_semantic",
+                "notes_recent",
+                "notes_read"
+            ]
+        );
+    }
+
+    #[test]
+    fn write_tools_are_refused_without_intent() {
+        let refused = call_tool("notes_create", r#"{"title":"x"}"#, false);
+        assert!(refused.contains("недоступна"), "{refused}");
+        let refused = call_tool("notes_append", r#"{"path":"x.md","text":"y"}"#, false);
+        assert!(refused.contains("недоступна"), "{refused}");
+        let refused = call_tool("notes_sync", "{}", false);
+        assert!(refused.contains("недоступна"), "{refused}");
+    }
+
+    #[test]
+    fn write_intent_needs_a_write_verb() {
+        assert!(write_intent("запиши в заметки про прокси"));
+        assert!(write_intent("создай заметку о встрече"));
+        assert!(write_intent("допиши в reference/ssh.md"));
+        assert!(write_intent("сохрани мысль"));
+        assert!(!write_intent("найди в заметках про прокси"));
+        assert!(!write_intent("что я писал про ssh?"));
+        assert!(!write_intent("покажи последние заметки"));
+    }
+
+    #[test]
+    fn quick_capture_does_not_drop_a_long_line() {
+        let text = "длинная строка ".repeat(40);
+        let (title, body) = quick_capture(&text);
+        assert!(title.len() <= MAX_TITLE_BYTES);
+        assert!(!body.is_empty());
+        // Every character of the input survives between title and body.
+        let rejoined = format!("{title}{body}").replace(' ', "");
+        let original = text.replace(' ', "");
+        assert!(original.ends_with(&rejoined), "{title} / {body}");
+        assert!(original.contains(&body.replace(' ', "")));
+    }
+
+    #[test]
+    fn multiline_capture_keeps_the_first_line_as_title() {
+        let (title, body) = quick_capture("заголовок\nпервая строка\nвторая");
+        assert_eq!(title, "заголовок");
+        assert_eq!(body, "первая строка\nвторая");
+    }
+
+    #[test]
+    fn removing_an_untracked_note_requires_force() {
+        assert_eq!(remove_check(true, false, false), RemoveCheck::NeedConfirm);
+        assert_eq!(remove_check(false, false, false), RemoveCheck::NeedConfirm);
+        assert_eq!(remove_check(false, true, false), RemoveCheck::Untracked);
+        assert_eq!(remove_check(true, true, false), RemoveCheck::Ready);
+        assert_eq!(remove_check(false, true, true), RemoveCheck::Ready);
+    }
+
+    #[test]
+    fn nb_verdict_sees_errors_in_a_zero_exit_run() {
+        assert!(nb_report_failed(
+            true,
+            0,
+            "fatal: could not read from remote"
+        ));
+        assert!(nb_report_failed(true, 0, "error: failed to push some refs"));
+        assert!(nb_report_failed(false, 1, ""));
+        assert!(nb_report_failed(true, 124, ""));
+        assert!(!nb_report_failed(true, 0, "Already up to date."));
+        assert!(!nb_report_failed(true, 0, "create mode 100644 note.md"));
+    }
+
+    #[test]
+    fn tail_keeps_the_end_and_stays_utf8() {
+        let text = "начало\nошибка в конце";
+        let tailed = tail(text, 10);
+        assert!(tailed.starts_with('…'));
+        assert!(tailed.ends_with("конце"));
+        assert_eq!(tail("short", 10), "short");
     }
 
     #[test]
@@ -1596,6 +1941,20 @@ mod tests {
 
         let shown = execute(&Action::Show("spor-o-depressii.md".to_string()));
         assert!(shown.contains("quick thought"), "{shown}");
+
+        fs::write(root.join("long.md"), "x".repeat(9_000)).expect("long note");
+        let read = call_tool("notes_read", r#"{"path":"long.md"}"#, false);
+        assert!(
+            read.contains("заметка обрезана"),
+            "{}",
+            &read[..read.len().min(200)]
+        );
+        assert!(
+            read.contains("из 9000 символов"),
+            "{}",
+            &read[..read.len().min(200)]
+        );
+        assert!(read.len() <= MAX_TOOL_RESULT, "{}", read.len());
 
         std::env::remove_var("PILL_BOT_NOTES_DIR");
         let _ = fs::remove_dir_all(&root);
