@@ -15,7 +15,10 @@ in
     pkgs.hyperfine # benchmarking tool
     pkgs.just # command runner for project tasks
     pkgs.pkgconf # pkg-config wrapper
-    pkgs.scc # parallel code counter
+    (onDemand {
+      name = "scc";
+      attr = "scc";
+    }) # parallel code counter, built on first use
     pkgs.shellcheck # shell linter
     pkgs.shfmt # shell formatter
     pkgs.strace # trace syscalls

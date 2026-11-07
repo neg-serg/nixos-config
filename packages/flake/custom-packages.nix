@@ -76,6 +76,19 @@
   espanso = pkgs.espanso; # text expander (launcher in modules/user/nix-maid/cli/espanso.nix)
   hdspeconf = pkgs.hdspeconf; # RME HDSPe matrix mixer (launcher in modules/media/audio/core-packages.nix)
   corectrl = pkgs.corectrl; # AMD GPU overclock/fan GUI (launcher in modules/user/games/performance.nix)
+
+  # Second on-demand wave: each attr is what the launcher in the named module
+  # builds on first use.
+  yazi = pkgs.yazi; # terminal file manager (modules/user/nix-maid/cli/yazi.nix)
+  vscode-js-debug = pkgs.vscode-js-debug; # JS/TS DAP adapter (modules/user/nix-maid/apps/dsh-debug.nix)
+  typescript-language-server = pkgs.typescript-language-server; # TS/JS LSP (modules/user/neovim.nix)
+  vscode-langservers-extracted = pkgs.vscode-langservers-extracted; # CSS/HTML/JSON/ESLint LSPs (neovim)
+  docker-language-server = pkgs.docker-language-server; # Dockerfile LSP (modules/user/neovim.nix)
+  lazygit = pkgs.lazygit; # Git TUI for Snacks.lazygit (modules/user/neovim.nix)
+  scc = pkgs.scc; # parallel code counter (modules/dev/pkgs/default.nix)
+  mprime = pkgs.mprime; # Prime95 CPU torture test (modules/user/games/performance.nix)
+  himalaya = pkgs.himalaya; # async email CLI (modules/user/mail.nix)
+  sacad = pkgs.sacad; # album art downloader (modules/user/nix-maid/sys/media.nix)
   proton-ge-bin = pkgs.proton-ge-bin; # GE-Proton, materialised into Steam's compat dir by a login unit
   searxng = pkgs.searxng; # SearXNG metasearch, run from /var/lib/nix-apps/searx
   protontricks = pkgs.protontricks; # winetricks wrapper for Proton

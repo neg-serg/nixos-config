@@ -80,7 +80,10 @@ in
           attr = "vkmark";
         }) # Vulkan benchmark for GPU stability/performance, built on first use
         pkgs.s-tui # terminal stress + monitoring UI with live graphs (OCCT-like)
-        pkgs.mprime # Prime95 CPU stress test (Mersenne torture)
+        (onDemand {
+          name = "mprime";
+          attr = "mprime";
+        }) # Prime95 CPU stress test (Mersenne torture), built on first use
         pkgs.stressapptest # Google stressapptest — RAM/CPU stability test
         # gpu-oc: write AMD GPU overclock settings to pp_od_clk_voltage (root)
         # Usage: gpu-oc <sclk-offset> <vddgfx-offset>  (e.g. gpu-oc 150 -50)

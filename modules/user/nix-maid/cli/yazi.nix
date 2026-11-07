@@ -13,6 +13,10 @@ let
   # source for Russian-layout duplicate binds in this file.
   ruKeys = neg.ruKeys;
 
+  # yazi is opened from a keybind, not at session start, so its 41.3 MiB
+  # exclusive closure is built on first use.
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+
   settings = {
     mgr = {
       show_hidden = true;
@@ -299,7 +303,15 @@ let
 in
 lib.mkIf (cfg.enable or false) (
   lib.mkMerge [
-    { environment.systemPackages = [ pkgs.yazi ]; }
+    {
+      environment.systemPackages = [
+        (onDemand {
+          name = "yazi";
+          attr = "yazi";
+          aliases = [ "ya" ];
+        }) # terminal file manager, built on first use
+      ];
+    }
     (neg.mkHomeFiles {
       ".config/yazi/yazi.toml".source = tomlFormat.generate "yazi.toml" settings;
       ".config/yazi/theme.toml".source = tomlFormat.generate "theme.toml" theme;

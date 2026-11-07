@@ -54,7 +54,10 @@ let
 
     # -- Network --
     pkgs.nicotine-plus # Soulseek client
-    pkgs.waves # keyboard-driven terminal music player with Soulseek/Last.fm
+    (onDemand {
+      name = "waves";
+      attr = "waves";
+    }) # keyboard-driven terminal music player (Soulseek/Last.fm), built on first use
     # SoundCloud downloader: occasional by nature, so the launcher builds it on
     # first call instead of carrying it through every switch.
     (onDemand {

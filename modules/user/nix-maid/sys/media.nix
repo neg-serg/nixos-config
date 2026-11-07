@@ -11,6 +11,9 @@ let
   # Module-shaped systemd user units (lib/systemd-user.nix)
   systemdUser = config.lib.neg.systemdUser;
 
+  # sacad downloads album art on demand only, so it is built on first use.
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+
   # --- rmpc: Russian-layout duplicate binds (ЙЦУКЕН) --------------------------
   # GENERATED from lib/ru-keys.nix (neg.ruKeys) — single source of truth, do not
   # edit the generated chars. Bind data lives below (rmpcRuBinds), the latin
@@ -180,7 +183,12 @@ lib.mkMerge [
         else
           [ pkgs.beets ] # Music library manager and tagger (native)
       ))
-      ++ [ pkgs.sacad ] # Standalone cover art downloader for music library
+      ++ [
+        (onDemand {
+          name = "sacad";
+          attr = "sacad";
+        }) # cover art downloader for the music library, built on first use
+      ]
       ++ [
         # Audio
         pkgs.mpc # A minimalist command line interface to MPD
