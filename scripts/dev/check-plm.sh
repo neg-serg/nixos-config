@@ -28,16 +28,10 @@ cd "$REPO_ROOT"
 # -z so paths with spaces survive. --cached covers tracked (and intent-to-add)
 # scenes, --others the not-yet-added ones (untracked but not ignored): a new
 # scene is checked during development, before it is ever `git add`ed.
-#
-# `.agent/bench/**` holds agent-eval fixtures: per-case overlay files that the
-# bench harness lays over its shared `base/` workspace at run time, and whose
-# defect cases are broken on purpose. Their relative imports resolve only in the
-# assembled workspace, so compiling them in place checks a tree that never
-# exists; the harness does it after assembly.
 FILES=()
 while IFS= read -r -d '' f; do
   FILES+=("$f")
-done < <(git ls-files --cached --others --exclude-standard -z -- '*.plm' ':(exclude).agent/bench/**')
+done < <(git ls-files --cached --others --exclude-standard -z -- '*.plm')
 
 # `pleamar --check` opens scenes only: it refuses `library` files (they are
 # checked through the scenes that import them) and `part` files (includes that
