@@ -72,9 +72,7 @@
 #   | ------------ | ---------------------------------------- | --- | ----- | ----- |
 #   | gemma4-26b   | Gemma-4-26B-A4B-abliterated Q3_K_M (MoE)  | 32k | 16.2G | 105-110 |
 #   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 64k | 14.8G | 45    |
-#   | qwen3.6-35b  | Qwen3.6-35B-A3B-abliterated i1-IQ2_S     | 96k | 15.1G | 55    |
 #   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 32k | 13.8G | 30-36 |
-#   | qwen3.5-4b   | Qwen3.5-4B-abliterated Q8_0 (dense)     | 256k| 11.7G | 95-100 |
 #   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 64k | 0G    | 22    |
 #   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 32k | 6.9G  | 6-11.5 |
 #   | qwen3.8-next | Qwen3.8-Flash-Next abl-v2 IQ3_S          | 128k| 6.0G  | 5.9   |
@@ -90,10 +88,6 @@
 #   content. With low effort it keeps tools, JSON and arithmetic intact.
 # - `gemma4-26b` is text-only (the projector does not fit next to 12.5 GB of
 #   weights); `qwen3-vl-8b` serves images and is the `vision` alias.
-# - `qwen3.6-35b-abliterated` (`strong` alias) is the strongest thing the card
-#   holds: 35B MoE, 3B active, dynamic IQ2. At IQ2 it can wander into
-#   comment-only "reasoning" on tricky coding prompts, so gpt-oss stays the
-#   tools default.
 # - `tiny` (Spark-X2.6-4B abliterated, `cheap` alias) runs on 4 CPU threads
 #   with `-ngl 0`: zero VRAM, ~22 tok/s, so it does not compete with a game.
 #   The game guard skips it and still unloads every GPU model. Its context
@@ -101,17 +95,6 @@
 #   at 800-1000 tok/s, while 16k could not even hold the agent harness prompt
 #   (~20k tokens) — see `modules/llm/llama-swap.nix`. Generation drops from
 #   ~22 tok/s short-context to ~8 tok/s on a 40k prompt.
-# - `qwen3.5-4b-abliterated` (`qwen3.5`, `quick` aliases) is the fast,
-#   long-context tier: dense 4B at Q8_0, hybrid attention (8 of 32 layers
-#   full), 95-100 tok/s short-context and the native 256k window for ~11.7 GiB
-#   of the card. Verified on a 104k-token prompt: correct needle, 2890 tok/s
-#   prefill (~36 s), 70 tok/s decode; ~95-100 short. The benchmarks say it is
-#   the speed option, not the smart one: 4/13 chemistry (8/13 with the `--chem`
-#   prompt) and 0/7 Lean, while `qwen3-vl-8b` scores 13/13 at 45 tok/s. On CPU
-#   it manages 11 tok/s (8 threads pinned, no FA) — half of `tiny` — so it
-#   stays a GPU model. `--reasoning off` is mandatory: with thinking on it
-#   burns the whole budget inside `reasoning_content` and returns empty
-#   content.
 # - `gpt-oss-120b-abliterated` (`gpt-oss-120`, `big` aliases) is the RAM tier:
 #   63.4 GB of MXFP4 weights on a 16 GB card. Four layers run on the GPU
 #   (~6.9 GiB model buffer, ~10.5 GiB total with the desktop), the other 32 stay
@@ -135,8 +118,8 @@
 #   without another model. It is also the core-Lean tier: 7/7 on
 #   `llmctl bench lean` (2026-11-05), the only streaming model that solved all
 #   seven tasks — the 120B scores 2/7, so route Lean work here.
-# - Context is cheap on the hybrid-attention models: gpt-oss and Qwen3.6 went
-#   from 32k to 64k for <200 MB, with q8_0 KV and `-ub 1024` (prefill +29%).
+# - Context is cheap where only part of the layers keep keys: moving 32k -> 64k
+#   cost <200 MB with q8_0 KV, and `-ub 1024` bought +29% prefill.
 #   MTP speculation was tested and rejected: slower (46 vs 65 tok/s) and it
 #   answers wrong on quantized targets (llama.cpp issue #25618).
 # - The Gemma and gpt-oss commands start with `--fit off`: auto-fit reads the
@@ -283,13 +266,16 @@
 #
 # - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
 #   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
-# - `/zero/ai/llama` — llama.cpp GGUFs (~190 GB): qwen3-vl-8b, qwen3.8-27B,
-#   the abliterated set (Gemma 26B IQ3, Qwen3.5-4B, Qwen3.8-27B IQ3,
-#   Qwen3-VL-8B), gpt-oss-120b MXFP4 (63 GB) and Qwen3.8-Flash-Next IQ3_S
-#   (78 GB, two shards in `qwen38-flash-next-iq3s/`). 34 GB of dead weights
-#   (gpt-oss-20b, the 24 GB-box Gemma MXFP4 + its mmproj, Gemma E4B) were
-#   deleted on 2026-11-05; gpt-oss-20b also left the catalog after it failed
-#   the FP planning task, which now lives in `llmctl bench fp`.
+# - `/zero/ai/llama` — llama.cpp GGUFs (321 GB): qwen3-vl-8b, qwen3.8-27B,
+#   the abliterated set (Gemma 26B IQ3, Qwen3.8-27B IQ3, Qwen3-VL-8B),
+#   gpt-oss-120b MXFP4 (63 GB), Qwen3.8-Flash-Next IQ3_S (78 GB, two shards
+#   in `qwen38-flash-next-iq3s/`), the Lean provers (oprover,
+#   deepseek-prover) and the small tiers (arduinollm, Spark). 34 GB of dead
+#   weights (gpt-oss-20b, the 24 GB-box Gemma MXFP4 + its mmproj, Gemma E4B)
+#   were deleted on 2026-11-05; gpt-oss-20b also left the catalog after it
+#   failed the FP planning task, which now lives in `llmctl bench fp`.
+#   Qwen3.6-35B, Qwen3.5-4B and MegaSciMoE-1.2B were deleted on 2026-11-08
+#   (16 GB) and their router entries are gone with them.
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
