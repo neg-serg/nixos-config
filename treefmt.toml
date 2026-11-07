@@ -10,8 +10,6 @@ excludes = [
   "nix/**",
   # Vendored kitty kittens (scroll_mark/search/tab_bar + kittens/)
   "files/kitty/**/*.py",
-  # Personal Obsidian vault — tracked, but prose-only: kept out of formatting
-  "files/obsidian-vault/**",
 ]
 
 # Nix files: format with nixfmt

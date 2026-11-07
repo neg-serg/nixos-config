@@ -41,10 +41,9 @@ let
   );
 
   # Trantor: full desktop minus domains with zero trantor references.
-  # Excluded: appimage (no trantor usage), apps (obsidian via flatpak).
+  # Excluded: appimage (no trantor usage).
   excludedDomains = [
     "appimage"
-    "apps"
   ];
   trantorDomains = builtins.filter (d: !(builtins.elem d excludedDomains)) allDomains;
 

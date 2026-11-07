@@ -19,7 +19,6 @@ modules/
 | Domain          | Purpose                                                                                                                                  |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `appimage`      | AppImage integration — binfmt registration, FHS compat                                                                                   |
-| `apps`          | Application-specific configs (Obsidian, etc.)                                                                                            |
 | `cli`           | CLI tools — file ops, text processing, networking, compression                                                                           |
 | `core`          | Core helpers: `lib.neg`, global `neg.*` options                                                                                          |
 | `dev`           | Development — Android, C/C++, Python, editor, git, security research                                                                     |
