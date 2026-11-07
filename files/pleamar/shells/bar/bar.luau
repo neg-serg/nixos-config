@@ -963,9 +963,13 @@ end)
 -- is by workspace id (the manifest's own numbering), which is what the bar
 -- sees for a workspace that was never renamed.
 local WS_GLYPH = {
-    [1] = "\u{EA85}",  -- term
+    -- term: a bare `>_` prompt (Font Awesome's terminal), the owner's choice over the reference's
+    -- boxed Codicon (U+EA85): the box owned the whole cell and read heavier than the icons beside it.
+    [1] = "\u{F120}",
     [2] = "\u{F269}",  -- web
-    [3] = "\u{F4B0}",  -- dev
+    -- dev: the Neovim mark (Nerd Fonts' custom set) instead of the generic `</>` (U+F4B0) — the
+    -- owner asked for the editor's own glyph on the workspace it runs on.
+    [3] = "\u{E6AE}",
     [4] = "\u{F1B7}",  -- games
     [5] = "\u{F15C}",  -- doc
     [6] = "\u{F008}",  -- vid
@@ -1014,13 +1018,24 @@ local function split_lead(name)
 end
 
 -- The workspace plate is as wide as what it holds, not a constant: 6 px of air, the Nerd glyph
--- (7 px in the mono face at 14), the 5 px gap the scene draws before the letter, the Old Italic
--- letter (Code2001 at 14: 10.1 for U+10330/31, 10.5 for U+10332 — 10.5 covers this set), the
--- name at 7 px per glyph, and 6 px of air. Composed here, from the same strings the plate prints,
--- for the reason `weather.w` is: a measure lands in its property only after the frame that shaped
--- the text, so a plate sized from `measure` would draw one frame at the old workspace's width and
--- take the row with it. Past WS_MAX design px the label elides instead of eating the row.
-local WS_PAD, WS_ICON, WS_GAP, WS_LEAD, WS_CHAR, WS_MAX = 6, 7, 5, 10.5, 7, 180
+-- (15 px — the widest advance of the set `glyph_px` draws, see below), the 5 px gap the scene draws
+-- before the letter, the Old Italic letter (Code2001 at 14: 10.1 for U+10330/31, 10.5 for U+10332 —
+-- 10.5 covers this set), the name at 7 px per glyph, and 6 px of air. Composed here, from the same
+-- strings the plate prints, for the reason `weather.w` is: a measure lands in its property only
+-- after the frame that shaped the text, so a plate sized from `measure` would draw one frame at the
+-- old workspace's width and take the row with it. Past WS_MAX design px the label elides instead of
+-- eating the row.
+local WS_PAD, WS_ICON, WS_GAP, WS_LEAD, WS_CHAR, WS_MAX = 6, 15, 5, 10.5, 7, 180
+
+-- The icon's size in design px lives where it is used (`workspacesChanged`) and not in a local of
+-- its own: this chunk sits on Lua 5.1's 200-local ceiling, which luajit enforces when `just lint`
+-- parses every .luau. A Nerd Font glyph inside the BMP (the Font Awesome and Codicon sets) is drawn
+-- in the half-em cell the mono face gives it, so 26 makes the 13 x 14 px picture the bar's other
+-- icons have; the Material Design set patched in above U+FFFF (the `:rack` workspace's U+F02C1) is a
+-- full em wide and tall instead, so the same 26 would draw it twice as big as every other icon and
+-- over its own name; those keep half the size. The two glyphs the owner picked by hand sit two steps
+-- under the rest: a bare `>_` has no box around it, and the Neovim mark fills its whole cell, so at
+-- 26 both read heavier than the set they stand in.
 local function ws_width()
     local ts = tonumber(fact.text_scale) or 1
     local n = 0
@@ -1049,6 +1064,16 @@ local function workspacesChanged(w)
     text.ws_lead = lead
     text.ws_label = label
     text.ws_icon = icon
+    -- The icon size: the two hand-picked glyphs first, then the family of the codepoint (see the
+    -- comment beside `WS_ICON`). No local of its own — the chunk is on Lua 5.1's local ceiling.
+    local px = 26
+    if icon == "\u{F120}" or icon == "\u{E6AE}" then
+        px = 22
+    elseif icon ~= "" then
+        local ok, cp = pcall(utf8.codepoint, icon, 1)
+        if ok and cp > 0xFFFF then px = 13 end
+    end
+    fact.ws_px = px
     fact["ws.w"] = ws_width()
 end
 
