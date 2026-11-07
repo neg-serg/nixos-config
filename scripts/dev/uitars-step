@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+"""uitars-step - one UI-TARS action on a Linux window.
+
+The window is captured through computer-use-linux (CUL), the cropped image is
+sent to UI-TARS on llama-swap, and the returned image coordinates are mapped
+back to the desktop. Only a `click` action is executed; anything else is
+printed for the caller to handle.
+
+CUL's window screenshot is downscaled; its metadata carries the mapping back
+to window coordinates (`coordinate_width/height` vs `width/height`). The
+absolute click is sent through CUL's uinput pointer, which is the path that
+works on Hyprland; the `relative` click path falls back to ydotool and is not
+used here.
+"""
+
+import argparse
+import base64
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import urllib.request
+
+CUL = os.environ.get("CUL_BIN") or shutil.which("computer-use-linux")
+BASE = os.environ.get("LLMCTL_URL", "http://127.0.0.1:9292")
+MODEL = os.environ.get("UITARS_MODEL", "ui-tars-1.5-7b")
+
+PROMPT = """You are a GUI agent. You are given a task and your action history, with screenshots. You need to perform the next action to complete the task.
+
+## Output Format
+```
+Thought: ...
+Action: ...
+```
+
+## Action Space
+
+click(point='<point>x1 y1</point>')
+left_double(point='<point>x1 y1</point>')
+right_single(point='<point>x1 y1</point>')
+drag(start_point='<point>x1 y1</point>', end_point='<point>x2 y2</point>')
+hotkey(key='ctrl c')
+type(content='xxx')
+scroll(point='<point>x1 y1</point>', direction='down or up or right or left')
+wait()
+finished(content='xxx')
+
+## Note
+- Use English in `Thought` part.
+- Write a small plan and finally summarize your next action (with its target element) in one sentence in `Thought` part.
+
+## User Instruction
+{instruction}
+"""
+
+
+class MCP:
+    def __init__(self):
+        self.p = subprocess.Popen(
+            [CUL, "mcp"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        self._id = 0
+        self.rpc(
+            "initialize",
+            {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "uitars-step", "version": "0"},
+            },
+        )
+        self.p.stdin.write(
+            json.dumps(
+                {"jsonrpc": "2.0", "method": "notifications/initialized"}
+            )
+            + "\n"
+        )
+        self.p.stdin.flush()
+
+    def rpc(self, method, params=None):
+        self._id += 1
+        msg = {"jsonrpc": "2.0", "id": self._id, "method": method}
+        if params is not None:
+            msg["params"] = params
+        self.p.stdin.write(json.dumps(msg) + "\n")
+        self.p.stdin.flush()
+        while True:
+            line = self.p.stdout.readline()
+            if not line:
+                raise SystemExit("computer-use-linux mcp closed")
+            try:
+                reply = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if reply.get("id") == self._id:
+                return reply
+
+    def call(self, name, args):
+        reply = self.rpc("tools/call", {"name": name, "arguments": args})
+        content = reply.get("result", {}).get("content") or []
+        text = content[-1].get("text") if content else None
+        return json.loads(text) if text else reply
+
+    def call_raw(self, name, args):
+        reply = self.rpc("tools/call", {"name": name, "arguments": args})
+        return reply.get("result", {}).get("content") or []
+
+
+def find_window(mcp, app_id, title):
+    windows = mcp.call("list_windows", {}).get("windows", [])
+    for win in windows:
+        if app_id and win.get("app_id") == app_id:
+            return win
+        if title and title.lower() in (win.get("title") or "").lower():
+            return win
+    raise SystemExit(f"window not found: app_id={app_id} title={title}")
+
+
+def ask_uitars(image_png, instruction):
+    b64 = base64.b64encode(image_png).decode()
+    body = {
+        "model": MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": PROMPT.replace("{instruction}", instruction),
+            },
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Screenshot:"},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": "data:image/png;base64," + b64},
+                    },
+                ],
+            },
+        ],
+        "max_tokens": 256,
+        "temperature": 0,
+    }
+    req = urllib.request.Request(
+        BASE + "/v1/chat/completions",
+        data=json.dumps(body).encode(),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        return json.loads(resp.read())
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--app-id", default="org.telegram.desktop")
+    ap.add_argument("--title", default=None)
+    ap.add_argument("--task", required=True)
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+
+    mcp = MCP()
+    win = find_window(mcp, args.app_id, args.title)
+    wid = win["window_id"]
+    bounds = win["bounds"]
+    print(json.dumps({"window": win}), flush=True)
+
+    mcp.call("activate_window", {"window_id": wid})
+    content = mcp.call_raw(
+        "screenshot", {"window_id": wid, "format": "png"}
+    )
+    image = base64.b64decode(content[0]["data"])
+    meta = json.loads(content[-1]["text"])
+
+    out = ask_uitars(image, args.task)
+    text = out["choices"][0]["message"]["content"]
+    print(text, flush=True)
+
+    action = text.split("Action:", 1)[-1]
+    if "click" not in action:
+        print(json.dumps({"skipped": "not a click", "action": action}))
+        return
+
+    nums = re.findall(r"-?\d+", action)
+    if len(nums) < 2:
+        print(json.dumps({"error": "no coordinates", "action": action}))
+        return
+    mx, my = int(nums[-2]), int(nums[-1])
+    sx = meta["coordinate_width"] / meta["width"]
+    sy = meta["coordinate_height"] / meta["height"]
+    ax = round(bounds["x"] + mx * sx)
+    ay = round(bounds["y"] + my * sy)
+    print(
+        json.dumps(
+            {
+                "model_point": [mx, my],
+                "image": [meta["width"], meta["height"]],
+                "window": [bounds["x"], bounds["y"]],
+                "absolute": [ax, ay],
+            }
+        ),
+        flush=True,
+    )
+    if not args.dry_run:
+        print(json.dumps(mcp.call("click", {"x": ax, "y": ay})))
+
+
+if __name__ == "__main__":
+    sys.exit(main())
