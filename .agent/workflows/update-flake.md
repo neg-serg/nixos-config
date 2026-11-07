@@ -32,6 +32,12 @@ just bump-own --no-commit  # leave flake.lock modified for review
 The recipe refuses a dirty tree or a branch other than `main`, and never touches `nixpkgs` or
 third-party pins.
 
+On trantor `features.system.flakeBump.enable` runs the same script weekly (`flake-bump-own.timer`,
+Sunday 04:00): the tick commits and `rollout-watch` deploys the commit. A dirty tree or another
+branch makes the tick skip quietly (`--allow-skip`); a failed eval leaves the unit failed in
+`systemctl --user --failed`. `features.system.flakeBump.heavy = true` adds `--all`, and
+`features.system.flakeBump.calendar` moves the schedule.
+
 ## Common Inputs
 
 | Input | Description | |-------|-------------| | `nixpkgs` | Main package repository | | `sops-nix`
