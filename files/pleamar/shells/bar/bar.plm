@@ -403,13 +403,20 @@ scene bar {
     // with Hyprland's `:name` prefix stripped. bar.luau fills them; the scene
     // cannot compare workspace names itself (text, not numbers).
     text ws_icon = ""
+    // The icon's size in design px, before `text_scale`. bar.luau picks it from the codepoint:
+    // a Nerd Font glyph inside the BMP is drawn in the half-em cell a mono face gives it, so the
+    // cell-scaled sets want 26 (a 13 px picture); the Material Design set above U+FFFF is a full
+    // em and gets 13 (the same picture, half the size). A flat 26 would draw the `:rack`
+    // workspace's icon twice as wide as every other one and over its own name.
+    fact ws_px = 26
     // The Old Italic letter the owner puts in front of the name, kept apart: only
     // Code2001 has U+10330 among the faces here, and the label's Iosevka does not.
     text ws_lead = ""
     text ws_label = ""
     // The plate's width, composed by bar.luau from the very strings above (see the arithmetic
-    // there): 70 design px for the reference's ":term" (69) rounded up so the label's own live.ink fits.
-    fact ws.w = 70
+    // there): 78 design px for the reference's ":term" (69), the eight extra being the icon's
+    // larger advance — it is drawn at its own size, not the label's, further down this file.
+    fact ws.w = 78
     // The two halves of the network readout, as QS prints them.
     // The two readouts, without their unit letter — the capsule draws the number
     // beside a link glyph and the tooltip appends the letter (measured against the
@@ -1079,7 +1086,7 @@ scene bar {
         // name at 7 px per glyph, 6 px of air) — the same arithmetic the audio and weather plates
         // use. A `measure` cannot size it: a measure reaches its property only after the frame
         // that shaped the text, so the plate would draw one frame at the old workspace's width
-        // and take the row with it. For this host's ":term" it comes out 70; the reference drew 69.
+        // and take the row with it. For this host's ":term" it comes out 78; the reference drew 69.
         size: ws.w * scale, strip * scale
         group zoom {
             scale: scale
@@ -1099,7 +1106,16 @@ scene bar {
             // Symbols: different pictures at these code points, and a different advance per glyph,
             // so the icon was wrong and the label moved whenever the workspace changed. Iosevka is
             // the installed Nerd-patched build and carries the same code points.
-            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: 14 * text_scale; color: live.accent_hover; family: "Iosevka" }
+            // The size is not the label's. This face draws a Nerd glyph inside its 0.5 em advance
+            // (a cell, not the em), so `14 * text_scale` — the label's size — drew a 7 x 8 px
+            // picture, the smallest icon in the bar against the 13-14 px ones beside it, and half
+            // the glyph the reference drew at `wsIconScale` 1.4 of the same 14 px label (a 20 px
+            // font, `BaselineAlignedIcon` text mode). `ws_px` comes from the logic, which sizes the
+            // glyph by its own metrics: 26 for the cell-scaled sets (a 13 x 14 px picture), 13 for
+            // the full-em Material ones (12 x 10), 22 for the two hand-picked glyphs — the term
+            // prompt (11 x 9) and the Neovim mark on `:dev` (11 x 14). The plate's width budget
+            // takes the widest advance of those (`WS_ICON` = 15) so the name keeps its room.
+            text "{ws_icon}" { measure: glyph; at: 6, strip / 2; anchor: left center; size: ws_px * text_scale; color: live.accent_hover; family: "Iosevka" }
             text "{ws_lead}" { measure: lead; at: 6 + glyph.width + 5, strip / 2; anchor: left center; size: 14 * text_scale; weight: 500; color: live.ink; family: "Iosevka" }
             // `width:` and one line: a long name runs over the plate and onto the keyboard capsule
             // beside it, so the box stops 6 px short of the plate's edge — the same air the label
