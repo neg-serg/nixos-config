@@ -1,3 +1,0 @@
-# Policy
-
-English-only documentation.

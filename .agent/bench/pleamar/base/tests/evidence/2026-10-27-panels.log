@@ -1,9 +1,0 @@
-report · measuring panels for 30 s. Use the desktop as usual meanwhile —
-         move windows, switch workspaces, open and close things— above all what feels slow.
-          29 s left           28 s left           27 s left           26 s left           25 s left           24 s left           23 s left           22 s left           21 s left           20 s left           19 s left           18 s left           17 s left           16 s left           15 s left           14 s left           13 s left           12 s left           11 s left           10 s left            9 s left            8 s left            7 s left            6 s left            5 s left            4 s left            3 s left            2 s left            1 s left            0 s left          done.          
-
-  panels: smooth · 30 fps, the scene's own `rate: 30` (the screen gives 240 Hz)
-
-report · written to /etc/nixos/files/pleamar/tests/evidence/2026-10-27-panels.md
-         Send it to us: attach it to an issue at https://github.com/k4ditano/pleamar/issues
-         or drop it in the Discord. It holds no personal data: numbers, the card and the monitors.
