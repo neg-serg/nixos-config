@@ -1297,7 +1297,13 @@ scene bar {
             // row reads its child's `size:` once, when it lays the row out (bar.plm's own note on
             // component sizes), so a capsule that grew and shrank again would not reflow — the mode
             // is drawn in the 20 px the icon already owns, and the layout keeps its place.
-            image icon_keyboard { at: 8, strip / 2 - 10; size: 20, 20; tint: live.ink.dim; show: not kb_badge_on }
+            // The picture is rasterised at `size` and then scaled by the compositor, so its
+            // atlas is twice the cell it is drawn in: a 40x24 image inside a half-scale group
+            // lands on 20x12 logical px, one texel per device pixel.
+            group kbpicture {
+                scale: 0.5
+                image icon_keyboard { at: 16, 12; size: 40, 24; fit: contain; tint: live.ink.dim; show: not kb_badge_on }
+            }
             // The badge is 18 px, below WCAG's large-text threshold, so the plain live.accent (4.09:1 on
             // the plate) is not enough for it; `live.accent_hover` is the text-safe tone at 5.79:1.
             text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18 * text_scale; color: live.accent_hover; show: kb_badge_on }
