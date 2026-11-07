@@ -62,13 +62,16 @@ in
   # (modules/user/nix-maid/apps/craft-apps.nix) built on first launch, so the
   # system generation carries launchers and desktop entries only. Four of the
   # names shadow older nixpkgs recipes on purpose — the overlay builds the
-  # newest upstream tags.
+  # newest upstream tags. `craft-fonts` is their shared build input (faces
+  # embedded at build time), shadowing nixpkgs' older pin — see
+  # packages/craft-fonts/default.nix.
   vectorcraft = callPkg (pkg "vectorcraft") { }; # vector illustration editor (SVG/PDF) + converter CLI
   figcraft = callPkg (pkg "figcraft") { }; # interface design and prototyping
   soundcraft = callPkg (pkg "soundcraft") { }; # digital audio workstation
   deckcraft = callPkg (pkg "deckcraft") { }; # presentations and slide shows
   gridcraft = callPkg (pkg "gridcraft") { }; # spreadsheet workbooks
   solidcraft = callPkg (pkg "solidcraft") { }; # parametric 3D CAD + headless CLI/MCP
+  craft-fonts = callPkg (pkg "craft-fonts") { }; # shared ArtCraft font bundle (CRAFT_FONTS_DIR build input)
 
   # pleamar — Wayland desktop shell runtime (bars, launchers, notification
   # centres, docks, lock screens as animated scenes). Rev-pinned input in
