@@ -1,11 +1,13 @@
 //! Notes for the monitoring bot.
 //!
 //! The chat is the phone-side interface to the `~/notes` zk notebook: create,
-//! show, append, search, list, tag lookup, delete and the `nb` sync script
-//! (pull, `zk index`, commit, push). The commands are deterministic and work
-//! without the model; the same operations are also exposed to the local model
-//! as OpenAI tool calls (see `ask.rs`), so free text like "запиши в заметки …"
-//! and explicit commands share one implementation.
+//! show, append, lexical and semantic search, list, tag lookup, delete and the
+//! `nb` sync script (pull, `zk index`, commit, push). The commands are
+//! deterministic and work without the model; the same operations are also
+//! exposed to the local model as OpenAI tool calls (see `ask.rs`), so free text
+//! like "запиши в заметки …" and explicit commands share one implementation.
+//! Semantic search shells out to the user's `rag-search` (qwen3-embedding +
+//! optional bge reranker) and reads its SQLite index without refreshing it.
 //!
 //! The bot runs as root because it reads the root-owned bot secrets, so every
 //! operation that touches the notebook drops to `PILL_BOT_OWNER` through
@@ -24,6 +26,10 @@
 //!   PILL_BOT_HOME          that user's home (default /home/$PILL_BOT_OWNER)
 //!   PILL_BOT_NB            the `nb` sync script (default ~/.local/bin/nb)
 //!   PILL_BOT_RG            ripgrep binary (default `rg` from PATH)
+//!   PILL_BOT_RAG           semantic-search CLI (default ~/.local/bin/rag-search)
+//!   PILL_BOT_RAG_INDEX     embedding index watched for staleness
+//!                          (default ~/.local/share/rag-notes/index.sqlite)
+//!   PILL_BOT_RAG_N         semantic hits to return (default 5)
 //!   PILL_BOT_RUNUSER       privilege drop helper (default `runuser`)
 //!   PILL_BOT_NB_TIMEOUT    seconds before `nb` is killed (default 90)
 //!   PILL_BOT_NOTES_TOOLS=0 disable the model tools
@@ -63,6 +69,7 @@ const HELP: &str = "📝 Заметки (~/notes):\n\n\
 /note append <путь> <текст> — дописать с датой.\n\
 /note rm <путь> --yes — удалить (в git остаётся история).\n\
 /notes <запрос> — поиск по тексту и именам; /notes — последние.\n\
+/notes find <запрос> — семантический поиск (RAG, эмбеддинги).\n\
 /notes recent [N] — последние N заметок.\n\
 /notes tag <тег> — заметки с тегом.\n\
 /nb — синхронизация: pull, zk index, commit, push.";
@@ -77,6 +84,7 @@ pub enum Action {
     Append { path: String, text: String },
     Remove { path: String, confirmed: bool },
     Search(String),
+    Semantic(String),
     Recent(usize),
     Tag(String),
     Sync,
@@ -209,6 +217,15 @@ fn parse_notes(rest: &str) -> Action {
                 Action::Tag(tag)
             }
         }
+        // Semantic search over the embedding index (rag-search).
+        "find" | "semantic" | "rag" | "семантика" | "найти" => {
+            let query = tail.trim().to_string();
+            if query.is_empty() {
+                Action::Help
+            } else {
+                Action::Semantic(query)
+            }
+        }
         // `#tag` is a tag lookup, everything else a full-text search.
         _ if rest.starts_with('#') => Action::Tag(rest.trim_start_matches('#').to_string()),
         _ => Action::Search(rest.to_string()),
@@ -311,6 +328,7 @@ pub fn execute(action: &Action) -> String {
         Action::Append { path, text } => append(path, text),
         Action::Remove { path, confirmed } => remove(path, *confirmed),
         Action::Search(query) => search(query),
+        Action::Semantic(query) => semantic_search(query),
         Action::Recent(limit) => recent(*limit),
         Action::Tag(tag) => tag_search(tag),
         Action::Sync => sync(),
@@ -683,6 +701,197 @@ fn search(query: &str) -> String {
     out
 }
 
+/// Semantic search over the embedding index built by `rag-search`.
+///
+/// The index lives in the user's home and is refreshed by hand
+/// (`rag-search index`, ~5 minutes), so the bot only reads it. The reranker is
+/// used when it is already running; otherwise the search asks for cosine-only
+/// results instead of starting a llama-server, which would need a writable log
+/// next to the index.
+fn semantic_search(query: &str) -> String {
+    let query = query.trim();
+    if query.is_empty() {
+        return HELP.to_string();
+    }
+    let rag = env_or(
+        "PILL_BOT_RAG",
+        &owner_home()
+            .join(".local/bin/rag-search")
+            .display()
+            .to_string(),
+    );
+    if !Path::new(&rag).exists() {
+        return format!("⚠️ rag-search не найден: {rag}\n/notes <запрос> — обычный поиск.");
+    }
+    let count = env_or("PILL_BOT_RAG_N", "5")
+        .parse::<usize>()
+        .unwrap_or(5)
+        .clamp(1, 10);
+    // Ask for twice as many: the embedding index stores chunks, so one note
+    // can fill the whole answer with near-identical fragments.
+    let requested = (count * 2).clamp(1, 10).to_string();
+    let mut args = vec!["search", "-n", requested.as_str()];
+    if !reranker_running(&rag) {
+        args.push("--no-rerank");
+    }
+    args.push(query);
+    let output = match run_owner(&rag, &args) {
+        Ok(output) => output,
+        Err(error) => return format!("⚠️ RAG не запустился: {error}"),
+    };
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    if !output.status.success() {
+        let error = if stderr.trim().is_empty() {
+            stdout.trim()
+        } else {
+            stderr.trim()
+        };
+        return format!("⚠️ RAG: {}", cut(error, 500));
+    }
+    let body = compact_rag(stdout.trim(), count);
+    if body.is_empty() {
+        return format!("🧠 «{}» — RAG ничего не нашёл.", cut(query, 80));
+    }
+    let files = body
+        .lines()
+        .filter(|line| rag_header_path(line).is_some())
+        .count();
+    let mut reply = String::new();
+    if let Some(warning) = index_warning() {
+        reply.push_str(&warning);
+        reply.push_str("\n\n");
+    }
+    let count_label = rag_count_label(files);
+    reply.push_str(&format!(
+        "🧠 RAG: «{}»{}\n\n{}",
+        cut(query, 80),
+        count_label,
+        cut(&body, 8000)
+    ));
+    reply
+}
+
+/// ` — 5 файлов`; empty when the tool's output could not be split into files.
+fn rag_count_label(files: usize) -> String {
+    if files == 0 {
+        return String::new();
+    }
+    format!(" — {files} {}", plural(files, "файл", "файла", "файлов"))
+}
+
+/// Keep one result per file: the index stores chunks, and a single note with a
+/// long tag block would otherwise fill the whole answer.
+fn compact_rag(body: &str, limit: usize) -> String {
+    let mut blocks: Vec<(String, String)> = Vec::new();
+    let mut current: Option<(String, String)> = None;
+    for line in body.lines() {
+        if let Some(path) = rag_header_path(line) {
+            if let Some((path, block)) = current.take() {
+                blocks.push((path, block));
+            }
+            current = Some((path, format!("{line}\n")));
+        } else if let Some((_, block)) = current.as_mut() {
+            block.push_str(line);
+            block.push('\n');
+        }
+        // The tool's own header (`Search «…» — N results`) is dropped: the
+        // reply gets its own header and N counts chunks, not files.
+    }
+    if let Some((path, block)) = current {
+        blocks.push((path, block));
+    }
+    if blocks.is_empty() {
+        return body.to_string();
+    }
+    let mut seen: Vec<String> = Vec::new();
+    let mut out = String::new();
+    let mut kept = 0;
+    for (path, block) in blocks {
+        if seen.contains(&path) {
+            continue;
+        }
+        seen.push(path);
+        let kept_block = renumber_rag_block(&block, kept + 1);
+        out.push_str(kept_block.trim_end());
+        out.push_str("\n\n");
+        kept += 1;
+        if kept >= limit {
+            break;
+        }
+    }
+    out.trim_end().to_string()
+}
+
+fn renumber_rag_block(block: &str, number: usize) -> String {
+    let block = block.trim_start();
+    match block.split_once(char::is_whitespace) {
+        Some((_, rest)) => format!("#{number} {rest}"),
+        None => block.to_string(),
+    }
+}
+
+/// Path from a `rag-search` result header, e.g.
+/// `#1  [cos 0.60]  rerank: -1.7  reference/ssh.md  (SSH setup)`.
+/// Files without a frontmatter title have no `(title)` suffix, so the whole
+/// remainder after the score is the path.
+fn rag_header_path(line: &str) -> Option<String> {
+    let trimmed = line.trim_start();
+    let number = trimmed.strip_prefix('#')?;
+    if !number.chars().next()?.is_ascii_digit() {
+        return None;
+    }
+    let rest = if let Some((_, after)) = trimmed.split_once("rerank:") {
+        after.trim_start().split_once("  ")?.1
+    } else {
+        trimmed.split_once(']')?.1.trim_start()
+    };
+    let path = rest
+        .rsplit_once("  (")
+        .map(|(path, _)| path)
+        .unwrap_or(rest)
+        .trim();
+    if path.is_empty() {
+        None
+    } else {
+        Some(path.to_string())
+    }
+}
+
+fn reranker_running(rag: &str) -> bool {
+    run_owner(rag, &["status"])
+        .ok()
+        .filter(|output| output.status.success())
+        .map(|output| String::from_utf8_lossy(&output.stdout).contains("Reranker: running"))
+        .unwrap_or(false)
+}
+
+/// The embedding index is refreshed by hand; warn when it predates the notes
+/// the user is likely to search for.
+fn index_warning() -> Option<String> {
+    let path = PathBuf::from(env_or(
+        "PILL_BOT_RAG_INDEX",
+        &owner_home()
+            .join(".local/share/rag-notes/index.sqlite")
+            .display()
+            .to_string(),
+    ));
+    let modified = fs::metadata(&path)
+        .and_then(|metadata| metadata.modified())
+        .ok()?;
+    let age = SystemTime::now()
+        .duration_since(modified)
+        .map(|age| age.as_secs() / 86_400)
+        .unwrap_or(0);
+    if age < 30 {
+        return None;
+    }
+    Some(format!(
+        "⚠️ RAG-индекс от {}, заметки новее могут не находиться (rag-search index).",
+        date_of(modified)
+    ))
+}
+
 fn recent(limit: usize) -> String {
     if !notebook().is_dir() {
         return format!("⚠️ Каталог заметок не найден: {}", notebook().display());
@@ -799,8 +1008,14 @@ pub fn tools_json() -> Value {
     Value::Array(vec![
         tool(
             "notes_search",
-            "Найти заметки в ~/notes по тексту или имени файла. Возвращает пути и строки.",
+            "Найти заметки в ~/notes по точным словам или имени файла. Быстро, но не понимает синонимы.",
             &[("query", "string", "Поисковый запрос.")],
+            &["query"],
+        ),
+        tool(
+            "notes_semantic",
+            "Семантический поиск заметок по смыслу (RAG на эмбеддингах). Медленнее обычного поиска; используй, когда точных слов нет или запрос сформулирован иначе.",
+            &[("query", "string", "Что найти по смыслу.")],
             &["query"],
         ),
         tool(
@@ -902,6 +1117,7 @@ pub fn call_tool(name: &str, arguments: &str) -> String {
     let arguments = json::parse(arguments).unwrap_or(Value::Object(vec![]));
     let result = match name {
         "notes_search" => search(&text_arg(&arguments, "query")),
+        "notes_semantic" => semantic_search(&text_arg(&arguments, "query")),
         "notes_recent" => recent(int_arg(&arguments, "count", DEFAULT_RECENT)),
         "notes_read" => show(&text_arg(&arguments, "path")),
         "notes_create" => create(
@@ -1228,6 +1444,11 @@ mod tests {
             parse("/notes #linux"),
             Some(Action::Tag("linux".to_string()))
         );
+        assert_eq!(
+            parse("/notes find как настроить прокси"),
+            Some(Action::Semantic("как настроить прокси".to_string()))
+        );
+        assert_eq!(parse("/notes find"), Some(Action::Help));
         assert_eq!(parse("/nb"), Some(Action::Sync));
         assert_eq!(parse("/sync@trantor_bot"), Some(Action::Sync));
         assert_eq!(parse("/status"), None);
@@ -1265,7 +1486,7 @@ mod tests {
         let body = tools_json().dump(None);
         let parsed = json::parse(&body).expect("tool schema must be valid json");
         let tools = parsed.as_array().expect("array of tools");
-        assert_eq!(tools.len(), 6);
+        assert_eq!(tools.len(), 7);
         for tool in tools {
             assert_eq!(tool.get("type").and_then(Value::as_str), Some("function"));
             let function = tool.get("function").expect("function");
@@ -1277,6 +1498,43 @@ mod tests {
                     == Some("object")
             );
         }
+    }
+
+    #[test]
+    fn rag_results_are_deduplicated_per_file() {
+        let body = "Search «q» — 5 results:\n\n\
+#1  [cos 0.60]  rerank: -1.0  a.md  (A)\n    snippet a\n\n\
+#2  [cos 0.55]  rerank: -2.0  a.md  (A)\n    snippet a again\n\n\
+#3  [cos 0.52]  rerank: -2.5  list.txt\n    snippet list\n\n\
+#4  [cos 0.51]  rerank: -2.6  list.txt\n    snippet list again\n\n\
+#5  [cos 0.50]  rerank: -3.0  b.md  (B)\n    snippet b";
+        let out = compact_rag(body, 5);
+        assert_eq!(out.matches("a.md").count(), 1, "{out}");
+        assert_eq!(out.matches("list.txt").count(), 1, "{out}");
+        assert!(out.contains("#2  [cos 0.52]"), "{out}");
+        assert!(out.contains("#3  [cos 0.50]"), "{out}");
+        assert!(out.contains("b.md"), "{out}");
+        // The cosine-only format (reranker down) also yields a path.
+        assert_eq!(
+            rag_header_path("#1  [cos 0.50]  c.md  (C)"),
+            Some("c.md".to_string())
+        );
+        assert_eq!(
+            rag_header_path("#1  [cos 0.50]  rerank: -1.0  d.md  (D)"),
+            Some("d.md".to_string())
+        );
+        assert_eq!(
+            rag_header_path("#1  [cos 0.50]  rerank: -1.0  e.txt"),
+            Some("e.txt".to_string())
+        );
+    }
+
+    #[test]
+    fn rag_count_label_includes_the_number() {
+        assert_eq!(rag_count_label(1), " — 1 файл");
+        assert_eq!(rag_count_label(2), " — 2 файла");
+        assert_eq!(rag_count_label(5), " — 5 файлов");
+        assert_eq!(rag_count_label(0), "");
     }
 
     #[test]

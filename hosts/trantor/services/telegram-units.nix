@@ -56,6 +56,9 @@ let
   # needs that user's HOME for its SSH config and key).
   notesDir = "/home/neg/notes";
   notesUserBin = "/home/neg/.local/bin/nb";
+  # Semantic search over the notes embedding index (read-only for the bot; the
+  # index is refreshed by hand with `rag-search index`).
+  ragUserBin = "/home/neg/.local/bin/rag-search";
 
   # Daily 12:00 pill reminder: sends a Telegram message with an inline
   # "Mark taken" button; telegram-pill-bot turns a press into confirmation.
@@ -87,7 +90,8 @@ let
   # It also serves the notes commands (/note, /notes, /nb) and the model's
   # notes tools: those write to the zk notebook as the desktop user, and `nb`
   # pulls/commits/pushes it (git over the sing-box proxy, like the user's own
-  # shell). The notes directory is the only extra writable path.
+  # shell). `/notes find` adds semantic search over the rag-search index, which
+  # the unit only reads. The notes directory is the only extra writable path.
   # Rust bridge (pkgs.neg.telegram-notify): it takes the two secrets, the panel
   # paths, the owning user and the model endpoint from the environment, which
   # the wrapper exports.
@@ -101,6 +105,7 @@ let
     export PILL_BOT_HOME=/home/${pillPanelUser}
     export PILL_BOT_NOTES_DIR=${notesDir}
     export PILL_BOT_NB=${notesUserBin}
+    export PILL_BOT_RAG=${ragUserBin}
     export PILL_BOT_STATE_DIR=/var/lib/telegram-pill-bot
     export PILL_BOT_LAST_MESSAGE=/var/lib/telegram-pill-reminder/last-message.json
     export PILL_BOT_LLM_URL=${config.trantor.telegram.llmEndpoint}
@@ -243,9 +248,10 @@ in
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
-          # /status shells out to zpool; notes need zk and ripgrep, and `nb`
-          # runs git/ssh (through the user's ProxyCommand and hence nc).
-          # systemctl, df, date and id are already on the unit PATH.
+          # /status shells out to zpool; notes need zk and ripgrep, `nb` runs
+          # git/ssh (through the user's ProxyCommand and hence nc), and
+          # `rag-search` is a stdlib Python script whose shebang wants
+          # `python3` on PATH. systemctl, df, date and id are already there.
           path = [
             pkgs.zfs
             pkgs.zk
@@ -254,6 +260,7 @@ in
             pkgs.util-linux # runuser: drop from root to the notebook owner
             pkgs.openssh
             pkgs.netcat-openbsd # ssh ProxyCommand for github.com
+            pkgs.python3 # rag-search (semantic notes search)
           ];
           # Same sandbox as the bridge, except that this one legitimately
           # writes into the panel and the notes notebook: it rewrites the
