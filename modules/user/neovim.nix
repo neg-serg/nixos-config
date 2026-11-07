@@ -116,7 +116,11 @@ lib.mkIf devEnabled (
         pkgs.yamllint # YAML linter
         pkgs.black # Python formatter (conform.nvim + just lint)
         pkgs.luajit # Lua syntax checker (just lint)
-        pkgs.qt6.qtdeclarative # qmlformat: QML syntax checker (just lint)
+        # qmlls (QML LSP, configured in files/nvim/.../lspconfig.lua) for the
+        # Quickshell scenes under ~/.config/quickshell. The store path is
+        # already in the closure through SuperCollider/Vicine/Qt tooling, so
+        # this entry costs no bytes; qmlformat arrives with the same package.
+        pkgs.qt6.qtdeclarative # qmlls + qmlformat for QML (path already in the closure)
 
         # DAP debug adapters (nvim-dap) + lazygit (Snacks.lazygit)
         # lldb/lldb-dap live in the `cpp` devshell; Rust work already uses
