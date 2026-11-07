@@ -88,13 +88,10 @@
   features.dev.java.enable = false; # no Java work here — keeps the ~630M Maven/JDK stack out of the closure
   features.dev.craftAnything.enable = true; # reverse-engineering workbench (GUI + CLI + MCP), built on first use
   services.speechd.enable = false; # no screen reader — drops speech-dispatcher + MBROLA voices (~650M)
-  # WinApps and its VM stack are off for now: the module pulls qemu_kvm,
-  # freerdp, virt-viewer, a virt-manager launcher and the RDPWindows libvirt
-  # domain (~500 MiB of system closure) for VMs that are shut off. Re-enable
-  # these two flags to bring the stack back; the VM images stay untouched in
-  # /var/lib/libvirt.
+  # libvirtd stays off: no libvirt domain is defined declaratively, and the flag
+  # pulls qemu_kvm plus the libvirtd stack (~500 MiB of system closure) for VMs
+  # that are shut off. The VM images under /var/lib/libvirt are untouched.
   features.virt.libvirtd.enable = false;
-  features.apps.winapps.enable = false;
   # Declarative Wine apps — features.wine.apps.<id>; managed via the `wineapps`
   # CLI (list/install/uninstall/run). Workflow: see the wine-apps DSH skill.
   features.wine.enable = true;
