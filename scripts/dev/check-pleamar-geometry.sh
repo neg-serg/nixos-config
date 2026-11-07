@@ -5,10 +5,15 @@
 # is, so this gate needs no screenshots and no arithmetic of its own: it reads
 # the rectangles and holds them to the rules the scenes are written by —
 #
-#   * the strip band is the surface's last 25 px (y 10, h 25);
+#   * the strip band is the surface's last 25 px (y 10, h 25) for the two side
+#     rows; the centre row (the build badge and the activity capsules beside
+#     it) is placed against the band's middle and the badge is drawn 2 px
+#     shorter, so the band rule is the side rows';
 #   * the left row starts at the 4 px side margin, the right row ends 4 px
 #     from the screen's edge — the two insets are symmetric;
-#   * every inter-widget gap in a row is the same 7 px;
+#   * every inter-widget gap in a row is the same 7 px, except the centre row's
+#     own `center.gap` (6 px) — that row is anchored on the panel centre, but a
+#     hidden child keeps its gap, so only the gaps are asserted for it;
 #   * zones never overlap, and none leaves the panel.
 #
 # Widths themselves are deliberately NOT checked: they are content-sized now
@@ -86,7 +91,7 @@ printf '%s\n' "$OUT" | awk -v scene="$SCENE" '
     split(geom, a, /[,× ]+/)
     name = $2; sub(/#.*/, "", name)
     n++
-    zx[n] = a[1] + 0; zy[n] = a[2] + 0; zw[n] = a[3] + 0; zh[n] = a[4] + 0; zn[n] = name
+    zx[n] = a[1] + 0; zy[n] = a[2] + 0; zw[n] = a[3] + 0; zh[n] = a[4] + 0; zn[n] = name; zi[n] = $2
   }
   END {
     if (panelw == 0) { print "no main panel in the describe output"; exit 2 }
@@ -101,7 +106,7 @@ printf '%s\n' "$OUT" | awk -v scene="$SCENE" '
     m = 0
     for (i = 1; i <= n; i++) {
       if (zn[i] == "strip_hover" || zn[i] == "tray_reveal") continue
-      m++; wx[m] = zx[i]; wy[m] = zy[i]; ww[m] = zw[i]; wh[m] = zh[i]; wn[m] = zn[i]
+      m++; wx[m] = zx[i]; wy[m] = zy[i]; ww[m] = zw[i]; wh[m] = zh[i]; wn[m] = zn[i]; wi[m] = zi[i]
     }
     if (m < 2) { print "  ✗ found fewer than two widgets to check"; exit 1 }
 
@@ -111,6 +116,9 @@ printf '%s\n' "$OUT" | awk -v scene="$SCENE" '
         fail(wn[i] " leaves the panel horizontally (" wx[i] ".." wx[i] + ww[i] " of " panelw ")")
       if (wy[i] < 0 || wy[i] + wh[i] > panelh)
         fail(wn[i] " leaves the panel vertically (" wy[i] ".." wy[i] + wh[i] " of " panelh ")")
+      # The centre row rides the middle of the band instead of sitting on it:
+      # the build badge is the reference tile, 2 px shorter than the strip.
+      if (index(wi[i], "#Left") == 0 && index(wi[i], "#Right") == 0) continue
       if (wy[i] != 10 || wh[i] != 25)
         fail(wn[i] " is not on the strip band (y " wy[i] ", h " wh[i] "; expected y 10, h 25)")
     }
@@ -123,6 +131,7 @@ printf '%s\n' "$OUT" | awk -v scene="$SCENE" '
         t = ww[j]; ww[j] = ww[j - 1]; ww[j - 1] = t
         t = wh[j]; wh[j] = wh[j - 1]; wh[j - 1] = t
         t = wn[j]; wn[j] = wn[j - 1]; wn[j - 1] = t
+        t = wi[j]; wi[j] = wi[j - 1]; wi[j - 1] = t
       }
     }
 
@@ -133,13 +142,19 @@ printf '%s\n' "$OUT" | awk -v scene="$SCENE" '
         fail(wn[i - 1] " and " wn[i] " overlap (" prev_end " > " wx[i] ")")
     }
 
-    # -- the two side insets and the gap between neighbours ----------------
-    # The row a widget belongs to is decided by the side of the panel it
-    # sits on, so a left-row widget added or removed needs no edit here.
-    left_n = 0; right_n = 0
+    # -- three rows, their insets and the gaps between neighbours ----------
+    # The row is written into the zone id by the bar row helpers themselves
+    # (`#Left75#`, `#Right106#`); a widget with neither marker is the centre
+    # row (`row center_slot`, anchored on `screen.width / 2`). That row is
+    # placed by content — a resident model, a recording take, a running build —
+    # and it is anchored on the panel centre. That anchor is not asserted here:
+    # a hidden child keeps its gap in the row, so the visible zones of a partly
+    # populated row are not symmetric about the centre. Its gap is.
+    left_n = 0; right_n = 0; centre_n = 0
     for (i = 1; i <= m; i++) {
-      if (wx[i] + ww[i] / 2 < panelw / 2) { left_n++; lx[left_n] = wx[i]; lw[left_n] = ww[i]; ln[left_n] = wn[i] }
-      else                                { right_n++; rx[right_n] = wx[i]; rw[right_n] = ww[i]; rn[right_n] = wn[i] }
+      if (index(wi[i], "#Left") > 0)       { left_n++;   lx[left_n] = wx[i];     lw[left_n] = ww[i];     ln[left_n] = wn[i] }
+      else if (index(wi[i], "#Right") > 0) { right_n++;  rx[right_n] = wx[i];    rw[right_n] = ww[i];    rn[right_n] = wn[i] }
+      else                                 { centre_n++; cx[centre_n] = wx[i];  cw[centre_n] = ww[i];  cn[centre_n] = wn[i] }
     }
     if (left_n == 0 || right_n == 0) fail("one of the two rows is empty; the bar draws both")
 
@@ -158,7 +173,10 @@ printf '%s\n' "$OUT" | awk -v scene="$SCENE" '
       gap = rx[i] - (rx[i - 1] + rw[i - 1])
       if (gap != 7) fail("gap " rn[i - 1] " → " rn[i] " is " gap " px, not 7")
     }
-
+    for (i = 2; i <= centre_n; i++) {
+      gap = cx[i] - (cx[i - 1] + cw[i - 1])
+      if (gap != 6) fail("gap " cn[i - 1] " → " cn[i] " is " gap " px, not the centre row gap of 6")
+    }
     if (!failed) ok("bounds, band, insets and gaps hold")
     exit failed ? 1 : 0
   }
