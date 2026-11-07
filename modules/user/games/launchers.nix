@@ -17,6 +17,57 @@ let
     inherit pkgs;
     nix = config.nix.package;
   };
+
+  # GE-Proton is a 1.5 GiB unpacked tree (the tarball itself, re-exported as a
+  # compatibility tool) and Steam only reads it when a game asks for that
+  # tool. Instead of `programs.steam.extraCompatPackages` — which links it
+  # into the Steam runtime and therefore into the system closure — a login
+  # oneshot builds it into a GC root and links that root into the user's
+  # compatibilitytools.d. The tool's own compatibilitytool.vdf expects exactly
+  # that layout: a subdirectory whose install_path is ".".
+  protonGeEnsure = pkgs.writeShellScriptBin "steam-proton-ge-ensure" ''
+    set -eu
+    nix=${config.nix.package}/bin/nix
+    nixStore=${config.nix.package}/bin/nix-store
+    root="$HOME/.local/state/nix-apps/proton-ge-bin"
+
+    if [ ! -e "$root" ]; then
+      mkdir -p "$(dirname "$root")"
+      rm -f "$root"
+      # `^*` is required: the manifest-bearing `steamcompattool` output is not
+      # the default one, and a plain `--print-out-paths` would only return the
+      # unpacked `out`. Both lines are printed, so the candidate is filtered.
+      out=$("$nix" build --no-link --print-out-paths "git+file:///etc/nixos#proton-ge-bin^*" |
+        # Two outputs: `out` is the unpacked build, `steamcompattool` is the
+        # manifest-bearing wrapper Steam expects. `--print-out-paths` prints
+        # both, and `--add-root` rejects the newline-joined pair.
+        while IFS= read -r candidate; do
+          case "$candidate" in
+            *-steamcompattool) printf '%s\n' "$candidate"; break ;;
+          esac
+        done)
+      "$nixStore" --add-root "$root" --indirect --realise "$out" >/dev/null
+    fi
+
+    target=$(readlink -f "$root")
+    # Store basenames carry a 32-char hash prefix: <hash>-proton-ge-bin-GE-Proton11-11-steamcompattool
+    name=$(basename "$target" | sed -e 's/^[a-z0-9]\{32\}-//' -e 's/^proton-ge-bin-//' -e 's/-steamcompattool$//')
+    compat="$HOME/.local/share/Steam/compatibilitytools.d"
+    mkdir -p "$compat"
+
+    # Drop links to older store paths of ours. protonup-ng installs real
+    # directories in the same place, so only symlinks into the store are
+    # touched and only when they are not the current target.
+    for stale in "$compat"/GE-Proton*; do
+      [ -L "$stale" ] || continue
+      resolved=$(readlink -f "$stale")
+      case "$resolved" in
+        /nix/store/*) [ "$resolved" = "$target" ] || rm -f "$stale" ;;
+      esac
+    done
+
+    ln -sfn "$target" "$compat/$name"
+  '';
 in
 {
   imports = [
@@ -114,7 +165,10 @@ in
       gamescopeSession.enable = true;
       remotePlay.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
-      extraCompatPackages = [ pkgs.proton-ge-bin ]; # community Proton build with more patches
+      # GE-Proton (community Proton build with more patches) is materialised
+      # into ~/.local/share/Steam/compatibilitytools.d by protonGeEnsure below
+      # rather than through extraCompatPackages, which would put the unpacked
+      # 1.5 GiB build into the system closure.
     };
 
     # Steam cannot route its native CM connections (WebSocket 27018-27036)
@@ -143,7 +197,14 @@ in
         attr = "protontricks";
         aliases = [ "protontricks-launch" ];
       }) # winetricks-like helper tailored for Steam Proton, built on first use
+      protonGeEnsure # re-link GE-Proton into Steam's compatibilitytools.d
     ];
+
+    systemd.user.services.steam-proton-ge = config.lib.neg.systemdUser.mkUserOneshot {
+      description = "Steam — link GE-Proton into compatibilitytools.d";
+      script = "${protonGeEnsure}/bin/steam-proton-ge-ensure";
+      after = [ "network.target" ];
+    };
 
     # Expose udev rules/devices used by various game controllers
     hardware.steam-hardware.enable = true;

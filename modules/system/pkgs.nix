@@ -12,7 +12,10 @@ in
 
     # -- Hardware Info --
     pkgs.dmidecode # extract system/memory/bios info
-    pkgs.hw-probe # tool to get information about system
+    (onDemand {
+      name = "hw-probe";
+      attr = "hw-probe";
+    }) # hardware inventory probe, built on first use (pulls mesa-demos)
     pkgs.lm_sensors # Hardware monitoring sensors
     pkgs.pciutils # manipulate pci devices
     pkgs.usbutils # USB device utilities
