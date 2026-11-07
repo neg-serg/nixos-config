@@ -510,12 +510,17 @@ apparmor-test:
     set -eu
     cd "{{repo_root}}" && nix build --impure --file tests/apparmor-enforce.nix -L --offline --no-link
 
+# just runs each recipe line in its own shell, so this must be one script: the
+# old per-line form lost `repo` between lines and died on `set -u` (it never
+# deleted anything). The uv/ruff caches are ad-hoc run leftovers in the root.
 clean-caches:
-    set -eu
-    repo=$(git rev-parse --show-toplevel)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    repo=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
     find "$repo" -type f -name '*.zwc' -delete || true
     find "$repo" -type d -name '__pycache__' -prune -exec rm -rf {} + || true
     find "$repo" -type f -name '*.pyc' -delete || true
+    rm -rf "$repo/.uv-cache" "$repo/.ruff_cache" || true
     : "${XDG_CACHE_HOME:=$HOME/.cache}"
     : "${XDG_STATE_HOME:=$HOME/.local/state}"
     rm -rf "$XDG_CACHE_HOME/zsh" || true
