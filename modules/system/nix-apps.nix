@@ -18,6 +18,8 @@
 # Typical maintenance:
 #
 #     nix-apps status              # what went stale after just update
+#     nix-apps seed                # after a switch: pin every launcher on PATH
+#                                  # so the apps work offline (roots survive GC)
 #     nix-apps update              # re-point every managed root
 #     nix-apps update vivaldi      # ... or one name
 #     nix-apps clean renoise       # drop the pin; the path survives until GC
