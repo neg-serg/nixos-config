@@ -70,6 +70,8 @@
   # the system closure).
   vkmark = pkgs.vkmark; # Vulkan benchmark for GPU stability runs
   texlab = pkgs.texlab; # LaTeX LSP server for Neovim
+  android-tools = pkgs.android-tools; # adb/fastboot, built by the launcher in modules/dev/android
+  scrcpy = pkgs.scrcpy; # Android display/control over USB/TCP (launcher in modules/hardware/webcam)
   searxng = pkgs.searxng; # SearXNG metasearch, run from /var/lib/nix-apps/searx
   protontricks = pkgs.protontricks; # winetricks wrapper for Proton
   sonic-visualiser = pkgs.sonic-visualiser; # spectra/sonogram analyser
