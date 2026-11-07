@@ -106,6 +106,15 @@ CATALOG = {
         "lean": "7/7",
         "fp": "6.0/6*",
     },
+    "arduinollm-7b": {
+        "aliases": ["embedded", "arduino"],
+        "role": "7B embedded code (Arduino/ESP32/Pi)",
+        "ctx": "32k",
+        "size": "5.4 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
 }
 
 CHEM_SYSTEM = """Ты — химик. Обязательные проверки:

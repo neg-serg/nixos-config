@@ -267,6 +267,38 @@ let
       --host 127.0.0.1 --port ''${PORT}
   '';
 
+  # ArduinoLLM-7B v2 (Q5_K_M, Apache-2.0) — the embedded tier: Qwen2.5-Coder-7B
+  # plus a LoRA stage on Arduino/ESP32/Raspberry Pi/MicroPython/CircuitPython
+  # and a continued-pretraining pass over ~500M tokens of real library sources
+  # (Arduino core, micropython-lib, Adafruit CircuitPython Bundle). It answers in
+  # the trained shape — wiring table, ASCII diagram, sketch, one design note —
+  # and that format is why it beats a general coder here, not raw skill.
+  #
+  # Measured 2026-11-08 on the 9070 XT: 95 tok/s decode on a 584-token answer,
+  # 1783 tok/s prefill (llama-bench: tg64 100.4, pp256 4198), ~5 s cold load,
+  # 10.1 GiB of VRAM with the desktop open (5.4 GB of weights + ~1.1 GiB of
+  # q8_0 KV at 32k). Unload llama-swap before measuring: the first probe read
+  # 15 tok/s because the previous model was still being swapped out and the
+  # weights had spilled to GTT.
+  #
+  # API discipline is the weak spot of a 7B this size: pin tables and sketch
+  # structure come out right, library calls do not always — the probes produced
+  # a non-existent `ESP32MQTT.h`, a non-existent `esp_deep_sleep_ms()`, and a
+  # button sketch with a floating input and no INPUT_PULLUP. A bare "ESP32"
+  # prompt also drifts to ESP-IDF (`gpio_pullup_enable(4)`) where the Arduino
+  # line was wanted; say "Arduino IDE" when that is the target. Treat the output
+  # as a reviewed draft, not as code to flash.
+  #
+  # Not abliterated, unlike the rest of the fleet: these are the only published
+  # weights of this fine-tune, and wiring tasks are not where refusals live.
+  embedded7b = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/embedded/ArduinoLLM-7B.Q5_K_M.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0
+  '';
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -408,6 +440,16 @@ in
           aliases = [
             "spark-igpu"
             "cheap-igpu"
+          ];
+        };
+
+        "arduinollm-7b" = {
+          cmd = embedded7b;
+          # Specialist, not a daily driver: a longer TTL only wastes the card.
+          ttl = 600;
+          aliases = [
+            "embedded"
+            "arduino"
           ];
         };
 
