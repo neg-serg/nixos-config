@@ -340,6 +340,10 @@ fi
 kill -STOP $$
 "#,
         );
+        // screenrec's sound sidecar: a stopped process whose comm is `ffmpeg`,
+        // so the start path sees it alive and `status` can report it. Every
+        // screenrec test kills it through the state file.
+        self.fake("ffmpeg", "kill -STOP $$\n");
         self.fake(
             "slurp",
             "printf '%s\\n' \"${FAKE_SLURP_OUT-}\"\nexit \"${FAKE_SLURP_EXIT-0}\"\n",
@@ -573,11 +577,18 @@ kill -STOP $$
     pub fn pidfile(&self) -> PathBuf {
         PathBuf::from(format!("/tmp/wf-recorder-{}.pid", self.user))
     }
+
+    /// screenrec's state file: the sidecar path and the audio PID the tests
+    /// clean up after a start.
+    pub fn statefile(&self) -> PathBuf {
+        PathBuf::from(format!("/tmp/wf-recorder-{}.json", self.user))
+    }
 }
 
 impl Drop for Sandbox {
     fn drop(&mut self) {
         let _ = fs::remove_file(self.pidfile());
+        let _ = fs::remove_file(self.statefile());
         let _ = fs::remove_dir_all(&self.root);
     }
 }

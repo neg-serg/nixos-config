@@ -1,12 +1,15 @@
 //! Hermetic tests for the `screenrec` port.
 //!
-//! The fake `wf-recorder` stops itself (`kill -STOP $$`) so it looks alive to
-//! the liveness probe and to `kill -0`; the tests reap it afterwards.
+//! The fake `wf-recorder` and the fake sound sidecar stop themselves
+//! (`kill -STOP $$`) so they look alive to the liveness probe and to `kill -0`;
+//! the tests reap them afterwards, the sidecar through the state file.
 
 mod support;
 
 use std::path::PathBuf;
+use std::time::{SystemTime, UNIX_EPOCH};
 
+use local_bin_desktop::json::Json;
 use nix::sys::signal::{kill, Signal};
 use nix::unistd::Pid;
 use support::*;
@@ -24,7 +27,21 @@ fn kill_fake(sandbox: &Sandbox) {
         let _ = kill(Pid::from_raw(pid), Signal::SIGKILL);
         let _ = kill(Pid::from_raw(pid), Signal::SIGCONT);
     }
+    // The sound sidecar is a stopped process of its own: it outlives the
+    // recorder in the sandbox unless the state file names it.
+    if let Ok(bytes) = std::fs::read(sandbox.statefile()) {
+        if let Ok(json) = Json::parse(&bytes) {
+            if let Some(pid) = json.get("audio_pid").and_then(Json::as_number) {
+                let pid = pid as i32;
+                if pid > 0 {
+                    let _ = kill(Pid::from_raw(pid), Signal::SIGKILL);
+                    let _ = kill(Pid::from_raw(pid), Signal::SIGCONT);
+                }
+            }
+        }
+    }
     let _ = std::fs::remove_file(sandbox.pidfile());
+    let _ = std::fs::remove_file(sandbox.statefile());
 }
 
 fn dated_env<'a>(date: &'a str) -> Vec<(&'a str, &'a str)> {
@@ -310,4 +327,141 @@ fn unknown_mode_records_the_whole_screen() {
         render(&sandbox.calls("wf-recorder"))
     );
     kill_fake(&sandbox);
+}
+
+fn now_seconds() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_secs())
+        .unwrap_or(0)
+}
+
+fn state_of(sandbox: &Sandbox) -> Json {
+    let bytes = sandbox.read(&sandbox.statefile());
+    Json::parse(&bytes).unwrap_or_else(|_| panic!("{} is JSON", str_of(&bytes)))
+}
+
+#[test]
+fn start_records_microphone_and_system_sound() {
+    let sandbox = Sandbox::new("sr-audio");
+    sandbox.install_default_fakes();
+    assert!(sandbox.install_real_sleep(), "needs a real sleep");
+    let outcome = sandbox.run_env(BIN, &[], &dated_env(DATE));
+    assert_eq!(outcome.code, 0);
+    assert_eq!(
+        sandbox.notifications()[0][3],
+        b"Recording started...".to_vec()
+    );
+
+    let calls = sandbox.calls("ffmpeg");
+    assert_eq!(calls.len(), 1, "{}", render(&calls));
+    let args = &calls[0];
+    for expected in ["@DEFAULT_SOURCE@", "@DEFAULT_MONITOR@", "amix"] {
+        assert!(
+            args.iter().any(|argument| argument.contains(expected)),
+            "{expected} missing: {}",
+            render(&calls)
+        );
+    }
+    let sidecar = args.last().expect("the sidecar path");
+    assert!(
+        sidecar.ends_with(&format!("/vid/recordings/rec-{DATE}.mka")),
+        "{sidecar}"
+    );
+
+    let state = state_of(&sandbox);
+    assert!(str_of(&state.get("video").unwrap().raw()).ends_with(&format!("rec-{DATE}.mp4")));
+    assert!(str_of(&state.get("audio").unwrap().raw()).ends_with(&format!("rec-{DATE}.mka")));
+    assert!(
+        state.get("audio_pid").unwrap().as_number().unwrap() > 0.0,
+        "the sidecar is alive"
+    );
+    kill_fake(&sandbox);
+}
+
+#[test]
+fn start_without_ffmpeg_keeps_the_video() {
+    let sandbox = Sandbox::new("sr-noaudio");
+    sandbox.install_default_fakes();
+    assert!(sandbox.install_real_sleep(), "needs a real sleep");
+    std::fs::remove_file(sandbox.bin.join("ffmpeg")).expect("drop the sidecar fake");
+    let outcome = sandbox.run_env(BIN, &[], &dated_env(DATE));
+    assert_eq!(outcome.code, 0);
+    assert_eq!(
+        sandbox.notifications()[0][3],
+        b"Recording started (no audio)".to_vec()
+    );
+    let state = state_of(&sandbox);
+    assert_eq!(state.get("audio_pid").unwrap().as_number(), Some(0.0));
+    assert_eq!(state.get("audio").unwrap().as_str(), Some(&b""[..]));
+    kill_fake(&sandbox);
+}
+
+#[test]
+fn status_without_a_take_is_off() {
+    let sandbox = Sandbox::new("sr-status-idle");
+    sandbox.install_default_fakes();
+    let outcome = sandbox.run_env(BIN, &["status"], &[]);
+    assert_eq!(outcome.code, 0);
+    assert_eq!(outcome.stdout, b"{\"screen\":false}\n");
+    assert!(sandbox.notifications().is_empty());
+}
+
+#[test]
+fn status_reports_the_take_its_sound_and_its_clock() {
+    let sandbox = Sandbox::new("sr-status-live");
+    sandbox.install_default_fakes();
+    let mut recorder = sandbox.spawn_fake("wf-recorder", &[]);
+    let recorder_pid = recorder.id();
+    sandbox.write_pidfile(recorder_pid);
+    let mut audio = sandbox.spawn_fake("ffmpeg", &[]);
+    let audio_pid = audio.id();
+    let started = now_seconds() - 42;
+    std::fs::write(
+        sandbox.statefile(),
+        format!(
+            "{{\"video\":\"/tmp/v.mp4\",\"audio\":\"/tmp/a.mka\",\"started\":{started},\"audio_pid\":{audio_pid}}}"
+        ),
+    )
+    .expect("write state");
+
+    let outcome = sandbox.run_env(BIN, &["status"], &[]);
+    assert_eq!(outcome.code, 0);
+    let line = Json::parse(&outcome.stdout).expect("one JSON line");
+    assert!(line.get("screen").map(Json::truthy).unwrap_or(false));
+    assert!(line.get("audio").map(Json::truthy).unwrap_or(false));
+    let elapsed = line.get("elapsed").and_then(Json::as_number).unwrap();
+    assert!(
+        (41.0..=45.0).contains(&elapsed),
+        "elapsed {elapsed} around 42"
+    );
+    assert_eq!(
+        line.get("pid").and_then(Json::as_number),
+        Some(recorder_pid as f64)
+    );
+
+    let _ = kill(Pid::from_raw(audio_pid as i32), Signal::SIGKILL);
+    let _ = kill(Pid::from_raw(recorder_pid as i32), Signal::SIGKILL);
+    let _ = audio.wait();
+    let _ = recorder.wait();
+    let _ = std::fs::remove_file(sandbox.statefile());
+}
+
+#[test]
+fn stop_while_idle_never_starts() {
+    let sandbox = Sandbox::new("sr-stop-idle");
+    sandbox.install_default_fakes();
+    let outcome = sandbox.run_env(BIN, &["stop"], &dated_env(DATE));
+    assert_eq!(outcome.code, 0);
+    assert!(sandbox.notifications().is_empty());
+    assert!(!sandbox.pidfile().exists());
+    assert!(!sandbox.statefile().exists());
+    assert!(
+        sandbox
+            .calls("wf-recorder")
+            .iter()
+            .all(|call| call.len() == 2 && call[1] == "-L"),
+        "{}",
+        render(&sandbox.calls("wf-recorder"))
+    );
 }
