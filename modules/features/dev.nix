@@ -1,4 +1,4 @@
-{ lib, mkBool, ... }:
+{ mkBool, ... }:
 {
   options.features.dev = {
     enable = mkBool "enable Dev stack (toolchains, editors, hack tooling)" true;
@@ -34,11 +34,6 @@
 
     unreal = {
       enable = mkBool "enable Unreal Engine 5 tooling" false;
-      useSteamRun = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Wrap Unreal Editor launch via steam-run to provide FHS runtime libraries.";
-      };
     };
     # The Hub is a manual .deb install in ~/opt/unityhub; the module only ships
     # proxy-aware launchers (unityhub-proxy, unity-proxy) for it.
