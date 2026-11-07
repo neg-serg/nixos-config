@@ -15,10 +15,15 @@
 # `[flake] Bump own project inputs` commit; rollout-watch deploys it on its next
 # tick like any other commit on main.
 #
-# Usage: flake-bump-own.sh [--all] [--no-commit]
-#   --all        also bump aurora-src and iosevka-neg
-#   --no-commit  leave the updated flake.lock in the working tree for review
-#   -h, --help   print this help
+# The repo is resolved from this script's location (scripts/dev/../..), so the
+# timer unit needs no WorkingDirectory. --allow-skip is what the weekly unit
+# passes: a dirty tree or another branch is then a quiet skip, not a failure.
+#
+# Usage: flake-bump-own.sh [--all] [--no-commit] [--allow-skip]
+#   --all         also bump aurora-src and iosevka-neg
+#   --no-commit   leave the updated flake.lock in the working tree for review
+#   --allow-skip  exit 0 instead of 1 when the tree is dirty or not on main
+#   -h, --help    print this help
 
 set -euo pipefail
 
@@ -36,12 +41,24 @@ die() {
   exit 1
 }
 
+# A precondition the weekly timer should not treat as a failure. Manual runs
+# keep the non-zero exit; the timer passes --allow-skip and stays quiet.
+skip() {
+  if [ "$allow_skip" -eq 1 ]; then
+    printf 'flake-bump-own: skipped: %s\n' "$*" >&2
+    exit 0
+  fi
+  die "$*"
+}
+
 include_heavy=0
 commit=1
+allow_skip=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --all) include_heavy=1 ;;
     --no-commit) commit=0 ;;
+    --allow-skip) allow_skip=1 ;;
     -h | --help)
       usage
       exit 0
@@ -51,14 +68,14 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-repo=$(repo_root)
+repo=$(repo_root "$(cd -- "$script_dir/../.." && pwd)")
 [ -d "$repo/.git" ] || die "$repo is not a git work tree"
 
 branch=$(git -C "$repo" symbolic-ref --quiet --short HEAD || true)
-[ "$branch" = main ] || die "HEAD is on ${branch:-a detached head}, not main"
+[ "$branch" = main ] || skip "HEAD is on ${branch:-a detached head}, not main"
 
 status=$(git -C "$repo" status --porcelain --untracked-files=no)
-[ -z "$status" ] || die "working tree is dirty; commit or stash the changes first"
+[ -z "$status" ] || skip "working tree is dirty; commit or stash the changes first"
 
 command -v nix > /dev/null 2>&1 || die "nix is not on PATH"
 command -v jq > /dev/null 2>&1 || die "jq is not on PATH"

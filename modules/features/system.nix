@@ -99,4 +99,32 @@
     default = null;
     description = "telegram-send wrapper for rollout reports (config.trantor.telegram.sender); null disables Telegram.";
   };
+
+  # Weekly bump of the flake inputs that point at neg's own repositories. The
+  # user timer (modules/user/nix-maid/sys/user-services/flake-bump.nix) runs
+  # scripts/dev/flake-bump-own.sh, which commits flake.lock without pushing;
+  # rollout-watch then deploys the commit like any other. Off by default: the
+  # timer turns "weekly" into local commits and system switches with no human in
+  # the loop, so enabling it is a trust decision, not a preference.
+  options.features.system.flakeBump.enable =
+    mkBool "bump neg's own flake inputs weekly and commit the lock" false;
+
+  options.features.system.flakeBump.repo = lib.mkOption {
+    type = lib.types.str;
+    default = "/etc/nixos";
+    description = ''
+      Live git checkout the bump operates on. Not `repoRoot` from specialArgs:
+      during a flake evaluation that is the store copy of the source, and the
+      script commits into the checkout that has the .git directory.
+    '';
+  };
+
+  options.features.system.flakeBump.calendar = lib.mkOption {
+    type = lib.types.str;
+    default = "Sun *-*-* 04:00:00";
+    description = "OnCalendar expression for the weekly bump timer.";
+  };
+
+  options.features.system.flakeBump.heavy =
+    mkBool "also bump aurora-src and iosevka-neg (long rebuilds)" false;
 }
