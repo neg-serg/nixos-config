@@ -71,6 +71,10 @@ in
   # ROCm compute (amdkfd + clr/rocm-smi userspace); training tooling via
   # features.dev.ai.rocm (nightjob; torch is a pip venv, not a Nix package)
   features.hardware.amdgpu.rocm.enable = true;
+  # SteamVR async reprojection: Steam's bwrap user namespace cannot grant
+  # CAP_SYS_NICE to vrcompositor, so lift amdgpu's high-priority-context check
+  # instead. The patch header documents the scheduling-privilege tradeoff.
+  features.hardware.amdgpu.ignoreCtxPrivileges = true;
   zramSwap.algorithm = "zstd";
   profiles.performance.writeback.enable = true;
   # Safe memory extras: lower swappiness and raise max_map_count for heavy apps/games

@@ -11,6 +11,10 @@
       usbAutomount.enable = lib.mkEnableOption ''
         Enable udev-driven USB storage auto-mount via systemd service (mounts under /mnt/<label>).
       '';
+
+      # The sibling amdgpu.rocm flag lives in features/network.nix (historical
+      # home); both options merge under features.hardware.amdgpu.
+      amdgpu.ignoreCtxPrivileges = mkBool "allow high-priority GPU contexts without CAP_SYS_NICE (SteamVR async reprojection; weakens the amdgpu privilege check)" false;
     };
     input = {
       kanata.enable = mkBool "enable Kanata keyboard remapper (requires uinput module)" false;
