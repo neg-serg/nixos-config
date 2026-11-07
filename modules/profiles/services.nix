@@ -191,7 +191,26 @@ in
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
     avahi.enable = opts.mkEnableOption "Avahi (mDNS) profile.";
-    samba.enable = opts.mkEnableOption "Samba (SMB/CIFS) fileshare profile.";
+    samba = {
+      enable = opts.mkEnableOption "Samba (SMB/CIFS) fileshare profile.";
+      interfaces = opts.mkListOpt types.str {
+        default = [ "lo" ];
+        description = "Interfaces smbd binds to (with `bind interfaces only`); add the LAN interface when a share is meant for another host.";
+      };
+      # Shares rendered next to the `shared` share in smb.conf, e.g. a read-only
+      # model directory published to a single LAN host (per-share `hosts allow`).
+      extraShares = opts.mkOpt (types.attrsOf (types.attrsOf types.str)) { } {
+        description = "Additional smb.conf share sections, merged as-is.";
+        example = {
+          "models" = {
+            path = "/zero/ai/llama/some-model";
+            "read only" = "yes";
+            "guest ok" = "yes";
+            "hosts allow" = "192.168.0.144";
+          };
+        };
+      };
+    };
     searx.enable = opts.mkEnableOption "SearXNG self-hosted metasearch (localhost, default search).";
     # Koito — self-hosted, ListenBrainz-compatible scrobbler on loopback. Local
     # scrobble hub: features.media.audio.listenbrainzMpd can submit here
