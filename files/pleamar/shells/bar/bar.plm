@@ -592,7 +592,7 @@ scene bar {
     // drawn at the device pixel grid. The
     // Material-shaped files are the font's own outlines, so the pictures do not change — only
     // their edges: resvg rasterises them at the surface's scale instead of hinting a 14 px font.
-    image icon_keyboard = file "icons/keyboard.svg", 14, 14
+    image icon_keyboard = file "icons/keyboard.svg", 32, 19
     image icon_network = file "icons/network.svg", 14, 14
     // The Material `verified_user` live.outline NetClusterCapsule.qml:91 asks for as `"verified_user"`
     // (its `mode: "material"` slot), cut to the same 24-unit grid as the icons above.
@@ -1273,9 +1273,10 @@ scene bar {
 
     // ------------------------------------------------------ left: the keyboard
     component KeyboardCluster(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        // 8 + 20 (the icon) + 6 + 14 (two glyphs of the layout) + 6. The 50 it held clipped the
-        // layout to `r` once the icon grew.
-        size: 54 * scale, strip * scale
+        // 7 + 32 (the TBK-Mini picture) + 6 + 14 (two glyphs of the layout) + 7. The 54 it held
+        // was the small glyph's width; the picture needs the wider plate, and the reference's own
+        // keyboard capsule was wider than the port's (the note at the top of this file).
+        size: 66 * scale, strip * scale
         group zoom {
             scale: scale
             body {
@@ -1286,7 +1287,7 @@ scene bar {
                 // The glass in that shell is not per widget — it is the compositor's,
                 // over the whole surface (see the strip below).
                 border: 1, mix(live.coal, live.ink, 8%)
-                box { from: 0, 1; size: 54, 23; corner: 6 }
+                box { from: 0, 1; size: 66, 23; corner: 6 }
             }
             // 10 and 32, not 6 and 28: the reference insets this capsule's live.ink 12 logical px
             // from its own edge (its glyph measures at 170 inside a plate at 158), while the
@@ -1296,14 +1297,11 @@ scene bar {
             // accent. The reference instead grows its capsule and prints `glyph ⌨ layout`; here a
             // row reads its child's `size:` once, when it lays the row out (bar.plm's own note on
             // component sizes), so a capsule that grew and shrank again would not reflow — the mode
-            // is drawn in the 20 px the icon already owns, and the layout keeps its place.
-            // The picture is rasterised at `size` and then scaled by the compositor, so its
-            // atlas is twice the cell it is drawn in: a 40x24 image inside a half-scale group
-            // lands on 20x12 logical px, one texel per device pixel.
-            group kbpicture {
-                scale: 0.5
-                image icon_keyboard { at: 16, 12; size: 40, 24; fit: contain; tint: live.ink.dim; show: not kb_badge_on }
-            }
+            // is drawn in the 32 px the picture already owns, and the layout keeps its place.
+            // The picture is the TBK-Mini this machine types on, drawn in the layout ink. It
+            // takes 32 px of the plate: 36 keys at 20 px are one device pixel each and read as
+            // a smudge, whichever way resvg draws them.
+            image icon_keyboard { at: 7, strip / 2 - 9.6; size: 32, 19; fit: contain; tint: live.ink.dim; show: not kb_badge_on }
             // The badge is 18 px, below WCAG's large-text threshold, so the plain live.accent (4.09:1 on
             // the plate) is not enough for it; `live.accent_hover` is the text-safe tone at 5.79:1.
             text "{kb_badge}" { at: 18, strip / 2; anchor: center; size: 18 * text_scale; color: live.accent_hover; show: kb_badge_on }
@@ -1311,12 +1309,12 @@ scene bar {
             // on the line box it reads 1.25 px low against the digits around it (measured on the
             // raster), and the plate is the only place where that is visible. One px up is the
             // optical centre for this one string — a digit set does not need it.
-            text "{kb_layout}" { at: 36, strip / 2 - 1; anchor: left center; size: 14 * text_scale; color: live.ink; family: "Iosevka"; width: 14; lines: 1 }
+            text "{kb_layout}" { at: 45, strip / 2 - 1; anchor: left center; size: 14 * text_scale; color: live.ink; family: "Iosevka"; width: 14; lines: 1 }
             // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
             // layout of the device in force (`switchKeyboardLayout()`), and the label follows
             // from the event socket a moment later. The wheel does the same here: a capsule that
             // reads as a knob should answer the hand that turns it, not only the one that clicks.
-            zone box kb { from: 0, 0; size: 54, strip; corner: corner; cursor: pointer; label: "Keyboard {kb_layout}"; role: button }
+            zone box kb { from: 0, 0; size: 66, strip; corner: corner; cursor: pointer; label: "Keyboard {kb_layout}"; role: button }
             on enter kb { emit tip(2) }
             on leave kb { emit tip_hide }
             on press kb { emit next_layout }
