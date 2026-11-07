@@ -72,10 +72,9 @@ in
         # kitty pads make that name the class via --class). hyprpwcenter sets
         # its own Wayland class, so `mixer` has to map to it here — registered
         # by the bind alone it matched no window and the pad opened tiled on the
-        # current workspace. There is deliberately no music entry — the daemon
-        # has no `offset` field (it logged "Unknown scratchpad field 'offset'"
-        # on every parse), and rmpc geometry comes from the music-scratchpad
-        # window rule in hyprland.lua.
+        # current workspace. Pads whose float/size/move come from a window rule in
+        # hyprland.lua need no entry here: the daemon has no `offset` field (it
+        # logged "Unknown scratchpad field 'offset'" on every parse).
         ".config/hypr/hyprscratch.conf".text = ''
           telegram {
               class = org.telegram.desktop

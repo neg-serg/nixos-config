@@ -98,7 +98,7 @@ let
   # space, keys outside the table).
   toRu = k: latinToRu.${k} or latinToRuUpper.${k} or null;
 
-  # Map a list of single-char keys (yazi on=[...], rmpc key lists)
+  # Map a list of single-char keys (yazi on=[...])
   # to their ru counterparts. Keys without a counterpart (digits) are dropped.
   mkRuKeys = keys: builtins.filter (k: k != null) (map toRu keys);
 

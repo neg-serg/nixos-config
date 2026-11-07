@@ -26,7 +26,6 @@
           default = [
             "term" # plain shell (kitty --class term)
             "nwim" # nvim wrapper (kitty --class nwim)
-            "music" # rmpc (M4+f)
             "teardown" # btop + dmesg/lazytail tabs (M4+d)
             "torrment" # rustmission (M4+t)
             "hyprpwcenter" # PipeWire control center (M4+C+p)

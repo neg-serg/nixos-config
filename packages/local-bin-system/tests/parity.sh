@@ -349,7 +349,7 @@ compare "shade: fzf picker" sh "$ORIGINALS/shade" "$BIN_DIR/shade" "$SHADE_FAKES
 section "main-menu"
 MENU_FAKES=$WORK/fakes/menu
 mkdir -p "$MENU_FAKES"
-make_fake "$MENU_FAKES" rmpc 'printf "%s" "${FAKE_SONG:-}"'
+make_fake "$MENU_FAKES" mpc 'printf "%s" "${FAKE_SONG:-}"'
 make_fake "$MENU_FAKES" wl-copy 'while IFS= read -r -N 1 character; do printf "%s" "$character" >> "$FAKE_CLIP"; done'
 make_fake "$MENU_FAKES" wl-paste 'printf "%s" "${FAKE_PASTE:-}"'
 make_fake "$MENU_FAKES" trans 'printf "trans %s\n" "$*" >> "$FAKE_ARGV_LOG"; printf "%s" "${FAKE_TRANS:-}"'
@@ -358,12 +358,10 @@ make_fake "$MENU_FAKES" notify-send 'printf "notify-send %s\n" "$*" >> "$FAKE_AR
 make_fake "$MENU_FAKES" play-sound 'printf "play-sound %s\n" "$*" >> "$FAKE_ARGV_LOG"'
 make_fake "$MENU_FAKES" vicinae 'while IFS= read -r line; do printf "in %s\n" "$line" >> "$FAKE_ARGV_LOG"; done
 printf "%s" "${FAKE_SEL:-}"'
-for helper in rmpc-pause rmpc-play rmpc-enableoutput rmpc-disableoutput sleep; do
-  make_fake "$MENU_FAKES" "$helper" 'printf "%s %s\n" "${0##*/}" "$*" >> "$FAKE_ARGV_LOG"'
-done
+make_fake "$MENU_FAKES" sleep 'printf "%s %s\n" "${0##*/}" "$*" >> "$FAKE_ARGV_LOG"'
 setup_noop
 setup setup_noop
-MENU_SONG='{"metadata":{"artist":"Artist","title":"Title","album":"Album"},"file":"a/b.mp3"}'
+MENU_SONG=$'Artist\nTitle\nAlbum\nName\na/b.mp3'
 compare "main-menu: list" sh "$ORIGINALS/main-menu" "$BIN_DIR/main-menu" "$MENU_FAKES" - -- --list
 compare "main-menu: help" sh "$ORIGINALS/main-menu" "$BIN_DIR/main-menu" "$MENU_FAKES" - -- --help
 compare "main-menu: run without action" sh "$ORIGINALS/main-menu" "$BIN_DIR/main-menu" "$MENU_FAKES" - -- --run

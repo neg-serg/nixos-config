@@ -14,8 +14,8 @@ printf 'cmd %s\n' "${0##*/}" >> "$FAKE_ARGV_LOG"
 for arg in "$@"; do printf '  %s\n' "$arg" >> "$FAKE_ARGV_LOG"; done
 "#;
 
-const RMPC: &str = r#"#!/bin/sh
-printf 'cmd rmpc\n' >> "$FAKE_ARGV_LOG"
+const MPC: &str = r#"#!/bin/sh
+printf 'cmd mpc\n' >> "$FAKE_ARGV_LOG"
 for arg in "$@"; do printf '  %s\n' "$arg" >> "$FAKE_ARGV_LOG"; done
 printf '%s' "${FAKE_SONG:-}"
 "#;
@@ -51,11 +51,14 @@ while IFS= read -r line; do printf '  in %s\n' "$line" >> "$FAKE_ARGV_LOG"; done
 printf '%s' "${FAKE_SEL:-}"
 "#;
 
-const SONG: &str = r#"{"metadata":{"artist":"Artist","title":"Title","album":"Album","name":"Name"},"file":"a/b.mp3"}"#;
+// One field per line, exactly what `mpc --format` prints for a tagged song.
+const SONG: &str = "Artist\nTitle\nAlbum\nName\na/b.mp3";
+// A song that carries no tags: the format's four newlines, five empty fields.
+const UNTAGGED: &str = "\n\n\n\n";
 
 fn fixture(label: &str) -> Case {
     let case = Case::new(label, BIN);
-    case.write_fake("rmpc", RMPC);
+    case.write_fake("mpc", MPC);
     case.write_fake("wl-copy", WL_COPY);
     case.write_fake("wl-paste", WL_PASTE);
     case.write_fake("trans", TRANS);
@@ -63,15 +66,7 @@ fn fixture(label: &str) -> Case {
     case.write_fake("notify-send", LOG_ARGS);
     case.write_fake("play-sound", LOG_ARGS);
     case.write_fake("vicinae", VICINAE);
-    for helper in [
-        "rmpc-pause",
-        "rmpc-play",
-        "rmpc-enableoutput",
-        "rmpc-disableoutput",
-        "sleep",
-    ] {
-        case.write_fake(helper, LOG_ARGS);
-    }
+    case.write_fake("sleep", LOG_ARGS);
     case
 }
 
@@ -124,46 +119,42 @@ fn title_copy_joins_artist_and_title() {
     let output = case.run_env(&["--run", "title_copy"], &song_env(SONG));
     assert_eq!(exited(&output), 0);
     assert_eq!(case.clip_log(), "Artist - Title\n");
-    assert!(case.argv_log().contains("cmd rmpc\n  song\n"));
+    let argv = case.argv_log();
+    assert!(argv.contains("cmd mpc\n"), "{argv}");
+    assert!(argv.contains("  --format\n"), "{argv}");
+    assert!(argv.contains("  current\n"), "{argv}");
 }
 
 #[test]
 fn title_copy_falls_back_to_title_then_name_then_empty() {
     let title_only = fixture("title-only");
-    let _ = title_only.run_env(
-        &["--run", "title_copy"],
-        &song_env(r#"{"metadata":{"title":"Only"}}"#),
-    );
+    let _ = title_only.run_env(&["--run", "title_copy"], &song_env("\nOnly"));
     assert_eq!(title_only.clip_log(), "Only\n");
 
     let name_only = fixture("name-only");
-    let _ = name_only.run_env(
-        &["--run", "title_copy"],
-        &song_env(r#"{"metadata":{"name":"Named"}}"#),
-    );
+    let _ = name_only.run_env(&["--run", "title_copy"], &song_env("\n\n\nNamed"));
     assert_eq!(name_only.clip_log(), "Named\n");
 
     let empty = fixture("empty-song");
-    let _ = empty.run_env(&["--run", "title_copy"], &song_env("{}"));
+    let _ = empty.run_env(&["--run", "title_copy"], &song_env(UNTAGGED));
     assert_eq!(empty.clip_log(), "\n");
 
-    let malformed = fixture("malformed-song");
-    let _ = malformed.run_env(&["--run", "title_copy"], &song_env("not json"));
-    assert_eq!(malformed.clip_log(), "");
+    let no_song = fixture("no-song");
+    let _ = no_song.run_env(&["--run", "title_copy"], &[]);
+    // `mpc current` prints nothing when the queue has no current song.
+    assert_eq!(no_song.clip_log(), "");
+    assert!(no_song.argv_log().contains("cmd mpc\n"));
 }
 
 #[test]
-fn empty_string_metadata_is_truthy_like_jq() {
-    let case = fixture("empty-strings");
-    let _ = case.run_env(
-        &["--run", "title_copy"],
-        &song_env(r#"{"metadata":{"artist":"","title":""}}"#),
-    );
-    assert_eq!(case.clip_log(), " - \n");
+fn a_song_without_tags_still_copies_an_empty_line() {
+    let case = fixture("untagged");
+    let _ = case.run_env(&["--run", "title_copy"], &song_env(UNTAGGED));
+    assert_eq!(case.clip_log(), "\n");
 }
 
 #[test]
-fn artist_and_album_copy_use_jq_alt_empty() {
+fn artist_and_album_copy_use_the_mpc_fields() {
     let artist = fixture("artist");
     let _ = artist.run_env(&["--run", "artist_copy"], &song_env(SONG));
     assert_eq!(artist.clip_log(), "Artist\n");
@@ -173,8 +164,8 @@ fn artist_and_album_copy_use_jq_alt_empty() {
     assert_eq!(album.clip_log(), "Album\n");
 
     let missing = fixture("album-missing");
-    let _ = missing.run_env(&["--run", "album_copy"], &song_env("{}"));
-    // jq's `// empty` emits zero bytes; the clipboard is still invoked.
+    let _ = missing.run_env(&["--run", "album_copy"], &song_env(UNTAGGED));
+    // An empty field emits zero bytes; the clipboard is still invoked.
     assert_eq!(missing.clip_log(), "");
     assert!(missing.argv_log().contains("cmd wl-copy\n"));
 }
@@ -189,7 +180,7 @@ fn path_copy_prefixes_the_music_directory() {
     assert_eq!(case.clip_log(), "/music/a/b.mp3\n");
 
     let empty = fixture("path-empty");
-    let _ = empty.run_env(&["--run", "path_copy"], &song_env(r#"{"file":""}"#));
+    let _ = empty.run_env(&["--run", "path_copy"], &song_env(UNTAGGED));
     assert_eq!(empty.clip_log(), "");
     assert!(!empty.argv_log().contains("cmd wl-copy"));
 }
@@ -201,7 +192,7 @@ fn pipewire_output_switches_the_outputs() {
     assert_eq!(exited(&output), 0);
     assert_eq!(
         case.argv_log(),
-        "cmd rmpc-pause\ncmd rmpc-enableoutput\n  PipeWire\ncmd rmpc-disableoutput\n  RME HDSPe AIO\ncmd rmpc-play\n"
+        "cmd mpc\n  pause\ncmd mpc\n  enable\n  PipeWire\ncmd mpc\n  disable\n  RME HDSPe AIO\ncmd mpc\n  play\n"
     );
 }
 
@@ -212,7 +203,7 @@ fn alsa_output_switches_back_and_waits() {
     assert_eq!(exited(&output), 0);
     assert_eq!(
         case.argv_log(),
-        "cmd rmpc-pause\ncmd rmpc-enableoutput\n  RME HDSPe AIO\ncmd rmpc-disableoutput\n  PipeWire\ncmd rmpc-play\ncmd sleep\n  5s\ncmd rmpc-play\n"
+        "cmd mpc\n  pause\ncmd mpc\n  enable\n  RME HDSPe AIO\ncmd mpc\n  disable\n  PipeWire\ncmd mpc\n  play\ncmd sleep\n  5s\ncmd mpc\n  play\n"
     );
 }
 
@@ -289,7 +280,7 @@ fn dmenu_skips_an_unterminated_final_line_like_the_shell_read_loop() {
     assert_eq!(exited(&output), 0);
     // `while read` does not run its body for the unterminated last line.
     assert_eq!(case.clip_log(), "");
-    assert!(!case.argv_log().contains("cmd rmpc"));
+    assert!(!case.argv_log().contains("cmd mpc"));
 }
 
 #[test]

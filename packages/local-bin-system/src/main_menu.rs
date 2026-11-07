@@ -2,16 +2,15 @@
 //!
 //! Port of `packages/local-bin/bin/main-menu` (POSIX sh). The menu names, the
 //! action bodies and the argv of every external helper are the original ones:
-//! `rmpc song`, `wl-copy`, `wl-paste`, `trans -brief :ru`, `notify-send -t N`,
-//! `nc termbin.com 9999`, `play-sound`, the `rmpc-*output` switches and
-//! `vicinae dmenu -p '❯>'`. JSON from `rmpc song` is parsed natively with jq's
-//! `// empty` and string-interpolation semantics.
+//! `mpc --format`, `wl-copy`, `wl-paste`, `trans -brief :ru`, `notify-send -t N`,
+//! `nc termbin.com 9999`, `play-sound` and `vicinae dmenu -p '❯>'`. Song
+//! metadata comes from one MPD format string, so the menu needs no
+//! player-specific client.
 
 use std::io::{Read, Write};
 use std::process::{Command, Stdio};
 
 use local_bin_system as sh;
-use serde_json::Value;
 
 const MENU: [&str; 8] = [
     "title_copy",
@@ -26,33 +25,36 @@ const MENU: [&str; 8] = [
 
 const DAC_NAME: &str = "RME HDSPe AIO";
 
-fn song_json() -> Option<Value> {
-    let output = sh::capture("rmpc", &["song"], true)?;
-    serde_json::from_slice(&output.stdout).ok()
+/// One field per line; `%name%` is the stream name MPD reports for radio.
+const SONG_FORMAT: &str = "%artist%\n%title%\n%album%\n%name%\n%file%";
+
+#[derive(Default)]
+struct Song {
+    artist: String,
+    title: String,
+    album: String,
+    name: String,
+    file: String,
 }
 
-fn song_field(document: &Option<Value>, path: &[&str]) -> Result<Option<String>, ()> {
-    let Some(document) = document else {
-        return Ok(None);
-    };
-    let value = sh::jq_index_chain(document, path)?;
-    Ok(sh::jq_alt_empty(&value))
-}
-
-/// jq's `tostring` for the string interpolation in `title_copy`.
-fn jq_tostring(value: &Value) -> String {
-    match value {
-        Value::String(text) => text.clone(),
-        Value::Null => "null".to_string(),
-        Value::Bool(true) => "true".to_string(),
-        Value::Bool(false) => "false".to_string(),
-        Value::Number(_) => sh::jq_render(value),
-        other => serde_json::to_string(other).unwrap_or_default(),
+/// `mpc --format FORMAT current`: no output means nothing is playing. One
+/// trailing newline (mpc terminates every line) is stripped before the split;
+/// a song with no tags therefore still yields five empty fields.
+fn song() -> Option<Song> {
+    let output = sh::capture("mpc", &["--format", SONG_FORMAT, "current"], true)?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if stdout.is_empty() {
+        return None;
     }
-}
-
-fn jq_truthy(value: &Value) -> bool {
-    !matches!(value, Value::Null | Value::Bool(false))
+    let text = stdout.strip_suffix('\n').unwrap_or(&stdout);
+    let mut fields = text.split('\n').map(str::to_string);
+    Some(Song {
+        artist: fields.next().unwrap_or_default(),
+        title: fields.next().unwrap_or_default(),
+        album: fields.next().unwrap_or_default(),
+        name: fields.next().unwrap_or_default(),
+        file: fields.next().unwrap_or_default(),
+    })
 }
 
 fn clipboard(bytes: &[u8]) {
@@ -102,73 +104,59 @@ fn run_ignored(program: &str, arguments: &[&str]) {
 }
 
 fn title_copy() {
-    let Some(document) = song_json() else {
-        // jq fails on the unreadable/absent JSON and emits nothing; wl-copy
-        // still runs with an empty stdin.
+    let Some(song) = song() else {
+        // Nothing playing: an empty clipboard, like the original's empty
+        // jq output. wl-copy still runs with an empty stdin.
         clipboard(b"");
         return;
     };
-    let Ok(metadata) = sh::jq_index(&document, "metadata") else {
-        clipboard(b"");
-        return;
-    };
-    let artist = sh::jq_index(&metadata, "artist").unwrap_or(Value::Null);
-    let title = sh::jq_index(&metadata, "title").unwrap_or(Value::Null);
-    let text = if jq_truthy(&artist) && jq_truthy(&title) {
-        format!("{} - {}", jq_tostring(&artist), jq_tostring(&title))
-    } else if jq_truthy(&title) {
-        jq_tostring(&title)
+    let text = if !song.artist.is_empty() && !song.title.is_empty() {
+        format!("{} - {}", song.artist, song.title)
+    } else if !song.title.is_empty() {
+        song.title
     } else {
-        let name = sh::jq_index(&metadata, "name").unwrap_or(Value::Null);
-        if jq_truthy(&name) {
-            jq_tostring(&name)
-        } else {
-            String::new()
-        }
+        song.name
     };
     clipboard(format!("{text}\n").as_bytes());
 }
 
 fn album_copy() {
-    let document = song_json();
-    match song_field(&document, &["metadata", "album"]) {
-        Ok(Some(text)) => clipboard(format!("{text}\n").as_bytes()),
+    match song() {
+        Some(song) if !song.album.is_empty() => clipboard(format!("{}\n", song.album).as_bytes()),
         _ => clipboard(b""),
     }
 }
 
 fn artist_copy() {
-    let document = song_json();
-    match song_field(&document, &["metadata", "artist"]) {
-        Ok(Some(text)) => clipboard(format!("{text}\n").as_bytes()),
+    match song() {
+        Some(song) if !song.artist.is_empty() => clipboard(format!("{}\n", song.artist).as_bytes()),
         _ => clipboard(b""),
     }
 }
 
 fn path_copy() {
     let music_dir = sh::env_or("XDG_MUSIC_DIR", &format!("{}/Music", sh::home()));
-    let document = song_json();
-    if let Ok(Some(file)) = song_field(&document, &["file"]) {
-        if !file.is_empty() {
-            clipboard(format!("{music_dir}/{file}\n").as_bytes());
+    if let Some(song) = song() {
+        if !song.file.is_empty() {
+            clipboard(format!("{music_dir}/{}\n", song.file).as_bytes());
         }
     }
 }
 
 fn pipewire_output() {
-    run_ignored("rmpc-pause", &[]);
-    run_ignored("rmpc-enableoutput", &["PipeWire"]);
-    run_ignored("rmpc-disableoutput", &[DAC_NAME]);
-    run_ignored("rmpc-play", &[]);
+    run_ignored("mpc", &["pause"]);
+    run_ignored("mpc", &["enable", "PipeWire"]);
+    run_ignored("mpc", &["disable", DAC_NAME]);
+    run_ignored("mpc", &["play"]);
 }
 
 fn alsa_output() {
-    run_ignored("rmpc-pause", &[]);
-    run_ignored("rmpc-enableoutput", &[DAC_NAME]);
-    run_ignored("rmpc-disableoutput", &["PipeWire"]);
-    run_ignored("rmpc-play", &[]);
+    run_ignored("mpc", &["pause"]);
+    run_ignored("mpc", &["enable", DAC_NAME]);
+    run_ignored("mpc", &["disable", "PipeWire"]);
+    run_ignored("mpc", &["play"]);
     run_ignored("sleep", &["5s"]);
-    run_ignored("rmpc-play", &[]);
+    run_ignored("mpc", &["play"]);
 }
 
 fn translate() {

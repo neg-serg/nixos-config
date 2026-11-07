@@ -108,7 +108,6 @@ local m = {
   xwaylandvideobridge = "^(xwaylandvideobridge)$",
   -- scratchpad classes
   im_scratchpad      = "^(KotatogramDesktop|Skype|Slack|TelegramDesktop|org\\.telegram\\.desktop|zoom)$",
-  music_scratchpad   = "^(ncmpcpp|rmpc|music)$",
   mail_scratchpad    = "^(mutterfox|neomutt)$",
   mixer_scratchpad   = "^(hyprpwcenter)$",
   torrment_scratchpad = "^(torrment)$",
@@ -452,9 +451,8 @@ hl.bind(M4 .. "+" .. C .. "+z", hl.dsp.exec_cmd("kitty-font-zoom toggle"))
 -- scratchpad-geometry still treat it as the same pad (files/kitty/teardown.session).
 hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty-glass --class teardown --session ~/.config/kitty/teardown.session' special"))
 hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hyprscratch toggle telegram"))
--- mod4+f is the new player now (aurora, its own window), not the rmpc scratchpad: the
--- migration is on, and the key has to lead to the thing being used. The launcher brings the
--- window up if aurora is already running instead of starting a second copy.
+-- mod4+f is the player's key (aurora, its own window): the launcher brings the window up
+-- if aurora is already running instead of starting a second copy.
 hl.bind(M4 .. "+f", hl.dsp.exec_cmd("aurora-focus"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class torrment -e rustmission' special"))
 -- M4+u used to open a `tun status` pad; full-TUN was dropped in 317181e6 and
@@ -618,9 +616,9 @@ hl.bind(M4 .. "+m", hl.dsp.exec_cmd("~/.local/bin/music-rename current"), { lock
 hl.bind(M4 .. "+" .. SH .. "+q", hl.dsp.exec_cmd("mpd-voice once"), { locked = true })
 
 -- Euphonica (GTK4/libadwaita MPD client) — run-or-raise, the GUI counterpart
--- to the M4+f rmpc scratchpad.
+-- to the M4+f player.
 hl.bind(M4 .. "+" .. SH .. "+e", hl.dsp.exec_cmd('raise --match "class:regex=^(euphonica|io\\.github\\.htkhiem\\.Euphonica)$" --launch "euphonica"'), { locked = true })
--- MPD transport mode (submap below): ncmpcpp/rmpc letters for the verbs MPRIS
+-- MPD transport mode (submap below): ncmpcpp-style letters for the verbs MPRIS
 -- does not carry (repeat/random/single/consume, relative seek, software volume).
 hl.bind(M4 .. "+" .. SH .. "+p", hl.dsp.submap("music"))
 
@@ -859,11 +857,11 @@ hl.define_submap("tiling", "reset", function()
   binde_reset("f", hy3(function(p) return p.toggle_focus_layer() end))
 end)
 
--- Submap: music (MPD transport with ncmpcpp/rmpc letter bindings)
+-- Submap: music (MPD transport with ncmpcpp-style letter bindings)
 -- mpc drives MPD directly: playerctl/mpd-mpris relays only play-pause and skips,
 -- while repeat/random/single/consume, relative seek and the MPD software mixer
 -- (mixer_type "software" in mpd.conf) exist only on the MPD protocol.
--- Letters follow the rmpc config (files/rmpc/config.ron) and ncmpcpp:
+-- Letters follow the ncmpcpp conventions:
 --   p/space toggle   s stop   n/N next/prev (also ,/.)
 --   b/f seek -/+10s  h/l seek -/+5s
 --   z repeat  r random  y single  R consume  u update  U rescan
@@ -1264,11 +1262,9 @@ hl.animation({ leaf = "zoomFactor",       enabled = true, speed = 1, spring = "s
 hl.window_rule({ name = "nm-connection-editor", match = { class = "^(nm-connection-editor)$" }, float = true, size = "45% 45%", center = true, animation = "popin 80%", tag = "nm-connection-editor" })
 hl.window_rule({ name = "picture-in-picture", match = { title = m.pip }, float = true, keep_aspect_ratio = true, move = "73% 72%", size = "25% 25%", pin = true, animation = "popin 90%", tag = "pip" })
 -- player (Vulkan MPD frontend, ~/src/aurora): a fixed-size floating window, because tiling
--- it into a column hides most of the three-pane layout. The base geometry is the rmpc scratchpad
--- (music-scratchpad below: 70% x 40% at 15%/30%, i.e. centred) grown by 30% on both axes —
--- 0.7 * 1.3 = 0.91 wide, 0.4 * 1.3 = 0.52 tall, still centred — so the key that swapped one player
--- for the other does not swap the footprint back. On the 1920x1080 logical monitor that is
--- 1747x562 at 86,259 (rmpc itself saves 1344x432 at 288,324 in ~/.local/state/hyprscratch/geometry.json).
+-- it into a column hides most of the three-pane layout. The base is 70% x 40% at 15%/30%
+-- grown by 30% on both axes — 0.7 * 1.3 = 0.91 wide, 0.4 * 1.3 = 0.52 tall, still centred.
+-- On the 1920x1080 logical monitor that is 1747x562 at 86,259.
 --
 -- The window is parked on its own special workspace from the start: mod4+f toggles that workspace
 -- (aurora-focus), which is the only reliable "hide" Hyprland offers here. `silent` keeps the view
@@ -1284,12 +1280,11 @@ hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, 
 -- glass plugin's tags (`hyprglass_preset_*`) and they went with the plugin, so
 -- a scratchpad blurs exactly like every other window.
 --
--- The rmpc pane sits at the scratchpad opacity of 0.85 (services.nix): with the
--- frost gone, that opacity is what keeps its text readable over the desktop.
--- Set 0.45 back there (or write a number into ~/.config/kitty/glass-opacity) to
--- make the pane translucent again once a glass plugin is back.
+-- Scratchpad panes sit at 0.85 opacity (services.nix): with the frost gone, that
+-- opacity is what keeps their text readable over the desktop. Write a number into
+-- ~/.config/kitty/glass-opacity to make a pane translucent again once a glass
+-- plugin is back.
 hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
-hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.3", no_dim = true })
 hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
 hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
 hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
@@ -1310,7 +1305,7 @@ hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratc
 -- makes the desk arrive with the window. Covers every scratchpad class the config
 -- knows about: the kitty terminals plus the app scratchpads (telegram, mail).
 for i, pattern in ipairs({
-  "^teardown$", "^music$", "^torrment$", "^mixer$", "^rebuild$",
+  "^teardown$", "^torrment$", "^mixer$", "^rebuild$",
   m.im_scratchpad, m.mail_scratchpad,
 }) do
   hl.window_rule({ name = "anim-scratchpad-" .. i, match = { class = pattern }, animation = "slidefadevert 12%" })

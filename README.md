@@ -216,7 +216,7 @@ flowchart LR
 <details>
 <summary><h3>🎵 Media Stack</h3></summary>
 
-- 🎵 **MPD** - Music Player Daemon + clients (rmpc, ncmpcpp, euphonica)
+- 🎵 **MPD** - Music Player Daemon + clients (euphonica, mpc)
 - ⬇️ **Transmission** - Torrent client + rustmission TUI
 - 🎨 **AI Upscaling** - Real-time video enhancement (optional)
 - 🔊 **PipeWire** - Modern audio server
@@ -257,7 +257,6 @@ flowchart LR
 │   └── ...
 ├── 📂 packages/                      # 🎁 Custom overlays (30)
 │   ├── game/
-│   ├── rmpc/
 │   └── ...
 ├── 📂 files/                         # 📝 Config files
 │   ├── 📁 gui/hypr/                  # Hyprland configs
@@ -530,7 +529,6 @@ Quick-access overlays for common applications:
 | Scratchpad | App | Keybind | Size |
 |------------|-----|---------|------|
 | 💬 **im** | Telegram | `Super+E` | 30% × full height (right edge) |
-| 🎵 **music** | RMPC | `Super+F` | 70% × 40% |
 | 📬 **mail** | neomutt | — (class rule only) | 50% × 50% (centered) |
 | 🔊 **mixer** | hyprpwcenter | `Super+Ctrl+P` | 40% × full height (right edge) |
 | ⬇️ **torrment** | Rustmission | `Super+T` | 98% × 40% (top-left) |
@@ -551,7 +549,6 @@ Quick-access overlays for common applications:
 Rust launcher wrapper in `packages/game/`:
 - `game-run` - CPU isolation wrapper with gamescope presets
 ### 🎵 Media
-- `rmpc` - Modern MPD client (Rust)
 - `rustmission` - Transmission TUI
 
 ### 💻 Productivity

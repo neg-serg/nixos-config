@@ -20,9 +20,9 @@ let
   scratchpadGeometry = pkgs.neg.scratchpad-geometry;
   # Fallback frost for a scratchpad pane (see kitty-glass-frost.sh): a heavily
   # blurred, darkened slice of the current wallpaper pushed into the pane as kitty's
-  # background image. The launcher no longer uses it — the rmpc pane is translucent
-  # enough these days for the plugin's own frost to carry it — but it stays
-  # installed: one line in the music branch of `kitty-glass` below brings it back.
+  # background image. The launcher does not use it (the compositor's own frost
+  # carries the panes), but it stays installed: one line in `kitty-glass` below
+  # brings it back.
   kittyGlassFrost = pkgs.writeShellScriptBin "kitty-glass-frost" (
     builtins.replaceStrings
       [ "@hyprctl@" "@kitten@" ]
@@ -85,14 +85,9 @@ in
     # terminal itself has to be translucent for the backdrop to read through:
     # kitty's 0.88 default is nearly opaque and showed no glass at all. 0.85 black
     # keeps a hint of frost while staying decisively darker than the media card
-    # (0.45) — a terminal that faint competes with its own text.
-    #
-    # The music pane (rmpc) used to sit at the opposite end: it carried the glass
-    # plugin's strongest frost preset, so 0.45 black let the backdrop through. With
-    # the plugin gone there is no extra frost behind it, and 0.85 puts the pane on
-    # the same footing as every other scratchpad, where the text wins over
-    # the backdrop. Measured over an opaque 200-grey window: 0.96 -> (6,6,6),
-    # 0.92 -> (11,11,11), 0.85 -> (24,24,24), 0.70 -> (49,49,49).
+    # (0.45) — a terminal that faint competes with its own text. Measured over an
+    # opaque 200-grey window: 0.96 -> (6,6,6), 0.92 -> (11,11,11),
+    # 0.85 -> (24,24,24), 0.70 -> (49,49,49).
     #
     # The opacity can be tuned without a rebuild: write a number into
     # ~/.config/kitty/glass-opacity (all scratchpads) and reopen the pane — the
@@ -107,11 +102,8 @@ in
         previous="$arg"
       done
 
-      # Per-class default; the override file below still wins over both.
-      case "$class" in
-        music) opacity=0.85 ;; # rmpc: same footing as the other scratchpads
-        *) opacity=0.85 ;;
-      esac
+      # One default for every pane; the override file below still wins.
+      opacity=0.85
       override="$HOME/.config/kitty/glass-opacity"
       [ -r "$override" ] && opacity="$(head -n 1 "$override" | tr -d '[:space:]')"
       case "$opacity" in
@@ -133,7 +125,6 @@ in
         rebuild)  tint="#171008" ;; # warm — the rebuilds it runs
         torrment) tint="#08131a" ;; # cold blue — downloads
         vpn)      tint="#08160f" ;; # green — the tunnel
-        music)    tint="#000000" ;; # rmpc: the pane stays black, no cover accent
         mixer)    tint="#181207" ;; # amber — audio
         teardown) tint="#0b0d11" ;; # neutral slate — system overview
         *)        tint="#000000" ;;
