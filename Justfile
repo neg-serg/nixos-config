@@ -401,6 +401,12 @@ music-moss-venv *ARGS:
 music-moss-models *ARGS:
     bash "{{repo_root}}/scripts/dev/moss-music-setup.sh" --only models {{ARGS}}
 
+# Install chordotomy (beat-aligned chords, key changes, Roman numerals from a
+# recording) as a uv tool plus its Beat This! weights; --check/--dry-run are
+# read-only. It lives in ~/.local, so no rebuild is needed to use it.
+music-chordotomy-setup *ARGS:
+    bash "{{repo_root}}/scripts/dev/chordotomy-setup.sh" {{ARGS}}
+
 # Refresh every derived music artefact in one incremental pass: MERT index ->
 # MTG tags -> mood/genre playlists (the weekly timer runs the same script).
 # --check / --dry-run are read-only; see docs/howto/local-music-ai.md.
