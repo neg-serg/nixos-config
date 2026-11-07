@@ -1,21 +1,19 @@
 ##
 # Module: media/audio/mpd-packages
-# Purpose: Provide the MPD client/tool stack system-wide when the MPD feature is enabled.
+# Purpose: Open the MPD control port when the MPD feature is enabled. The
+# clients themselves (mpc, euphonica, playerctl) are installed by the user
+# media layer (modules/user/nix-maid/sys/media.nix); nothing here belongs in
+# the system closure.
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 let
   enabled = config.lib.neg.enabled "media.audio.mpd";
-  packages = [
-    pkgs.rmpc # minimal MPD CLI used in scripts/notifications
-  ];
 in
 {
   config = lib.mkIf enabled {
-    environment.systemPackages = lib.mkAfter packages;
     networking.firewall.allowedTCPPorts = [ 6600 ];
   };
 }

@@ -12,8 +12,6 @@
   adguardian-term = pkgs.adguardian;
   hxtools = pkgs.hxtools; # Collection of small tools over the years by j.eng
 
-  rmpc = pkgs.rmpc; # TUI music player client for MPD with album art support vi...
-
   waves = pkgs.waves;
 
   termeverything = pkgs.neg.termeverything;

@@ -22,8 +22,8 @@ import "../../capsule.plm"
 
 library Mpd strict {
 
-    // mpc only: the QS fallback `rmpc status` is a second binary for a second
-    // client library, and this shell talks to MPD, not to a wrapper.
+    // mpc only: the QS fallback used a second binary and a second client
+    // library, and this shell talks to MPD, not to a wrapper.
     permissions { run: "mpc" }
 
     // ------------------------------------------------------------- boundary

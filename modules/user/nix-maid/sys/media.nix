@@ -14,102 +14,6 @@ let
   # sacad downloads album art on demand only, so it is built on first use.
   onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
 
-  # --- rmpc: Russian-layout duplicate binds (ЙЦУКЕН) --------------------------
-  # GENERATED from lib/ru-keys.nix (neg.ruKeys) — single source of truth, do not
-  # edit the generated chars. Bind data lives below (rmpcRuBinds), the latin
-  # binds live in files/rmpc/config.ron (markers rmpcRuBinds.*). The daemon
-  # ru-layout (features.input.ruHotkeys) already forces us in the terminal, so
-  # these duplicates only matter after a manual M4+S switch inside the window.
-  ruKeys = neg.ruKeys;
-
-  # Positional constructor for the table below: nixfmt keeps a two-name
-  # `inherit` on one line, so each record costs one line instead of four.
-  rmpcBind = key: action: { inherit key action; };
-
-  rmpcRuBinds = {
-    global = [
-      (rmpcBind "p" "TogglePause")
-      (rmpcBind "q" "Quit")
-      (rmpcBind "s" "Stop")
-      (rmpcBind "u" "Update")
-      (rmpcBind "w" "ShowHelp")
-      (rmpcBind "b" "SeekBack")
-      (rmpcBind "f" "SeekForward")
-      (rmpcBind "o" "ShowOutputs")
-      (rmpcBind "z" "ToggleRepeat")
-      (rmpcBind "r" "ToggleRandom")
-      (rmpcBind "y" "ToggleSingle")
-      (rmpcBind "L" "ExternalCommand(command: [\"mpc\", \"clear\"])")
-      (rmpcBind "O" "ShowOutputs")
-      (rmpcBind "P" "PlaylistsTab")
-      (rmpcBind "U" "Rescan")
-      (rmpcBind "R" "ToggleConsume")
-    ];
-    navigation = [
-      (rmpcBind "a" "Select")
-      (rmpcBind "A" "AddAll")
-      (rmpcBind "D" "Delete")
-      (rmpcBind "g" "Top")
-      (rmpcBind "G" "Bottom")
-      (rmpcBind "h" "Left")
-      (rmpcBind "i" "FocusInput")
-      (rmpcBind "j" "Down")
-      (rmpcBind "J" "MoveDown")
-      (rmpcBind "k" "Up")
-      (rmpcBind "K" "MoveUp")
-      (rmpcBind "l" "Right")
-      (rmpcBind "n" "NextResult")
-      (rmpcBind "N" "PreviousResult")
-      (rmpcBind "r" "Rename")
-    ];
-    queue = [
-      (rmpcBind "a" "AddToPlaylist")
-      (rmpcBind "C" "DeleteAll")
-      (rmpcBind "d" "Delete")
-    ];
-  };
-
-  # Generated lines keep the 12-space indent of the surrounding RON entries.
-  rmpcRuLine = d: "            \"${ruKeys.toRu d.key}\": ${d.action}, // ${d.key}";
-
-  # The markers in files/rmpc/config.ron carry the section header; the
-  # generated block is just the bind lines (no trailing newline — the marker's
-  # own line break follows).
-  rmpcRuBlock = binds: lib.concatStringsSep "\n" (map rmpcRuLine binds);
-
-  # files/rmpc/config.ron carries marker comments (rmpcRuBinds.*) where the
-  # generated blocks are spliced in.
-  rmpcConfig = builtins.readFile (config.lib.neg.path "files/rmpc/config.ron");
-  rmpcText = lib.pipe rmpcConfig [
-    (
-      s:
-      builtins.replaceStrings
-        [
-          "            // Russian layout duplicates (ЙЦУКЕН) — GENERATED (rmpcRuBinds.global), see modules/user/nix-maid/sys/media.nix"
-        ]
-        [ (rmpcRuBlock rmpcRuBinds.global) ]
-        s
-    )
-    (
-      s:
-      builtins.replaceStrings
-        [
-          "            // Russian layout duplicates (ЙЦУКЕН) — GENERATED (rmpcRuBinds.navigation), see modules/user/nix-maid/sys/media.nix"
-        ]
-        [ (rmpcRuBlock rmpcRuBinds.navigation) ]
-        s
-    )
-    (
-      s:
-      builtins.replaceStrings
-        [
-          "            // Russian layout duplicates (ЙЦУКЕН) — GENERATED (rmpcRuBinds.queue), see modules/user/nix-maid/sys/media.nix"
-        ]
-        [ (rmpcRuBlock rmpcRuBinds.queue) ]
-        s
-    )
-  ];
-
   # --- Beets distrobox wrapper ---
   beetWrapper = pkgs.writeShellScriptBin "beet" ''
     set -euo pipefail
@@ -192,8 +96,7 @@ lib.mkMerge [
       ++ [
         # Audio
         pkgs.mpc # A minimalist command line interface to MPD
-        pkgs.rmpc # Rust Music Player Client
-        pkgs.euphonica # GTK4/libadwaita MPD client (GUI counterpart to rmpc)
+        pkgs.euphonica # GTK4/libadwaita MPD client (GUI MPD frontend)
         pkgs.playerctl # Command-line controller for MPC-capable players
 
         # Images
@@ -231,11 +134,6 @@ lib.mkMerge [
     ".config/beets/config.yaml".text = builtins.toJSON beetsSettings;
 
     ".config/mpd/playlists/.keep".text = "";
-
-    # rmpc config: config.ron is GENERATED (RU duplicates spliced at the
-    # rmpcRuBinds.* markers), themes deployed as-is.
-    ".config/rmpc/config.ron".text = rmpcText;
-    ".config/rmpc/themes".source = config.lib.neg.live "files/rmpc/themes";
 
     ".config/swayimg".source = config.lib.neg.live "files/gui/swayimg";
 

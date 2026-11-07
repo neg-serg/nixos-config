@@ -5,9 +5,9 @@
 -- prints a line per subsystem change, and the 2500 ms fallback poll is the QS
 -- `timers` tick (`mpd.flags`) for a missed or unsupported idle.
 --
--- Deviation, on purpose: the QS command was `(mpc status || rmpc status)`; this
+-- Deviation, on purpose: the QS command fell back to a second MPD client; this
 -- plugin speaks mpc only (one binary, one permission), and when mpc cannot reach
--- MPD it says `available = false` instead of asking a second client.
+-- MPD it says `available = false` instead of asking that client.
 --
 -- Permissions are the plugin's own: mpc.
 

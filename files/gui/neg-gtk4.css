@@ -1,7 +1,7 @@
 /* neg-gtk — GTK4 / libadwaita palette override, applied on top of Adwaita.
  *
  * Palette source: neg.nvim, kept in sync with the other themed surfaces of this
- * repo (ghostty palettes 25/247/251, rmpc neg.ron, vicinae, btop midnight-ocean).
+ * repo (ghostty palettes 25/247/251, vicinae, btop midnight-ocean).
  *
  *   background  #000000 (view) -> #040f1c (window) -> #0c1c30 (card/headerbar)
  *   text        #a4b3c6, secondary #6d839e, bright #d1e5ff
