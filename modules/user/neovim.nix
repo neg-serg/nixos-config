@@ -80,7 +80,8 @@ lib.mkIf devEnabled (
         # the devshell for that language: marksman/lemminx from the default
         # shell (flake/devshells/base.nix), clangd/CMake from `cpp`,
         # rust-analyzer from `rust`, delve from `tools`, vale from `lint`.
-        # What stays below is needed in every session, whatever the project.
+        # What stays below is needed in every session or is fetched on first
+        # use, whatever the project.
         (onDemand {
           name = "texlab";
           attr = "texlab";
@@ -88,15 +89,29 @@ lib.mkIf devEnabled (
         pkgs.lua-language-server # Lua
         pkgs.bash-language-server # Bash
         pkgs.pyright # Python
-        pkgs.typescript-language-server # TypeScript/JavaScript
-        pkgs.vscode-langservers-extracted # CSS + HTML + JSON
+        (onDemand {
+          name = "typescript-language-server";
+          attr = "typescript-language-server";
+        }) # TypeScript/JavaScript LSP, built on first use
+        (onDemand {
+          name = "vscode-json-language-server";
+          attr = "vscode-langservers-extracted";
+          aliases = [
+            "vscode-css-language-server"
+            "vscode-eslint-language-server"
+            "vscode-html-language-server"
+          ];
+        }) # CSS + HTML + JSON + ESLint LSP servers, built on first use
         pkgs.taplo # TOML
         pkgs.just-lsp # Justfiles
         pkgs.autotools-language-server # Autotools/Make
         pkgs.dot-language-server # DOT graphs
         pkgs.yaml-language-server # YAML
         pkgs.nil # Nix (fast LSP with built-in nixpkgs docs)
-        pkgs.docker-language-server # Dockerfile LSP
+        (onDemand {
+          name = "docker-language-server";
+          attr = "docker-language-server";
+        }) # Dockerfile LSP, built on first use
         # CMake LSP/formatter live in the `cpp` devshell together with CMake.
         pkgs.systemd-lsp # Systemd unit LSP
 
@@ -131,7 +146,10 @@ lib.mkIf devEnabled (
             priority = 1;
           }; # wins PATH over plain python3 so `python3 -m debugpy.adapter` works
         })) # Python DAP adapter (nvim-dap)
-        pkgs.lazygit # Git TUI used by Snacks.lazygit bindings
+        (onDemand {
+          name = "lazygit";
+          attr = "lazygit";
+        }) # Git TUI for Snacks.lazygit bindings, built on first use
       ];
     }
     (neg.mkHomeFiles (

@@ -21,7 +21,10 @@ in
   # is built and rooted under ~/.local/state/nix-apps on the first run.
   config = lib.mkIf enabled {
     environment.systemPackages = [
-      pkgs.himalaya # async email CLI with IMAP/SMTP sync + TUI prompts
+      (onDemand {
+        name = "himalaya";
+        attr = "himalaya";
+      }) # async email CLI with IMAP/SMTP sync + TUI prompts, built on first use
       pkgs.kyotocabinet # DB backend for himalaya cache (faster than sqlite)
       (onDemand {
         name = "neomutt";
