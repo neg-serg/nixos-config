@@ -9,6 +9,7 @@
 
 mod cli;
 mod command;
+mod llm;
 mod sample;
 mod state;
 #[cfg(test)]
@@ -113,6 +114,7 @@ fn run(options: cli::Options) -> Result<(), String> {
         gpu_path,
         temp_path,
         proc_paths,
+        llm_url: options.llm_url,
     };
     let mut session = Session::new(config, state, start_ms);
     session.auto_subscribe(start_ms);
