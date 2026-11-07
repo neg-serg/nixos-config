@@ -84,9 +84,32 @@ lib.mkMerge [
       adguardhome.filterLists = adguardLists.filterLists;
       # Enable Avahi (mDNS) so iOS/macOS can resolve *.local and discover SMB shares
       avahi.enable = true;
-      # Enable Samba profile on this host (guest-access share under /zero/sync/smb)
-      samba.enable = false;
+      # Samba profile: the guest share under /zero/sync/smb stays off, but smbd
+      # also publishes the Gyro-Coder weights read-only to the 7900 XTX box
+      # (192.168.0.144, "debian-I"). That box has 57.6 GB free and the file is
+      # 75.8 GB, so it mounts the share instead of keeping a copy; NFS was the
+      # first choice but this kernel has no nfsd/rpc_pipefs modules at all.
+      samba = {
+        enable = true;
+        interfaces = [
+          "lo"
+          "net1"
+        ];
+        extraShares."gyro-coder" = {
+          path = "/zero/ai/llama/gyro-coder";
+          browseable = "yes";
+          "read only" = "yes";
+          "guest ok" = "yes";
+          "force user" = "nobody";
+          "hosts allow" = "192.168.0.144";
+        };
+      };
     };
+
+    # smbd is not started at boot by the samba module (it drags in
+    # network-online.target); the model server on the other host needs the
+    # share, so this host opts back in.
+    systemd.services.samba-smbd.wantedBy = lib.mkForce [ "multi-user.target" ];
 
     # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
 
@@ -153,6 +176,7 @@ lib.mkMerge [
           8090 # flohmarkt small-ads board (servicesProfiles.flohmarkt above)
           8091 # minibbs board (servicesProfiles.minibbs above)
           11434 # ollama (no auth — LAN only)
+          445 # samba: read-only Gyro-Coder share for the 7900 XTX box
           27015 # Steam
           27036 # Steam Remote Play
           27037 # Steam Remote Play
