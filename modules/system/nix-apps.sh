@@ -18,6 +18,7 @@ usage: nix-apps COMMAND [NAME...]
 commands:
   list              every on-demand root with its pinned store path
   status            compare each root with the current flake
+  seed [NAME...]    pre-warm every launcher on PATH (or the named ones)
   update [NAME...]  rebuild roots from the current flake (default: all managed)
   clean NAME...     remove roots; the store path stays until the next GC
 
@@ -26,6 +27,11 @@ A root is a GC root: it pins the store path of one flake attr until
 call of a launcher after a clean builds the app again; `update` re-points
 without waiting for that call, and creates a missing per-user root when
 the name resolves to a flake attr (pre-warm a launcher that was never run).
+
+`seed` is the offline recipe: it walks PATH, finds every on-demand launcher
+(their store target lives in <name>-launchers) and pins the ones that have
+no root yet. Run it once while online after a switch, and every launcher
+works without network afterwards — the roots survive GC.
 EOF
 }
 
@@ -172,6 +178,78 @@ cmd_update() {
   done
 }
 
+# Every on-demand launcher installed on PATH, as: root-name<TAB>launcher-target.
+# The launcher symlink points into <hash>-<name>-launchers/bin/<name>, which is
+# how the root name is recovered; aliases collapse onto the same root.
+each_launcher() {
+  local dir f target base
+  local -a dirs=()
+  IFS=':' read -r -a dirs <<< "${PATH:-}"
+  for dir in "${dirs[@]}"; do
+    [ -d "$dir" ] || continue
+    for f in "$dir"/*; do
+      [ -L "$f" ] || continue
+      target=$(readlink "$f" 2> /dev/null || true)
+      case "$target" in
+        */[0-9a-z]*-launchers/bin/*) ;;
+        *) continue ;;
+      esac
+      base=$(basename "$(dirname "$(dirname "$target")")")
+      base=${base#*-}
+      printf '%s\t%s\n' "${base%-launchers}" "$target"
+    done
+  done
+}
+
+# Offline recipe: pin every launcher that has no root yet. The flake attr is
+# read back from the generated dispatch script, so aliases and renamed roots
+# (adb -> android-tools, js-debug -> vscode-js-debug) need no mapping table.
+cmd_seed() {
+  local name path attr out picked failed=0 w hit
+  local -A seen=()
+  printf '%-26s %-9s %s\n' NAME SCOPE RESULT
+  while IFS=$'\t' read -r name path; do
+    [ -n "$name" ] || continue
+    [ -n "${seen[$name]:-}" ] && continue
+    seen[$name]=1
+
+    if [ "$#" -gt 0 ]; then
+      hit=0
+      for w in "$@"; do
+        [ "$w" = "$name" ] && hit=1
+      done
+      [ "$hit" = 1 ] || continue
+    fi
+
+    if [ -e "$user_root/$name" ]; then
+      printf '%-26s %-9s already pinned\n' "$name" user
+      continue
+    fi
+
+    attr=$(sed -n 's/.*git+file:\/\/\/etc\/nixos#\([A-Za-z0-9._-]*\).*/\1/p' "$(readlink -f "$path" 2> /dev/null)" | head -n 1)
+    if [ -z "$attr" ]; then
+      printf '%-26s %-9s skipped (no attr in launcher)\n' "$name" user
+      continue
+    fi
+    if ! out=$(nix build --no-link --print-out-paths "$flake#$attr" 2> /dev/null); then
+      printf '%-26s %-9s FAILED (network or eval)\n' "$name" user
+      failed=$((failed + 1))
+      continue
+    fi
+    picked=$(pick_output "$name" "$out")
+    if [ -z "$picked" ]; then
+      printf '%-26s %-9s FAILED (no output)\n' "$name" user
+      failed=$((failed + 1))
+      continue
+    fi
+    mkdir -p "$user_root"
+    rm -f "$user_root/$name"
+    nix-store --add-root "$user_root/$name" --indirect --realise "$picked" > /dev/null
+    printf '%-26s %-9s %s\n' "$name" user "${picked##*/}"
+  done < <(each_launcher)
+  [ "$failed" -eq 0 ] || die "$failed launcher(s) could not be seeded"
+}
+
 cmd_clean() {
   [ "$#" -gt 0 ] || die 'clean needs at least one name'
   local want scope name path found
@@ -197,6 +275,7 @@ main() {
   case "$cmd" in
     list) cmd_list ;;
     status) cmd_status ;;
+    seed) cmd_seed "$@" ;;
     update) cmd_update "$@" ;;
     clean) cmd_clean "$@" ;;
     -h | --help | help) usage ;;
