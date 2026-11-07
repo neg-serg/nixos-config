@@ -5,9 +5,14 @@
 {
   lib,
   pkgs,
+  config,
   ...
 }:
 let
+  # The HDSPe matrix mixer is a GUI (wxWidgets + WebKit, 214.7 MiB exclusive)
+  # opened by hand when routing changes, so it is built on first use.
+  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+
   # glm-usbmon-priv: root helper for USB traffic captures — mounts debugfs for
   # the length of one usbmon session and unmounts it on stop (invoked via
   # NOPASSWD sudo from the GLM/GNet protocol work).
@@ -41,7 +46,10 @@ in
     glmUsbmonPriv # root helper (NOPASSWD) for usbmon captures of the GLM adapter
 
     # -- RME HDSPe --
-    pkgs.hdspeconf # HDSPe matrix mixer & config (for snd-hdspe driver)
+    (onDemand {
+      name = "hdspeconf";
+      attr = "hdspeconf";
+    }) # HDSPe matrix mixer & config (snd-hdspe driver), built on first use
     alsaToolsHdsp # hdspmixer, hdspconf (RME HDSPe userland tools)
 
     # -- Mixer --

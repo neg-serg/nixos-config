@@ -70,7 +70,8 @@ in
       systemPackages = [
         # pkgs.mangohud removed — fails to build on the unstable rev
         pkgs.neg.game # Unified game launcher — CPU pinning, Gamescope, sessions
-        pkgs.corectrl # GUI for AMD GPU overclocking and fan control
+        # CoreCtrl is installed by modules/hardware/gpu-corectrl.nix
+        # (hardware.gpu.corectrl) together with its polkit rule.
         pkgs.ryzenadj # AMD CPU overclocking (PBO, curve optimizer) via SMU
         pkgs.stress-ng # CPU/RAM stress testing for stability verification
         pkgs.glmark2 # OpenGL benchmark for GPU stability/performance
