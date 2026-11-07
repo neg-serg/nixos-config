@@ -1311,7 +1311,7 @@ scene bar {
             // on the line box it reads 1.25 px low against the digits around it (measured on the
             // raster), and the plate is the only place where that is visible. One px up is the
             // optical centre for this one string — a digit set does not need it.
-            text "{kb_layout}" { at: 34, strip / 2 - 1; anchor: left center; size: 14 * text_scale; color: live.ink; family: "Iosevka"; width: 14; lines: 1 }
+            text "{kb_layout}" { at: 36, strip / 2 - 1; anchor: left center; size: 14 * text_scale; color: live.ink; family: "Iosevka"; width: 14; lines: 1 }
             // QS's KeyboardLayoutHypr is a button: a press asks the compositor for the next
             // layout of the device in force (`switchKeyboardLayout()`), and the label follows
             // from the event socket a moment later. The wheel does the same here: a capsule that
