@@ -4,7 +4,6 @@ let
 in
 {
   nativeBuildInputs = [
-    pkgs.ansible # IT automation platform
     pkgs.terraform # Tool for building, changing, and versioning infrastructure
     pkgs.opentofu # Tool for building, changing, and versioning infrastructure
   ]
