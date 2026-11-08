@@ -41,6 +41,7 @@ Quick Commands
 - Format all: `just fmt`
 - Full check: `just check` (runs `nix flake check -L --option substitute false`)
 - Update flake: `just update`
+- AppArmor VM test (on-demand; boots a VM): `just apparmor-test`
 - GC: `sudo nix-collect-garbage -d && nix-collect-garbage -d`
 
 Project Structure
