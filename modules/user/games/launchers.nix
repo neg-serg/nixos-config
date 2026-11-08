@@ -77,26 +77,32 @@ in
       package = pkgs.steam.override {
         # Digital distribution platform
         #
-        # Drop the i686 half of the FHS env. nixpkgs hardcodes
-        # `multiArch = true` in the steam package, but `buildFHSEnv` is a
-        # callPackage argument, so wrapping it removes the whole
-        # `pkgsi686Linux.multiPkgs` set (mesa/llvm 32-bit, NetworkManager,
-        # glibc-locales, ...) from the closure (~1.1 GiB NAR / ~0.5 GiB on
-        # ZFS). Nothing Steam itself runs is 32-bit — client and runtime are
-        # steamrt64 — and 32-bit games are not used here. They will not
-        # launch in this sandbox; restore `multiArch` together with
-        # hardware.graphics.enable32Bit if that ever changes.
-        #
-        # `glibc_multi.bin` in the package's targetPkgs is a multilib ldconfig
-        # that still drags in i686 glibc; for a 64-bit-only sandbox the plain
-        # glibc ldconfig that buildFHSEnv installs is enough.
+        # Steam's own game launch chain starts steamrt64/reaper, a 32-bit
+        # i386 binary whose interpreter is /lib/ld-linux.so.2, and Steam
+        # preloads its 32-bit gameoverlayrenderer.so into it, so the sandbox
+        # needs i686 glibc plus libGL (the reaper never resolves a vendor
+        # driver). Without them every launch dies in under a second before
+        # Proton starts, so multiArch must stay on. What we drop is the rest
+        # of steam's i686 multiPkgs (mesa/llvm, NetworkManager, glibc-locales,
+        # ~1.1 GiB NAR / ~0.5 GiB on ZFS): the 32-bit side gets only glibc and
+        # libglvnd. 32-bit games still have no drivers here; restore
+        # hardware.graphics.enable32Bit and steam's own multiPkgs if that
+        # ever changes.
         buildFHSEnv =
           args:
           pkgs.buildFHSEnv (
             args
             // {
-              multiArch = false;
-              targetPkgs = p: builtins.filter (x: x != p.glibc_multi.bin) (args.targetPkgs p);
+              multiArch = true;
+              multiPkgs =
+                p:
+                if p.stdenv.hostPlatform.is32bit then
+                  [
+                    p.glibc
+                    p.libGL
+                  ]
+                else
+                  args.multiPkgs p;
             }
           );
         extraBwrapArgs = [
