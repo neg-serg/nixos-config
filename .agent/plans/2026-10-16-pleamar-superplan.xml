@@ -8,7 +8,7 @@
   modules/AGENTS.md, .agent/workflows/{plan-before-code,delegate-task,rebuild}.md.
   Docs are English only; chat replies are Russian; commits are `[gui/pleamar] ...`.
 -->
-<superplan id="pleamar-shell" version="0.1" date="2026-10-16" status="awaiting-approval">
+<superplan id="pleamar-shell" version="0.1" date="2026-10-16" status="cutover-done">
   <meta>
     <goal>
       A new project (a pleamar shell) that reproduces every behaviour of the current
@@ -551,6 +551,22 @@ CONTEXT: /home/neg/src/pleamar (v0.4.11, flake.nix, nix/package.nix, Cargo.lock)
       <item>Known compiler traps for every scene author (INTERFACES.md §9): literal first factor for `text size:`/`body rim:`, no forwarding `children` into a nested component copy, no 8-digit hex, no string `let`s, `role:`/`agent:` cannot be parameters, a `let` redeclared across imports may differ per `screens: each` copy.</item>
       <item>When pleamar-wm lands: smoke.sh --soft --scene proof (PNG), describe-snap.sh --update, measure.sh; attach the PNG as the first visual artifact.</item>
       <item>Repo discipline: keep features.gui.pleamar.enable off; quickshell stays the live shell; commit only at the human-gated cutover.</item>
+    </next>
+  </progress>
+  <progress date="2026-11-08" phase="cutover done — this file is now history">
+    <done>
+      <item>The cutover happened on 2026-11-02, ahead of this file's own gate: `features.gui.pleamar.enable = true` on trantor (hosts/trantor/default.nix), the Quickshell tree was deleted, and modules/user/nix-maid/gui/pleamar.nix is the only shell module. The PH0-era "keep the flag off / quickshell stays live" items above are historical, not instructions.</item>
+      <item>PH2-A/B/C/D/E, PH3-O and PH3-L landed: the bar, panels, notifications, toast, overlay, overview, launcher and lock scenes are in files/pleamar/shells; the six plugins (spectrum, genelec, mpd, pill, cover, meta) are in use; PH4-C (caller migration) and PH4-D (Quickshell decommission) are done.</item>
+      <item>PH3-P: the hostile-plugin test exists and passes — `scripts/dev/check-plugin-sandbox.sh` runs in `just lint` and refuses an unapproved plugin, proves it touched nothing, and runs an approved one's command.</item>
+      <item>Per-task `status` attributes (PH0-T1 "running", the rest "pending") are the 2026-10-16 state and were not maintained. Treat them as history; this note is the final state.</item>
+    </done>
+    <open>
+      <item>PH3-L human gate: the four PAM cases at the greeter (right password, wrong password, layout switch, no fingerprint) were never run as a matrix; with the legacy tree gone the rollback is git history.</item>
+      <item>PH4-V: no tests/evidence/&lt;date&gt;-superiority.tsv; per-scene budgets exist (panels, lock), the superiority matrix does not.</item>
+      <item>Parity gaps that remain are tracked in files/pleamar/docs/PARITY.md ("Backlog: what is left"), not in this file. bar-gaps.md is superseded by it.</item>
+    </open>
+    <next>
+      <item>The live queue is PARITY.md: the startup gate (`startupClean`, refused by the compiler), the plugin boundary decision, the lock's fingerprint/PAM decision, and the deliberately dropped items (nixie, SubmenuHost search).</item>
     </next>
   </progress>
 </superplan>
