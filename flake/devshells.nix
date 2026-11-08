@@ -1,7 +1,6 @@
 {
   nixpkgs,
   pkgs,
-  flakeLib,
   inputs,
   ...
 }:
@@ -13,6 +12,6 @@ in
   devShells = import ./devshells/default.nix {
     inherit pkgs lib;
     inherit (inputs) import-tree;
-    mkDevShell = flakeLib.mkDevShell pkgs;
+    mkShell = pkgs.mkShell;
   };
 }

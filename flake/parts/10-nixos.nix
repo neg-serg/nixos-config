@@ -7,7 +7,7 @@
 }:
 let
   flakeLib = config.neg.lib;
-  pkgs = flakeLib.mkPkgs "x86_64-linux";
+  pkgs = flakeLib.mkPkgs (builtins.head config.systems);
   filteredSource = lib.cleanSourceWith {
     filter = name: _type: !(lib.hasSuffix ".md" (builtins.baseNameOf name));
     src = lib.cleanSource ../../.;
