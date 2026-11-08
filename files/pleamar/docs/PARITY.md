@@ -151,10 +151,10 @@ Three rows moved today:
   1. **wrong password** → the field clears, an error shows, no session, prompt still there;
   1. **layout switch** (us ↔ ru) → the password typed in the *other* layout still authenticates, and
      the layout indicator follows the switch;
-  1. **no fingerprint** → currently vacuous: no `fprintd` entry exists for `greetd` or `pleamar` in
-     this tree, so there is nothing to fall back from. Enable
-     `security.pam.services.<svc>.fprintAuth` first if the case is wanted, otherwise record it as
-     not applicable.
+  1. **no fingerprint** → not applicable on this host: `security.pam.services.pleamar` already tries
+     `fprintd` as `sufficient` and falls through to `pam_unix` (see "The password has a stack now"),
+     but no reader is plugged in, so the case cannot be exercised. The journal's
+     `pam_fprintd ... GetDevices failed` line is expected, not a fault.
 - **`greeter/`** — behaviour complete: the card, its theme tokens and the login phase all run from
   `shells/lock` (`pleamar-login-layer` loads it from `/etc/pleamar-lock` before `~/.config` exists).
   The one item the port never closed is the **PH3-L PAM matrix** — right password, wrong password,
@@ -181,8 +181,8 @@ slide reveals (a text cannot roll a digit), the media capsule's transport reveal
 delay the port refuses on purpose, the settings surface's keys the compiler refuses (`height`,
 `animations`) and its widget order, the `SunIcon` over the weather card's conditions, the media
 tooltip's track quality (it reads a plugin's boundary — see «The plugin boundary does not reach the
-scene's logic»), and in the lock tree the fingerprint PAM path, user and session selection, the
-nixie lab and the greeter's nixie/CRT variants.
+scene's logic»), and in the lock tree the user and session selection, the nixie lab and the greeter's
+nixie/CRT variants.
 
 Closed since this paragraph was first written, so they are off the list: connectivity, weather
 values and the notification history (2026-10-26/28); the tray's menus, their host, the audio
