@@ -10,7 +10,6 @@ lib.mkMerge [
   {
     sops = {
       age.keyFile = lib.mkForce "${config.users.users.neg.home}/.config/sops/age/keys.txt";
-      defaultSopsFile = "${secretsDir}/all.yaml";
       secrets = {
         # github-netrc, mpdas, musicbrainz are managed elsewhere
         "github-token" = lib.mkIf (builtins.pathExists "${secretsDir}/github-token.sops.yaml") {
