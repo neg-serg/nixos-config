@@ -69,12 +69,12 @@ in
 
     llmModel = lib.mkOption {
       type = lib.types.str;
-      default = "qwen3.5-4b-abliterated";
+      default = "qwen3-vl-8b-abliterated";
       description = ''
         llama-swap model answering free-text questions. The default is the
-        fast 4B tier (thinking off, ~95 tok/s): an answer arrives in seconds
-        and leaves most of the card to the desktop. A larger tier works but
-        pays with load time and VRAM.
+        8B vision tier (~97 tok/s, 5 GB): an answer arrives in seconds and
+        leaves most of the card to the desktop; it also answers photo
+        questions. A larger tier works but pays with load time and VRAM.
       '';
     };
   };
