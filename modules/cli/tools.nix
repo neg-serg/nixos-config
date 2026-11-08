@@ -32,7 +32,6 @@ let
 in
 {
   environment.shellAliases = {
-    sk = "nix run github:neg-serg/two_percent --";
     newsraft = "nix run nixpkgs#newsraft --";
     tealdeer = "nix run nixpkgs#tealdeer --";
   };
@@ -40,7 +39,6 @@ in
   environment.systemPackages = [
     pkgs.ripgrep # better grep
     ugrepWithConfig # better grep, rg alternative (wrapped with global config)
-
     # Diff tools
     pkgs.delta # better diff tool
     (onDemand {
@@ -84,7 +82,6 @@ in
     pkgs.pwgen # password generator
     pkgs.sd # intuitive find & replace CLI (sed replacement)
     pkgs.wlrctl # command-line utility for miscellaneous wlroots Wayland extensions
-
     # Wallpaper / cartography
     pkgs.neg.topowall # topographic contour wallpapers from real elevation data (GPU render)
     (onDemand {
