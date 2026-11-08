@@ -7,12 +7,20 @@
 }:
 let
   inherit (config.users.users.neg) home;
+  onDemand = config.lib.neg.onDemand pkgs;
 in
 lib.mkMerge [
   {
     environment.systemPackages = [
       pkgs.aliae # Shell alias manager
-      (pkgs.fastfetch.override { zfsSupport = true; }) # System info tool (neofetch successor; zfsSupport enables zpool module)
+      # TODO(neg): remove fastfetch for good together with the blizzard stack
+      # (modules/user/nix-maid/cli/fastfetch.nix, files/fastfetch/). Until then
+      # it is on demand: the launcher builds packages.x86_64-linux.fastfetch on
+      # first call and GC-roots it under ~/.local/state/nix-apps.
+      (onDemand {
+        name = "fastfetch";
+        attr = "fastfetch";
+      }) # System info tool (neofetch successor); zfsSupport in the flake attr keeps the zpool module
       pkgs.tealdeer # Fast tldr client
       pkgs.nxv # Find any version of any Nix package instantly
     ];
