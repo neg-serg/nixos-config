@@ -84,9 +84,10 @@ let
   # panel-side mark/unmark edits the same Telegram reminder message, so
   # the pill can be confirmed from either source.
   # The same poll loop answers text messages: /status is a deterministic
-  # monitoring snapshot and every other text is answered by the local
-  # llama-swap model (packages/telegram-notify/src/ask.rs). The endpoint is
-  # loopback-only, so the snapshot never leaves the host.
+  # monitoring snapshot, and every other text goes to the local llama-swap
+  # model as a general question (monitoring is context, not the topic ceiling;
+  # packages/telegram-notify/src/ask.rs). The endpoint is loopback-only, so the
+  # snapshot never leaves the host.
   # It also serves the notes commands (/note, /notes, /nb) and the model's
   # notes tools: those write to the zk notebook as the desktop user, and `nb`
   # pulls/commits/pushes it (git over the sing-box proxy, like the user's own
@@ -250,9 +251,9 @@ in
 
         # Telegram bot: long-polls callback queries for the reminder button
         # and text messages for /status, the notes commands and the
-        # local-model Q&A.
+        # local-model answers to any question.
         systemd.services."telegram-pill-bot" = {
-          description = "Telegram bot: pill buttons, /status, notes and local-model Q&A";
+          description = "Telegram assistant: pill buttons, /status, notes and local-model answers";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
