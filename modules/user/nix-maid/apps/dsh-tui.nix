@@ -29,7 +29,7 @@ let
   # The plugin roster, its loader rows, the seed list and the search rows live
   # in dsh-terminal-plugins.nix; the agent-preset declarations (0.2.0 registry
   # rows: .agent-presets directories are dead) live in dsh-presets.nix.
-  roster = import ./dsh-terminal-plugins.nix { inherit lib; };
+  roster = import ./dsh-terminal-plugins.nix { inherit lib homeDir; };
   presets = import ./dsh-presets.nix { inherit pkgs; };
 
   # The profile ships `cordis.patch.yml` as an empty list; rows must replace

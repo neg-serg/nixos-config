@@ -2,7 +2,7 @@
   lib,
   pkgs,
   isNushell ? false,
-  homeDir ? "/home/neg",
+  homeDir,
   ...
 }:
 let

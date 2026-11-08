@@ -105,6 +105,7 @@ in
             -p ${toString cfg.port}:${toString cfg.containerPort} \
             -e OLLAMA_BASE_URL=${cfg.ollamaUrl} \
             -e OLLAMA_EMBEDDING_MODEL=${cfg.embeddingModel} \
+            # allow-absolute-home: container-internal path, not the host user
             -v vane-data:/home/vane/data \
             ${cfg.image}
         ''}";

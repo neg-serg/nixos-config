@@ -22,7 +22,7 @@ let
   # which materialises the root on the first start (as `neg`, HOME set by
   # systemd).
   xrayService = pkgs.writeShellScriptBin "xray-service" ''
-    exec ${xray}/bin/xray run -config /home/neg/.config/sing-box-tun/config.json
+    exec ${xray}/bin/xray run -config ${config.lib.neg.homeDir}/.config/sing-box-tun/config.json
   '';
 in
 lib.mkIf cfg.enable {

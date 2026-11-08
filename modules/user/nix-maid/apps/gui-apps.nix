@@ -12,7 +12,7 @@ let
   # (lib/on-demand-app.nix), so desktop icons have to be addressed under $HOME.
   # Pointing `icon` at the package's store path instead would pull the app's
   # whole closure into system-path — the one thing the launcher avoids.
-  appRoot = "/home/neg/.local/state/nix-apps";
+  appRoot = "${config.lib.neg.homeDir}/.local/state/nix-apps";
 
   # Reads evdev through libinput, so it needs the user in `input`
   # (see modules/system/users.nix) and needs no X11/XWayland.

@@ -44,21 +44,21 @@ let
   # service's own directory). It moved with the shell's name; both scripts
   # below fall back to the legacy file while the new one does not exist yet, so
   # a mark recorded before the rename is not lost on the first boot.
-  pillPanelStateFile = "/home/neg/.local/state/pleamar/pill-tracker.json";
-  pillPanelStateDir = "/home/neg/.local/state/pleamar";
-  pillPanelLegacyStateFile = "/home/neg/.local/state/quickshell/pill-tracker.json";
-  pillPanelIcsDir = "/home/neg/.config/vdirsyncer/calendars/pills";
+  pillPanelStateFile = "${config.lib.neg.homeDir}/.local/state/pleamar/pill-tracker.json";
+  pillPanelStateDir = "${config.lib.neg.homeDir}/.local/state/pleamar";
+  pillPanelLegacyStateFile = "${config.lib.neg.homeDir}/.local/state/quickshell/pill-tracker.json";
+  pillPanelIcsDir = "${config.lib.neg.homeDir}/.config/vdirsyncer/calendars/pills";
   pillPanelUser = "neg";
 
   # Personal wiki the bot reads and writes: the zk notebook plus the `nb`
   # sync script. The unit runs as root, so the bot drops to the desktop user
   # for every write and for zk/nb (new notes must stay neg-owned, and git
   # needs that user's HOME for its SSH config and key).
-  notesDir = "/home/neg/notes";
-  notesUserBin = "/home/neg/.local/bin/nb";
+  notesDir = "${config.lib.neg.homeDir}/notes";
+  notesUserBin = "${config.lib.neg.homeDir}/.local/bin/nb";
   # Semantic search over the notes embedding index (read-only for the bot; the
   # index is refreshed by hand with `rag-search index`).
-  ragUserBin = "/home/neg/.local/bin/rag-search";
+  ragUserBin = "${config.lib.neg.homeDir}/.local/bin/rag-search";
 
   # Daily 12:00 pill reminder: sends a Telegram message with an inline
   # "Mark taken" button; telegram-pill-bot turns a press into confirmation.

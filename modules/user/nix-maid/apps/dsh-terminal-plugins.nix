@@ -22,7 +22,7 @@
 # source is a git snapshot, so an untracked directory never reaches the store
 # and the caretaker reports it missing while the row is already in the patch
 # layer — a state that breaks the next terminal start.
-{ lib }:
+{ lib, homeDir }:
 let
   # The roster is an explicit allow-list (`{ name; path; }`, one directory per
   # plugin): do NOT derive it with `builtins.readDir` — that would change which
@@ -125,7 +125,7 @@ rec {
       # defaults fill in everything else.
       - id: session-query-sqlite
         config:
-          path: /home/neg/.dsh/session-search.db
+          path: ${homeDir}/.dsh/session-search.db
           openAt: first-search
     '';
 
