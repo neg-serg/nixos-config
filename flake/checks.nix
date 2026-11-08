@@ -262,6 +262,21 @@ in
   # exception only via a `# allow-relative: <reason>` /
   # `# allow-relative-file: <reason>` marker.
 
+  # `nix flake check` evaluates the flake outputs but not every package's
+  # derivation graph; force each drvPath so a broken callPackage in packages/
+  # fails the check set instead of waiting for the first build.
+  "packages-eval" =
+    let
+      system = pkgs.stdenv.hostPlatform.system;
+      packages = self.packages.${system};
+    in
+    builtins.deepSeq (builtins.mapAttrs (_: p: p.drvPath) packages) (
+      pkgs.runCommand "check-packages-eval" { } ''
+        echo "check: ${toString (builtins.length (builtins.attrNames packages))} flake packages evaluate"
+        touch $out
+      ''
+    );
+
   # lib/package-checks.nix gates alias generation on package availability; a
   # renamed package silently drops the alias (btm -> bottom was exactly that).
   # Force every guard and fail on a stale one.
