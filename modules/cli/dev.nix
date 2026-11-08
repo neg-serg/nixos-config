@@ -10,11 +10,6 @@ in
       attr = "worktrunk";
       binary = "wt";
     }) # git worktree manager: create, switch and clean up worktrees, built on first call
-
-    # Encoding & hashing
     pkgs.qrencode # QR generator for clipboard helpers
-
-    # Fetch/info tools
-    pkgs.fastfetch # modern ASCII system summary
   ];
 }
