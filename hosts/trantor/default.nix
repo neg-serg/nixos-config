@@ -84,6 +84,7 @@
   features.net.proxy.enable = true; # sing-box SOCKS5 proxy (+ xray.service), no full-TUN mode
   features.virt.docker.enable = true; # Podman + docker-compat stack (for the Ceno/Ouinet container)
   features.dev.ai.rocm.enable = true; # ROCm training tooling: nightjob + rocm-smi (torch comes from `nightjob env init` wheels)
+  features.dev.ai.crawl4ai.enable = true; # local Crawl4AI server (127.0.0.1:11235), token from gopass api/crawl4ai; `crawl4ai up`
   features.dev.unity.enable = true; # unityhub-proxy / unity-proxy: Unity Hub + `unity` CLI through the SOCKS5 proxy
   features.dev.java.enable = false; # no Java work here — keeps the ~630M Maven/JDK stack out of the closure
   features.dev.craftAnything.enable = true; # reverse-engineering workbench (GUI + CLI + MCP), built on first use
