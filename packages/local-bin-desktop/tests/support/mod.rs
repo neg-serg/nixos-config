@@ -254,10 +254,6 @@ exit 0
         );
         self.fake("oxipng", "exit \"${FAKE_OXIPNG_EXIT-0}\"\n");
         self.fake(
-            "tesseract",
-            "printf '%s' \"${FAKE_TESSERACT_OUT-}\"\nexit \"${FAKE_TESSERACT_EXIT-0}\"\n",
-        );
-        self.fake(
             "magick",
             "printf '%s' \"${FAKE_MAGICK_OUT-}\"\nexit \"${FAKE_MAGICK_EXIT-0}\"\n",
         );

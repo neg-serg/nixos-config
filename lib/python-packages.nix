@@ -67,7 +67,6 @@
       # Image/vision (cv2 and friends)
       opencv4 # cv2: OpenCV bindings for image/video processing
       matplotlib # plotting / image visualization
-      pytesseract # OCR wrapper around the system-wide tesseract engine
       piexif # EXIF metadata read/write for JPEG
 
       # Scientific/data

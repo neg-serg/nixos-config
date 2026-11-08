@@ -9,11 +9,16 @@ use support::*;
 
 const BIN: &str = env!("CARGO_BIN_EXE_pic-ocr");
 const PROMPT: &str = "Transcribe all text from this image, preserving line breaks. Output only the recognized text, no commentary.";
+const DEFAULT_MODEL: &str = "qwen3-vl-abliterated:8b";
 
 fn picture(sandbox: &Sandbox) -> PathBuf {
     let path = sandbox.case.join("i.png");
     sandbox.write(&path, b"imagebytes");
     path
+}
+
+fn reply(content: &str) -> String {
+    format!(r#"{{"choices":[{{"message":{{"content":"{content}"}}}}]}}"#)
 }
 
 #[test]
@@ -45,36 +50,69 @@ fn unknown_engine_prints_the_help_on_stderr() {
     let sandbox = Sandbox::new("po-engine");
     sandbox.install_default_fakes();
     let path = picture(&sandbox);
-    let outcome = sandbox.run(BIN, &["--engine=nope", path.to_str().unwrap()]);
-    assert_eq!(outcome.code, 1);
-    let expected = format!("pic-ocr: unknown engine: nope\n{PIC_OCR_HELP}");
-    assert_eq!(outcome.stderr, expected.into_bytes());
+    // The removed classic engines are unknown now, like any other value.
+    for engine in ["nope", "tesseract", "classic"] {
+        let flag = format!("--engine={engine}");
+        let outcome = sandbox.run(BIN, &[&flag, path.to_str().unwrap()]);
+        assert_eq!(outcome.code, 1);
+        let expected = format!("pic-ocr: unknown engine: {engine}\n{PIC_OCR_HELP}");
+        assert_eq!(outcome.stderr, expected.into_bytes());
+        assert!(sandbox.clipped().is_empty());
+        assert!(sandbox.notifications().is_empty());
+    }
 }
 
 #[test]
-fn tesseract_result_reaches_the_clipboard_and_the_toast() {
-    let sandbox = Sandbox::new("po-tesseract");
+fn default_engine_is_nn() {
+    let sandbox = Sandbox::new("po-default");
     sandbox.install_default_fakes();
     let path = picture(&sandbox);
     let outcome = sandbox.run_env(
         BIN,
         &[path.to_str().unwrap()],
-        &[("FAKE_TESSERACT_OUT", "line one\nline two")],
+        &[
+            ("FAKE_MAGICK_OUT", "jpgdata"),
+            ("FAKE_CURL_OUT", &reply("default text")),
+        ],
+    );
+    assert_eq!(outcome.code, 0);
+    assert_eq!(outcome.stdout, b"");
+    assert_eq!(sandbox.last_clip(), b"default text\n");
+    assert_eq!(sandbox.calls("magick").len(), 1);
+    assert_eq!(sandbox.calls("curl").len(), 1);
+    assert!(sandbox.calls("vicinae").is_empty());
+}
+
+#[test]
+fn neural_result_reaches_the_clipboard_and_the_toast() {
+    let sandbox = Sandbox::new("po-nn");
+    sandbox.install_default_fakes();
+    let path = picture(&sandbox);
+    let outcome = sandbox.run_env(
+        BIN,
+        &["--engine=nn", path.to_str().unwrap()],
+        &[
+            ("FAKE_MAGICK_OUT", "jpgdata"),
+            (
+                "FAKE_CURL_OUT",
+                r#"{"choices":[{"message":{"content":"line one\nline two"}}]}"#,
+            ),
+        ],
     );
     assert_eq!(outcome.code, 0);
     assert_eq!(outcome.stdout, b"");
     assert_eq!(sandbox.last_clip(), b"line one\nline two\n");
     assert_eq!(
-        sandbox.calls("tesseract"),
+        sandbox.calls("magick"),
         vec![call(
-            "tesseract",
+            "magick",
             &[
                 path.to_str().unwrap(),
-                "stdout",
-                "-l",
-                "eng+rus",
-                "--psm",
-                "3"
+                "-resize",
+                "1600x1600>",
+                "-quality",
+                "85",
+                "jpg:-"
             ]
         )]
     );
@@ -83,40 +121,54 @@ fn tesseract_result_reaches_the_clipboard_and_the_toast() {
         vec![vec![
             b"-a".to_vec(),
             b"pic-ocr".to_vec(),
-            b"OCR (tesseract)".to_vec(),
+            format!("OCR ({DEFAULT_MODEL} (local))").into_bytes(),
             b"line one line two".to_vec(),
         ]]
     );
+    assert!(sandbox.calls("vicinae").is_empty());
 }
 
 #[test]
-fn empty_result_is_reported_as_critical() {
-    let sandbox = Sandbox::new("po-empty");
-    sandbox.install_default_fakes();
-    let path = picture(&sandbox);
-    let outcome = sandbox.run_env(
-        BIN,
-        &[path.to_str().unwrap()],
-        &[("FAKE_TESSERACT_OUT", "")],
-    );
-    assert_eq!(outcome.code, 1);
-    assert!(sandbox.clipped().is_empty());
-    assert_eq!(
-        sandbox.notifications(),
-        vec![vec![
-            b"-a".to_vec(),
-            b"pic-ocr".to_vec(),
-            b"-u".to_vec(),
-            b"critical".to_vec(),
-            b"OCR".to_vec(),
-            b"No text recognized (tesseract)".to_vec(),
-        ]]
-    );
+fn empty_neural_result_is_reported_as_critical() {
+    // Empty output, invalid JSON and an empty content field all yield an empty
+    // result; there is no tesseract fallback any more.
+    for (case, reply) in [
+        ("empty", ""),
+        ("invalid", "not json"),
+        ("missing", r#"{"choices":[{"message":{"content":""}}]}"#),
+    ] {
+        let sandbox = Sandbox::new(&format!("po-empty-{case}"));
+        sandbox.install_default_fakes();
+        let path = picture(&sandbox);
+        let outcome = sandbox.run_env(
+            BIN,
+            &[path.to_str().unwrap()],
+            &[("FAKE_MAGICK_OUT", "jpgdata"), ("FAKE_CURL_OUT", reply)],
+        );
+        assert_eq!(outcome.code, 1, "{case}: no recognized text is a failure");
+        assert!(sandbox.clipped().is_empty(), "{case}: nothing is copied");
+        assert_eq!(
+            sandbox.notifications(),
+            vec![vec![
+                b"-a".to_vec(),
+                b"pic-ocr".to_vec(),
+                b"-u".to_vec(),
+                b"critical".to_vec(),
+                b"OCR".to_vec(),
+                format!("No text recognized ({DEFAULT_MODEL} (local))").into_bytes(),
+            ]],
+            "{case}"
+        );
+        assert!(
+            sandbox.calls("magick").len() == 1 && sandbox.calls("curl").len() == 1,
+            "{case}: no fallback attempt"
+        );
+    }
 }
 
 #[test]
 fn neural_engine_builds_the_exact_ollama_payload() {
-    let sandbox = Sandbox::new("po-nn");
+    let sandbox = Sandbox::new("po-payload");
     sandbox.install_default_fakes();
     let path = picture(&sandbox);
     let outcome = sandbox.run_env(
@@ -132,22 +184,8 @@ fn neural_engine_builds_the_exact_ollama_payload() {
     );
     assert_eq!(outcome.code, 0);
     assert_eq!(sandbox.last_clip(), b"net text\n");
-    assert_eq!(
-        sandbox.calls("magick"),
-        vec![call(
-            "magick",
-            &[
-                path.to_str().unwrap(),
-                "-resize",
-                "1600x1600>",
-                "-quality",
-                "85",
-                "jpg:-"
-            ]
-        )]
-    );
     let payload = format!(
-        "{{\n  \"model\": \"qwen3-vl:8b\",\n  \"messages\": [\n    {{\n      \"role\": \"user\",\n      \"content\": [\n        {{\n          \"type\": \"image_url\",\n          \"image_url\": {{\n            \"url\": \"data:image/jpeg;base64,anBnZGF0YQ==\"\n          }}\n        }},\n        {{\n          \"type\": \"text\",\n          \"text\": \"{PROMPT}\"\n        }}\n      ]\n    }}\n  ],\n  \"stream\": false\n}}"
+        "{{\n  \"model\": \"{DEFAULT_MODEL}\",\n  \"messages\": [\n    {{\n      \"role\": \"user\",\n      \"content\": [\n        {{\n          \"type\": \"image_url\",\n          \"image_url\": {{\n            \"url\": \"data:image/jpeg;base64,anBnZGF0YQ==\"\n          }}\n        }},\n        {{\n          \"type\": \"text\",\n          \"text\": \"{PROMPT}\"\n        }}\n      ]\n    }}\n  ],\n  \"stream\": false\n}}"
     );
     assert_eq!(
         sandbox.calls("curl"),
@@ -165,66 +203,45 @@ fn neural_engine_builds_the_exact_ollama_payload() {
             ]
         )]
     );
-    assert!(str_of(&sandbox.notifications()[0][2]).contains("qwen3-vl:8b (local)"));
-}
-
-#[test]
-fn neural_failure_falls_back_to_tesseract() {
-    let sandbox = Sandbox::new("po-fallback");
-    sandbox.install_default_fakes();
-    let path = picture(&sandbox);
-    let outcome = sandbox.run_env(
-        BIN,
-        &["-n", path.to_str().unwrap()],
-        &[
-            ("FAKE_MAGICK_OUT", ""),
-            ("FAKE_TESSERACT_OUT", "fallback text"),
-        ],
-    );
-    assert_eq!(outcome.code, 0);
-    assert_eq!(sandbox.last_clip(), b"fallback text\n");
     assert_eq!(
         sandbox.notifications()[0][2],
-        b"OCR (tesseract (nn fallback))".to_vec()
+        format!("OCR ({DEFAULT_MODEL} (local))").into_bytes()
     );
 }
 
 #[test]
-fn menu_pick_selects_the_engine() {
-    let sandbox = Sandbox::new("po-menu");
-    sandbox.install_default_fakes();
-    let path = picture(&sandbox);
-    let outcome = sandbox.run_env(
-        BIN,
-        &["--menu", path.to_str().unwrap()],
-        &[
-            ("FAKE_VICINAE_OUT", "Tesseract (classic)"),
-            ("FAKE_TESSERACT_OUT", "menu text"),
-        ],
-    );
-    assert_eq!(outcome.code, 0);
-    assert_eq!(sandbox.last_clip(), b"menu text\n");
-    assert_eq!(
-        sandbox.calls("vicinae"),
-        vec![call("vicinae", &["dmenu", "-p", "⟬OCR⟭ ❯>"])]
-    );
-    let listing = str_of(&sandbox.read(&sandbox.vicinae_in));
-    assert_eq!(listing, "Tesseract (classic)\nQwen3-VL 8B (neural)\n");
-}
-
-#[test]
-fn cancelled_menu_exits_0() {
-    let sandbox = Sandbox::new("po-menucancel");
-    sandbox.install_default_fakes();
-    let path = picture(&sandbox);
-    let outcome = sandbox.run_env(
-        BIN,
-        &["--menu", path.to_str().unwrap()],
-        &[("FAKE_VICINAE_OUT", "")],
-    );
-    assert_eq!(outcome.code, 0);
-    assert!(sandbox.clipped().is_empty());
-    assert!(sandbox.calls("tesseract").is_empty());
+fn menu_alias_runs_the_neural_engine() {
+    // `-m`/`--menu` used to call vicinae; it is now an alias for `--engine=nn`.
+    let mut reference = None;
+    for flag in ["--engine=nn", "--menu", "-m"] {
+        let sandbox = Sandbox::new(&format!("po-menu-{}", flag.trim_start_matches('-')));
+        sandbox.install_default_fakes();
+        let path = picture(&sandbox);
+        let outcome = sandbox.run_env(
+            BIN,
+            &[flag, path.to_str().unwrap()],
+            &[
+                ("FAKE_MAGICK_OUT", "jpgdata"),
+                ("FAKE_CURL_OUT", &reply("menu text")),
+            ],
+        );
+        assert!(sandbox.calls("vicinae").is_empty(), "{flag}");
+        let observed = (
+            outcome.code,
+            outcome.stdout,
+            outcome.stderr,
+            sandbox.last_clip(),
+            sandbox.notifications(),
+        );
+        match &reference {
+            Some(reference) => assert_eq!(&observed, reference, "{flag} differs"),
+            None => {
+                assert_eq!(observed.0, 0);
+                assert_eq!(observed.3, b"menu text\n");
+                reference = Some(observed);
+            }
+        }
+    }
 }
 
 #[test]
@@ -236,7 +253,8 @@ fn slurp_region_is_captured_and_removed() {
         &[],
         &[
             ("FAKE_SLURP_OUT", "10,10 20x20"),
-            ("FAKE_TESSERACT_OUT", "region text"),
+            ("FAKE_MAGICK_OUT", "jpgdata"),
+            ("FAKE_CURL_OUT", &reply("region text")),
         ],
     );
     assert_eq!(outcome.code, 0);
@@ -291,14 +309,17 @@ fn preview_is_cut_to_140_characters() {
     let outcome = sandbox.run_env(
         BIN,
         &[path.to_str().unwrap()],
-        &[("FAKE_TESSERACT_OUT", &text)],
+        &[
+            ("FAKE_MAGICK_OUT", "jpgdata"),
+            ("FAKE_CURL_OUT", &reply(&text)),
+        ],
     );
     assert_eq!(outcome.code, 0);
     assert_eq!(sandbox.notifications()[0][3], "a".repeat(140).into_bytes());
 }
 
 #[test]
-fn preview_follows_the_effective_character_locale() {
+fn preview_is_cut_to_140_bytes_in_the_c_locale() {
     let sandbox = Sandbox::new("po-preview-c");
     sandbox.install_default_fakes();
     let path = picture(&sandbox);
@@ -306,7 +327,10 @@ fn preview_follows_the_effective_character_locale() {
     let utf8 = sandbox.run_env(
         BIN,
         &[path.to_str().unwrap()],
-        &[("FAKE_TESSERACT_OUT", &text)],
+        &[
+            ("FAKE_MAGICK_OUT", "jpgdata"),
+            ("FAKE_CURL_OUT", &reply(&text)),
+        ],
     );
     assert_eq!(utf8.code, 0);
     assert_eq!(
@@ -322,7 +346,8 @@ fn preview_follows_the_effective_character_locale() {
         BIN,
         &[path.to_str().unwrap()],
         &[
-            ("FAKE_TESSERACT_OUT", &text),
+            ("FAKE_MAGICK_OUT", "jpgdata"),
+            ("FAKE_CURL_OUT", &reply(&text)),
             ("LANG", "C"),
             ("LC_ALL", "C"),
         ],
@@ -343,7 +368,11 @@ fn notify_send_status_is_the_exit_status() {
     let outcome = sandbox.run_env(
         BIN,
         &[path.to_str().unwrap()],
-        &[("FAKE_TESSERACT_OUT", "text"), ("FAKE_NOTIFY_EXIT", "3")],
+        &[
+            ("FAKE_MAGICK_OUT", "jpgdata"),
+            ("FAKE_CURL_OUT", &reply("text")),
+            ("FAKE_NOTIFY_EXIT", "3"),
+        ],
     );
     assert_eq!(outcome.code, 3);
 }

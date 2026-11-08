@@ -3,7 +3,6 @@
   buildGoModule,
   fetchFromGitHub,
   installShellFiles,
-  makeWrapper,
   pkg-config,
   writableTmpDirAsHomeHook,
   versionCheckHook,
@@ -20,7 +19,6 @@
   libxtst,
   libxi,
   fontconfig,
-  tesseract,
   pipewire,
 }:
 
@@ -33,7 +31,9 @@
 # once 1.59.0 ships.
 #
 # The source build needs the cgo toolchain and pkg-config: the Linux evdev
-# capture is C, and tesseract/pipewire are linked dynamically by the daemon.
+# capture is C. Upstream also links tesseract through cgo for its OCR hints;
+# that engine was removed from this host on 2026-11-08, and the postPatch below
+# decouples the two tags (see the comment there).
 buildGoModule (finalAttrs: {
   pname = "neru";
   version = "1.58.0-unstable-2026-10-15";
@@ -66,9 +66,27 @@ buildGoModule (finalAttrs: {
     "-X github.com/y3owk1n/neru/internal/buildinfo.GitCommit=9a0fbc758006ff5964204b0c5a1eb3d4d6eb8b83"
   ];
 
+  # Tesseract was removed from the system, but upstream ties the OCR bridge to
+  # the `cgo` tag and the Linux evdev adapter needs cgo, so no upstream build
+  # exists without libtesseract. These two substitutions decouple the tags: the
+  # C bridge compiles only with `-tags tesseract` (not passed here) and the
+  # pure-Go stub — which reports that no engine is available — is used instead.
+  # The OCR-based hinting is therefore unavailable; keyboard navigation, grids
+  # and vim modes are unaffected.
+  postPatch = ''
+    substituteInPlace internal/adapter/platform/linux/ocr_cgo.go \
+      --replace-fail '//go:build linux && cgo' '//go:build linux && cgo && tesseract'
+    substituteInPlace internal/adapter/platform/linux/ocr_nocgo.go \
+      --replace-fail '//go:build linux && !cgo' '//go:build linux && !tesseract'
+    # cgo compiles every .c file in the package directory once any file imports
+    # "C" (cgo.go does), and build tags cannot exclude a C file — so the bridge
+    # has to leave the tree as well. Nothing references it once ocr_cgo.go is
+    # excluded by the tag above.
+    mv internal/adapter/platform/linux/ocr.c internal/adapter/platform/linux/ocr.c.disabled
+  '';
+
   nativeBuildInputs = [
     installShellFiles
-    makeWrapper
     pkg-config
     writableTmpDirAsHomeHook
   ];
@@ -87,7 +105,6 @@ buildGoModule (finalAttrs: {
     libxtst
     libxi
     fontconfig
-    tesseract
     pipewire
   ];
 
@@ -111,11 +128,6 @@ buildGoModule (finalAttrs: {
       --bash <($out/bin/neru completion bash) \
       --fish <($out/bin/neru completion fish) \
       --zsh <($out/bin/neru completion zsh)
-
-    # tesseract resolves its language data at runtime; --set-default keeps a
-    # user-provided TESSDATA_PREFIX (e.g. tessdata_fast) intact.
-    wrapProgram $out/bin/neru \
-      --set-default TESSDATA_PREFIX ${tesseract}/share/tessdata
   '';
 
   doInstallCheck = true;

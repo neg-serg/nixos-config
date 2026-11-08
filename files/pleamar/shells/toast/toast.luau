@@ -11,7 +11,9 @@
 -- the legacy FileView watch; 700 ms is the cadence, and `cat` runs only for
 -- this one path.
 --
--- Actions: the legacy `pic-ocr --engine=tesseract|nn`, `wl-copy <path>` and
+-- Actions: `pic-ocr --engine=nn` from both OCR buttons (the classic tesseract
+-- engine was removed on 2026-11-08; the buttons keep their names and emitted
+-- events so the scene layout does not change), `wl-copy <path>` and
 -- `xdg-open <path>`; the card is hidden first, as the legacy hid itself as soon
 -- as it launched the program. Paths with a fresh `?<n>` counter are handed to
 -- the scene so the renderer reloads a shot written again under the same name.
@@ -206,7 +208,7 @@ local function act(cmd, args)
     if not ok then log("toast: could not run", cmd) end
 end
 
-on("ocr_tess", function() act("pic-ocr", { "--engine=tesseract", path }) end)
+on("ocr_tess", function() act("pic-ocr", { "--engine=nn", path }) end)
 on("ocr_nn", function() act("pic-ocr", { "--engine=nn", path }) end)
 on("copy_path", function() act("wl-copy", { path }) end)
 on("open_shot", function() act("xdg-open", { path }) end)
