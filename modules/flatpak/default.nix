@@ -18,6 +18,13 @@
         appId = "md.obsidian.Obsidian";
         origin = "flathub";
       }
+      {
+        # Windows-game launcher for non-Steam titles (per-game prefixes,
+        # bundled Proton/GE builds). Game data stays on /gamez; Steam's own
+        # Proton and features.wine.apps are untouched.
+        appId = "ru.linux_gaming.PortProton";
+        origin = "flathub";
+      }
     ];
     update.onActivation = false;
   };
