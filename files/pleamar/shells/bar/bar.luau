@@ -179,8 +179,8 @@ end
 --
 -- Two deliberate differences from the reference: the settings keys that would
 -- tune this (`startupClean*`) are refused by the compiler, so the constants below
--- are the reference's defaults; and the bar's entrance slide is not ported, so
--- the gate changes widget visibility only. `PLEAMAR_STARTUP_CLEAN=0` disables the
+-- are the reference's defaults; and the gate changes widget visibility only —
+-- the bar's entrance slide is a scene spring (`bar_face`), not part of the gate. `PLEAMAR_STARTUP_CLEAN=0` disables the
 -- gate, `=1` holds it up for a preview run, as QS_STARTUP_CLEAN did.
 local startup = {
     clean = { clock = true, weather = true },
@@ -429,6 +429,12 @@ elseif startup.mode == "1" then
 else
     startup.probe()
 end
+
+-- One tick after load the scene may start its entrance slide: `bar.reveal`
+-- changes from 0 to 1 and the scene's `follow bar.slide` carries the spring
+-- (bar.plm). The reference slid the panel in on every start, whatever the gate
+-- decided; a hot reload slides again, as a restarted panel did.
+after(1, function() fact["bar.reveal"] = 1 end)
 
 -- The customizer's writes (pages/bar.plm in `panels` says what the page shows). The file is
 -- mutated, never rebuilt: a key another version put there survives, and the watcher above applies
