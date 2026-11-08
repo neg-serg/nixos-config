@@ -25,7 +25,6 @@
   hasBtm = pkgs ? bottom;
   hasIotop = pkgs ? iotop;
   hasLsof = pkgs ? lsof;
-  hasKmon = pkgs ? kmon;
   hasFd = pkgs ? fd;
   hasMpc = pkgs ? mpc;
 }

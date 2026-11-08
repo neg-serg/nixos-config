@@ -37,7 +37,6 @@ let
     hasBtm
     hasIotop
     hasLsof
-    hasKmon
     hasFd
     hasMpc
     ;
@@ -262,7 +261,6 @@ let
     (mkAliasIf hasBtm "htop" "btm -b -T --mem_as_value")
     (mkAliasIf hasIotop "iotop" "sudo iotop -oPa")
     (mkAliasIf hasLsof "ports" "sudo lsof -Pni")
-    (mkAliasIf hasKmon "kmon" "sudo kmon -u --color 19683a")
     (mkAliasIf hasFd "fd" "${mkCmd "fd"} -H --ignore-vcs")
     (mkAliasIf hasFd "fda" "${mkCmd "fd"} -Hu")
     (mkAliasIf hasMpc "love" "mpc sendmessage mpdas love")
