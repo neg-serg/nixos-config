@@ -65,6 +65,44 @@ let
   # larger) set of named colors than GTK3's Adwaita.
   gtk3Css = if gtkThemeName == "neg-gtk" then negGtk3Css else "/* @import 'colors.css'; */";
   gtk4Css = if gtkThemeName == "neg-gtk" then negGtk4Css else "/* @import 'colors.css'; */";
+
+  # GSettings schemas for the whole session. This is not a GNOME session, so
+  # nothing links the installed packages' `share/gsettings-schemas` into the
+  # system profile and GSettings found no schemas at all: an unwrapped
+  # GLib/GTK4 program (Vivaldi/Chromium is the visible one) silently fell back
+  # to GtkSettings' defaults — icon theme "Adwaita" instead of Kora, no
+  # prefer-dark, stock fonts. Vivaldi then drew every image in its downloads
+  # panel with Adwaita's 16 px `image-x-generic` bitmap, upscaled and blurry.
+  # GTK3 apps read `~/.config/gtk-3.0/settings.ini`, but GTK4 takes the theme
+  # from `org.gnome.desktop.interface`, i.e. from GSettings/dconf, and needs
+  # the schema present for that lookup to work.
+  #
+  # Two halves, because the two paths have different reach:
+  #
+  # - the system profile gets the desktop schemas through `pathsToLink`: every
+  #   process already has `/run/current-system/sw/share` on XDG_DATA_DIRS, so
+  #   this is live right after the generation is switched;
+  # - the session variable below points at each package's own compiled
+  #   database and also adds GTK's schemas (`org.gtk.Settings.*`), but it only
+  #   reaches programs started after the next login.
+  #
+  # No merged directory: glib-compile-schemas reads the files in readdir order
+  # and silently ignores a schema whose enum is defined in a file it has not
+  # reached yet, so merging the packages' XML into one dir yields a database
+  # that is missing half the schemas.
+  gsettingsProfileSchemas = pkgs.runCommand "gsettings-profile-schemas" { } ''
+    mkdir -p $out/share/glib-2.0
+    ln -s ${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas $out/share/glib-2.0/schemas
+  '';
+
+  # One colon-separated list: every package ships its own compiled database.
+  gsettingsSchemaDir =
+    lib.concatMapStringsSep ":" (p: "${p}/share/gsettings-schemas/${p.name}/glib-2.0/schemas")
+      [
+        pkgs.gsettings-desktop-schemas # org.gnome.desktop.interface (icon theme, dark mode)
+        pkgs.gtk3 # org.gtk.Settings.* for GTK3
+        pkgs.gtk4 # org.gtk.gtk4.Settings.* for GTK4
+      ];
 in
 {
   config = lib.mkIf (config.lib.neg.enabled "gui") (
@@ -74,13 +112,21 @@ in
         environment.systemPackages = [
           alkano-aio
           gtkThemePkg
+          gsettingsProfileSchemas # desktop schemas on the profile's XDG_DATA_DIRS
           pkgs.gsettings-desktop-schemas # org.gnome.desktop.interface schemas (dconf + libadwaita dark mode)
           pkgs.kora-icon-theme # flat icon theme
           iosevkaNeg.nerd-font
         ];
 
+        # `gsettingsProfileSchemas` puts its compiled database at this prefix,
+        # which the profile's XDG_DATA_DIRS entry already exposes.
+        environment.pathsToLink = [ "/share/glib-2.0/schemas" ];
+
         # 2. Environment Variables
         environment.sessionVariables = {
+          # See `gsettingsSchemaDir`: without this every unwrapped GTK4 app
+          # (Vivaldi, zenity, …) reads GSettings defaults instead of dconf.
+          GSETTINGS_SCHEMA_DIR = gsettingsSchemaDir;
           XCURSOR_THEME = "Alkano-aio";
           XCURSOR_SIZE = "23";
           HYPRCURSOR_THEME = "Alkano-aio";
