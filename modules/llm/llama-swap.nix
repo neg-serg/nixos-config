@@ -60,6 +60,28 @@ let
       -c 16384 -np 1 --flash-attn on --jinja
   '';
 
+  # The two document-OCR engines measured against the removed tesseract on a
+  # 2026-11-08 scan (Russian prose, a table, a formula, noise + 0.4° rotation):
+  # olmOCR-2 7B read 14/14 key fields at 0.00% CER in ~30 s per page; dots.ocr
+  # 13/14 at 0.65% in ~13 s and emits tables as HTML. The 0.47B PaddleOCR-VL
+  # above stays the 2 s path, so these two are for pages that have to be exact
+  # and can wait. Both are Qwen2.5-VL-derived, 8k context is one page.
+  ocrOlm = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/ocr-test/allenai_olmOCR-2-7B-1025-Q6_K.gguf \
+      --mmproj ${modelDir}/ocr-test/mmproj-allenai_olmOCR-2-7B-1025-f16.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 8192 -np 1 --flash-attn on --jinja
+  '';
+
+  ocrDots = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/ocr-test/dots.ocr-Q8_0.gguf \
+      --mmproj ${modelDir}/ocr-test/mmproj-dots.ocr-Q8_0.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 8192 -np 1 --flash-attn on --jinja
+  '';
+
   # Qwen3-Embedding-0.6B (Apache-2.0) — retrieval embeddings. Qwen3 uses
   # last-token pooling, which the GGUF metadata does not set by itself.
   embed = ''
@@ -617,6 +639,25 @@ in
           aliases = [
             "paddleocr"
             "document"
+          ];
+        };
+        # The high-quality document tiers (see the cmds' comment for the
+        # benchmark). Slow enough that the 10 min TTL matters: a page costs
+        # ~30 s (olm) or ~13 s (dots), so repeated pages should stay warm.
+        "ocr-olm" = {
+          cmd = ocrOlm;
+          ttl = 600;
+          aliases = [
+            "olmocr"
+            "doc-hq"
+          ];
+        };
+        "ocr-dots" = {
+          cmd = ocrDots;
+          ttl = 600;
+          aliases = [
+            "dotsocr"
+            "doc-fast"
           ];
         };
         "embed" = {
