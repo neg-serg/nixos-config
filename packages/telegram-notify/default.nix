@@ -4,9 +4,9 @@
 #   digest (khal → telegram-send), the 12:00 pill reminder with its "Mark taken"
 #   button (Bot API through curl, marker file for at-most-once sending) and the
 #   crash-loop scanner that reads NRestarts from both systemd managers.
-#   `telegram-pill-bot` also serves free-text questions: `/status` renders a
-#   deterministic monitoring snapshot and everything else is answered by the
-#   local llama-swap model.
+#   `telegram-pill-bot` also serves as a general assistant: `/status` renders a
+#   deterministic monitoring snapshot, and every other text is answered by the
+#   local llama-swap model (monitoring is context, not the only allowed topic).
 #   The same bot owns the notes surface (`src/notes.rs`): `/note`, `/notes`,
 #   `/nb` plus the matching model tools create, read, append, search, tag and
 #   delete notes in the user's zk notebook, and run `nb` to pull/commit/push

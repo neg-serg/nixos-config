@@ -1,5 +1,9 @@
 //! Free-text questions for the shared trantor Telegram bot.
 //!
+//! The bot is a general-purpose assistant first: any question is answered from
+//! the model's own knowledge, and the host snapshot is context for monitoring
+//! questions instead of the only allowed topic.
+//!
 //! `telegram-pill-bot` is the only `getUpdates` consumer for the bot token, so
 //! text messages arrive here. Two answer paths:
 //!
@@ -47,9 +51,10 @@ const MAX_QUESTION_CHARS: usize = 2000;
 const MAX_TELEGRAM_CHARS: usize = 3900;
 const PLACEHOLDER: &str = "⏳ Собираю снимок и спрашиваю локальную модель…";
 
-const HELP_TEXT: &str = "🤖 trantor — мониторинг-бот.\n\n\
-/status — снимок без модели: uptime, нагрузка, память, диски, ZFS, failed units, алерты.\n\
-/ask <вопрос> — спросить локальную модель (llama-swap) о состоянии системы.\n\
+const HELP_TEXT: &str =
+    "🤖 trantor — ассистент. Отвечаю на любые вопросы, не только про систему.\n\n\
+/status — снимок хоста без модели: uptime, нагрузка, память, диски, ZFS, failed units, алерты.\n\
+/ask <вопрос> — спросить локальную модель (llama-swap); можно и без /ask, просто текстом.\n\
 /do <запрос> — выполнить действие по естественному запросу (сейчас: поиск на рутрекере по сидам).\n\
 /chatid — id этого чата (для групп).\n\
 /screenshot [окно] — снимок окна (по умолчанию активного) в чат.\n\
@@ -323,7 +328,10 @@ fn split_message(text: &str, limit: usize) -> Vec<String> {
 /// round is one llama-swap request; three keeps latency bounded while still
 /// allowing search → read → answer.
 const MAX_TOOL_ROUNDS: usize = 3;
-const MAX_TOKENS: f64 = 600.0;
+/// One Telegram message holds ~4000 characters, so 1200 tokens is about a full
+/// message in Russian and an explanation is not cut mid-sentence. At the 8B
+/// tier (~45 tok/s) that is under half a minute once the model is loaded.
+const MAX_TOKENS: f64 = 1200.0;
 
 fn ask_model(question: &str, snapshot: &str) -> Result<String, String> {
     // Write tools are only offered when the user actually asked for a write:
@@ -530,10 +538,12 @@ notes_semantic ищи по смыслу, когда точные слова не
         String::new()
     };
     format!(
-        "Ты — мониторинг-бот trantor (NixOS). Хост: AMD Ryzen 9 9950X3D, Radeon RX 9070 XT.
-Отвечай по-русски, коротко: 1-3 предложения, без предисловий и повторов.
-Если вопрос о состоянии системы — опирайся ТОЛЬКО на снимок ниже. Не выдумывай цифры и события; если данных нет, скажи об этом.
-На вопросы не о системе отвечай кратко из общих знаний.{notes}
+        "Ты — личный ассистент владельца хоста trantor (NixOS) в Telegram. Хост: AMD Ryzen 9 9950X3D, Radeon RX 9070 XT.
+Отвечай на любые вопросы: знания, объяснения, код, планы, бытовые и текстовые задачи. Вопрос не обязан быть про систему.
+Если вопрос о состоянии хоста (нагрузка, память, диски, ZFS, юниты, алерты) — опирайся ТОЛЬКО на снимок ниже и не выдумывай цифры; если нужного поля в снимке нет, скажи, чего не хватает.
+На все остальные вопросы отвечай из своих знаний и не отказывайся: снимок тогда не нужен.
+Пиши по-русски, по делу, без предисловий и повторов. Длина — по вопросу: короткий вопрос — 1-3 предложения, просьба объяснить — столько, сколько нужно.
+Свежие факты (погода, новости, курсы), которых ты не знаешь, не выдумывай: предупреди, что данные могут быть устаревшими, и подскажи, где проверить.{notes}
 Снимок на момент вопроса:
 {snapshot}"
     )
@@ -817,6 +827,14 @@ mod tests {
             Intent::Ask(question) => assert_eq!(question, "что по диску?"),
             _ => panic!("expected ask"),
         }
+    }
+
+    #[test]
+    fn prompt_is_a_general_assistant() {
+        let prompt = system_prompt("Снимок: тест", false);
+        assert!(prompt.contains("любые вопросы"));
+        assert!(prompt.contains("не отказывайся"));
+        assert!(!prompt.contains("мониторинг-бот"));
     }
 
     #[test]
