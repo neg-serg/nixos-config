@@ -171,7 +171,7 @@ Golden tool set (agent habits) — hard rules
   - `fd` instead of `find`
   - `bat` instead of `cat` for terminal peeks (the `read` tool stays primary for files)
   - `jq` instead of `sed`/`awk` for JSON
-  - `eza` instead of `ls`, `dust`/`ncdu` instead of `du`, `duf` instead of `df`, `btop`
+  - `eza` instead of `ls`, `dust` instead of `du`, `duf` instead of `df`, `btop`
     instead of `top`, `procs` instead of `ps`, `delta` instead of `diff` (git pager already wired)
   - `sd` for simple search-and-replace, `zoxide` for `cd`, `fzf` for interactive selection,
     `hyperfine` for benchmarking
