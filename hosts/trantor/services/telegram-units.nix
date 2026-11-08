@@ -110,6 +110,14 @@ let
     export PILL_BOT_LAST_MESSAGE=/var/lib/telegram-pill-reminder/last-message.json
     export PILL_BOT_LLM_URL=${config.trantor.telegram.llmEndpoint}
     export PILL_BOT_LLM_MODEL=${config.trantor.telegram.llmModel}
+    export PILL_BOT_ACTION_MODEL=${config.trantor.telegram.llmModel}
+    export PILL_BOT_RT_PY=/home/${pillPanelUser}/.dsh/skills/rutracker/scripts/.venv/bin/python
+    export PILL_BOT_RT_SCRIPT=/home/${pillPanelUser}/.dsh/skills/rutracker/scripts/rt.py
+    export PILL_BOT_DESKTOP_USER=${pillPanelUser}
+    export PILL_BOT_XDG_RUNTIME_DIR=/run/user/${toString config.users.users.${pillPanelUser}.uid}
+    export PILL_BOT_WAYLAND_DISPLAY=wayland-1
+    export PILL_BOT_HYPRCTL=${pkgs.hyprland}/bin/hyprctl
+    export PILL_BOT_GRIM=${pkgs.grim}/bin/grim
     export PILL_BOT_ALERTMANAGER_URL=http://127.0.0.1:${toString config.monitoring.alertmanager.port}/api/v2/alerts
     exec ${lib.getExe' pkgs.neg.telegram-notify "telegram-pill-bot"} "$@"
   '';
@@ -261,6 +269,8 @@ in
             pkgs.openssh
             pkgs.netcat-openbsd # ssh ProxyCommand for github.com
             pkgs.python3 # rag-search (semantic notes search)
+            pkgs.hyprland # hyprctl for /screenshot
+            pkgs.grim # window capture for /screenshot
           ];
           # Same sandbox as the bridge, except that this one legitimately
           # writes into the panel and the notes notebook: it rewrites the
