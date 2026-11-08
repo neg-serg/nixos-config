@@ -709,16 +709,20 @@ hl.bind(M4 .. "+" .. C .. "+comma", hl.dsp.exec_cmd('timeout 3 pleamar --say bar
 hl.bind(M4 .. "+" .. C .. "+equal", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit wheel_volume 1"'), { repeating = true })
 hl.bind(M4 .. "+" .. C .. "+minus", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit wheel_volume -1"'), { repeating = true })
 -- What the shell has put on screen is dismissed over its own IPC: the notification centre takes
--- `dismiss_all`, the drawer cards answer to `fact drawer none` (the panels scene's own words), and
--- the headphone drawer takes `close_drawer`. The legacy path was a semaphore file that quickshell
--- watched (`~/.cache/quickshell/notif-close-all`), and nothing reads it now — the port's scenes are
--- the only shell running, so the bind talks to them directly. `M4+space` closes the cards,
--- `M4+Shift+K` / `M4+Shift+D` are the same action under the names the old overlay fallback used.
+-- `dismiss_all`, the drawer cards answer to `fact drawer none` (the panels scene's own words), the
+-- headphone drawer takes `close_drawer`, and the screenshot card in the `toast` scene takes `hide`
+-- (that card is the PH2-D port of the old Quickshell toast, so the bind missed it while it still
+-- listed only the first three — M4+space closed the notifications and left the card up). The legacy
+-- path was a semaphore file that quickshell watched (`~/.cache/quickshell/notif-close-all`), and
+-- nothing reads it now — the port's scenes are the only shell running, so the bind talks to them
+-- directly. `M4+space` closes the cards, `M4+Shift+K` / `M4+Shift+D` are the same action under the
+-- names the old overlay fallback used.
 local function dismiss_shell()
   return hl.dsp.exec_cmd(
     'timeout 3 pleamar --say notifications "emit dismiss_all" >/dev/null 2>&1; '
       .. 'timeout 3 pleamar --say panels "fact drawer none" >/dev/null 2>&1; '
-      .. 'timeout 3 pleamar --say headphones "emit close_drawer" >/dev/null 2>&1; true'
+      .. 'timeout 3 pleamar --say headphones "emit close_drawer" >/dev/null 2>&1; '
+      .. 'timeout 3 pleamar --say toast "emit hide" >/dev/null 2>&1; true'
   )
 end
 hl.bind(M4 .. "+space", dismiss_shell(), { locked = true })
