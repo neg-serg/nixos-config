@@ -50,7 +50,14 @@ in
       services.pipewire = {
         enable = true;
         alsa.enable = true;
-        alsa.support32Bit = true;
+        # 32-bit ALSA->PipeWire bridge: forced OFF. `programs.steam` sets this
+        # to true for 32-bit games (nixos/modules/programs/steam.nix), which
+        # keeps the whole pkgsi686Linux.pipewire closure alive (~240 MiB NAR,
+        # ~150 MiB on ZFS). Nothing here runs 32-bit at runtime: Wine is
+        # wow64-only (zero ELF32 objects in its closure) and the Steam client
+        # is 64-bit. If a 32-bit game that drives ALSA directly loses audio,
+        # drop the mkForce and pay the closure again.
+        alsa.support32Bit = lib.mkForce false;
         pulse.enable = true;
         jack.enable = true;
         # Base low-latency tuning + optional RNNoise virtual mic.
