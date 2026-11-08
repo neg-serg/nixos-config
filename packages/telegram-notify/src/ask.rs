@@ -23,7 +23,7 @@
 //!
 //! Environment (set by the unit, `hosts/trantor/services/telegram-units.nix`):
 //!   PILL_BOT_LLM_URL           OpenAI-compatible base (default http://127.0.0.1:9292)
-//!   PILL_BOT_LLM_MODEL         llama-swap model (default qwen3.5-4b-abliterated)
+//!   PILL_BOT_LLM_MODEL         llama-swap model (default qwen3-vl-8b-abliterated)
 //!   PILL_BOT_LLM_TIMEOUT       curl timeout in seconds (default 180)
 //!   PILL_BOT_ALERTMANAGER_URL  active-alerts API (default .../api/v2/alerts)
 //!   PILL_BOT_OWNER             desktop user for `systemctl --user --machine`
@@ -38,7 +38,7 @@ use crate::shared::json::{self, Value};
 use crate::{env_or, stamp_now, Api, DEFAULT_CURL};
 
 const DEFAULT_LLM_URL: &str = "http://127.0.0.1:9292";
-const DEFAULT_LLM_MODEL: &str = "qwen3.5-4b-abliterated";
+const DEFAULT_LLM_MODEL: &str = "qwen3-vl-8b-abliterated";
 const DEFAULT_LLM_TIMEOUT: u64 = 180;
 const DEFAULT_ALERTMANAGER_URL: &str = "http://127.0.0.1:9093/api/v2/alerts";
 const MAX_QUESTION_CHARS: usize = 2000;
@@ -50,6 +50,9 @@ const PLACEHOLDER: &str = "⏳ Собираю снимок и спрашиваю
 const HELP_TEXT: &str = "🤖 trantor — мониторинг-бот.\n\n\
 /status — снимок без модели: uptime, нагрузка, память, диски, ZFS, failed units, алерты.\n\
 /ask <вопрос> — спросить локальную модель (llama-swap) о состоянии системы.\n\
+/do <запрос> — выполнить действие по естественному запросу (сейчас: поиск на рутрекере по сидам).\n\
+/chatid — id этого чата (для групп).\n\
+/screenshot [окно] — снимок окна (по умолчанию активного) в чат.\n\
 Любой текст — как /ask.\n\n\
 📝 Заметки (~/notes):\n\
 /note <текст> — новая заметка (заголовок из первой строки).\n\
@@ -61,6 +64,11 @@ const HELP_TEXT: &str = "🤖 trantor — мониторинг-бот.\n\n\
 /nb — синхронизация: pull, zk index, commit, push.\n\n\
 Модель локальная; данные не покидают хост.";
 
+/// Commands allowed in a group: the private monitoring/notes/model paths stay
+/// out of group chats, where every reply is visible to the members.
+const GROUP_HELP: &str = "В группе я выполняю только /do <запрос> (и /chatid). \
+Остальные команды — в личном чате.";
+
 /// One answer at a time: a model call can block for minutes while llama-swap
 /// loads the backend, and piling up requests would only fight for the same GPU.
 static ANSWERING: AtomicBool = AtomicBool::new(false);
@@ -69,17 +77,26 @@ pub enum Intent<'a> {
     Status,
     Help,
     Ask(&'a str),
+    Do(&'a str),
+    ChatId,
+    Screenshot(&'a str),
 }
 
-pub fn handle_message(api: &Api, owner_chat: &str, message: &Value, once: bool) {
+pub fn handle_message(api: &Api, owner: &str, message: &Value, once: bool) {
     let (Some(chat), Some(from)) = (message.get("chat"), message.get("from")) else {
         return;
     };
-    // Private bot: the configured chat is the owner's user id, so both ids
-    // must match. Group/channel traffic and strangers are ignored.
-    if id_of(chat).as_deref() != Some(owner_chat) || id_of(from).as_deref() != Some(owner_chat) {
+    // The configured id is the owner's user id. Only that user's messages are
+    // served: in a private chat chat.id == from.id, in a group chat.id differs
+    // but from.id must still be the owner. Group members can see the replies,
+    // so only `/do` (and `/chatid`) are allowed outside the private chat.
+    if id_of(from).as_deref() != Some(owner) {
         return;
     }
+    let Some(chat_id) = id_of(chat) else {
+        return;
+    };
+    let private = chat_id == owner;
     let Some(text) = message.get("text").and_then(Value::as_str) else {
         // Stickers, photos and service messages are not questions.
         return;
@@ -87,17 +104,43 @@ pub fn handle_message(api: &Api, owner_chat: &str, message: &Value, once: bool) 
     let reply_to = message.get("message_id").and_then(Value::as_i64);
     // Notes commands are deterministic and run before the model: `/note`,
     // `/notes` and `/nb` must work while the GPU is busy or the model is
-    // unloaded, exactly like `/status`.
-    if crate::notes::handle_message(api, owner_chat, text, reply_to) {
+    // unloaded, exactly like `/status`. They stay private: notes must not
+    // leak into a group.
+    if private && crate::notes::handle_message(api, &chat_id, text, reply_to) {
         return;
     }
     match intent(text) {
         Intent::Status => {
+            if !private {
+                deliver(api, &chat_id, GROUP_HELP, reply_to, None);
+                return;
+            }
             let snapshot = format!("📊 {}", snapshot());
-            deliver(api, owner_chat, &snapshot, reply_to, None);
+            deliver(api, &chat_id, &snapshot, reply_to, None);
         }
-        Intent::Help => deliver(api, owner_chat, HELP_TEXT, reply_to, None),
-        Intent::Ask(question) => ask(api, owner_chat, question, reply_to, once),
+        Intent::Help => deliver(api, &chat_id, HELP_TEXT, reply_to, None),
+        Intent::Ask(question) => {
+            if !private {
+                deliver(api, &chat_id, GROUP_HELP, reply_to, None);
+                return;
+            }
+            ask(api, &chat_id, question, reply_to, once);
+        }
+        Intent::Do(action) => crate::actions::handle_message(api, &chat_id, action, reply_to, once),
+        Intent::ChatId => deliver(
+            api,
+            &chat_id,
+            &format!("🆔 chat id: {chat_id}"),
+            reply_to,
+            None,
+        ),
+        Intent::Screenshot(window) => {
+            if !private {
+                deliver(api, &chat_id, GROUP_HELP, reply_to, None);
+                return;
+            }
+            crate::screen::handle(api, &chat_id, window, reply_to);
+        }
     }
 }
 
@@ -120,6 +163,15 @@ pub fn intent(text: &str) -> Intent<'_> {
                 Intent::Ask(rest)
             }
         }
+        "/do" | "/сделай" | "/выполни" => {
+            if rest.is_empty() {
+                Intent::Help
+            } else {
+                Intent::Do(rest)
+            }
+        }
+        "/chatid" | "/чат" => Intent::ChatId,
+        "/screenshot" | "/screen" | "/скриншот" | "/shot" => Intent::Screenshot(rest),
         _ if whole == "status" || whole == "статус" => Intent::Status,
         _ => Intent::Ask(trimmed),
     }
@@ -787,7 +839,7 @@ mod tests {
         let body = Value::Object(vec![
             (
                 "model".to_string(),
-                Value::Str("qwen3.5-4b-abliterated".into()),
+                Value::Str("qwen3-vl-8b-abliterated".into()),
             ),
             (
                 "messages".to_string(),

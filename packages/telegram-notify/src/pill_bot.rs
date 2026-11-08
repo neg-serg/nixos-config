@@ -34,8 +34,10 @@
 #[path = "lib.rs"]
 mod shared;
 
+mod actions;
 mod ask;
 mod notes;
+mod screen;
 
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -161,6 +163,41 @@ impl Api {
         for (key, value) in params {
             command.args(["--data-urlencode", &format!("{key}={value}")]);
         }
+        command
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        let mut child = command.spawn().ok()?;
+        if let Some(mut stdin) = child.stdin.take() {
+            let _ = stdin.write_all(shared::curl_url_config(&url).as_bytes());
+        }
+        let output = child.wait_with_output().ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        Some(String::from_utf8_lossy(&output.stdout).to_string())
+    }
+
+    /// Multipart upload of a local file as a Telegram document. Screenshots
+    /// are documents, not photos: Telegram re-encodes photos, and a window
+    /// capture should keep its exact pixels.
+    pub(crate) fn send_document(&self, chat_id: &str, path: &str, caption: &str) -> Option<String> {
+        let url = format!("{}/bot{}/sendDocument", self.base, self.token);
+        let mut command = Command::new(&self.curl);
+        command.args(["-s", "--max-time", "120"]);
+        let loopback =
+            self.base.starts_with("http://127.0.0.1") || self.base.starts_with("http://localhost");
+        if !loopback {
+            command.args(["--proxy", &self.proxy]);
+        }
+        command.args(["-K", "-"]);
+        command
+            .arg("-F")
+            .arg(format!("chat_id={chat_id}"))
+            .arg("-F")
+            .arg(format!("document=@{path}"))
+            .arg("-F")
+            .arg(format!("caption={caption}"));
         command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
