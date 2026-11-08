@@ -9,10 +9,7 @@
 }:
 let
   enabled = config.lib.neg.enabled "media.audio.creation";
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
 
   # pw-jack launcher unit (lib/jack-app.nix): ExecStart under pw-jack, the
   # audio-graph ordering and the restart policy live there.

@@ -4,10 +4,7 @@
   ...
 }:
 let
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
   # Wrap dsh so it loads DEEPSEEK_API_KEY from the sops secret itself, rather
   # than relying on shell init — works even from a terminal opened before the
   # secret was wired (a shell only sources .zshenv at startup).

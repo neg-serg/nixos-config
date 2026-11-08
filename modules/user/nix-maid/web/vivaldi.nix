@@ -8,10 +8,7 @@ let
   cfg = config.features.web.vivaldi;
   webEnabled = config.lib.neg.enabled "web";
   guiEnabled = config.lib.neg.enabled "gui";
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
 
   # Extension install strategy — ExtensionInstallForcelist (force-installed via
   # managed policy). The browser itself downloads and (re)installs SurfingKeys +

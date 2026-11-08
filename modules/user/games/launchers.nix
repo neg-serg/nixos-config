@@ -13,10 +13,7 @@ let
 
   # Same on-demand root the fun module uses; both modules only contribute the
   # PATH wrapper, so the launcher derivation is identical and deduplicated.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
 
   # GE-Proton is a 1.5 GiB unpacked tree (the tarball itself, re-exported as a
   # compatibility tool) and Steam only reads it when a game asks for that

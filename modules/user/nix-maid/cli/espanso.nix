@@ -9,7 +9,7 @@ let
   # espanso links wxwidgets/WebKit (176 MiB) for a text expander that is
   # started by hand, so the launcher builds it on first use instead of
   # carrying the toolkit in every system generation.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = config.lib.neg.onDemand pkgs;
 in
 
 {

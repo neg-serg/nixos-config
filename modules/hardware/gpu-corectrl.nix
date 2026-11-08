@@ -31,7 +31,7 @@ let
   # The GUI is opened by hand and its exclusive closure is 92.2 MiB
   # (mesa-demos included), so it is built on first use. The polkit rule below
   # matches the helper's action id, not a path, so it works unchanged.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = config.lib.neg.onDemand pkgs;
 in
 {
   options.hardware.gpu.corectrl = {

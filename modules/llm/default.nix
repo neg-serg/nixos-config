@@ -315,10 +315,7 @@ let
   # (Nix refuses a git repository it does not own), so a oneshot running as the
   # main user materialises the root at a shared path and overrides ExecStart.
   # The launcher stays on PATH for the `ollama` CLI (its own root under $HOME).
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
   ollamaLauncher = onDemand {
     name = "ollama";
     attr = "ollama";

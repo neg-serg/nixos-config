@@ -6,7 +6,7 @@
 let
   # The DAP adapter is spawned only while a JS/TS session is being debugged,
   # so its 32.7 MiB exclusive closure is built on first use.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = config.lib.neg.onDemand pkgs;
 in
 {
   # js-debug-adapter binary for JS/TS debugging, used by the TUI's dsh-debug

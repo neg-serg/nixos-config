@@ -21,10 +21,7 @@
 let
   cfg = config.servicesProfiles.searx or { enable = false; };
 
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
   # `searx` on PATH: the package's only binary is `searxng-run`, and the root
   # name matches the systemd unit so `nix-apps update searx` prints the right
   # restart hint.

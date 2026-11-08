@@ -11,7 +11,7 @@
 let
   # The HDSPe matrix mixer is a GUI (wxWidgets + WebKit, 214.7 MiB exclusive)
   # opened by hand when routing changes, so it is built on first use.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = config.lib.neg.onDemand pkgs;
 
   # glm-usbmon-priv: root helper for USB traffic captures — mounts debugfs for
   # the length of one usbmon session and unmounts it on stop (invoked via

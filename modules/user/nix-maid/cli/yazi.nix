@@ -15,7 +15,7 @@ let
 
   # yazi is opened from a keybind, not at session start, so its 41.3 MiB
   # exclusive closure is built on first use.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = config.lib.neg.onDemand pkgs;
 
   settings = {
     mgr = {

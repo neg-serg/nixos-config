@@ -18,7 +18,7 @@ let
 
   # texlab: a 63 MiB LSP needed only when a LaTeX buffer attaches, so Neovim
   # resolves it from an on-demand launcher instead of the system image.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = config.lib.neg.onDemand pkgs;
 in
 lib.mkIf devEnabled (
   lib.mkMerge [

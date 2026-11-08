@@ -12,7 +12,7 @@ let
   systemdUser = config.lib.neg.systemdUser;
 
   # sacad downloads album art on demand only, so it is built on first use.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = config.lib.neg.onDemand pkgs;
 
   # --- Beets distrobox wrapper ---
   beetWrapper = pkgs.writeShellScriptBin "beet" ''
