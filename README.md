@@ -15,7 +15,7 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=github)](https://github.com/neg-serg/nixos-config)
 [![NixOS](https://img.shields.io/badge/NixOS-26.11-5277C3?style=for-the-badge&logo=nixos&logoColor=white)](https://nixos.org)
 [![Hyprland](https://img.shields.io/badge/Hyprland-Dynamic_Tiling-00D9FF?style=for-the-badge&logo=wayland&logoColor=white)](https://hyprland.org)
-[![Commits](https://img.shields.io/badge/commits-3200+-FF6B35?style=for-the-badge&logo=git&logoColor=white)](https://github.com/neg-serg/nixos-config/commits)
+[![Commits](https://img.shields.io/badge/commits-5200+-FF6B35?style=for-the-badge&logo=git&logoColor=white)](https://github.com/neg-serg/nixos-config/commits)
 [![Stars](https://img.shields.io/github/stars/neg-serg/nixos-config?style=for-the-badge&logo=github)](https://github.com/neg-serg/nixos-config/stargazers)
 
 ---
@@ -42,7 +42,7 @@
 ## ✨ Highlights
 
 > [!TIP]
-> **New to NixOS?** Check out the [docs index](docs/index.md) for a comprehensive guide!
+> **New to NixOS?** Start with [AGENTS.md](AGENTS.md) and the step-by-step recipes in [`.agent/workflows/`](.agent/workflows/).
 
 🎯 **What makes this configuration special:**
 
@@ -50,8 +50,8 @@
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
 - 🎨 **Beautiful Hyprland** - 18 workspaces, 8 scratchpads, custom pleamar shell
-- 📦 **30 Custom Packages** - Tailored tools for productivity and performance
-- 🧩 **Modular Architecture** - 27 domain modules with feature flags, 502 Nix files
+- 📦 **143 Custom Packages** - Tailored tools for productivity and performance
+- 🧩 **Modular Architecture** - 26 domain modules with feature flags, 619 Nix files
 - 🔄 **Local Gates** - pre-commit hook (`just lint`) plus `nix flake check -L`; no CI service runs this repo
 
 ---
@@ -83,12 +83,12 @@ nh os switch
 
 | 📁 Category | 🔢 Count | 📊 Progress |
 |-------------|----------|-------------|
-| **Module Domains** | 27 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Nix Files** | 502 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Custom Packages** | 107 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Module Files** | 319 | ![](https://geps.dev/progress/93?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Module Domains** | 26 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 619 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Custom Packages** | 143 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Module Files** | 361 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
-| **Total Commits** | 3200+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Total Commits** | 5200+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
 </div>
 
@@ -255,46 +255,27 @@ flowchart LR
 │   │   └── ...
 │   ├── 📁 servers/                   # 🖧 Server services
 │   └── ...
-├── 📂 packages/                      # 🎁 Custom overlays (30)
+├── 📂 packages/                      # 🎁 Custom overlays (143)
 │   ├── game/
 │   └── ...
 ├── 📂 files/                         # 📝 Config files
 │   ├── 📁 gui/hypr/                  # Hyprland configs
 │   ├── 📁 pleamar/                   # Shell scenes and libraries
 ├── 📂 scripts/dev/                   # 🔧 Dev & CI scripts
-├── 📂 docs/                          # 📚 Documentation (index, howto/, runbook-*.md)
 ```
 
 ---
 
 ## 🗂️ Module Categories
 
-<div align="center">
-
-### 📊 Module Distribution
-
-```mermaid
-pie title Module Categories Distribution
-    "System (8)" : 8
-    "Desktop/GUI (12)" : 12
-    "Development (6)" : 6
-    "Web & Comm (4)" : 4
-    "Core (16)" : 16
-    "Servers (7)" : 7
-    "Other (9)" : 9
-```
-
-</div>
-
 <details>
-<summary><h3>🎯 Core Modules (22)</h3></summary>
+<summary><h3>🎯 Core Modules (25)</h3></summary>
 
 | Module | Description | Files |
 |--------|-------------|-------|
-| 🎛️ **args** | Module arguments & impurity | 1 |
-| ⚙️ **features** | Feature flags system | 14 |
+| ⚙️ **features** | Feature flags system | 16 |
 | 📚 **neg** | Custom library helpers | 2 |
-| 👥 **profiles** | Service profiles | 5 |
+| 👥 **profiles** | Profile bundles and option profiles | 7 |
 
 </details>
 
@@ -543,7 +524,7 @@ Quick-access overlays for common applications:
 
 ## 🛠️ Custom Packages
 
-**30 Custom Packages** tailored for productivity and performance:
+**143 Custom Packages** exposed by the flake — selected highlights:
 
 ### 🎮 Game
 Rust launcher wrapper in `packages/game/`:
@@ -566,8 +547,7 @@ Rust launcher wrapper in `packages/game/`:
 
 | Resource | Description |
 |----------|-------------|
-| 📖 [Docs index](docs/index.md) | Repo documentation entry point |
-
+| 📖 [Workflows](.agent/workflows/) | Step-by-step change recipes |
 | 💬 [Package Annotations](modules/) | Inline comments |
 | 🔧 [CI Scripts](scripts/dev/) | Development tools |
 
@@ -623,7 +603,7 @@ Special thanks to:
 
 ### 🌟 Star this repo if you find it useful!
 
-**Last Updated:** September 2026 • **Version:** 26.11 • **Commits:** 3200+
+**Last Updated:** November 2026 • **Version:** 26.11 • **Commits:** 5200+
 
 Made with ❤️ and ☕ by [neg-serg](https://github.com/neg-serg)
 

@@ -9,11 +9,19 @@ repo — profile cascades, unfree policy, exclusions, and notable behaviors.
 
 ## Profiles
 
-- `features.profiles`: list of active profiles (default: `["desktop"]`)
-  - Available: `desktop`, `gaming`, `dev`.
+- `features.profiles`: list of active bundle profiles (default: `["desktop"]`)
+  - Available: `desktop`, `gaming`, `dev` (enforced by an enum).
   - Each profile sets feature-flag defaults via `modules/profiles/<name>.nix`
     (`mkDefault`); order matters — later profiles override earlier ones.
   - You can still override any option after the profiles are set.
+- `profiles.<name>.enable`: a separate option family, unrelated to
+  `features.profiles`. It gates kernel/performance/security/network settings:
+  `debug`, `performance`, `security`, `vm`, `work` (declared next to their
+  subsystems), `games` (`modules/user/games/`) and `network`
+  (`modules/system/net/`). These do not select bundles.
+- `servicesProfiles.<name>.enable`: per-service toggles declared in
+  `modules/profiles/services.nix` (AdGuard Home, Unbound); hosts set them
+  directly.
 
 ## Unfree Policy
 
