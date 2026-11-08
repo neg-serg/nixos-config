@@ -170,6 +170,9 @@ scene bar {
     fact bar_edge: top | bottom = bottom
     fact shown = true
     fact startup = false
+    // Tripped by bar.luau one tick after load; the rule at the drawing section
+    // turns it into the entrance spring (`bar.slide`).
+    fact bar.reveal = 0
     // The gap between two capsules: the reference's panel.widgetSpacing 4 at the
     // interWidgetRatio 1.35 is 5.4 logical px, and its plates sit at 5, 72, 158, 223 with gaps
     // of 9 then 7. A uniform 6 left every capsule after the clock 3 logical px short, so this
@@ -984,6 +987,12 @@ scene bar {
     event tip_hide ->
     // The one number on the bar everybody watches: a shove on its spring when the clock's reading
     // changes (the reference's `NumberFadeBehavior`, as far as a printed text can go).
+    // The bar's entrance: the face starts one strip lower and rises over 350 ms
+    // (the reference's `Theme.panelSlideMs`). The logic trips `bar.reveal` one
+    // tick after load and the `follow` carries the spring; the gate does not
+    // drive this — the reference slid the panel in on every start.
+    prop bar.slide = 0 ~350ms
+    follow bar.slide = bar.reveal
     prop tick.dip = 0 ~120ms
     // 34 px/s against a 120 ms spring is a 3 px rise that is gone before the eye settles, which
     // is what a number changing should look like; the mechanism was measured with a 3 s spring
@@ -2033,262 +2042,268 @@ scene bar {
     // (which read as a flat slab) and not nothing at all (which let the
     // wallpaper through unbroken). No rim and no shadow: QS paints neither
     // (`panel.capsule.borderWidth` is 0 and WidgetCapsule has no drop shadow).
-    body {
-        color: live.coal
-        // `panel.seam.opacity` is 0.88 in the reference, where the blur is the compositor's; here
-        // the surface does the blur, so a flat 0.88 hid the glass and 0.62 let a light
-        // wallpaper's own colour through as a slab. The dark theme needs the lower number and the
-        // light one does not: `live.coal` is #000000 there, so 0.84 of it is a black wall with
-        // nothing behind it to bend, and the glass reads as paint.
-        opacity: if(live.light, 84%, 60%)
-        // No blur anywhere at the moment: the compositor's `decoration:blur` is off
-        // (hyprland.lua has the measurement) and `strip.glass` is 0, so this body is
-        // just its `opacity` live.coal over the desktop. `lens: false` because the lens
-        // kept taking screencopies at 0 % glass too — each one a 4K readback that
-        // held the compositor (and input) for 10-20 ms; 74 % of a core against 62 %
-        // without, measured 2026-11-02. The scene's own lens is the alternative look
-        // (a screencopy of what is behind the strip on every capture, 61-69 % of a
-        // core for the bar alone): the frost below belongs to it and is inert at 0 %,
-        // kept so the switch back is one number.
-        glass: 70% * strip.glass
-        lens: false
-        tint: 42%
-        // Smoked glass in the dark theme: what is seen through is taken down, the brighter the
-        // more, its colour kept — so a window under the bar stops competing with the strip's own
-        // words instead of being covered up. The light theme keeps none: there `milk` is the
-        // counterpart, and it is not asked for yet.
-        smoke: if(live.light, 0%, 90%)
-        // `auto` leaves a bare wallpaper clear, which is what let the pink through unblurred;
-        // the strip wants the frosted reading everywhere, it is 25 px tall.
-        frost: 100%
-        // No rim. The bevel is a band the glass leaves open at the silhouette: it either catches
-        // the light — the lit border that had to go — or shows what is behind it, which with no
-        // `live.highlight` and no `mirror` measured 15.6 against an interior of 50.9, a dark line of
-        // its own. So the band is capped with the plate's own colour: a 1 px `border` in
-        // `live.coal` closes it at the surface's tone, and what is left bends without ever
-        // catching anything.
-        // `refraction` is how thick the glass is — how far its edge pulls what is behind it in;
-        // 200 % is the thick lens of the language's own example. 180 % on a 25 px strip bends
-        // the wallpaper where it meets the plate, `dispersion: 60%` splits the bend a little
-        // (red, green and blue each by their own index) and `dome: 8%` magnifies the middle
-        // faintly, so the plate reads as a piece of glass rather than a pane of water.
-        refraction: 180%
-        dispersion: 60%
-        dome: 8%
-        mirror: 0%
-        highlight: 0%
-        border: 1, live.coal
-        // The shape, not a second coat of paint: a body fills its own extent, and a box
-        // inside it with no colour of its own inherits the body's and fills it again. The
-        // two coats are what a measurement of the strip shows — QS' #1D1E21 for a plate at
-        // 88 % over that wallpaper, the port's #040404, and 1 - (1 - 0.88)^2 = 0.9856 with
-        // 0.0144 * rgb(242,250,255) is exactly #040404. `opacity: 0%` keeps the shape the
-        // body needs and drops the second coat.
-        box { from: 0, hot; size: screen.width, band; opacity: 0% }
-    }
-    // ---- hover relays for the three capsules whose tooltip the plugin cannot draw
-    // A plugin has no surface, so the card is the bar's: the plugin keeps its own `hot` fact and
-    // the scene turns it into the tooltip's own events. The indexes are `tip_line`'s in bar.luau —
-    // 9 the pill, 10 the MPD flags, 11 Genelec; the rest of the strip is wired in place (`emit tip`
-    // beside each `on enter`), and these three live here because their zones are the plugins'.
-    on change Pill.hot while Pill.hot { emit tip(9) }
-    on change Pill.hot while not Pill.hot { emit tip_hide }
-    on change Pill.taken { pill.taken = Pill.taken; pill.at = Pill.takenAt }
-    on change Pill.reminder { pill.reminder = Pill.reminder }
-    on change Pill.streak { pill.streak = Pill.streak }
-    on change Mpd.hot while Mpd.hot { emit tip(10) }
-    on change Mpd.hot while not Mpd.hot { emit tip_hide }
-    on change Genelec.hot while Genelec.hot { emit tip(11) }
-    on change Genelec.hot while not Genelec.hot { emit tip_hide }
-    // The pill's right press toggles the calendar, as QS's second TapHandler did
-    // (`calendar.toggle()`), and that drawer now marks the tracked days and their streak: it
-    // reads the same `Pill.days` model this mark is drawn from (`pages/calendar.plm`).
-    on change Pill.asks { emit toggle_calendar_panel }
+    // Entrance slide: the logic trips `bar.reveal` one tick after load and the
+    // spring carries the whole face up from one strip below.
+    group bar_face {
+        move: 0, (1 - bar.slide) * band
 
-    // The whole strip is a hover target for the widgets that hide at idle
-    // (QS's `panelHovering`): declared before the rows, so every widget's own
-    // zone is above it and keeps its clicks.
-    // The hotzone counts as the bar for `strip.hot`: the widgets that hide at idle come
-    // back when the pointer enters the band above the strip, which is what QS does.
-    // Hover is the strip, not the tooltip's headroom: the 10 px above the paint exist so the
-    // tooltip card is not cut, and counting them as the bar's zone took the pointer over the
-    // windows below for a band nothing is drawn in.
-    zone box strip_hover { from: 0, hot; size: screen.width, band; label: "Bar"; role: region }
-    // `tray_panel` is the same moment told to the logic: the tray machine needs to know when the
-    // strip is *left* (`panelHover`, SystemTray.qml:14), which a fact cannot say.
-    on enter strip_hover { strip.hot = true; emit tray_panel(1) }
-    on leave strip_hover { strip.hot = false; emit tip_hide; emit tray_panel(0); emit media_hover(0) }
+        body {
+            color: live.coal
+            // `panel.seam.opacity` is 0.88 in the reference, where the blur is the compositor's; here
+            // the surface does the blur, so a flat 0.88 hid the glass and 0.62 let a light
+            // wallpaper's own colour through as a slab. The dark theme needs the lower number and the
+            // light one does not: `live.coal` is #000000 there, so 0.84 of it is a black wall with
+            // nothing behind it to bend, and the glass reads as paint.
+            opacity: if(live.light, 84%, 60%)
+            // No blur anywhere at the moment: the compositor's `decoration:blur` is off
+            // (hyprland.lua has the measurement) and `strip.glass` is 0, so this body is
+            // just its `opacity` live.coal over the desktop. `lens: false` because the lens
+            // kept taking screencopies at 0 % glass too — each one a 4K readback that
+            // held the compositor (and input) for 10-20 ms; 74 % of a core against 62 %
+            // without, measured 2026-11-02. The scene's own lens is the alternative look
+            // (a screencopy of what is behind the strip on every capture, 61-69 % of a
+            // core for the bar alone): the frost below belongs to it and is inert at 0 %,
+            // kept so the switch back is one number.
+            glass: 70% * strip.glass
+            lens: false
+            tint: 42%
+            // Smoked glass in the dark theme: what is seen through is taken down, the brighter the
+            // more, its colour kept — so a window under the bar stops competing with the strip's own
+            // words instead of being covered up. The light theme keeps none: there `milk` is the
+            // counterpart, and it is not asked for yet.
+            smoke: if(live.light, 0%, 90%)
+            // `auto` leaves a bare wallpaper clear, which is what let the pink through unblurred;
+            // the strip wants the frosted reading everywhere, it is 25 px tall.
+            frost: 100%
+            // No rim. The bevel is a band the glass leaves open at the silhouette: it either catches
+            // the light — the lit border that had to go — or shows what is behind it, which with no
+            // `live.highlight` and no `mirror` measured 15.6 against an interior of 50.9, a dark line of
+            // its own. So the band is capped with the plate's own colour: a 1 px `border` in
+            // `live.coal` closes it at the surface's tone, and what is left bends without ever
+            // catching anything.
+            // `refraction` is how thick the glass is — how far its edge pulls what is behind it in;
+            // 200 % is the thick lens of the language's own example. 180 % on a 25 px strip bends
+            // the wallpaper where it meets the plate, `dispersion: 60%` splits the bend a little
+            // (red, green and blue each by their own index) and `dome: 8%` magnifies the middle
+            // faintly, so the plate reads as a piece of glass rather than a pane of water.
+            refraction: 180%
+            dispersion: 60%
+            dome: 8%
+            mirror: 0%
+            highlight: 0%
+            border: 1, live.coal
+            // The shape, not a second coat of paint: a body fills its own extent, and a box
+            // inside it with no colour of its own inherits the body's and fills it again. The
+            // two coats are what a measurement of the strip shows — QS' #1D1E21 for a plate at
+            // 88 % over that wallpaper, the port's #040404, and 1 - (1 - 0.88)^2 = 0.9856 with
+            // 0.0144 * rgb(242,250,255) is exactly #040404. `opacity: 0%` keeps the shape the
+            // body needs and drops the second coat.
+            box { from: 0, hot; size: screen.width, band; opacity: 0% }
+        }
+        // ---- hover relays for the three capsules whose tooltip the plugin cannot draw
+        // A plugin has no surface, so the card is the bar's: the plugin keeps its own `hot` fact and
+        // the scene turns it into the tooltip's own events. The indexes are `tip_line`'s in bar.luau —
+        // 9 the pill, 10 the MPD flags, 11 Genelec; the rest of the strip is wired in place (`emit tip`
+        // beside each `on enter`), and these three live here because their zones are the plugins'.
+        on change Pill.hot while Pill.hot { emit tip(9) }
+        on change Pill.hot while not Pill.hot { emit tip_hide }
+        on change Pill.taken { pill.taken = Pill.taken; pill.at = Pill.takenAt }
+        on change Pill.reminder { pill.reminder = Pill.reminder }
+        on change Pill.streak { pill.streak = Pill.streak }
+        on change Mpd.hot while Mpd.hot { emit tip(10) }
+        on change Mpd.hot while not Mpd.hot { emit tip_hide }
+        on change Genelec.hot while Genelec.hot { emit tip(11) }
+        on change Genelec.hot while not Genelec.hot { emit tip_hide }
+        // The pill's right press toggles the calendar, as QS's second TapHandler did
+        // (`calendar.toggle()`), and that drawer now marks the tracked days and their streak: it
+        // reads the same `Pill.days` model this mark is drawn from (`pages/calendar.plm`).
+        on change Pill.asks { emit toggle_calendar_panel }
 
-    // The corner the tray is revealed from: QS's hot zone (`Bar.qml:1246-1260`) — a hover target of
-    // its own over the bottom right of the panel, 16 by 9 design px (`Settings/Theme.qml:687-688`),
-    // drawing nothing. Here it is a zone like any other, declared with the strip's own hover target
-    // so the widgets stay above it: a press in its box still reaches the capsule drawn over it
-    // (Genelec), and its hover fires where a hand reaching for the bottom-right corner lands.
-    // The hover is not exclusive in this engine: a zone under the pointer gets its own `enter` and
-    // `leave` (measured on 0.7.7), so the box can be the comfortable 64 px of `tray.reveal` above —
-    // wide enough to overlap the Genelec tile and still leave the tile its own hover and presses —
-    // instead of the four-pixel line a corner exclusive to one widget came to.
-    // Only while there is a tray to reveal: nothing is drawn for an empty one, and the state
-    // machine has nothing to expand. It is not gated on `tray_trigger` either — that flag is off by
-    // default and nothing sets it, which is how the corner came to be a dead zone and the tray
-    // unreachable with the mouse.
-    zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region; show: widget.systray and icons.count > 0 }
-    on enter tray_reveal { emit tray_hot(1) }
-    on leave tray_reveal { emit tray_hot(0) }
+        // The whole strip is a hover target for the widgets that hide at idle
+        // (QS's `panelHovering`): declared before the rows, so every widget's own
+        // zone is above it and keeps its clicks.
+        // The hotzone counts as the bar for `strip.hot`: the widgets that hide at idle come
+        // back when the pointer enters the band above the strip, which is what QS does.
+        // Hover is the strip, not the tooltip's headroom: the 10 px above the paint exist so the
+        // tooltip card is not cut, and counting them as the bar's zone took the pointer over the
+        // windows below for a band nothing is drawn in.
+        zone box strip_hover { from: 0, hot; size: screen.width, band; label: "Bar"; role: region }
+        // `tray_panel` is the same moment told to the logic: the tray machine needs to know when the
+        // strip is *left* (`panelHover`, SystemTray.qml:14), which a fact cannot say.
+        on enter strip_hover { strip.hot = true; emit tray_panel(1) }
+        on leave strip_hover { strip.hot = false; emit tip_hide; emit tray_panel(0); emit media_hover(0) }
 
-    // ---------------------------------------------------- centre: a take
-    // The recording capsule: the palette's alert red as a dot with a one-second
-    // heartbeat behind it, and the clock in Iosevka beside it. The plate, the
-    // 23 px face and the 6 px radius are the strip's own (the build badge next
-    // to it uses the same ones), so the centre does not become a different
-    // species of widget while something records.
-    component RecCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        let pad = 6
-        let dot = 7
-        let dot.gap = 6
-        // Six glyphs: `M:SS` up to `999:59`; 14 px Iosevka advances 7 px, so the
-        // box never has to change width while the clock runs.
-        let timer.w = 44
-        let w = pad + dot + dot.gap + timer.w + pad
-        size: w * scale, strip * scale
-        group zoom {
-            scale: scale
-            body {
-                color: live.coal
-                opacity: 69%
-                border: 1, mix(live.coal, live.ink, 8%)
-                box { from: 0, 1; size: w, 23; corner: 6 }
+        // The corner the tray is revealed from: QS's hot zone (`Bar.qml:1246-1260`) — a hover target of
+        // its own over the bottom right of the panel, 16 by 9 design px (`Settings/Theme.qml:687-688`),
+        // drawing nothing. Here it is a zone like any other, declared with the strip's own hover target
+        // so the widgets stay above it: a press in its box still reaches the capsule drawn over it
+        // (Genelec), and its hover fires where a hand reaching for the bottom-right corner lands.
+        // The hover is not exclusive in this engine: a zone under the pointer gets its own `enter` and
+        // `leave` (measured on 0.7.7), so the box can be the comfortable 64 px of `tray.reveal` above —
+        // wide enough to overlap the Genelec tile and still leave the tile its own hover and presses —
+        // instead of the four-pixel line a corner exclusive to one widget came to.
+        // Only while there is a tray to reveal: nothing is drawn for an empty one, and the state
+        // machine has nothing to expand. It is not gated on `tray_trigger` either — that flag is off by
+        // default and nothing sets it, which is how the corner came to be a dead zone and the tray
+        // unreachable with the mouse.
+        zone box tray_reveal { from: screen.width - tray.reveal.w, hot + band - tray.reveal.h; size: tray.reveal.w, tray.reveal.h; label: "System tray"; role: region; show: widget.systray and icons.count > 0 }
+        on enter tray_reveal { emit tray_hot(1) }
+        on leave tray_reveal { emit tray_hot(0) }
+
+        // ---------------------------------------------------- centre: a take
+        // The recording capsule: the palette's alert red as a dot with a one-second
+        // heartbeat behind it, and the clock in Iosevka beside it. The plate, the
+        // 23 px face and the 6 px radius are the strip's own (the build badge next
+        // to it uses the same ones), so the centre does not become a different
+        // species of widget while something records.
+        component RecCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+            let pad = 6
+            let dot = 7
+            let dot.gap = 6
+            // Six glyphs: `M:SS` up to `999:59`; 14 px Iosevka advances 7 px, so the
+            // box never has to change width while the clock runs.
+            let timer.w = 44
+            let w = pad + dot + dot.gap + timer.w + pad
+            size: w * scale, strip * scale
+            group zoom {
+                scale: scale
+                body {
+                    color: live.coal
+                    opacity: 69%
+                    border: 1, mix(live.coal, live.ink, 8%)
+                    box { from: 0, 1; size: w, 23; corner: 6 }
+                }
+                // The halo is the heartbeat: `rec.beat` is impulsed once a second by
+                // the rule at the top of the file and decays on `quick`, so the ring
+                // swells exactly as often as the clock ticks.
+                ellipse { at: pad + dot / 2, strip / 2; radius: dot / 2 + 1.5 + max(0, rec.beat); color: live.warn; opacity: 22% }
+                ellipse { at: pad + dot / 2, strip / 2; radius: dot / 2; color: live.warn }
+                // `live.ink`, not the red: the clock is information, the dot is the
+                // state. 14 px is the bar's reading size and the box is right there.
+                text "{rec_time}" { at: pad + dot + dot.gap, strip / 2; anchor: left center; size: 14 * text_scale; weight: 600; color: live.ink; family: "Iosevka"; width: timer.w; lines: 1 }
+                // The whole plate stops the take: `screenrec stop` is idempotent, so
+                // a press that races the recorder's own stop cannot start another.
+                zone box rec { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Screen recording {rec_time}, click to stop"; role: button }
+                on enter rec { emit tip(13) }
+                on leave rec { emit tip_hide }
+                on press rec { emit stop_recording }
             }
-            // The halo is the heartbeat: `rec.beat` is impulsed once a second by
-            // the rule at the top of the file and decays on `quick`, so the ring
-            // swells exactly as often as the clock ticks.
-            ellipse { at: pad + dot / 2, strip / 2; radius: dot / 2 + 1.5 + max(0, rec.beat); color: live.warn; opacity: 22% }
-            ellipse { at: pad + dot / 2, strip / 2; radius: dot / 2; color: live.warn }
-            // `live.ink`, not the red: the clock is information, the dot is the
-            // state. 14 px is the bar's reading size and the box is right there.
-            text "{rec_time}" { at: pad + dot + dot.gap, strip / 2; anchor: left center; size: 14 * text_scale; weight: 600; color: live.ink; family: "Iosevka"; width: timer.w; lines: 1 }
-            // The whole plate stops the take: `screenrec stop` is idempotent, so
-            // a press that races the recorder's own stop cannot start another.
-            zone box rec { from: 0, 0; size: w, strip; corner: corner; cursor: pointer; label: "Screen recording {rec_time}, click to stop"; role: button }
-            on enter rec { emit tip(13) }
-            on leave rec { emit tip_hide }
-            on press rec { emit stop_recording }
         }
-    }
 
-    // The sound take: four bars, the meter 11 px wide inside a 21 px plate —
-    // icon-sized, the promise the capsule makes. Each bar is a cava band of the
-    // two sources the recorder mixes (microphone and system output), the sockets
-    // stay visible at rest so silence still reads as a meter, and the colour
-    // climbs from the palette's highlight to its alert red with the level.
-    component RecAudio(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        let pad = 5
-        let bar.w = 2
-        let bar.gap = 1
-        let meter.w = 4 * bar.w + 3 * bar.gap
-        let w = 2 * pad + meter.w
-        let base = strip / 2 + 7
-        let floor = 2
-        let span = 12
-        let x1 = pad
-        let x2 = x1 + bar.w + bar.gap
-        let x3 = x2 + bar.w + bar.gap
-        let x4 = x3 + bar.w + bar.gap
-        let h1 = floor + min(1, max(0, rec.bar1)) * span
-        let h2 = floor + min(1, max(0, rec.bar2)) * span
-        let h3 = floor + min(1, max(0, rec.bar3)) * span
-        let h4 = floor + min(1, max(0, rec.bar4)) * span
-        size: w * scale, strip * scale
-        group zoom {
-            scale: scale
-            body {
-                color: live.coal
-                opacity: 69%
-                border: 1, mix(live.coal, live.ink, 8%)
-                box { from: 0, 1; size: w, 23; corner: 6 }
+        // The sound take: four bars, the meter 11 px wide inside a 21 px plate —
+        // icon-sized, the promise the capsule makes. Each bar is a cava band of the
+        // two sources the recorder mixes (microphone and system output), the sockets
+        // stay visible at rest so silence still reads as a meter, and the colour
+        // climbs from the palette's highlight to its alert red with the level.
+        component RecAudio(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+            let pad = 5
+            let bar.w = 2
+            let bar.gap = 1
+            let meter.w = 4 * bar.w + 3 * bar.gap
+            let w = 2 * pad + meter.w
+            let base = strip / 2 + 7
+            let floor = 2
+            let span = 12
+            let x1 = pad
+            let x2 = x1 + bar.w + bar.gap
+            let x3 = x2 + bar.w + bar.gap
+            let x4 = x3 + bar.w + bar.gap
+            let h1 = floor + min(1, max(0, rec.bar1)) * span
+            let h2 = floor + min(1, max(0, rec.bar2)) * span
+            let h3 = floor + min(1, max(0, rec.bar3)) * span
+            let h4 = floor + min(1, max(0, rec.bar4)) * span
+            size: w * scale, strip * scale
+            group zoom {
+                scale: scale
+                body {
+                    color: live.coal
+                    opacity: 69%
+                    border: 1, mix(live.coal, live.ink, 8%)
+                    box { from: 0, 1; size: w, 23; corner: 6 }
+                }
+                box { from: x1, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
+                box { from: x2, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
+                box { from: x3, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
+                box { from: x4, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
+                box { from: x1, base - h1; size: bar.w, h1; corner: 1; color: mix(live.highlight, live.warn, rec.bar1) }
+                box { from: x2, base - h2; size: bar.w, h2; corner: 1; color: mix(live.highlight, live.warn, rec.bar2) }
+                box { from: x3, base - h3; size: bar.w, h3; corner: 1; color: mix(live.highlight, live.warn, rec.bar3) }
+                box { from: x4, base - h4; size: bar.w, h4; corner: 1; color: mix(live.highlight, live.warn, rec.bar4) }
             }
-            box { from: x1, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
-            box { from: x2, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
-            box { from: x3, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
-            box { from: x4, base - floor - span; size: bar.w, floor + span; corner: 1; color: live.ink; opacity: 10% }
-            box { from: x1, base - h1; size: bar.w, h1; corner: 1; color: mix(live.highlight, live.warn, rec.bar1) }
-            box { from: x2, base - h2; size: bar.w, h2; corner: 1; color: mix(live.highlight, live.warn, rec.bar2) }
-            box { from: x3, base - h3; size: bar.w, h3; corner: 1; color: mix(live.highlight, live.warn, rec.bar3) }
-            box { from: x4, base - h4; size: bar.w, h4; corner: 1; color: mix(live.highlight, live.warn, rec.bar4) }
         }
-    }
 
-    // ---------------------------------------------------- centre: a model
-    // The resident llama-swap model. The glyph is tinted by the GPU's busy
-    // share, so a generating model leans toward the alert red while one that is
-    // merely held stays in the accent; the two rows are the network capsule's
-    // 9.6 px readout — the id above, the card's used VRAM and the clock since
-    // the model appeared below.
-    component LlmCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        let pad = 6
-        let icon = 14
-        let icon.gap = 6
-        let text.w = 68
-        let w = pad + icon + icon.gap + text.w + pad
-        size: w * scale, strip * scale
-        group zoom {
-            scale: scale
-            body {
-                color: live.coal
-                opacity: 69%
-                border: 1, mix(live.coal, live.ink, 8%)
-                box { from: 0, 1; size: w, 23; corner: 6 }
+        // ---------------------------------------------------- centre: a model
+        // The resident llama-swap model. The glyph is tinted by the GPU's busy
+        // share, so a generating model leans toward the alert red while one that is
+        // merely held stays in the accent; the two rows are the network capsule's
+        // 9.6 px readout — the id above, the card's used VRAM and the clock since
+        // the model appeared below.
+        component LlmCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+            let pad = 6
+            let icon = 14
+            let icon.gap = 6
+            let text.w = 68
+            let w = pad + icon + icon.gap + text.w + pad
+            size: w * scale, strip * scale
+            group zoom {
+                scale: scale
+                body {
+                    color: live.coal
+                    opacity: 69%
+                    border: 1, mix(live.coal, live.ink, 8%)
+                    box { from: 0, 1; size: w, 23; corner: 6 }
+                }
+                text "psychology" { at: pad, strip / 2; anchor: left center; family: "Material Symbols Outlined"; size: icon; color: mix(live.accent, live.warn, min(1, max(0, gpu))) }
+                // 9.6 px is the same readout size as the network capsule's two rows;
+                // the id is elided inside `text.w` when a tier name is long, and the
+                // tooltip carries the whole id.
+                text "{llm_model}" { at: pad + icon + icon.gap, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.ink; family: "Iosevka"; width: text.w; lines: 1 }
+                text "{llm_vram}" { at: pad + icon + icon.gap, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.accent_hover; family: "Iosevka"; lines: 1 }
+                text "{llm_time}" { at: w - pad, strip / 2 + 4; anchor: right center; size: 9.6 * text_scale; color: live.ink.off; family: "Iosevka"; width: 30; lines: 1 }
+                // Read-only, but a hover area: the tooltip is where the full id,
+                // the TTL state and the RAM figure belong.
+                zone box llm { from: 0, 0; size: w, strip; corner: corner; label: "Local LLM {llm_model}"; role: region }
+                on enter llm { emit tip(14) }
+                on leave llm { emit tip_hide }
             }
-            text "psychology" { at: pad, strip / 2; anchor: left center; family: "Material Symbols Outlined"; size: icon; color: mix(live.accent, live.warn, min(1, max(0, gpu))) }
-            // 9.6 px is the same readout size as the network capsule's two rows;
-            // the id is elided inside `text.w` when a tier name is long, and the
-            // tooltip carries the whole id.
-            text "{llm_model}" { at: pad + icon + icon.gap, strip / 2 - 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.ink; family: "Iosevka"; width: text.w; lines: 1 }
-            text "{llm_vram}" { at: pad + icon + icon.gap, strip / 2 + 4; anchor: left center; size: 9.6 * text_scale; weight: 700; color: live.accent_hover; family: "Iosevka"; lines: 1 }
-            text "{llm_time}" { at: w - pad, strip / 2 + 4; anchor: right center; size: 9.6 * text_scale; color: live.ink.off; family: "Iosevka"; width: 30; lines: 1 }
-            // Read-only, but a hover area: the tooltip is where the full id,
-            // the TTL state and the RAM figure belong.
-            zone box llm { from: 0, 0; size: w, strip; corner: corner; label: "Local LLM {llm_model}"; role: region }
-            on enter llm { emit tip(14) }
-            on leave llm { emit tip_hide }
         }
-    }
 
-    Left()
-    Right()
+        Left()
+        Right()
 
-    // The centre of the strip: QS puts `BuildStatus` on a panel of its own
-    // centred along the bottom edge, so its capsule stands where the bar's
-    // centre is — not at the end of a row where it shoved the weather and the
-    // clock around every time a build started. The activity capsules stand
-    // beside it in the same row: a resident model or a recording take is
-    // something the bar should say where the eye already is. The row takes no
-    // space at rest, and a press on the build badge toggles the build drawer
-    // (QS: `autoToggleOnTap` on BuildStatus).
-    let center.gap = 6 * ui * user_scale * mon_scale[min(screen.index, 3)]
-    row center_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; gap: center.gap
-        show: llm_active or rec_active or (widget.build and Build.busy)
-        LlmCapsule() { show: llm_active }
-        RecCapsule() { show: rec_active }
-        // A `show:` written on a copy of a strict-library component is read
-        // inside the library, where this scene's `widget.build` and the
-        // plugin's `Build.busy` do not exist — the wrapper row carries the
-        // condition instead (the `pill_slot` rule in `Left`).
-        row build_slot { show: widget.build and Build.busy
-            build.Tile(toggle_build_panel, build_hover, type_scale: text_scale)
+        // The centre of the strip: QS puts `BuildStatus` on a panel of its own
+        // centred along the bottom edge, so its capsule stands where the bar's
+        // centre is — not at the end of a row where it shoved the weather and the
+        // clock around every time a build started. The activity capsules stand
+        // beside it in the same row: a resident model or a recording take is
+        // something the bar should say where the eye already is. The row takes no
+        // space at rest, and a press on the build badge toggles the build drawer
+        // (QS: `autoToggleOnTap` on BuildStatus).
+        let center.gap = 6 * ui * user_scale * mon_scale[min(screen.index, 3)]
+        row center_slot { at: screen.width / 2, hot + band / 2; anchor: center middle; gap: center.gap
+            show: llm_active or rec_active or (widget.build and Build.busy)
+            LlmCapsule() { show: llm_active }
+            RecCapsule() { show: rec_active }
+            // A `show:` written on a copy of a strict-library component is read
+            // inside the library, where this scene's `widget.build` and the
+            // plugin's `Build.busy` do not exist — the wrapper row carries the
+            // condition instead (the `pill_slot` rule in `Left`).
+            row build_slot { show: widget.build and Build.busy
+                build.Tile(toggle_build_panel, build_hover, type_scale: text_scale)
+            }
+            RecAudio() { show: rec_active and rec_audio }
+            // A zone that goes away takes its pointer with it and `leave` never comes: a build that ends
+            // under the cursor takes its card too (the rule the audio capsules carry).
+            on change Build.busy while not Build.busy { emit tip_hide }
         }
-        RecAudio() { show: rec_active and rec_audio }
-        // A zone that goes away takes its pointer with it and `leave` never comes: a build that ends
-        // under the cursor takes its card too (the rule the audio capsules carry).
-        on change Build.busy while not Build.busy { emit tip_hide }
-    }
 
-    // ------------------------------------------------------------ what waits
-    // The seam/wedge between the two bar halves, the bar's entrance slide (the
-    // login gate itself is in bar.luau and drives `startup`), and the settings
-    // keys the compiler refuses (see the header).
-    //
-    // Widget ORDER is not a runtime thing: the scene paints in the order it is
-    // written, so `widgets` is applied as visibility here, and an order would be
-    // applied when the scene is generated.
+        // ------------------------------------------------------------ what waits
+        // The seam/wedge between the two bar halves and the settings keys the
+        // compiler refuses (see the header). The login gate is in bar.luau; the
+        // entrance slide is the `bar_face` group around this block.
+        //
+        // Widget ORDER is not a runtime thing: the scene paints in the order it is
+        // written, so `widgets` is applied as visibility here, and an order would be
+        // applied when the scene is generated.
+    }
 }

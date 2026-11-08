@@ -191,7 +191,8 @@ capsules and the workspace watcher (2026-10-31); the settings surface's `fontSca
 now-playing popup, the greeter's theme tokens and the glyph shadow (2026-10-31, this session's
 commits name each one). The login gate joined them on 2026-11-08: `bar.luau` arms it from the login
 marker, holds it for at least 10 s, polls `hyprctl -j clients` and hides every widget but clock and
-weather; the bar's entrance slide is still not ported.
+weather; the bar's face also slides in on every start now (the `bar_face` group and its `bar.slide`
+spring, the reference's `panelSlideMs`).
 
 Not to be ported for now, by the owner's word (2026-10-28): the nixie glass on the lock's clock. The
 lock draws a slab, and that is where it stays until it is asked for again — the same call as the
