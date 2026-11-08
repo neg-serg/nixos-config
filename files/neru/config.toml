@@ -8,9 +8,12 @@
 # Apply edits with `neru config reload` (the daemon does not watch the file).
 
 # Latin hint letters must be typeable while the focused window is on the ru
-# layout, so neru reads keys as if the keyboard were us.
+# layout, so neru reads keys as if the keyboard were us. The value is the XKB
+# layout *name*, not the code: "us" never matched (the compositor reports
+# "English (US)") and neru silently fell back to auto-selection with a warning
+# on every keymap change.
 [general]
-kb_layout_to_use = "us"
+kb_layout_to_use = "English (US)"
 
 [hints]
 # Linux defaults to `contour`, which in text-heavy windows labels every blob it
