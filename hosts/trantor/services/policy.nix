@@ -278,6 +278,29 @@ lib.mkMerge [
         # (active on trantor). Image/port unverified — first boot pulls the OCI
         # image and shows the one-time setup wizard (see modules/llm/vane.nix).
         vane.enable = true;
+
+        # llama-swap swaps one model at a time by default, and a local load
+        # aborts a *starting* remote tier (its ~4 min cold load is the longest in
+        # the fleet). The remote tier runs on the other machine's card, so nothing
+        # local needs to evict it: the local tiers keep swapping among themselves
+        # inside `local`, while `remote` is persistent and non-exclusive. Members
+        # are derived from the model set so a newly added local model cannot
+        # silently fall back into the default exclusive group.
+        llama-swap.settings.groups = {
+          local = {
+            swap = true;
+            exclusive = false;
+            members = lib.filter (m: m != "gyro-coder") (
+              lib.attrNames config.services.llama-swap.settings.models
+            );
+          };
+          remote = {
+            swap = true;
+            exclusive = false;
+            persistent = true;
+            members = [ "gyro-coder" ];
+          };
+        };
         # dsh-ssh ssh_tunnel: with allowTcpForwarding enabled in
         # servicesProfiles.openssh above, restrict forwarded destinations to
         # loopback so the hardened sshd cannot be used as a pivot into the LAN.
