@@ -562,7 +562,7 @@ CONTEXT: /home/neg/src/pleamar (v0.4.11, flake.nix, nix/package.nix, Cargo.lock)
     </done>
     <open>
       <item>PH3-L human gate: the four PAM cases at the greeter (right password, wrong password, layout switch, no fingerprint) were never run as a matrix; with the legacy tree gone the rollback is git history.</item>
-      <item>PH4-V: the matrix exists — files/pleamar/tests/evidence/2026-11-08-superiority.{tsv,md}. It is adversarial, not green: M1 (memory 112.0 MB against the 60 MB target) and M2 (CPU 6.75 % against 1 %) fail, M7 misses by 0.1 s because of RestartSec=5, and M4/M10/M11 are blocked on the missing renderer (pleamar-wm). Deviations, causes and the missing 24 h undisturbed run are named in the report.</item>
+      <item>PH4-V: the matrix exists — files/pleamar/tests/evidence/2026-11-08-superiority.{tsv,md}. It is adversarial, not green: M1 (memory 112.0 MB against the 60 MB target) fails and M2 (CPU 6.75 % → 4.3 % after the 2026-11-08 poll cut) is still above its 1 % target, M7 misses by 0.1 s because of RestartSec=5, and M4/M10/M11 are blocked on the missing renderer (pleamar-wm). Deviations, causes and the missing 24 h undisturbed run are named in the report.</item>
       <item>Parity gaps that remain are tracked in files/pleamar/docs/PARITY.md ("Backlog: what is left"), not in this file. bar-gaps.md is superseded by it.</item>
     </open>
     <next>

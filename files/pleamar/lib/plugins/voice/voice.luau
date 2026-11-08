@@ -2,12 +2,12 @@
 --
 -- The bar cannot see processes, so this polls: `pgrep -x mpd-voice` names the
 -- client by its exact command (`once` is only the mode it was started with, and
--- the kernel's comm is the binary name). One second is the poll's cost and the
--- resolution the user sees; the badge is not timing-critical.
+-- the kernel's comm is the binary name). Two seconds is the poll's cost: the badge is not
+-- timing-critical, and one second meant 60 `pgrep`s a minute.
 --
 -- Permissions are the plugin's own: pgrep.
 
-local POLL_MS = 1000
+local POLL_MS = 2000
 local timer = nil
 local active = false
 

@@ -77,4 +77,8 @@ end
 
 refresh()
 startIdle()
-every(FALLBACK_MS, refresh)
+-- The idle watch is the signal; the fallback only covers the window while it is down. It used to
+-- run `mpc status` every 2.5 s even with a healthy idle, 24 mpc spawns a minute for nothing.
+every(FALLBACK_MS, function()
+    if not idle then refresh() end
+end)

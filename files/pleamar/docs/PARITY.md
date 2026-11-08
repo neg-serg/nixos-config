@@ -181,8 +181,8 @@ slide reveals (a text cannot roll a digit), the media capsule's transport reveal
 delay the port refuses on purpose, the settings surface's keys the compiler refuses (`height`,
 `animations`) and its widget order, the `SunIcon` over the weather card's conditions, the media
 tooltip's track quality (it reads a plugin's boundary — see «The plugin boundary does not reach the
-scene's logic»), and in the lock tree the user and session selection, the nixie lab and the greeter's
-nixie/CRT variants.
+scene's logic»), and in the lock tree the user and session selection, the nixie lab and the
+greeter's nixie/CRT variants.
 
 Closed since this paragraph was first written, so they are off the list: connectivity, weather
 values and the notification history (2026-10-26/28); the tray's menus, their host, the audio
