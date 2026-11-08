@@ -1283,6 +1283,10 @@ hl.window_rule({ name = "picture-in-picture", match = { title = m.pip }, float =
 -- where it is while the player maps behind it.
 hl.window_rule({ name = "player", match = { class = "^(player)$" }, float = true, workspace = "special:aurora silent", size = "monitor_w*0.91 monitor_h*0.52", move = "monitor_w*0.045 monitor_h*0.24", animation = "popin 90%" })
 hl.window_rule({ name = "file-dialog", match = { title = m.file_dialog }, center = true, float = true, animation = "popin 80%", tag = "file-dialog" })
+-- xdg-desktop-portal-termfilechooser opens broot in a kitty window of this class
+-- (files/broot/termfilechooser). It is a dialog, so float it centred with room
+-- for the tree and the preview instead of tiling it into the layout.
+hl.window_rule({ name = "termfilechooser", match = { class = "^(termfilechooser)$" }, float = true, size = "60% 70%", center = true, animation = "popin 80%", tag = "file-dialog" })
 hl.window_rule({ name = "telegram-wrapped", match = { class = m.telegram_wrapped }, center = true, tag = "telegram" })
 hl.window_rule({ name = "telegram-org", match = { class = m.telegram_org }, float = true, tag = "telegram" })
 hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, animation = "popin 85%", tag = "utility" })

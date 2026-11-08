@@ -1,0 +1,44 @@
+# broot verb set for xdg-desktop-portal-termfilechooser (Open File, single).
+#
+# Read after the user's own conf, so these definitions win over both the user's
+# verbs and broot builtins with the same key. The wrapper runs broot with its
+# stdout redirected to the portal's selection file; `:print_path` writes the
+# picked path there before quitting.
+{
+    # Esc quits when there is nothing to cancel — with this on, an empty
+    # selection is a plain "cancel" instead of leaving broot open.
+    quit_on_last_cancel: true
+
+    verbs: [
+        # Enter on a file picks it and closes broot. On a directory the verb
+        # does not apply, so stock `:open_stay` keeps descending the tree.
+        {
+            invocation: "pick"
+            key: "enter"
+            internal: ":print_path"
+            apply_to: "file"
+        }
+        # Save dialogs (and "type a path" escapes): a new name for the current
+        # directory. auto_exec: false asks for the name before running the
+        # command; {name:path-from-directory} resolves it against the selection.
+        {
+            invocation: "save as {name}"
+            key: "ctrl-n"
+            auto_exec: false
+            shell_command: "printf '%s\\n' {name:path-from-directory} >> \"$TERMFILECHOOSER_OUT\""
+            apply_to: "any"
+        }
+        # Stock alt-enter hands the file to xdg-open (or cds the parent shell);
+        # a file dialog must never execute the file it is picking.
+        {
+            key: "alt-enter"
+            internal: ":no_action"
+        }
+        # Dotfiles are needed by half the dialogs, but keeping them off by
+        # default keeps $HOME readable.
+        {
+            key: "alt-h"
+            internal: ":toggle_hidden"
+        }
+    ]
+}
