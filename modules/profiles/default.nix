@@ -1,13 +1,21 @@
 #
 # Profiles and feature flags
-# (moved out of the docs tree; keep it in sync with the code it describes)
+# (keep this header in sync with the code it describes)
 #
 #
-# - Profiles: feature-flag bundles under `modules/profiles/`:
+# - Bundle profiles: `features.profiles` is a list of bundle names; each name
+#   imports `modules/profiles/<name>.nix`, which sets feature-flag defaults via
+#   `mkDefault` (later list entries win):
 #
-#   - `profiles.desktop` — GUI defaults (features.gui.\* = mkDefault true)
-#   - `profiles.gaming` — gaming optimizations + GUI apps
-#   - `profiles.dev` — development toolchains
+#   - `desktop` — GUI defaults (features.gui.\* = mkDefault true)
+#   - `gaming` — gaming optimizations + GUI apps
+#   - `dev` — development toolchains
+#
+# - Option profiles: a separate mechanism, unrelated to `features.profiles`.
+#   `profiles.<name>.enable` gates kernel/performance/security settings. Names
+#   live next to what they configure: debug, performance, security, vm and work
+#   in this directory, `games` in `modules/user/games/`, `network` in
+#   `modules/system/net/`.
 #
 # - Service profiles: toggle per‑service via `servicesProfiles.<name>.enable` (declared in
 #   `modules/profiles/services.nix`). The former `profiles.services.*` alias module was removed as
@@ -22,8 +30,8 @@
 # Example (host):
 #
 #     { lib, ... }: {
-#       # Profiles are composed per host; disable heavy services here if needed
-#       profiles.services = {
+#       # Service profiles are composed per host; disable heavy services here.
+#       servicesProfiles = {
 #         adguardhome.enable = false;
 #       };
 #     }
@@ -53,7 +61,13 @@
 }:
 {
   options.features.profiles = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
+    type = lib.types.listOf (
+      lib.types.enum [
+        "desktop"
+        "gaming"
+        "dev"
+      ]
+    );
     default = [ "desktop" ];
     description = ''
       List of enabled system profiles. Each profile sets a bundle of feature-flag defaults
