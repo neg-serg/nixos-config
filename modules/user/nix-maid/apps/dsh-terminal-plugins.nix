@@ -251,9 +251,6 @@ rec {
             defaultContextWindow: 32768
             defaultMaxTokens: 8192
             models:
-              - id: qwen3.6-35b-abliterated
-                name: Qwen3.6-35B abliterated
-                contextWindow: 98304
               - id: qwen3.8-flash-next-abliterated
                 name: Qwen3.8-Flash-Next 180B (thinking, 128k)
                 # Serves with thinking (xhigh, 4096-token budget); a hard
@@ -280,6 +277,14 @@ rec {
                 name: Spark 4B abliterated (CPU, no VRAM)
                 # CPU backend, 1M-native with SWA; 64k preallocates ~2.6 GiB
                 # of KV and keeps the ~20k-token harness prompt inside the window.
+                contextWindow: 65536
+              # Runs on the other machine (192.168.0.144, RX 7900 XTX): the
+              # weights sit on /zero and are read over SMB, llama-swap starts the
+              # container there on the first request over ssh. Cold start is
+              # ~4 min, decode ~50 tok/s; the model unloads on TTL (15 min) or on
+              # /model switch, which frees the remote card.
+              - id: gyro-coder
+                name: Gyro-Coder 125B (7900 XTX box, ~4 min cold)
                 contextWindow: 65536
           # ── free-tier fallbacks (2026-11-05) ───────────────────────────────
           # Declared unconditionally and key-gated at request time: an unset
