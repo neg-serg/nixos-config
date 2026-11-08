@@ -270,6 +270,16 @@ in
     bash ${../scripts/dev}/check-relative-paths.sh "$TMPDIR/repo"
   '';
 
+  # Same class, the other absolute: `$HOME`-relative paths written as
+  # /home/<user> instead of config.lib.neg.homeDir (modules, hosts, lib).
+  "absolute-home-guard" = mkScriptCheck "absolute-home" [ pkgs.findutils pkgs.gawk ] ''
+    mkdir -p "$TMPDIR/repo"
+    cp -r ${../modules} "$TMPDIR/repo/modules"
+    cp -r ${../hosts} "$TMPDIR/repo/hosts"
+    cp -r ${../lib} "$TMPDIR/repo/lib"
+    bash ${../scripts/dev}/check-absolute-home.sh "$TMPDIR/repo"
+  '';
+
   # ── Text gates from `just lint`, promoted into the flake ────────────
   # Same scripts the lint recipe runs; wired here so `nix flake check`
   # (the CI entry point) covers them too instead of relying on just.

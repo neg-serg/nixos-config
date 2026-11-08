@@ -100,10 +100,10 @@ let
       "files:search"
       "clipboard:history"
     ];
-    indexingPaths = [ "/home/neg" ];
+    indexingPaths = [ config.lib.neg.homeDir ];
     excludedIndexingPaths = [
-      "/home/neg/.cache"
-      "/home/neg/.local/share/Trash"
+      "${config.lib.neg.homeDir}/.cache"
+      "${config.lib.neg.homeDir}/.local/share/Trash"
     ];
 
     # global shortcuts

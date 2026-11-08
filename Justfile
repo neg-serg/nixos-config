@@ -197,6 +197,7 @@ lint:
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-hyprland-vars.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-relative-paths.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-absolute-home.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-doc-links.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-markdown-language.sh" && \
     bash "{{repo_root}}/scripts/dev/repo-stats.sh" --check "{{repo_root}}" && \

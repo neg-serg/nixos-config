@@ -1080,7 +1080,7 @@ in
           wantedBy = [ "hyprland-session.target" ];
           partOf = [ "hyprland-session.target" ];
           pathConfig = {
-            PathChanged = "/home/neg/pic/shots";
+            PathChanged = "${config.lib.neg.homeDir}/pic/shots";
             Unit = "screenshot-toast.service";
           };
         };

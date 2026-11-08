@@ -20,7 +20,7 @@ let
   # --- Aliae Config ---
   aliaeConfig = import (config.lib.neg.path "lib/aliae.nix") {
     inherit lib pkgs;
-    homeDir = config.users.users.neg.home;
+    homeDir = config.lib.neg.homeDir;
   };
 
   # --- ZSH Config Generator ---
