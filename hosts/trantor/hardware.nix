@@ -24,7 +24,7 @@ in
   # Hardware and performance tuning specific to host 'trantor'
   hardware.graphics = {
     enable = true;
-    enable32Bit = true; # required for Proton/32-bit games (GL/Vulkan i686)
+    enable32Bit = lib.mkForce false; # 32-bit games are not used; see the steam override in modules/user/games/launchers.nix
   };
 
   # Enable AMD-oriented kernel structured config for this host and tune performance
