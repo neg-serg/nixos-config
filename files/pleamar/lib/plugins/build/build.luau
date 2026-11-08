@@ -115,7 +115,10 @@ local function apply(line)
 end
 
 local function start()
-    id = spawn("nixbuild-status", { "--format", "waybar", "--watch", "1" }, apply, function(_, code)
+    -- Three seconds, not one: nixbuild-status scans /proc and the derivation log on every tick, and
+    -- the badge cost 0.40 % of a core at 1 s (measured 2026-11-08). A build state that updates
+    -- within 3 s is enough for a capsule that changes on the scale of minutes.
+    id = spawn("nixbuild-status", { "--format", "waybar", "--watch", "3" }, apply, function(_, code)
         id = nil
         -- The tool exits when it cannot read /proc or the derivation log; the badge
         -- then has nothing to say and must not keep claiming a build.

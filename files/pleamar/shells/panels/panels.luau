@@ -72,7 +72,7 @@ local function palette_load()
 end
 
 palette_load()
-every(2000, palette_load)
+sys.watch("files:palette.json", palette_load)
 
 
 -- Defaults live here; the file holds only what the user changed.

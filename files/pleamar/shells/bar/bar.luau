@@ -33,8 +33,11 @@ local function palette_load()
     end
 end
 
+-- The theme script rewrites palette.json; watch it instead of reading it every two seconds. This
+-- is the same file watch settings.json uses, so a theme change still lands live and costs nothing
+-- while it does not happen.
 palette_load()
-every(2000, palette_load)
+sys.watch("files:palette.json", palette_load)
 
 
 -- How many monitors the per-monitor scale reaches: the engine repeats a `screens: each` surface
