@@ -11,6 +11,8 @@ rec {
   # file you just edited, so no rebuild/switch is in the loop. Returned as a
   # *string* on purpose — strings carry no path context, so the file is not
   # copied into the store and stays editable.
+  # Deliberately the live host path: these links point at the deployed tree,
+  # so a clone used for evaluation does not redirect them.
   liveRoot = "/etc/nixos";
   live = p: "${liveRoot}/${p}";
 
@@ -388,6 +390,6 @@ rec {
       value;
 
   # ЙЦУКЕН hotkey table + generators — single source of truth for Russian-layout
-  # duplicate binds (see lib/ru-keys.nix and docs/howto/hotkeys-ru-layout.md).
+  # duplicate binds (see lib/ru-keys.nix).
   ruKeys = import ./ru-keys.nix;
 }

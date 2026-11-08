@@ -68,7 +68,7 @@ let
     # modules/user/nix-maid/apps/mpv/input.nix (mpvRuBinds).
     # mpv matches keys by the text the active layout produces, so latin-letter
     # binds break under the ru layout.
-    # Table: docs/howto/hotkeys-ru-layout.md
+    # Table: lib/ru-keys.nix
   ''
   + lib.concatStringsSep "\n" (map (d: "${mpvRuKey d.key} ${d.command}  # ${d.key}") mpvRuBinds)
   + "\n";

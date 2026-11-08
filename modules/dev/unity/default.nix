@@ -39,7 +39,7 @@
 # Electron side, on top of the hook for everything native.
 #
 # The endpoint is the sing-box SOCKS5 inbound of the `proxy` CLI on
-# 127.0.0.1:10808 (`docs/runbook-proxy.md`), so this module is only meaningful
+# 127.0.0.1:10808, so this module is only meaningful
 # with `features.net.proxy.enable`, which owns that service.
 {
   lib,

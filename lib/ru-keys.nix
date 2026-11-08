@@ -11,8 +11,8 @@
 # the base-layout key for non-ASCII events (see files/kitty/key.conf), so it
 # carries no duplicates and no generator here.
 #
-# Mechanics and the per-app coverage matrix:
-# docs/howto/hotkeys-ru-layout.md
+# Mechanics and the per-app coverage matrix live in the generators below;
+# kitty is the exception (see its comment above).
 #
 # Pure file: no config/flake dependencies. Exposed to modules via specialArgs.neg
 # (lib/neg-helpers.nix) and unit-tested by flake/checks.nix ("ru-keys" check).

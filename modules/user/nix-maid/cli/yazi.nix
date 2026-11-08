@@ -243,7 +243,7 @@ let
       # ru layout. Lowercase Cyrillic only (uppercase implies SHIFT, which the RU
       # layout reports differently). All duplicates are GENERATED from
       # lib/ru-keys.nix (single source of truth) — do not hand-edit the chars.
-      # Table: docs/howto/hotkeys-ru-layout.md
+      # Table: lib/ru-keys.nix
       (yaziBindNoDesc (ruKeys.mkRuKeys [ "j" ]) "arrow next")
       (yaziBindNoDesc (ruKeys.mkRuKeys [ "k" ]) "arrow prev")
       (yaziBindNoDesc (ruKeys.mkRuKeys [ "h" ]) "leave")

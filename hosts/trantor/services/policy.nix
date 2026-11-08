@@ -290,7 +290,7 @@ lib.mkMerge [
           local = {
             swap = true;
             exclusive = false;
-            members = lib.filter (m: m != "gyro-coder") (
+            members = lib.filter (m: m != "gyro-coder" && m != "nano") (
               lib.attrNames config.services.llama-swap.settings.models
             );
           };
@@ -298,7 +298,10 @@ lib.mkMerge [
             swap = true;
             exclusive = false;
             persistent = true;
-            members = [ "gyro-coder" ];
+            members = [
+              "gyro-coder"
+              "nano"
+            ];
           };
         };
         # dsh-ssh ssh_tunnel: with allowTcpForwarding enabled in

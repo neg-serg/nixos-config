@@ -3,8 +3,8 @@
 # Purpose: keep the music tagging/embedding toolchain working: the wrappers run
 #          on a nix python (GC-rooted) with the music-AI venv on PYTHONPATH, so
 #          a nix-collect-garbage run cannot break them the way dangling venv
-#          symlinks did (see docs/howto/local-music-ai.md). With
-#          autoIndex.enable, a weekly user timer also keeps the MERT similarity
+#          symlinks did. With autoIndex.enable, a weekly user timer also keeps
+#          the MERT similarity
 #          index fresh without a manual hours-long pass.
 # Key options: features.media.audio.musicTagging.*
 # Dependencies: the music-AI venv tree on /zero (python3.12 site-packages) for
@@ -31,7 +31,7 @@ let
   # --quiet keeps one progress line per 25 tracks out of the journal; the run
   # summary and failures still land there. --threads 4 trades ~1.8x per-clip
   # speed for keeping most cores free for interactive work (2.05 vs 1.14 s per
-  # clip against the 16-thread default, docs/howto/local-music-ai.md); Nice and
+  # clip against the 16-thread default); Nice and
   # idle IO below deprioritize what is left.
   refreshScript = config.lib.neg.path "scripts/dev/music-refresh.sh";
   indexArgs =
