@@ -1,0 +1,36 @@
+#!/bin/sh
+# neru-menu — pick a neru mode and start it.
+#
+# Bound to M4+SHIFT+space (files/gui/hypr/hyprland.lua), the slot the headphone
+# drawer used to take. Every mode is also on neru's own evdev hotkeys
+# (Ctrl+Alt+Space hints, C recursive grid, W scroll, B bisect, G grid,
+# F vision search), so this is the discoverable entry point for the ones a hand
+# does not remember, not the fast path.
+#
+# Runs in the compositor's environment: vicinae answers the picker, and neru
+# is driven over the daemon's IPC socket, so a picked mode starts exactly like
+# the hotkey would.
+set -u
+
+choice=$(
+  printf '%s\n' \
+    "hints (click)" \
+    "hints (text search)" \
+    "grid" \
+    "recursive grid" \
+    "bisect" \
+    "scroll" |
+    vicinae dmenu -p "⟬neru⟭ ❯>"
+) || exit 0
+
+[ -n "$choice" ] || exit 0
+
+case "$choice" in
+  "hints (click)") exec neru hints --action left_click --repeat ;;
+  "hints (text search)") exec neru hints --strategy vision --search --action left_click --repeat ;;
+  grid) exec neru grid ;;
+  "recursive grid") exec neru recursive_grid ;;
+  bisect) exec neru bisect ;;
+  scroll) exec neru scroll ;;
+  *) exit 0 ;;
+esac

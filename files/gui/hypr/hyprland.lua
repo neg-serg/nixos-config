@@ -694,6 +694,13 @@ hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "e
 -- The shell page: window and type scale, the closing rules, Fahrenheit, the
 -- weather city and country, the light theme's paper warmth (`b` was free).
 hl.bind(M4 .. "+" .. SH .. "+b", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit toggle_shell_panel"'))
+-- neru, the keyboard-navigation daemon: this is the slot the headphone pleamar
+-- drawer used to take. Every mode is also on neru's own evdev hotkeys
+-- (Ctrl+Alt+Space hints, C recursive grid, W scroll, B bisect, G grid, F
+-- vision search), so this bind is the discoverable entry point rather than the
+-- fast path. `neru-menu` (packages/local-bin/bin) asks vicinae and drives the
+-- daemon over IPC, so a picked mode starts exactly like the hotkey would.
+hl.bind(M4 .. "+" .. SH .. "+space", hl.dsp.exec_cmd('neru-menu'))
 -- The rest of the transport and the volume steps: M4+C+period/comma mimic the >
 -- and < keys, equal/minus stand in for the volume rocker (the XF86 keys stay on
 -- the Genelec path). The bar's `wheel_volume` takes notches and steps in 5 %
