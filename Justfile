@@ -679,3 +679,10 @@ wellum-build:
 # Build and flash the Wellum keymap onto an AVR Pro Micro/Elite-C Sweep
 wellum-avr:
     WELLUM_CONVERT= bash "{{repo_root}}/scripts/dev/qmk-wellum.sh" flash
+
+# Local GUI agent loop (plan -> act -> verify) driving one window through
+# computer-use-linux; planner, actor and verifier are llama-swap models, so
+# nothing leaves the host. Artifacts land in /tmp/webstep-<stamp>/.
+# Example: just webstep run --goal "add album Rumours to Alex" --app-id vivaldi-stable
+webstep *ARGS:
+    "{{repo_root}}/scripts/dev/webstep" {{ARGS}}
