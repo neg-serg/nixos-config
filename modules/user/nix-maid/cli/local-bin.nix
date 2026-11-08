@@ -216,7 +216,18 @@
         ".local/bin/qr".source = lib.getExe' pkgs.neg.local-bin-system "qr";
         ".local/bin/pdf2md".source = lib.getExe' pkgs.neg.local-bin-system "pdf2md";
         ".local/bin/upstream-radar".source = lib.getExe' pkgs.neg.local-bin-system "upstream-radar";
-        ".local/bin/vsmlrt-models".source = lib.getExe' pkgs.neg.local-bin-system "vsmlrt-models";
+        # The helper shells out to curl and 7zz (packages/local-bin-system/src/
+        # vsmlrt_models.rs). Neither is in the system package set on purpose, so
+        # pin both here instead of relying on PATH.
+        ".local/bin/vsmlrt-models".source = pkgs.writeShellScript "vsmlrt-models" ''
+          export PATH=${
+            lib.makeBinPath [
+              pkgs.curl # downloads the model archive
+              pkgs._7zz # 7-Zip, extracts the archive
+            ]
+          }:$PATH
+          exec ${lib.getExe' pkgs.neg.local-bin-system "vsmlrt-models"} "$@"
+        '';
         ".local/bin/nix-updates".source = lib.getExe' pkgs.neg.local-bin-system "nix-updates";
         # Rust ports of the audio helpers (packages/local-bin-audio).
         ".local/bin/audio-diag".source = lib.getExe' pkgs.neg.local-bin-audio "audio-diag";
