@@ -14,6 +14,7 @@
     craftAnything.enable = mkBool "enable Craft Anything (reverse-engineering workbench + rebuild assistant)" false;
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
+      crawl4ai.enable = mkBool "run the local Crawl4AI server (rootless podman, API token from gopass api/crawl4ai)" false;
       herdr.enable = mkBool "install Herdr (terminal workspace manager / runtime for AI coding agents) with its neg config" false;
       rocm.enable = mkBool "install ROCm training tooling (nightjob GPU runner + rocm-smi); the torch env is a pip venv (`nightjob env init`)" false;
     };
