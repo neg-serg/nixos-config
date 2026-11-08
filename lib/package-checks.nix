@@ -21,7 +21,8 @@
   hasRlwrap = pkgs ? rlwrap;
   hasYtDlp = pkgs ? yt-dlp;
   hasKhal = pkgs ? khal;
-  hasBtm = pkgs ? btm;
+  # nixpkgs renamed the package to `bottom`; the binary is still `btm`.
+  hasBtm = pkgs ? bottom;
   hasIotop = pkgs ? iotop;
   hasLsof = pkgs ? lsof;
   hasKmon = pkgs ? kmon;
