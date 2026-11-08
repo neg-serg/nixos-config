@@ -1,10 +1,10 @@
 # Genelec GLM 5 on Linux — porting plan (2026-11-02)
 
-Status: prerequisites delivered and activated (rebooted 2026-11-02, usbmon loaded); T2 done from the
-qlm spec, T0/T1 blocked on a root-run capture · Owner: next agent session · Written to be executed
-by subagents that never saw the originating chat: every task carries its own context, deliverable,
-boundaries and stop conditions. Chat language with the user is Russian; this file and all code stay
-English.
+Status: CLOSED 2026-11-08. The VM path was removed on 2026-11-03 (`f34c030ea`); T0-T4 were delivered
+on 2026-11-02; the remaining implementation (T5-T8) and the parity matrix (T10) are not pursued —
+see "Decision 2026-11-08" at the end of this file, which supersedes gate D1 and the phase-3 rollout.
+The text below is the historical record of the spike. · Owner: none · Chat language with the user is
+Russian; this file and all code stay English.
 
 ## Why
 
@@ -586,3 +586,28 @@ off.
 1. The old glue (`glm-midi-relay`, `glm-vm-netfix`, `ensure-vm-proxy-alias`) is either gone or has a
    written justification in the module that keeps it.
 1. `just fmt` / `just check` / `just lint` clean; runbook written; no protocol corpus committed.
+
+## Decision 2026-11-08 — closed
+
+The VM did not survive the plan: it was removed on 2026-11-03 (`f34c030ea`), together with the GLM
+Windows app, the OSC/MIDI bridges and `rtpmidid`, and the host path is now `genlc daemon` plus
+`genlc apply` plan files. This closes the remaining work rather than leaving it half-tracked:
+
+- **Gate D1 is superseded.** There is no VM and no host calibration path: GLM 5.2 under Wine is
+  unusable (DirectWrite never registers, T0), so AutoCal, GRADE and Genelec Cloud are not available
+  on this host. Reopening calibration is a new project (a Windows machine, or a Wine/DirectWrite
+  effort), not a step in this plan.
+- **T5-T8 are not pursued.** The wire path is already in `genlc` (`daemon`, `status`, `volume`,
+  `mute`, `lease`, `apply --commit/--take`); what is missing is a typed device/setup model with
+  read-back verification and a UI. Nobody asked for that after the VM removal, and a reviewed plan
+  file is the honest interface for a one-off configuration change.
+- **T10 has no parity matrix.** The accurate statement is: control (volume, mute, status) works on
+  the host; per-monitor configuration is sent as a plan file, not applied from a model.
+- **The runbook path is gone.** `docs/runbook-genelec-glm.md` no longer exists (the `docs/` tree was
+  removed); operational notes live in the `genlc` module header
+  (`modules/user/nix-maid/sys/user-services/glm-monitoring.nix`) and in
+  `.agent/notes/2026-11-02-glm-vm-removal-backlog.md`.
+
+What stays true: the protocol facts, the forbidden-frame list and its tests
+(`packages/genlc-rs/src/protocol.rs`), the per-session mute rounds, and the capture tooling
+(`glm-usbmon-priv` + usbmon).
