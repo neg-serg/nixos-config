@@ -112,6 +112,10 @@ let
     export PILL_BOT_LLM_URL=${config.trantor.telegram.llmEndpoint}
     export PILL_BOT_LLM_MODEL=${config.trantor.telegram.llmModel}
     export PILL_BOT_ACTION_MODEL=${config.trantor.telegram.llmModel}
+    # The curl cap on one model call (both /ask and /do read it). The 27B takes
+    # 2-3 min for a long answer once llama-swap cold-loads it; the old 180 s
+    # default cut real answers off with "curl: (28) ... 0 bytes received".
+    export PILL_BOT_LLM_TIMEOUT=600
     export PILL_BOT_RT_PY=/home/${pillPanelUser}/.dsh/skills/rutracker/scripts/.venv/bin/python
     export PILL_BOT_RT_SCRIPT=/home/${pillPanelUser}/.dsh/skills/rutracker/scripts/rt.py
     export PILL_BOT_DESKTOP_USER=${pillPanelUser}
