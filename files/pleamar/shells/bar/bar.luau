@@ -944,7 +944,7 @@ end)
 -- keyboard is the last active device, so `current` switches that one alone and leaves the layouts
 -- of the boards actually typed on behind ("ok" is all it answers either way). The compositor's own
 -- bind says so and uses `all` (`files/gui/hypr/hyprland.lua`, SUPER+S). The label does not change
--- here: the event socket above reports it, and the two-second poll is the net under it.
+-- here: the event socket above reports it, and the thirty-second poll is the net under it.
 -- (permissions: "hyprctl")
 on("next_layout", function()
     run("hyprctl", { "switchxkblayout", "all", "next" }, function(_, code)
@@ -1076,9 +1076,10 @@ end
 -- and `audioChanged` ends by asking for the reading, which needs the route definitions above.
 sys.watch("audio", audioChanged)
 
--- Once at start, then slowly: a route changes when somebody changes it, and the press below asks
--- again after its own toggle. Two seconds is the keyboard layout's cadence for the same reason.
-local ROUTE_POLL_MS = 2000
+-- Once at start, then every 10 s: a route changes when somebody changes it, the press below asks
+-- again after its own toggle, and the capsule is the only reader. Two seconds cost a `pwroute`
+-- process (10-14 ms wall, measured 2026-11-08) 30 times a minute for a value that almost never moves.
+local ROUTE_POLL_MS = 10000
 route_read()
 every(ROUTE_POLL_MS, route_read)
 
@@ -2554,11 +2555,14 @@ local function layout()
 end
 
 layout()
-every(2000, layout)
+-- 30 s, not the old 2 s: the event socket below carries every change on the keystroke, so this is
+-- only the safety net for a missed event or a socket that went away (30 hyprctl spawns a minute
+-- became two).
+every(30000, layout)
 
 -- Hyprland says every layout change down its event socket (`activelayout>>device,Layout`,
 -- the event HyprlandWatcherImpl reads: Services/HyprlandWatcherImpl.qml:156), so the label
--- changes on the keystroke instead of on the next poll. The two-second `hyprctl devices -j`
+-- changes on the keystroke instead of on the next poll. The thirty-second `hyprctl devices -j`
 -- above stays as the safety net: a missed event, or the socket going away, costs a tick.
 --
 -- `nc -U` writes one line per event and runs until the socket closes; re-arming after a
@@ -2595,7 +2599,7 @@ local function watch_layout()
         -- typed on, so it becomes the pin: it used to be chosen once from `main` (false on every
         -- board here) and the first name in the list, and a switch on the keyboard actually in
         -- use — Alt+Shift, or the compositor's own bind — was dropped by the filter below, so the
-        -- capsule stood still while the layout changed. The two-second poll then asks this device.
+        -- capsule stood still while the layout changed. The thirty-second poll then asks this device.
         local device, name = payload:match("^([^,]*),%s*(.+)$")
         if device and device ~= "" and device ~= text.kb_device then
             text.kb_device = device
@@ -2739,7 +2743,9 @@ sysmon_start()
 -- while the take has sound, the same analyser the media capsule already uses;
 -- the microphone's node name comes from WirePlumber, the output is cava's own
 -- default (the monitor of the default sink). Nothing runs at rest.
-local REC_POLL_MS = 1000
+-- The badge shows whole seconds and the pidfile only changes when a take starts or ends, so the
+-- poll runs at 2 s: one second doubled the `cat` spawns for a number that steps a second at a time.
+local REC_POLL_MS = 2000
 
 local recUser = sys.ask("env", "USER")
 local recPidfile = "/tmp/wf-recorder-" .. tostring(recUser or "") .. ".pid"

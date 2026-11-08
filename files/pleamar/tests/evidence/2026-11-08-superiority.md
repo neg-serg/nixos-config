@@ -54,17 +54,21 @@ total is 112.0 MB cgroup, so the aggregate memory claim of the plan is **not met
 at parity with the shell it replaced, not 45 % below it. A larger share is the bar's picture/atlas
 cache, which grew with the ported widgets since the 2026-10-16 dual-run number (bar 52.5 MB then).
 
-### M2 — idle CPU: 6.75 % of a core against the 1 % target
+### M2 — idle CPU: 4.3 % of a core against the 1 % target (was 6.75 %)
 
-Bar 5.86 %, launcher 0.28, notifications 0.27, toast 0.26, osd 0.08. The renderer is not the
+Bar 3.01 %, launcher 0.28, notifications 0.27, toast 0.26, osd 0.08. The renderer is not the
 problem: `--report` measures the scene's own process at 1 % of a core, with paint 0.06 ms and rules
 0.04 ms per round at the 12 fps rest pace (the other 83 ms of each round is waiting for the screen).
-The rest of the cgroup figure is child processes: the bar polls services every 1–4 s and several of
-them spawn a command (`hyprctl devices`, `ps`-based sysmon, `ip`, `ping`, `mpc`, `playerctl`,
-`genlc`, weather fetch), which is where the seconds go.
+The rest was child processes, and the label-only polls were cut on 2026-11-08: `route_read` 2 s → 10
+s (a `pwroute` process is 10–14 ms wall each), `layout` 2 s → 30 s (the Hyprland event socket
+already carries every change on the keystroke), `rec_poll` 1 s → 2 s, the voice `pgrep` 1 s → 2 s,
+and the mpd fallback now skips `mpc status` while `mpc idle` is alive. That took the bar from 5.50 %
+to 3.01 % (−45 %) and the shell from 6.75 % to 4.3 % (−36 %). The remaining seconds are the five
+scene processes' own logic, the persistent workers (`nixbuild-status` 0.43 %), and the polls that
+still matter (`cat /proc/net/dev` 2 s, `ip -j` 4 s, the 30 s ping).
 
-For comparison the plan records Quickshell at ~4 % of one core. The port's 6.75 % is worse, so the
-"≤ 1 % idle" target is missed twice over: not met by the port, and not met by the reference either.
+For comparison the plan records Quickshell at ~4 % of one core, so the port is now at parity with
+the reference, not below it, and the 1 % target is met by neither.
 
 ### M7 — crash isolation: 5101 ms against the 5 s target
 
@@ -96,8 +100,9 @@ artifacts exist, the 24 h proof was replaced by a 39 h live session with documen
 1. M1: find the bar's atlas and service-cache cost (`--report` memory, then the scene's images),
    then either split the bar's picture cache or accept 112 MB and amend the budget; the 60 MB target
    predates the ported widget set.
-1. M2: move the 1–4 s external polls into the runtime (or batch them in one helper), and measure the
-   bar with the pointer off the strip again; the renderer is already at 1 %.
+1. M2: the label-only polls are done (2026-11-08, 6.75 → 4.3 %); what is left is the five scene
+   processes' own logic and the persistent workers. Either cut the worker set or amend the 1 %
+   target — Quickshell measured ~4 %.
 1. M7: `RestartSec=2` for scene units (a preset change), then re-run the SIGKILL test.
 1. M4/M10/M11: install `pleamar-wm` (or a nested compositor + `grim`) and re-run
    `pleamar-smoke --require-render`; M4 additionally needs a logic-blocking fixture.
