@@ -15,7 +15,6 @@
     pkgs.mypy # Optional static typing for Python
     pkgs.stylua # Opinionated Lua code formatter
     pkgs.luajit # Lua syntax checker
-    pkgs.qt6.qtdeclarative # qmlformat: QML syntax checker for 'just lint'
     # Language servers for the default shell: Markdown and XML are edited here
     # often enough to keep them one `nix develop` away, not in system-path.
     pkgs.marksman # Markdown LSP
