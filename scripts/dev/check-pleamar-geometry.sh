@@ -72,9 +72,12 @@ printf '%s\n' "$OUT" | awk -v scene="$SCENE" '
   function fail(msg) { printf "  ✗ %s\n", msg; failed = 1 }
   function ok(msg)   { printf "  · %s\n", msg }
 
-  /^[a-z_]+ \(screen [0-9]+\) · panel / {
+  / · panel [0-9]+×[0-9]+/ {
     # A surface header. Only the unnamed `main` one is the strip; the named
-    # surfaces (bartip, barmenu) are cards and have their own geometry.
+    # surfaces (bartip, barmenu) are cards and have their own geometry. A named
+    # surface may carry no `(screen N)` suffix at all, so the header is matched
+    # by its ` · panel ` part, not by the shape of the main header; otherwise
+    # the multi-line bartip text was parsed as a zone of the strip.
     inmain = ($1 == "main")
     if (inmain) {
       match($0, /panel [0-9]+×[0-9]+/)
