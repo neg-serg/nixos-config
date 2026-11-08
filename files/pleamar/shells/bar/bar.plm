@@ -119,8 +119,9 @@ language 0.4
 //                 `height` would lift if a surface could take a runtime value.
 //   animations, startupClean                     — not applied: `animations`
 //                 would have to choose a spring at runtime, and a `~spring` is
-//                 a name written when the scene loads; `startupClean` is the
-//                 login gate, which lives in the deployment, not in a scene
+//                 a name written when the scene loads; `startupClean` would tune
+//                 the login gate, which lives in bar.luau with the reference's
+//                 defaults (its settings keys are refused by the compiler)
 
 import "../../lib/palette.plm"
 import "../../lib/palette-live.plm"
@@ -163,8 +164,9 @@ scene bar {
 
     // ------------------------------------------------- facts the interface fixes
     // `bar_edge` is the surface anchor; `shown` gates surface and reserve (tests
-    // and other tools read both). `startup` is the login gate's fact: this slice
-    // leaves it false, the gate itself is a later slice.
+    // and other tools read both). `startup` is the login gate's fact: bar.luau
+    // arms it from the login marker and hides all but clock and weather while it
+    // is true; a bar started inside a running session drops it at once.
     fact bar_edge: top | bottom = bottom
     fact shown = true
     fact startup = false
@@ -2282,12 +2284,9 @@ scene bar {
     }
 
     // ------------------------------------------------------------ what waits
-    // Later slices (rest of PH2-A): the pill capsule, the keyboard layout, the
-    // system monitor and the weather on the left; media + its transport, the MPD
-    // flags, the system monitor, the tray, the microphone and Genelec on the
-    // right; the seam/wedge between the two bar halves; the startup gate (it
-    // reads `startupClean` and drives `startup`); and the settings keys that
-    // cannot act yet (see the header).
+    // The seam/wedge between the two bar halves, the bar's entrance slide (the
+    // login gate itself is in bar.luau and drives `startup`), and the settings
+    // keys the compiler refuses (see the header).
     //
     // Widget ORDER is not a runtime thing: the scene paints in the order it is
     // written, so `widgets` is applied as visibility here, and an order would be
