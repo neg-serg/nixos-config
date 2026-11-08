@@ -8,7 +8,7 @@ let
   # adb/fastboot are needed occasionally, not in every session: the launcher
   # builds android-tools (272 MiB closure) on first use and GC-roots it under
   # $HOME instead of carrying it in system-path.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = config.lib.neg.onDemand pkgs;
 in
 {
   # nixpkgs 26.05 removed the programs.adb module (see nixpkgs rename.nix);

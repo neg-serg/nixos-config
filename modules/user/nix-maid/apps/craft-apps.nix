@@ -31,10 +31,7 @@
 let
   enabled = config.lib.neg.enabled "apps.craftApps";
 
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
 
   # Where lib/on-demand-app.nix registers the per-app GC root on first launch.
   appRoot = "${config.lib.neg.homeDir}/.local/state/nix-apps";

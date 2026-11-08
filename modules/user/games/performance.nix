@@ -17,7 +17,7 @@ let
 
   # Vulkan benchmark: a 79 MiB closure used only for GPU stability runs, so it
   # is built on first use instead of sitting in the system image.
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") { inherit pkgs; };
+  onDemand = config.lib.neg.onDemand pkgs;
 in
 {
   config = lib.mkIf cfg.enable {

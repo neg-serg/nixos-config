@@ -58,10 +58,7 @@
 let
   cfg = config.hardware.audio.dsp.camilladsp;
   systemdUser = config.lib.neg.systemdUser;
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
   homeDir = config.lib.neg.homeDir;
 
   # Kept in one place: the patched camillagui config above bakes in the same

@@ -9,10 +9,7 @@
 }:
 let
   enabled = (config.lib.neg.enabled "fun") && (config.lib.neg.enabled "gui");
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
   packages = [
     (onDemand {
       name = "protontricks";

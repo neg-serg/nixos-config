@@ -9,10 +9,7 @@
   ...
 }:
 let
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
   packages = [
     # -- Analysis --
     (onDemand {

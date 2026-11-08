@@ -7,10 +7,7 @@
 }:
 let
   cfg = config.features.mail; # Tie to mail feature as we're using it for calendars
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
 in
 {
   config = lib.mkIf (cfg.enable or false) (

@@ -114,6 +114,16 @@ in
         # over `lib` only, so callers no longer import it themselves.
         systemdUser = neg.systemdUser lib;
 
+        # On-demand launcher builder (lib/on-demand-app.nix). Closes over the
+        # configured Nix, so callers stop repeating the import plus
+        # `nix = config.nix.package`; `onDemand pkgs` returns the builder.
+        onDemand =
+          pkgs:
+          import (repo.path "lib/on-demand-app.nix") {
+            inherit pkgs;
+            nix = config.nix.package;
+          };
+
         # Shared llama-server systemd unit skeleton (lib/llama-server.nix).
         llamaServer = neg.llamaServer lib;
 

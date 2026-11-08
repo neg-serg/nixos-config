@@ -4,10 +4,7 @@
   ...
 }:
 let
-  onDemand = import (config.lib.neg.path "lib/on-demand-app.nix") {
-    inherit pkgs;
-    nix = config.nix.package;
-  };
+  onDemand = config.lib.neg.onDemand pkgs;
 in
 {
   # ast-grep binary for the structural search tool used by the TUI's
