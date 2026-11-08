@@ -153,6 +153,14 @@ check:
 check-fast:
     nix-fast-build --flake .#checks --skip-cached --eval-workers 2 --no-link
 
+# Print the counts advertised by README's "Project Statistics" table.
+stats:
+    bash "{{repo_root}}/scripts/dev/repo-stats.sh" "{{repo_root}}"
+
+# Fail when the README numbers no longer match the tree (also runs in `lint`).
+stats-check:
+    bash "{{repo_root}}/scripts/dev/repo-stats.sh" --check "{{repo_root}}"
+
 lint:
     set -eu
     statix check -- .
@@ -189,7 +197,9 @@ lint:
     bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-hyprland-vars.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-relative-paths.sh" "{{repo_root}}" && \
+    bash "{{repo_root}}/scripts/dev/check-doc-links.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-markdown-language.sh" && \
+    bash "{{repo_root}}/scripts/dev/repo-stats.sh" --check "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-all-syntax.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-osh-syntax.sh" "{{repo_root}}" && \
     bash "{{repo_root}}/scripts/dev/check-lusty-smoke.sh"

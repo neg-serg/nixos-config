@@ -24,7 +24,7 @@ Communication language (hard rule)
 Scope
 - This AGENTS.md applies to the entire `/etc/nixos` tree.
 - Prefer existing module structure (`modules/`, `hosts/`, `modules/user/nix-maid/`, etc.) and follow surrounding style.
-- Nested AGENTS.md files exist for subtrees (`modules/`, `docs/`, `packages/`,
+- Nested AGENTS.md files exist for subtrees (`modules/`, `packages/`,
   `scripts/`, `secrets/`, `hosts/`, `files/pleamar/`). Read the nearest
   applicable one before touching that subtree; nested rules take precedence
   where they conflict with this file.
@@ -52,12 +52,9 @@ Project Structure
 - `lib/` — shared Nix helpers (opts.nix, neg-helpers.nix, package-checks.nix, ...)
 - `secrets/` — SOPS-encrypted secrets
 - `files/` — config files (Hyprland, pleamar shell, scripts)
-- `docs/` — three English shapes, one source of truth per topic: `docs/runbook-*.md` (operations,
-  index `docs/runbook-index.md`), `docs/howto/*.md` (cross-cutting workflows, index
-  `docs/howto/index.md`) and `docs/README.md`. Knowledge that belongs to a single module lives in
-  that module's header, not in `docs/` (see `docs/AGENTS.md`)
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
-- `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild, theming)
+- `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild,
+  theming); knowledge that belongs to a single module lives in that module's header
 - `.githooks/` — git hooks (enable with `just hooks-enable`)
 - Note: `result` is a gitignored symlink to the last build; `nix/` and `viz/`
   are gitignored local/generated dirs — never commit any of them.
@@ -84,13 +81,13 @@ General guidance
 - Keep changes minimal and focused on the feature you are touching.
 - Avoid drive-by refactors; mention unrelated issues separately instead of fixing them silently.
 - Document behavior where it lives: module header comments, `mkOption` descriptions, and comments
-  next to non-obvious code (the *why*, invariants, gotchas) — in English. `docs/` holds runbooks
-  and cross-cutting howtos only; do not add overviews or generated maps, and fold single-module
+  next to non-obvious code (the *why*, invariants, gotchas) — in English. `.agent/workflows/` holds
+  step-by-step procedures only; do not add overviews or generated maps, and fold single-module
   knowledge into the code instead.
 - For WireGuard/VPN host vs user-level setup patterns, see `git log` and the module comments in
   `modules/system/net/vpn/`.
 - For verified step-by-step change workflows (add module/flag/package/host/script/secret, commit
-  rules), see `.agent/workflows/` (long-form recipes: `docs/howto/agent-recipes.md`).
+  rules), see `.agent/workflows/`.
 - Before committing: run `just fmt` then `just check`; never commit unformatted
   or failing changes.
 - Lookup discipline: start from the error or output that names the failure; consult reference docs
@@ -168,8 +165,7 @@ Goal completion audit (ported from omp)
 
 Golden tool set (agent habits) — hard rules
 - Always prefer the fast modern replacements over legacy coreutils when working on this host.
-  They are installed system-wide; the full reference (rationale, config wiring, examples,
-  caveats) is `docs/howto/golden-tools.md`.
+  They are installed system-wide; prefer them by default.
   - `rg` (ripgrep) or `ugrep` instead of `grep -r`; `rg --pcre2` covers PCRE-only patterns
   - `fd` instead of `find`
   - `bat` instead of `cat` for terminal peeks (the `read` tool stays primary for files)
