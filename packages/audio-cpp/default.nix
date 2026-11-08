@@ -16,8 +16,7 @@
 # dlopens libvulkan.so.1 at run time — so the wrapper carries the loader, the
 # driver runpath (mesa RADV provides the ICD on NixOS) and the bundled libs.
 #
-# Models are GGUF files fetched separately; see scripts/dev/audio-cpp-models.sh
-# and docs/howto/local-music-ai.md.
+# Models are GGUF files fetched separately; see scripts/dev/audio-cpp-models.sh.
 stdenv.mkDerivation (finalAttrs: {
   pname = "audio-cpp";
   version = "0.9.2-drama3-base-small";

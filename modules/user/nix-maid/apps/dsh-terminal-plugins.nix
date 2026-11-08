@@ -76,7 +76,7 @@ rec {
     # `herdr agent wait`, and publishes turn/tokens/session as display metadata
     # (`herdr pane report-metadata`) for scripts and `$token` sidebar rows.
     # Inert outside a Herdr pane (HERDR_ENV=1); injects `subprocess` only.
-    # See docs/howto/herdr.md.
+    # See modules/user/nix-maid/apps/herdr.nix.
     "dsh-herdr"
     # /diff + show_diff: the diff-review surface. The tool declares the harness's
     # `card: "diff"` presenter (the same one the edit-approval preview uses), so
@@ -286,6 +286,16 @@ rec {
               - id: gyro-coder
                 name: Gyro-Coder 125B (7900 XTX box, ~4 min cold)
                 contextWindow: 65536
+              # OrcaCyber Nano 1.0 — 27B vision-language on the same 7900 XTX
+              # box (the second remote tier in llama-swap.nix). Stock ROCm
+              # llama.cpp, DFlash2 drafter + mmproj, 32k context, ~42 tok/s,
+              # ~30 s cold load. Vision goes through the mmproj, hence `image`.
+              - id: nano
+                name: OrcaCyber Nano 27B VL (7900 XTX, vision)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
           # ── free-tier fallbacks (2026-11-05) ───────────────────────────────
           # Declared unconditionally and key-gated at request time: an unset
           # key fails that route only, never the loader. `free-llm-check`

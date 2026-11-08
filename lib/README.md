@@ -43,7 +43,7 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
   into `flake/checks.nix` as the `fzf-opts-guard` check.
 - `ru-keys.nix` — single source of truth for the RU-layout hotkey problem: latin key → the char the
   ru layout produces, and every per-app duplicate bind is generated from this table. Exposed as
-  `neg.ruKeys`; mechanics in `docs/howto/hotkeys-ru-layout.md`.
+  `neg.ruKeys`; mechanics in `ru-keys.nix`.
 - `neg-helpers-tests.nix` — eval-only assertions over `tree` / `leaves` / `find` and `importDir`'s
   `nameFilter` (extension stripping, `default.nix` addressing its own directory, `_`-prefixed
   entries being skipped, a miss aborting evaluation); wired into `flake/checks.nix` as

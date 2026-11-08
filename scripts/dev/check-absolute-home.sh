@@ -24,9 +24,11 @@ while IFS= read -r -d '' file; do
       { raw = $0; code = $0; sub(/#.*/, "", code)
         if (code ~ /(^|[^A-Za-z0-9._\/-])\/home\/[A-Za-z0-9._-]+/ &&
             raw !~ /allow-absolute-home/ &&
-            prev !~ /allow-absolute-home/) {
+            prev !~ /allow-absolute-home/ &&
+            prev2 !~ /allow-absolute-home/) {
           printf "%d:%s\n", FNR, raw
         }
+        prev2 = prev
         prev = raw
       }
     ' "$file"

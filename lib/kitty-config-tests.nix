@@ -2,7 +2,7 @@
 # Wired into flake/checks.nix as the "kitty-config" check. Keep this file free
 # of config/flake dependencies: it is evaluated on every `nix flake check`.
 #
-# Two invariants, both learned the hard way (docs/howto/hotkeys-ru-layout.md):
+# Two invariants, both learned the hard way (the ЙЦУКЕН table in lib/ru-keys.nix):
 #
 # 1. kitty has no inline comments: its parser splits a `map` line into the key
 #    and the rest, and the rest is the action's argument string (conf/utils.py —

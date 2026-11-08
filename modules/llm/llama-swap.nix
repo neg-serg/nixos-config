@@ -467,6 +467,22 @@ let
   gyroCoderStop = ''
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 gyro-coder-stop
   '';
+
+  # OrcaCyber Nano 1.0 (27B vision-language) on the same 7900 XTX box, but on
+  # stock upstream llama.cpp with the ROCm backend: the Agention Vulkan fork the
+  # gyro tier runs is ~4x slower for arch `qwen35` (8.6 vs 36.4 tok/s decode,
+  # measured 2026-11-08). The start/stop scripts live in the remote user's home
+  # rather than /usr/local/bin because no root is available there; the `cmd`
+  # still has to be a plain argv, so the remote command is one absolute path.
+  # allow-absolute-home: the path is on the remote host, which has no root
+  nano = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/nano-start
+  '';
+
+  # allow-absolute-home: the path is on the remote host, which has no root
+  nanoStop = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/nano-stop
+  '';
 in
 {
   services.llama-swap = lib.mkIf enabled {
@@ -624,6 +640,22 @@ in
           aliases = [
             "gyro"
             "gyrocoder"
+          ];
+        };
+
+        # Same box, second remote tier. 15.7G build + DFlash2 drafter + mmproj
+        # occupy 22.2 GiB of the 24 GiB card at 32k and decode at ~42 tok/s; a
+        # cold load is ~30 s (page cache warm from the earlier runs), so the
+        # 15 min TTL only exists to release the card between sessions.
+        "nano" = {
+          cmd = nano;
+          cmdStop = nanoStop;
+          proxy = "http://192.168.0.144:8094";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "orcacyber"
+            "cyber"
           ];
         };
       };

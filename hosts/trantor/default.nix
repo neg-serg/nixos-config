@@ -131,7 +131,7 @@
   # Weekly incremental refresh of the MERT similarity index (music-index): warm
   # runs embed only new/changed albums. --layer -1 pins the settings of the
   # index built on 2026-10-12; without it the timer would rebuild everything,
-  # because the default layer for MERT-v1 is -2 (docs/howto/local-music-ai.md).
+  # because the default layer for MERT-v1 is -2.
   features.media.audio.musicTagging.autoIndex = {
     enable = true;
     # One weekly pass refreshes the index, the MTG tags and the mood/genre
