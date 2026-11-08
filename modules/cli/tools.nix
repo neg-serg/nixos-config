@@ -64,13 +64,10 @@ in
     pkgs.dust # better du
     pkgs.erdtree # modern tree
     pkgs.eza # modern 'ls' replacement
-    pkgs.fsel # fast TUI app launcher and fuzzy finder (dmenu pipe, clipboard history)
-    pkgs.graf # terminal force-directed graph of markdown wikilinks (TUI; -d <vault dir>)
     pkgs.huebox # terminal theme editor (TUI): live colour preview, pushes the palette into the kitty/ghostty/alacritty config
     pkgs.lazytail # TUI log viewer: live filtering, follow mode, multi-tab; also runs as an MCP server (lazytail --mcp)
     pkgs.libnotify # notify-send helper used by CLI scripts
     pkgs.moreutils # assorted unix utils (sponge, etc.)
-    pkgs.ncdu_1 # interactive du (C version, no zig/LLVM dep)
     pkgs.neg.duf # better df (fork with plain style support)
     pkgs.neg.termeverything # Wayland compositor that renders GUI windows in the terminal
     pkgs.neg.lusty # native file/buffer picker for Neovim (Lusty successor)
