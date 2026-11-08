@@ -262,6 +262,22 @@ in
   # exception only via a `# allow-relative: <reason>` /
   # `# allow-relative-file: <reason>` marker.
 
+  # lib/package-checks.nix gates alias generation on package availability; a
+  # renamed package silently drops the alias (btm -> bottom was exactly that).
+  # Force every guard and fail on a stale one.
+  "package-checks" =
+    let
+      guards = import ../lib/package-checks.nix { inherit pkgs; };
+      missing = builtins.filter (name: !guards.${name}) (builtins.attrNames guards);
+    in
+    if missing == [ ] then
+      pkgs.runCommand "check-package-checks" { } ''
+        echo "check: all ${toString (builtins.length (builtins.attrNames guards))} package guards resolve"
+        touch $out
+      ''
+    else
+      throw "stale package guards in lib/package-checks.nix: ${builtins.concatStringsSep ", " missing}";
+
   "relative-paths-guard" = mkScriptCheck "relative-paths" [ pkgs.findutils pkgs.gawk ] ''
     mkdir -p "$TMPDIR/repo"
     cp -r ${../modules} "$TMPDIR/repo/modules"
