@@ -1,4 +1,4 @@
-{ config, inputs, ... }:
+{ inputs, ... }:
 {
   perSystem =
     { system, pkgs, ... }:
@@ -7,7 +7,6 @@
         (import ../devshells.nix {
           inherit pkgs inputs;
           inherit (inputs) nixpkgs;
-          flakeLib = config.neg.lib;
         } system).devShells;
     };
 }

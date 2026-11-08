@@ -169,12 +169,7 @@ let
     };
 
   mkCustomPkgs = pkgs: import ../packages/flake/custom-packages.nix { inherit pkgs; };
-
-  # Wrap a devshell module's argument set into `pkgs.mkShell`. Every
-  # `flake/devshells/*.nix` module returns such an argument set, so the
-  # `mkShell` call (and any future shared defaults) lives in one place.
-  mkDevShell = pkgs: args: pkgs.mkShell args;
 in
 {
-  inherit mkPkgs mkCustomPkgs mkDevShell;
+  inherit mkPkgs mkCustomPkgs;
 }

@@ -1,7 +1,7 @@
 {
   pkgs,
   lib,
-  mkDevShell,
+  mkShell,
   import-tree,
   ...
 }:
@@ -22,6 +22,6 @@ in
 builtins.listToAttrs (
   map (p: {
     name = nameOf p;
-    value = mkDevShell (import p { inherit pkgs lib; });
+    value = mkShell (import p { inherit pkgs lib; });
   }) files
 )
