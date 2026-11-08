@@ -233,6 +233,22 @@ health:
 pleamar-geometry:
     bash "{{repo_root}}/scripts/dev/check-pleamar-geometry.sh"
 
+# Restart every pleamar scene after a compositor restart or a scale change.
+# Hyprland can configure the layer surfaces before scale 2 is applied: the
+# first sheet is 3840×35 at scale 1, then 1920×35 at scale 2. Pleamar updates
+# the `screen.width` fact, but the scene keeps the load-time 3840 layout, so
+# the bar's right row lands off-panel. Reloading the scenes after the
+# compositor has settled is the recovery (see
+# .agent/notes/2026-11-08-pleamar-scale-race.md).
+pleamar-restart:
+    systemctl --user restart \
+      pleamar-bar.service \
+      pleamar-headphones.service \
+      pleamar-launcher.service \
+      pleamar-notifications.service \
+      pleamar-osd.service \
+      pleamar-toast.service
+
 # What the shell spent on CPU at login, and what it spends now. `pleamar-login-cpu.timer`
 # records every scene's `systemctl show` counters a minute after the session target (they
 # are cumulative from each unit's start, so that window is the login burst); this renders
