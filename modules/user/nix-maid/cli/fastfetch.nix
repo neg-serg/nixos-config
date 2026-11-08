@@ -1,6 +1,8 @@
 # Black-metal blizzard logo generator + wrappers (fastfetch).
 # Reproducible tools: the animated WebP logos are generated on demand from
 # the user's reference image; the logos/ dir is created at runtime.
+# TODO(neg): drop this module (and files/fastfetch/) together with fastfetch;
+# the on-demand launcher in cli/utils.nix is a stopgap, not the target state.
 {
   lib,
   config,
