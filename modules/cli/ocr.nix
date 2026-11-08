@@ -1,4 +1,11 @@
-# OCR tooling: Tesseract engine (eng/rus/osd) and ocrmypdf for PDFs.
+# OCR tooling: scans and PDFs -> Markdown through llama.cpp vision models.
+#
+# Tesseract was removed on 2026-11-08, together with ocrmypdf (only a tesseract
+# front end): on a scan benchmark with Russian text, a table and a formula it
+# lost 7 of 14 key fields (Н·м, −12,5, ±, superscripts) and produced garbage
+# for the math, while the local Qwen3-VL-8B read 14/14 at 0.65% CER and
+# PaddleOCR-VL 12/14 in 2 s. `pic-ocr` is neural-only now (packages/
+# local-bin-desktop); this module keeps the docling launcher and `ocr`.
 #
 # Docling (PDF/DOCX → Markdown, layout + table models) stays out of the system
 # closure: its python env is ~3.9 GiB. The `docling` launcher below builds the
@@ -12,27 +19,13 @@
 # `ocr` (below) is the nudge-free path for scans and screenshots: it sends an
 # image, or every page of a PDF rendered with pdftoppm, to the llama-swap
 # `ocr` slot (PaddleOCR-VL-1.6) and prints Markdown. It needs neither the
-# docling env nor tesseract data at run time.
+# docling env nor any OCR engine at run time.
 { pkgs, config, ... }:
 let
-  # Default tesseract ships eng only; rus needed for Russian text, osd for
-  # orientation/script detection on scans.
-  tesseract = pkgs.tesseract.override {
-    enableLanguages = [
-      "eng"
-      "rus"
-      "osd"
-    ];
-  };
   onDemand = config.lib.neg.onDemand pkgs;
 in
 {
   environment.systemPackages = [
-    tesseract # OCR engine (Tesseract) with eng/rus/osd language data
-    (onDemand {
-      name = "ocrmypdf";
-      attr = "ocrmypdf";
-    }) # add searchable text layer to PDFs via OCR, built on first use
     (onDemand {
       name = "docling";
       attr = "docling-env";

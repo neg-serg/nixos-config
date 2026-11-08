@@ -1,9 +1,12 @@
 //! Rust port of `packages/local-bin/bin/pic-ocr`.
 //!
-//! OCR an image and put the result into the clipboard. `tesseract`, `magick`,
-//! `curl`, `grim`, `slurp`, `mktemp`, `wl-copy`, `notify-send` and `vicinae`
-//! stay subprocesses with the original argv; the argument handling, the base64
-//! encoding, the Ollama JSON payload and the response parsing are native.
+//! OCR an image and put the result into the clipboard. `magick`, `curl`,
+//! `grim`, `slurp`, `mktemp`, `wl-copy` and `notify-send` stay subprocesses;
+//! the argument handling, the base64 encoding, the Ollama JSON payload and the
+//! response parsing are native. NEURAL ONLY: tesseract was removed on
+//! 2026-11-08 (it lost ~7 of 14 key fields on the scan benchmark and produced
+//! garbage on formulas), so the classic engine, its menu entry and the nn
+//! fallback are gone.
 
 #![forbid(unsafe_code)]
 
@@ -29,7 +32,7 @@ fn run() -> i32 {
     let program = env::invocation_name(&argv0);
     let args: Vec<Vec<u8>> = arguments.map(|value| value.as_bytes().to_vec()).collect();
 
-    let mut engine: Vec<u8> = b"tesseract".to_vec();
+    let mut engine: Vec<u8> = b"nn".to_vec();
     let mut image: Option<Vec<u8>> = None;
     let mut index = 0;
     while index < args.len() {
@@ -46,7 +49,10 @@ fn run() -> i32 {
             engine = b"nn".to_vec();
             index += 1;
         } else if argument == b"-m" || argument == b"--menu" {
-            engine = b"menu".to_vec();
+            // The engine menu had one entry left after tesseract was dropped;
+            // the flag stays as an alias for the neural engine so existing
+            // keybinds keep working.
+            engine = b"nn".to_vec();
             index += 1;
         } else if argument == b"-h" || argument == b"--help" {
             env::out_str(PIC_OCR_HELP);
@@ -111,39 +117,18 @@ fn run() -> i32 {
     }
 
     if engine == b"menu" {
-        let mut listing = Vec::new();
-        listing.extend_from_slice(b"Tesseract (classic)\n");
-        listing.extend_from_slice(b"Qwen3-VL 8B (neural)\n");
-        let selected = Cmd::new("vicinae")
-            .args(["dmenu", "-p", "⟬OCR⟭ ❯>"])
-            .stdin(Input::Bytes(&listing))
-            .stdout(Sink::Capture)
-            .stderr(Sink::Null)
-            .run();
-        let selection = text::strip_trailing_newlines(&selected.stdout).to_vec();
-        if text::find(&selection, b"Tesseract").is_some() {
-            engine = b"tesseract".to_vec();
-        } else if text::find(&selection, b"Qwen3").is_some() {
-            engine = b"nn".to_vec();
-        } else {
-            return 0;
-        }
+        // No engine list is left: the menu used to offer tesseract and the
+        // neural model. Keep the value harmless if it arrives via -e.
+        engine = b"nn".to_vec();
     }
 
     let (mut result, engine_name): (Vec<u8>, Vec<u8>) = match engine.as_slice() {
-        b"tesseract" | b"classic" => (ocr_tesseract(&image), b"tesseract".to_vec()),
         b"nn" | b"neural" | b"ollama" => {
             let text = ocr_neural(&image, &program);
-            if !text.is_empty() {
-                let model = env::var_or("PIC_OCR_NN_MODEL", b"qwen3-vl:8b");
-                let mut name = model;
-                name.extend_from_slice(b" (local)");
-                (text, name)
-            } else {
-                // Ollama down or the model missing: the classic engine still
-                // produces something useful.
-                (ocr_tesseract(&image), b"tesseract (nn fallback)".to_vec())
-            }
+            let model = env::var_or("PIC_OCR_NN_MODEL", b"qwen3-vl-abliterated:8b");
+            let mut name = model;
+            name.extend_from_slice(b" (local)");
+            (text, name)
         }
         _ => {
             let mut message = b"pic-ocr: unknown engine: ".to_vec();
@@ -193,22 +178,10 @@ fn run() -> i32 {
     outcome.code
 }
 
-/// `tesseract IMAGE stdout -l eng+rus --psm 3`, stderr discarded.
-fn ocr_tesseract(image: &[u8]) -> Vec<u8> {
-    // `tesseract "$1" stdout -l eng+rus --psm 3`: the image comes first.
-    let outcome = Cmd::new("tesseract")
-        .arg_bytes(image)
-        .args(["stdout", "-l", "eng+rus", "--psm", "3"])
-        .stdout(Sink::Capture)
-        .stderr(Sink::Null)
-        .run();
-    text::strip_trailing_newlines(&outcome.stdout).to_vec()
-}
-
 /// The Ollama engine: downscale to JPEG, base64 it, ask the vision model, and
 /// read `.choices[0].message.content // empty` from the reply.
 fn ocr_neural(image: &[u8], program: &[u8]) -> Vec<u8> {
-    let model = env::var_or("PIC_OCR_NN_MODEL", b"qwen3-vl:8b");
+    let model = env::var_or("PIC_OCR_NN_MODEL", b"qwen3-vl-abliterated:8b");
     let base_url = env::var_or("PIC_OCR_OLLAMA_URL", b"http://localhost:11434/v1");
     let converted = Cmd::new("magick")
         .arg_bytes(image)

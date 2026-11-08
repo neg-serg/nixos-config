@@ -22,8 +22,9 @@ Replaces the old `marker` wrapper: marker-pdf was a hand-kept pip venv in
 (`ModuleNotFoundError: No module named 'marker'`).
 
 Layout/table weights are HuggingFace assets kept in /zero/ai/ocr (the \"all AI
-assets on /zero/ai\" convention), so a store GC never touches them. Scanned
-pages fall back to Tesseract (eng/rus/osd, see modules/cli/ocr.nix).
+assets on /zero/ai\" convention), so a store GC never touches them. Tesseract was
+removed on 2026-11-08, so scanned pages no longer have a classic fallback: run
+them through the `ocr` wrapper (PaddleOCR-VL) or `pic-ocr` instead.
 
 Usage:
   pdf2md file.pdf              # → ./file.md

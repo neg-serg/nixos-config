@@ -43,7 +43,7 @@ while [ $# -gt 0 ]; do
       shift 2
       ;;
     --list)
-      printf '%s\n' pic-notify screenrec clip screenshot-toast pic-info pic-ocr \
+      printf '%s\n' pic-notify screenrec clip screenshot-toast pic-info \
         pic-dirs-list wl-restore unlock kitty-font-zoom cursor-stretch pngoptim \
         hypr-resize-proportional
       exit 0
@@ -212,10 +212,6 @@ exit 0
 EOF
   mkfake oxipng << 'EOF'
 exit "${FAKE_OXIPNG_EXIT-0}"
-EOF
-  mkfake tesseract << 'EOF'
-printf '%s' "${FAKE_TESSERACT_OUT-}"
-exit "${FAKE_TESSERACT_EXIT-0}"
 EOF
   mkfake magick << 'EOF'
 printf '%s' "${FAKE_MAGICK_OUT-}"
@@ -840,36 +836,41 @@ ocr_image_setup() {
 ocr_slurp_setup() {
   rm -f "$WORK/capture.png"
 }
-ocr_text() {
-  set_env "FAKE_TESSERACT_OUT=$1"
-}
 
-if tool_enabled pic-ocr; then
+# The pic-ocr shell original was deleted when the Rust port landed, so the copy
+# restored from git is the pre-port tesseract implementation. Parity is closed
+# for this tool (and tesseract itself is gone), so the cases only run when a
+# real shell original is present, e.g. PARITY_ORIGINALS pointing at the last
+# tree that still carried it.
+if tool_enabled pic-ocr && [ -x "$ORIGINALS/pic-ocr" ]; then
   begin_tool pic-ocr
   compare "pic-ocr: help" "" -- -h
   compare "pic-ocr: unknown option" "" -- --bogus
-  compare "pic-ocr: unknown engine" "" -- --engine=nope "$CASE_DIR/i.png"
-  set_env "FAKE_TESSERACT_OUT=line one
-line two"
-  compare "pic-ocr: tesseract result to clipboard and toast" ocr_image_setup -- "$CASE_DIR/i.png"
-  set_env "FAKE_TESSERACT_OUT="
+  compare "pic-ocr: unknown engine" ocr_image_setup -- --engine=nope "$CASE_DIR/i.png"
+  set_env "FAKE_MAGICK_OUT=jpgdata" \
+    "FAKE_CURL_OUT={\"choices\":[{\"message\":{\"content\":\"line one\\nline two\"}}]}"
+  compare "pic-ocr: neural result to clipboard and toast" ocr_image_setup -- "$CASE_DIR/i.png"
+  set_env "FAKE_MAGICK_OUT=jpgdata" "FAKE_CURL_OUT="
   compare "pic-ocr: no text recognized exits 1" ocr_image_setup -- "$CASE_DIR/i.png"
   set_env "FAKE_MAGICK_OUT=jpgdata" \
     "FAKE_CURL_OUT={\"choices\":[{\"message\":{\"content\":\"net text\"}}]}"
   compare "pic-ocr: neural engine builds the jq payload" ocr_image_setup -- --engine=nn "$CASE_DIR/i.png"
-  set_env "FAKE_MAGICK_OUT=jpgdata" "FAKE_CURL_OUT=not json" "FAKE_TESSERACT_OUT=fallback text"
-  compare "pic-ocr: neural failure falls back to tesseract" ocr_image_setup -- --engine=nn "$CASE_DIR/i.png"
-  set_env "FAKE_VICINAE_OUT=Tesseract (classic)" "FAKE_TESSERACT_OUT=menu text"
-  compare "pic-ocr: menu picks tesseract" ocr_image_setup -- --menu "$CASE_DIR/i.png"
-  set_env "FAKE_VICINAE_OUT="
-  compare "pic-ocr: cancelled menu exits 0" ocr_image_setup -- --menu "$CASE_DIR/i.png"
-  set_env "FAKE_SLURP_OUT=10,10 20x20" "FAKE_TESSERACT_OUT=region text"
+  set_env "FAKE_MAGICK_OUT=jpgdata" "FAKE_CURL_OUT=not json"
+  compare "pic-ocr: neural failure does not fall back" ocr_image_setup -- --engine=nn "$CASE_DIR/i.png"
+  set_env "FAKE_MAGICK_OUT=jpgdata" \
+    "FAKE_CURL_OUT={\"choices\":[{\"message\":{\"content\":\"menu text\"}}]}"
+  compare "pic-ocr: menu is an alias for nn" ocr_image_setup -- --menu "$CASE_DIR/i.png"
+  set_env "FAKE_SLURP_OUT=10,10 20x20" "FAKE_MAGICK_OUT=jpgdata" \
+    "FAKE_CURL_OUT={\"choices\":[{\"message\":{\"content\":\"region text\"}}]}"
   compare "pic-ocr: slurp capture is removed afterwards" ocr_slurp_setup
   set_env "FAKE_SLURP_EXIT=1"
   compare "pic-ocr: cancelled slurp exits 1" ocr_slurp_setup
-  set_env "FAKE_TESSERACT_OUT=text"
+  set_env "FAKE_MAGICK_OUT=jpgdata" \
+    "FAKE_CURL_OUT={\"choices\":[{\"message\":{\"content\":\"text\"}}]}"
   compare "pic-ocr: missing file exits 1" "" -- "$CASE_DIR/gone.png"
-  set_env "FAKE_TESSERACT_OUT=$(printf 'a%.0s' $(seq 1 200))" "FAKE_NOTIFY_EXIT=3"
+  set_env "FAKE_MAGICK_OUT=jpgdata" \
+    "FAKE_CURL_OUT={\"choices\":[{\"message\":{\"content\":\"$(printf 'a%.0s' $(seq 1 200))\"}}]}" \
+    "FAKE_NOTIFY_EXIT=3"
   compare "pic-ocr: long preview is cut to 140 chars" ocr_image_setup -- "$CASE_DIR/i.png"
 fi
 

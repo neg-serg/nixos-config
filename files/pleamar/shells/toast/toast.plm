@@ -8,7 +8,8 @@ import "../../lib/capsule.plm"
 //
 // What this scene owns: the screenshot feedback card (the legacy
 // Widgets/ScreenshotToast.qml) — a preview of the shot taken last, its
-// dimensions/size/depth line, the two pic-ocr engines, copy and open — drawn
+// dimensions/size/depth line, the two OCR buttons (both neural since tesseract
+// was removed on 2026-11-08), copy and open — drawn
 // in a corner over everything (level: overlay, no reserve). The transient
 // notification toasts of the shell are drawn by the `notifications` scene
 // (PH2-C); this scene keeps the frozen `visible` fact of INTERFACES §2.1
@@ -218,7 +219,8 @@ scene toast {
                 zone box path_row { from: 8, 356; size: 444, 32; label: "Screenshot path"; role: region }
 
                 // ------***----------- actions
-                // The legacy rows: the two OCR engines share the width, Copy,
+                // The legacy rows: the two OCR buttons share the width (both
+                // run the neural engine since tesseract was removed), Copy,
                 // Open and Dismiss keep their own. The zone of each one is
                 // declared below with its own name, so a hand can press it
                 // (`describe` prints `ocr_zone#Card1`, `dismiss_zone#Card1`, …;

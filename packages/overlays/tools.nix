@@ -69,16 +69,6 @@ in
     topowall = callPkg (pkg "topowall") { }; # Topographic contour wallpapers from real elevation data (GPU render)
     terrascope = callPkg (pkg "terrascope") { }; # Interactive world map for the terminal (braille; live weather/aircraft/earthquakes)
     geekbench-ai = callPkg (pkg "geekbench-ai") { }; # Geekbench AI — on-device inference benchmark (proprietary binary)
-    neru = callPkg (pkg "neru") {
-      # Neru's OCR only needs the languages this host reads; nixpkgs' default
-      # tesseract ships the full ~1G tessdata set.
-      tesseract = final.tesseract.override {
-        enableLanguages = [
-          "eng"
-          "rus"
-          "osd"
-        ];
-      };
-    }; # Desktop keyboard navigation — hints, grids, vim-style modes (upstream main)
+    neru = callPkg (pkg "neru") { }; # Desktop keyboard navigation — hints, grids, vim-style modes (upstream main)
   };
 }

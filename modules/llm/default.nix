@@ -137,12 +137,15 @@
 # ### pic-ocr (screenshot → text, engine choice)
 #
 # - Script: `packages/local-bin-desktop` (pic-ocr) (installed to `~/.local/bin`).
-# - Two engines: classic **tesseract** (eng+rus, fast) and local **neural** OCR via Ollama's
-#   `qwen3-vl-abliterated:8b` (default; override with `PIC_OCR_NN_MODEL`). Neural images never leave the machine.
-# - Usage: `pic-ocr [--engine=nn|tesseract|menu] IMAGE`; with no IMAGE it captures a region (`slurp`).
-#   Result goes to the clipboard + `notify-send`.
+# - Single engine: local **neural** OCR via Ollama's `qwen3-vl-abliterated:8b` (override with
+#   `PIC_OCR_NN_MODEL`). Images never leave the machine. Tesseract was removed on 2026-11-08: on the
+#   scan benchmark it lost 7 of 14 key fields and produced garbage on formulas, while this model
+#   read 14/14 (see modules/cli/ocr.nix for the numbers).
+# - Usage: `pic-ocr [--engine=nn] IMAGE`; with no IMAGE it captures a region (`slurp`).
+#   Result goes to the clipboard + `notify-send`. `-m/--menu` is kept as an alias for nn.
 # - Wired into the quickshell **ScreenshotToast**: after a Hyprland screenshot (`M4+SHIFT+R`,
-#   `M4+SHIFT+CTRL+R`) the toast offers **OCR** (tesseract) and **OCR NN** (neural) buttons.
+#   `M4+SHIFT+CTRL+R`) the toast offers **OCR** and **OCR NN**; both now run the neural engine
+#   (the buttons and events were kept to avoid a scene change in this patch).
 #
 # ### local-ai user service (fallback)
 #
