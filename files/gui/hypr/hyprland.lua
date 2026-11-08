@@ -694,12 +694,6 @@ hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "e
 -- The shell page: window and type scale, the closing rules, Fahrenheit, the
 -- weather city and country, the light theme's paper warmth (`b` was free).
 hl.bind(M4 .. "+" .. SH .. "+b", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit toggle_shell_panel"'))
--- The headphone drawer (the pleamar scene `headphones`, files/pleamar/shells/headphones):
--- the catalogue T12 exports into the scene's own data folder, the selected model's EQ curve,
--- and `enter` to apply it through the `headphones` CLI. The whole M4+SHIFT letter row is taken
--- (`h` is hide-all, `m` the menu-search, ...), so the drawer takes the one free slot that reads
--- as a toggle, `space`; M4+space, which dismisses the shell, closes it below.
-hl.bind(M4 .. "+" .. SH .. "+space", hl.dsp.exec_cmd('timeout 3 pleamar --say headphones "emit toggle_drawer"'))
 -- The rest of the transport and the volume steps: M4+C+period/comma mimic the >
 -- and < keys, equal/minus stand in for the volume rocker (the XF86 keys stay on
 -- the Genelec path). The bar's `wheel_volume` takes notches and steps in 5 %
@@ -709,8 +703,8 @@ hl.bind(M4 .. "+" .. C .. "+comma", hl.dsp.exec_cmd('timeout 3 pleamar --say bar
 hl.bind(M4 .. "+" .. C .. "+equal", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit wheel_volume 1"'), { repeating = true })
 hl.bind(M4 .. "+" .. C .. "+minus", hl.dsp.exec_cmd('timeout 3 pleamar --say bar "emit wheel_volume -1"'), { repeating = true })
 -- What the shell has put on screen is dismissed over its own IPC: the notification centre takes
--- `dismiss_all`, the drawer cards answer to `fact drawer none` (the panels scene's own words), the
--- headphone drawer takes `close_drawer`, and the screenshot card in the `toast` scene takes `hide`
+-- `dismiss_all`, the drawer cards answer to `fact drawer none` (the panels scene's own words),
+-- and the screenshot card in the `toast` scene takes `hide`
 -- (that card is the PH2-D port of the old Quickshell toast, so the bind missed it while it still
 -- listed only the first three — M4+space closed the notifications and left the card up). The legacy
 -- path was a semaphore file that quickshell watched (`~/.cache/quickshell/notif-close-all`), and
@@ -721,7 +715,6 @@ local function dismiss_shell()
   return hl.dsp.exec_cmd(
     'timeout 3 pleamar --say notifications "emit dismiss_all" >/dev/null 2>&1; '
       .. 'timeout 3 pleamar --say panels "fact drawer none" >/dev/null 2>&1; '
-      .. 'timeout 3 pleamar --say headphones "emit close_drawer" >/dev/null 2>&1; '
       .. 'timeout 3 pleamar --say toast "emit hide" >/dev/null 2>&1; true'
   )
 end

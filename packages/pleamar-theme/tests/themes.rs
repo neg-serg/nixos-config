@@ -299,7 +299,6 @@ fn apply_leaves_the_live_palette_where_a_scene_reads_it() {
         "toast",
         "picker",
         "osd",
-        "headphones",
     ] {
         let json = case.palette(scene);
         assert!(json.contains("\"coal_r\":"), "{scene}: {json}");

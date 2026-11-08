@@ -29,7 +29,7 @@
 # ## Units and guards (when the flag is on)
 #
 # - `pleamar-<scene>.service` for every scene in `pleamarScenes` (`bar`, `notifications`,
-#   `toast`, `launcher`, `osd`, `headphones`), each running
+#   `toast`, `launcher`, `osd`), each running
 #   `pleamar --scene ~/.config/pleamar/shells/<scene>/<scene>.plm --no-hud` with memory/CPU caps.
 #   `panels` is an on-demand unit too (`pleamarOnDemandUnits`): a drawer scene keeps 19
 #   full-monitor layer surfaces mapped, and Hyprland composites —and blurs— every mapped layer on
@@ -137,11 +137,6 @@ let
     # The volume/brightness pill: watches `audio` and `brightness` and shows itself, so it
     # is resident — nothing else could start it on the change that has to raise it.
     "osd"
-    # The headphone drawer (shells/headphones): a resident scene like the launcher, because the
-    # compositor bind (M4+SHIFT+space) reaches it over IPC and there is no helper command that
-    # could start an on-demand unit. Closed, it keeps a 1x1 keeper at 10 fps; open, it draws the
-    # catalogue's selected model and applies it with `enter`.
-    "headphones"
   ];
 
   # Scenes that must come back from *any* exit, not only a crash: the bar and
@@ -155,9 +150,6 @@ let
     # The OSD is a scene whose whole job is to be there when the volume moves, so it
     # comes back from any exit like the bar: nothing else would start it again.
     "osd"
-    # The headphone drawer holds no session state (the catalogue is on disk and re-read on every
-    # open), but a bind that reaches nothing after a compositor reload is a dead key; restart it.
-    "headphones"
   ];
 
   # The scenes the hang watchdog probes. A wedged bar is the obvious one, but the panels scene draws

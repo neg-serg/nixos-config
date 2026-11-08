@@ -243,7 +243,6 @@ pleamar-geometry:
 pleamar-restart:
     systemctl --user restart \
       pleamar-bar.service \
-      pleamar-headphones.service \
       pleamar-launcher.service \
       pleamar-notifications.service \
       pleamar-osd.service \
