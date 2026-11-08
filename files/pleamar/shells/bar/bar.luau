@@ -41,7 +41,7 @@ every(2000, palette_load)
 -- on 4 monitors at most unless a scene says otherwise (reference §surfaces), which is exactly what
 -- these facts cover. The read is `mon_scale[min(screen.index, 3)]` in the scene, because reading a
 -- numbered name past its last element is -1 there, and a negative scale would draw backwards.
-local MAX_SCREENS = 4
+-- 4 monitors at most; the loop below reads 0..3 directly (top-level locals are near LuaJIT's limit).
 
 -- Defaults live in code; the file holds what the user changed. The frozen keys
 -- of INTERFACES §6.3 that this slice still cannot apply (height, animations,
@@ -169,6 +169,45 @@ local function media_rules_from(priority, preset)
     return MEDIA_PRESETS[preset] or MEDIA_PRESETS.mpdBias
 end
 
+-- ------------------------------------------------------------ startup gate
+-- QS Bar.qml's "clean login" bar: at login the panel shows only the widgets in
+-- `startupCleanWidgets` (clock and weather), and the first real window brings the
+-- rest back. The gate arms only when this bar start IS the login: the marker
+-- ($PLEAMAR_LOGIN_STATE_DIR/state, or $XDG_RUNTIME_DIR/pleamar-login/state,
+-- rewritten when the password is accepted) has to be fresh. A bar restarted
+-- inside a running session sees an old marker and shows everything at once.
+--
+-- Two deliberate differences from the reference: the settings keys that would
+-- tune this (`startupClean*`) are refused by the compiler, so the constants below
+-- are the reference's defaults; and the bar's entrance slide is not ported, so
+-- the gate changes widget visibility only. `PLEAMAR_STARTUP_CLEAN=0` disables the
+-- gate, `=1` holds it up for a preview run, as QS_STARTUP_CLEAN did.
+local startup = {
+    clean = { clock = true, weather = true },
+    login_window_s = 120,
+    min_ms = 10000,
+    poll_ms = 600,
+    slow_after = 100, -- 60 s at 600 ms
+    slow_every = 4,   -- 600 * 4 = 2.4 s, the reference's 2500 ms
+    active = false,
+    hold = false,
+    wanted = nil,
+    dwell_done = false,
+    window_seen = false,
+    ticks = 0,
+}
+
+-- `apply` below runs before the rest of this block is defined, so the widget
+-- write lives here and the gate state is a value it reads.
+function startup.apply_widgets()
+    local wanted = startup.wanted
+    for _, name in ipairs(WIDGETS) do
+        local shown = (wanted == nil) or (wanted[name] == true)
+        if startup.active and not startup.clean[name] then shown = false end
+        fact["widget." .. name] = shown
+    end
+end
+
 -- What the file says, resolved once and again on every change of it.
 local mediaPinned = id_set(D.mediaPinned)
 local mediaIgnored = id_set(D.mediaIgnored)
@@ -214,7 +253,7 @@ local function apply(raw)
     -- at all (`mon_scale[screen.index]`, one fact per monitor, defaulting to the fourth).
     fact.text_scale = num(raw.fontScale, 0.5, 2.0, D.fontScale)
     local mon = (type(raw.monitorScale) == "table") and raw.monitorScale or {}
-    for i = 0, MAX_SCREENS - 1 do
+    for i = 0, 3 do
         fact["mon_scale." .. i] = num(mon[i + 1], 0.5, 2.5, 1.0)
     end
 
@@ -225,9 +264,8 @@ local function apply(raw)
             if type(raw.widgets[i]) == "string" then wanted[raw.widgets[i]] = true end
         end
     end
-    for _, name in ipairs(WIDGETS) do
-        fact["widget." .. name] = (wanted == nil) or (wanted[name] == true)
-    end
+    startup.wanted = wanted
+    startup.apply_widgets()
 
     -- The weather's own two settings, clamped like everything else here.
     weatherCity = (type(raw.weatherCity) == "string") and raw.weatherCity or ""
@@ -268,6 +306,129 @@ sys.watch("files:" .. FILE, function()
     raw = read_file()
     apply(raw)
 end)
+
+-- ------------------------------------------------------ startup gate (state)
+function startup.env()
+    local ok, value = pcall(function() return sys.ask("env", "PLEAMAR_STARTUP_CLEAN") end)
+    if ok and type(value) == "string" then return value end
+    return ""
+end
+
+function startup.marker_path()
+    local ok, dir = pcall(function() return sys.ask("env", "PLEAMAR_LOGIN_STATE_DIR") end)
+    if not ok or type(dir) ~= "string" or dir == "" then
+        local ok2, runtime = pcall(function() return sys.ask("env", "XDG_RUNTIME_DIR") end)
+        if not ok2 or type(runtime) ~= "string" or runtime == "" then return nil end
+        dir = runtime .. "/pleamar-login"
+    end
+    return dir .. "/state"
+end
+
+function startup.open()
+    if not startup.active or startup.hold then return end
+    startup.active = false
+    fact.startup = false
+    startup.apply_widgets()
+    log("bar: startup gate open")
+end
+
+function startup.maybe_open()
+    if startup.active and startup.dwell_done and startup.window_seen then
+        startup.open()
+    end
+end
+
+function startup.arm()
+    startup.active = true
+    startup.ticks = 0
+    startup.dwell_done = false
+    startup.window_seen = false
+    fact.startup = true
+    startup.apply_widgets()
+    if startup.hold then
+        log("bar: startup gate held by PLEAMAR_STARTUP_CLEAN=1")
+        return
+    end
+    after(startup.min_ms, function()
+        startup.dwell_done = true
+        startup.maybe_open()
+    end)
+    log("bar: startup gate armed")
+end
+
+function startup.drop()
+    startup.active = false
+    fact.startup = false
+    startup.apply_widgets()
+end
+
+function startup.probe()
+    local path = startup.marker_path()
+    if not path then startup.drop() return end
+    run("date", { "+%s" }, function(now_out, now_code)
+        local now = (now_code == 0) and tonumber(now_out) or nil
+        if not now then startup.drop() return end
+        run("date", { "-r", path, "+%s" }, function(mtime_out, mtime_code)
+            local mtime = (mtime_code == 0) and tonumber(mtime_out) or nil
+            if not mtime then startup.drop() return end
+            local age = now - mtime
+            log("bar: startup marker " .. tostring(math.floor(age)) .. "s old")
+            if age >= -60 and age <= startup.login_window_s then
+                startup.arm()
+            else
+                startup.drop()
+            end
+        end)
+    end)
+end
+
+-- A real window: mapped, not hidden and not on a special workspace (the
+-- reference's hasRealWindow). `hyprctl -j clients` is scanned per client chunk,
+-- so the nested workspace object cannot confuse the answer.
+function startup.has_window(json)
+    if type(json) ~= "string" or json == "" then return false end
+    local from = 1
+    while true do
+        local first = json:find('"address"%s*:', from)
+        if not first then return false end
+        local next_at = json:find('"address"%s*:', first + 1)
+        local chunk = json:sub(first, (next_at or (#json + 1)) - 1)
+        if chunk:find('"mapped"%s*:%s*true')
+            and not chunk:find('"hidden"%s*:%s*true')
+            and not chunk:find('"special:', 1, true) then
+            return true
+        end
+        if not next_at then return false end
+        from = next_at + 1
+    end
+end
+
+function startup.poll()
+    if not startup.active or startup.hold then return end
+    startup.ticks = startup.ticks + 1
+    if startup.ticks > startup.slow_after and startup.ticks % startup.slow_every ~= 0 then
+        return
+    end
+    run("hyprctl", { "-j", "clients" }, function(out, code)
+        if code ~= 0 or not startup.active then return end
+        if startup.has_window(out) then
+            startup.window_seen = true
+            startup.maybe_open()
+        end
+    end)
+end
+
+every(startup.poll_ms, startup.poll)
+
+startup.mode = startup.env()
+if startup.mode == "0" then
+    fact.startup = false
+elseif startup.mode == "1" then
+    startup.hold = true
+    startup.arm()
+else
+    startup.probe()
+end
 
 -- The customizer's writes (pages/bar.plm in `panels` says what the page shows). The file is
 -- mutated, never rebuilt: a key another version put there survives, and the watcher above applies
