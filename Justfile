@@ -26,7 +26,7 @@ seed host="trantor":
 
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
-deploy host="trantor":
+deploy host="trantor": check-eval hooks-ensure
     # Build system closure with network tuning
     nix build .#nixosConfigurations.{{ host }}.config.system.build.toplevel \
       --out-link result \
@@ -40,11 +40,11 @@ deploy host="trantor":
     sudo ./result/bin/switch-to-configuration switch
 
 # Deploy (Legacy/Slow) - keeps nh features like pretty print
-deploy-nh host="trantor":
+deploy-nh host="trantor": check-eval hooks-ensure
     nh os switch . --hostname {{ host }}
 
 # Deploy with maximum verbosity (logs + trace + verbose)
-deploy-debug host="trantor":
+deploy-debug host="trantor": check-eval hooks-ensure
     nh os switch . --hostname {{ host }} -L -t -v
 
 # Alias for deploy
@@ -61,7 +61,7 @@ switch host="trantor":
 # whole system and applies nothing. `--option substitute false` because
 # cache.nixos.org is unreliable from this host.
 # Usage: just switch-sudo [host]
-switch-sudo host="trantor":
+switch-sudo host="trantor": check-eval hooks-ensure
     sudo nixos-rebuild switch --flake .#{{ host }} < /dev/null
 
 # Cache-status preflight for a rebuild: per host, how much of the *whole closure*
@@ -87,7 +87,7 @@ preflight host="":
 # the toplevel the agent already built and verified — the root-owned unit refuses to
 # switch when the tree now builds something else (modules/security/agent-switch.nix).
 # Usage: just agent-switch /nix/store/…-nixos-system-trantor-…
-agent-switch toplevel:
+agent-switch toplevel: check-eval hooks-ensure
     #!/usr/bin/env bash
     set -uo pipefail
     rc=0
@@ -152,6 +152,12 @@ check:
 # `--eval-workers 2`: one NixOS eval peaks ~3.6GiB (see `preflight` above).
 check-fast:
     nix-fast-build --flake .#checks --skip-cached --eval-workers 2 --no-link
+
+# Cheap eval gate before a deploy: catches a broken flake before root builds
+# or activates anything. It does not build the check scripts; use `just check`
+# for the full gate.
+check-eval:
+    nix flake check --no-build
 
 # Print the counts advertised by README's "Project Statistics" table.
 stats:
@@ -510,6 +516,18 @@ unbound-hosts-guard:
 
 hooks-enable:
     git config core.hooksPath .githooks
+
+# Enable the repo hooks when this clone has no core.hooksPath yet. Deploy
+# targets and the devshell shellHook call this, so a fresh clone cannot commit
+# without the lint/commit-msg gate.
+hooks-ensure:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="{{repo_root}}"
+    if [ -z "$(git -C "$root" config --get core.hooksPath 2>/dev/null)" ]; then
+      git -C "$root" config core.hooksPath .githooks
+      echo "git hooks enabled (core.hooksPath=.githooks)"
+    fi
 
 systemd-status:
     set -eu
