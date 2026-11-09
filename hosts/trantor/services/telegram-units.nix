@@ -186,6 +186,13 @@ in
         stateDirectory = "telegram-alert-scanner";
       })
 
+      # The timer fires every minute, so systemd logs three INFO records per
+      # run (Starting / Finished / Deactivated) — ~4.3k lines/day of pure
+      # lifecycle. The manager applies the unit's LogLevelMax to its own
+      # messages about the unit, so notice drops that churn while the scanner's
+      # own warnings and errors still land in the journal.
+      { systemd.services.telegram-alert-scanner.serviceConfig.LogLevelMax = "notice"; }
+
       # Telegram "trantor booted" notice. The socks proxy is a user unit that
       # starts at login, so keep retrying for a while after network is up.
       # The /run marker (see telegramBootNotifyScript) makes it fire once per
