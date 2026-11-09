@@ -2,8 +2,9 @@
 """llmctl — one entry point for the local llama-swap fleet.
 
 Subcommands cover the daily loop: see what is loaded, switch models, ask a
-one-shot question, and run the chemistry/Lean benchmarks. The model catalog
-carries the measured scores so `llmctl models` answers "which one for what".
+one-shot question, turn a git diff into a commit message (`llmctl commit`), and
+run the chemistry/Lean/fp/commit benchmarks. The model catalog carries the
+measured scores so `llmctl models` answers "which one for what".
 """
 
 import argparse
@@ -642,14 +643,15 @@ def _result_path(kind, started):
     return path
 
 
-def _save_results(kind, models, started, results):
+def _save_results(kind, models, started, results, extra=None):
     """Persist one bench run with provenance next to the per-model records.
 
     `__meta__` sits beside the model keys rather than wrapping them, so the
     flat records written before this field stay queryable by the same
     `jq '.["model"]'` form. `seed` is null on purpose: the server default
     (-1) draws a fresh random seed per request, i.e. every run is an
-    independent sample, not a replay of one.
+    independent sample, not a replay of one. `extra` carries bench-specific
+    provenance (repository and prompt variant for the commit bench).
     """
     os.makedirs(STATE, exist_ok=True)
     path = _result_path(kind, started)
@@ -666,6 +668,7 @@ def _save_results(kind, models, started, results):
             "seed": None,
             "url": BASE,
             "pid": os.getpid(),
+            **(extra or {}),
         },
         **results,
     }
@@ -1140,6 +1143,506 @@ def bench_fp(models, thinking=False):
     return results
 
 
+# ---------------------------------------------------------------- commit bench
+
+# Real commits from this repository, one per shape a daily change takes: a
+# one-file package patch, a subtle Nix setting, a two-file alias fix, a shell
+# script, a config-only addition, a Justfile repair, a layout checker, a
+# multi-file feature and a 32-bit packaging change. The model sees `git show`
+# without the message; grading compares the reply with the commit that was
+# actually made. Fixed hashes keep runs comparable across days and fleet
+# changes, unlike sampling the tail of the log.
+COMMIT_CASES = [
+    ("aurora-ffmpeg", "04b8bbe5f"),
+    ("nixpkgs-registry", "b90ad5965"),
+    ("btm-alias", "6df32eab5"),
+    ("rollout-ansi", "4fa96cb0b"),
+    ("gtk4-schemas", "9adb15bad"),
+    ("clean-caches", "f96d81b29"),
+    ("pleamar-geometry", "3714ea7e5"),
+    ("samba-shares", "c42f4e55e"),
+    ("rct32-repro", "859a320f6"),
+]
+
+# The default commit-writer set, measured 2026-11-09 (9 real diffs; totals
+# of 90 under the 0-10 rubric): qwen3.8-27b 81.6, devstral 76.5, tiny 75.3, qwen3-vl-8b 73.3,
+# gemma4 70.8. The 27B is the quality tier; the 8B is the fast default when no
+# model is resident (see COMMIT_DEFAULT_MODEL / `--model auto`). `tiny` runs on
+# CPU and keeps the card free at ~19 tok/s.
+COMMIT_MODELS = [
+    "qwen3-vl-8b-abliterated",
+    "devstral-small-2-24b",
+    "gemma4-26b-abliterated",
+    "qwen3.8-27b-abliterated",
+    "tiny",
+]
+
+COMMIT_SCOPES_IN_PROMPT = 30
+COMMIT_DIFF_CHARS = 24000
+COMMIT_MAX_TOKENS = 400
+
+COMMIT_RULES = """You write git commit messages for a NixOS configuration repository.
+
+The repository's conventions:
+- First line: `[scope] Imperative subject`, at most 72 characters, no
+  trailing period. `scope` names the area of the change: usually a path area
+  ([servers/samba], [gui/theme], [cli]) and sometimes a thematic one
+  ([media/audio], [hardware/audio]). Pick one from the scope list below.
+- Then one blank line and a body of 2-5 sentences: what changed and why,
+  naming the concrete mechanisms, options or tradeoffs visible in the diff.
+  Describe the effect of the change, not a file-by-file walkthrough.
+- English only, plain text: no markdown fences, no bullet lists, no quotes
+  around the message. Do not mention file line numbers. Do not invent reasons
+  or details that the diff does not support.
+
+Return only the commit message."""
+
+# One example of the target shape, unrelated to the bench's cases so a small
+# model can copy the structure without copying its content.
+COMMIT_EXAMPLE = """Example of the expected shape:
+[services/backup] Stop the timer from waking a sleeping host
+
+The nightly snapshot timer fires at 03:00 and wakes the machine, but the
+backup itself only runs when the host is already awake, so the missed runs
+leave gaps in the archive. Move the timer to boot and stamp each run, so a
+skipped night is caught up on the next start instead of being lost."""
+
+# The bench strips the subject scope before matching content words, so the
+# scope vocabulary can be graded separately from how well the subject names
+# the change.
+COMMIT_STOP = set(
+    """the a an and or but if then than that this these those with without
+    for from into onto via when where while what which who whom whose is are
+    was were be been being has have had do does did not no to of in on at by
+    as it its their there here also only just more most less least very can
+    should would could will may might must about after before under over
+    between within each other such like using used use make makes made add
+    adds added fix fixes fixed change changes changed keep keeps kept new old
+    one two three all any some same way still even back out up down off so why
+    how because since now per instead rather through against
+    """.split()
+)
+
+_COMMIT_PATH_RE = re.compile(
+    r"[A-Za-z0-9_.@+/-]+\.(?:nix|sh|py|lua|rs|md|json|toml|lock|js|ts|c|h|"
+    r"svg|desktop|service|timer|conf|ya?ml|xml|patch)"
+)
+
+
+def _git(repo, *args):
+    return subprocess.run(
+        ["git", "-C", repo, *args], capture_output=True, text=True
+    )
+
+
+def _commit_default_repo():
+    env = os.environ.get("LLMCTL_REPO")
+    if env:
+        return env
+    if os.path.isdir("/etc/nixos/.git"):
+        return "/etc/nixos"
+    return os.getcwd()
+
+
+def _commit_tokens(text):
+    return {
+        w
+        for w in re.findall(r"[a-z0-9][a-z0-9_.+/-]{2,}", text.lower())
+        if w not in COMMIT_STOP and not w.isdigit()
+    }
+
+
+def _commit_scopes(repo, limit=400):
+    """Return (top scopes for the prompt, all scopes accepted by grading).
+
+    The repository uses a small scope vocabulary; showing its most frequent
+    entries is worth a few hundred prompt tokens because a small model then
+    picks `[servers/samba]` instead of inventing `[config]`. Any scope seen in
+    the recent log is accepted by the grader, even if it did not make the
+    prompt list.
+    """
+    r = _git(repo, "log", f"-n{limit}", "--format=%s")
+    counts = {}
+    for line in r.stdout.splitlines():
+        m = re.match(r"^\[([^\]\s][^\]]*)\]", line)
+        if m:
+            scope = m.group(1).strip().lower()
+            counts[scope] = counts.get(scope, 0) + 1
+    ordered = sorted(counts, key=lambda s: (-counts[s], s))
+    return ordered[:COMMIT_SCOPES_IN_PROMPT], set(ordered)
+
+
+def _commit_load(repo):
+    """Load the fixed cases once; missing history is a hard error, not a skip.
+
+    A silently smaller case set would change the denominator and make two runs
+    incomparable, so a rewritten history fails loudly and the case list moves
+    with it.
+    """
+    if _git(repo, "rev-parse", "--git-dir").returncode:
+        sys.exit(f"not a git repository: {repo}")
+    cases = []
+    for label, sha in COMMIT_CASES:
+        patch = _git(repo, "show", "--format=", "--patch", sha)
+        msg = _git(repo, "log", "-1", "--format=%s%n%n%b", sha)
+        if patch.returncode or msg.returncode or not patch.stdout.strip():
+            sys.exit(f"commit case missing: {label} {sha} in {repo}")
+        subject, _, body = msg.stdout.partition("\n")
+        diff = patch.stdout
+        if len(diff) > COMMIT_DIFF_CHARS:
+            diff = diff[:COMMIT_DIFF_CHARS] + "\n... [diff truncated]\n"
+        stat = _git(repo, "show", "--format=", "--numstat", sha)
+        files = []
+        for line in stat.stdout.strip().splitlines():
+            add, dele, path = line.split("\t", 2)
+            files.append(f"{path} (+{add}/-{dele})")
+        cases.append(
+            {
+                "label": label,
+                "sha": sha,
+                "diff": diff,
+                "files": files,
+                "gold_subject": subject.strip(),
+                "gold_body": body.strip(),
+            }
+        )
+    return cases
+
+
+def _commit_prompt(case, scopes, with_example=False, scopes_mode="freq"):
+    """Build the chat messages; `scopes_mode` controls the vocabulary hint.
+
+    Frequency order primed small models to reuse the first entry: three
+    different tiers wrote `[gui/pleamar]` for the GTK4 theme case, which is
+    the most frequent scope in the log but absent from that diff. `alpha`
+    keeps the vocabulary without the salience, `none` drops it entirely.
+    """
+    lines = [
+        "Repository: NixOS configuration on trantor "
+        "(Nix modules, shell scripts, Justfile).",
+        "",
+    ]
+    if scopes_mode != "none":
+        ordered = sorted(scopes) if scopes_mode == "alpha" else scopes
+        lines.append(
+            "Scopes used in this repository (vocabulary, not a suggestion — "
+            "pick the one that describes the changed files): "
+            + ", ".join(f"[{s}]" for s in ordered)
+        )
+        lines.append("")
+    lines.append("Changed files:")
+    lines += ["  " + f for f in case["files"]]
+    lines += ["", "Diff:", case["diff"]]
+    user = "\n".join(lines)
+    system = COMMIT_RULES + ("\n\n" + COMMIT_EXAMPLE if with_example else "")
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+
+def _commit_clean(text):
+    t = (text or "").strip()
+    t = re.sub(r"^```[A-Za-z0-9_-]*\s*\n", "", t)
+    t = re.sub(r"\n```\s*$", "", t)
+    t = re.sub(r"^(?:commit message|message)\s*:\s*", "", t, flags=re.I)
+    if len(t) >= 2 and t[0] == t[-1] and t[0] in "\"'":
+        t = t[1:-1].strip()
+    return t.strip()
+
+
+def _commit_parse(text):
+    lines = text.splitlines()
+    subject = next((ln.strip() for ln in lines if ln.strip()), "")
+    m = re.match(r"^\[([^\]]+)\]\s+(.+)$", subject)
+    scope = m.group(1).strip().lower() if m else None
+    rest = m.group(2).strip() if m else subject
+    idx = next((i for i, ln in enumerate(lines) if ln.strip() == subject), -1)
+    body = "\n".join(lines[idx + 1 :]).strip() if idx >= 0 else ""
+    return subject, scope, rest, body
+
+
+def _commit_grade(case, text, all_scopes):
+    """Score one reply 0-10 against the real commit and the diff.
+
+    The rubric is deliberately mechanical: a small model's message is judged
+    on conventions (format, scope), on capturing the actual subject, on a body
+    grounded in identifiers the diff added, and on not inventing paths. The
+    full reply is kept in the results file so a human (or a judge run) can
+    overrule the rubric on the cases where wording differs from history.
+    """
+    subject, scope, rest, body = _commit_parse(text)
+    notes = []
+    points = 0.0
+
+    fmt = 0.0
+    if scope:
+        fmt += 1.0
+    else:
+        notes.append("no-scope")
+    if subject and len(subject) <= 72:
+        fmt += 0.5
+    elif subject:
+        notes.append("long-subject")
+    if subject and not subject.endswith("."):
+        fmt += 0.5
+    else:
+        notes.append("subject-period")
+    if "```" in text or (text and text[:1] in "\"'" and text[-1:] == text[:1]):
+        fmt = max(0.0, fmt - 0.5)
+        notes.append("markdown-wrapped")
+    points += fmt
+
+    gold_subject = case["gold_subject"]
+    _, gold_scope, gold_rest, _ = _commit_parse(gold_subject)
+    if scope and gold_scope and scope == gold_scope:
+        points += 2.0
+    elif (
+        scope
+        and gold_scope
+        and (
+            scope.endswith("/" + gold_scope)
+            or gold_scope.endswith("/" + scope)
+            or scope.split("/")[-1] == gold_scope.split("/")[-1]
+        )
+    ):
+        points += 1.5
+        notes.append("scope-related")
+    elif scope and scope in all_scopes:
+        points += 1.0
+        notes.append("scope-known")
+    elif scope:
+        notes.append("scope-unknown")
+
+    gold_tokens = _commit_tokens(gold_rest)
+    subj_tokens = _commit_tokens(rest)
+    subj_recall = len(gold_tokens & subj_tokens) / max(1, len(gold_tokens))
+    points += 2.0 * min(1.0, subj_recall / 0.6)
+    if subj_recall < 0.3:
+        notes.append("subject-off")
+
+    body_tokens = _commit_tokens(body)
+    gold_body_tokens = _commit_tokens(case["gold_body"])
+    body_recall = len(gold_body_tokens & body_tokens) / max(
+        1, len(gold_body_tokens)
+    )
+    if body:
+        points += 0.5
+        points += 1.0 * min(1.0, body_recall / 0.25)
+    else:
+        notes.append("no-body")
+    diff_tokens = _commit_tokens(
+        "\n".join(
+            ln[1:]
+            for ln in case["diff"].splitlines()
+            if ln.startswith("+") and not ln.startswith("+++")
+        )
+    )
+    grounded = body_tokens & diff_tokens
+    if len(grounded) >= 2:
+        points += 0.5
+    else:
+        notes.append("body-thin")
+
+    mentioned = set(_COMMIT_PATH_RE.findall(text))
+    invented = {p for p in mentioned if p not in case["diff"]}
+    if invented:
+        notes.append("invented-path:" + ",".join(sorted(invented)[:2]))
+    else:
+        points += 1.0
+    overlap = len(subj_tokens & body_tokens) / max(
+        1, len(subj_tokens | body_tokens)
+    )
+    if body and overlap <= 0.8:
+        points += 1.0
+    else:
+        notes.append("body-restates-subject")
+
+    return {
+        "score": round(points, 2),
+        "notes": notes,
+        "scope": scope,
+        "subject": subject,
+        "body": body,
+        "subject_recall": round(subj_recall, 2),
+        "body_recall": round(body_recall, 2),
+    }
+
+
+def bench_commit(
+    models, repo=None, with_example=False, show=False, scopes_mode="freq"
+):
+    """Generate a commit message for nine real diffs and grade each reply.
+
+    `cache_prompt` stays off, matching the other benches: a warm prefix moves
+    the trajectory and makes repeated runs incomparable.
+    """
+    started = time.time()
+    repo = repo or _commit_default_repo()
+    cases = _commit_load(repo)
+    prompt_scopes, all_scopes = _commit_scopes(repo)
+    results = {}
+    print(
+        f"\nCommit: {len(cases)} диффов, {len(models)} моделей, repo={repo}"
+        + (" (с example)" if with_example else "")
+    )
+    for model in models:
+        results[model] = []
+        total = 0.0
+        print(f"\n== {model}")
+        for case in cases:
+            messages = _commit_prompt(
+                case, prompt_scopes, with_example, scopes_mode
+            )
+            try:
+                r = chat(
+                    model,
+                    messages,
+                    max_tokens=COMMIT_MAX_TOKENS,
+                    cache=False,
+                    extra={"chat_template_kwargs": {"enable_thinking": False}},
+                )
+            except Exception as exc:  # noqa: BLE001
+                print(f"  {case['label']:16s} FAILED {exc}")
+                results[model].append(
+                    {"label": case["label"], "error": str(exc), "score": 0.0}
+                )
+                continue
+            text = _commit_clean(r["content"])
+            g = _commit_grade(case, text, all_scopes)
+            total += g["score"]
+            t = r["timings"]
+            tps = t.get("predicted_per_second") or 0.0
+            print(
+                f"  {case['label']:16s} {g['score']:4.1f}  "
+                f"{r['wall']:5.1f}s {tps:5.1f}t/s  "
+                f"{g['subject'][:56]}"
+            )
+            if show:
+                print(f"    gold: {case['gold_subject']}")
+                print("    " + text.replace("\n", "\n    "))
+                print(f"    notes: {', '.join(g['notes']) or '—'}")
+            results[model].append(
+                {
+                    "label": case["label"],
+                    "sha": case["sha"],
+                    "score": g["score"],
+                    "notes": g["notes"],
+                    "scope": g["scope"],
+                    "subject": g["subject"],
+                    "body": g["body"],
+                    "subject_recall": g["subject_recall"],
+                    "body_recall": g["body_recall"],
+                    "wall": round(r["wall"], 2),
+                    "prompt_n": t.get("prompt_n"),
+                    "predicted_n": t.get("predicted_n"),
+                    "predicted_per_second": round(tps, 1),
+                    "finish": r["finish"],
+                }
+            )
+        results[model].append(
+            {"total": round(total, 2), "of": len(cases) * 10}
+        )
+        print(f"  -> {total:.1f}/{len(cases) * 10}")
+    _save_results(
+        "commit",
+        models,
+        started,
+        results,
+        extra={
+            "repo": repo,
+            "example": with_example,
+            "scopes": scopes_mode,
+        },
+    )
+    return results
+
+
+# ------------------------------------------------------------- commit command
+
+COMMIT_DEFAULT_MODEL = "qwen3-vl-8b-abliterated"
+
+
+def _commit_diff(repo, staged):
+    """Return (diff, files) for the message request; staged-only or HEAD."""
+    base = ["--cached"] if staged else ["HEAD"]
+    diff = _git(repo, "diff", *base)
+    if not diff.stdout.strip():
+        mode = "staged" if staged else "working tree"
+        sys.exit(f"no {mode} changes to describe (git add first)")
+    stat = _git(repo, "diff", "--numstat", *base)
+    files = []
+    for line in stat.stdout.strip().splitlines():
+        add, dele, path = line.split("\t", 2)
+        files.append(f"{path} (+{add}/-{dele})")
+    untracked = _git(repo, "ls-files", "--others", "--exclude-standard")
+    if untracked.stdout.strip():
+        print(
+            "note: untracked files are not in the diff: "
+            + ", ".join(untracked.stdout.split()[:5]),
+            file=sys.stderr,
+        )
+    return diff.stdout, files
+
+
+def cmd_commit(args):
+    repo = args.repo or os.getcwd()
+    if _git(repo, "rev-parse", "--git-dir").returncode:
+        sys.exit(f"not a git repository: {repo}")
+    if args.apply and not args.staged:
+        sys.exit(
+            "--apply commits the index; pass --staged so the message "
+            "describes exactly what will be committed"
+        )
+    # `auto` keeps the resident model, so a commit message does not evict the
+    # tier the user is actually working with; a cold fleet falls back to the
+    # small writer instead of loading the expensive one.
+    if args.model == "auto":
+        live = running()
+        model = live[0]["model"] if live else COMMIT_DEFAULT_MODEL
+    else:
+        model = resolve(args.model) or args.model
+    diff, files = _commit_diff(repo, args.staged)
+    if len(diff) > COMMIT_DIFF_CHARS:
+        diff = diff[:COMMIT_DIFF_CHARS] + "\n... [diff truncated]\n"
+    scopes, _ = _commit_scopes(repo)
+    messages = _commit_prompt(
+        {"diff": diff, "files": files},
+        scopes,
+        args.example,
+        args.scopes,
+    )
+    try:
+        r = chat(
+            model,
+            messages,
+            max_tokens=args.max,
+            cache=True,
+            extra={"chat_template_kwargs": {"enable_thinking": False}},
+        )
+    except Exception as exc:  # noqa: BLE001
+        sys.exit(f"model request failed: {exc}")
+    text = _commit_clean(r["content"])
+    print(text)
+    if args.verbose:
+        t = r["timings"]
+        print(
+            f"({model}: {r['wall']:.1f}s, {t.get('prompt_n')} prompt, "
+            f"{t.get('predicted_n')} out, "
+            f"{t.get('predicted_per_second') or 0:.1f} tok/s)",
+            file=sys.stderr,
+        )
+    if args.apply:
+        if _git(repo, "diff", "--cached", "--quiet").returncode == 0:
+            sys.exit("nothing staged; git add the files to commit first")
+        proc = subprocess.run(
+            ["git", "-C", repo, "commit", "-F", "-"],
+            input=text,
+            text=True,
+        )
+        sys.exit(proc.returncode)
+
+
 # ----------------------------------------------------------------------- menu
 
 
@@ -1170,6 +1673,7 @@ def cmd_menu(_args):
         "bench chem",
         "bench lean",
         "bench fp",
+        "bench commit",
     ]
     if not shutil.which("fzf"):
         sys.exit("fzf not installed")
@@ -1195,6 +1699,11 @@ def cmd_menu(_args):
         bench_lean(select_models(None))
     elif sel == "bench fp":
         bench_fp(select_models(None))
+    elif sel == "bench commit":
+        bench_commit(
+            [m for m in COMMIT_MODELS if m in model_names()],
+            show=True,
+        )
 
 
 def select_models(spec):
@@ -1233,8 +1742,34 @@ def main():
     # question off mid-thinking and return an empty `content`.
     s.add_argument("--max", type=int, default=8192)
     s.add_argument("--temp", type=float, default=0.0)
+    s = sub.add_parser("commit", help="commit message по git diff")
+    s.add_argument(
+        "--staged", action="store_true", help="описывать только индекс"
+    )
+    s.add_argument(
+        "--model",
+        default="auto",
+        help="модель; auto = резидент llama-swap, иначе дефолт",
+    )
+    s.add_argument("--repo", help="репозиторий (по умолчанию cwd)")
+    s.add_argument(
+        "--apply",
+        action="store_true",
+        help="сразу git commit (требует --staged)",
+    )
+    s.add_argument(
+        "--example", action="store_true", help="добавить one-shot пример"
+    )
+    s.add_argument("--max", type=int, default=COMMIT_MAX_TOKENS)
+    s.add_argument("--verbose", action="store_true", help="тайминги в stderr")
+    s.add_argument(
+        "--scopes",
+        choices=["freq", "alpha", "none"],
+        default="freq",
+        help="порядок списка scopes (freq/alpha) или без него",
+    )
     s = sub.add_parser("bench", help="бенчмарки")
-    s.add_argument("kind", choices=["chem", "lean", "fp", "all"])
+    s.add_argument("kind", choices=["chem", "lean", "fp", "commit", "all"])
     s.add_argument("--models", help="список через запятую (имя или alias)")
     s.add_argument(
         "--prompt", action="store_true", help="chem: с system prompt"
@@ -1243,6 +1778,26 @@ def main():
         "--thinking",
         action="store_true",
         help="fp: оставить раздумья модели (медленно, но честно)",
+    )
+    s.add_argument(
+        "--repo",
+        help="commit: git-репозиторий с историей (по умолчанию /etc/nixos)",
+    )
+    s.add_argument(
+        "--example",
+        action="store_true",
+        help="commit: добавить one-shot пример в system prompt",
+    )
+    s.add_argument(
+        "--show",
+        action="store_true",
+        help="commit: печатать ответ, gold и заметки",
+    )
+    s.add_argument(
+        "--scopes",
+        choices=["freq", "alpha", "none"],
+        default="freq",
+        help="commit: порядок списка scopes (freq/alpha) или без него",
     )
     sub.add_parser("menu", help="интерактивное меню (fzf)")
 
@@ -1257,16 +1812,29 @@ def main():
         cmd_unload(args)
     elif args.cmd == "ask":
         cmd_ask(args)
+    elif args.cmd == "commit":
+        cmd_commit(args)
     elif args.cmd == "menu":
         cmd_menu(args)
     elif args.cmd == "bench":
-        models = select_models(args.models)
+        if args.kind == "commit" and not args.models:
+            models = [m for m in COMMIT_MODELS if m in model_names()]
+        else:
+            models = select_models(args.models)
         if args.kind in ("chem", "all"):
             bench_chem(models, use_prompt=args.prompt)
         if args.kind in ("lean", "all"):
             bench_lean(models)
         if args.kind in ("fp", "all"):
             bench_fp(models, thinking=args.thinking)
+        if args.kind == "commit":
+            bench_commit(
+                models,
+                repo=args.repo,
+                with_example=args.example,
+                show=args.show,
+                scopes_mode=args.scopes,
+            )
 
 
 if __name__ == "__main__":
