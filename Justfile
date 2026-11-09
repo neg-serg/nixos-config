@@ -740,3 +740,8 @@ webstep *ARGS:
 # drivers on a nixpkgs bump.
 rct32-mesa:
     nix build nixpkgs#pkgsi686Linux.mesa --out-link ~/.local/state/rct32-mesa
+
+# Reproducible RCT Classic setup: 32-bit Mesa GC root + Steam launch options.
+# Steam must be closed; see scripts/dev/steam-rct32.sh.
+rct32-setup:
+    bash "{{repo_root}}/scripts/dev/steam-rct32.sh"

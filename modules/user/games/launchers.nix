@@ -86,12 +86,12 @@ in
         # of steam's i686 multiPkgs (mesa/llvm, NetworkManager, glibc-locales,
         # ~1.1 GiB NAR / ~0.5 GiB on ZFS): the 32-bit side gets only glibc and
         # libglvnd. 32-bit games therefore need graphics from outside the
-        # closure: `just rct32-mesa` builds pkgsi686Linux.mesa into the user GC
-        # root ~/.local/state/rct32-mesa, and the game's Steam launch options
-        # point LD_LIBRARY_PATH/LIBGL_DRIVERS_PATH at it (llvmpipe plus
-        # PROTON_USE_WINED3D, so no 32-bit Vulkan driver is needed). The system
-        # closure stays free of the 32-bit graphics stack; RCT Classic
-        # (app 683900) runs this way.
+        # closure: `just rct32-setup` builds pkgsi686Linux.mesa into the user GC
+        # root ~/.local/state/rct32-mesa and writes the matching Steam launch
+        # options, which point LD_LIBRARY_PATH/LIBGL_DRIVERS_PATH at it
+        # (llvmpipe plus PROTON_USE_WINED3D, so no 32-bit Vulkan driver is
+        # needed). The system closure stays free of the 32-bit graphics stack;
+        # RCT Classic (app 683900) runs this way.
         buildFHSEnv =
           args:
           pkgs.buildFHSEnv (
