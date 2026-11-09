@@ -47,6 +47,15 @@ in
       OLLAMA_KEEP_ALIVE = "5m";
     };
 
+    # The bundled llama.cpp server logs every slot operation at INFO even when
+    # idle ("slot get_availabl", "srv update_slots: all slots are idle"):
+    # ~13.6k lines/day, enough to trip journald's RateLimitBurst ("Suppressed N
+    # messages from ollama.service"). Warnings and errors are what this unit
+    # must surface, so cap the journal at warning. LogLevelMax only has an
+    # effect on system units: journald reads /run/systemd/units/log-level-max:<unit>,
+    # which the user manager cannot write (verified 2026-11-10).
+    systemd.services.ollama.serviceConfig.LogLevelMax = "warning";
+
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.enable (lib.mkAfter [ 11434 ]);
   };
 }
