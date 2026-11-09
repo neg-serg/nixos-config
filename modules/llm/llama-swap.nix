@@ -3,7 +3,7 @@
 # it (or proxies to it) and shuts the previously running one down; an idle
 # backend is unloaded after `globalTTL` (60 s) or the model's own `ttl`. Small
 # models fit the 16 GB card whole; the RAM tiers (gpt-oss-120b, qwen3.8-flash)
-# mmap most weights from /zero; `igpu` is the APU tier. The 8B vision unit on
+# mmap most weights from /zero. The 8B vision unit on
 # :8080 is manual and separate.
 # Clients use http://127.0.0.1:9292/v1.
 #
@@ -278,25 +278,6 @@ let
       --host 127.0.0.1 --port ''${PORT} \
       -c 32768 -np 1 --flash-attn on --fit off --reasoning off \
       --cache-type-k q4_0 --cache-type-v q4_0 --jinja
-  '';
-
-  # Spark-X2.6-4B on the iGPU (Radeon 610M, Granite Ridge, 2 CU) — the
-  # smallest tier: no dGPU VRAM at all, so it can serve while the 16 GB card is
-  # busy. Measured on 2026-11-05 with this exact GGUF: decode 10.9 tok/s, but
-  # prefill is ~10x slower than the CPU build (73 vs 742 tok/s) — the APU is
-  # bandwidth-bound on shared DDR5 and RADV has no coopmat path for RDNA2.
-  # Hence 8k, not 64k: a 20k prompt (the agent harness) would cost ~4.5 min
-  # of prefill here. Use it for short-output work — labels, JSON
-  # extraction, tagging — not for prompt-heavy requests. Vulkan1 is the 610M;
-  # Vulkan0 is the RX 9070 XT (`llama-server --list-devices`). `-t 4` caps
-  # host-side work only, once the layers live on the APU. The game guard still
-  # unloads this model while a game runs (it competes for the same memory
-  # bandwidth).
-  igpu = ''
-    ${llamaVulkan} --device Vulkan1 -ngl 99 \
-      -m ${modelDir}/abliterated/Spark-X2.6-4B-abliterated-Q4_K_M.gguf \
-      -t 4 -c 8192 -np 1 --jinja --reasoning off \
-      --host 127.0.0.1 --port ''${PORT}
   '';
 
   # ArduinoLLM-7B v2 (Q5_K_M, Apache-2.0) — the embedded tier: Qwen2.5-Coder-7B
@@ -603,14 +584,6 @@ in
             "ud"
           ];
         };
-        "igpu" = {
-          cmd = igpu;
-          aliases = [
-            "spark-igpu"
-            "cheap-igpu"
-          ];
-        };
-
         "arduinollm-7b" = {
           cmd = embedded7b;
           # Specialist, not a daily driver: a longer TTL only wastes the card.

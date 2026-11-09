@@ -71,15 +71,6 @@ CATALOG = {
         "lean": "-",
         "fp": "4.2/6",
     },
-    "igpu": {
-        "aliases": ["spark-igpu", "cheap-igpu"],
-        "role": "4B on the iGPU, no dGPU VRAM",
-        "ctx": "8k",
-        "size": "2.6 GB",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
-    },
     "gpt-oss-120b-abliterated": {
         "aliases": ["gpt-oss-120", "big"],
         "role": "120B-A5B MoE, RAM tier",
