@@ -20,6 +20,12 @@
     };
   };
 
+  # Userspace console on the login VTs: kmscon takes over the autovt VTs
+  # (tty2-tty6) from the in-kernel console. tty1 stays with greetd and the log
+  # TTYs stay kernel consoles — see modules/system/kmscon.nix for the reasons.
+  options.features.system.kmscon.enable =
+    mkBool "kmscon userspace console instead of agetty on the autovt VTs" true;
+
   options.features.virt = {
     docker.enable = mkBool "enable docker/podman virtualization" false;
     libvirtd.enable = mkBool "enable libvirtd (KVM/QEMU) virtualization" false;
