@@ -1653,6 +1653,8 @@ def cmd_commit(args):
     repo = args.repo or os.getcwd()
     if _git(repo, "rev-parse", "--git-dir").returncode:
         sys.exit(f"not a git repository: {repo}")
+    if args.all and args.staged:
+        sys.exit("--all and --staged are mutually exclusive")
     if args.apply:
         print(
             "note: committing is the default now; --apply is redundant",
@@ -1666,6 +1668,24 @@ def cmd_commit(args):
         model = live[0]["model"] if live else COMMIT_DEFAULT_MODEL
     else:
         model = resolve(args.model) or args.model
+    new_files = []
+    if args.all:
+        # `git diff HEAD` cannot see untracked files: intent-to-add puts them
+        # in the index with an empty blob so the message describes them too.
+        # The real staging happens right before the commit; --dry-run restores
+        # the files to untracked instead of leaving the index touched.
+        raw = _git(
+            repo, "ls-files", "-z", "--others", "--exclude-standard"
+        ).stdout
+        new_files = [p for p in raw.split("\0") if p]
+        if new_files:
+            add = subprocess.run(
+                ["git", "-C", repo, "add", "-N", "--", *new_files],
+                capture_output=True,
+                text=True,
+            )
+            if add.returncode:
+                sys.exit(f"git add -N failed: {add.stderr.strip()}")
     diff, files = _commit_diff(repo, args.staged)
     if len(diff) > COMMIT_DIFF_CHARS:
         diff = diff[:COMMIT_DIFF_CHARS] + "\n... [diff truncated]\n"
@@ -1714,21 +1734,28 @@ def cmd_commit(args):
             file=sys.stderr,
         )
     if args.dry_run:
+        if new_files:
+            subprocess.run(
+                ["git", "-C", repo, "reset", "-q", "--", *new_files],
+                check=False,
+            )
         return
     # The message describes `git diff HEAD` (or the index with --staged), so
     # stage exactly the tracked working-tree changes it describes. Untracked
-    # files are reported by _commit_diff and never swept in by `git add -u`.
+    # files are reported by _commit_diff and never swept in by `git add -u`;
+    # --all adds them explicitly with `git add -A`.
     if args.staged:
         if _git(repo, "diff", "--cached", "--quiet").returncode == 0:
             sys.exit("nothing staged; git add the files to commit first")
     else:
+        stage = ["add", "-A"] if args.all else ["add", "-u"]
         add = subprocess.run(
-            ["git", "-C", repo, "add", "-u"],
+            ["git", "-C", repo, *stage],
             capture_output=True,
             text=True,
         )
         if add.returncode:
-            sys.exit(f"git add -u failed: {add.stderr.strip()}")
+            sys.exit(f"git {stage[0]} failed: {add.stderr.strip()}")
     proc = subprocess.run(
         ["git", "-C", repo, "commit", "-F", "-"],
         input=text,
@@ -1839,6 +1866,11 @@ def main():
     s = sub.add_parser("commit", help="commit message по git diff и коммит")
     s.add_argument(
         "--staged", action="store_true", help="описывать только индекс"
+    )
+    s.add_argument(
+        "--all",
+        action="store_true",
+        help="включить новые (untracked) файлы, как git commit -a + новые",
     )
     s.add_argument(
         "--model",

@@ -65,11 +65,16 @@ quality to the 8B but does not touch VRAM.
 ```
 llmctl commit                        # git diff HEAD, message + commit
 llmctl commit --dry-run              # print the message only
+llmctl commit --all                  # include new (untracked) files
 llmctl commit --staged --verbose     # commit the index
 llmctl commit --model qwen3.8-27b-abliterated
 llmctl bench commit --models qwen3-vl-8b-abliterated --example
 llmctl bench commit --models tiny --show --scopes alpha
 ```
+
+From the repository root, `just commit` wraps the same call (arguments pass through, so
+`just commit --all` and `just commit --dry-run` work); it uses the repo copy of `llmctl.py`, so
+the command is current even before the next system switch.
 
 Run results are JSON under `~/.local/state/llmctl/commit-*.json` (for this session's runs, under
 `/tmp/llm-bench-commit/...` because of the agent file sandbox). Every reply is stored with its

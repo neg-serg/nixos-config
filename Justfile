@@ -167,6 +167,13 @@ stats:
 stats-check:
     bash "{{repo_root}}/scripts/dev/repo-stats.sh" --check "{{repo_root}}"
 
+# Commit the pending tree with a message written by the local model
+# (`llmctl commit`): message and commit in one step, tracked changes only.
+# `just commit --all` also stages new (untracked) files; `--dry-run` prints
+# the message without committing.
+commit *args:
+    python3 "{{repo_root}}/modules/llm/llmctl.py" commit --repo "{{repo_root}}" {{args}}
+
 lint:
     set -eu
     statix check -- .
