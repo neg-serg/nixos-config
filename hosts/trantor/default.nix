@@ -79,7 +79,8 @@
   features.mail.mbsync.enable = false;
   features.net.zapret2.enable = true; # Zapret2 DPI bypass (nfqws2)
   features.net.rknDomains.enable = true; # RKN blocklist -> zapret2 hostlist
-  features.net.netHealth.enable = true; # Periodic net/DNS/zapret2 health check with self-heal + ntfy
+  features.net.netHealth.enable = true; # Periodic net/DNS/zapret2 health check with self-heal
+  features.net.ntfy.enable = false; # local ntfy push server (:2586) off; net-health still checks, transitions go to journald
   features.net.ceno.enable = true; # Ceno/Ouinet P2P client (censorship-circumvention node)
   features.net.proxy.enable = true; # sing-box SOCKS5 proxy (+ xray.service), no full-TUN mode
   features.virt.docker.enable = true; # Podman + docker-compat stack (for the Ceno/Ouinet container)
@@ -95,12 +96,14 @@
   features.virt.libvirtd.enable = false;
   # Auto-rollout: the watcher in modules/user/nix-maid/sys/user-services/
   # rollout-watch.nix deploys new commits every two minutes through
-  # nixos-agent-rollout and reports to ntfy + desktop + Telegram. Changes under
+  # nixos-agent-rollout and reports to desktop + Telegram (and to ntfy when
+  # features.net.ntfy is on). Changes under
   # secrets/, the VPN module and modules/security/ only produce a "switch by
   # hand" report instead of being applied.
   features.system.rolloutWatch = {
     enable = true;
-    ntfyUrl = "http://127.0.0.1:2586/system";
+    # Only reported while the local ntfy server (features.net.ntfy) exists.
+    ntfyUrl = lib.mkIf config.features.net.ntfy.enable "http://127.0.0.1:2586/system";
     telegramSender = lib.mkIf config.trantor.telegram.enable config.trantor.telegram.sender;
   };
   # Weekly bump of the inputs that point at neg's own repositories: the user

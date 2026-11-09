@@ -19,7 +19,11 @@
       nixDaemonProxy.enable = mkBool "route nix-daemon fetches (substituters, flake inputs) through the local SOCKS5 proxy" true;
       zapret2.enable = mkBool "enable Zapret2 DPI bypass via nfqueue (requires zapret2 package)" false;
       rknDomains.enable = mkBool "enable RKN domain blocklist fetcher with daily timer" false;
-      netHealth.enable = mkBool "enable periodic network/DNS/zapret2 health check with self-heal and ntfy push" false;
+      netHealth.enable = mkBool "enable periodic network/DNS/zapret2 health check with self-heal (notifications only when features.net.ntfy is on)" false;
+      # Self-hosted ntfy server (:2586) for LAN push notifications. net-health
+      # and rollout-watch only post while this is on; the health check itself
+      # keeps running either way.
+      ntfy.enable = mkBool "enable the self-hosted ntfy push-notification server (LAN :2586)" false;
       ceno.enable = mkBool "enable Ceno/Ouinet P2P client (censorship-circumvention node, podman container)" false;
       bbrv3.enable = mkBool "enable TCP BBRv3 congestion control (kernel >= 6.18)" true;
     };
