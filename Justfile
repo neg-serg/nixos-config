@@ -730,3 +730,13 @@ wellum-avr:
 # Example: just webstep run --goal "add album Rumours to Alex" --app-id vivaldi-stable
 webstep *ARGS:
     "{{repo_root}}/scripts/dev/webstep" {{ARGS}}
+
+# --- Steam 32-bit graphics --------------------------------------------------------
+
+# Build and pin the out-of-closure 32-bit Mesa that Steam launch options use for
+# 32-bit games (the system ships no 32-bit graphics drivers on purpose; see
+# modules/user/games/launchers.nix). Writes the GC root at
+# ~/.local/state/rct32-mesa — re-run only after the root is gone or to refresh
+# drivers on a nixpkgs bump.
+rct32-mesa:
+    nix build nixpkgs#pkgsi686Linux.mesa --out-link ~/.local/state/rct32-mesa
