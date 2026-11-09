@@ -83,6 +83,36 @@
 #   30.5 tok/s at a 9.5k prompt). The old "32k spills" claim came from a
 #   measurement taken while another model was resident. `--reasoning off` is
 #   mandatory — without it the reply carries an empty `content`.
+# - Quant-source comparison (2026-11-09): the same tier built by three
+#   quantizers, measured with the same harness (chem 6 tasks/13 values, fp 6
+#   cases, two repetitions each, temperature 0, prompt cache off, one model
+#   resident at a time, no game running):
+#
+#   | weights                                     | file  | ctx | VRAM | chem  | fp   | tok/s |
+#   | ------------------------------------------- | ----- | --- | ---- | ----- | ---- | ----- |
+#   | Qwen3.8-27B-abliterated IQ3_S (current)     | 10.9G | 32k | 14.0 | 12/13 | 3.70 | 39.4  |
+#   | orcarouter-27B-Uncensored IQ3_M (bartowski) | 12.9G | 16k | 15.5 | 13/13 | 3.30 | 35.1  |
+#   | Qwen3.8-27B UD-IQ3_S (unsloth, aligned)     | 11.2G | 32k | 14.0 | 13/13 | 4.20 | 38.8  |
+#
+#   Both repetitions scored identically, so the deltas are reproducible rather
+#   than sampling noise; `tok/s` is a warm 294-token answer after the load.
+#   The chem gap is a single graded value on P6 (phosphorus): the current
+#   quant drops the 3.87 factor that both others keep. fp runs the other way —
+#   the aligned unsloth build leads by 0.5, i.e. abliteration costs planning
+#   quality. bartowski's IQ3_M is the weakest trade: 1.5 GiB more VRAM than
+#   unsloth at half the context (at 32k it filled 15.8 of 15.9 GiB and the
+#   backend then died on allocation, surfacing as `proxy error: EOF`/502), no
+#   chem gain over the same-size unsloth build and 0.4 less fp. Only
+#   bartowski's build is uncensored (the orcarouter finetune); unsloth ships no
+#   abliterated 27B, so the fleet keeps the current IQ3_S — the two alternatives
+#   stay as slots (`bart27b`, `ud`) for re-measuring, not as defaults.
+# - The game guard matches any argv carrying a `.exe` token, so a command that
+#   names a game file (`pgrep -f RCTClassic.exe`) keeps the guard latched in
+#   "game detected" by itself: it then unloads the backend every 20 s and every
+#   local-model request dies with 502. Use a bracketed pattern
+#   (`pgrep -f 'RCT[C]lassic'`) — or any spelling without the literal token —
+#   when benching or driving models while Steam is open.
+#   The detection itself lives in `modules/llm/llama-swap.nix`.
 # - `gpt-oss-120b-abliterated` needs `--reasoning-effort low`: at the default
 #   effort it spends the whole token budget on reasoning and returns empty
 #   content. With low effort it keeps tools, JSON and arithmetic intact.
