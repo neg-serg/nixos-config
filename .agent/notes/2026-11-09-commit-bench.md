@@ -63,9 +63,10 @@ message plus a one-time 8 s load. For the best possible text at ~5-6 s warm, pas
 quality to the 8B but does not touch VRAM.
 
 ```
-llmctl commit                        # git diff HEAD, print message
-llmctl commit --staged --verbose
-llmctl commit --staged --model qwen3.8-27b-abliterated --apply
+llmctl commit                        # git diff HEAD, message + commit
+llmctl commit --dry-run              # print the message only
+llmctl commit --staged --verbose     # commit the index
+llmctl commit --model qwen3.8-27b-abliterated
 llmctl bench commit --models qwen3-vl-8b-abliterated --example
 llmctl bench commit --models tiny --show --scopes alpha
 ```

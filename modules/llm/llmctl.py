@@ -2,9 +2,9 @@
 """llmctl — one entry point for the local llama-swap fleet.
 
 Subcommands cover the daily loop: see what is loaded, switch models, ask a
-one-shot question, turn a git diff into a commit message (`llmctl commit`), and
-run the chemistry/Lean/fp/commit benchmarks. The model catalog carries the
-measured scores so `llmctl models` answers "which one for what".
+one-shot question, turn a git diff into a commit (`llmctl commit`), and run the
+chemistry/Lean/fp/commit benchmarks. The model catalog carries the measured
+scores so `llmctl models` answers "which one for what".
 """
 
 import argparse
@@ -1272,6 +1272,32 @@ def _commit_scopes(repo, limit=400):
     return ordered[:COMMIT_SCOPES_IN_PROMPT], set(ordered)
 
 
+_COMMIT_FILE_STAT_RE = re.compile(r"^(.*) \(\+\d+/-\d+\)$")
+
+
+def _commit_path_scopes(repo, files):
+    """Scopes of recent commits that touched the changed paths, best first.
+
+    The vocabulary says which scopes exist, not which one this diff belongs
+    to, and small tiers pick the most salient entry (a crawl4ai unit came back
+    as `[llm]`). The per-path history is the missing signal: the commit that
+    introduced the file names its area. Grading is untouched — the bench feeds
+    fixed diffs through `_commit_prompt` without this hint.
+    """
+    counts = {}
+    for item in files:
+        m = _COMMIT_FILE_STAT_RE.match(item)
+        path = m.group(1) if m else item
+        log = _git(repo, "log", "-5", "--format=%s", "--", path)
+        for subject in log.stdout.splitlines():
+            sm = re.match(r"^\[([^\]]+)\]", subject)
+            if sm:
+                scope = sm.group(1).strip().lower()
+                counts[scope] = counts.get(scope, 0) + 1
+    ordered = sorted(counts, key=lambda s: (-counts[s], s))
+    return ordered[:3]
+
+
 def _commit_load(repo):
     """Load the fixed cases once; missing history is a hard error, not a skip.
 
@@ -1309,13 +1335,18 @@ def _commit_load(repo):
     return cases
 
 
-def _commit_prompt(case, scopes, with_example=False, scopes_mode="freq"):
+def _commit_prompt(
+    case, scopes, with_example=False, scopes_mode="freq", path_scopes=None
+):
     """Build the chat messages; `scopes_mode` controls the vocabulary hint.
 
     Frequency order primed small models to reuse the first entry: three
     different tiers wrote `[gui/pleamar]` for the GTK4 theme case, which is
     the most frequent scope in the log but absent from that diff. `alpha`
     keeps the vocabulary without the salience, `none` drops it entirely.
+
+    `path_scopes` is the daily-use hint from `_commit_path_scopes`; the bench
+    leaves it None so its measured prompts stay reproducible.
     """
     lines = [
         "Repository: NixOS configuration on trantor "
@@ -1328,6 +1359,13 @@ def _commit_prompt(case, scopes, with_example=False, scopes_mode="freq"):
             "Scopes used in this repository (vocabulary, not a suggestion — "
             "pick the one that describes the changed files): "
             + ", ".join(f"[{s}]" for s in ordered)
+        )
+        lines.append("")
+    if path_scopes:
+        lines.append(
+            "Commits that touched the changed files used these scopes — "
+            "prefer the closest one: "
+            + ", ".join(f"[{s}]" for s in path_scopes)
         )
         lines.append("")
     lines.append("Changed files:")
@@ -1360,6 +1398,32 @@ def _commit_parse(text):
     idx = next((i for i, ln in enumerate(lines) if ln.strip() == subject), -1)
     body = "\n".join(lines[idx + 1 :]).strip() if idx >= 0 else ""
     return subject, scope, rest, body
+
+
+def _commit_shorten(model, messages, text, subject, max_tokens):
+    """One repair round when the subject breaks the 72-character rule.
+
+    The 8B tier overshoots by a few characters on multi-topic diffs (74 for
+    the crawl4ai split proxy) even though the rule is in the system prompt;
+    feeding the draft back with the measured length is cheaper than making
+    every caller re-read and edit the subject.
+    """
+    ask = (
+        messages[1]["content"]
+        + "\n\nYour draft:\n"
+        + text
+        + f"\n\nThe first line is {len(subject)} characters long; the rule is "
+        "at most 72. Rewrite the whole message with the same scope and meaning, "
+        "a shorter first line, and a 2-5 sentence body. Return only the message."
+    )
+    r = chat(
+        model,
+        [messages[0], {"role": "user", "content": ask}],
+        max_tokens=max_tokens,
+        cache=True,
+        extra={"chat_template_kwargs": {"enable_thinking": False}},
+    )
+    return _commit_clean(r["content"])
 
 
 def _commit_grade(case, text, all_scopes):
@@ -1589,10 +1653,10 @@ def cmd_commit(args):
     repo = args.repo or os.getcwd()
     if _git(repo, "rev-parse", "--git-dir").returncode:
         sys.exit(f"not a git repository: {repo}")
-    if args.apply and not args.staged:
-        sys.exit(
-            "--apply commits the index; pass --staged so the message "
-            "describes exactly what will be committed"
+    if args.apply:
+        print(
+            "note: committing is the default now; --apply is redundant",
+            file=sys.stderr,
         )
     # `auto` keeps the resident model, so a commit message does not evict the
     # tier the user is actually working with; a cold fleet falls back to the
@@ -1611,6 +1675,7 @@ def cmd_commit(args):
         scopes,
         args.example,
         args.scopes,
+        _commit_path_scopes(repo, files),
     )
     try:
         r = chat(
@@ -1623,7 +1688,23 @@ def cmd_commit(args):
     except Exception as exc:  # noqa: BLE001
         sys.exit(f"model request failed: {exc}")
     text = _commit_clean(r["content"])
-    print(text)
+    subject = _commit_parse(text)[0]
+    if len(subject) > 72:
+        try:
+            fixed = _commit_shorten(model, messages, text, subject, args.max)
+        except Exception as exc:  # noqa: BLE001
+            print(f"note: shorten retry failed: {exc}", file=sys.stderr)
+        else:
+            fixed_subject = _commit_parse(fixed)[0]
+            if fixed_subject and len(fixed_subject) <= 72:
+                text = fixed
+            else:
+                print(
+                    f"note: subject still {len(fixed_subject)} chars "
+                    "(rule: at most 72)",
+                    file=sys.stderr,
+                )
+    print(text, flush=True)
     if args.verbose:
         t = r["timings"]
         print(
@@ -1632,15 +1713,28 @@ def cmd_commit(args):
             f"{t.get('predicted_per_second') or 0:.1f} tok/s)",
             file=sys.stderr,
         )
-    if args.apply:
+    if args.dry_run:
+        return
+    # The message describes `git diff HEAD` (or the index with --staged), so
+    # stage exactly the tracked working-tree changes it describes. Untracked
+    # files are reported by _commit_diff and never swept in by `git add -u`.
+    if args.staged:
         if _git(repo, "diff", "--cached", "--quiet").returncode == 0:
             sys.exit("nothing staged; git add the files to commit first")
-        proc = subprocess.run(
-            ["git", "-C", repo, "commit", "-F", "-"],
-            input=text,
+    else:
+        add = subprocess.run(
+            ["git", "-C", repo, "add", "-u"],
+            capture_output=True,
             text=True,
         )
-        sys.exit(proc.returncode)
+        if add.returncode:
+            sys.exit(f"git add -u failed: {add.stderr.strip()}")
+    proc = subprocess.run(
+        ["git", "-C", repo, "commit", "-F", "-"],
+        input=text,
+        text=True,
+    )
+    sys.exit(proc.returncode)
 
 
 # ----------------------------------------------------------------------- menu
@@ -1742,7 +1836,7 @@ def main():
     # question off mid-thinking and return an empty `content`.
     s.add_argument("--max", type=int, default=8192)
     s.add_argument("--temp", type=float, default=0.0)
-    s = sub.add_parser("commit", help="commit message по git diff")
+    s = sub.add_parser("commit", help="commit message по git diff и коммит")
     s.add_argument(
         "--staged", action="store_true", help="описывать только индекс"
     )
@@ -1753,9 +1847,14 @@ def main():
     )
     s.add_argument("--repo", help="репозиторий (по умолчанию cwd)")
     s.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="только напечатать сообщение, ничего не коммитить",
+    )
+    s.add_argument(
         "--apply",
         action="store_true",
-        help="сразу git commit (требует --staged)",
+        help="устарело: коммит теперь по умолчанию",
     )
     s.add_argument(
         "--example", action="store_true", help="добавить one-shot пример"
