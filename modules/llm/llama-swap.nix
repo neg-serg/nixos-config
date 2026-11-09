@@ -244,6 +244,42 @@ let
       --cache-type-k q4_0 --cache-type-v q4_0 --jinja
   '';
 
+  # Same tier, different quantizer: bartowski's IQ3_M of the orcarouter
+  # uncensored Qwen3.8-27B (13.9 GB file, i.e. ~18% more bits than the IQ3_S
+  # above), kept as the second half of the quant-source comparison. Flags are
+  # identical to `qwen38` except the context: at 32k this file filled the card
+  # to 15.8 of 15.9 GiB next to the desktop and the always-on fim (:8012) and
+  # reranker (:8013) servers, and the next start then died on allocation —
+  # llama-swap surfaced it as `proxy error: EOF` / 502 on every other request
+  # (observed 2026-11-09). 16k keeps the start reliable and does not touch the
+  # benchmark: the chem and fp prompts are a few hundred tokens.
+  #   llmctl bench chem --models qwen3.8-27b-abliterated,qwen3.8-27b-bartowski
+  # `llmctl unload` before any llama-bench run: two models on the 16 GB card
+  # break the numbers (see the qwen38 comment above).
+  qwen38bart = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/bartowski/orcarouter_Qwen3.8-27B-Uncensored-IQ3_M.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 16384 -np 1 --flash-attn on --fit off --reasoning off \
+      --cache-type-k q4_0 --cache-type-v q4_0 --jinja
+  '';
+
+  # Third quant of the same tier: unsloth's UD-IQ3_S of the *base* (aligned)
+  # Qwen3.8-27B, 12.0 GB. This is the size-matched control for `qwen38`: same
+  # nominal quant, different quantizer, so a chem/fp delta against the
+  # abliterated IQ3_S is a quantizer signal rather than a bitrate one. The
+  # abliteration is still a confound (unsloth ships no uncensored 27B), which
+  # is why the fleet does not serve it by default. 32k fits here, unlike the
+  # bartowski slot above: measured 15.3 GiB with the desktop, i.e. the same
+  # footprint as `qwen38` for a 1 GB larger file.
+  qwen38unsloth = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/unsloth/Qwen3.8-27B-UD-IQ3_S.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off --reasoning off \
+      --cache-type-k q4_0 --cache-type-v q4_0 --jinja
+  '';
+
   # Spark-X2.6-4B abliterated (Q4) — the CPU-only tier: no VRAM at all, so it
   # can be used while a game owns the card. ~22 tok/s with 4 threads, which
   # leaves 28 of the 32 hardware threads to the game. The game guard skips it.
@@ -574,6 +610,20 @@ in
           aliases = [
             "qwen3.8"
             "ru"
+          ];
+        };
+        "qwen3.8-27b-bartowski" = {
+          cmd = qwen38bart;
+          aliases = [
+            "bart27b"
+            "bartowski"
+          ];
+        };
+        "qwen3.8-27b-unsloth" = {
+          cmd = qwen38unsloth;
+          aliases = [
+            "unsloth27b"
+            "ud"
           ];
         };
         "tiny" = {
