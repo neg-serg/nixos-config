@@ -173,19 +173,60 @@ pub fn running_units(scope: &str) -> Vec<String> {
         .collect()
 }
 
-/// `(restart_policy, nrestarts)`, or `(None, None)` when unreadable.
-pub fn restart_state(scope: &str, unit: &str) -> (Option<String>, Option<i64>) {
-    let stdout = systemctl(scope, &["show", unit, "-p", "Restart", "-p", "NRestarts"]);
-    let mut policy = None;
-    let mut nrestarts = None;
+/// Restart policy and `NRestarts` for every unit, from one `systemctl show`.
+///
+/// One call per manager, not one per unit: every `--user --machine` invocation
+/// starts a `systemd-stdio-bridge` transient service and a PAM login session
+/// (about six journal records), so the per-unit form turned a 5-minute scan
+/// into ~70 sessions and dominated the journal on this host.
+pub fn restart_states(
+    scope: &str,
+    units: &[String],
+) -> BTreeMap<String, (Option<String>, Option<i64>)> {
+    if units.is_empty() {
+        return BTreeMap::new();
+    }
+    let mut args = vec!["show", "-p", "Id", "-p", "Restart", "-p", "NRestarts"];
+    args.extend(units.iter().map(String::as_str));
+    parse_show(&systemctl(scope, &args))
+}
+
+/// Parse the `Id=`/`Restart=`/`NRestarts=` blocks one `systemctl show` prints
+/// for several units at once.
+fn parse_show(stdout: &str) -> BTreeMap<String, (Option<String>, Option<i64>)> {
+    let mut states = BTreeMap::new();
+    let mut id: Option<String> = None;
+    let mut policy: Option<String> = None;
+    let mut nrestarts: Option<i64> = None;
+
     for line in stdout.lines() {
-        if let Some(value) = line.strip_prefix("Restart=") {
-            policy = Some(value.to_string());
-        } else if let Some(value) = line.strip_prefix("NRestarts=") {
-            nrestarts = value.trim().parse::<i64>().ok();
+        let Some((key, value)) = line.split_once('=') else {
+            continue;
+        };
+        match key {
+            "Id" => {
+                flush_state(&mut id, &mut policy, &mut nrestarts, &mut states);
+                id = Some(value.to_string());
+            }
+            "Restart" => policy = Some(value.to_string()),
+            "NRestarts" => nrestarts = value.trim().parse().ok(),
+            _ => {}
         }
     }
-    (policy, nrestarts)
+    flush_state(&mut id, &mut policy, &mut nrestarts, &mut states);
+    states
+}
+
+/// Store the block accumulated so far, if it had an `Id=`.
+fn flush_state(
+    id: &mut Option<String>,
+    policy: &mut Option<String>,
+    nrestarts: &mut Option<i64>,
+    states: &mut BTreeMap<String, (Option<String>, Option<i64>)>,
+) {
+    if let Some(name) = id.take() {
+        states.insert(name, (policy.take(), nrestarts.take()));
+    }
 }
 
 /// System units keep their name; user units get a prefix so a same-named unit
@@ -256,8 +297,12 @@ fn main() -> std::process::ExitCode {
     let mut changed = false;
 
     for scope in ["system", "user"] {
-        for unit in running_units(scope) {
-            let (policy, nrestarts) = restart_state(scope, &unit);
+        let units = running_units(scope);
+        let mut states = restart_states(scope, &units);
+        for unit in units {
+            let Some((policy, nrestarts)) = states.remove(&unit) else {
+                continue;
+            };
             let Some(policy) = policy else { continue };
             if !AUTO_RESTART.contains(&policy.as_str()) {
                 continue;
@@ -388,5 +433,36 @@ mod tests {
     fn user_units_get_a_prefix() {
         assert_eq!(unit_key("system", "koito.service"), "koito.service");
         assert_eq!(unit_key("user", "koito.service"), "user:koito.service");
+    }
+
+    #[test]
+    fn show_output_is_parsed_per_unit() {
+        let stdout = "\
+Id=mpd.service
+Restart=always
+NRestarts=3
+
+Id=dbus-broker.service
+Restart=no
+NRestarts=0
+
+Id=broken.service
+Restart=on-failure
+NRestarts=not-a-number
+";
+        let states = parse_show(stdout);
+        assert_eq!(
+            states.get("mpd.service"),
+            Some(&(Some("always".to_string()), Some(3)))
+        );
+        assert_eq!(
+            states.get("dbus-broker.service"),
+            Some(&(Some("no".to_string()), Some(0)))
+        );
+        assert_eq!(
+            states.get("broken.service"),
+            Some(&(Some("on-failure".to_string()), None))
+        );
+        assert_eq!(states.get("missing.service"), None);
     }
 }
