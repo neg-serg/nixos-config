@@ -280,36 +280,18 @@ let
       --cache-type-k q4_0 --cache-type-v q4_0 --jinja
   '';
 
-  # Spark-X2.6-4B abliterated (Q4) — the CPU-only tier: no VRAM at all, so it
-  # can be used while a game owns the card. ~22 tok/s with 4 threads, which
-  # leaves 28 of the 32 hardware threads to the game. The game guard skips it.
-  # 64k, not the 16k it started at: the model is 1M-native with sliding-window
-  # attention and its f16 KV is ~42 KB/token (5.2 GiB RSS at 64k, 3.3 GiB at
-  # 16k), while CPU prefill runs at 800-1000 tok/s, so a 20k prompt costs ~25 s
-  # once and is then served from the prompt cache. Generation slows with the
-  # context: ~22 tok/s short, ~8 tok/s on a 40k prompt. 16k could not hold the
-  # agent harness prompt at all (~20k tokens: system prompt + tools + skills),
-  # which showed up as `request (20126 tokens) exceeds the available context
-  # size (16384 tokens)`.
-  tiny = ''
-    ${llamaVulkan} -m ${modelDir}/abliterated/Spark-X2.6-4B-abliterated-Q4_K_M.gguf \
-      -ngl 0 -t 4 -c 65536 -np 1 --jinja --reasoning off \
-      --host 127.0.0.1 --port ''${PORT}
-  '';
-
-  # Spark-X2.6-4B on the iGPU (Radeon 610M, Granite Ridge, 2 CU) — the third
-  # tier: no dGPU VRAM at all, so it can serve while the 16 GB card is busy
-  # (and while `tiny` is not the flavour you want). Measured on 2026-11-05 with
-  # this exact GGUF: decode 10.9 tok/s, i.e. the same as `tiny` on 4 threads
-  # (10.7), but prefill is ~10x slower (73 vs 742 tok/s) — the APU is
+  # Spark-X2.6-4B on the iGPU (Radeon 610M, Granite Ridge, 2 CU) — the
+  # smallest tier: no dGPU VRAM at all, so it can serve while the 16 GB card is
+  # busy. Measured on 2026-11-05 with this exact GGUF: decode 10.9 tok/s, but
+  # prefill is ~10x slower than the CPU build (73 vs 742 tok/s) — the APU is
   # bandwidth-bound on shared DDR5 and RADV has no coopmat path for RDNA2.
-  # Hence 8k, not 64k: a 20k prompt (the agent harness) costs ~4.5 min here
-  # versus ~27 s on CPU. Use it for short-output work — labels, JSON
+  # Hence 8k, not 64k: a 20k prompt (the agent harness) would cost ~4.5 min
+  # of prefill here. Use it for short-output work — labels, JSON
   # extraction, tagging — not for prompt-heavy requests. Vulkan1 is the 610M;
   # Vulkan0 is the RX 9070 XT (`llama-server --list-devices`). `-t 4` caps
   # host-side work only, once the layers live on the APU. The game guard still
   # unloads this model while a game runs (it competes for the same memory
-  # bandwidth); only `tiny` is exempt.
+  # bandwidth).
   igpu = ''
     ${llamaVulkan} --device Vulkan1 -ngl 99 \
       -m ${modelDir}/abliterated/Spark-X2.6-4B-abliterated-Q4_K_M.gguf \
@@ -452,13 +434,11 @@ let
     runtimeInputs = [
       pkgs.coreutils # sleep in the polling loop
       pkgs.curl # GET /unload against llama-swap
-      pkgs.jq # read /running, so the CPU-only model is left alone
       pkgs.procps # pgrep for game process detection
     ];
     text = ''
       base="http://127.0.0.1:${toString config.services.llama-swap.port}"
       endpoint="$base/unload"
-      running="$base/running"
       gaming=0
 
       is_gaming() {
@@ -481,12 +461,9 @@ let
             echo "game detected — unloading GPU models"
             gaming=1
           fi
-          # llama-swap keeps one model resident: leave the CPU-only `tiny`
-          # alone (it holds no VRAM) and unload anything else.
-          model=$(curl -fsS --max-time 5 "$running" | jq -r '.running[0].model // empty' 2>/dev/null)
-          if [ "$model" != "tiny" ]; then
-            curl -fsS -o /dev/null --max-time 5 "$endpoint" || echo "unload request failed" >&2
-          fi
+          # llama-swap keeps one model resident; drop whatever it holds so
+          # the game gets the whole card.
+          curl -fsS -o /dev/null --max-time 5 "$endpoint" || echo "unload request failed" >&2
           sleep 20
         else
           if [ "$gaming" = 1 ]; then
@@ -626,14 +603,6 @@ in
             "ud"
           ];
         };
-        "tiny" = {
-          cmd = tiny;
-          aliases = [
-            "cheap"
-            "spark-cpu"
-          ];
-        };
-
         "igpu" = {
           cmd = igpu;
           aliases = [

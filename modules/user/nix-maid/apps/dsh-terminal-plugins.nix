@@ -273,11 +273,6 @@ rec {
                 input:
                   - text
                   - image
-              - id: tiny
-                name: Spark 4B abliterated (CPU, no VRAM)
-                # CPU backend, 1M-native with SWA; 64k preallocates ~2.6 GiB
-                # of KV and keeps the ~20k-token harness prompt inside the window.
-                contextWindow: 65536
               # Runs on the other machine (192.168.0.144, RX 7900 XTX): the
               # weights sit on /zero and are read over SMB, llama-swap starts the
               # container there on the first request over ssh. Cold start is

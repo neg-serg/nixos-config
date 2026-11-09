@@ -73,7 +73,6 @@
 #   | gemma4-26b   | Gemma-4-26B-A4B-abliterated Q3_K_M (MoE)  | 32k | 16.2G | 105-110 |
 #   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 64k | 14.8G | 45    |
 #   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 32k | 13.8G | 30-36 |
-#   | tiny         | Spark-X2.6-4B-abliterated Q4 (CPU only)  | 64k | 0G    | 22    |
 #   | gpt-oss-120b | gpt-oss-120b-abliterated MXFP4 (MoE)     | 32k | 6.9G  | 6-11.5 |
 #   | qwen3.8-next | Qwen3.8-Flash-Next abl-v2 IQ3_S          | 128k| 6.0G  | 5.9   |
 #
@@ -118,13 +117,6 @@
 #   content. With low effort it keeps tools, JSON and arithmetic intact.
 # - `gemma4-26b` is text-only (the projector does not fit next to 12.5 GB of
 #   weights); `qwen3-vl-8b` serves images and is the `vision` alias.
-# - `tiny` (Spark-X2.6-4B abliterated, `cheap` alias) runs on 4 CPU threads
-#   with `-ngl 0`: zero VRAM, ~22 tok/s, so it does not compete with a game.
-#   The game guard skips it and still unloads every GPU model. Its context
-#   is 64k: the KV is cheap (~42 KB/token, 5.2 GiB RSS) and CPU prefill runs
-#   at 800-1000 tok/s, while 16k could not even hold the agent harness prompt
-#   (~20k tokens) — see `modules/llm/llama-swap.nix`. Generation drops from
-#   ~22 tok/s short-context to ~8 tok/s on a 40k prompt.
 # - `gpt-oss-120b-abliterated` (`gpt-oss-120`, `big` aliases) is the RAM tier:
 #   63.4 GB of MXFP4 weights on a 16 GB card. Four layers run on the GPU
 #   (~6.9 GiB model buffer, ~10.5 GiB total with the desktop), the other 32 stay
