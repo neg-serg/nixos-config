@@ -21,6 +21,13 @@
   libxcursor,
   libxrandr,
   libxi,
+  # The statusbar plugin's whole-track spectrogram is one `ffmpeg -lavfi showspectrumpic` per
+  # track, cached in `~/.cache/aurora/spectra`: the player never decodes audio (MPD does), and a
+  # picture of the file's whole timeline is the one thing the daemon cannot answer. It arrives
+  # through the wrapper's PATH rather than a `buildInputs` entry, because it is a program to run
+  # and not a library to link — and the wrapper is what makes the feature work under a session
+  # whose profile has no ffmpeg of its own.
+  ffmpeg,
   src,
   toolsOnly ? false,
 }:
@@ -76,10 +83,13 @@ let
     ];
 
     postFixup = ''
-      for prog in aurora aurora-probe; do
-        wrapProgram "$out/bin/$prog" \
-          --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath runtimeLibs}"
-      done
+      # The player: the runtime libraries it dlopens, and the ffmpeg the status bar's spectrogram
+      # runs. The probe measures start-up and draws no bar, so it takes only the libraries.
+      wrapProgram "$out/bin/aurora" \
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath runtimeLibs}" \
+        --prefix PATH : "${lib.makeBinPath [ ffmpeg ]}"
+      wrapProgram "$out/bin/aurora-probe" \
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath runtimeLibs}"
     '';
 
     # Desktop entry, so a launcher, a file manager and MPRIS's DesktopEntry
