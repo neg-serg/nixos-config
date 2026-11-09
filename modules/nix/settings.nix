@@ -61,7 +61,11 @@ in
         })
     );
 
-    nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
+    # Resolve `<nixpkgs>` through the flake registry below instead of pinning
+    # the store path here: `nixpkgs=${inputs.nixpkgs}` exported the nixpkgs
+    # source tree via /etc/set-environment and dragged its ~207 MiB NAR into
+    # the system closure for no runtime benefit.
+    nixPath = [ "nixpkgs=flake:nixpkgs" ];
     settings = {
       accept-flake-config = true;
       builders-use-substitutes = true;
@@ -147,7 +151,18 @@ in
       automatic = lib.mkDefault true;
       dates = "weekly";
     };
-    registry.nixpkgs.flake = inputs.nixpkgs;
+    # Keep `nixpkgs` in the flake registry pinned to the revision flake.nix
+    # locks, but as a fetchable reference: `flake = inputs.nixpkgs` wrote the
+    # source store path into /etc/nix/registry.json, which kept the nixpkgs
+    # tree (~207 MiB NAR) in the system closure. The github ref resolves
+    # through the fetcher/eval cache instead, so offline resolution works only
+    # once that revision is cached.
+    registry.nixpkgs.to = {
+      type = "github";
+      owner = "NixOS";
+      repo = "nixpkgs";
+      rev = inputs.nixpkgs.rev;
+    };
     daemonCPUSchedPolicy = "batch";
   };
 
