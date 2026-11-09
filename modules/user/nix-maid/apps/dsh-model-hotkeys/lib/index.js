@@ -31,8 +31,6 @@ export const ROUTES = [
   ['3', 'qwen3.8-flash-next-abliterated', 'Qwen3.8-Flash-Next (local)'],
   ['4', 'gemma4-26b-abliterated', 'Gemma 4 26B (local)'],
   ['5', 'qwen3-vl-8b-abliterated', 'Qwen3-VL-8B (local)'],
-  ['6', 'tiny', 'Spark 4B (CPU)'],
-  ['7', 'gpt-oss-120b-abliterated', 'gpt-oss-120B (local)'],
   ['8', 'gyro-coder', 'Gyro-Coder 125B (7900 XTX box)'],
 ]
 

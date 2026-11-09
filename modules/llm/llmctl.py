@@ -71,15 +71,6 @@ CATALOG = {
         "lean": "-",
         "fp": "4.2/6",
     },
-    "tiny": {
-        "aliases": ["cheap", "spark-cpu"],
-        "role": "CPU-only fallback",
-        "ctx": "64k",
-        "size": "2.6 GB",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
-    },
     "igpu": {
         "aliases": ["spark-igpu", "cheap-igpu"],
         "role": "4B on the iGPU, no dGPU VRAM",
@@ -1165,16 +1156,14 @@ COMMIT_CASES = [
 ]
 
 # The default commit-writer set, measured 2026-11-09 (9 real diffs; totals
-# of 90 under the 0-10 rubric): qwen3.8-27b 81.6, devstral 76.5, tiny 75.3, qwen3-vl-8b 73.3,
-# gemma4 70.8. The 27B is the quality tier; the 8B is the fast default when no
-# model is resident (see COMMIT_DEFAULT_MODEL / `--model auto`). `tiny` runs on
-# CPU and keeps the card free at ~19 tok/s.
+# of 90 under the 0-10 rubric): qwen3.8-27b 81.6, devstral 76.5, qwen3-vl-8b
+# 73.3, gemma4 70.8. The 27B is the quality tier; the 8B is the fast default
+# when no model is resident (see COMMIT_DEFAULT_MODEL / `--model auto`).
 COMMIT_MODELS = [
     "qwen3-vl-8b-abliterated",
     "devstral-small-2-24b",
     "gemma4-26b-abliterated",
     "qwen3.8-27b-abliterated",
-    "tiny",
 ]
 
 COMMIT_SCOPES_IN_PROMPT = 30
