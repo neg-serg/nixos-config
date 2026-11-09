@@ -27,10 +27,7 @@ in
         ];
         environment.sessionVariables = {
           QT_QPA_PLATFORMTHEME = "hyprqt6engine";
-          # File dialogs go through xdg-desktop-portal via the engine's own
-          # delegation to the xdgdesktopportal theme (see
-          # packages/hyprqt6engine/portal-dialogs.patch). QT_XDG_DESKTOP_PORTAL
-          # was a no-op — Qt does not read that variable.
+          QT_XDG_DESKTOP_PORTAL = "1";
         };
       }
       {
