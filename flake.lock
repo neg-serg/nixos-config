@@ -3,11 +3,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794211190,
-        "narHash": "sha256-L+xSI3eBf2/96PRMrTK6GtFliq1q84SmlFuz1wbM9xs=",
+        "lastModified": 1794249969,
+        "narHash": "sha256-1L2LwVF3xYIioyewFB2eJzh54poxccVPhYhKLysShLI=",
         "ref": "refs/heads/main",
-        "rev": "fc73676708066ed2bb34854efadb33bd19507374",
-        "revCount": 842,
+        "rev": "b0bd9cdd1403b7e645b8eacac6a90552abf99fa7",
+        "revCount": 844,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -925,11 +925,11 @@
     },
     "nix-maid": {
       "locked": {
-        "lastModified": 1793005444,
-        "narHash": "sha256-h0XoWnvPIeU0u8deg/Fg7mYTD6+hXJrupU0d7D+qvYU=",
+        "lastModified": 1794213517,
+        "narHash": "sha256-bryY6i495uT5OEz0eSeTPeJ35E6JLpI0PjPGNa5EdRk=",
         "ref": "refs/heads/master",
-        "rev": "35a7aa1d167c55c95849c500252ecb6bdc2daf1c",
-        "revCount": 135,
+        "rev": "d4f00026e380858e683a022abe313a0ae52ad2c0",
+        "revCount": 136,
         "type": "git",
         "url": "https://codeberg.org/viperML/nix-maid"
       },
