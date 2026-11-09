@@ -305,7 +305,13 @@ let
     )
     + "\n";
 
-  enabledDaemons = lib.filterAttrs (name: _: cfg.${name} != "disable") daemons;
+  # ntfy's profile pins its package path, so it would keep the package in the
+  # closure even with the service off. Drop the profile when the optional ntfy
+  # feature (features.net.ntfy) did not start the daemon.
+  availableDaemons =
+    if config.services.ntfy-sh.enable or false then daemons else removeAttrs daemons [ "ntfy" ];
+
+  enabledDaemons = lib.filterAttrs (name: _: cfg.${name} != "disable") availableDaemons;
 in
 {
   config = lib.mkIf cfg.enable {

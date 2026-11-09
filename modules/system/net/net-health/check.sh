@@ -15,6 +15,9 @@ NTFY_URL="http://127.0.0.1:2586/net-health"
 ZAPRET2=@zapret2Enabled@
 RKN=@rknEnabled@
 ADGUARD=@adguardEnabled@
+# ntfy is optional (features.net.ntfy): keep the check the same, only skip
+# the push when no local ntfy server is running.
+NTFY=@ntfyEnabled@
 
 # record a check result: rec <id> <PASS|FAIL>
 rec() {
@@ -23,6 +26,7 @@ rec() {
 
 # push to ntfy; a failing push is not a failure of the check itself
 push() { # $1 = priority, $2 = message
+  [ "$NTFY" = "1" ] || return 0
   $CURL -sS -m 5 -X POST -H "Title: net-health" -H "Priority: $1" -d "$2" "$NTFY_URL" > /dev/null 2>&1 || true
 }
 

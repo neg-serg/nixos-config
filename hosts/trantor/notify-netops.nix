@@ -8,8 +8,8 @@
 # (B) ntfy-system-stale (oneshot + timer, weekly Monday 10:00): reminds to run
 #     `nix flake update` when the last commit that touched flake.lock is older
 #     than 14 days. Posts an info/low ntfy message to the local server topic
-#     `system` (net-health feature provides the ntfy server). Gated on the
-#     same feature flag that enables net-health / ntfy.
+#     `system`. Gated on features.net.netHealth and features.net.ntfy (the
+#     latter starts the local server on :2586).
 {
   config,
   lib,
@@ -74,15 +74,18 @@ mkMerge [
     }
   ))
 
-  # ---- Part B: ntfy-system-stale (gated on the net-health feature flag that
-  # supplies the local ntfy server on :2586) ----
-  (mkIf (config.features.net.netHealth.enable or false) (
-    systemdUser.mkOneshotTimer {
-      name = "ntfy-system-stale";
-      description = "Remind to nix flake update when flake.lock is stale";
-      timerDescription = "Weekly stale-flake reminder";
-      script = lib.getExe staleScript;
-      onCalendar = "Mon *-*-* 10:00:00";
-    }
-  ))
+  # ---- Part B: ntfy-system-stale (gated on the net-health feature flag plus
+  # features.net.ntfy, which supplies the local ntfy server on :2586) ----
+  (mkIf
+    ((config.features.net.netHealth.enable or false) && (config.features.net.ntfy.enable or false))
+    (
+      systemdUser.mkOneshotTimer {
+        name = "ntfy-system-stale";
+        description = "Remind to nix flake update when flake.lock is stale";
+        timerDescription = "Weekly stale-flake reminder";
+        script = lib.getExe staleScript;
+        onCalendar = "Mon *-*-* 10:00:00";
+      }
+    )
+  )
 ]

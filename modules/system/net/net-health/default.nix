@@ -4,7 +4,8 @@
 # self-heal for the zapret2 stack and ntfy push notifications.
 #
 # Architecture:
-#   - ntfy-sh server listens on :2586 (all interfaces); topic `net-health`.
+#   - ntfy-sh server (only when features.net.ntfy is on) listens on :2586
+#     (all interfaces); topic `net-health`.
 #   - systemd timer (every ~5 min) runs the check script:
 #       * checks: default route, uplink state, gateway ping, DNS chain
 #         (resolved -> unbound -> adguardhome) incl. DNSSEC validation,
@@ -35,6 +36,10 @@ let
   zapret2Enabled = config.lib.neg.enabled "net.zapret2";
   rknEnabled = config.lib.neg.enabled "net.rknDomains";
   adguardEnabled = config.services.adguardhome.enable or false;
+  # ntfy is a separate opt-in feature (features.net.ntfy): the checks and the
+  # self-heal run regardless, but the server and the pushes only exist when it
+  # is on.
+  ntfyCfg = config.features.net.ntfy or { enable = false; };
 
   # No `set -e`: failing checks are a normal outcome here, only `set -u`.
   netHealthScript = pkgs.writeShellScript "net-health-check" (
@@ -51,6 +56,7 @@ let
         zapret2Enabled = lib.boolToString zapret2Enabled;
         rknEnabled = lib.boolToString rknEnabled;
         adguardEnabled = lib.boolToString adguardEnabled;
+        ntfyEnabled = lib.boolToString ntfyCfg.enable;
       }
     )
   );
@@ -59,8 +65,9 @@ in
   config = mkIf cfg.enable {
     # Self-hosted ntfy server: LAN subscribers (e.g. phone) read topic
     # `net-health` at http://<trantor-LAN-ip>:2586/net-health. No auth (LAN
-    # only).
-    services.ntfy-sh = {
+    # only). Optional: gated on features.net.ntfy so the server and its
+    # ~130 MiB closure stay out unless the flag is on.
+    services.ntfy-sh = mkIf ntfyCfg.enable {
       enable = true;
       settings = {
         # all interfaces; the module default is 127.0.0.1:2586
@@ -74,7 +81,7 @@ in
       };
     };
 
-    networking.firewall.interfaces = {
+    networking.firewall.interfaces = mkIf ntfyCfg.enable {
       net0.allowedTCPPorts = [ 2586 ]; # ntfy server (second NIC, DHCP LAN)
       net1.allowedTCPPorts = [ 2586 ]; # ntfy server (uplink, router 192.168.0.x)
       br0.allowedTCPPorts = [ 2586 ]; # ntfy server (libvirt bridge)
