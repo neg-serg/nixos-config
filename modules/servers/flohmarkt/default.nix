@@ -144,6 +144,13 @@ in
     systemd.services.podman-flohmarkt = {
       after = [ "flohmarkt-initdb.service" ];
       wants = [ "flohmarkt-initdb.service" ];
+      # The image's web process flushes its background queues with plain
+      # `print()` (ActivityPub jobs every 30 s, mail every 60 s, LDAP cleanup
+      # every 60 s) and exposes no log-level knob, so the journal is the only
+      # lever: ~5.5k INFO lines/day. Drop INFO for this unit; warnings and
+      # errors stay. uvicorn's access lines are INFO too, so they go as well —
+      # acceptable for a LAN board. (CouchDB already caps itself at warning.)
+      serviceConfig.LogLevelMax = "notice";
     };
 
     # The board is not needed for a login: CouchDB plus the initdb bootstrap sat
