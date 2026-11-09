@@ -1,0 +1,17 @@
+--- a/hyprqtplugin/PlatformTheme.cpp
++++ b/hyprqtplugin/PlatformTheme.cpp
+@@ -77,6 +77,14 @@
+     g_pConfigManager = makeUnique<CConfigManager>();
+     g_pConfigManager->init();
+ 
++    // Delegate file dialogs to the xdgdesktopportal platform theme, mirroring
++    // qt6ct's `standard_dialogs=xdgdesktopportal`: QGenericUnixTheme (the
++    // fallback used below) has no native dialog helper, so without this every
++    // Qt app renders its in-process QFileDialog instead of the desktop portal
++    // (FileChooser -> xdg-desktop-portal-termfilechooser here).
++    if (QPlatformThemeFactory::keys().contains(QStringLiteral("xdgdesktopportal")))
++        m_theme.reset(QPlatformThemeFactory::create(QStringLiteral("xdgdesktopportal")));
++
+     static auto PCOLORSCHEME = g_pConfigManager->getValue<Hyprlang::STRING>("theme:color_scheme");
+ 
+     if (QGuiApplication::desktopSettingsAware()) {

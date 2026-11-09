@@ -51,6 +51,14 @@ stdenv.mkDerivation {
     qt6.qtbase
   ];
 
+  # Delegate file dialogs to the xdgdesktopportal platform theme (the dialog
+  # theme qt6ct loaded from `standard_dialogs=xdgdesktopportal`). Upstream
+  # leaves the fallback theme unset, so usePlatformNativeDialog() falls through
+  # to QGenericUnixTheme, which has no native dialog helper: Qt apps then open
+  # their in-process QFileDialog instead of the portal and the configured
+  # xdg-desktop-portal-termfilechooser never shows up.
+  patches = [ ./portal-dialogs.patch ];
+
   # The build produces QPA/style plugins, not apps, so there is nothing to wrap;
   # PLUGINDIR is passed explicitly because the CMake fallback probes qtpaths,
   # which is not on PATH here.
