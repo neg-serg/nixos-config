@@ -336,6 +336,19 @@ slimChunks
     buildInputs = builtins.filter (pkg: (pkg.pname or "") != "gtk3") (old.buildInputs or [ ]);
   });
 
+  # vapoursynth-bestsource builds its own ffmpeg with `withLcms2 = true` inside
+  # the upstream expression, so every generation carried a second
+  # ffmpeg-9.0.2-lib (34.5 MiB) beside the one the rest of the closure uses
+  # (gpu-screen-recorder and friends take the shared build). LittleCMS is
+  # ffmpeg's ICC colour-management path; a frame-accurate *source* plugin hands
+  # raw frames to VapourSynth and never runs an ffmpeg colour filter, so the
+  # plugin is pointed at the shared build here.
+  vapoursynth-bestsource = finalPrev.vapoursynth-bestsource.overrideAttrs (old: {
+    buildInputs = builtins.map (
+      p: if (p.pname or "") == "ffmpeg" then final.ffmpeg else p
+    ) old.buildInputs;
+  });
+
   # Ollama ROCm: build the ROCm stack for only the local GPU architecture
   # (gfx1201 — Navi 48 / RX 9070 XT) instead of all 10 default targets.
   # hipblaslt's Tensile codegen generates ~323k assembly kernels per arch;
