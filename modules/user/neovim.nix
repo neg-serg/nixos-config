@@ -3,10 +3,18 @@
   pkgs,
   config,
   neg,
+  inputs,
   ...
 }:
 let
   devEnabled = config.lib.neg.enabled "dev";
+
+  # Neovim nightly (0.13.0-dev) instead of stable 0.12.6: guh.nvim needs
+  # `vim.async` (files/nvim/lua/plugins/integration/guh.lua), which only exists
+  # after 0.12.6. The flake input pins the exact neovim master rev; the module
+  # expects the *unwrapped* build here and applies its own wrapper for the
+  # python3/node providers.
+  neovimUnwrapped = inputs.neovim-nightly.packages.${pkgs.stdenv.hostPlatform.system}.neovim;
   nvimConf = config.lib.neg.path "files/nvim";
   # Deploy each top-level entry as its own symlink (quickshell pattern) instead
   # of one dir symlink, so the config dir itself stays writable at runtime.
@@ -25,6 +33,7 @@ lib.mkIf devEnabled (
     {
       programs.neovim = {
         enable = true;
+        package = neovimUnwrapped;
         defaultEditor = true;
         viAlias = true;
         vimAlias = true;
