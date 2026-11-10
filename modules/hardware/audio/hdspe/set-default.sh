@@ -39,7 +39,14 @@ game_sink_id="$(echo "$status" | sed -n '/game-stereo.*Audio\/Sink/{s/^[^0-9]*\(
 # on AES, the analog RCA pair (AUX0/1) is unused; this script owns the
 # mapping.
 if [ -n "$hdspe_sink_id" ] && [ -n "$game_sink_id" ]; then
-  wpctl set-default "$game_sink_id" || true
+  # The output the user chose must survive a wireplumber restart: this script
+  # supplies the boot default only when nothing is configured (or the
+  # configured sink is gone), otherwise `pwout headphones` would be undone on
+  # every session start.
+  configured="$(pw-metadata -n default 2> /dev/null | sed -n 's/.*default\.configured\.audio\.sink.*"name":"\([^"]*\)".*/\1/p' | head -n1)"
+  if [ -z "$configured" ] || [[ "$status" != *"$configured"* ]]; then
+    wpctl set-default "$game_sink_id" || true
+  fi
   # WirePlumber auto-links new stereo streams to the RME's FIRST channels
   # (AUX0/1 = analog). Drop those stray links so the loopback feeds only
   # the AES pair, then connect virtual sink playback to HDSPe AES (AUX2/3).

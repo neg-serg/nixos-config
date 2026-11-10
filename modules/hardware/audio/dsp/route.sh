@@ -25,10 +25,13 @@
 set -u
 
 pwLink="@pwLink@/bin/pw-link"
+pwMeta="@pwLink@/bin/pw-metadata"
 awk="@awk@/bin/awk"
 grep="@grep@/bin/grep"
 sleep="@sleep@/bin/sleep"
 date="@date@/bin/date"
+systemctl="@systemctl@/bin/systemctl"
+wpctl="@wpctl@/bin/wpctl"
 
 RME=alsa_output.pci-0000_05_00.0.pro-output-0
 GAME=playback.game-stereo
@@ -45,6 +48,8 @@ state=unknown
 said=
 host_grace=0
 host_guard=0
+idle=0
+last_start=0
 
 log() { printf '%s camilladsp-route: %s\n' "$("$date" '+%F %T')" "$*"; }
 
@@ -145,6 +150,40 @@ dsp_up() {
     && "$pwLink" -o 2> /dev/null | "$grep" -qxF "$PB:output_FL"
 }
 
+# --- the insert's lifetime -------------------------------------------------
+#
+# The DSP unit is not started at login: this loop starts it while the speaker
+# output is in use and stops it when it is not, so an idle machine has no
+# real-time client in the graph and no insert for a config reload to break.
+#
+# "In use" is the rule the headphone router shares: the sink is the default
+# output, or an app plays to it. Being the default is what lets playback start
+# with the DSP already in the path — starting the insert only when the first
+# sample arrives would leak the first fraction of a second past it.
+UNIT=camilladsp
+
+unit_active() { "$systemctl" --user is-active --quiet "$UNIT" 2> /dev/null; }
+
+default_sink() {
+  "$pwMeta" -n default 2> /dev/null | "$awk" -F'"' '/default\.audio\.sink/ { print $4; exit }'
+}
+
+# An app playing into the sink. The loopbacks' own streams are plumbing and are
+# not a reason to keep the DSP running.
+app_streams() {
+  local src
+  while IFS= read -r src; do
+    [[ -z $src || $src == playback.* || $src == camilladsp-* ]] && continue
+    return 0
+  done < <(sources_to "game-stereo:playback_FL")
+  return 1
+}
+
+armed() {
+  [[ $(default_sink) == "game-stereo" ]] && return 0
+  app_streams
+}
+
 # The four links the insert is, both ways, and nothing else on the two DSP ports.
 route_complete() {
   has_link "$GAME:output_FL" "$CAP:input_FL" \
@@ -153,6 +192,10 @@ route_complete() {
     && has_link "$PB:output_FR" "$AES_R" \
     && ! has_link "$GAME:output_FL" "$AES_L" \
     && ! has_link "$GAME:output_FR" "$AES_R" \
+    && ! has_link "$GAME:output_FL" "$STRAY_L" \
+    && ! has_link "$GAME:output_FR" "$STRAY_R" \
+    && ! has_link "$GAME:output_FL" "$AES_R" \
+    && ! has_link "$GAME:output_FR" "$AES_L" \
     && only_sources "$CAP:input_FL" "$GAME:output_FL" \
     && only_sources "$CAP:input_FR" "$GAME:output_FR" \
     && only_dests "$PB:output_FL" "$AES_L" \
@@ -182,6 +225,11 @@ route_dsp() {
   del "$GAME:output_FR" "$AES_R"
   del "$GAME:output_FL" "$STRAY_L"
   del "$GAME:output_FR" "$STRAY_R"
+  # A crossed stray (the left channel into the right AES pair) was seen once,
+  # when WirePlumber picked the free port next to a busy one; both directions
+  # go, because a crossed pair is never the intended route.
+  del "$GAME:output_FL" "$AES_R"
+  del "$GAME:output_FR" "$AES_L"
 }
 
 route_direct() {
@@ -189,6 +237,8 @@ route_direct() {
   add "$GAME:output_FR" "$AES_R"
   del "$GAME:output_FL" "$STRAY_L"
   del "$GAME:output_FR" "$STRAY_R"
+  del "$GAME:output_FL" "$AES_R"
+  del "$GAME:output_FR" "$AES_L"
 }
 
 # The host insert. A crosspoint can carry a chain of VST effects through a
@@ -325,6 +375,45 @@ route_host_playback() { # $1 = host node
 }
 
 while :; do
+  # Lifetime first: with the unit down this loop is the direct path, with it up
+  # the state machine below owns the wiring.
+  if armed; then
+    idle=0
+    if ! unit_active; then
+      now=$("$date" +%s)
+      if ((now - last_start >= 2)); then
+        last_start=$now
+        "$systemctl" --user start "$UNIT" > /dev/null 2>&1 || log "could not start $UNIT"
+        # Re-poll quickly so the insert is wired as soon as the nodes exist.
+        "$sleep" 0.2
+        continue
+      fi
+    fi
+  else
+    if unit_active; then
+      ((idle++))
+      if ((idle >= 3)); then
+        # Another output is default and nothing plays here: take the direct
+        # path down first, then stop the unit, so no audio is cut on exit.
+        if [[ $state == dsp ]]; then
+          route_direct
+          state=direct
+          log "route: direct (idle)"
+        fi
+        "$systemctl" --user stop "$UNIT" > /dev/null 2>&1 || true
+        idle=0
+      fi
+    else
+      idle=0
+    fi
+  fi
+
+  # Mirror of the headphone router's prune: WirePlumber can link the headphone
+  # loopback's stream into game-stereo, which would put headphone audio on the
+  # monitors.
+  del "playback.headphones:output_FL" "game-stereo:playback_FL"
+  del "playback.headphones:output_FR" "game-stereo:playback_FR"
+
   # Nothing can be routed while one of the two ends is absent. While that lasts,
   # a live DSP stream is also taken off every sink it has: with its AES target
   # gone, WirePlumber's own re-link would feed the playback stream into
@@ -416,6 +505,10 @@ while :; do
       direct)
         has_link "$GAME:output_FL" "$AES_L" \
           && has_link "$GAME:output_FR" "$AES_R" \
+          && ! has_link "$GAME:output_FL" "$STRAY_L" \
+          && ! has_link "$GAME:output_FR" "$STRAY_R" \
+          && ! has_link "$GAME:output_FL" "$AES_R" \
+          && ! has_link "$GAME:output_FR" "$AES_L" \
           || {
             route_direct
             log "route: repaired (direct)"
