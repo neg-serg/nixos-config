@@ -397,6 +397,12 @@ rec {
               - id: DeepSeek-V3.2
                 name: DeepSeek V3.2 (free, 20/day)
                 contextWindow: 131072
+              - id: DeepSeek-V3.1
+                name: DeepSeek V3.1 (free, 20/day)
+                contextWindow: 131072
+              - id: gemma-4-31B-it
+                name: Gemma 4 31B IT (free, 20/day)
+                contextWindow: 131072
           # z.ai: the pricing table lists GLM-4.7-Flash / GLM-4.5-Flash as
           # free per token and the model pages document function calling
           # (checked 2026-11-10). The ids are not in the OpenAPI manifest, so

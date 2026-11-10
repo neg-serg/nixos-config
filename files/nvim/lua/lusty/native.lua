@@ -2,10 +2,11 @@
 -- with real highlights — no floating window and no frame. No terminal buffer
 -- involved, so it renders reliably even when nvim itself runs inside a web
 -- xterm. This is the only picker implementation (the historical Lua port was
--- removed).
+-- removed). The layout follows the fzf profile in theme.toml: prompt on top,
+-- info line under it, one entry per row, footer hints.
 --
 -- Backend protocol (plain lines, tab separated):
---   Q <from> <to> <query> [sort] -> "N <total>" + "W <maxw>" + "R <i> <kind> <label>\t<path>" rows + "E"
+--   Q <from> <to> <query> [sort] -> "N <matched> <total>" + "W <maxw>" + "R <i> <kind> <label>\t<path>" rows + "E"
 --                             sort: 0 name, 1 ext, 2 size, 3 time (C-y cycles)
 --   M <mask> <index>...     -> "K <index> <meta>" per index + "E" (long view;
 --                             mask bits 1 perm, 2 user, 4 size, 8 time)
@@ -703,9 +704,15 @@ function Picker:rerank()
     local win_rows = {}
     local total = self.total
     for _, ln in ipairs(lines) do
-      local n = ln:match('^N (%d+)$')
+      -- "N <matched> <total>": the backend reports the listing size as a
+      -- second token, so the info line can show fzf's `matched/total`
+      -- counter. An older backend sends only the matched count.
+      local n, all = ln:match('^N (%d+)%s*(%d*)$')
       if n then
         total = tonumber(n)
+        if all ~= '' then
+          self.listing_total = tonumber(all)
+        end
       else
         local wm = ln:match('^W (%d+)$')
         if wm then
@@ -761,120 +768,114 @@ function Picker:draw()
     self:draw_one_line()
     return
   end
-  if self.loading then
-    -- First listing is still in flight from the serve backend: show a plain
-    -- box with a dim ellipsis and the path prompt (no [N] counter, no stale
-    -- grid) instead of flashing a wrong 0 total.
-    local w = self:width()
-    local rows = self:list_rows()
-    local lines = {}
-    for r = 1, rows do
-      lines[r] = string.rep(' ', w)
-    end
-    lines[1] = '…' .. string.rep(' ', math.max(0, w - 1))
-    lines[rows + 1] = self:prompt_text()
-    api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
-    api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
-    api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeMeta', 0, 0, 1)
-    self:paint_prompt(rows + 1)
-    return
-  end
+  local w = self:width()
+  local ch = self:chrome()
   local rows = self:list_rows()
-  local cols = self:max_cols()
-  local h = rows + 1 -- grid rows + one prompt line
-  local col_w = self:col_width()
+  local h = self:height()
+  -- fzf layout: the prompt is the first row, the info line sits right under
+  -- it, the entries follow and the footer (separator + key hints) closes the
+  -- split. A short split drops the footer first, then the info line
+  -- (native_core.chrome).
+  local top = 2 + ch.info
+  local profile = theme.profile()
   local lines = {}
-  local cells = {} -- { line, col, item, pos }
-  if self.long then
-    -- long view: one entry per line; serve already supplied the metadata
-    -- (item.meta, eza -l style). Metadata is ascii, so byte length == width.
-    local w = self:width()
-    for r = 1, rows do
-      local pos = self.offset + (r - 1)
-      local item = self.window[pos - self.offset + 1]
+  for i = 1, h do
+    lines[i] = string.rep(' ', w)
+  end
+  local cells = {}
+  if self.loading then
+    -- First listing still in flight: the fzf chrome with a dim ellipsis
+    -- instead of a stale list.
+    if ch.info == 1 then
+      lines[2] = '  …' .. string.rep(' ', math.max(0, w - 3))
+    end
+  else
+    for r = 0, rows - 1 do
+      local pos = self.offset + r
+      local item = self.window[r + 1]
       if item then
-        local meta = item.meta or ''
-        local prefix = ''
-        if meta ~= '' then
-          prefix = meta .. ' '
-        end
-        local icon_pre = ''
+        local selected = pos == self.selected
+        local marked = self.marked[item.path] ~= nil
         local name = item.label
+        local icon_pre = ''
         if self.icons then
           icon_pre = icon_for(item) .. ' '
           name = icon_pre .. name
         elseif item.kind == 'd' then
           name = name .. '/'
         end
-        local pw = #prefix
-        local maxw = math.max(4, w - pw)
-        local text = core.fit(name, maxw)
-        local full = prefix .. text
-        full = full .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(full)))
-        lines[r] = full
+        local meta = ''
+        if self.long and item.meta and item.meta ~= '' then
+          meta = item.meta .. ' '
+        end
+        -- fzf line prefix: the pointer on the current row, the gutter bar
+        -- elsewhere, then the marker column (the ✓ glyph on marked rows).
+        local first = selected and profile.pointer or '\u{258c}'
+        local prefix = first .. (marked and profile.marker or ' ')
+        local body = meta .. name
+        local room = math.max(1, w - vim.fn.strdisplaywidth(prefix))
+        local text = core.fit(body, room)
+        local line = prefix .. text
+        line = line .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(line)))
+        lines[top + r] = line
         cells[#cells + 1] = {
-          line = r,
-          col = 1,
+          line = top + r,
           item = item,
           pos = pos,
-          icon_bytes = #icon_pre,
-          name_start = pw,
-          name_bytes = #text,
+          selected = selected,
+          marked = marked,
+          first_bytes = #first,
+          prefix_bytes = #prefix,
           meta = meta,
-          long = true,
+          icon_bytes = #icon_pre,
+          name_start = #prefix + #meta,
+          text_bytes = math.max(0, #text - #meta),
         }
       end
     end
-  else
-    for r = 1, rows do
-      local bufparts = {}
-      local byte_start = 0 -- byte offset of the current cell within lines[r]
-      for c = 1, cols do
-        -- row-major: fill left-to-right, then next row (original Lusty order)
-        local pos = self.offset + (r - 1) * cols + (c - 1)
-        local item = self.window[pos - self.offset + 1]
-        if item then
-          local icon_pre = ''
-          local label = item.label
-          if self.icons then
-            icon_pre = icon_for(item) .. ' '
-            label = icon_pre .. label
-          elseif item.kind == 'd' then
-            label = label .. '/'
-          end
-          -- pad to the full column width (display cells) so columns align;
-          -- truncated cells are padded too, otherwise that row shifts by one
-          -- and the selection highlight (fixed pitch) lands off.
-          local text, tw = core.fit(label, col_w - 1)
-          local text_bytes = #text
-          text = text .. string.rep(' ', math.max(0, col_w - tw))
-          bufparts[c] = text
-          cells[#cells + 1] = {
-            line = r,
-            col = c,
-            item = item,
-            pos = pos,
-            byte_start = byte_start,
-            text_bytes = text_bytes,
-            cell_bytes = #text,
-            icon_bytes = #icon_pre,
-          }
-          byte_start = byte_start + #text + 2
-        end
-      end
-      lines[r] = table.concat(bufparts, '  ')
-    end
   end
-  for i = 1, h do
-    if not lines[i] then
-      lines[i] = ''
-    end
+  local prompt = self:prompt_text()
+  lines[1] = prompt .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(prompt)))
+  if ch.info == 1 then
+    local info = self:info_text()
+    lines[2] = info .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(info)))
   end
-  lines[h] = self:prompt_text()
+  if ch.footer == 2 then
+    lines[h - 1] = string.rep('\u{2500}', w)
+    lines[h] = self:footer_line()
+  end
   api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
-
   api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
+  self:paint_chrome()
+  self:paint_cells(cells, lines)
+  pf('drawn')
+  self:ensure_meta()
+end
+
+--- Paint the fzf chrome rows: prompt, info line, footer separator and hints.
+function Picker:paint_chrome()
+  local ch = self:chrome()
+  local h = self:height()
+  self:paint_prompt(0)
+  if ch.info == 1 then
+    core.paint_segments(self, ns, 1, self:info_segments())
+  end
+  if ch.footer == 2 then
+    api.nvim_buf_add_highlight(self.buf, ns, 'LustySeparator', h - 2, 0, -1)
+    local text = self:fitted_footer()
+    api.nvim_buf_add_highlight(self.buf, ns, 'LustyFooter', h - 1, 0, #text)
+  end
+end
+
+--- Paint one list page. The current row takes fzf's `fg+` over the whole line
+--- (no background bar), its matches take `hl+`, the pointer keeps the pointer
+--- colour and the marker glyph its own; every other row keeps LS_COLORS and
+--- the `hl` match tone.
+function Picker:paint_cells(cells, lines)
+  local profile = theme.profile()
   for _, cell in ipairs(cells) do
+    local row = cell.line - 1
+    local line = lines[cell.line] or ''
     local entry = {
       name = basename(cell.item.label),
       is_dir = cell.item.kind == 'd',
@@ -882,118 +883,61 @@ function Picker:draw()
       path = cell.item.path,
     }
     local group = lsc.group_for(entry)
-    local name_from
-    local name_to
-    if cell.long then
-      name_from = cell.name_start
-      name_to = cell.name_start + cell.name_bytes
-    else
-      name_from = cell.byte_start
-      name_to = cell.byte_start + cell.text_bytes
-    end
-    if cell.long and cell.meta ~= '' and cell.pos ~= self.selected then
-      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeMeta', cell.line - 1, 0, #cell.meta)
-    end
     if group then
-      api.nvim_buf_add_highlight(self.buf, ns, group, cell.line - 1, name_from, name_to)
+      api.nvim_buf_add_highlight(
+        self.buf, ns, group, row,
+        cell.name_start, math.min(cell.name_start + cell.text_bytes, #line)
+      )
     end
-    -- approximate fuzzy-match highlight: underline the first plain
-    -- case-insensitive occurrence of the query in the entry basename
-    -- Underline the matched query letters in every cell, including the
-    -- selected one, so the match survives the selection bar.
+    if cell.meta ~= '' and not cell.selected then
+      api.nvim_buf_add_highlight(
+        self.buf, ns, 'LustyNativeMeta', row,
+        cell.prefix_bytes, cell.prefix_bytes + #cell.meta
+      )
+    end
+    if cell.selected then
+      -- fzf's current line: no background, just fg+ over the whole row.
+      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', row, 0, #line)
+      -- The pointer keeps its own colour on top of fg+ (pointer == hl+ in
+      -- this profile, but the roles stay separate).
+      api.nvim_buf_add_highlight(
+        self.buf, ns, 'LustyPointer', row, 0, cell.first_bytes
+      )
+    end
+    if cell.marked then
+      local from = cell.first_bytes
+      api.nvim_buf_add_highlight(
+        self.buf, ns, 'LustyNativeMark', row, from,
+        from + #profile.marker
+      )
+    end
+    -- Approximate fuzzy-match highlight: the first plain case-insensitive
+    -- occurrence of the query in the entry basename. Painted last, after the
+    -- current line, so hl+ wins over fg+.
     local q = self.query
     if q ~= '' and q:sub(1, 1) ~= '.' then
       local base = basename(cell.item.label)
       local s, e = base:lower():find(q:lower(), 1, true)
       if s and e then
-        local name_start = name_from + (cell.icon_bytes or 0)
+        local name_start = cell.name_start + (cell.icon_bytes or 0)
         local lstart = #cell.item.label - #base
+        local match_group = cell.selected and 'LustyNativeMatchSel' or 'LustyNativeMatch'
         api.nvim_buf_add_highlight(
-          self.buf, ns, 'LustyNativeMatch', cell.line - 1,
+          self.buf, ns, match_group, row,
           name_start + lstart + s - 1, name_start + lstart + e
         )
       end
     end
-    -- Marked file (C-Space): a distinct tint over the whole name, drawn after
-    -- the match underline so it wins; the selection bar is painted later on top.
-    if self.marked[cell.item.path] then
-      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeMark', cell.line - 1, name_from, name_to)
-    end
   end
-  if self.total > 0 and rows > 0 then
-    local sel_row
-    local sel_from = 0
-    local sel_to = 0
-    if self.long then
-      sel_row = self.selected - self.offset
-      if sel_row >= 0 and sel_row < rows then
-        local line = lines[sel_row + 1] or ''
-        sel_from = 0
-        sel_to = math.max(1, #line)
-      end
-    else
-      sel_row = math.floor(self.selected / cols)
-      for _, cell in ipairs(cells) do
-        if cell.pos == self.selected then
-          sel_from = cell.byte_start
-          sel_to = cell.byte_start + cell.cell_bytes
-          break
-        end
-      end
-    end
-    if sel_row >= 0 and sel_row < rows then
-      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', sel_row, sel_from, sel_to)
-    end
-  end
-  self:paint_prompt(h)
-  pf('drawn')
-  self:ensure_meta()
 end
 
---- Bottom prompt: current path with Lusty prompt colors, then > query.
---- Prompt segment list: path, query and the counters, with their colours. The
---- single source for the prompt line, the one-line mode and the plain-text
---- form below.
+--- fzf prompt row: the `❯  ` glyph and the query. The counters moved to the
+--- info line; the browsed directory rides at the right-hand tail of that line
+--- (the standalone TUI puts it in the border label, a split has no border).
 function Picker:prompt_segments()
-  local home = os.getenv('HOME') or ''
   local add, segs = core.prompt_segments()
-  if self.icons then
-    add(ICON_DIR .. ' ', 'LustyPromptSep')
-  end
-  local path = self.root
-  if home ~= '' and path:sub(1, #home) == home then
-    add('~', 'LustyPromptTilde')
-    path = path:sub(#home + 1)
-  elseif path:sub(1, 1) ~= '/' then
-    -- relative root: show as-is in path color
-  end
-  local seg = ''
-  for i = 1, #path do
-    local ch = path:sub(i, i)
-    if ch == '/' then
-      add(seg, 'LustyPromptPath')
-      add('/', 'LustyPromptSep')
-      seg = ''
-    else
-      seg = seg .. ch
-    end
-  end
-  add(seg, 'LustyPromptPath')
-  add(' ', 'LustyPromptSep')
-  add('\u{f105}', 'LustyPromptSep')
-  add(' ', 'LustyPromptQuery')
-  add(self.query, 'LustyPromptQuery')
-  if self.total > 0 then
-    add(' [' .. self.total .. ']', 'LustyPromptPath')
-  end
-  if self.sort > 0 then
-    add(' <' .. SORT_LABELS[self.sort + 1] .. '>', 'LustyPromptPath')
-  end
-  if #self.mark_order > 0 then
-    add(' (' .. #self.mark_order .. ' marked)', 'LustyPromptPath')
-  end
-  -- Search depth (C-d cycles it), dimmed
-  add('  d' .. tostring(self.depth), 'LustyNativeMeta')
+  add(theme.profile().prompt, 'LustyPrompt')
+  add(self.query, 'LustyQuery')
   return segs
 end
 
@@ -1002,8 +946,71 @@ function Picker:prompt_text()
   return core.segments_text(self:prompt_segments())
 end
 
-function Picker:paint_prompt(h)
-  core.paint_segments(self, ns, h - 1, self:prompt_segments())
+--- Paint the prompt row; `line` is 0-based for core.paint_segments.
+function Picker:paint_prompt(line)
+  core.paint_segments(self, ns, line, self:prompt_segments())
+end
+
+--- Tildified browsed directory, as shown at the tail of the info line.
+function Picker:path_text()
+  local home = os.getenv('HOME') or ''
+  local path = self.root or ''
+  if
+    home ~= ''
+    and path:sub(1, #home) == home
+    and (#path == #home or path:sub(#home + 1, #home + 1) == '/')
+  then
+    return '~' .. path:sub(#home + 1)
+  end
+  return path
+end
+
+--- fzf info line: `matched/total` (serve reports both numbers), the mark
+--- count as fzf's `--multi` appends, the depth and the sort order, then the
+--- `─` rule that fills the row and the browsed directory at its tail.
+function Picker:info_segments()
+  local add, segs = core.prompt_segments()
+  local total = self.listing_total or self.total
+  add('  ' .. tostring(self.total) .. '/' .. tostring(total), 'LustyInfo')
+  if #self.mark_order > 0 then
+    add(' (' .. #self.mark_order .. ')', 'LustyInfo')
+  end
+  add('  d' .. tostring(self.depth), 'LustyInfo')
+  if self.sort > 0 then
+    add('  ' .. SORT_LABELS[self.sort + 1], 'LustyInfo')
+  end
+  local path = self:path_text()
+  local left = core.segments_text(segs)
+  local fill = self:width()
+    - vim.fn.strdisplaywidth(left)
+    - vim.fn.strdisplaywidth(path)
+    - 3
+  if fill > 0 then
+    add(' ', 'LustyInfo')
+    add(string.rep('\u{2500}', fill), 'LustySeparator')
+    add(' ' .. path, 'LustyPath')
+  end
+  return segs
+end
+
+function Picker:info_text()
+  return core.segments_text(self:info_segments())
+end
+
+--- Key hints in fzf's footer shape; the filesystem picker overrides this in
+--- the list pickers where the key set differs.
+function Picker:footer_text()
+  return '[C-l] Long  [C-y] Sort  [C-r] Preview  [C-d] Depth  [C-Space] Mark  [C-x] One-line'
+end
+
+function Picker:fitted_footer()
+  -- fzf truncates the footer instead of overflowing the window.
+  return core.fit('  ' .. self:footer_text(), self:width())
+end
+
+function Picker:footer_line()
+  local line = self:fitted_footer()
+  return line .. string.rep(' ', math.max(0, self:width() - vim.fn.strdisplaywidth(line)))
 end
 
 --- One-line mode (g:LustyExplorerOneLine / LUSTY_ONE_LINE): a single row with
@@ -1466,69 +1473,36 @@ end
 
 --- Define the few extra highlight groups (lsc groups come from its own cache).
 function M.ensure_highlights()
-  -- selection styled like the neg.nvim PmenuSel bar: read the live colors
-  -- (bg #2b2b2b / fg #e6e6e6 in the monochrome neg palette) so it always
-  -- matches the active colorscheme, with a neg fallback
-  local okp, h = pcall(api.nvim_get_hl_by_name, 'PmenuSel', true)
-  local bg = 0x2b2b2b
-  local fg = 0xe6e6e6
-  if okp and type(h) == 'table' then
-    if h.background then
-      bg = h.background
-    end
-    if h.foreground then
-      fg = h.foreground
+  local c = theme.colors()
+  local p = theme.profile()
+  local function hl(group, spec)
+    local ok = pcall(api.nvim_set_hl, 0, group, spec)
+    if not ok then
+      api.nvim_set_hl(0, group, { link = 'Normal' })
     end
   end
-  local ok = pcall(api.nvim_set_hl, 0, 'LustyNativeSel', {
-    bg = '#' .. string.format('%06x', bg),
-    fg = '#' .. string.format('%06x', fg),
-    bold = true,
-  })
-  if not ok then
-    api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#2b2b2b', fg = '#e6e6e6', bold = true })
-  end
-  -- Selection style from the theme TOML (files/nvim/lua/lusty/theme.toml):
-  -- bg/fg/bold/underline/reverse. g:LustyExplorerSelStyle (1..4) overrides
-  -- with a built-in preset for quick switching.
-  local sel = theme.selection()
-  if sel.reverse then
-    api.nvim_set_hl(0, 'LustyNativeSel', { reverse = true, bold = sel.bold ~= false })
-  else
-    api.nvim_set_hl(0, 'LustyNativeSel', {
-      bg = sel.bg or ('#' .. string.format('%06x', bg)),
-      fg = sel.fg or ('#' .. string.format('%06x', fg)),
-      bold = sel.bold ~= false,
-      underline = sel.underline == true,
-    })
-  end
-  local st = tonumber(vim.g.LustyExplorerSelStyle)
-  if st == 2 then
-    api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#006e9f', fg = '#dfffff', bold = true })
-  elseif st == 3 then
-    api.nvim_set_hl(0, 'LustyNativeSel', { bg = '#5e35b1', fg = '#ffffff', bold = true })
-  elseif st == 4 then
-    api.nvim_set_hl(0, 'LustyNativeSel', { reverse = true, bold = true })
-  end
-  api.nvim_set_hl(0, 'LustyPromptQuery', { fg = '#ffffff' })
-  local mt = theme.match()
-  api.nvim_set_hl(0, 'LustyNativeMatch', {
-    fg = mt.fg or '#ffffff',
-    underline = mt.underline ~= false,
-  })
-  api.nvim_set_hl(0, 'LustyNativeMeta', { fg = '#6c7e96' }) -- dim metadata in long view
-  -- Multi-select mark (C-Space): warm tint, distinct from the match underline.
-  api.nvim_set_hl(0, 'LustyNativeMark', { fg = '#ffd75f', bold = true })
-  -- nearly-black but not #000000: the web/xterm layer treats exact black as
-  -- the transparent default, while #0c0d14 rendered too gray on this setup
-  api.nvim_set_hl(0, 'LustyNativeFloat', { bg = '#000001', fg = '#d4d4d4' })
-  -- Window separator one notch darker than the panel body: the colorscheme's
-  -- default (VertSplit) reads too bright against the near-black picker
-  api.nvim_set_hl(0, 'LustyNativeBorder', { fg = '#3a4454', bg = '#000001' })
-  -- omp.zsh path segment colors (neg.omp.json)
-  api.nvim_set_hl(0, 'LustyPromptTilde', { fg = '#287373' })
-  api.nvim_set_hl(0, 'LustyPromptSep', { fg = '#005faf' })
-  api.nvim_set_hl(0, 'LustyPromptPath', { fg = '#95a7bc' })
+  -- The picker body: fzf's list background/foreground.
+  hl('LustyNativeFloat', { bg = c.bg, fg = c.fg })
+  hl('LustyNativeBorder', { fg = c.border, bg = c.bg })
+  -- Chrome roles: prompt, query, info line, separator and footer.
+  hl('LustyPrompt', { fg = c.prompt })
+  hl('LustyQuery', { fg = c.input })
+  hl('LustyInfo', { fg = c.info })
+  hl('LustyPath', { fg = c.info })
+  hl('LustySeparator', { fg = c.separator, bg = c.bg })
+  hl('LustyFooter', { fg = c.footer, underline = p.footer_underline ~= false })
+  -- List roles: fzf fg+, pointer, marker, hl and hl+.
+  hl('LustyPointer', { fg = c.pointer })
+  hl('LustyNativeMark', { fg = c.marker })
+  hl('LustyNativeSel', { fg = c.fg_current })
+  hl('LustyNativeMatch', { fg = c.hl })
+  hl('LustyNativeMatchSel', { fg = c.hl_current })
+  hl('LustyNativeMeta', { fg = c.info })
+  -- Legacy names still referenced by the prompt/one-line helpers.
+  hl('LustyPromptSep', { fg = c.prompt })
+  hl('LustyPromptQuery', { fg = c.input })
+  hl('LustyPromptPath', { fg = c.info })
+  hl('LustyPromptTilde', { fg = c.info })
 end
 
 M.ensure_highlights()

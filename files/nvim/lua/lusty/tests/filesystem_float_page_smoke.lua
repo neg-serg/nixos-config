@@ -1,8 +1,8 @@
--- Filesystem float page smoke: the first Q cannot know `total` yet, so the
--- backend page used to cover a single column of the grid; once the total is
--- known the grid may want more columns and the picker has to re-ask for the
--- full page instead of leaving the lower rows empty. Runs headless like the
--- other smokes:
+-- Filesystem list page smoke: the first Q cannot know `total` yet, so the
+-- fetched page is re-asked once the total arrives and the visible rows are
+-- filled instead of leaving the list short. The picker renders one entry per
+-- row (fzf style), so the page covers exactly list_rows() entries. Runs
+-- headless like the other smokes:
 --   nvim --clean --headless -l files/nvim/lua/lusty/tests/filesystem_float_page_smoke.lua
 -- Requires the lusty binary on PATH (the test skips without it).
 
@@ -34,8 +34,8 @@ wait_until(function() return p.total == 40 end, 'total known')
 -- fetched page covers list_rows() * max_cols() slots (or all 40 entries).
 wait_until(function()
   return #p.window == math.min(p:screen_count(), p.total)
-end, 'page fills the grid')
-assert(p:max_cols() > 1, 'grid uses more than one column')
-assert(#p.window > p:list_rows(), 'page is wider than the first single column')
+end, 'page fills the list')
+assert(p:max_cols() == 1, 'one entry per row, like fzf')
+assert(#p.window == math.min(p:list_rows(), p.total), 'page covers the visible rows')
 
 H.finish('PASS filesystem float page smoke')

@@ -43,10 +43,12 @@ vim.g.loaded_node_provider=0
 vim.g.loaded_perl_provider=0
 vim.g.loaded_ruby_provider=0
 
--- Lusty pickers as a single bottom row: the prompt and the selected entry share
--- it (no grid). Read live by files/nvim/lua/lusty/native_core.lua `one_line`;
--- LUSTY_ONE_LINE=1 in the environment wins over this.
-vim.g.LustyExplorerOneLine = 1
+-- Lusty pickers follow the fzf profile: prompt on top, info line, one entry
+-- per row and the footer. The old single bottom row is still available as a
+-- toggle (C-x inside the picker, or this variable); the layout reads it live
+-- (files/nvim/lua/lusty/native_core.lua `one_line`), and LUSTY_ONE_LINE in
+-- the environment wins over it.
+vim.g.LustyExplorerOneLine = 0
 
 -- Defer executable() checks to VeryLazy (synchronous PATH scans are slow at startup)
 vim.api.nvim_create_autocmd('User', {

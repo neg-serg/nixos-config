@@ -103,114 +103,183 @@ function Pick:draw()
   if self.closed or not api.nvim_buf_is_valid(self.buf) then
     return
   end
-  -- Remember what the grid was drawn for: ensure_geometry() compares against
+  -- Remember what the list was drawn for: ensure_geometry() compares against
   -- the live window size on the next key.
   self._drawn_w, self._drawn_h = self:width(), self:height()
   if self:one_line() then
     self:draw_one_line()
     return
   end
-  local cols = self:max_cols()
-  local col_w = self:col_width()
-  local h = self:height()
+  local th = require('lusty.theme')
+  local profile = th.profile()
+  local w = self:width()
+  local ch = self:chrome()
   local rows = self:list_rows()
+  local h = self:height()
+  -- fzf layout: prompt, info line, one entry per row, footer separator and
+  -- the key hints (native_core.chrome drops the chrome on tiny splits).
+  local top = 2 + ch.info
   local lines = {}
-  local cells = {}
-  for r = 1, rows do
-    local parts = {}
-    for c = 1, cols do
-      local pos = self.offset + (r - 1) * cols + (c - 1)
-      local item = self.items[pos - self.offset + 1]
-      if item then
-        local text, tw = core.fit(item.label or '', col_w)
-        parts[c] = text .. string.rep(' ', math.max(0, col_w - tw))
-        cells[#cells + 1] = {
-          line = r,
-          col = c,
-          item = item,
-          pos = pos,
-          label_w = tw, -- colour the full visible label, incl. the last char
-          start_col = (c - 1) * (col_w + 2),
-        }
-      end
-    end
-    lines[r] = table.concat(parts, '  ')
-  end
   for i = 1, h do
-    if not lines[i] then
-      lines[i] = ''
+    lines[i] = string.rep(' ', w)
+  end
+  local cells = {}
+  for r = 0, rows - 1 do
+    local pos = self.offset + r
+    local item = self.items[pos + 1]
+    if item then
+      local selected = pos == self.selected
+      local marked = self.multi and self.marked[self:key_of(item)] ~= nil
+      local first = selected and profile.pointer or '\u{258c}'
+      local prefix = first .. (marked and profile.marker or ' ')
+      local room = math.max(1, w - vim.fn.strdisplaywidth(prefix))
+      local text, tw = core.fit(item.label or '', room)
+      local line = prefix .. text
+      line = line .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(line)))
+      lines[top + r] = line
+      cells[#cells + 1] = {
+        line = top + r,
+        item = item,
+        pos = pos,
+        selected = selected,
+        marked = marked,
+        first_bytes = #first,
+        text_bytes = tw,
+      }
     end
   end
-  lines[h] = core.segments_text(self:prompt_segments())
+  local prompt = core.segments_text(self:prompt_segments())
+  lines[1] = prompt .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(prompt)))
+  if ch.info == 1 then
+    local info = core.segments_text(self:info_segments())
+    lines[2] = info .. string.rep(' ', math.max(0, w - vim.fn.strdisplaywidth(info)))
+  end
+  if ch.footer == 2 then
+    lines[h - 1] = string.rep('\u{2500}', w)
+    lines[h] = self:footer_line()
+  end
   api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
-
   api.nvim_buf_clear_namespace(self.buf, ns, 0, -1)
-  local sel_col0 = 0
+  self:paint_chrome()
+  self:paint_cells(cells, lines)
+end
+
+--- Paint the fzf chrome rows: prompt, info line, footer separator and hints.
+function Pick:paint_chrome()
+  local ch = self:chrome()
+  local h = self:height()
+  core.paint_segments(self, ns, 0, self:prompt_segments())
+  if ch.info == 1 then
+    core.paint_segments(self, ns, 1, self:info_segments())
+  end
+  if ch.footer == 2 then
+    api.nvim_buf_add_highlight(self.buf, ns, 'LustySeparator', h - 2, 0, -1)
+    local text = self:fitted_footer()
+    api.nvim_buf_add_highlight(self.buf, ns, 'LustyFooter', h - 1, 0, #text)
+  end
+end
+
+--- Paint one list page: fzf `fg+` over the current row (no background bar),
+--- `hl+` matches on it, the pointer and marker glyphs in their own colours.
+function Pick:paint_cells(cells, lines)
+  local profile = require('lusty.theme').profile()
   for _, cell in ipairs(cells) do
+    local row = cell.line - 1
+    local line = lines[cell.line] or ''
     local group = cell.item.group
     if cell.item.current and not group then
       group = 'Constant'
     end
-    if cell.pos == self.selected then
-      sel_col0 = cell.start_col
-    elseif group then
+    -- The label starts after the two prefix cells (pointer/gutter + marker).
+    local start = cell.first_bytes
+    if group then
       api.nvim_buf_add_highlight(
-        self.buf, ns, group, cell.line - 1, cell.start_col, cell.start_col + cell.label_w
+        self.buf, ns, group, row,
+        start, math.min(start + cell.text_bytes, #line)
       )
-    elseif cell.item.marks and cols == 1 then
-      -- single-column grep rows: byte-accurate sub-highlights
+    elseif cell.item.marks then
+      -- Single-column grep rows: byte-accurate sub-highlights.
       for _, m in ipairs(cell.item.marks) do
-        api.nvim_buf_add_highlight(self.buf, ns, m.group, cell.line - 1, m.start, m.finish)
+        api.nvim_buf_add_highlight(
+          self.buf, ns, m.group, row,
+          start + m.start, math.min(start + m.finish, #line)
+        )
       end
     end
-    -- Underline matched query letters in the label (incl. the selected row,
-    -- so the match survives the selection bar).
+    if cell.selected then
+      api.nvim_buf_add_highlight(self.buf, ns, 'LustyNativeSel', row, 0, #line)
+      api.nvim_buf_add_highlight(
+        self.buf, ns, 'LustyPointer', row, 0, cell.first_bytes
+      )
+    end
+    if cell.marked then
+      api.nvim_buf_add_highlight(
+        self.buf, ns, 'LustyNativeMark', row,
+        cell.first_bytes, cell.first_bytes + #profile.marker
+      )
+    end
     local label = cell.item.label
     if label and self.query ~= '' and self.query:sub(1, 1) ~= '.' then
       local base = label:match('([^/]+)$') or label
       local s, e = base:lower():find(self.query:lower(), 1, true)
       if s and e then
-        local origin = cell.start_col + (#label - #base)
+        local origin = start + (#label - #base)
+        local match_group = cell.selected and 'LustyNativeMatchSel' or 'LustyNativeMatch'
         api.nvim_buf_add_highlight(
-          self.buf, ns, 'LustyNativeMatch', cell.line - 1, origin + s - 1, origin + e
+          self.buf, ns, match_group, row, origin + s - 1, origin + e
         )
       end
     end
-    if self.multi and self.marked[self:key_of(cell.item)] then
-      api.nvim_buf_add_highlight(
-        self.buf, ns, 'LustyNativeMark', cell.line - 1, cell.start_col, cell.start_col + cell.label_w
-      )
-    end
   end
-  if self.total > 0 then
-    local sel_row = math.floor((self.selected - self.offset) / cols)
-    api.nvim_buf_add_highlight(
-      self.buf, ns, 'LustyNativeSel', sel_row, sel_col0, sel_col0 + col_w - 1
-    )
-  end
-  self:paint_prompt(h)
 end
 
-function Pick:paint_prompt(h)
-  core.paint_segments(self, ns, h - 1, self:prompt_segments())
-end
-
---- Prompt segment list: title, query and counters, with their colours. The
---- single source for the prompt line and the one-line mode.
+--- fzf prompt row: the `❯  ` glyph and the query.
 function Pick:prompt_segments()
   local add, segs = core.prompt_segments()
-  add(self.title, 'LustyPromptPath')
-  add(' ', 'LustyPromptSep')
-  add(self.arrow, 'LustyPromptSep')
-  add(' ', 'LustyPromptQuery')
-  add(self.query, 'LustyPromptQuery')
-  if self.total > 0 then
-    add(' [' .. self.total .. ']', 'LustyPromptPath')
-  end
+  add(require('lusty.theme').profile().prompt, 'LustyPrompt')
+  add(self.query, 'LustyQuery')
+  return segs
+end
+
+--- fzf info line: the item count, the mark count, then the `─` rule with the
+--- picker title at its tail (the title used to live in the prompt).
+function Pick:info_segments()
+  local add, segs = core.prompt_segments()
+  add('  ' .. tostring(self.total), 'LustyInfo')
   if #self.mark_order > 0 then
-    add(' (' .. #self.mark_order .. ' marked)', 'LustyPromptPath')
+    add(' (' .. #self.mark_order .. ')', 'LustyInfo')
+  end
+  local title = self.title or ''
+  local left = core.segments_text(segs)
+  local fill = self:width()
+    - vim.fn.strdisplaywidth(left)
+    - vim.fn.strdisplaywidth(title)
+    - 3
+  if title ~= '' and fill > 0 then
+    add(' ', 'LustyInfo')
+    add(string.rep('\u{2500}', fill), 'LustySeparator')
+    add(' ' .. title, 'LustyPath')
   end
   return segs
+end
+
+--- Key hints in fzf's footer shape (the two picker flavors bind different
+--- sets, so the caller does not have to keep a per-instance footer).
+function Pick:footer_text()
+  if self.multi then
+    return '[Enter] Open  [C-Space] Mark  [C-d] Delete  [C-x] One-line'
+  end
+  return '[Enter] Open  [C-t] Tab  [C-o] Split  [C-v] Vsplit  [C-x] One-line'
+end
+
+function Pick:fitted_footer()
+  -- fzf truncates the footer instead of overflowing the window.
+  return core.fit('  ' .. self:footer_text(), self:width())
+end
+
+function Pick:footer_line()
+  local line = self:fitted_footer()
+  return line .. string.rep(' ', math.max(0, self:width() - vim.fn.strdisplaywidth(line)))
 end
 
 --- One-line mode (g:LustyExplorerOneLine / LUSTY_ONE_LINE): a single row with
