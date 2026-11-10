@@ -8,7 +8,11 @@
 #     stream, route the playback stream to the RME AES pair, and drop the
 #     direct loopback -> RME links (two paths would double the audio);
 #   * streams gone    -> restore the direct links, so a dead or reloading DSP
-#     never costs the machine its sound.
+#     never costs the machine its sound;
+#   * host in the path -> the matrix tab (or a hand-run Carla project) has put
+#     a VST host between a stream and its destination: keep the host's four
+#     links, drop the direct cable, and do not prune a half-made insert while
+#     its owner is still wiring it.
 #
 # Links are added before the ones that no longer belong are pruned, and the
 # steady state is checked against the exact set it wants: a link that appears
@@ -39,6 +43,8 @@ STRAY_R=$RME:playback_AUX1
 
 state=unknown
 said=
+host_grace=0
+host_guard=0
 
 log() { printf '%s camilladsp-route: %s\n' "$("$date" '+%F %T')" "$*"; }
 
@@ -48,6 +54,15 @@ say_once() {
   [[ $said == "$1" ]] && return 0
   said=$1
   log "$2"
+}
+
+# A port owned by the VST host. While a host node is present the pruners leave
+# its links alone: its owner wires them one at a time, and a poll that lands in
+# the middle must not delete half an insert. The grace timer above is what
+# eventually lets a half-wired host be pruned as a stray.
+host_endpoint() {
+  local node=${1%%:*}
+  [[ ${node,,} == *carla* ]]
 }
 
 # One direction of a link line from `pw-link -l`: the port header line is the
@@ -90,6 +105,7 @@ prune_sources() { # $1 = capture port, $2 = the only source it should have ("" f
   local src
   while IFS= read -r src; do
     [[ -z $src || $src == "$2" ]] && continue
+    ((host_guard)) && host_endpoint "$src" && continue
     del "$src" "$1"
   done < <(sources_to "$1")
 }
@@ -98,6 +114,7 @@ prune_dests() { # $1 = output port, $2 = the only destination it should have (""
   local dst
   while IFS= read -r dst; do
     [[ -z $dst || $dst == "$2" ]] && continue
+    ((host_guard)) && host_endpoint "$dst" && continue
     del "$1" "$dst"
   done < <(dests_of "$1")
 }
@@ -174,6 +191,139 @@ route_direct() {
   del "$GAME:output_FR" "$STRAY_R"
 }
 
+# The host insert. A crosspoint can carry a chain of VST effects through a
+# headless host (`pw-jack carla --no-gui`); on the managed path that host is a
+# third node — game-stereo -> host -> camilladsp-capture, or
+# camilladsp-playback -> host -> the RME pair. The router does not start or
+# wire it (the matrix tab or the person running the exported project does), but
+# it has to accept the hosted four-link path as a steady state instead of
+# pruning it as a stray every two seconds.
+#
+# The host is recognised by its client name and by the four ports a continuous
+# rack exposes (audio-in1/2, audio-out1/2). A host that is merely running, or a
+# chain on another crosspoint, changes nothing: only links into this path count.
+host_node() {
+  local port name
+  local -A in1=() in2=() out1=() out2=()
+  while IFS= read -r port; do
+    name=${port%:*}
+    [[ ${name,,} == *carla* ]] || continue
+    case ${port##*:} in
+      audio-in1) in1[$name]=1 ;;
+      audio-in2) in2[$name]=1 ;;
+      audio-out1) out1[$name]=1 ;;
+      audio-out2) out2[$name]=1 ;;
+    esac
+  done < <(
+    "$pwLink" -i 2> /dev/null
+    "$pwLink" -o 2> /dev/null
+  )
+  for name in "${!in1[@]}"; do
+    [[ -n ${in2[$name]-} && -n ${out1[$name]-} && -n ${out2[$name]-} ]] || continue
+    printf '%s\n' "$name"
+    return 0
+  done
+  return 1
+}
+
+host_capture_wired() { # $1 = host node; the capture half goes through it
+  has_link "$GAME:output_FL" "$1:audio-in1" \
+    && has_link "$GAME:output_FR" "$1:audio-in2" \
+    && has_link "$1:audio-out1" "$CAP:input_FL" \
+    && has_link "$1:audio-out2" "$CAP:input_FR"
+}
+
+host_playback_wired() { # $1 = host node; the playback half goes through it
+  has_link "$PB:output_FL" "$1:audio-in1" \
+    && has_link "$PB:output_FR" "$1:audio-in2" \
+    && has_link "$1:audio-out1" "$AES_L" \
+    && has_link "$1:audio-out2" "$AES_R"
+}
+
+host_touched() { # $1 = host node; any one of the links a host insert makes
+  has_link "$GAME:output_FL" "$1:audio-in1" \
+    || has_link "$GAME:output_FR" "$1:audio-in2" \
+    || has_link "$1:audio-out1" "$CAP:input_FL" \
+    || has_link "$1:audio-out2" "$CAP:input_FR" \
+    || has_link "$PB:output_FL" "$1:audio-in1" \
+    || has_link "$PB:output_FR" "$1:audio-in2" \
+    || has_link "$1:audio-out1" "$AES_L" \
+    || has_link "$1:audio-out2" "$AES_R"
+}
+
+host_capture_complete() { # $1 = host node
+  host_capture_wired "$1" \
+    && has_link "$PB:output_FL" "$AES_L" \
+    && has_link "$PB:output_FR" "$AES_R" \
+    && ! has_link "$GAME:output_FL" "$CAP:input_FL" \
+    && ! has_link "$GAME:output_FR" "$CAP:input_FR" \
+    && ! has_link "$GAME:output_FL" "$AES_L" \
+    && ! has_link "$GAME:output_FR" "$AES_R" \
+    && only_sources "$CAP:input_FL" "$1:audio-out1" \
+    && only_sources "$CAP:input_FR" "$1:audio-out2" \
+    && only_dests "$PB:output_FL" "$AES_L" \
+    && only_dests "$PB:output_FR" "$AES_R" \
+    && ! has_link "$1:audio-out1" "$AES_L" \
+    && ! has_link "$1:audio-out2" "$AES_R"
+}
+
+host_playback_complete() { # $1 = host node
+  host_playback_wired "$1" \
+    && has_link "$GAME:output_FL" "$CAP:input_FL" \
+    && has_link "$GAME:output_FR" "$CAP:input_FR" \
+    && ! has_link "$PB:output_FL" "$AES_L" \
+    && ! has_link "$PB:output_FR" "$AES_R" \
+    && only_sources "$CAP:input_FL" "$GAME:output_FL" \
+    && only_sources "$CAP:input_FR" "$GAME:output_FR" \
+    && only_dests "$PB:output_FL" "$1:audio-in1" \
+    && only_dests "$PB:output_FR" "$1:audio-in2" \
+    && ! has_link "$GAME:output_FL" "$1:audio-in1" \
+    && ! has_link "$GAME:output_FR" "$1:audio-in2"
+}
+
+# Same order as route_dsp: add what carries sound first, take the direct cable
+# down last. The host links are already there when this runs — its owner made
+# them — but adding them again is free and makes a repair possible.
+route_host_capture() { # $1 = host node
+  add "$PB:output_FL" "$AES_L"
+  add "$PB:output_FR" "$AES_R"
+  prune_dests "$PB:output_FL" "$AES_L"
+  prune_dests "$PB:output_FR" "$AES_R"
+  add "$GAME:output_FL" "$1:audio-in1"
+  add "$GAME:output_FR" "$1:audio-in2"
+  add "$1:audio-out1" "$CAP:input_FL"
+  add "$1:audio-out2" "$CAP:input_FR"
+  prune_sources "$CAP:input_FL" "$1:audio-out1"
+  prune_sources "$CAP:input_FR" "$1:audio-out2"
+  del "$GAME:output_FL" "$CAP:input_FL"
+  del "$GAME:output_FR" "$CAP:input_FR"
+  del "$GAME:output_FL" "$AES_L"
+  del "$GAME:output_FR" "$AES_R"
+  del "$1:audio-out1" "$AES_L"
+  del "$1:audio-out2" "$AES_R"
+  del "$GAME:output_FL" "$STRAY_L"
+  del "$GAME:output_FR" "$STRAY_R"
+}
+
+route_host_playback() { # $1 = host node
+  add "$GAME:output_FL" "$CAP:input_FL"
+  add "$GAME:output_FR" "$CAP:input_FR"
+  prune_sources "$CAP:input_FL" "$GAME:output_FL"
+  prune_sources "$CAP:input_FR" "$GAME:output_FR"
+  add "$PB:output_FL" "$1:audio-in1"
+  add "$PB:output_FR" "$1:audio-in2"
+  add "$1:audio-out1" "$AES_L"
+  add "$1:audio-out2" "$AES_R"
+  prune_dests "$PB:output_FL" "$1:audio-in1"
+  prune_dests "$PB:output_FR" "$1:audio-in2"
+  del "$GAME:output_FL" "$1:audio-in1"
+  del "$GAME:output_FR" "$1:audio-in2"
+  del "$GAME:output_FL" "$AES_L"
+  del "$GAME:output_FR" "$AES_R"
+  del "$GAME:output_FL" "$STRAY_L"
+  del "$GAME:output_FR" "$STRAY_R"
+}
+
 while :; do
   # Nothing can be routed while one of the two ends is absent. While that lasts,
   # a live DSP stream is also taken off every sink it has: with its AES target
@@ -184,29 +334,106 @@ while :; do
       prune_dests "$PB:output_FL" ""
       prune_dests "$PB:output_FR" ""
     fi
+    host_grace=0
     say_once waiting "route: waiting for game-stereo and the RME AES pair"
     "$sleep" 2
     continue
   fi
-  said=
+  # A host that is only running changes nothing; one with a link into this path
+  # is either a finished insert or one being wired.
+  host=
+  host_guard=0
+  if dsp_up; then
+    host=$(host_node) || true
+  fi
+  hosted_capture=
+  hosted_playback=
+  if [[ -n $host ]]; then
+    host_guard=1
+    host_capture_wired "$host" && hosted_capture=1
+    host_playback_wired "$host" && hosted_playback=1
+  fi
 
-  if dsp_up; then want=dsp; else want=direct; fi
+  # The two host cells are wired one at a time, and the direct cable may already
+  # be gone. Hold repairs for a few polls instead of deleting a half-made
+  # insert; after that it is a stray link like any other.
+  if [[ $state != hostcap && $state != hostplay ]] \
+    && [[ -n $host && -z $hosted_capture && -z $hosted_playback ]] \
+    && host_touched "$host"; then
+    if ((host_grace < 5)); then
+      ((host_grace++))
+      say_once host "route: waiting for the host insert to settle"
+      "$sleep" 2
+      continue
+    fi
+    host_guard=0
+  else
+    host_grace=0
+  fi
+
+  said=
+  if [[ -n $hosted_capture ]]; then
+    want=hostcap
+  elif [[ -n $hosted_playback ]]; then
+    want=hostplay
+  elif [[ -n $host && $state == hostcap ]] && host_touched "$host"; then
+    # One host link dropped while the insert was live: repair it rather than
+    # treating the leftovers as a fresh, half-wired insert.
+    want=hostcap
+  elif [[ -n $host && $state == hostplay ]] && host_touched "$host"; then
+    want=hostplay
+  elif dsp_up; then
+    want=dsp
+  else
+    want=direct
+  fi
+
   if [[ $want != $state ]]; then
-    if [[ $want == dsp ]]; then route_dsp; else route_direct; fi
+    case $want in
+      dsp) route_dsp ;;
+      direct) route_direct ;;
+      hostcap) route_host_capture "$host" ;;
+      hostplay) route_host_playback "$host" ;;
+    esac
     log "route: $want"
     state=$want
-  elif [[ $want == dsp ]]; then
-    route_complete || {
-      route_dsp
-      log "route: repaired"
-    }
   else
-    has_link "$GAME:output_FL" "$AES_L" \
-      && has_link "$GAME:output_FR" "$AES_R" \
-      || {
-        route_direct
-        log "route: repaired (direct)"
-      }
+    case $want in
+      dsp)
+        route_complete || {
+          # The owner may have wired the host between the check above and this
+          # repair. Re-read once: a half-made insert is the next poll's problem,
+          # not a stray link to delete.
+          late_host=$(host_node) || true
+          if [[ -n $late_host ]] && host_touched "$late_host" && ((host_grace < 5)); then
+            host_guard=1
+          else
+            route_dsp
+            log "route: repaired"
+          fi
+        }
+        ;;
+      direct)
+        has_link "$GAME:output_FL" "$AES_L" \
+          && has_link "$GAME:output_FR" "$AES_R" \
+          || {
+            route_direct
+            log "route: repaired (direct)"
+          }
+        ;;
+      hostcap)
+        host_capture_complete "$host" || {
+          route_host_capture "$host"
+          log "route: repaired (host capture)"
+        }
+        ;;
+      hostplay)
+        host_playback_complete "$host" || {
+          route_host_playback "$host"
+          log "route: repaired (host playback)"
+        }
+        ;;
+    esac
   fi
   "$sleep" 2
 done
