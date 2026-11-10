@@ -61,6 +61,11 @@ in
             style = kvantum
             color_scheme = ${kvantumPkg}/share/color-schemes/${kvantumTheme}.colors
             icon_theme = ${iconTheme}
+            # File dialogs are delegated to xdg-desktop-portal, so Qt apps get
+            # the same chooser as GTK ones (broot in kitty when
+            # features.gui.termfilechooser is on). This is the qt6ct
+            # `standard_dialogs` hook, added by the local hyprqt6engine patch.
+            standard_dialogs = xdgdesktopportal
           }
         '';
 

@@ -12,6 +12,14 @@
 # runs with its intended features: KF6IconThemes for the icon-theme lookup and
 # KF6ConfigCore + KF6ColorScheme for parsing the .colors file named by
 # theme:color_scheme (without the latter the palette stays the generic Qt one).
+#
+# Local patch (standard-dialogs.patch): upstream keeps qt6ct's m_theme hook in
+# PlatformTheme.cpp but never initializes it, so `usePlatformNativeDialog`
+# always answers false and QFileDialog falls back to Qt's built-in widget
+# dialog. The patch adds `theme:standard_dialogs`, which creates the named
+# platform theme (xdgdesktopportal) and delegates FileChooser dialogs to it —
+# so Qt apps use xdg-desktop-portal and therefore the broot picker from
+# features.gui.termfilechooser. Drop the patch when upstream grows the setting.
 {
   lib,
   stdenv,
@@ -35,6 +43,8 @@ stdenv.mkDerivation {
     rev = "d0ce29ca5471f406c71558cd9453573686b8c976";
     hash = "sha256-UQQue60zRgkz4KqqAyVZlVqGvdGZcj5BuWV9SlbURis=";
   };
+
+  patches = [ ./standard-dialogs.patch ];
 
   nativeBuildInputs = [
     cmake

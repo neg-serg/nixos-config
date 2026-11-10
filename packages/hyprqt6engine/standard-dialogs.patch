@@ -1,0 +1,31 @@
+diff --git a/common/config/ConfigManager.cpp b/common/config/ConfigManager.cpp
+index 553c70c..b49c2d3 100644
+--- a/common/config/ConfigManager.cpp
++++ b/common/config/ConfigManager.cpp
+@@ -23,6 +23,7 @@ void CConfigManager::init() {
+     m_config.addConfigValue("theme:font_fixed_size", Hyprlang::INT{11});
+     m_config.addConfigValue("theme:font", Hyprlang::STRING{"Sans Serif"});
+     m_config.addConfigValue("theme:font_size", Hyprlang::INT{11});
++    m_config.addConfigValue("theme:standard_dialogs", Hyprlang::STRING{""});
+ 
+     m_config.addConfigValue("misc:single_click_activate", Hyprlang::INT{1});
+     m_config.addConfigValue("misc:menus_have_icons", Hyprlang::INT{1});
+diff --git a/hyprqtplugin/PlatformTheme.cpp b/hyprqtplugin/PlatformTheme.cpp
+index 36a9cf1..68b2533 100644
+--- a/hyprqtplugin/PlatformTheme.cpp
++++ b/hyprqtplugin/PlatformTheme.cpp
+@@ -78,6 +78,14 @@ CHyprPlatformTheme::CHyprPlatformTheme() : m_fixedFont(*QGenericUnixTheme::font(
+     g_pConfigManager->init();
+ 
+     static auto PCOLORSCHEME = g_pConfigManager->getValue<Hyprlang::STRING>("theme:color_scheme");
++    static auto PSTANDARDDIALOGS = g_pConfigManager->getValue<Hyprlang::STRING>("theme:standard_dialogs");
++
++    // Delegate FileChooser dialogs to another platform theme (typically
++    // xdgdesktopportal, which forwards them to xdg-desktop-portal). This is the
++    // same hook qt6ct exposes as `standard_dialogs`; without it QFileDialog
++    // falls back to Qt's built-in widget dialog.
++    if (const std::string dialogs = *PSTANDARDDIALOGS; !dialogs.empty())
++        m_theme.reset(QPlatformThemeFactory::create(QString::fromStdString(dialogs)));
+ 
+     if (QGuiApplication::desktopSettingsAware()) {
+         applySettings();
