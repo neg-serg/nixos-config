@@ -196,11 +196,39 @@ class Estimate(unittest.TestCase):
             small,
         )
 
-    def test_is_pessimistic(self):
-        # 3600 chars at 3.6 chars/token is 1000 tokens; the margin must push
-        # the estimate above that, never below.
-        self.assertGreater(
-            lp.estimate_tokens([{"role": "user", "content": "x" * 3600}]), 1000
+    def test_per_class_rates_are_pinned(self):
+        # The rates come from measuring qwen3.8 and devstral over the same
+        # texts; a change here has to be re-measured, not guessed.
+        self.assertAlmostEqual(460 / lp.CPK_LATIN, 100, places=6)
+        self.assertAlmostEqual(330 / lp.CPK_CYRILLIC, 100, places=6)
+        self.assertAlmostEqual(120 / lp.CPK_CJK, 100, places=6)
+        self.assertAlmostEqual(320 / lp.CPK_OTHER, 100, places=6)
+
+    def test_cyrillic_costs_more_than_latin(self):
+        latin = lp.char_tokens("a" * 330)
+        cyrillic = lp.char_tokens("ж" * 330)
+        self.assertGreater(cyrillic, latin)
+
+    def test_cjk_is_never_underestimated(self):
+        # Measured chars/token, baseline subtracted: Chinese runs at 2.00 on
+        # qwen3.8 and 1.18 on devstral. The old 3.6-char constant estimated
+        # 2.4x fewer tokens than devstral needs — a slot overflow, i.e. the
+        # 400 this guard exists to prevent.
+        sample = (
+            "首先我们需要找到问题的来源：构建失败并不是因为配置写错了，"
+            "而是因为替换缓存的请求超时。我们检查守护进程的日志，确认代理是"
+            "否在运行。如果代理没有启动，那么每次请求都会等待一分钟然后失败，"
+            "所以构建看起来像是卡住了，实际上只是它在等待网络。"
+        )
+        tokens = lp.char_tokens(sample)
+        self.assertGreaterEqual(tokens, len(sample) / 1.3)
+        self.assertEqual(1.26, round(len(sample) / tokens, 2))
+
+    def test_russian_text_costs_more_than_english(self):
+        ru = "Сборка падает не из-за конфигурации, а из-за кэша подстановки."
+        en = "The build fails not because of the configuration but the cache."
+        self.assertLess(
+            len(ru) / lp.char_tokens(ru), len(en) / lp.char_tokens(en)
         )
 
 
