@@ -36,6 +36,10 @@ SINGLE_TOOL_RULE = (
 CHARS_PER_TOKEN = 3.6  # English + code mix; trimmed requests get a 10% margin
 
 
+def _empty_row():
+    return {"requests": 0, "trimmed": 0, "retries": 0, "errors": 0}
+
+
 class Stats:
     def __init__(self):
         self.lock = threading.Lock()
@@ -48,13 +52,14 @@ class Stats:
     def bump(self, field, model=None, n=1):
         with self.lock:
             setattr(self, field, getattr(self, field) + n)
-            if model:
-                row = self.per_model.setdefault(
-                    model, {"requests": 0, "trimmed": 0}
-                )
-                row["requests"] += 1
-                if field == "trimmed":
-                    row["trimmed"] += n
+            if not model:
+                return
+            row = self.per_model.setdefault(model, _empty_row())
+            # Only the counter that was bumped moves: incrementing `requests`
+            # on every event made the per-model row useless (a trim or a retry
+            # showed up as another request).
+            if field in row:
+                row[field] += n
 
     def snapshot(self):
         with self.lock:
