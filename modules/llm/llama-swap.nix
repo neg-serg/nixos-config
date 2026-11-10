@@ -189,7 +189,10 @@ let
   '';
 
   # Qwen3.8-27B abliterated (IQ3_S, ~3.5 bpw) — the quality tier: dense 27B,
-  # the highest bits-per-weight of anything served here, text-only. Dense
+  # the highest bits-per-weight of anything served here. Since 2026-11-11 it
+  # is also the `vision` tier: the release is natively multimodal and huihui
+  # publishes a bf16 projector for it, so the same weights read images for
+  # +0.87 GiB of VRAM (see the mmproj note below). Dense
   # attention makes the KV cache expensive: q8_0 only leaves room for ~8k, so
   # both run q4_0 and the context is 32k — measured 2026-11-05 at 13.75 GiB
   # with the desktop (2.15 GiB of headroom), 1069 tok/s prefill on a 9.5k
@@ -199,11 +202,40 @@ let
   # before measuring outside the router. 32k also fits the ~20k-token agent
   # prompt with room for its answer. `--reasoning off` is mandatory: without
   # it the reply arrives with an empty `content` (everything to reasoning).
+  #
+  # Vision (2026-11-11): the Qwen3.8 release is natively multimodal and the
+  # huihui GGUF repo ships `mmproj-model-bf16.gguf` (0.87 GiB) for exactly
+  # these weights; the file lives next to them as
+  # `mmproj-qwen38-27b-bf16.gguf`. The text slot above stays projector-free on
+  # purpose: `qwen38vision` below serves the same weights with the projector
+  # and the `vision` alias, at half the context. Measured on 2026-11-11 with a
+  # 963-token screenshot and a 2.9 GiB desktop: 32k peaked at 16020 of 16304
+  # MiB (0.28 GiB left), 16k at 15660 (0.64 GiB left). The KV cache is small
+  # here (the 27B is hybrid attention, most layers carry no per-token KV), so
+  # halving the window buys only ~0.35 GiB — the image graph and the bf16
+  # projector dominate. 16k still holds a dozen images, and the margin now
+  # survives a browser tab.
   qwen38 = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3.8-27B-abliterated-IQ3_S.gguf \
       --host 127.0.0.1 --port ''${PORT} \
       -c 32768 -np 1 --flash-attn on --fit off --reasoning off \
+      --cache-type-k q4_0 --cache-type-v q4_0 --jinja
+  '';
+
+  # The `vision` tier: same IQ3_S weights, plus the bf16 projector and a
+  # smaller window (see the note above). Warm numbers on that screenshot:
+  # 9.5 s, 753 tok/s prefill, 37.9 tok/s decode. The 8B `vision-fast` is much
+  # faster (2.8 s, 93 tok/s) and transcribed the image with a neutral prompt,
+  # but refused the structured "list the table rows verbatim" request
+  # outright — the 27B answered it. Abliteration thins refusals, it does not
+  # remove them, so the bigger model owns the alias.
+  qwen38vision = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/abliterated/Qwen3.8-27B-abliterated-IQ3_S.gguf \
+      --mmproj ${modelDir}/abliterated/mmproj-qwen38-27b-bf16.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 16384 -np 1 --flash-attn on --fit off --reasoning off \
       --cache-type-k q4_0 --cache-type-v q4_0 --jinja
   '';
 
@@ -539,8 +571,11 @@ in
       models = {
         "qwen3-vl-8b-abliterated" = {
           cmd = vision8b;
+          # `vision` moved to the 27B on 2026-11-11; this stays the fast path
+          # (twice the prefill, 64k window) for screenshots that need a read,
+          # not a document.
           aliases = [
-            "vision"
+            "vision-fast"
             "vision-8b"
             "qwen3-vl-8b"
           ];
@@ -582,6 +617,14 @@ in
           aliases = [
             "qwen3.8"
             "ru"
+          ];
+        };
+        # Same weights, projector + 16k window: the `vision` tier.
+        "qwen3.8-27b-vision" = {
+          cmd = qwen38vision;
+          aliases = [
+            "vision"
+            "vision-27b"
           ];
         };
         "qwen3.8-27b-bartowski" = {

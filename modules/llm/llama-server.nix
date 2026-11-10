@@ -13,9 +13,12 @@ let
   modelDir = "/zero/ai/llama";
 
   # The 30B vision weights (18 GB) were removed on 2026-11-06: they do not fit
-  # the 16 GB card next to the desktop, so the unit only serves the 8B model.
-  modelFile = "qwen3-vl-8b-instruct-q4_k_m.gguf";
-  mmprojFile = "mmproj-qwen3-vl-8b-f16.gguf";
+  # the 16 GB card next to the desktop. The censored Qwen3-VL-8B pair went with
+  # the 2026-11-10 weight cleanup, so the unit serves the abliterated 8B pair
+  # that the router already uses — the only vision files left on disk. The 27B
+  # `vision` tier is router-only (it needs the swap and the 32k KV budget).
+  modelFile = "abliterated/Qwen3-VL-8B-abliterated-Q4_K_M.gguf";
+  mmprojFile = "abliterated/mmproj-qwen3-vl-8b-ablit-f16.gguf";
 in
 {
   options.services.llama-server = {

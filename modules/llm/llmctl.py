@@ -40,8 +40,8 @@ CATALOG = {
         "fp": "3.0/6",
     },
     "qwen3-vl-8b-abliterated": {
-        "aliases": ["vision", "vision-8b", "qwen3-vl-8b"],
-        "role": "fast / vision / chemistry",
+        "aliases": ["vision-fast", "vision-8b", "qwen3-vl-8b"],
+        "role": "fast vision (8B) / chemistry",
         "ctx": "64k",
         "size": "5 GB",
         "chem": "13/13",
@@ -50,12 +50,21 @@ CATALOG = {
     },
     "qwen3.8-27b-abliterated": {
         "aliases": ["qwen3.8", "ru"],
-        "role": "dense 27B quality",
+        "role": "dense 27B: text quality tier",
         "ctx": "32k",
         "size": "11 GB",
         "chem": "12/13",
         "lean": "4/7",
         "fp": "3.7/6",
+    },
+    "qwen3.8-27b-vision": {
+        "aliases": ["vision", "vision-27b"],
+        "role": "vision + docs (27B + mmproj)",
+        "ctx": "16k",
+        "size": "11 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
     },
     "qwen3.8-27b-bartowski": {
         "aliases": ["bart27b", "bartowski"],
