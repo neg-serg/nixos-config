@@ -236,6 +236,5 @@
     pkgs.nodejs # Node.js — required by npx, MCP servers, git hooks
     pkgs.wtype # Wayland keyboard input simulator (Ctrl+Space→Tab)
     pkgs.kanata # keyboard remapper (Caps→Ctrl, etc.)
-    pkgs.podman # container management for distrobox (Docker-compatible)
   ];
 }

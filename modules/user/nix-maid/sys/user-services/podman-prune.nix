@@ -8,7 +8,7 @@
 # images used by distrobox survive.
 # Key options: none — gated by features.virt.docker, the flag that brings the
 # podman stack in.
-# Dependencies: pkgs.podman in the wrapper's PATH; rootless storage lives in
+# Dependencies: the module podman package in the wrapper PATH; rootless storage lives in
 # ~/.local/share/containers, so the unit runs as the user, not as root.
 {
   lib,
@@ -26,7 +26,7 @@ let
   pruneScript = pkgs.writeShellApplication {
     name = "podman-prune";
     runtimeInputs = [
-      pkgs.podman # podman itself: it owns the storage being pruned
+      config.virtualisation.podman.package # podman itself: it owns the storage being pruned
       pkgs.coreutils # standard utilities for the wrapper's shell
     ];
     text = ''
