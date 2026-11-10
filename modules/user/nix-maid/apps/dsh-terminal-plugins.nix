@@ -277,9 +277,6 @@ rec {
                 # Serves with thinking (xhigh, 4096-token budget); a hard
                 # question costs minutes at ~8 tok/s. See llama-swap.nix.
                 contextWindow: 131072
-              - id: gpt-oss-120b-abliterated
-                name: gpt-oss-120b (RAM tier, slow prefill)
-                contextWindow: 32768
               - id: qwen3.8-27b-abliterated
                 name: Qwen3.8-27B abliterated (quality, RU)
                 # 32k measured at 13.75 GiB with the desktop, 30.5 tok/s at a

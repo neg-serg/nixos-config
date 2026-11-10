@@ -71,15 +71,6 @@ CATALOG = {
         "lean": "-",
         "fp": "4.2/6",
     },
-    "gpt-oss-120b-abliterated": {
-        "aliases": ["gpt-oss-120", "big"],
-        "role": "120B-A5B MoE, RAM tier",
-        "ctx": "32k",
-        "size": "63 GB",
-        "chem": "8/13",
-        "lean": "2/7",
-        "fp": "4.7/6",
-    },
     "qwen3.8-flash-next-abliterated": {
         "aliases": ["qwen3.8-flash", "next"],
         "role": "180B-A6B MoE, next tier",
@@ -487,9 +478,8 @@ def print_models():
         "chem = 6 olympiad problems (13 values), lean = 7 core-Lean "
         "theorems, fp = 6 build-planning cases (partial credit). * = fp with "
         "the tier's own thinking config; every other fp score has thinking "
-        "pinned off for comparability. gpt-oss-120b is the only model whose "
-        "fp score moved between runs (4.4 and 5.0 of 6, so 4.7 is the mean); "
-        "the qwen tiers repeat exactly. The Lean prover (oprover) is "
+        "pinned off for comparability. The qwen tiers repeat exactly across "
+        "runs. The Lean prover (oprover) is "
         "trained against Mathlib, which this host does not have, so its "
         "core-only score understates it and is not comparable with the "
         "general tiers."

@@ -2,8 +2,8 @@
 # stack. The `model` field of a request selects the backend: llama-swap starts
 # it (or proxies to it) and shuts the previously running one down; an idle
 # backend is unloaded after `globalTTL` (60 s) or the model's own `ttl`. Small
-# models fit the 16 GB card whole; the RAM tiers (gpt-oss-120b, qwen3.8-flash)
-# mmap most weights from /zero. The 8B vision unit on
+# models fit the 16 GB card whole; the RAM tier (qwen3.8-flash) mmaps most
+# weights from /zero. The 8B vision unit on
 # :8080 is manual and separate.
 # Clients use http://127.0.0.1:9292/v1.
 #
@@ -108,43 +108,6 @@ let
       --host 127.0.0.1 --port ''${PORT} \
       -c 32768 -np 1 --flash-attn on --fit off --reasoning off \
       --cache-type-k q8_0 --cache-type-v q8_0 --jinja
-  '';
-
-  # gpt-oss-120b abliterated (MXFP4, 63.4 GB) — the RAM tier: the model is 4x
-  # the card, so only 4 layers run on the GPU (attention + their expert layers,
-  # ~6.9 GiB model buffer, ~10.5 GiB total with the desktop) and the other 32
-  # stay mmap'd, read from page cache / NVMe on demand. 5.1B active gives
-  # 6-8.5 tok/s decode on a cold page cache and ~11.5 once the file is warm
-  # (measured 2026-11-05). Prefill is CPU/IO-bound and cache-dependent: 55 tok/s
-  # on the first cold-cache request, then 130-146 tok/s with the expert pages
-  # warm (re-measured 2026-11-05 at 1.4k/5.4k/11.3k prompts), so a full 32k
-  # prompt is ~4 min warm and ~10 cold. The old "19 tok/s / 18 min" figure was
-  # a cold-cache measurement and overstates the cost by 4x. NOT --n-cpu-moe
-  # here: it mallocs
-  # the expert weights, and ~52 GB of anonymous memory does not fit next to the
-  # desktop, so the 507 GB swap becomes the hot path (measured 25-27 -> 7.55
-  # tok/s in llama.cpp#26110). mmap'd pages, by contrast, are evictable.
-  # `-ngl 4`, not 5: at 5 the card sat at 96% with the desktop open. 32k of the
-  # 131k-native window: the KV is ~20 KB/token at q8_0 and lives mostly in RAM
-  # (only 4 layers are on the card), so memory is not the limit; prefill is,
-  # at a few minutes per full window. 16k was the old value, too tight for any
-  # multi-turn session that kept its history. Checked with a needle at 26,715
-  # tokens: found, prefill 112 tok/s, ~5 min. Planning is not as depth-proof as
-  # the 180B: the same F6 case buried in 22k tokens scores 0.70 against 1.00
-  # short-context — rebuild and waves stay right, the cut-off bookkeeping does
-  # not. It is also the one tier whose fp score is not stable: two runs of
-  # `bench fp` gave 4.4 and 5.0 of 6 (different per-case misses), so 4.7 is the
-  # mean; the qwen tiers repeat exactly. This tier IGNORES
-  # `chat_template_kwargs.enable_thinking` — its thoughts are driven by
-  # `--reasoning-effort` — so clients must leave max_tokens room for them; a
-  # 24-token cap returns an empty `content` with everything in reasoning.
-  gptoss120 = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/abliterated/gpt-oss-120b-abliterated-MXFP4_MOE.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -ngl 4 -c 32768 -np 1 --flash-attn on --fit off --jinja \
-      --cache-type-k q8_0 --cache-type-v q8_0 -ub 512 \
-      --reasoning-effort low
   '';
 
   # Qwen3.8-Flash-Next abliterated v2 (Swift IQ3_S, 78 GB in two shards, split
@@ -418,8 +381,8 @@ let
   # `/unload`) — 3.1 GiB of weights, ~1.07 GiB of q8_0 KV at 64k, the rest is
   # the compute buffer. 112 tok/s decode and 405 tok/s prefill on a cold short
   # prompt, ~2.5 s from request to first token. Quality is a 3B's: chem bench
-  # 8/13 (the whole phosphorus problem 0/5; gpt-oss-120b also scores 8/13, the
-  # 8B vision tier 13/13), and it slipped 17x23 -> 431 at temperature 0. Use it
+  # 8/13 (the whole phosphorus problem 0/5; the 8B vision tier 13/13), and it
+  # slipped 17x23 -> 431 at temperature 0. Use it
   # as the fast chat/rewrite tier, not as a reasoner.
   falcon3b = ''
     ${llamaVulkan} --device Vulkan0 \
@@ -445,7 +408,7 @@ let
   # against 3634 MiB idle, next to the desktop, fim and reranker), 65 tok/s
   # decode, 471 tok/s prefill. Wall-clock is long because the traces are: a
   # carbonate olympiad problem is 2217 thought tokens, 49 s. The fleet's chem
-  # bench is 8/13 — the same as the 3B and as gpt-oss-120b — and the
+  # bench is 8/13 — the same as the 3B — and the
   # phosphorus case never converges: it hit the 6000-token cap in 92 s, and a
   # 16000-token retry ran 4m18s and ended empty, still in `reasoning_content`.
   # Lean is 0/7 measured, kept as "-" in the catalog because the harness pins
@@ -589,16 +552,7 @@ in
             "gemma4-26b"
           ];
         };
-        "gpt-oss-120b-abliterated" = {
-          cmd = gptoss120;
-          # 63 GB + ~55 s cold start: keep it resident for 15 min instead of
-          # letting the 60 s global TTL force a reload between messages.
-          ttl = 900;
-          aliases = [
-            "gpt-oss-120"
-            "big"
-          ];
-        };
+
         "qwen3.8-flash-next-abliterated" = {
           cmd = qwen38next;
           ttl = 900;
