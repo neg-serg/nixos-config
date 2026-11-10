@@ -153,6 +153,7 @@ in
         pkgs.brutefir # digital convolution engine for audio processing
         pkgs.camilladsp # flexible audio DSP engine for HTTP control
         pkgs.camillagui # web GUI for CamillaDSP (backend + prebuilt React frontend)
+        pkgs.carla # VST2/VST3 plugin host (headless insert for aurora's matrix tab)
         # lsp-plugins moved to the Renoise launcher (it prefixes LV2/VST/VST3/
         # CLAP paths with a GC-rooted copy); yabridgectl is an on-demand
         # launcher — its wrapper pins yabridge and the bridge wine, so the
