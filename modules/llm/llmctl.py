@@ -362,9 +362,15 @@ def chat(
         body.update(extra)
     t0 = time.perf_counter()
     d = None
-    for attempt in range(3):
+    base = chat_base()
+    # The proxy owns the swap-race retry when it is in the path: it sits next
+    # to llama-swap, unloads and waits there already, so retrying here as well
+    # would turn one failure into up to nine upstream attempts. Talking to
+    # llama-swap directly, llmctl keeps its own retry.
+    attempts = 1 if base == PROXY else 3
+    for attempt in range(attempts):
         try:
-            d = api("/v1/chat/completions", body, base=chat_base())
+            d = api("/v1/chat/completions", body, base=base)
             break
         except urllib.error.HTTPError as exc:
             # llama-swap answers 500 "group: starting <model> failed: aborted"
@@ -373,7 +379,7 @@ def chat(
             # minute). Retry 5xx only — a 4xx is the caller's mistake — and
             # unload in between: an explicit unload clears the wedged state,
             # which is what made the same request succeed by hand.
-            if exc.code < 500 or attempt == 2:
+            if exc.code < 500 or attempt == attempts - 1:
                 raise
             try:
                 with urllib.request.urlopen(BASE + "/unload", timeout=15):
@@ -389,7 +395,7 @@ def chat(
                 time.sleep(2)
             time.sleep(5 * (attempt + 1))
         except urllib.error.URLError:
-            if attempt == 2:
+            if attempt == attempts - 1:
                 raise
             time.sleep(5 * (attempt + 1))
     wall = time.perf_counter() - t0
