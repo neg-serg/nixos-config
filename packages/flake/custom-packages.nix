@@ -25,6 +25,7 @@
 
   brrtfetch = pkgs.neg.brrtfetch;
   tint = pkgs.neg.tint; # colouriser for CLI output (scanners + per-tool rulesets)
+  llm-proxy = pkgs.neg.llm-proxy; # OpenAI-compatible guard in front of llama-swap (context budget + tool protocol)
 
   sola-mpd = pkgs.sola-mpd; # browser MPD client (Node backend + React UI)
 
