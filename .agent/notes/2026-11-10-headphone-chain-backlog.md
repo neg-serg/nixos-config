@@ -6,23 +6,18 @@ instance on port 1235, its own `headphones` sink, a router that wires it to the 
 lifetime for both inserts. This note is the backlog: what has to happen before the chain is usable,
 and what is still a guess.
 
-## 0. It is not switched yet
+## 0. It is switched, and the sink is there
 
-The commit is only in the checkout. The switch needs the owner's password:
+Done 2026-11-10: the switch ran, and `systemctl --user restart pipewire wireplumber` was needed
+afterwards — a switch alone does not create `headphones`, because the loopback is a
+`pipewire.conf.d` module the running daemon reads only at startup. `pwout status` now reads:
 
-```bash
-sudo nixos-rebuild switch --flake /etc/nixos#trantor --option substitute false
-systemctl --user restart pipewire wireplumber   # a switch does not reread pipewire.conf.d
-pwout status
-```
+    default output: game-stereo
+    monitors:       game-stereo  (CamillaDSP running, present)
+    headphones:     headphones  (CamillaDSP stopped, present; DAC match none)
 
-A switch alone does not create `headphones`: the loopback is a `pipewire.conf.d` module, and the
-running daemon reads that directory at startup. Until the user manager's PipeWire restarts (or a new
-login), `pwout headphones` has nothing to select.
-
-Acceptance: `pwout status` lists both sinks; `camilladsp-headphones` is **stopped** (no DAC yet);
-`pwout headphones` refuses; and `systemctl --user is-active camilladsp` is `active` while
-`game-stereo` is the default — the daemon is no longer a login unit, the speaker router starts it.
+`camilladsp-headphones` is stopped (no DAC yet), `pwout headphones` refuses, and the speaker daemon
+is started by its router rather than at login.
 
 ## 1. The E1DA match string is a guess
 
@@ -35,34 +30,30 @@ substring that does. Acceptance: with the DAC plugged and `pwout headphones` sel
 logs `dsp: headphones -> camilladsp-headphones -> <dac>`; unplugging the DAC returns the default to
 `game-stereo` and the log says so.
 
-## 2. aurora still points at the speaker instance
+## 2. Done in aurora: the pane and the CLI point at 1235
 
-`~/.config/aurora/skins.toml`, the `[[plugin]] name = "camilla"` block, has no `url` key, so the
-pane talks to `127.0.0.1:1234` — the speaker instance. A headphone model applied from page 5 still
-lands on the monitors, i.e. the original complaint is only half fixed until this points at 1235:
+Fixed in the aurora repo, commit `808f9fd` (`[camilla] The headphone EQ belongs to the headphone
+chain, and the frame names it`): the core `:headphones` pane and the `headphones` CLI address the
+headphone instance (`camilla::chain::DAEMON`, port 1235), and an apply writes the model into
+`~/.config/camilladsp/headphones.yml` after the daemon validates it — the title carries the model's
+name (`EQ: Sennheiser — HD 600`), restore removes it, and the pane's chip and the player's status bar
+read the file without a socket, so the answer survives the lazy chain being stopped.
 
-```toml
-[[plugin]]
-name = "camilla"
-enabled = true
-url = "127.0.0.1:1235"
-```
+The `[[plugin]] name = "camilla"` tab stays on 1234 on purpose: it is the speaker DSP surface. The
+known hazard is closed from the other side — the tab now refuses a config whose `capture.node_name`
+is not the active instance's (`belongs_to_chain`), so page 3 cannot hand `headphones.yml` to the
+speaker daemon.
 
-That is a user-state file, no rebuild needed. The `headphones` CLI has the same default: `apply`
-targets 1234 unless `--daemon 127.0.0.1:1235` is passed. Changing the default lives in the aurora
-repo, and the system package builds from the `aurora-src` flake input — that needs a commit there
-plus a lock bump (`just update`), not a `/etc/nixos` edit.
+What is left is the build: the player package builds from the `aurora-src` flake input, so the fix
+reaches `/run/current-system` only after a lock bump (`just update`) and a switch — or `nix build`
+of the package for a try.
 
-Known hazard after the pane points at 1235: page 3 lists every config in `~/.config/camilladsp` and
-applies the selected file with `SetConfigFilePath` + `Reload`. Applying `default.yml` (the speaker
-config) to the headphone instance would create `camilladsp-capture/-playback` next to the speaker
-instance's nodes and the router would fall back to the direct path. Recovery is a restart of
-`camilladsp-headphones` (its ExecStart names `headphones.yml`). A filter by instance would close it.
+## 3. The switch has a key in the player
 
-## 3. The switch has no key
-
-`pwout` is the only way to choose the output. A Hyprland chord next to the `pwroute` ones, or a bar
-chip, would make it usable without a terminal; the bar already reads levels from `game-stereo`.
+`alt+o` and `:audio speakers|headphones|status` in aurora (`808f9fd`) run `pwout` and print its
+answer on the status line, so the frame can choose the output; the refusal for an absent DAC is the
+script's own sentence. A Hyprland chord next to the `pwroute` ones is still nobody's, and a bar chip
+on the desktop side would be the third face of the same choice.
 
 `pwout headphones` refuses while the DAC is absent on purpose — selecting it would just be a silent
 output.
@@ -83,7 +74,10 @@ output.
 ## 5. Not yet verified against the hardware
 
 - End to end with the real E1DA: the model audible on the headphones only, the monitors unchanged.
-  Then `pwout speakers` and confirm the monitors' sound is identical to before the model.
+  Then `pwout speakers` and confirm the monitors' sound is identical to before the model. (The
+  player's half was verified against a stand-in instance on 1237 — apply, file, restart from the
+  file, restore, and the speaker instance untouched — see `docs/plugin-camilla.md`, but no E1DA was
+  plugged in.)
 - Lazy lifetime: with headphones selected, `camilladsp` must leave `pw-top` after the idle grace;
   switching back must put it in the path before the next track starts.
 - The `node.autoconnect=false` pin on `playback.game-stereo`: if a game or MPD comes back unlinked
