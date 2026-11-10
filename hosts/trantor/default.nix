@@ -46,30 +46,16 @@
   };
   users.main.hashedPasswordFile = config.sops.secrets."user-password-hash".path;
 
-  # Console font (visible on tty1-6; plymouth owns the screen during boot)
+  # Console font (tty1-6 and the log TTYs; the boot screen is bootvine's tty12)
   console = {
     earlySetup = true;
     font = "${pkgs.terminus_font}/share/consolefonts/ter-124n.psf.gz";
   };
 
-  # Boot splash. `splash` already rides in boot.kernelParams through
-  # profiles.performance.quietBoot, so this only adds the daemon, the initrd
-  # payload and the theme. adi1090x ships all ~30 themes in one derivation;
-  # `selected_themes` keeps the closure to the two we switch between.
-  # Plymouth only owns the first second of the boot now: bootvine (below) starts
-  # at sysinit and switches the console to its own VT.
-  boot.plymouth = {
-    enable = true;
-    theme = "lone";
-    themePackages = [
-      (pkgs.adi1090x-plymouth-themes.override {
-        selected_themes = [
-          "lone"
-          "green_blocks"
-        ];
-      })
-    ];
-  };
+  # No boot splash: bootvine (below) draws the boot itself, from the initrd
+  # on, so plymouth would only own tty1 for the first second and then be
+  # redundant. `splash` still rides in boot.kernelParams through
+  # profiles.performance.quietBoot and is harmless without the daemon.
 
   # Boot screen: a live tree of the boot's systemd jobs on tty12, instead of
   # the scrolling kernel/systemd lines. It starts in the systemd initrd (the
