@@ -289,7 +289,11 @@ let
       base=$(read_state base)
       prev_current=$(read_state current)
 
-      log "watch: HEAD=$(short "$head_rev") branch=''${branch_now:-detached} current=$current"
+      # The timer fires every two minutes; log the tick only when the commit or
+      # the running system moved, or a quiet host files two lines per tick.
+      if [ "$head_rev" != "$prev_head" ] || [ "$current" != "$prev_current" ]; then
+        log "watch: HEAD=$(short "$head_rev") branch=''${branch_now:-detached} current=$current"
+      fi
 
       record() {
         write_state head "$head_rev"
@@ -308,8 +312,9 @@ let
         exit 0
       fi
 
+      # Same HEAD as last time: nothing to do, and nothing worth a journal
+      # line — the state file already records the outcome.
       if [ "$head_rev" = "$prev_head" ] && [ -n "$status" ]; then
-        log "HEAD $(short "$head_rev") already handled ($status)"
         exit 0
       fi
 
