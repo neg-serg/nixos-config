@@ -120,15 +120,6 @@ let
       target = "gemma4-26b-abliterated";
       ctx = 32768;
     };
-    "devstral-small-2-24b".ctx = 32768;
-    "devstral" = {
-      target = "devstral-small-2-24b";
-      ctx = 32768;
-    };
-    "coder" = {
-      target = "devstral-small-2-24b";
-      ctx = 32768;
-    };
     "qwen3.8-27b-bartowski".ctx = 16384;
     "bart27b" = {
       target = "qwen3.8-27b-bartowski";
@@ -241,7 +232,7 @@ in
       description = ''
         Per-model guards, merged key by key over the built-in set, so
         overriding one field keeps the rest of the profile:
-        `profiles.devstral.single_tool = false` keeps the alias and the
+        `profiles.qwen3.8.single_tool = false` keeps the alias and the
         context window. `ctx` is the slot's context window, `target`
         rewrites the model name sent upstream (aliases), `single_tool`
         injects the one-tool-per-turn rule when `tools` are present,

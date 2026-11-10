@@ -111,24 +111,6 @@ CATALOG = {
         "lean": "0/7",
         "fp": "-",
     },
-    "deepseek-prover-v2-7b": {
-        "aliases": ["deepseek-prover", "dsprover"],
-        "role": "Lean 4 whole-proof, 7B",
-        "ctx": "32k",
-        "size": "7.3 GB",
-        "chem": "-",
-        "lean": "5/7",
-        "fp": "-",
-    },
-    "devstral-small-2-24b": {
-        "aliases": ["devstral", "coder"],
-        "role": "24B agentic coding (SWE)",
-        "ctx": "32k",
-        "size": "9.4 GB",
-        "chem": "7/13",
-        "lean": "-",
-        "fp": "-",
-    },
     "falcon-h1-3b": {
         "aliases": ["falcon-3b", "falcon3b", "falcon"],
         "role": "3B parallel-hybrid Mamba, fast",
@@ -144,15 +126,6 @@ CATALOG = {
         "ctx": "64k",
         "size": "5.8 GB",
         "chem": "8/13",
-        "lean": "-",
-        "fp": "-",
-    },
-    "arduinollm-7b": {
-        "aliases": ["embedded", "arduino"],
-        "role": "7B embedded code (Arduino/ESP32/Pi)",
-        "ctx": "32k",
-        "size": "5.4 GB",
-        "chem": "-",
         "lean": "-",
         "fp": "-",
     },
@@ -1323,9 +1296,10 @@ COMMIT_CASES = [
 # of 90 under the 0-10 rubric): qwen3.8-27b 81.6, devstral 76.5, qwen3-vl-8b
 # 73.3, gemma4 70.8. The 27B is the quality tier; the 8B is the fast default
 # when no model is resident (see COMMIT_DEFAULT_MODEL / `--model auto`).
+# devstral left the fleet on 2026-11-11 with its weights; its 76.5 stands as
+# the recorded score, the remaining three keep the comparison.
 COMMIT_MODELS = [
     "qwen3-vl-8b-abliterated",
-    "devstral-small-2-24b",
     "gemma4-26b-abliterated",
     "qwen3.8-27b-abliterated",
 ]

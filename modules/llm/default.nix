@@ -20,9 +20,9 @@
 # - Module: `modules/llm/{default,ollama}.nix`
 # - Package: `pkgs.ollama-rocm` (ROCm build)
 # - Bind: `0.0.0.0:11434` (firewall opened)
-# - Model store: `/zero/ai/ollama` — lives on the `zero` ZFS pool, never on system disks. An existing
-#   413 GB store (18 models: qwen3 32b/235b, llama3.3 70b, qwen3-coder, devstral, qwq, abliterated
-#   variants, …) is already in place; no re-download needed.
+# - Model store: `/zero/ai/ollama` — lives on the `zero` ZFS pool, never on system disks. The
+#   store is 96 GB over 8 model families (qwen3.8, qwen3-vl and its abliterated build,
+#   qwen3-embedding, glm-ocr, three huihui abliterated qwen3 tiers); no re-download needed.
 # - Service user: `ollama` (static user, `DynamicUser = false` so ownership of the store stays
 #   stable). `neg` is in the `ollama` group and can manage model files.
 # - tmpfiles ensure `/zero/ai/ollama` is `0770 ollama:ollama` (with `Z` recursive fixup at boot).
@@ -302,11 +302,13 @@
 #
 # - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
 #   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
-# - `/zero/ai/llama` — llama.cpp GGUFs (295 GB): qwen3-vl-8b, qwen3.8-27B,
+# - `/zero/ai/llama` — llama.cpp GGUFs (280 GB): qwen3-vl-8b, qwen3.8-27B,
 #   the abliterated set (Gemma 26B IQ3, Qwen3.8-27B IQ3, Qwen3-VL-8B),
 #   Qwen3.8-Flash-Next IQ3_S (78 GB, two shards
-#   in `qwen38-flash-next-iq3s/`), the Lean provers (oprover,
-#   deepseek-prover) and the small tiers (arduinollm, Spark). 34 GB of dead
+#   in `qwen38-flash-next-iq3s/`), the Lean prover (oprover), the OCR tiers
+#   and the small specialists. DeepSeek-Prover-V2 and Devstral left the fleet
+#   on 2026-11-11 (16.7 GB); ArduinoLLM's weights were already gone from disk,
+#   so its slot was dead and went with them. 34 GB of dead
 #   weights (gpt-oss-20b, the 24 GB-box Gemma MXFP4 + its mmproj, Gemma E4B)
 #   were deleted on 2026-11-05; gpt-oss-20b also left the catalog after it
 #   failed the FP planning task, which now lives in `llmctl bench fp`.
