@@ -9,10 +9,13 @@
 #  1. Keep a request inside the slot's context window. llama-server answers
 #     400 the moment the prompt does not fit, and a long agent chain reaches
 #     that point silently — the 16k coder slot failed at ~24k prompt tokens.
-#  2. Normalize the tool protocol for small models: they batch dependent
-#     calls and invent values they should have read (0/3 chains before the
-#     "one tool per turn" rule, 3/3 after), and they misread a tool result
-#     wrapped as {"result": ...} — plain text with a `name` is what works.
+#  2. Normalize the tool protocol: a tool result wrapped as {"result": ...} is
+#     unwrapped to plain text with a `name`, which is what small models read
+#     correctly, and the "one tool per turn" rule is available per profile.
+#     The rule is off by default — it was measured on 2026-11-10 against its
+#     own intended target (mini = qwen3-vl-8b) and changed nothing: no batched
+#     turns in either arm, 0/6 tasks passed with and without it. A profile has
+#     to ask for it until something shows a case where it pays.
 #  3. Retry the llama-swap swap race (500 "group starting ... aborted", 502
 #     "proxy error: EOF") by unloading and waiting, which llmctl does by hand.
 #
@@ -59,7 +62,11 @@ let
       single_tool = lib.mkOption {
         type = lib.types.nullOr lib.types.bool;
         default = null;
-        description = "Inject the one-tool-per-turn rule when tools are present.";
+        description = ''
+          Inject the one-tool-per-turn rule when tools are present. Off in
+          the base set, and skipped anyway when the client's own system
+          prompt already asks for one action per turn.
+        '';
       };
       thinking = lib.mkOption {
         type = lib.types.nullOr lib.types.bool;
@@ -76,13 +83,17 @@ let
 
   # Mirrors the base set in the proxy's `load_config`; the generated JSON is
   # the authoritative copy, the Python one is the fallback for a file that
-  # carries no `defaults` at all.
+  # carries no `defaults` at all. `single_tool` is opt-in: on 2026-11-10 the
+  # guard was measured against its own profile (mini = qwen3-vl-8b) with a
+  # client prompt that does not ask for one command per turn — 0 batched
+  # turns out of 54 with the rule and out of 36 without, 0/6 tasks passed in
+  # both arms. It has not earned a default-on, so a profile asks for it.
   baseGuards = {
     ctx = 32768;
     reserve = 4096;
     keep_tool_results = 6;
     keep_last_messages = 8;
-    single_tool = true;
+    single_tool = false;
     thinking = null;
     target = null;
   };
