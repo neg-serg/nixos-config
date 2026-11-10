@@ -21,6 +21,10 @@ import urllib.error
 import urllib.request
 
 BASE = os.environ.get("LLMCTL_URL", "http://127.0.0.1:9292")
+# Chat goes through llm-proxy when it is up, so `ask`/`bench` get the context
+# guard and the tool protocol. Management stays on llama-swap: the proxy does
+# not own /unload or /running.
+PROXY = os.environ.get("LLMCTL_PROXY_URL", "http://127.0.0.1:9300")
 STATE = os.path.expanduser("~/.local/state/llmctl")
 
 # Measured on trantor 2026-11-05: chem = six olympiad problems (13 values),
@@ -311,8 +315,8 @@ induction, cases, exact, intro, omega и любые другие из ядра.
 # ---------------------------------------------------------------- HTTP helpers
 
 
-def api(path, payload=None, timeout=900):
-    url = BASE + path
+def api(path, payload=None, timeout=900, base=None):
+    url = (base or BASE) + path
     data = json.dumps(payload).encode() if payload is not None else None
     req = urllib.request.Request(
         url, data=data, headers={"Content-Type": "application/json"}
@@ -320,6 +324,27 @@ def api(path, payload=None, timeout=900):
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         raw = resp.read()
     return json.loads(raw) if raw else {}
+
+
+_CHAT_BASE = None
+
+
+def chat_base():
+    """The guard when it is running, llama-swap otherwise.
+
+    Probed once per process: a stale proxy address would otherwise turn every
+    `ask` into a connection error instead of falling back.
+    """
+    global _CHAT_BASE
+    if _CHAT_BASE is None:
+        _CHAT_BASE = BASE
+        if PROXY and PROXY != BASE:
+            try:
+                with urllib.request.urlopen(PROXY + "/health", timeout=2):
+                    _CHAT_BASE = PROXY
+            except OSError:
+                pass
+    return _CHAT_BASE
 
 
 def chat(
@@ -339,7 +364,7 @@ def chat(
     d = None
     for attempt in range(3):
         try:
-            d = api("/v1/chat/completions", body)
+            d = api("/v1/chat/completions", body, base=chat_base())
             break
         except urllib.error.HTTPError as exc:
             # llama-swap answers 500 "group: starting <model> failed: aborted"
