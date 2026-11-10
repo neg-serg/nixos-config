@@ -11,7 +11,8 @@
  * channel still exposes `listModels()` / `switchModel()`.
  *
  * Routes are resolved by model id, so the local `llama-swap` provider and
- * `deepseek-official` both work without hardcoding a provider id.
+ * `deepseek-official` both work without hardcoding a provider id. The free
+ * key-gated routes (`gemini`, `pollinations`) resolve the same way.
  */
 
 /** The only unsupported dependency: the host-internal Channel registry. */
@@ -27,10 +28,13 @@ export const inject = ['tuiShortcuts']
 /** [digit, model id shown in /model, label used by shortcut list()] */
 export const ROUTES = [
   ['0', 'deepseek-flash', 'DeepSeek V4.1 Flash'],
+  ['1', 'gemini-3.6-flash', 'Gemini 3.6 Flash (free)'],
   ['2', 'qwen3.8-27b-abliterated', 'Qwen3.8-27B (local)'],
   ['3', 'qwen3.8-flash-next-abliterated', 'Qwen3.8-Flash-Next (local)'],
   ['4', 'gemma4-26b-abliterated', 'Gemma 4 26B (local)'],
   ['5', 'qwen3-vl-8b-abliterated', 'Qwen3-VL-8B (local)'],
+  ['6', 'gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (free)'],
+  ['7', 'openai-fast', 'GPT-OSS 20B (Pollinations, free)'],
   ['8', 'gyro-coder', 'Gyro-Coder 125B (7900 XTX box)'],
 ]
 
