@@ -136,10 +136,10 @@ CATALOG = {
     },
     "falcon-h1r-7b": {
         "aliases": ["falcon-h1r", "h1r", "reasoner"],
-        "role": "7B hybrid reasoner (thinking)",
+        "role": "7B hybrid reasoner (long thoughts)",
         "ctx": "64k",
         "size": "5.8 GB",
-        "chem": "-",
+        "chem": "8/13",
         "lean": "-",
         "fp": "-",
     },

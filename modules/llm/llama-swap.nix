@@ -440,6 +440,20 @@ let
   # hence `--jinja`, and `--reasoning-format deepseek` moves the trace to
   # `reasoning_content` (without it the trace stays in `content`). Bench
   # numbers from the card are the vendor's; ours go in the catalog.
+  #
+  # Measured 2026-11-10 on the 9070 XT: +7.5 GiB of VRAM (11099 MiB resident
+  # against 3634 MiB idle, next to the desktop, fim and reranker), 65 tok/s
+  # decode, 471 tok/s prefill. Wall-clock is long because the traces are: a
+  # carbonate olympiad problem is 2217 thought tokens, 49 s. The fleet's chem
+  # bench is 8/13 — the same as the 3B and as gpt-oss-120b — and the
+  # phosphorus case never converges: it hit the 6000-token cap in 92 s, and a
+  # 16000-token retry ran 4m18s and ended empty, still in `reasoning_content`.
+  # Lean is 0/7 measured, kept as "-" in the catalog because the harness pins
+  # thinking off for that bench and this template has no such switch: the
+  # 2000-token cap goes to thoughts, so no code arrives (the same bench scores
+  # 2/7 with thoughts on for qwen3.8-flash-next against 7/7 off). So this is
+  # the local tier that shows its work on easy-to-mid problems; hard ones still
+  # belong to the 180B on the other box.
   falconH1r = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/falcon/Falcon-H1R-7B-Q6_K.gguf \
