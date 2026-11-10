@@ -15,16 +15,27 @@
 # config are therefore a contract — point an end at another device and the DSP
 # stops carrying audio while the direct path takes over.
 #
-# The daemon starts with ~/.config/camilladsp/default.yml rather than `--wait`:
-# the insert has to be up before anything is played. Configs are user state
-# (the surfaces save and apply them), so default.yml is seeded once from
-# ./dsp/default.yml and never replaced afterwards. The command line wins over
-# the statefile's `config_path` (measured 2026-11-04: a config applied from a
-# surface is forgotten on the next start, and the daemon rewrites that field
-# with default.yml), so `default.yml` is the one place to tune; the statefile
-# carries volume, mute and the last applied path for the surfaces only.
-# `Stop` from a surface exits the daemon and the unit restarts it, i.e. the
-# insert recovers by itself.
+# The daemon starts with ~/.config/camilladsp/default.yml rather than `--wait`,
+# and it is not a login service: `camilladsp-route` starts it while the speaker
+# output is in use (the sink is the default output, or an app plays to it) and
+# stops it when neither holds, leaving the direct loopback -> RME path in place.
+# An idle machine therefore has no real-time client in the graph, and a stopped
+# DSP cannot break playback. Configs are user state (the surfaces save and apply
+# them), so default.yml is seeded once from ./dsp/default.yml and never replaced
+# afterwards. The command line wins over the statefile's `config_path`
+# (measured 2026-11-04: a config applied from a surface is forgotten on the next
+# start, and the daemon rewrites that field with default.yml), so `default.yml`
+# is the one place to tune; the statefile carries volume, mute and the last
+# applied path for the surfaces only. `Stop` from a surface exits the daemon and
+# the unit restarts it, i.e. the insert recovers by itself.
+#
+# The headphone chain is a second instance of the same shape
+# (dsp/headphones.yml, dsp/route-headphones.sh): apps -> `headphones` (a loopback
+# sink from files/media/pipewire/pipewire.conf.d/30-headphones.conf) -> the
+# `camilladsp-hp-*` nodes on port 1235 -> the USB DAC matched by
+# hardware.audio.dsp.headphones.dacMatch. `pwout speakers|headphones` chooses the
+# default output; each router follows that choice and keeps only its own chain
+# alive, so a model applied to the headphone instance cannot reach the monitors.
 #
 # The graph quantum is 256 frames and the RME runs 256-frame periods; the DSP's
 # `chunksize` is its own block and it scales the rings (7x chunksize, prefilled
@@ -87,6 +98,54 @@ let
         grep = pkgs.gnugrep;
         sleep = pkgs.coreutils;
         date = pkgs.coreutils;
+        systemctl = pkgs.systemd;
+        wpctl = config.services.pipewire.wireplumber.package;
+      }
+    )
+  );
+
+  # The headphone instance: its own config, statefile and port. It is started
+  # and stopped by its router (see dsp/route-headphones.sh), never at login.
+  hp = config.hardware.audio.dsp.headphones;
+  hpConfig = "${dspHome}/headphones.yml";
+  hpStatefile = "${dspState}/headphones-statefile.yml";
+
+  seedHpConfig = pkgs.writeShellScript "camilladsp-headphones-seed" ''
+    set -eu
+    install -d -m 0755 ${dspHome} ${dspHome}/coeffs ${dspState}
+    if [ ! -e ${hpConfig} ]; then
+      install -m 0644 ${./dsp/headphones.yml} ${hpConfig}
+    fi
+  '';
+
+  routeHpScript = pkgs.writeShellScript "camilladsp-headphones-route" (
+    builtins.readFile (
+      pkgs.replaceVars ./dsp/route-headphones.sh {
+        pwLink = pkgs.pipewire;
+        jq = pkgs.jq;
+        awk = pkgs.gawk;
+        grep = pkgs.gnugrep;
+        sleep = pkgs.coreutils;
+        date = pkgs.coreutils;
+        systemctl = pkgs.systemd;
+        wpctl = config.services.pipewire.wireplumber.package;
+        dacMatch = hp.dacMatch;
+      }
+    )
+  );
+
+  # The switch between the two virtual outputs. It belongs next to the routers
+  # that own the chains: those follow the default sink this command sets.
+  pwout = pkgs.writeShellScriptBin "pwout" (
+    builtins.readFile (
+      pkgs.replaceVars ./dsp/pwout.sh {
+        pwLink = pkgs.pipewire;
+        jq = pkgs.jq;
+        awk = pkgs.gawk;
+        date = pkgs.coreutils;
+        systemctl = pkgs.systemd;
+        wpctl = config.services.pipewire.wireplumber.package;
+        dacMatch = hp.dacMatch;
       }
     )
   );
@@ -142,18 +201,49 @@ in
     };
   };
 
+  options.hardware.audio.dsp.headphones = {
+    enable = lib.mkEnableOption "the second CamillaDSP instance and the headphone insert it feeds";
+
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 1235;
+      description = ''
+        Websocket port of the headphone instance. The speaker instance keeps
+        1234 (camillagui is baked to it); a surface that edits headphone models
+        points here, so a model applied over this port cannot reach the
+        monitors.
+      '';
+    };
+
+    dacMatch = lib.mkOption {
+      type = lib.types.str;
+      default = "E1DA";
+      description = ''
+        Case-insensitive regex over a PipeWire sink's node name or description:
+        the USB DAC that ends the headphone chain. The router links the
+        headphone insert into the matching sink, and `pwout headphones` refuses
+        to select the output while nothing matches.
+      '';
+    };
+  };
+
   config = lib.mkMerge [
     {
       # Enabled by default like the RNNoise virtual mic: this is the machine's
       # playback chain, and every surface that talks to the DSP assumes it is
       # there. Hosts without the insert set this to false — the packages stay.
       hardware.audio.dsp.camilladsp.enable = lib.mkDefault true;
+      # The headphone chain is a second instance plus its own router: enabled by
+      # default for the same reason, so `headphones` is never a sink with no
+      # DSP behind it.
+      hardware.audio.dsp.headphones.enable = lib.mkDefault true;
 
       environment.systemPackages = [
         pkgs.brutefir # digital convolution engine for audio processing
         pkgs.camilladsp # flexible audio DSP engine for HTTP control
         pkgs.camillagui # web GUI for CamillaDSP (backend + prebuilt React frontend)
         pkgs.carla # VST2/VST3 plugin host (headless insert for aurora's matrix tab)
+        pwout # pwout: choose the default output (monitors/headphones), list the DAC sinks
         # lsp-plugins moved to the Renoise launcher (it prefixes LV2/VST/VST3/
         # CLAP paths with a GC-rooted copy); yabridgectl is an on-demand
         # launcher — its wrapper pins yabridge and the bridge wine, so the
@@ -177,8 +267,11 @@ in
 
       systemd.user.services.camilladsp = systemdUser.mkUserService {
         description = "CamillaDSP audio DSP engine (control plane + insert)";
+        # Not started at login: route.sh starts it while the speaker output is
+        # in use and stops it when nothing plays, so an idle machine has no
+        # real-time client in the graph and a stopped DSP leaves the direct
+        # path in place instead of an insert that can break playback.
         presets = [
-          "defaultWanted"
           "audioGraph"
           "restartAlways"
         ];
@@ -241,6 +334,59 @@ in
           RestartSec = "2s";
         };
       };
+
+      # The headphone instance. Like the speaker one it is not wanted at login:
+      # camilladsp-headphones-route starts it when the headphones are in use and
+      # stops it when they are not. It keeps the speaker instance's real-time
+      # policy for the same reason (the graph deadline does not care which pair
+      # the frames end up on).
+      systemd.user.services.camilladsp-headphones = lib.mkIf hp.enable (
+        systemdUser.mkUserService {
+          description = "CamillaDSP for the headphone output (headphones -> E1DA)";
+          presets = [
+            "audioGraph"
+            "restartAlways"
+          ];
+          unitConfig.StartLimitIntervalSec = 0;
+          serviceConfig = {
+            CPUSchedulingPolicy = "fifo";
+            CPUSchedulingPriority = 19;
+            ExecStartPre = seedHpConfig;
+            ExecStart = lib.concatStringsSep " " (
+              [
+                (lib.getExe pkgs.camilladsp)
+                "--address"
+                cfg.address
+                "--port"
+                (toString hp.port)
+                "--statefile"
+                hpStatefile
+                "--loglevel"
+                cfg.logLevel
+              ]
+              ++ cfg.extraArgs
+              ++ [ hpConfig ]
+            );
+            RestartSec = "2s";
+          };
+        }
+      );
+
+      systemd.user.services.camilladsp-headphones-route = lib.mkIf hp.enable (
+        systemdUser.mkUserService {
+          description = "CamillaDSP headphone insert router (headphones -> DSP -> DAC)";
+          presets = [
+            "defaultWanted"
+            "audioGraph"
+            "restartAlways"
+          ];
+          after = [ "camilladsp-headphones.service" ];
+          serviceConfig = {
+            ExecStart = routeHpScript;
+            RestartSec = "2s";
+          };
+        }
+      );
     })
   ];
 }

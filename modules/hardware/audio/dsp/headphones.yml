@@ -1,0 +1,35 @@
+# CamillaDSP for the headphone output: the second instance.
+#
+# The speaker insert (`default.yml`) owns game-stereo -> RME AES; this one owns
+# headphones -> E1DA. They are separate processes because one CamillaDSP config
+# has exactly one `capture` and one `playback` device (4.1.3 rejects a second
+# pair), and because the point of the split is that a headphone model applied
+# through `SetConfigJson` over port 1235 cannot touch what the monitors hear.
+#
+# Node names are a contract with modules/hardware/audio/dsp/route-headphones.sh
+# the same way the speaker pair is a contract with dsp/route.sh: rename them and
+# the router stops wiring, the direct fallback takes over, and the headphone
+# output plays unprocessed instead of silently dying.
+#
+# `node_group_name` must differ from the speaker instance's `camilladsp`: two
+# instances in one group would fight over the driver (the upstream docs say to
+# leave the default only when a single instance runs).
+#
+# `chunksize` and the ring sizes follow the speaker insert (see default.yml):
+# the graph quantum is 256 frames at 48 kHz, and 512 is the block that measured
+# best on this machine. `target_level` stays at its default (3x chunksize).
+devices:
+  samplerate: 48000
+  chunksize: 512
+  capture:
+    type: PipeWire
+    channels: 2
+    node_name: camilladsp-hp-capture
+    node_description: CamillaDSP Headphones Capture
+    node_group_name: camilladsp-hp
+  playback:
+    type: PipeWire
+    channels: 2
+    node_name: camilladsp-hp-playback
+    node_description: CamillaDSP Headphones Playback
+    node_group_name: camilladsp-hp
