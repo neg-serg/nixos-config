@@ -443,6 +443,17 @@ def fmt_gib(n):
     return f"{n / 2**30:.1f}"
 
 
+def vram_used(card):
+    if not card:
+        return None
+    try:
+        return int(
+            open(os.path.join(card[0], "mem_info_vram_used")).read().strip()
+        )
+    except OSError:
+        return None
+
+
 def service_state():
     r = subprocess.run(
         ["systemctl", "is-active", "llama-swap"],
@@ -484,14 +495,10 @@ def print_status():
         print("running     — (idle, model unloads after TTL)")
     card = vram_card()
     if card:
-        dev, total = card
-        try:
-            used = int(
-                open(os.path.join(dev, "mem_info_vram_used")).read().strip()
-            )
+        total = card[1]
+        used = vram_used(card)
+        if used is not None:
             print(f"VRAM        {fmt_gib(used)} / {fmt_gib(total)} GiB")
-        except OSError:
-            pass
     try:
         live = model_names()
         print(f"models      {len(live)}: " + ", ".join(live))
@@ -551,16 +558,56 @@ def cmd_use(args):
 
 
 def cmd_unload(_args):
-    # llama-swap answers /unload with the plain text "OK", not JSON, so this
-    # bypasses api(); POST is rejected with 405, GET is the form the game
-    # guard uses too.
-    try:
-        with urllib.request.urlopen(BASE + "/unload", timeout=15) as resp:
-            resp.read()
-    except Exception as exc:  # noqa: BLE001
-        sys.exit(f"unload failed: {exc}")
-    time.sleep(1)
-    print("unloaded")
+    # Targeted unload, not GET /unload: that form blocks until every backend
+    # is gone, so it hung for its whole 15 s timeout whenever a model was
+    # still `starting` (observed 2026-11-11). POST /api/models/unload answers
+    # at once with {"msg":"ok"} and stops the backend in the background, so
+    # the command returns in ~0.1 s and the caller only waits on VRAM.
+    card = vram_card()
+    before = vram_used(card)
+    names = [m.get("model") for m in running() if m.get("model")]
+    if names:
+        for name in names:
+            req = urllib.request.Request(
+                BASE + "/api/models/unload",
+                json.dumps({"name": name}).encode(),
+                {"Content-Type": "application/json"},
+                method="POST",
+            )
+            try:
+                urllib.request.urlopen(req, timeout=10).read()
+            except Exception as exc:  # noqa: BLE001
+                sys.exit(f"unload of {name} failed: {exc}")
+    else:
+        # /running can be empty while a backend is still coming up; the
+        # blanket unload is the only lever that also catches that case.
+        try:
+            with urllib.request.urlopen(BASE + "/unload", timeout=10):
+                pass
+        except Exception:  # noqa: BLE001
+            pass
+    for _ in range(40):  # up to 20 s: VRAM is released shortly after the OK
+        if not running():
+            break
+        time.sleep(0.5)
+    # /running clears before the backend has actually exited, so wait for the
+    # VRAM figure to settle (three identical samples, ~1.5 s) before
+    # reporting: sampling right after the OK understates what was freed.
+    last, stable = None, 0
+    for _ in range(40):
+        cur = vram_used(card)
+        if cur is not None and cur == last:
+            stable += 1
+            if stable >= 3:
+                break
+        else:
+            stable, last = 0, cur
+        time.sleep(0.5)
+    after = vram_used(card)
+    freed = ""
+    if before is not None and after is not None:
+        freed = f"  ({fmt_gib(before - after)} GiB freed)"
+    print(f"unloaded {', '.join(names) or 'nothing'}{freed}")
     print_status()
 
 

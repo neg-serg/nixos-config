@@ -60,7 +60,11 @@
 #   the censored ollama peers were removed — aligned models refuse too much for
 #   this stack. Base files still lie on disk until they are deleted.
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
-#   unloads them at once when a game starts.
+#   unloads them at once when a game starts. The heavy `vision` slot frees
+#   itself after 30 s (`ttl`), and `llmctl unload` clears the card on demand:
+#   it POSTs `/api/models/unload` per resident model and returns in ~0.1 s,
+#   where the blanket `GET /unload` blocked until the backend was gone and
+#   hung for its whole timeout when a model was still starting.
 # - One model is resident at a time. All of them fit the 16 GB card except the
 #   streaming tier (Qwen3.8-Flash-Next); the 8B vision unit on :8080 is
 #   separate and started by hand.

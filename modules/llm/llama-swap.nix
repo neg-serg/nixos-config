@@ -622,6 +622,11 @@ in
         # Same weights, projector + 16k window: the `vision` tier.
         "qwen3.8-27b-vision" = {
           cmd = qwen38vision;
+          # One-shot read tier: 30 s after the last request is long enough for
+          # a follow-up and short enough that 15.3 GiB does not sit on the card
+          # while the browser wants the memory. A warm reload is ~3.6 s.
+          # `llmctl unload` frees it immediately, without waiting for the TTL.
+          ttl = 30;
           aliases = [
             "vision"
             "vision-27b"
