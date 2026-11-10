@@ -54,6 +54,10 @@ in
     # must surface, so cap the journal at warning. LogLevelMax only has an
     # effect on system units: journald reads /run/systemd/units/log-level-max:<unit>,
     # which the user manager cannot write (verified 2026-11-10).
+    # Pruning the model store: /zero/ai/ollama/manifests keeps per-model dirs at
+    # mode 0700 owned by the `ollama` user, so a scan run as any other user
+    # silently skips them and sees their blobs as dangling. Remove models with
+    # `ollama rm`, or prune as the ollama user — never from a plain shell scan.
     systemd.services.ollama.serviceConfig.LogLevelMax = "warning";
 
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.enable (lib.mkAfter [ 11434 ]);
