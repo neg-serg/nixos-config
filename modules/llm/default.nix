@@ -274,7 +274,7 @@
 #
 # - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
 #   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
-# - `/zero/ai/llama` — llama.cpp GGUFs (420 GB): qwen3-vl-8b, qwen3.8-27B,
+# - `/zero/ai/llama` — llama.cpp GGUFs (361 GB): qwen3-vl-8b, qwen3.8-27B,
 #   the abliterated set (Gemma 26B IQ3, Qwen3.8-27B IQ3, Qwen3-VL-8B),
 #   Qwen3.8-Flash-Next IQ3_S (78 GB, two shards
 #   in `qwen38-flash-next-iq3s/`), the Lean provers (oprover,
@@ -283,7 +283,9 @@
 #   were deleted on 2026-11-05; gpt-oss-20b also left the catalog after it
 #   failed the FP planning task, which now lives in `llmctl bench fp`.
 #   Qwen3.6-35B, Qwen3.5-4B and MegaSciMoE-1.2B were deleted on 2026-11-08
-#   (16 GB) and their router entries are gone with them.
+#   (16 GB) and their router entries are gone with them. The gpt-oss-120b
+#   MXFP4 weights (63 GB on disk) went the same way on 2026-11-10, when the
+#   RAM tier left the fleet.
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
