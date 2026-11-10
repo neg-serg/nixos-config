@@ -110,7 +110,7 @@ def load_config(path):
         "reserve": 4096,
         "keep_tool_results": 6,
         "keep_last_messages": 8,
-        "single_tool": True,
+        "single_tool": False,
         "thinking": None,
         "target": None,
     }
