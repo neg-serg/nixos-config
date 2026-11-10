@@ -1,19 +1,54 @@
 {
-  // local whisper.cpp transcription, no API keys
+  // Dictation through the local whisper.cpp server (whisper-stt, port 8002):
+  // GPU (Vulkan) with ggml-large-v3-turbo, no API keys, no audio leaving the
+  // host. The server itself is features.media.audio.speech; without it this
+  // provider has nothing to talk to.
+  //
+  // The packaged fallback is `"provider": "whisper_cpp"` with
+  // transcription.whisper_cpp.models_dirs, which runs whisper-cli on the CPU
+  // (nixpkgs whisper-cpp, no GPU) — slower, use it only if the server is down.
   "audio_feedback": true,
   "start_sound_volume": 0.1,
   "stop_sound_volume": 0.1,
   "auto_copy_clipboard": true,
+
+  // Hyprland owns the recording key (hold ALT+`). The daemon's own evdev
+  // shortcut is a tap-to-toggle one: super+alt+r, its built-in default, is the
+  // resize submap in files/gui/hypr/hyprland.lua and starting a dictation on
+  // every resize would be wrong — null is not "disabled" (the code falls back
+  // to the same default), so the toggle lives on super+alt+d instead. The
+  // top-level `primary_shortcut` is the legacy field and it overrides
+  // shortcuts.press unless both say the same thing.
+  "primary_shortcut": "SUPER+ALT+D",
+  "shortcuts": { "press": "SUPER+ALT+D", "hold": null },
+
+  // Trim silence before transcription: without this, holding the key in a quiet
+  // room sends noise to whisper and gets a phantom phrase pasted ("*sad music*"
+  // was the measured result). "quality" is the least aggressive trim profile.
+  "fast_vad": {
+    "enabled": true,
+    "profile": "quality",
+    "min_speech_ms": 200,
+    "silence_timeout_ms": 1000,
+    "pre_roll_ms": 200,
+    "post_roll_ms": 300
+  },
+
   "transcription": {
-    "provider": "whisper_cpp",
-    "request_timeout_secs": 45,
-    "whisper_cpp": {
-      "model": "small",
-      "threads": 12,
-      "gpu_layers": 0,
-      "fallback_cli": true,
-      "no_speech_threshold": 0.6,
-      "models_dirs": [ "@HOMEDIR@/.local/share/hyprwhspr-rs/models" ]
+    "provider": "custom.local_whisper",
+    "request_timeout_secs": 60,
+    "custom": {
+      "local_whisper": {
+        "kind": "openai_audio_transcriptions",
+        "label": "Local whisper.cpp (large-v3-turbo, Vulkan)",
+        "base_url": { "value": "http://127.0.0.1:8002" },
+        "endpoint": "/v1/audio/transcriptions",
+        "model": "ggml-large-v3-turbo",
+        "audio_format": "wav"
+        // Language is left to whisper-cli's auto-detect (its `-l` default), so
+        // Russian and English phrases both transcribe correctly. Pin one by
+        // adding `"body": { "language": "ru" }` to this object.
+      }
     }
   }
 }

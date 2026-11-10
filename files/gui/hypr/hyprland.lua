@@ -634,8 +634,8 @@ hl.bind(M4 .. "+" .. SH .. "+p", hl.dsp.submap("music"))
 hl.bind(M1 .. "+g", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/wm/switch-windows"))
 
 -- hyprwhspr-rs dictation: hold ALT+` to talk (released fires on key up).
--- The binary comes from features.gui.hyprwhspr, which is off by default on
--- this host — the two binds are no-ops until it is enabled.
+-- The binary comes from features.gui.hyprwhspr (enabled on trantor); without
+-- the flag the two binds are no-ops.
 hl.bind(M1 .. "+GRAVE", hl.dsp.exec_cmd("hyprwhspr-rs record start"))
 hl.bind(M1 .. "+GRAVE", hl.dsp.exec_cmd("hyprwhspr-rs record stop"), { release = true })
 -- One search window for the tray/app menus (StatusNotifierItem DBusMenus, submenus
