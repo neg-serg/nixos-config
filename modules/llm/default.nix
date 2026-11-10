@@ -21,8 +21,9 @@
 # - Package: `pkgs.ollama-rocm` (ROCm build)
 # - Bind: `0.0.0.0:11434` (firewall opened)
 # - Model store: `/zero/ai/ollama` — lives on the `zero` ZFS pool, never on system disks. The
-#   store is 96 GB over 8 model families (qwen3.8, qwen3-vl and its abliterated build,
-#   qwen3-embedding, glm-ocr, three huihui abliterated qwen3 tiers); no re-download needed.
+#   store is 40 GB over five families (qwen3.8, qwen3-vl, qwen3-vl-abliterated,
+#   qwen3-embedding, glm-ocr); the 59 GB of huihui 30B/35B/coder MoE tags that could not fit
+#   the 16 GB card were removed on 2026-11-11.
 # - Service user: `ollama` (static user, `DynamicUser = false` so ownership of the store stays
 #   stable). `neg` is in the `ollama` group and can manage model files.
 # - tmpfiles ensure `/zero/ai/ollama` is `0770 ollama:ollama` (with `Z` recursive fixup at boot).
@@ -289,7 +290,6 @@
 # | `qwen3-vl-abliterated:8b`            | 8.0GB | **default** — uncensored, fully on GPU |
 # | `qwen3.8:27b`                        | 17GB  | kept for RU quality, spills to CPU    |
 # | `qwen3-vl:8b`                        | 6.1GB | base vision tag, kept for now         |
-# | `huihui_ai/qwen3-abliterated:30b-a3b`| 20GB  | uncensored, but 0.3 tok/s on 16GB     |
 #
 # One-off override: `RAG_LLM_MODEL=qwen3.8:27b rag-search search --llm "..."`
 #
@@ -300,8 +300,8 @@
 #
 # ## Layout on disk
 #
-# - `/zero/ai/ollama` — Ollama model store (96 GB, 9 models: qwen3.8 27b, qwen3-vl 8b,
-#   qwen3-vl-abliterated 8b, huihui abliterated 30b/35b/coder, qwen3-embedding, glm-ocr)
+# - `/zero/ai/ollama` — Ollama model store (40 GB, 6 tags: qwen3.8 27b and 27b-plain,
+#   qwen3-vl 8b, qwen3-vl-abliterated 8b, qwen3-embedding, glm-ocr)
 # - `/zero/ai/llama` — llama.cpp GGUFs (280 GB): qwen3-vl-8b, qwen3.8-27B,
 #   the abliterated set (Gemma 26B IQ3, Qwen3.8-27B IQ3, Qwen3-VL-8B),
 #   Qwen3.8-Flash-Next IQ3_S (78 GB, two shards

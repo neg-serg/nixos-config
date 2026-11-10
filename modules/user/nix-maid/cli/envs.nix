@@ -42,7 +42,8 @@ in
     # 16GB VRAM (RX 9070 XT): models <= ~9GB run fully on GPU, bigger ones spill.
     #   qwen3-vl-abliterated:8b  (8.0GB) — uncensored, fully on GPU, 25 tok/s (default)
     #   qwen3.8:27b              (17GB)  — kept for RU quality, spills to CPU
-    # The huihui_ai abliterated 30B/35B MoE tags spill badly on 16GB (0.3 tok/s).
+    # The huihui_ai abliterated 30B/35B MoE tags (18-23GB) were removed on
+    # 2026-11-11: they spilled to CPU at ~0.1 tok/s on this card.
     # llama-swap (127.0.0.1:9292) is the fast path for interactive chat.
     # Per-run override: RAG_LLM_MODEL=<model> rag-search search --llm "..."
     RAG_LLM_MODEL = "qwen3-vl-abliterated:8b";
