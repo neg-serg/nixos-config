@@ -18,7 +18,7 @@ clicks the attach control and, when the queue is empty, sends.
 
 Roles and models (all overridable):
 
-  planner   devstral-small-2-24b   text only: turns the goal into <=5 steps
+  planner   qwen3.8-27b-abliterated  text only: turns the goal into <=5 steps
   actor     gui-owl-4b             sees the screenshot, picks ONE action
   verifier  qwen3-vl-8b-abliterated  checks progress every --verify-every
 
@@ -793,7 +793,7 @@ def main() -> int:
     runp.add_argument("--title", default=None)
     runp.add_argument("--max-steps", type=int, default=12)
     runp.add_argument("--act-model", default="gui-owl-4b")
-    runp.add_argument("--plan-model", default="devstral-small-2-24b")
+    runp.add_argument("--plan-model", default="qwen3.8-27b-abliterated")
     runp.add_argument("--check-model", default="qwen3-vl-8b-abliterated")
     runp.add_argument("--coord-space", choices=["normalized", "absolute"], default="normalized")
     runp.add_argument("--verify-every", type=int, default=3)

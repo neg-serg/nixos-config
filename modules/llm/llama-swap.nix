@@ -176,23 +176,9 @@ let
       --cache-type-k q8_0 --cache-type-v q8_0 --reasoning off
   '';
 
-  # DeepSeek-Prover-V2-7B — the 2025 whole-proof baseline, kept for comparison
-  # with the 2026 provers. Q8_0 (7.3 GB) fits the card whole, so there is no
-  # reason to quantize it further. The GGUF carries the `<｜User｜>` template;
-  # prompt it with a complete Lean statement, as the bench does.
-  dsprover = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/deepseek-prover/DeepSeek-Prover-V2-7B-Q8_0.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -c 32768 -np 1 --flash-attn on --fit off --jinja \
-      --cache-type-k q8_0 --cache-type-v q8_0
-  '';
-
   # Qwen3.8-27B abliterated (IQ3_S, ~3.5 bpw) — the quality tier: dense 27B,
-  # the highest bits-per-weight of anything served here. Since 2026-11-11 it
-  # is also the `vision` tier: the release is natively multimodal and huihui
-  # publishes a bf16 projector for it, so the same weights read images for
-  # +0.87 GiB of VRAM (see the mmproj note below). Dense
+  # the highest bits-per-weight of anything served here. The image tier runs
+  # the same weights with a projector in `qwen38vision` below. Dense
   # attention makes the KV cache expensive: q8_0 only leaves room for ~8k, so
   # both run q4_0 and the context is 32k — measured 2026-11-05 at 13.75 GiB
   # with the desktop (2.15 GiB of headroom), 1069 tok/s prefill on a 9.5k
@@ -273,70 +259,6 @@ let
       --host 127.0.0.1 --port ''${PORT} \
       -c 32768 -np 1 --flash-attn on --fit off --reasoning off \
       --cache-type-k q4_0 --cache-type-v q4_0 --jinja
-  '';
-
-  # ArduinoLLM-7B v2 (Q5_K_M, Apache-2.0) — the embedded tier: Qwen2.5-Coder-7B
-  # plus a LoRA stage on Arduino/ESP32/Raspberry Pi/MicroPython/CircuitPython
-  # and a continued-pretraining pass over ~500M tokens of real library sources
-  # (Arduino core, micropython-lib, Adafruit CircuitPython Bundle). It answers in
-  # the trained shape — wiring table, ASCII diagram, sketch, one design note —
-  # and that format is why it beats a general coder here, not raw skill.
-  #
-  # Measured 2026-11-08 on the 9070 XT: 95 tok/s decode on a 584-token answer,
-  # 1783 tok/s prefill (llama-bench: tg64 100.4, pp256 4198), ~5 s cold load,
-  # 10.1 GiB of VRAM with the desktop open (5.4 GB of weights + ~1.1 GiB of
-  # q8_0 KV at 32k). Unload llama-swap before measuring: the first probe read
-  # 15 tok/s because the previous model was still being swapped out and the
-  # weights had spilled to GTT.
-  #
-  # API discipline is the weak spot of a 7B this size: pin tables and sketch
-  # structure come out right, library calls do not always — the probes produced
-  # a non-existent `ESP32MQTT.h`, a non-existent `esp_deep_sleep_ms()`, and a
-  # button sketch with a floating input and no INPUT_PULLUP. A bare "ESP32"
-  # prompt also drifts to ESP-IDF (`gpio_pullup_enable(4)`) where the Arduino
-  # line was wanted; say "Arduino IDE" when that is the target. Treat the output
-  # as a reviewed draft, not as code to flash.
-  #
-  # Not abliterated, unlike the rest of the fleet: these are the only published
-  # weights of this fine-tune, and wiring tasks are not where refusals live.
-  embedded7b = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/embedded/ArduinoLLM-7B.Q5_K_M.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -c 32768 -np 1 --flash-attn on --fit off --jinja \
-      --cache-type-k q8_0 --cache-type-v q8_0
-  '';
-
-  # Devstral Small 2 24B (Apache-2.0) — the agentic coding tier: Mistral's
-  # SWE agent model (68.0% SWE-bench Verified, 55.7% multilingual), dense 24B
-  # on the Mistral Small 3.1 geometry (40 layers, 8 KV heads x 128 dims) with
-  # the Ministral 3 rope scaling (yarn over a 384k native window). Served at
-  # 32k: the card is the limit, not the model. UD-IQ3_XXS (~3.5 bpw) because
-  # Q4_K_M is 14.3 GB of weights and does not fit next to the desktop; KV is
-  # q4_0 because q8_0 adds 2.8 GiB at 32k where q4_0 costs ~1.4 GiB.
-  #
-  # Measured 2026-11-08 with this exact command: 8 s to healthy with the file
-  # in page cache, 13.1 GiB of VRAM next to a 2.8 GiB desktop (13.4 peak,
-  # ~2 GiB of headroom), 1121 tok/s prefill and 48.7 tok/s decode on a short
-  # prompt. `--jinja` is enough for the Mistral tool format: a request that
-  # passes `tools` comes back as `tool_calls` with `arguments` as a JSON
-  # string, so an agent harness needs no template hack.
-  #
-  # One-shot quality probe at this quant: it wrote a panic-free,
-  # allocation-free `parse_version` that compiles, but accepted empty
-  # components (`".."` -> `Some((0,0,0))`) and refused values above 1e9 that
-  # still fit u32. Review the diffs it produces — this tier trades the last
-  # bit of quality for fitting the card.
-  #
-  # Text-only on purpose: the release is vision-capable and the GGUF ships an
-  # mmproj, but the projector is another ~0.9 GB and the `vision` tier owns
-  # that job. Instruct model, so no reasoning flags apply.
-  devstral = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/devstral/Devstral-Small-2-24B-Instruct-2512-UD-IQ3_XXS.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -c 32768 -np 1 --flash-attn on --fit off --jinja \
-      --cache-type-k q4_0 --cache-type-v q4_0
   '';
 
   # Two Kubernetes specialists, both Q8_0 and new to the fleet: ~0.7 GiB of
@@ -604,14 +526,6 @@ in
             "prover"
           ];
         };
-        "deepseek-prover-v2-7b" = {
-          cmd = dsprover;
-          ttl = 600;
-          aliases = [
-            "deepseek-prover"
-            "dsprover"
-          ];
-        };
         "qwen3.8-27b-abliterated" = {
           cmd = qwen38;
           aliases = [
@@ -644,27 +558,6 @@ in
           aliases = [
             "unsloth27b"
             "ud"
-          ];
-        };
-        "arduinollm-7b" = {
-          cmd = embedded7b;
-          # Specialist, not a daily driver: a longer TTL only wastes the card.
-          ttl = 600;
-          aliases = [
-            "embedded"
-            "arduino"
-          ];
-        };
-
-        "devstral-small-2-24b" = {
-          cmd = devstral;
-          # A daily coding driver, not a one-off probe: keep it resident for
-          # ten minutes so the 60 s global TTL does not reload it between
-          # messages (a cold load is ~8 s of 9.4 GB from /zero).
-          ttl = 600;
-          aliases = [
-            "devstral"
-            "coder"
           ];
         };
 
