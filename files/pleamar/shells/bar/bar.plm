@@ -2289,7 +2289,11 @@ scene bar {
             // plugin's `Build.busy` do not exist — the wrapper row carries the
             // condition instead (the `pill_slot` rule in `Left`).
             row build_slot { show: widget.build and Build.busy
-                build.Tile(toggle_build_panel, build_hover, type_scale: text_scale)
+                // The tones are the live palette's, like every capsule in the strip: the plugin's
+                // defaults are the frozen ones, and a themed bar would leave the badge black.
+                build.Tile(toggle_build_panel, build_hover, type_scale: text_scale, row: strip,
+                           scale: ui * user_scale * mon_scale[min(screen.index, 3)],
+                           plate: live.coal, ink_tone: live.ink, lit: live.accent_hover)
             }
             RecAudio() { show: rec_active and rec_audio }
             // A zone that goes away takes its pointer with it and `leave` never comes: a build that ends
