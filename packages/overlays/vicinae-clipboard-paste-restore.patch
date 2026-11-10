@@ -1,0 +1,22 @@
+diff --git a/src/server/src/services/clipboard/clipboard-service.cpp b/src/server/src/services/clipboard/clipboard-service.cpp
+--- a/src/server/src/services/clipboard/clipboard-service.cpp
++++ b/src/server/src/services/clipboard/clipboard-service.cpp
+@@ -739,7 +739,17 @@
+   // we don't want subscribers to block before the actual copy happens
+   QMetaObject::invokeMethod(this, [this]() { emit selectionUpdated(); }, Qt::QueuedConnection);
+ 
+-  return copySelection(*std::move(selection), options);
++  bool const copied = copySelection(*selection, options);
++
++  // The clipboard now holds this selection. Refresh the snapshot used by
++  // restoreClipboard() so the transient restore that follows a paste rewrites
++  // this selection instead of the content it replaced: without it a paste from
++  // the clipboard history is rolled back to the previous selection 800 ms
++  // later, leaving the history and the system clipboard disagreeing
++  // (vicinaehq/vicinae#2133).
++  if (copied) m_lastSelection = *selection;
++
++  return copied;
+ }
+ 
+ QString ClipboardService::readText() { return QGuiApplication::clipboard()->text(); }

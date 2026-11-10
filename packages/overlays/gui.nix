@@ -181,11 +181,15 @@ in
       # patch ranks the root search with the lusty-fuzzy crate's matcher
       # (ported to src/lib/fuzzy/include/fuzzy/lusty.hpp) instead of fzf's v2
       # scorer, so the pickers, the tray and the launcher rank identically.
+      # The clipboard patch keeps the selection a paste from the history just
+      # wrote on the clipboard: upstream restores the previous selection 800 ms
+      # later, so a second paste yields the old content (vicinaehq/vicinae#2133).
       patches = (old.patches or [ ]) ++ [
         ./vicinae-tab-qml.patch
         ./vicinae-hybrid-keys.patch
         ./vicinae-dmenu-fix.patch
         ./vicinae-lusty-search.patch
+        ./vicinae-clipboard-paste-restore.patch
       ];
       apiDeps = prev.fetchNpmDeps {
         src = "${src}/src/typescript/api";
