@@ -134,6 +134,15 @@ CATALOG = {
         "lean": "-",
         "fp": "-",
     },
+    "falcon-h1r-7b": {
+        "aliases": ["falcon-h1r", "h1r", "reasoner"],
+        "role": "7B hybrid reasoner (thinking)",
+        "ctx": "64k",
+        "size": "5.8 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
     "arduinollm-7b": {
         "aliases": ["embedded", "arduino"],
         "role": "7B embedded code (Arduino/ESP32/Pi)",

@@ -429,6 +429,26 @@ let
       --cache-type-k q8_0 --cache-type-v q8_0
   '';
 
+  # Falcon-H1R-7B (TII, Oct 2025) — the local reasoner: Falcon-H1-7B-Base
+  # cold-started on long reasoning traces and RL'd with GRPO, so it writes a
+  # thought trace and then the answer. Same parallel hybrid as the 3B one size
+  # up: 44 blocks, 2 KV heads x 128 dims, so the KV is ~22 KB/token at q8_0
+  # (64k is ~1.4 GiB) and the GGUF declares 262k context (64k served: a 7B's
+  # thoughts are long, not its working set). Q6_K (5.8 GiB) rather than Q8_0
+  # (7.5 GiB): with the desk, fim and reranker on the card the difference is
+  # 6 GiB of headroom against 4. The template carries `<think>`/`</think>`,
+  # hence `--jinja`, and `--reasoning-format deepseek` moves the trace to
+  # `reasoning_content` (without it the trace stays in `content`). Bench
+  # numbers from the card are the vendor's; ours go in the catalog.
+  falconH1r = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/falcon/Falcon-H1R-7B-Q6_K.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 65536 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0 \
+      --reasoning-format deepseek
+  '';
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -641,6 +661,19 @@ in
             "falcon-3b"
             "falcon3b"
             "falcon"
+          ];
+        };
+
+        "falcon-h1r-7b" = {
+          cmd = falconH1r;
+          # A reasoner is not a warm path: a cold load costs a few seconds and
+          # an answer a minute of thinking, so keep it for ten minutes like
+          # the other daily tiers.
+          ttl = 600;
+          aliases = [
+            "falcon-h1r"
+            "h1r"
+            "reasoner"
           ];
         };
 
