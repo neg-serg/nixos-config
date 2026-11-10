@@ -115,6 +115,10 @@
   features.wine.enable = true;
   features.wine.apps = { }; # Windows apps for the wineapps CLI; add only what you need
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
+  # Hyprwhspr (features.gui.hyprwhspr): hold ALT+` to dictate into the focused
+  # window — the speech-stack whisper.cpp server (:8002) transcribes on the GPU
+  # with large-v3-turbo, the text is pasted and copied to the clipboard.
+  features.gui.hyprwhspr.enable = true;
   # Pleamar shell (features.gui.pleamar): this is the session's shell — bar,
   # panels, notifications, toast and launcher run as their own units, all
   # 18 scene files compile, and the panels' frame cost is inside the screen's
