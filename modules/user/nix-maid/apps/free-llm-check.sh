@@ -1,7 +1,7 @@
 # free-llm-check — prove the free LLM routes actually answer as agents.
 #
-# The two routes are declared in dsh-terminal-plugins.nix (llmRows) and are
-# key-gated at request time: pollinations answers anonymously, gemini needs
+# The routes are declared in dsh-terminal-plugins.nix (llmRows) and are
+# key-gated at request time: pollinations answers anonymously, the rest need
 # a free key. Keys live in ~/.config/dsh/free-llm.env
 # (KEY=VALUE lines, mode 0600); the dsh wrapper sources the same file.
 #
@@ -9,8 +9,9 @@
 # `tool_calls` cannot drive an agent loop. One request per route.
 #
 # Gemini refuses direct connections from this region, so it is checked
-# through the local sing-box HTTP inbound (10812). Pollinations is
-# checked directly on purpose: it is the route that must work without the proxy.
+# through the local sing-box HTTP inbound (10812). Pollinations, SambaNova,
+# Z.ai and DashScope are checked directly on purpose: they must work without
+# the proxy.
 #
 # Exit status: 0 when every armed route passed, 1 when any armed route failed.
 
@@ -26,7 +27,13 @@ if [ ! -e "$KEY_FILE" ]; then
     cat > "$KEY_FILE" << 'TEMPLATE'
 # Free LLM routes for dsh. Paste the key after `=`, keep the file mode 0600.
 # Gemini free tier (no card):  https://aistudio.google.com/apikey
+# Z.ai GLM Flash (free):       https://docs.z.ai/guides/overview/pricing
+# SambaNova free tier:         https://docs.sambanova.ai/docs/en/models/rate-limits
+# Alibaba free quota:          https://www.alibabacloud.com/help/en/model-studio/new-free-quota
 GEMINI_API_KEY=
+ZAI_API_KEY=
+SAMBANOVA_API_KEY=
+DASHSCOPE_API_KEY=
 TEMPLATE
   )
   echo "free-llm-check: created $KEY_FILE — paste your free keys there."
@@ -114,6 +121,9 @@ route() {
 echo "free-llm-check: keys from $KEY_FILE; proxy $PROXY"
 route pollinations "https://text.pollinations.ai/openai" "openai-fast" "" ""
 route gemini "https://generativelanguage.googleapis.com/v1beta/openai" "gemini-3.6-flash" "GEMINI_API_KEY" "$PROXY"
+route sambanova "https://api.sambanova.ai/v1" "gpt-oss-120b" "SAMBANOVA_API_KEY" ""
+route zai "https://api.z.ai/api/paas/v4" "glm-4.7-flash" "ZAI_API_KEY" ""
+route dashscope "https://dashscope-intl.aliyuncs.com/compatible-mode/v1" "qwen3.8-max" "DASHSCOPE_API_KEY" ""
 
 printf '\n%d passed, %d throttled, %d failed, %d skipped\n' \
   "$pass" "$throttled" "$fail" "$skip"

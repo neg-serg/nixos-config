@@ -353,12 +353,82 @@ rec {
                 input:
                   - text
                   - image
+              - id: gemini-3.5-flash
+                name: Gemini 3.5 Flash (free tier)
+                contextWindow: 1048576
+                input:
+                  - text
+                  - image
               - id: gemini-3.5-flash-lite
                 name: Gemini 3.5 Flash-Lite (free tier)
                 contextWindow: 1048576
                 input:
                   - text
                   - image
+              - id: gemini-3.1-flash-lite
+                name: Gemini 3.1 Flash-Lite (free tier)
+                contextWindow: 1048576
+                input:
+                  - text
+                  - image
+              - id: gemini-3-flash-preview
+                name: Gemini 3 Flash Preview (free tier)
+                contextWindow: 1048576
+                input:
+                  - text
+                  - image
+          # sambanova: no-card free tier — 20 requests/day, 200k tokens/day
+          # per model (docs, checked 2026-11-10). All listed ids document
+          # function calling. 20 RPD is a trickle: one call per ~72 minutes.
+          sambanova:
+            displayName: SambaNova (free, 20 req/day)
+            api: openai-completions
+            baseURL: https://api.sambanova.ai/v1
+            apiKeyEnv: SAMBANOVA_API_KEY
+            defaultContextWindow: 131072
+            defaultMaxTokens: 16384
+            models:
+              - id: Meta-Llama-3.3-70B-Instruct
+                name: Llama 3.3 70B (free, 20/day)
+                contextWindow: 131072
+              - id: gpt-oss-120b
+                name: GPT-OSS 120B (free, 20/day)
+                contextWindow: 131072
+              - id: DeepSeek-V3.2
+                name: DeepSeek V3.2 (free, 20/day)
+                contextWindow: 131072
+          # z.ai: the pricing table lists GLM-4.7-Flash / GLM-4.5-Flash as
+          # free per token and the model pages document function calling
+          # (checked 2026-11-10). The ids are not in the OpenAPI manifest, so
+          # verify them after pasting a key; tool_choice is auto-only.
+          zai:
+            displayName: Z.ai GLM (free Flash)
+            api: openai-completions
+            baseURL: https://api.z.ai/api/paas/v4
+            apiKeyEnv: ZAI_API_KEY
+            defaultContextWindow: 131072
+            defaultMaxTokens: 16384
+            models:
+              - id: glm-4.7-flash
+                name: GLM-4.7 Flash (free)
+                contextWindow: 131072
+              - id: glm-4.5-flash
+                name: GLM-4.5 Flash (free)
+                contextWindow: 131072
+          # dashscope: qwen3.8-max comes with a one-shot 1M-token free quota
+          # (90 days, Singapore only; checked 2026-11-10) — a burst budget,
+          # not per-day capacity. Function calling is documented for the id.
+          dashscope:
+            displayName: Alibaba Qwen (free 1M burst)
+            api: openai-completions
+            baseURL: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+            apiKeyEnv: DASHSCOPE_API_KEY
+            defaultContextWindow: 262144
+            defaultMaxTokens: 16384
+            models:
+              - id: qwen3.8-max
+                name: Qwen3.8-Max (1M tokens, 90 days)
+                contextWindow: 262144
     # agent-default-model: deployment default for new sessions (module:
     # dsh-terminal-plugins.nix). Runtime switches revert on the next rebuild or
     # login, when the caretaker restores this row.
