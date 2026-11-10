@@ -30,7 +30,6 @@
   ...
 }:
 let
-  enabled = config.lib.neg.enabled "llm";
   cfg = config.services.llm-proxy;
 
   # One guard profile. Every key is optional and null means "not set here":
@@ -188,11 +187,16 @@ in
   options.services.llm-proxy = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = enabled;
+      default = false;
       description = ''
         Run the llm-proxy context guard in front of llama-swap on :9300.
-        Clients that want the guards point at the proxy; clients that do not
-        keep talking to llama-swap directly.
+        Off by default: the trimming guard pays for itself only when a
+        request would otherwise overflow the slot (measured 2026-11-10: a
+        150k-character prompt is rejected with 400 directly and answered
+        after trimming through the proxy), while the swap-race retry and
+        the tool protocol add nothing that llama-swap and llmctl do not
+        already do. Enable it per host when long sessions are expected;
+        llmctl and the bench fall back to llama-swap when it is down.
       '';
     };
     host = lib.mkOption {
