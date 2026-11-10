@@ -11,10 +11,10 @@ let
   #
   # The wrapper also arms the free-tier fallbacks declared in llmRows
   # (dsh-terminal-plugins.nix) and smoke-tested by `free-llm-check`:
-  #   * ~/.config/dsh/free-llm.env carries GEMINI_API_KEY / OPENROUTER_API_KEY
+  #   * ~/.config/dsh/free-llm.env carries GEMINI_API_KEY
   #     (KEY=VALUE, mode 0600, outside the repo). The check script creates the
   #     template on first run.
-  #   * Gemini and OpenRouter refuse direct connections from this region, so
+  #   * Gemini refuses direct connections from this region, so
   #     NODE_USE_ENV_PROXY makes Node's fetch honour the local sing-box HTTP
   #     inbound. NO_PROXY keeps loopback (llama-swap) and the primary DeepSeek
   #     route on a direct path: a dead proxy must not take the daily driver
