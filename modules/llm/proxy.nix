@@ -236,6 +236,33 @@ in
         ExecStart = "${pkgs.neg.llm-proxy}/bin/llm-proxy --config /etc/llm-proxy/config.json";
         RestartSec = 3;
         DynamicUser = true;
+        # The proxy is pure Python over loopback: it reads one JSON config and
+        # speaks HTTP to llama-swap. Nothing else in the system is its business.
+        # MemoryDenyWriteExecute is safe here (unlike llama-swap's RADV JIT) —
+        # CPython never maps writable-executable pages.
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
+        NoNewPrivileges = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        ProtectClock = true;
+        ProtectHostname = true;
+        RestrictNamespaces = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+        # AF_UNIX stays for the resolver (a hostname upstream would need it).
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
+        SystemCallFilter = [ "@system-service" ];
+        CapabilityBoundingSet = [ "" ];
       };
     };
   };
