@@ -21,9 +21,9 @@
 # - Package: `pkgs.ollama-rocm` (ROCm build)
 # - Bind: `0.0.0.0:11434` (firewall opened)
 # - Model store: `/zero/ai/ollama` — lives on the `zero` ZFS pool, never on system disks. The
-#   store is 40 GB over five families (qwen3.8, qwen3-vl, qwen3-vl-abliterated,
-#   qwen3-embedding, glm-ocr); the 59 GB of huihui 30B/35B/coder MoE tags that could not fit
-#   the 16 GB card were removed on 2026-11-11.
+#   store is 32 GB over three families (qwen3.8, qwen3-vl-abliterated, qwen3-embedding).
+#   On 2026-11-11 the 59 GB of huihui 30B/35B/coder MoE tags that could not fit the 16 GB
+#   card went, and with them the censored qwen3-vl base tag and glm-ocr, which no tool called.
 # - Service user: `ollama` (static user, `DynamicUser = false` so ownership of the store stays
 #   stable). `neg` is in the `ollama` group and can manage model files.
 # - tmpfiles ensure `/zero/ai/ollama` is `0770 ollama:ollama` (with `Z` recursive fixup at boot).
@@ -289,7 +289,7 @@
 # | ------------------------------------ | ----- | ------------------------------------- |
 # | `qwen3-vl-abliterated:8b`            | 8.0GB | **default** — uncensored, fully on GPU |
 # | `qwen3.8:27b`                        | 17GB  | kept for RU quality, spills to CPU    |
-# | `qwen3-vl:8b`                        | 6.1GB | base vision tag, kept for now         |
+# | `qwen3-embedding:latest`             | 4.7GB | rag-search index embeddings           |
 #
 # One-off override: `RAG_LLM_MODEL=qwen3.8:27b rag-search search --llm "..."`
 #
@@ -300,9 +300,9 @@
 #
 # ## Layout on disk
 #
-# - `/zero/ai/ollama` — Ollama model store (40 GB, 6 tags: qwen3.8 27b and 27b-plain,
-#   qwen3-vl 8b, qwen3-vl-abliterated 8b, qwen3-embedding, glm-ocr)
-# - `/zero/ai/llama` — llama.cpp GGUFs (280 GB): qwen3-vl-8b, qwen3.8-27B,
+# - `/zero/ai/ollama` — Ollama model store (32 GB, 3 tags: qwen3.8 27b,
+#   qwen3-vl-abliterated 8b, qwen3-embedding)
+# - `/zero/ai/llama` — llama.cpp GGUFs (250 GB): qwen3-vl-8b, qwen3.8-27B,
 #   the abliterated set (Gemma 26B IQ3, Qwen3.8-27B IQ3, Qwen3-VL-8B),
 #   Qwen3.8-Flash-Next IQ3_S (78 GB, two shards
 #   in `qwen38-flash-next-iq3s/`), the Lean prover (oprover), the OCR tiers
