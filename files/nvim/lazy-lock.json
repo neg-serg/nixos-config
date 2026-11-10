@@ -56,6 +56,7 @@
   "snacks.nvim": { "branch": "main", "commit": "882c996cf28183f4d63640de0b4c02ec886d01f2" },
   "sshfs.nvim": { "branch": "main", "commit": "57f586251d788dae38fd12998b9a208f7d54c1ef" },
   "ssr.nvim": { "branch": "main", "commit": "7839acf6f940dc1c9210823a7c8b378df122765b" },
+  "strudel.nvim": { "branch": "main", "commit": "3a7e62c9048a318281328ad08d6269e50b884cd3" },
   "suda.vim": { "branch": "master", "commit": "c492741b4679b3cdd4d9e34138209784e061d916" },
   "tidal.nvim": { "branch": "main", "commit": "fa4673e181e18fd1719ae17a1d4f4ecce2de37aa" },
   "time-machine.nvim": { "branch": "main", "commit": "6657a7db8a07ecfa8a266be34bebfb6827bb2eab" },
