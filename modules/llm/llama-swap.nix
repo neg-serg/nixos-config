@@ -327,33 +327,6 @@ let
   # poorly (it defined a Deployment as "a namespace holding the state of all
   # containers"). Use it as a fast English kubectl-syntax helper — not as the
   # YAML tier and not for explanations.
-  # Qwen3-Coder-30B-A3B-Instruct (Apache-2.0) — the agentic tier: 30B total but
-  # 3B active, so one tool-calling turn costs a fraction of the dense 27B's and
-  # a long chain does not take minutes. UD-Q2_K_XL (11.2 GB) is the quant that
-  # fits next to the desktop and the always-on fim/reranker servers; the IQ3_XXS
-  # build (12.2 GB) spilled ~1.5 GiB into GTT at 16k and was dropped.
-  #
-  # Measured 2026-11-10 on four chains of 3/5/6/12 tool calls (correct final
-  # value, one call per turn): 3/3 in 3.9 s and the 12-step increments clean,
-  # against 42.1 s for qwen3.8-27b and 2/3 for devstral. fp (build planning) is
-  # the weak spot at 2.2/6, so route plans to qwen3.8-27b and steps here.
-  #
-  # Two protocol rules the model needs, both measured: call exactly one tool per
-  # turn ("never guess what a tool can return"), and send tool results as plain
-  # text with a `name` field rather than JSON-wrapped. Without them it batches
-  # dependent calls, invents the values it should have read, and llama-server
-  # answers 500 "Failed to parse tool call arguments as JSON".
-  #
-  # 16k, not 32k: 32k of KV does not fit next to the desktop, and 16k holds
-  # roughly 12-15 chained calls before the harness has to summarise.
-  qwen3Coder = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/qwen3-coder-30b/Qwen3-Coder-30B-A3B-Instruct-UD-Q2_K_XL.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -c 16384 -np 1 --flash-attn on --fit off --jinja \
-      --cache-type-k q4_0 --cache-type-v q4_0
-  '';
-
   # 32k is the native Qwen2.5 window (KV ~6 KB/token at q8_0, ~0.2 GiB);
   # measured 2026-11-08: +694 MiB of VRAM with the desktop open, 183-382 tok/s
   # decode, 2.0k tok/s prefill, cold start under 2 s.
@@ -644,17 +617,6 @@ in
           aliases = [
             "devstral"
             "coder"
-          ];
-        };
-
-        "qwen3-coder-30b" = {
-          cmd = qwen3Coder;
-          # Same reasoning as devstral: agent work arrives in chains of calls,
-          # and a reload between them would add ~10 s of 11 GB from /zero.
-          ttl = 600;
-          aliases = [
-            "qwen3-coder"
-            "agent"
           ];
         };
 
