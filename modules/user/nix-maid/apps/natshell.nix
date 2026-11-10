@@ -1,13 +1,26 @@
 {
+  config,
   pkgs,
   ...
 }:
-
+let
+  # natshell's own closure is ~280 MiB; the paths the system profile did not
+  # already carry (huggingface-hub, hf-xet, httpx, anyio, fsspec, the app
+  # itself) were ~38 MiB of the toplevel, and the app is useless until a model
+  # answers anyway. So it stays out of the system closure through the on-demand
+  # launcher (lib/on-demand-app.nix): the system profile carries a dispatch
+  # script that builds `git+file:///etc/nixos#natshell` on first use and pins
+  # the result under ~/.local/state/nix-apps/natshell. `nix-apps status`
+  # reports drift after `just update`; `nix-apps update natshell` re-points the
+  # pin, `nix-apps seed` warms it so the first launch works offline.
+  onDemand = config.lib.neg.onDemand pkgs;
+in
 {
   # NatShell (https://github.com/Barent/natshell) — natural-language shell: the
   # TUI takes a request in plain language, the model plans shell commands,
   # natshell runs them (confirm gate for moderate/dangerous patterns) and
-  # iterates until the task is done. Package: packages/natshell.
+  # iterates until the task is done. Package: packages/natshell (flake attr
+  # `natshell`, required by the launcher).
   #
   # Inference is the local llama-swap endpoint (:9292), which already owns the
   # 16 GB card and swaps one model at a time. natshell's bundled llama.cpp
@@ -16,7 +29,10 @@
   # (/config) replaces the store symlink with a real file, and the next
   # activation links it again.
   environment.systemPackages = [
-    pkgs.neg.natshell # natural-language shell agent TUI (remote inference via llama-swap)
+    (onDemand {
+      name = "natshell";
+      attr = "natshell";
+    }) # natural-language shell agent TUI, built on first run (remote inference via llama-swap)
   ];
 
   users.users.neg.maid.file.home.".config/natshell/config.toml".text = ''

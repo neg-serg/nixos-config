@@ -25,6 +25,7 @@
 
   brrtfetch = pkgs.neg.brrtfetch;
   tint = pkgs.neg.tint; # colouriser for CLI output (scanners + per-tool rulesets)
+  natshell = pkgs.neg.natshell; # natural-language shell agent (on-demand launcher; app-only paths stay out of the toplevel)
 
   sola-mpd = pkgs.sola-mpd; # browser MPD client (Node backend + React UI)
 
