@@ -24,6 +24,7 @@
   "leap.nvim": { "branch": "main", "commit": "e51ba2a70169bb6fd58342312ccde591242ac739" },
   "leetcode.nvim": { "branch": "master", "commit": "4e8b3683940a8377379ce9398e7f329e3560b42c" },
   "log-highlight.nvim": { "branch": "main", "commit": "b2e00cfd41ca94338265a595f3f3f423d9f9322e" },
+  "md-render.nvim": { "branch": "main", "commit": "4f6d73a276356bc23dbffa594d2a54dc978e98bb" },
   "mini.nvim": { "branch": "main", "commit": "e58ad4b0c9e9376096b9704f98fc00d4c9448870" },
   "namu.nvim": { "branch": "main", "commit": "e7afbdf63a75ace6ccc6202d58a4f6f9ac09db92" },
   "neg.nvim": { "branch": "master", "commit": "f6c50c5d2f3866534e165fdd357abf5769e9e0d9" },
