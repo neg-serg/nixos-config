@@ -36,6 +36,7 @@ export const ROUTES = [
   ['6', 'gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (free)'],
   ['7', 'openai-fast', 'GPT-OSS 20B (Pollinations, free)'],
   ['8', 'gyro-coder', 'Gyro-Coder 125B (7900 XTX box)'],
+  ['9', 'gemini-3.5-flash', 'Gemini 3.5 Flash (free)'],
 ]
 
 let registryPromise
