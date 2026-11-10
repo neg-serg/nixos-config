@@ -161,6 +161,12 @@ def normalize_tool_results(messages):
 
 
 def inject_single_tool_rule(messages, enabled):
+    """Merge the rule into the client's system prompt when there is one.
+
+    A second system message is not portable: the Mistral/Devstral template
+    rejects any `system` role that is not the first message ("Only user,
+    assistant and tool roles are supported, got system" -> HTTP 500), so the
+    rule has to extend the existing prompt instead of preceding it."""
     if not enabled:
         return messages
     if any(
@@ -169,8 +175,21 @@ def inject_single_tool_rule(messages, enabled):
         for m in messages
     ):
         return messages
+    out = [dict(m) for m in messages]
+    for i, m in enumerate(out):
+        if m.get("role") != "system":
+            continue
+        content = m.get("content")
+        if isinstance(content, list):
+            content = list(content) + [
+                {"type": "text", "text": SINGLE_TOOL_RULE}
+            ]
+        else:
+            content = "\n\n".join(p for p in (content, SINGLE_TOOL_RULE) if p)
+        out[i] = {**m, "content": content}
+        return out
     rule = {"role": "system", "content": SINGLE_TOOL_RULE}
-    return [rule] + messages
+    return [rule] + out
 
 
 # ---------------------------------------------------------------- trimming
