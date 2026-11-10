@@ -86,8 +86,13 @@ in
         ];
         description = "Refresh the MERT similarity index incrementally";
         # The refresh chain resolves `music-index` through PATH when it is not
-        # in ~/.local/bin any more (the Rust binary lives in the store).
-        path = [ pkgs.neg.music-index-tools ];
+        # in ~/.local/bin any more (the Rust binary lives in the store); the
+        # binary shells out to ffprobe for each new track, and the timer's PATH
+        # carries no media tools.
+        path = [
+          pkgs.neg.music-index-tools # music-index / music-similar (index math, npy, ranking)
+          pkgs.ffmpeg # ffprobe: stream metadata for the index
+        ];
         serviceConfig = {
           # The binary defaults to the packaged model; keep the configured one in
           # reach (the deleted wrapper exported MUSIC_EMBED_MODEL too).
@@ -97,15 +102,22 @@ in
               # The chain refreshes index -> tags -> describe -> playlists;
               # each step is incremental, so an unchanged library costs
               # seconds.
-              # incremental, so an unchanged library costs seconds.
               "${pkgs.bash}/bin/bash ${refreshScript} --index-args '${indexArgs}'${describeArgs}"
             else
               "${pkgs.neg.music-index-tools}/bin/music-index ${indexArgs}";
           # A cold pass over the whole library is hours (12h covers the measured
           # ~6h at the default thread count, ~1.8x that with --threads 4); warm
-          # runs finish in minutes. A timeout is not fatal: the per-file cache
+          # runs finish in minutes. The cap is not fatal: the per-file cache
           # lets the restart resume instead of re-embedding everything.
-          TimeoutStartSec = "12h";
+          #
+          # Type=simple, not the preset's oneshot: switch-to-configuration
+          # starts changed units with `systemctl start`, and for a oneshot that
+          # waits for the whole run — a switch touching this unit then hangs for
+          # hours (2026-11-10: the activation blocked for 34 minutes on the
+          # refresh). simple returns at exec; RuntimeMaxSec keeps the cap the
+          # oneshot's TimeoutStartSec used to give the run itself.
+          Type = "simple";
+          RuntimeMaxSec = "12h";
           # The restartOnFailure preset supplies Restart=on-failure; retry while
           # the machine is up so a flaky 04:00 run (network down, interrupted
           # model fetch) does not postpone the refresh a whole week.

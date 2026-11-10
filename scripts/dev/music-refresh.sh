@@ -125,6 +125,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# The timer runs with a minimal PATH (no bash, no ~/.local/bin), while the
+# tools themselves spawn ~/.local/bin wrappers (music-index -> music-embed).
+# Put the wrappers first so a child process resolves the same way the step does.
+PATH="$HOME/.local/bin:$PATH"
+export PATH
+
 # Wrappers are rendered by nix-maid into ~/.local/bin; fall back to PATH so the
 # script also works from a plain shell.
 resolve_tool() {
@@ -211,8 +217,9 @@ for step in "${steps[@]}"; do
   fi
   echo "music-refresh: $name"
   # The tool list was built with plain string concatenation, so run it through
-  # the shell to honour the quoted --index-args.
-  if ! bash -c "$command"; then
+  # the shell to honour the quoted --index-args. $BASH, not `bash`: the timer's
+  # PATH carries no shell (only the store tools), so a bare `bash` is not found.
+  if ! "$BASH" -c "$command"; then
     echo "music-refresh: $name failed" >&2
     failed=1
   fi
