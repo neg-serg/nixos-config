@@ -19,7 +19,8 @@ return {
       local langs = {
         'bash', 'c', 'cpp', 'cmake', 'css', 'dockerfile', 'dot',
         -- no jsonc: main has no such language, the json parser covers the filetype
-        'go', 'haskell', 'html', 'json', 'lua', 'luadoc', 'make',
+        -- javascript: *.str Strudel buffers are set to that filetype (plugins/strudel.lua)
+        'go', 'haskell', 'html', 'javascript', 'json', 'lua', 'luadoc', 'make',
         'markdown', 'markdown_inline', 'nix', 'python', 'regex', 'rust', 'toml',
         'typescript', 'vim', 'vimdoc', 'yaml',
       }
