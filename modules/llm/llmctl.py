@@ -125,6 +125,15 @@ CATALOG = {
         "lean": "-",
         "fp": "-",
     },
+    "falcon-h1-3b": {
+        "aliases": ["falcon-3b", "falcon3b", "falcon"],
+        "role": "3B parallel-hybrid Mamba, fast",
+        "ctx": "64k",
+        "size": "3.4 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
     "arduinollm-7b": {
         "aliases": ["embedded", "arduino"],
         "role": "7B embedded code (Arduino/ESP32/Pi)",

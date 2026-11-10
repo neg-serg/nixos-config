@@ -403,6 +403,23 @@ let
       --reasoning-format deepseek
   '';
 
+  # Falcon-H1-3B-Instruct (TII, 3B, Falcon LLM license) — the small fast
+  # general tier. Falcon-H1's hybrid is *parallel*, not alternating: every one
+  # of the 32 blocks carries an attention branch (2 KV heads x 128 dims) next
+  # to its Mamba-2 branch, so the KV cache is charged on all layers
+  # (~16 KB/token at q8_0, i.e. ~1 GiB at 64k), on top of a fixed SSM state per
+  # sequence. Q8_0 (3.35 GB) is nearly lossless and the whole model fits with
+  # room to spare, so there is nothing to gain from a lower quant. 64k of the
+  # 128k the GGUF declares: what limits a 3B here is quality, not the window.
+  # The GGUF carries the ChatML template, hence `--jinja`.
+  falcon3b = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/falcon/Falcon-H1-3B-Instruct-Q8_0.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 65536 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0
+  '';
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -603,6 +620,18 @@ in
           aliases = [
             "devstral"
             "coder"
+          ];
+        };
+
+        "falcon-h1-3b" = {
+          cmd = falcon3b;
+          # A general fast tier, not a specialist: ten minutes like the other
+          # daily drivers, so a chat turn does not pay for a reload.
+          ttl = 600;
+          aliases = [
+            "falcon-3b"
+            "falcon3b"
+            "falcon"
           ];
         };
 
