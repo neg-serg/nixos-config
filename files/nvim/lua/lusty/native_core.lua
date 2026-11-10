@@ -61,9 +61,9 @@ end
 --- that it is the requested height: the height the split had before a
 --- re-open (`win_h`, see Picker:restart — a split is user-resizable, so
 --- navigating must not snap it back), else LUSTY_ROWS as in the standalone
---- `--rows`, else five entry rows plus the prompt. A split has no border rows,
---- so the env value is the window height as is. The one-line mode always asks
---- for a single row and ensure_geometry() keeps the window there.
+--- `--rows`, else fzf's `--height=16`. A split has no border rows, so the env
+--- value is the window height as is. The one-line mode always asks for a
+--- single row and ensure_geometry() keeps the window there.
 function M.height(self)
   if self:one_line() then
     return 1
@@ -78,33 +78,31 @@ function M.height(self)
   if envr and envr >= 3 then
     return math.max(2, math.min(envr, vim.o.lines - 3))
   end
-  return math.min(6, math.max(1, vim.o.lines - 3))
+  return math.min(16, math.max(1, vim.o.lines - 3))
+end
+
+--- fzf chrome rows: the prompt (always), the info line right under it and the
+--- two-row footer (separator + key hints). A short split drops the footer
+--- first and then the info line, so a tiny window still shows an entry.
+function M.chrome(self)
+  local h = self:height()
+  local info = h >= 4 and 1 or 0
+  local footer = h >= 6 and 2 or 0
+  return { info = info, footer = footer }
 end
 
 function M.list_rows(self)
-  -- Entry rows inside the window: everything but the prompt line, so the grid
-  -- fills the window instead of leaving its last row empty.
-  return math.max(1, self:height() - 1)
+  -- Entry rows inside the window: everything but the fzf chrome, so the list
+  -- fills the split instead of leaving its last rows empty.
+  local c = M.chrome(self)
+  return math.max(1, self:height() - 1 - c.info - c.footer)
 end
 
---- Max columns of the entry grid: choose a pitch that fits the split width
---- exactly (col_w + 2 separator), so rows never overflow or wrap.
+--- Entry columns. fzf is a one-entry-per-line picker, so the pickers render a
+--- single column; the function stays as the seam the layout code (and the
+--- standalone grid view) already call.
 function M.max_cols(self)
-  if self.long or self.single or self:one_line() then
-    return 1
-  end
-  local w = self:width()
-  local rows = self:list_rows()
-  local total = math.max(self.total, 1)
-  local needed = math.max(1, math.ceil(total / rows))
-  -- cap the width influence: one huge name must not force a single column
-  local name_w = math.max(math.min(self.maxw or 12, 20), 1)
-  if self.icons then
-    name_w = name_w + 2 -- icon glyph + trailing space occupy two display cells
-  end
-  local byw = math.max(1, math.floor((w + 2) / (name_w + 4)))
-  local cols = math.min(needed, byw, 8)
-  return math.max(1, cols)
+  return 1
 end
 
 function M.col_width(self)
@@ -727,6 +725,7 @@ M.BOUND = {
   'width',
   'height',
   'list_rows',
+  'chrome',
   'max_cols',
   'col_width',
   'screen_count',

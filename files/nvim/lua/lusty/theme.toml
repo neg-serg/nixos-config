@@ -1,18 +1,38 @@
-# Lusty selection theme - shared by the nvim pickers and the standalone TUI.
-# The file format is intentionally simple: 'key = "value"' / 'key = true|false'
-# lines under a [section], so both the small Lua reader (nvim) and the small
-# Rust reader (standalone) can parse it without a full TOML dependency.
+# Lusty picker theme - shared by the nvim pickers and the standalone TUI.
 #
-# Neg-inspired palette: deep neutral panel, a calm blue selection bar with
-# light text, and a warm amber underline for the query match.
+# The values are the fzf profile from FZF_DEFAULT_OPTS
+# (modules/user/nix-maid/cli/search.nix): same glyphs, same palette, same
+# reverse layout (prompt on top, info line under it, footer at the bottom).
+# Change fzf's options and this file together, or the two interfaces drift.
+#
+# The format stays the small `key = "value"` / `key = true|false` dialect both
+# readers parse without a TOML dependency (theme.lua in nvim, the Theme loader
+# in src/tui.rs; `lusty --theme-map` dumps the resolved values for the parity
+# smoke test).
 
-[lusty.selection]
-bg = "#0b3d63"
-fg = "#e6f2ff"
-bold = true
-underline = false
-reverse = false
+[lusty.profile]
+# Prompt glyph (U+276F + two spaces), pointer (U+25B6) and multi-select
+# marker (U+2713), verbatim from fzf's --prompt/--pointer/--marker.
+prompt = "❯  "
+pointer = "▶"
+marker = "✓"
+# fzf --color=footer:underline
+footer_underline = true
 
-[lusty.match]
-fg = "#ffd75f"
-underline = true
+[lusty.colors]
+# fzf colour roles: fg_current is fg+, hl is hl, hl_current is hl+, input is
+# the terminal default foreground fzf draws the query in.
+bg = "#000000"
+fg = "#4f5d78"
+fg_current = "#8DA6B2"
+hl = "#546c8a"
+hl_current = "#005faf"
+border = "#0b2536"
+separator = "#0b2536"
+info = "#3f5876"
+input = "#6c7e96"
+prompt = "#005faf"
+pointer = "#005faf"
+marker = "#04141C"
+footer = "#ffffff"
+preview_fg = "#4f5d78"

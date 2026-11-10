@@ -162,9 +162,8 @@ p:handle('mark') -- C-Space on the same entry unmarks it
 assert_eq(#p.mark_order, 1, 'C-Space toggles a mark off')
 p:handle('mark')
 assert_eq(#p.mark_order, 2, 're-marked')
-local last = vim.api.nvim_buf_line_count(p.buf)
-local prompt_line = vim.api.nvim_buf_get_lines(p.buf, last - 1, last, false)[1] or ''
-assert(prompt_line:find('2 marked', 1, true), 'prompt shows the marked count: ' .. prompt_line)
+local info_line = vim.api.nvim_buf_get_lines(p.buf, 1, 2, false)[1] or ''
+assert(info_line:find('(2)', 1, true), 'info line shows the marked count: ' .. info_line)
 local ns_id = vim.api.nvim_get_namespaces()['lusty_native_pick']
 local painted = false
 for _, m in ipairs(vim.api.nvim_buf_get_extmarks(p.buf, ns_id, 0, -1, { details = true })) do

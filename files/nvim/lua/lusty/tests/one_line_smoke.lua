@@ -47,7 +47,7 @@ local wins_before = #api.nvim_tabpage_list_wins(0)
 -- 1. Off by default: the split keeps its normal height.
 local plain = native.run(tmp)
 H.wait_until(function() return not plain.loading end, 'listing without the mode')
-assert_eq(api.nvim_win_get_height(plain.win), 6, 'default picker is not one line')
+assert_eq(api.nvim_win_get_height(plain.win), 16, 'default picker is not one line')
 plain:handle('cancel')
 assert_eq(#api.nvim_tabpage_list_wins(0), wins_before, 'default picker closes cleanly')
 
@@ -60,7 +60,7 @@ vim.wait(200) -- the draw is scheduled after the listing arrives
 assert_eq(api.nvim_win_get_height(p.win), 1, 'one-line picker is a single row')
 assert_eq(api.nvim_buf_line_count(p.buf), 1, 'one-line picker owns a single buffer line')
 local line = row(p)
-assert(line:find(tmp, 1, true), 'the row carries the prompt path: ' .. line)
+assert(line:find('❯', 1, true), 'the row carries the fzf prompt glyph: ' .. line)
 assert(line:find('aaa.txt', 1, true), 'the row carries the selected entry: ' .. line)
 -- One row must still show the variants: the entries after the cursor follow it.
 assert(line:find('bbb.txt', 1, true), 'the row shows the next entry: ' .. line)
@@ -87,8 +87,8 @@ assert_eq(
 p:handle('b')
 H.wait_until(function()
   local l = row(p)
-  return l:find('b [2]', 1, true) ~= nil
-end, 'typing narrows the row to two matches')
+  return l:find('aaa.txt', 1, true) == nil and l:find('bbb.txt', 1, true) ~= nil
+end, 'typing narrows the row to the matches')
 local narrowed = row(p)
 assert(narrowed:find('bbz.txt', 1, true), 'both matches are visible: ' .. narrowed)
 assert(not narrowed:find('aaa.txt', 1, true), 'the filtered-out entry is gone: ' .. narrowed)
@@ -115,11 +115,13 @@ p:handle('toggle_one_line')
 H.wait_until(function() return api.nvim_win_get_height(p.win) > 1 end, 'grid after the toggle')
 local grid_h = api.nvim_win_get_height(p.win)
 H.wait_until(function() return api.nvim_buf_line_count(p.buf) == grid_h end, 'grid drawn')
-local prompt_row = api.nvim_buf_get_lines(p.buf, -2, -1, false)[1] or ''
-assert(prompt_row:find('b [2]', 1, true), 'query survives the toggle: ' .. prompt_row)
+local prompt_row = api.nvim_buf_get_lines(p.buf, 0, 1, false)[1] or ''
+assert(prompt_row:find('b', 1, true), 'query survives the toggle: ' .. prompt_row)
+local info_row = api.nvim_buf_get_lines(p.buf, 1, 2, false)[1] or ''
+assert(info_row:find('2/', 1, true), 'the filtered count survives the toggle: ' .. info_row)
 p:handle('toggle_one_line')
 H.wait_until(function() return api.nvim_win_get_height(p.win) == 1 end, 'one row again')
-H.wait_until(function() return row(p):find('bbb.txt', 1, true) ~= nil end, 'selection survives the toggle')
+H.wait_until(function() return row(p):find('bbz.txt', 1, true) ~= nil end, 'selection survives the toggle')
 
 -- 5. The preview pane makes no sense in one row and is refused.
 if p.caps.preview then
@@ -165,7 +167,7 @@ assert(lp, 'buffers picker opens in one-line mode')
 assert_eq(api.nvim_win_get_height(lp.win), 1, 'list picker is a single row')
 assert_eq(api.nvim_buf_line_count(lp.buf), 1, 'list picker owns a single buffer line')
 local list_line = api.nvim_buf_get_lines(lp.buf, 0, -1, false)[1] or ''
-assert(list_line:find('Buffers', 1, true), 'the row carries the title: ' .. list_line)
+assert(list_line:find('❯', 1, true), 'the row carries the prompt glyph: ' .. list_line)
 assert(list_line:find('lusty_one_line_', 1, true), 'the row carries the selected buffer: ' .. list_line)
 lp:handle('cancel')
 vim.g.LustyExplorerOneLine = nil

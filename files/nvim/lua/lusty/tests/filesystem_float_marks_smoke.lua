@@ -46,7 +46,7 @@ assert(#p.mark_order == 1, 'C-Space toggles the mark off: ' .. #p.mark_order)
 -- Mark the second file again; the prompt and the highlight reflect the marks.
 p:handle('mark')
 assert(#p.mark_order == 2, 'two marks before open')
-assert(p:prompt_text():find('2 marked', 1, true), 'prompt shows the count')
+assert(p:info_text():find('(2)', 1, true), 'info line shows the count: ' .. p:info_text())
 
 local ns_id = vim.api.nvim_get_namespaces()['lusty_native_ls']
 assert(ns_id, 'highlight namespace is registered')

@@ -20,6 +20,9 @@
         RIPGREP_CONFIG_PATH = "${config.users.users.neg.home}/.config/ripgrep/ripgreprc";
 
         FZF_DEFAULT_COMMAND = "${lib.getExe pkgs.fd} --type=f --hidden --exclude=.git";
+        # The lusty pickers mirror this profile (files/nvim/lua/lusty/theme.toml:
+        # prompt/pointer/marker glyphs and the fg/fg+/hl/hl+/border roles).
+        # Change both together, or the two pickers drift apart.
         FZF_DEFAULT_OPTS = neg.guardFzfOpts "FZF_DEFAULT_OPTS" (
           builtins.concatStringsSep " " (
             builtins.filter (x: builtins.typeOf x == "string") [
