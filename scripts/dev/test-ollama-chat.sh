@@ -2,9 +2,14 @@
 # test-ollama-chat.sh — smoke-test local Ollama chat models wired into DSH as
 # the "ollama-local" provider source. Run when there is enough free VRAM.
 # Usage: ./test-ollama-chat.sh [--force] [--limit-ms N]
+#
+# The model list is discovered from the daemon (`/api/tags` for names and exact
+# bytes, `/api/show` for capabilities), so it follows the store instead of
+# drifting: a hand-kept list named 28 models that had left months earlier.
 set -uo pipefail
 export OLLAMA_MODELS=/zero/ai/ollama OLLAMA_HOST=127.0.0.1:11434
-API=http://127.0.0.1:11434/v1/chat/completions
+HOST=http://127.0.0.1:11434
+API=$HOST/v1/chat/completions
 PROMPT="Answer with one word: hello"
 LIMIT_MS=90000
 FORCE=0
@@ -46,6 +51,47 @@ fail=0
 skip=0
 fullgpu=0
 partial=0
+# Chat models only: "completion" is the capability a chat model carries and an
+# embedding/OCR-only one does not, so the filter is by what the model can do
+# rather than by its name.
+discover() {
+  python3 - "$HOST" <<'PY'
+import json
+import sys
+import urllib.request
+
+host = sys.argv[1]
+
+
+def call(path, payload=None):
+    data = json.dumps(payload).encode() if payload is not None else None
+    req = urllib.request.Request(
+        host + path, data, {"Content-Type": "application/json"}
+    )
+    try:
+        return json.load(urllib.request.urlopen(req, timeout=10))
+    except Exception as exc:  # noqa: BLE001
+        sys.exit(f"ollama API: {exc}")
+
+
+rows = []
+for m in call("/api/tags").get("models", []):
+    caps = call("/api/show", {"model": m["name"]}).get("capabilities") or []
+    if "completion" in caps:
+        rows.append((m["size"], m["name"]))
+
+# Smallest first: those are the ones a 16 GB card can actually run.
+for size, name in sorted(rows):
+    print(f"{name} {size / 1e9:.1f}")
+PY
+}
+
+MODELS=$(discover)
+if [ -z "$MODELS" ]; then
+  echo "no chat models reported by $HOST (is ollama running?)" >&2
+  exit 1
+fi
+
 while read -r model size; do
   [ -z "$model" ] && continue
   est=$(python3 -c "print(round($size + $KV_GB + $BUF_GB,1))")
@@ -73,16 +119,5 @@ while read -r model size; do
     echo "FAIL $model (exit $code, ${tt}ms): $(echo "$out" | head -c 200)"
     fail=$((fail + 1))
   fi
-# Keep in sync with `OLLAMA_MODELS=/zero/ai/ollama ollama list`; the size
-# column is what it reports in GB. Chat models only: qwen3-embedding (4.7) and
-# glm-ocr (2.2) live in the same store but do not answer /v1/chat/completions.
-done << 'MODELS'
-qwen3-vl:8b 6.1
-qwen3-vl-abliterated:8b 6.2
-qwen3.8:27b 17
-qwen3.8:27b-plain 17
-huihui_ai/qwen3-abliterated:30b-a3b 18
-huihui_ai/qwen3-coder-abliterated:latest 18
-huihui_ai/qwen3.5-abliterated:35b-a3b 23
-MODELS
+done <<< "$MODELS"
 echo "==== summary: pass=$pass fail=$fail skip=$skip fullgpu=$fullgpu partial=$partial ===="
