@@ -106,6 +106,7 @@ let
     # Chat tiers: real windows from llama-swap.nix, so trimming only fires
     # when the slot itself would reject the request.
     "qwen3.8-27b-abliterated".ctx = 32768;
+    "qwen3.8-27b-vision".ctx = 16384;
     "qwen3.8" = {
       target = "qwen3.8-27b-abliterated";
       ctx = 32768;
@@ -143,15 +144,26 @@ let
       target = "qwen3.8-flash-next-abliterated";
       ctx = 131072;
     };
-    # Small tiers: `mini` is the 32k entry point the fleet uses for them;
-    # the vision slot itself keeps its native 64k.
+    # Small tiers: `mini` is the 32k entry point the fleet uses for them. The
+    # `vision` alias moved to the 27B on 2026-11-11 (its slot carries the
+    # mmproj); `vision-fast` keeps the 8B and its native 64k.
     "qwen3-vl-8b-abliterated" = {
       ctx = 65536;
       single_tool = false;
     };
-    "vision" = {
+    "vision-fast" = {
       target = "qwen3-vl-8b-abliterated";
       ctx = 65536;
+      single_tool = false;
+    };
+    "vision" = {
+      target = "qwen3.8-27b-vision";
+      ctx = 16384;
+      single_tool = false;
+    };
+    "vision-27b" = {
+      target = "qwen3.8-27b-vision";
+      ctx = 16384;
       single_tool = false;
     };
     "mini" = {

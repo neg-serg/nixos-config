@@ -73,6 +73,7 @@
 #   | gemma4-26b   | Gemma-4-26B-A4B-abliterated Q3_K_M (MoE)  | 32k | 16.2G | 105-110 |
 #   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 64k | 14.8G | 45    |
 #   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 32k | 13.8G | 30-36 |
+#   | vision-27b   | same IQ3_S + bf16 mmproj                 | 16k | 15.3G | 37.9  |
 #   | qwen3.8-next | Qwen3.8-Flash-Next abl-v2 IQ3_S          | 128k| 6.0G  | 5.9   |
 #
 # - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
@@ -81,6 +82,21 @@
 #   30.5 tok/s at a 9.5k prompt). The old "32k spills" claim came from a
 #   measurement taken while another model was resident. `--reasoning off` is
 #   mandatory — without it the reply carries an empty `content`.
+#   Since 2026-11-11 the same weights also serve images through a second slot,
+#   `qwen3.8-27b-vision` (aliases `vision`, `vision-27b`): it adds the
+#   `mmproj-qwen38-27b-bf16.gguf` projector (0.87 GiB, published by huihui for
+#   exactly these weights) and halves the context to 16k. The split is forced
+#   by VRAM: with the projector at 32k the backend peaked at 16020 of 16304
+#   MiB next to a 2.9 GiB desktop (0.28 GiB of headroom), at 16k 15660 (0.64
+#   GiB). The 27B is hybrid attention, so the KV is small and the window is
+#   not what costs — the image graph and the projector are. Measured warm on
+#   a 963-token screenshot: 9.5 s, 753 tok/s prefill, 37.9 tok/s decode.
+#   The 8B Qwen3-VL stays as `vision-fast` (2.8 s, 93 tok/s, 64k) and reads
+#   the same image with a neutral prompt, but refused the structured
+#   "list the table rows verbatim" request — that is why the alias moved.
+#   Why the 27B: it is the only bigger vision model that fits next to the
+#   desktop — the removed 30B-A3B needs 11.04 GB at IQ3_XXS plus a 1.01 GB
+#   projector and ~1.6 GiB of KV, i.e. ~17.3 GiB.
 # - Quant-source comparison (2026-11-09): the same tier built by three
 #   quantizers, measured with the same harness (chem 6 tasks/13 values, fp 6
 #   cases, two repetitions each, temperature 0, prompt cache off, one model
@@ -112,7 +128,8 @@
 #   when benching or driving models while Steam is open.
 #   The detection itself lives in `modules/llm/llama-swap.nix`.
 # - `gemma4-26b` is text-only (the projector does not fit next to 12.5 GB of
-#   weights); `qwen3-vl-8b` serves images and is the `vision` alias.
+#   weights); `qwen3.8-27b` serves images as the `vision` alias and
+#   `qwen3-vl-8b` is the `vision-fast` path.
 # - `qwen3.8-flash-next-abliterated` (`qwen3.8-flash`, `next` aliases) is the
 #   next tier: 78 GB split GGUF (Swift IQ3_S of the huihui v2 abliteration;
 #   pass the -00001 shard), 180B total but 6B active, 262k-native. Four layers
