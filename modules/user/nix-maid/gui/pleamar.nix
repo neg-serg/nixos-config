@@ -197,6 +197,38 @@ let
     ) pleamarScenes}
   '';
 
+  # The bar is the one scene that stays resident, so its frame-time line is the
+  # one that can flood: under load it arrived once per frame — 69 lines in four
+  # minutes on 2026-11-10, 799k in a day on 2026-11-05, enough to churn the 1G
+  # journal cap. Keep one sample a minute; `pleamar --report` is the tool for a
+  # real investigation. stdout carries the log stream (PRIORITY=6), stderr is
+  # left untouched so errors still land.
+  barLogFilter = pkgs.writeShellScript "pleamar-bar-log-filter" ''
+    # Outlive the unit's SIGTERM: if the reader dies first, the writer's next
+    # stdout line panics with EPIPE ("failed printing to stdout: Broken pipe",
+    # seen on every stop while this filter did not ignore the signal). The
+    # pipe closes on EOF when pleamar itself exits, and the filter leaves.
+    trap "" TERM
+    exec ${pkgs.gawk}/bin/awk '
+      /slow frame:/ {
+        now = systime()
+        if (now - last >= 60) {
+          print
+          fflush()
+          last = now
+        }
+        next
+      }
+      { print; fflush() }
+    '
+  '';
+
+  # `exec` keeps pleamar itself as the unit's main process, so Restart, the
+  # cgroup caps and the health probe still watch the scene, not a wrapper.
+  barLauncher = pkgs.writeShellScript "pleamar-bar-launch" ''
+    exec ${pkgs.pleamar}/bin/pleamar "$@" > >(${barLogFilter})
+  '';
+
   # Helper workers a scene spawns by name (`permissions { run: "pleamar-sysmon" }`):
   # nix-maid links them into ~/.local/bin so `spawn("pleamar-sysmon", …)` resolves
   # (the unit PATH already puts %h/.local/bin first). The names are the contract
@@ -334,7 +366,11 @@ let
         # debug aid for its decoupled logic thread, and the reason a click in this bar took half
         # a second to show and sometimes did not show at all. The scene's work is microseconds;
         # nothing here needs to prove the renderer survives a blocking logic.
-        ExecStart = "${pkgs.pleamar}/bin/pleamar --scene %h/.config/pleamar/shells/${scene}/${scene}.plm --no-hud --stall 0";
+        ExecStart =
+          if scene == "bar" then
+            "${barLauncher} --scene %h/.config/pleamar/shells/${scene}/${scene}.plm --no-hud --stall 0"
+          else
+            "${pkgs.pleamar}/bin/pleamar --scene %h/.config/pleamar/shells/${scene}/${scene}.plm --no-hud --stall 0";
         # `on-failure` is not enough for a scene the session cannot lose: when
         # Hyprland restarts it closes its clients, the scene exits 0, and the
         # bar stays gone until somebody starts it by hand. The bar and the
