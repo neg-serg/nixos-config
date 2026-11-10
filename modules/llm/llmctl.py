@@ -130,7 +130,7 @@ CATALOG = {
         "role": "3B parallel-hybrid Mamba, fast",
         "ctx": "64k",
         "size": "3.4 GB",
-        "chem": "-",
+        "chem": "8/13",
         "lean": "-",
         "fp": "-",
     },

@@ -412,6 +412,15 @@ let
   # room to spare, so there is nothing to gain from a lower quant. 64k of the
   # 128k the GGUF declares: what limits a 3B here is quality, not the window.
   # The GGUF carries the ChatML template, hence `--jinja`.
+  #
+  # Measured 2026-11-10 on the 9070 XT: +4.3 GiB of VRAM next to the desktop,
+  # the always-on fim and the reranker (8397 MiB against 4025 MiB after
+  # `/unload`) — 3.1 GiB of weights, ~1.07 GiB of q8_0 KV at 64k, the rest is
+  # the compute buffer. 112 tok/s decode and 405 tok/s prefill on a cold short
+  # prompt, ~2.5 s from request to first token. Quality is a 3B's: chem bench
+  # 8/13 (the whole phosphorus problem 0/5; gpt-oss-120b also scores 8/13, the
+  # 8B vision tier 13/13), and it slipped 17x23 -> 431 at temperature 0. Use it
+  # as the fast chat/rewrite tier, not as a reasoner.
   falcon3b = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/falcon/Falcon-H1-3B-Instruct-Q8_0.gguf \
