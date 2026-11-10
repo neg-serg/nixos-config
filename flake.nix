@@ -203,6 +203,18 @@
       url = "git+https://codeberg.org/GuillotineMelody/nervboot";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # bootvine — live dependency tree of the boot's systemd jobs, drawn on
+    # tty12 instead of the scrolling kernel/systemd lines (the boot-screen
+    # counterpart of nix-output-monitor). Imported and enabled in
+    # hosts/trantor/default.nix; it starts in the systemd initrd and follows the
+    # boot into stage 2, so the initrd must be the systemd one (the only kind
+    # left on 26.11). nixpkgs follows the system pin: the package is built with
+    # crane and must see the same toolchain as the system. Re-lock with
+    # `nix flake lock --update-input bootvine`.
+    bootvine = {
+      url = "git+https://codeberg.org/wvhulle/bootvine";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Neovim nightly (0.13.0-dev): guh.nvim needs `vim.async`, which does not
     # exist in the 0.12.6 stable. The overlay builds neovim master on top of our
     # neovim-unwrapped packaging and carries the workarounds master needs
