@@ -73,33 +73,16 @@ while read -r model size; do
     echo "FAIL $model (exit $code, ${tt}ms): $(echo "$out" | head -c 200)"
     fail=$((fail + 1))
   fi
+# Keep in sync with `OLLAMA_MODELS=/zero/ai/ollama ollama list`; the size
+# column is what it reports in GB. Chat models only: qwen3-embedding (4.7) and
+# glm-ocr (2.2) live in the same store but do not answer /v1/chat/completions.
 done << 'MODELS'
-qwen3:8b 5.2
-qwen3:8b-q8_0 8.9
-qwen3:32b 20
-qwen3.5:27b 17
-qwen3.5:122b 76
-qwen3:235b-a22b 142
 qwen3-vl:8b 6.1
-qwen2.5vl:7b 6.0
-qwen2.5vl:7b-q8_0 9.4
-qwen2.5vl:3b 3.2
-qwen2.5:7b 4.7
-granite4.1:8b 5.3
-gemma4:latest 9.6
-gemma4:12b 7.6
-gemma4:26b 17
-deepseek-r1-distill-qwen:14b 9.0
-llama3.2:1b 1.3
-llama3.3:70b-instruct-q5_K_M 49
-qwen3-coder:30b 18
-qwen3-coder-next:latest 51
-qwen2.5-coder:7b-instruct-q6_K 6.3
-devstral:24b 14
-deepcoder:14b 9.0
-qwq:32b 19
+qwen3-vl-abliterated:8b 6.2
+qwen3.8:27b 17
+qwen3.8:27b-plain 17
 huihui_ai/qwen3-abliterated:30b-a3b 18
-huihui_ai/qwen3.5-abliterated:35b-a3b 23
 huihui_ai/qwen3-coder-abliterated:latest 18
+huihui_ai/qwen3.5-abliterated:35b-a3b 23
 MODELS
 echo "==== summary: pass=$pass fail=$fail skip=$skip fullgpu=$fullgpu partial=$partial ===="
