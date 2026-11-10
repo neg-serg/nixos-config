@@ -24,11 +24,13 @@
 
   // Trim silence before transcription: without this, holding the key in a quiet
   // room sends noise to whisper and gets a phantom phrase pasted ("*sad music*"
-  // was the measured result). "quality" is the least aggressive trim profile.
+  // was the measured result). "quality" kept enough room noise to transcribe a
+  // lone ".", so this is the aggressive profile (upstream default) with a
+  // slightly longer minimum speech run.
   "fast_vad": {
     "enabled": true,
-    "profile": "quality",
-    "min_speech_ms": 200,
+    "profile": "aggressive",
+    "min_speech_ms": 250,
     "silence_timeout_ms": 1000,
     "pre_roll_ms": 200,
     "post_roll_ms": 300
