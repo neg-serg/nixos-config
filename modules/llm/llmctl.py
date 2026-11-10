@@ -1168,6 +1168,15 @@ COMMIT_MODELS = [
 COMMIT_SCOPES_IN_PROMPT = 30
 COMMIT_DIFF_CHARS = 24000
 COMMIT_MAX_TOKENS = 400
+# `--split` costs one extra model call (the plan) plus one per group, so its
+# planning prompt gets a smaller budget than a single message: grouping needs
+# the shape of each change, not every line of it.
+COMMIT_PLAN_CHARS = 12000
+COMMIT_PLAN_FILE_CHARS = 1200
+COMMIT_PLAN_MAX_TOKENS = 700
+# More groups than this means the model is cutting a change into pieces that
+# cannot be reviewed or reverted on their own; such a plan is rejected.
+COMMIT_PLAN_MAX_GROUPS = 8
 
 COMMIT_RULES = """You write git commit messages for a NixOS configuration repository.
 
@@ -1184,6 +1193,26 @@ The repository's conventions:
   or details that the diff does not support.
 
 Return only the commit message."""
+
+COMMIT_PLAN_RULES = """You split one pending change of a NixOS configuration
+repository into the commits it should become.
+
+Return JSON only: an array of groups with the changed paths, no prose and no
+code fences:
+[{"files": ["path/one.nix", "path/two.nix"]}, {"files": ["other.nix"]}]
+
+Rules:
+- Every changed file appears in exactly one group.
+- A group is one logical change: files that belong in the same review and can
+  be reverted together. Files under one directory, and a file with the test or
+  documentation that explains it, usually belong together.
+- Use the fewest groups, but never fewer than the number of unrelated
+  changes: two files that change different mechanisms are two commits even
+  when they live in the same directory. A shared directory is not a reason
+  to merge, and never split a single mechanism across commits.
+- Put the self-contained change first (locks, formatting, tests before
+  behaviour) so the later commits build on it.
+- Copy the paths exactly as they are given."""
 
 # One example of the target shape, unrelated to the bench's cases so a small
 # model can copy the structure without copying its content.
@@ -1365,6 +1394,197 @@ def _commit_prompt(
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
+
+
+_PLAN_STAT_RE = re.compile(r"\s*\(\+\d+/-\d+\)\s*$")
+
+
+def _commit_plan_slices(repo, paths):
+    """Return ([(path, patch), ...], omitted paths) under the plan budget.
+
+    Grouping needs the shape of each change, so every file gets a slice of its
+    patch; whatever does not fit is still listed by name in the prompt, because
+    an unassigned file would make the plan invalid and the message of that
+    group is written later from its own full diff.
+    """
+    slices, omitted, used = [], [], 0
+    for path in paths:
+        room = min(COMMIT_PLAN_FILE_CHARS, COMMIT_PLAN_CHARS - used)
+        if room < 200:
+            omitted.append(path)
+            continue
+        patch = _git(repo, "diff", "HEAD", "--", path).stdout
+        if not patch.strip():
+            omitted.append(path)
+            continue
+        if len(patch) > room:
+            patch = patch[:room] + "\n... [truncated]\n"
+        used += len(patch)
+        slices.append((path, patch))
+    return slices, omitted
+
+
+def _commit_plan_prompt(paths, slices, omitted):
+    """Ask for the grouping; the plan carries paths only, messages come later.
+
+    Grouping needs to know which files moved together, and each group's message
+    is written afterwards from that group's own diff, so this call skips the
+    scope vocabulary and the examples that the message prompt carries.
+    """
+    lines = [
+        "Repository: NixOS configuration on trantor "
+        "(Nix modules, shell scripts, Justfile).",
+        "",
+        f"Changed files ({len(paths)}):",
+    ]
+    lines += ["  " + p for p in paths]
+    if slices:
+        lines += ["", "Per-file diffs:"]
+        for path, patch in slices:
+            lines += [f"=== {path} ===", patch]
+    if omitted:
+        lines += ["", "Diffs not shown (judge by path): " + ", ".join(omitted)]
+    return [
+        {"role": "system", "content": COMMIT_PLAN_RULES},
+        {"role": "user", "content": "\n".join(lines)},
+    ]
+
+
+def _plan_resolve(raw_path, allowed):
+    """Map a model-written path onto a changed path, or None if ambiguous.
+
+    Small tiers repeat the ` (+3/-1)` stat suffix and sometimes drop leading
+    directories, so both are forgiven; a bare filename is accepted only when
+    exactly one changed path ends with it, otherwise the plan is rejected
+    instead of guessing which file was meant.
+    """
+    path = _PLAN_STAT_RE.sub("", raw_path.strip().strip("\"'`")).strip()
+    while path.startswith("./"):
+        path = path[2:]
+    if path in allowed:
+        return path
+    hits = [p for p in allowed if p.endswith("/" + path)]
+    return hits[0] if len(hits) == 1 else None
+
+
+def _commit_plan_parse(text, allowed):
+    """Return (groups, problems) for a planning reply.
+
+    The plan drives `git add` paths, so validation is strict: an invented,
+    dropped or repeated path would either stage the wrong content or leave a
+    change behind, and both failures must abort before the first commit rather
+    than surface as a half-split history.
+    """
+    raw = text.strip()
+    # Both bracket kinds: a plan may arrive as an array of groups or as an
+    # object that wraps one. A JSON value cannot start earlier than the first
+    # bracket, so the slice from the first opener to the last closer parses
+    # even when the model wraps the JSON in prose.
+    start = min(
+        (i for i in (raw.find("["), raw.find("{")) if i >= 0), default=-1
+    )
+    end = max(raw.rfind("]"), raw.rfind("}"))
+    if start < 0 or end <= start:
+        return [], ["the reply has no JSON array"]
+    try:
+        data = json.loads(raw[start : end + 1])
+    except json.JSONDecodeError as exc:
+        return [], [f"invalid JSON at offset {exc.pos}: {exc.msg}"]
+    if isinstance(data, dict):
+        # A wrapped answer (`{"groups": [...]}`) or a single group object is
+        # the same plan; neither is worth a repair round.
+        wrapped = next(
+            (
+                data[key]
+                for key in ("groups", "commits", "plan")
+                if isinstance(data.get(key), list)
+            ),
+            None,
+        )
+        data = wrapped if wrapped is not None else [data]
+    if isinstance(data, list) and any(isinstance(x, str) for x in data):
+        # A flat path list says nothing about the groups; one repair round with
+        # the shape spelled out beats guessing a split.
+        return [], ["each group must be an object with a files list"]
+    if not isinstance(data, list) or not data:
+        return [], ["the reply is not a non-empty array of groups"]
+    groups, problems, seen = [], [], {}
+    for idx, item in enumerate(data, 1):
+        if isinstance(item, dict):
+            files = item.get("files") or item.get("paths") or item.get("path")
+        else:
+            files = item
+        if isinstance(files, str):
+            files = [files]
+        if not isinstance(files, list) or not files:
+            problems.append(f"group {idx} has no files")
+            continue
+        resolved = []
+        for raw_path in files:
+            if not isinstance(raw_path, str):
+                problems.append(
+                    f"group {idx} has a non-string path: {raw_path}"
+                )
+                continue
+            path = _plan_resolve(raw_path, allowed)
+            if path is None:
+                problems.append(
+                    f"group {idx} names a file that did not change: {raw_path}"
+                )
+            elif path in seen:
+                problems.append(f"{path} is in groups {seen[path]} and {idx}")
+            else:
+                seen[path] = idx
+                resolved.append(path)
+        groups.append({"files": resolved})
+    missing = sorted(allowed - set(seen))
+    if missing:
+        problems.append("files in no group: " + ", ".join(missing))
+    if len(groups) > COMMIT_PLAN_MAX_GROUPS:
+        problems.append(
+            f"{len(groups)} groups is more than the {COMMIT_PLAN_MAX_GROUPS} allowed"
+        )
+    return groups, problems
+
+
+def _commit_plan(model, messages, allowed):
+    """Ask for the split plan, with one repair round on a bad reply.
+
+    Local tiers answer free-form or drop a file the first time, so the broken
+    rule goes back into the same conversation instead of re-planning from
+    scratch. Nothing is staged yet, so a rejected plan costs model time only.
+    """
+    for attempt in (1, 2):
+        try:
+            r = chat(
+                model,
+                messages,
+                max_tokens=COMMIT_PLAN_MAX_TOKENS,
+                cache=True,
+                extra={"chat_template_kwargs": {"enable_thinking": False}},
+            )
+        except Exception as exc:  # noqa: BLE001
+            sys.exit(f"model request failed: {exc}")
+        text = _commit_clean(r["content"])
+        groups, problems = _commit_plan_parse(text, allowed)
+        if not problems:
+            return groups
+        if attempt == 2:
+            print(text, file=sys.stderr)
+            sys.exit("split plan rejected:\n  " + "\n  ".join(problems))
+        print(
+            "note: repairing the split plan: " + problems[0], file=sys.stderr
+        )
+        messages = messages + [
+            {"role": "assistant", "content": text},
+            {
+                "role": "user",
+                "content": "That reply breaks the rules:\n- "
+                + "\n- ".join(problems)
+                + "\n\nReturn the corrected JSON array only.",
+            },
+        ]
+    sys.exit("unreachable")
 
 
 def _commit_clean(text):
@@ -1637,53 +1857,18 @@ def _commit_diff(repo, staged):
     return diff.stdout, files
 
 
-def cmd_commit(args):
-    repo = args.repo or os.getcwd()
-    if _git(repo, "rev-parse", "--git-dir").returncode:
-        sys.exit(f"not a git repository: {repo}")
-    if args.all and args.staged:
-        sys.exit("--all and --staged are mutually exclusive")
-    if args.apply:
-        print(
-            "note: committing is the default now; --apply is redundant",
-            file=sys.stderr,
-        )
-    # `auto` keeps the resident model, so a commit message does not evict the
-    # tier the user is actually working with; a cold fleet falls back to the
-    # small writer instead of loading the expensive one.
-    if args.model == "auto":
-        live = running()
-        model = live[0]["model"] if live else COMMIT_DEFAULT_MODEL
-    else:
-        model = resolve(args.model) or args.model
-    new_files = []
-    if args.all:
-        # `git diff HEAD` cannot see untracked files: intent-to-add puts them
-        # in the index with an empty blob so the message describes them too.
-        # The real staging happens right before the commit; --dry-run restores
-        # the files to untracked instead of leaving the index touched.
-        raw = _git(
-            repo, "ls-files", "-z", "--others", "--exclude-standard"
-        ).stdout
-        new_files = [p for p in raw.split("\0") if p]
-        if new_files:
-            add = subprocess.run(
-                ["git", "-C", repo, "add", "-N", "--", *new_files],
-                capture_output=True,
-                text=True,
-            )
-            if add.returncode:
-                sys.exit(f"git add -N failed: {add.stderr.strip()}")
-    diff, files = _commit_diff(repo, args.staged)
-    if len(diff) > COMMIT_DIFF_CHARS:
-        diff = diff[:COMMIT_DIFF_CHARS] + "\n... [diff truncated]\n"
-    scopes, _ = _commit_scopes(repo)
+def _commit_message(args, repo, model, case, scopes):
+    """Ask for one commit message and repair an over-long subject.
+
+    Shared by the single-commit path and every group of `--split`, so both get
+    the same prompt, the same examples and the same 72-character repair round.
+    """
     messages = _commit_prompt(
-        {"diff": diff, "files": files},
+        case,
         scopes,
         args.example,
         args.scopes,
-        _commit_path_scopes(repo, files),
+        _commit_path_scopes(repo, case["files"]),
     )
     try:
         r = chat(
@@ -1712,7 +1897,6 @@ def cmd_commit(args):
                     "(rule: at most 72)",
                     file=sys.stderr,
                 )
-    print(text, flush=True)
     if args.verbose:
         t = r["timings"]
         print(
@@ -1721,12 +1905,318 @@ def cmd_commit(args):
             f"{t.get('predicted_per_second') or 0:.1f} tok/s)",
             file=sys.stderr,
         )
-    if args.dry_run:
-        if new_files:
-            subprocess.run(
-                ["git", "-C", repo, "reset", "-q", "--", *new_files],
-                check=False,
+    return text
+
+
+def _commit_reset(repo, paths):
+    """Drop the intent-to-add entries `--all` created; no-op without them."""
+    if paths:
+        subprocess.run(
+            ["git", "-C", repo, "reset", "-q", "--", *paths], check=False
+        )
+
+
+def _commit_head_paths(repo):
+    """Paths changed against HEAD: staged and working tree, not untracked.
+
+    Rename detection is off on purpose: with it on `--name-only` reports only
+    the new half, and the deletion then either rides into whichever commit
+    happens first or is left behind. Both halves are listed instead, and
+    `_commit_plan_merge_renames` keeps the pair in one group so git still
+    records a rename.
+    """
+    out = _git(repo, "diff", "--name-only", "--no-renames", "HEAD").stdout
+    return [p for p in out.splitlines() if p]
+
+
+def _commit_group_case(repo, paths):
+    """Diff and numstat of one planned group, capped like a single commit."""
+    diff = _git(repo, "diff", "HEAD", "--", *paths).stdout
+    if len(diff) > COMMIT_DIFF_CHARS:
+        diff = diff[:COMMIT_DIFF_CHARS] + "\n... [diff truncated]\n"
+    stat = _git(repo, "diff", "--numstat", "HEAD", "--", *paths).stdout
+    files = []
+    for line in stat.strip().splitlines():
+        add, dele, path = line.split("\t", 2)
+        files.append(f"{path} (+{add}/-{dele})")
+    return {"diff": diff, "files": files}
+
+
+def _commit_rename_pairs(repo, paths):
+    """Return (old, new) pairs with identical content, i.e. renames.
+
+    With rename detection off, a rename arrives as a deletion plus an addition
+    of the same bytes; matching them by blob hash is what lets the plan keep
+    the pair together without asking the model to guess.
+    """
+    head = set(
+        _git(repo, "ls-tree", "-r", "--name-only", "HEAD").stdout.splitlines()
+    )
+    added = [p for p in paths if p not in head]
+    pairs = []
+    for old in (p for p in paths if p in head):
+        if os.path.exists(os.path.join(repo, old)):
+            continue
+        old_blob = _git(repo, "rev-parse", f"HEAD:{old}").stdout.strip()
+        if not old_blob:
+            continue
+        for new in added:
+            blob = _git(repo, "hash-object", "--", new).stdout.strip()
+            if blob and blob == old_blob:
+                pairs.append((old, new))
+                break
+    return pairs
+
+
+def _commit_plan_merge_renames(repo, groups, paths):
+    """Move both halves of a rename into one group, in place.
+
+    The plan is already validated, so this only changes membership; a split
+    rename would leave a deletion whose replacement commits later, or - when a
+    half is dropped - a file that looks deleted for good.
+    """
+    where = {p: i for i, g in enumerate(groups) for p in g["files"]}
+    for old, new in _commit_rename_pairs(repo, paths):
+        src, dst = where.get(old), where.get(new)
+        if src is None or dst is None or src == dst:
+            continue
+        groups[src]["files"].remove(old)
+        groups[dst]["files"].append(old)
+        where[old] = dst
+        print(
+            f"note: kept the rename {old} -> {new} in one commit",
+            file=sys.stderr,
+        )
+    # A group can lose its only file to the merge; an empty group must not
+    # reach the staging loop, where a bare `git add -A --` would stage the
+    # whole tree.
+    return [g for g in groups if g["files"]]
+
+
+def _commit_unstage(repo):
+    """Clear the index so `--split` stages each group from the worktree.
+
+    The split commits whole files, so an index that mirrors the worktree holds
+    nothing the split would not stage itself. An index that does *not* mirror
+    it is the user's decision (a `git add -p` selection) and resetting it would
+    silently change what gets committed, so that case aborts with the fix in
+    the message instead.
+    """
+    renames = []
+    for line in _git(
+        repo, "diff", "--cached", "--name-status", "-M", "HEAD"
+    ).stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) > 2 and parts[0].startswith("R"):
+            renames.append(parts[2])
+    if renames:
+        # git keeps both halves of a rename in the index, so unstaging it would
+        # leave the new path untracked and turn the commit into a bare deletion
+        # of the old one. The remedy keeps the pair together under --all.
+        sys.exit(
+            "--split cannot split a staged rename: unstaging it would leave "
+            "the new path untracked ("
+            + ", ".join(renames)
+            + "). Run `git reset` and then --split --all, or commit it "
+            "with --staged and no --split."
+        )
+    staged = {
+        p
+        for p in _git(
+            repo, "diff", "--cached", "--name-only", "--no-renames", "HEAD"
+        ).stdout.splitlines()
+        if p
+    }
+    if not staged:
+        return
+    # Only a path that is staged *and* changed again since carries a decision
+    # the reset would throw away; a file that is merely staged, or merely
+    # dirty, loses nothing.
+    both = sorted(
+        staged
+        & {
+            p
+            for p in _git(repo, "diff", "--name-only").stdout.splitlines()
+            if p
+        }
+    )
+    if both:
+        sys.exit(
+            "--split commits whole files from the working tree, but these "
+            "files are staged and changed again since (a partially staged "
+            "file): "
+            + ", ".join(both)
+            + ". Run `git reset` first, or commit them with --staged and "
+            "no --split."
+        )
+    reset = _git(repo, "reset", "-q")
+    if reset.returncode:
+        sys.exit(f"git reset failed: {reset.stderr.strip()}")
+    print(
+        "note: unstaged the index; the split stages every group itself",
+        file=sys.stderr,
+    )
+
+
+def _commit_split(args, repo, model, scopes, new_files):
+    """Make the several commits the model groups the pending change into.
+
+    Only whole files are grouped: a path with two unrelated edits stays one
+    commit, because committing a subset of a file's hunks needs `git add -p`
+    state that llmctl does not own. The plan is validated before anything is
+    staged, so a rejected plan leaves the repository untouched; a failing
+    commit stops the run instead of re-planning against a half-split history.
+    """
+    paths = _commit_head_paths(repo)
+    if not paths:
+        _commit_reset(repo, new_files)
+        sys.exit("no working tree changes to split")
+    if not args.all:
+        untracked = _git(repo, "ls-files", "--others", "--exclude-standard")
+        if untracked.stdout.strip():
+            print(
+                "note: untracked files are not in the split "
+                "(--all adds them): "
+                + ", ".join(untracked.stdout.split()[:5]),
+                file=sys.stderr,
             )
+    if len(paths) == 1:
+        groups = [{"files": paths}]
+    else:
+        slices, omitted = _commit_plan_slices(repo, paths)
+        messages = _commit_plan_prompt(paths, slices, omitted)
+        groups = _commit_plan(model, messages, set(paths))
+    groups = _commit_plan_merge_renames(repo, groups, paths)
+    if not groups:
+        _commit_reset(repo, new_files)
+        sys.exit("the split plan has no groups; nothing committed")
+    total = len(groups)
+    print(
+        f"split plan: {total} commit(s) over {len(paths)} file(s)",
+        file=sys.stderr,
+    )
+    for i, group in enumerate(groups, 1):
+        print(f"  {i}. {', '.join(group['files'])}", file=sys.stderr)
+    done = 0
+    for i, group in enumerate(groups, 1):
+        files = group["files"]
+        case = _commit_group_case(repo, files)
+        if not case["diff"].strip():
+            print(
+                f"note: group {i} has no pending diff left; skipped",
+                file=sys.stderr,
+            )
+            continue
+        text = _commit_message(args, repo, model, case, scopes)
+        if not text.strip():
+            sys.exit(f"empty message for group {i}/{total}; nothing committed")
+        print(f"--- {i}/{total}: {', '.join(files)}", flush=True)
+        print(text, flush=True)
+        if args.dry_run:
+            done += 1
+            continue
+        add = subprocess.run(
+            ["git", "-C", repo, "add", "-A", "--", *files],
+            capture_output=True,
+            text=True,
+        )
+        if add.returncode:
+            sys.exit(
+                f"git add failed for group {i}/{total}: {add.stderr.strip()}"
+            )
+        staged = {
+            p
+            for p in _git(
+                repo, "diff", "--cached", "--name-only", "--no-renames", "HEAD"
+            ).stdout.splitlines()
+            if p
+        }
+        if staged != set(files):
+            # A message must never describe a tree the commit does not contain.
+            sys.exit(
+                f"group {i}/{total} staged the wrong files "
+                f"(staged: {', '.join(sorted(staged)) or '-'}); nothing committed"
+            )
+        proc = subprocess.run(
+            ["git", "-C", repo, "commit", "-F", "-"], input=text, text=True
+        )
+        if proc.returncode:
+            sys.exit(
+                f"git commit failed for group {i}/{total}: {done} earlier "
+                f"commit(s) kept; {total - i} group(s) still pending"
+            )
+        done += 1
+    if args.dry_run:
+        _commit_reset(repo, new_files)
+        print(
+            f"note: dry run, {done} commit(s) planned, nothing committed",
+            file=sys.stderr,
+        )
+        return
+    print(f"committed {done} of {total} planned commit(s)", file=sys.stderr)
+
+
+def cmd_commit(args):
+    repo = args.repo or os.getcwd()
+    if _git(repo, "rev-parse", "--git-dir").returncode:
+        sys.exit(f"not a git repository: {repo}")
+    if args.all and args.staged:
+        sys.exit("--all and --staged are mutually exclusive")
+    if args.split and args.staged:
+        sys.exit(
+            "--split cannot describe the index: each group is staged and "
+            "committed by path, and such a commit takes the working tree "
+            "version of the file. Run --split without --staged."
+        )
+    if args.apply:
+        print(
+            "note: committing is the default now; --apply is redundant",
+            file=sys.stderr,
+        )
+    # `auto` keeps the resident model, so a commit message does not evict the
+    # tier the user is actually working with; a cold fleet falls back to the
+    # small writer instead of loading the expensive one.
+    if args.model == "auto":
+        live = running()
+        model = live[0]["model"] if live else COMMIT_DEFAULT_MODEL
+    else:
+        model = resolve(args.model) or args.model
+    if args.split:
+        # `--split` commits whole files from the working tree, so a staged index
+        # adds nothing it would not stage itself — and a leftover entry would
+        # be swept into the first group. Cleared here, while that is lossless
+        # (a partially staged file aborts instead, see _commit_unstage).
+        _commit_unstage(repo)
+    new_files = []
+    if args.all:
+        # `git diff HEAD` cannot see untracked files: intent-to-add puts them
+        # in the index with an empty blob so the message describes them too.
+        # The real staging happens right before the commit; --dry-run restores
+        # the files to untracked instead of leaving the index touched.
+        raw = _git(
+            repo, "ls-files", "-z", "--others", "--exclude-standard"
+        ).stdout
+        new_files = [p for p in raw.split("\0") if p]
+        if new_files:
+            add = subprocess.run(
+                ["git", "-C", repo, "add", "-N", "--", *new_files],
+                capture_output=True,
+                text=True,
+            )
+            if add.returncode:
+                sys.exit(f"git add -N failed: {add.stderr.strip()}")
+    scopes, _ = _commit_scopes(repo)
+    if args.split:
+        _commit_split(args, repo, model, scopes, new_files)
+        return
+    diff, files = _commit_diff(repo, args.staged)
+    if len(diff) > COMMIT_DIFF_CHARS:
+        diff = diff[:COMMIT_DIFF_CHARS] + "\n... [diff truncated]\n"
+    case = {"diff": diff, "files": files}
+    text = _commit_message(args, repo, model, case, scopes)
+    print(text, flush=True)
+    if args.dry_run:
+        _commit_reset(repo, new_files)
         return
     # The message describes `git diff HEAD` (or the index with --staged), so
     # stage exactly the tracked working-tree changes it describes. Untracked
@@ -1859,6 +2349,12 @@ def main():
         "--all",
         action="store_true",
         help="включить новые (untracked) файлы, как git commit -a + новые",
+    )
+    s.add_argument(
+        "--split",
+        action="store_true",
+        help="разбить изменения на несколько коммитов (группы по файлам "
+        "выбирает модель)",
     )
     s.add_argument(
         "--model",
