@@ -18,9 +18,19 @@
       autoStart = true;
       volumes = [ "ceno:/var/opt/ouinet" ]; # persistent node state (named volume)
       extraOptions = [ "--network=host" ]; # P2P + local proxy/frontend on host net
+      # BEP5 bridge announcements need a reachable public address, and this
+      # host has no global IPv6: every attempt fails with "Network is
+      # unreachable" (~1.1k WARN/day). v1.6.10 has no per-message filter and
+      # the global log-level would hide real warnings too, so disable the
+      # announcer itself (documented client.conf key); the DHT entry cannot be
+      # reached from here anyway. Re-enable if the host gets a public address.
+      cmd = [
+        "client"
+        "--disable-bridge-announcement"
+      ];
       # ouinet-rs logs every metrics tick at DEBUG into the journal (~1.2k lines
       # per boot, all of it its own bookkeeping). INFO keeps the useful lines
-      # (UPnP mapping, peer announcements).
+      # (UPnP mapping, fetcher state).
       environment = {
         RUST_LOG = "info";
       };
