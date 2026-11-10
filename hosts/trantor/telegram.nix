@@ -74,7 +74,7 @@ in
         llama-swap model answering questions in the chat — general ones
         included, with the host snapshot as extra context. The default is the
         quality tier (~30 tok/s, 13.75 GiB with the desktop): it answers
-        general knowledge far more reliably than the 8B vision tier, costs
+        general knowledge far more reliably than the 8B fast-vision tier, costs
         10-20 s on a cold load and unloads after 60 s idle. A smaller tier is
         faster and leaves more VRAM to the desktop.
       '';

@@ -285,8 +285,17 @@ rec {
               - id: gemma4-26b-abliterated
                 name: Gemma 4 26B abliterated
                 contextWindow: 32768
+              # The `vision` alias: the same IQ3_S weights plus the bf16
+              # projector, 16k window, 15.3 GiB next to the desktop, so the
+              # slot frees itself after 30 s idle (see llama-swap.nix).
+              - id: qwen3.8-27b-vision
+                name: Qwen3.8-27B vision (27B + mmproj)
+                contextWindow: 16384
+                input:
+                  - text
+                  - image
               - id: qwen3-vl-8b-abliterated
-                name: Qwen3-VL-8B abliterated (vision)
+                name: Qwen3-VL-8B abliterated (vision-fast)
                 contextWindow: 65536
                 input:
                   - text
