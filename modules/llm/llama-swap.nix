@@ -335,7 +335,7 @@ let
   # `/unload`) — 3.1 GiB of weights, ~1.07 GiB of q8_0 KV at 64k, the rest is
   # the compute buffer. 112 tok/s decode and 405 tok/s prefill on a cold short
   # prompt, ~2.5 s from request to first token. Quality is a 3B's: chem bench
-  # 8/13 (the whole phosphorus problem 0/5; the 8B vision tier 13/13), and it
+  # 8/13 (the whole phosphorus problem 0/5; the 8B vision-fast tier 13/13), and it
   # slipped 17x23 -> 431 at temperature 0. Use it
   # as the fast chat/rewrite tier, not as a reasoner.
   falcon3b = ''

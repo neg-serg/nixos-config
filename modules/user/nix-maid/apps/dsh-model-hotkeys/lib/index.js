@@ -32,7 +32,7 @@ export const ROUTES = [
   ['2', 'qwen3.8-27b-abliterated', 'Qwen3.8-27B (local)'],
   ['3', 'qwen3.8-flash-next-abliterated', 'Qwen3.8-Flash-Next (local)'],
   ['4', 'gemma4-26b-abliterated', 'Gemma 4 26B (local)'],
-  ['5', 'qwen3-vl-8b-abliterated', 'Qwen3-VL-8B (local)'],
+  ['5', 'qwen3.8-27b-vision', 'Qwen3.8-27B vision (local)'],
   ['6', 'gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (free)'],
   ['7', 'openai-fast', 'GPT-OSS 20B (Pollinations, free)'],
   ['8', 'gyro-coder', 'Gyro-Coder 125B (7900 XTX box)'],

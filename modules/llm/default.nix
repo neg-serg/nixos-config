@@ -140,8 +140,8 @@
 #   when benching or driving models while Steam is open.
 #   The detection itself lives in `modules/llm/llama-swap.nix`.
 # - `gemma4-26b` is text-only (the projector does not fit next to 12.5 GB of
-#   weights); `qwen3.8-27b` serves images as the `vision` alias and
-#   `qwen3-vl-8b` is the `vision-fast` path.
+#   weights); `qwen3.8-27b-vision` serves images as the `vision` alias and
+#   `qwen3-vl-8b-abliterated` is the `vision-fast` path.
 # - `qwen3.8-flash-next-abliterated` (`qwen3.8-flash`, `next` aliases) is the
 #   next tier: 78 GB split GGUF (Swift IQ3_S of the huihui v2 abliteration;
 #   pass the -00001 shard), 180B total but 6B active, 262k-native. Four layers

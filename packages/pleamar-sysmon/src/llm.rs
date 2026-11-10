@@ -232,11 +232,11 @@ mod tests {
 
     #[test]
     fn running_entry_is_read_and_idle_is_empty() {
-        let body = r#"{"running":[{"model":"qwen3.6-35b-abliterated","state":"ready","cmd":"x","ttl":60}]}"#;
+        let body = r#"{"running":[{"model":"qwen3.8-27b-abliterated","state":"ready","cmd":"x","ttl":60}]}"#;
         assert_eq!(
             parse_running(body),
             (
-                "qwen3.6-35b-abliterated".to_string(),
+                "qwen3.8-27b-abliterated".to_string(),
                 "ready".to_string(),
                 60
             )
