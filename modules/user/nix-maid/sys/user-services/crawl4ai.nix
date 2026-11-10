@@ -123,7 +123,7 @@ let
     runtimeInputs = [
       pkgs.gopass # token lookup from the password store
       pkgs.gnupg # gpg-agent that gopass shells out to
-      pkgs.podman # rootless container runtime
+      config.virtualisation.podman.package # rootless container runtime
       pkgs.coreutils # standard utilities for the wrapper's shell
     ];
     text = ''
@@ -163,7 +163,7 @@ let
       pkgs.curl # REST calls to the local server
       pkgs.gopass # token for authenticated endpoints
       pkgs.jq # /md answers with a JSON body
-      pkgs.podman # image pull
+      config.virtualisation.podman.package # image pull
       pkgs.systemd # systemctl/journalctl --user for the unit lifecycle
       pkgs.coreutils # standard utilities for the wrapper's shell
     ];

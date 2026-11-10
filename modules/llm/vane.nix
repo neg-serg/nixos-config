@@ -96,7 +96,7 @@ in
           # /run/wrappers/bin, so bring it in here instead of widening the default
           # environment of every user service.
           export PATH=/run/wrappers/bin:$PATH
-          podman=${lib.getExe pkgs.podman}
+          podman=${lib.getExe config.virtualisation.podman.package}
           if "$podman" container exists vane; then
             "$podman" start vane > /dev/null 2>&1 || true
             exec "$podman" attach vane

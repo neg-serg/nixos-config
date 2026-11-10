@@ -124,7 +124,7 @@ in
       path = [
         pkgs.coreutils # seq and sleep in the readiness loop
         pkgs.curl # the readiness probe's curl, run inside the CouchDB container
-        pkgs.podman # podman exec/run: probe and initdb stay in the host network
+        config.virtualisation.podman.package # podman exec/run: probe and initdb stay in the host network
       ];
       serviceConfig = {
         Type = "oneshot";
