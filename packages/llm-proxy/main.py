@@ -44,6 +44,16 @@ MIXED_SCRIPT_SHARE = 0.15  # share of CJK/Cyrillic that makes it text-defining
 SAFETY = 1.05  # never tighten a request to the exact edge of the slot
 PROMPT_OVERHEAD = 4  # per-message template tokens (role markers, separators)
 
+# Backoff between the three attempts at one request. Short enough that a
+# healthy swap recovers inside the client's own timeout, long enough for
+# llama-swap to finish stopping the previous backend.
+RETRY_DELAYS = (5, 10, 15)
+
+
+def log_line(message):
+    """One line per event to stderr, which journald keeps for the unit."""
+    print(f"llm-proxy: {message}", file=sys.stderr, flush=True)
+
 
 def _empty_row():
     return {"requests": 0, "trimmed": 0, "retries": 0, "errors": 0}
@@ -228,6 +238,45 @@ def normalize_tool_results(messages):
     return out
 
 
+SINGLE_TOOL_KINDS = ("tool", "command", "function", "action", "call")
+
+
+def message_texts(message):
+    """Text blocks of a message, for a system prompt that may be multimodal."""
+    content = message.get("content")
+    if isinstance(content, str):
+        return [content]
+    if isinstance(content, list):
+        return [
+            part.get("text") or ""
+            for part in content
+            if isinstance(part, dict)
+        ]
+    return []
+
+
+def asks_single_tool(messages):
+    """True when the client already asks for one action per turn.
+
+    Clients phrase this themselves — the sysadmin bench sends "Run exactly
+    ONE command per turn" — and matching only our exact wording appended a
+    second, differently worded copy of the same rule.
+    """
+    rule = SINGLE_TOOL_RULE.lower()
+    for message in messages:
+        if message.get("role") != "system":
+            continue
+        for text in message_texts(message):
+            low = " ".join(text.lower().split())
+            if rule in low:
+                return True
+            if "per turn" in low and any(
+                f"one {kind} per turn" in low for kind in SINGLE_TOOL_KINDS
+            ):
+                return True
+    return False
+
+
 def inject_single_tool_rule(messages, enabled):
     """Merge the rule into the client's system prompt when there is one.
 
@@ -235,13 +284,7 @@ def inject_single_tool_rule(messages, enabled):
     rejects any `system` role that is not the first message ("Only user,
     assistant and tool roles are supported, got system" -> HTTP 500), so the
     rule has to extend the existing prompt instead of preceding it."""
-    if not enabled:
-        return messages
-    if any(
-        m.get("role") == "system"
-        and SINGLE_TOOL_RULE in (m.get("content") or "")
-        for m in messages
-    ):
+    if not enabled or asks_single_tool(messages):
         return messages
     out = [dict(m) for m in messages]
     for i, m in enumerate(out):
@@ -395,6 +438,18 @@ class Upstream:
             time.sleep(1)
 
 
+class UpstreamError(Exception):
+    """An upstream HTTP error whose body was already read for the log.
+
+    The body cannot be re-read from the response afterwards, so it travels
+    here and the handler relays it to the client unchanged."""
+
+    def __init__(self, code, detail):
+        super().__init__(f"{code}: {detail[:200]}")
+        self.code = code
+        self.detail = detail
+
+
 def chat(up, payload, stats, model):
     """POST with the swap-race retry llmctl uses: unload, wait, retry."""
     last = None
@@ -402,17 +457,28 @@ def chat(up, payload, stats, model):
         try:
             return up.request("/v1/chat/completions", payload)
         except urllib.error.HTTPError as exc:
-            last = exc
+            detail = exc.read()[:2000].decode(errors="replace")
+            # Every attempt is logged, not just the last one: the retries are
+            # where a swap race shows its first symptom, and the client usually
+            # keeps only the status code.
+            log_line(
+                f"upstream {exc.code} for {model} "
+                f"(attempt {attempt + 1}/3): {detail}"
+            )
+            last = UpstreamError(exc.code, detail)
             if exc.code < 500:
-                raise
+                raise last from None
+            if attempt == len(RETRY_DELAYS) - 1:
+                break  # no retry left: count it as a failure, not a retry
             stats.bump("retries", model)
             up.unload()
             up.wait_idle()
-            time.sleep(5 * (attempt + 1))
+            time.sleep(RETRY_DELAYS[attempt])
         except urllib.error.URLError as exc:
             last = exc
+            log_line(f"upstream unreachable for {model}: {exc}")
             stats.bump("retries", model)
-            time.sleep(5 * (attempt + 1))
+            time.sleep(RETRY_DELAYS[attempt])
     raise last
 
 
@@ -534,25 +600,20 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header(k, v)
             self.end_headers()
             self.wfile.write(body)
+        except UpstreamError as exc:
+            # Already logged per attempt inside chat(); the client gets the body.
+            STATS.bump("errors", requested)
+            self._json(exc.code, {"error": {"message": exc.detail}}, headers)
         except urllib.error.HTTPError as exc:
+            # The streaming path talks to the upstream directly, so it can
+            # still raise here with the body unread.
             STATS.bump("errors", requested)
             detail = exc.read()[:2000].decode(errors="replace")
-            # The client may drop the body (the bench runner only keeps the
-            # status), and llama-swap logs just "non-200 response", so the
-            # reason would otherwise vanish: keep it in the journal.
-            print(
-                f"upstream {exc.code} for {requested}: {detail}",
-                file=sys.stderr,
-                flush=True,
-            )
+            log_line(f"upstream {exc.code} for {requested}: {detail}")
             self._json(exc.code, {"error": {"message": detail}}, headers)
         except OSError as exc:
             STATS.bump("errors", requested)
-            print(
-                f"upstream error for {requested}: {exc}",
-                file=sys.stderr,
-                flush=True,
-            )
+            log_line(f"upstream error for {requested}: {exc}")
             self._json(502, {"error": {"message": str(exc)}}, headers)
 
 

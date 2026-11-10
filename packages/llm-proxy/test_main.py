@@ -7,6 +7,7 @@ build sandbox has no network.
 """
 
 import importlib.util
+import io
 import json
 import pathlib
 import unittest
@@ -114,6 +115,40 @@ class SingleToolRule(unittest.TestCase):
     def test_rule_already_present_is_not_duplicated(self):
         msgs = [{"role": "system", "content": lp.SINGLE_TOOL_RULE}]
         self.assertEqual(1, len(lp.inject_single_tool_rule(msgs, True)))
+
+    def test_client_wording_of_the_rule_is_respected(self):
+        # The sysadmin bench sends this; appending our own wording on top of
+        # it changed the model's trajectory on task t5.
+        msgs = [
+            {
+                "role": "system",
+                "content": "Run exactly ONE command per turn and wait.",
+            },
+            {"role": "user", "content": "U"},
+        ]
+        self.assertTrue(lp.asks_single_tool(msgs))
+        out = lp.inject_single_tool_rule(msgs, True)
+        self.assertEqual(msgs[0]["content"], out[0]["content"])
+
+    def test_unrelated_system_prompt_still_gets_the_rule(self):
+        msgs = [
+            {"role": "system", "content": "You are a careful assistant."},
+            {"role": "user", "content": "U"},
+        ]
+        self.assertFalse(lp.asks_single_tool(msgs))
+        out = lp.inject_single_tool_rule(msgs, True)
+        self.assertIn(lp.SINGLE_TOOL_RULE, out[0]["content"])
+
+    def test_multimodal_system_prompt_is_checked(self):
+        msgs = [
+            {
+                "role": "system",
+                "content": [
+                    {"type": "text", "text": "use one command per turn"}
+                ],
+            }
+        ]
+        self.assertTrue(lp.asks_single_tool(msgs))
 
     def test_disabled_returns_the_same_object(self):
         msgs = [{"role": "user", "content": "U"}]
@@ -297,6 +332,54 @@ class StatsCounters(unittest.TestCase):
         s.bump("errors", "b")
         self.assertEqual(0, s.snapshot()["per_model"]["a"]["errors"])
         self.assertEqual(1, s.snapshot()["per_model"]["b"]["errors"])
+
+
+class FakeUpstream:
+    """Raises a canned HTTP status and counts the attempts."""
+
+    def __init__(self, code, body=b'{"error":"boom"}'):
+        self.code = code
+        self.body = body
+        self.attempts = 0
+
+    def request(self, path, payload=None, timeout=900):
+        self.attempts += 1
+        raise lp.urllib.error.HTTPError(
+            "http://upstream", self.code, "err", None, io.BytesIO(self.body)
+        )
+
+    def unload(self):
+        pass
+
+    def wait_idle(self):
+        pass
+
+
+class RetryAndRelay(unittest.TestCase):
+    def setUp(self):
+        self._delays = lp.RETRY_DELAYS
+        lp.RETRY_DELAYS = (0, 0, 0)
+
+    def tearDown(self):
+        lp.RETRY_DELAYS = self._delays
+
+    def test_5xx_is_retried_three_times_and_carries_the_body(self):
+        up = FakeUpstream(500, b'{"error":"Jinja Exception"}')
+        stats = lp.Stats()
+        with self.assertRaises(lp.UpstreamError) as caught:
+            lp.chat(up, {"model": "m"}, stats, "m")
+        self.assertEqual(3, up.attempts)
+        self.assertEqual(500, caught.exception.code)
+        self.assertIn("Jinja Exception", caught.exception.detail)
+        self.assertEqual(2, stats.retries)
+
+    def test_4xx_is_not_retried_but_keeps_the_body(self):
+        up = FakeUpstream(400, b'{"error":"bad request"}')
+        with self.assertRaises(lp.UpstreamError) as caught:
+            lp.chat(up, {"model": "m"}, lp.Stats(), "m")
+        self.assertEqual(1, up.attempts)
+        self.assertEqual(400, caught.exception.code)
+        self.assertIn("bad request", caught.exception.detail)
 
 
 if __name__ == "__main__":
