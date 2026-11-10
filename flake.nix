@@ -203,6 +203,20 @@
       url = "git+https://codeberg.org/GuillotineMelody/nervboot";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Neovim nightly (0.13.0-dev): guh.nvim needs `vim.async`, which does not
+    # exist in the 0.12.6 stable. The overlay builds neovim master on top of our
+    # neovim-unwrapped packaging and carries the workarounds master needs
+    # (already-applied CVE patch, loosened cmake requirements); the exact master
+    # rev is pinned in flake.lock through its own `neovim-src` input. nixpkgs
+    # follows the system pin, so the build reuses the same toolchain.
+    # Update with: nix flake lock --update-input neovim-nightly
+    neovim-nightly = {
+      url = "github:nix-community/neovim-nightly-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+      # Same library the repo already pins: one flake-parts node in the lock
+      # instead of a duplicate copy that only shapes the overlay's outputs.
+      inputs.flake-parts.follows = "flake-parts";
+    };
   };
 
   outputs =

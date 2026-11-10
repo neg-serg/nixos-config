@@ -820,6 +820,46 @@
         "type": "github"
       }
     },
+    "neovim-nightly": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "neovim-src": "neovim-src",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794268972,
+        "narHash": "sha256-onk4vjkxwkIgeLJbw8TA9loSpvj6PflE6ugpCorYCcw=",
+        "owner": "nix-community",
+        "repo": "neovim-nightly-overlay",
+        "rev": "a1f9dc03b509787a1d82cc7639c056d65c81b491",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "neovim-nightly-overlay",
+        "type": "github"
+      }
+    },
+    "neovim-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794257791,
+        "narHash": "sha256-7s8aMPHBZHqImfmy0HRQFf1JzyklydrqHub9Vniuzv8=",
+        "owner": "neovim",
+        "repo": "neovim",
+        "rev": "d175a05e0d24b2796f9624f8b6965d690394116e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neovim",
+        "repo": "neovim",
+        "type": "github"
+      }
+    },
     "nerv-boot": {
       "inputs": {
         "nixpkgs": [
@@ -1228,6 +1268,7 @@
         "lusty": "lusty",
         "multiverse": "multiverse",
         "neg-pkgs": "neg-pkgs",
+        "neovim-nightly": "neovim-nightly",
         "nerv-boot": "nerv-boot",
         "nix-cache-pin": "nix-cache-pin",
         "nix-cachyos-kernel": "nix-cachyos-kernel",
