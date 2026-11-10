@@ -33,7 +33,14 @@ SINGLE_TOOL_RULE = (
     "next one. Never guess a value that a tool can return."
 )
 
-CHARS_PER_TOKEN = 3.6  # English + code mix; trimmed requests get a 10% margin
+# Chars per token by character class, measured on qwen3.8 and devstral (the
+# lower of the two, minus a little). See `char_tokens` for the sample rates.
+CPK_CJK = 1.2
+CPK_CYRILLIC = 3.3
+CPK_LATIN = 4.6
+CPK_OTHER = 3.2
+SAFETY = 1.05  # never tighten a request to the exact edge of the slot
+PROMPT_OVERHEAD = 4  # per-message template tokens (role markers, separators)
 
 
 def _empty_row():
@@ -108,17 +115,60 @@ def profile_for(cfg, model):
 # ---------------------------------------------------------------- tokens
 
 
+def char_tokens(text):
+    """Tokens for `text`, by character class.
+
+    A single chars-per-token constant cannot cover the fleet: measured on
+    qwen3.8 and devstral over the same texts, English runs at 4.7 chars/token,
+    Russian at 3.3, source code at 3.6 and Chinese at 1.2 (devstral, whose
+    BPE splits Cyrillic and CJK hardest). One constant would either
+    underestimate CJK badly — the request hits the slot limit and fails with
+    400, the very thing this guard prevents — or overestimate English by half
+    and trim conversations that would have fit. The rates below are the
+    pessimistic end of those measurements.
+    """
+    cjk = cyrillic = latin = other = 0
+    for ch in text:
+        code = ord(ch)
+        if code < 128:
+            if ch.isalpha():
+                latin += 1
+            else:
+                other += 1
+        elif 0x0400 <= code <= 0x04FF or 0x0370 <= code <= 0x03FF:
+            cyrillic += 1
+        elif (
+            0x3040 <= code <= 0x30FF
+            or 0x3400 <= code <= 0x4DBF
+            or 0x4E00 <= code <= 0x9FFF
+            or 0xAC00 <= code <= 0xD7AF
+            or 0xF900 <= code <= 0xFAFF
+        ):
+            cjk += 1
+        elif ch.isalpha():
+            latin += 1
+        else:
+            other += 1
+    return (
+        cjk / CPK_CJK
+        + cyrillic / CPK_CYRILLIC
+        + latin / CPK_LATIN
+        + other / CPK_OTHER
+    )
+
+
 def estimate_tokens(messages, tools=None):
-    """Cheap estimate with a safety margin. Exact counting would need the chat
-    template, which only the server knows; being 10% pessimistic is enough."""
-    chars = 0
+    """Estimate the prompt size. Exact counting would need the chat template,
+    which only the server knows; the per-class rates above plus a small margin
+    are close enough to keep a request inside the slot."""
+    tokens = 0.0
     for m in messages:
-        chars += len(m.get("content") or "") + 12
+        tokens += char_tokens(m.get("content") or "") + PROMPT_OVERHEAD
         for tc in m.get("tool_calls") or []:
-            chars += len(json.dumps(tc)) + 12
+            tokens += char_tokens(json.dumps(tc)) + PROMPT_OVERHEAD
     if tools:
-        chars += len(json.dumps(tools))
-    return int(chars / CHARS_PER_TOKEN * 1.1) + 8
+        tokens += char_tokens(json.dumps(tools))
+    return int(tokens * SAFETY) + 8
 
 
 # ------------------------------------------------------- tool protocol
@@ -265,18 +315,24 @@ def fit(messages, budget, keep_tool_results, keep_last_messages, tools=None):
             break
         msgs, m = max(flat, key=lambda p: len(p[1]["content"]))
         over = size() - budget
-        budget_chars = max(
-            400, int((budget - 128) * CHARS_PER_TOKEN / 1.1) - len(marker)
-        )
-        half = max(200, budget_chars // 2)
+        text = m["content"]
+        # Convert the token budget back to characters with this block's own
+        # measured rate: a Russian or CJK dump holds far more tokens per
+        # character than English, and a fixed rate would cut it too late.
+        per_token = len(text) / max(1.0, char_tokens(text))
+        keep_chars = max(400, int((budget - 128) * per_token / SAFETY))
+        if len(text) <= keep_chars + len(marker):
+            break  # already as short as this path can make it
+        half = max(200, keep_chars // 2)
         msg = dict(m)
-        msg["content"] = m["content"][:half] + marker + m["content"][-half:]
+        msg["content"] = text[:half] + marker + text[-half:]
         for i, x in enumerate(msgs):
             if x is m:
                 msgs[i] = msg
                 break
         trimmed += over
-        break
+        # No break: one dump may be the only thing over budget, or several
+        # may be; the loop re-measures and cuts again until it fits.
 
     return [m for u in units for m in u["msgs"]], trimmed
 
