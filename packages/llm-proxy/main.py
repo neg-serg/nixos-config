@@ -463,9 +463,22 @@ class Handler(BaseHTTPRequestHandler):
         except urllib.error.HTTPError as exc:
             STATS.bump("errors", requested)
             detail = exc.read()[:2000].decode(errors="replace")
+            # The client may drop the body (the bench runner only keeps the
+            # status), and llama-swap logs just "non-200 response", so the
+            # reason would otherwise vanish: keep it in the journal.
+            print(
+                f"upstream {exc.code} for {requested}: {detail}",
+                file=sys.stderr,
+                flush=True,
+            )
             self._json(exc.code, {"error": {"message": detail}}, headers)
         except OSError as exc:
             STATS.bump("errors", requested)
+            print(
+                f"upstream error for {requested}: {exc}",
+                file=sys.stderr,
+                flush=True,
+            )
             self._json(502, {"error": {"message": str(exc)}}, headers)
 
 
