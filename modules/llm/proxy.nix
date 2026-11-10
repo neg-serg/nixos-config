@@ -29,13 +29,147 @@
 let
   enabled = config.lib.neg.enabled "llm";
   cfg = config.services.llm-proxy;
+
+  # One guard profile. Every key is optional and null means "not set here":
+  # `defaults` and each `profiles` entry are stripped of nulls before they
+  # reach the JSON, so an unset key never shadows a value from `defaults` or
+  # from the proxy's own base set.
+  guardModule = {
+    options = {
+      ctx = lib.mkOption {
+        type = lib.types.nullOr lib.types.ints.positive;
+        default = null;
+        description = "Context window of the slot, in tokens.";
+      };
+      reserve = lib.mkOption {
+        type = lib.types.nullOr lib.types.ints.unsigned;
+        default = null;
+        description = "Completion headroom kept out of the trimmed prompt.";
+      };
+      keep_tool_results = lib.mkOption {
+        type = lib.types.nullOr lib.types.ints.unsigned;
+        default = null;
+        description = "Tool-result groups kept when trimming.";
+      };
+      keep_last_messages = lib.mkOption {
+        type = lib.types.nullOr lib.types.ints.unsigned;
+        default = null;
+        description = "Trailing turns kept when trimming.";
+      };
+      single_tool = lib.mkOption {
+        type = lib.types.nullOr lib.types.bool;
+        default = null;
+        description = "Inject the one-tool-per-turn rule when tools are present.";
+      };
+      thinking = lib.mkOption {
+        type = lib.types.nullOr lib.types.bool;
+        default = null;
+        description = "Pin chat_template_kwargs.enable_thinking (null leaves it alone).";
+      };
+      target = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Model name to send upstream, for aliases.";
+      };
+    };
+  };
+
+  # Mirrors the base set in the proxy's `load_config`; the generated JSON is
+  # the authoritative copy, the Python one is the fallback for a file that
+  # carries no `defaults` at all.
+  baseGuards = {
+    ctx = 32768;
+    reserve = 4096;
+    keep_tool_results = 6;
+    keep_last_messages = 8;
+    single_tool = true;
+    thinking = null;
+    target = null;
+  };
+  stripNulls = lib.filterAttrs (_: v: v != null);
+
+  # Built-in guards. The `profiles` option holds only the user's side, so
+  # these merge key by key: a host that overrides one field would otherwise
+  # replace the whole profile (NixOS picks a single definition per key when
+  # priorities differ, and ctx/target would silently disappear).
+  builtinProfiles = {
+    # Chat tiers: real windows from llama-swap.nix, so trimming only fires
+    # when the slot itself would reject the request.
+    "qwen3.8-27b-abliterated".ctx = 32768;
+    "qwen3.8" = {
+      target = "qwen3.8-27b-abliterated";
+      ctx = 32768;
+    };
+    "ru" = {
+      target = "qwen3.8-27b-abliterated";
+      ctx = 32768;
+    };
+    "gemma4-26b-abliterated".ctx = 32768;
+    "gemma4" = {
+      target = "gemma4-26b-abliterated";
+      ctx = 32768;
+    };
+    "devstral-small-2-24b".ctx = 32768;
+    "devstral" = {
+      target = "devstral-small-2-24b";
+      ctx = 32768;
+    };
+    "coder" = {
+      target = "devstral-small-2-24b";
+      ctx = 32768;
+    };
+    "qwen3.8-27b-bartowski".ctx = 16384;
+    "bart27b" = {
+      target = "qwen3.8-27b-bartowski";
+      ctx = 16384;
+    };
+    "qwen3.8-27b-unsloth".ctx = 32768;
+    "ud" = {
+      target = "qwen3.8-27b-unsloth";
+      ctx = 32768;
+    };
+    "qwen3.8-flash-next-abliterated".ctx = 131072;
+    "qwen3.8-flash" = {
+      target = "qwen3.8-flash-next-abliterated";
+      ctx = 131072;
+    };
+    # Small tiers: `mini` is the 32k entry point the fleet uses for them;
+    # the vision slot itself keeps its native 64k.
+    "qwen3-vl-8b-abliterated" = {
+      ctx = 65536;
+      single_tool = false;
+    };
+    "vision" = {
+      target = "qwen3-vl-8b-abliterated";
+      ctx = 65536;
+      single_tool = false;
+    };
+    "mini" = {
+      target = "qwen3-vl-8b-abliterated";
+      ctx = 32768;
+    };
+    "falcon-h1-3b" = {
+      ctx = 65536;
+      single_tool = false;
+    };
+    "falcon" = {
+      target = "falcon-h1-3b";
+      ctx = 65536;
+      single_tool = false;
+    };
+  };
+
+  wireProfiles = lib.mapAttrs (
+    name: override: (builtinProfiles.${name} or { }) // stripNulls override
+  ) (builtinProfiles // cfg.profiles);
+
   configFile = pkgs.writeText "llm-proxy.json" (
     builtins.toJSON {
       upstream = cfg.upstream;
       host = cfg.host;
       port = cfg.port;
-      defaults = cfg.defaults;
-      profiles = cfg.profiles;
+      defaults = baseGuards // stripNulls cfg.defaults;
+      profiles = wireProfiles;
     }
   );
 in
@@ -66,105 +200,25 @@ in
       description = "llama-swap base URL.";
     };
     defaults = lib.mkOption {
-      type = lib.types.attrs;
-      default = {
-        # Per-model overridable guards. `reserve` is the completion headroom
-        # kept out of the trimmed prompt; the rest are protocol knobs.
-        ctx = 32768;
-        reserve = 4096;
-        keep_tool_results = 6;
-        keep_last_messages = 8;
-        single_tool = true;
-        thinking = null;
-        target = null;
-      };
-      description = "Default guard values for every model not listed in `profiles`.";
+      type = lib.types.submodule guardModule;
+      default = { };
+      description = ''
+        Guard values for every model not listed in `profiles`, as typed
+        overrides of the base set (ctx 32768, reserve 4096, keep 6 tool
+        results and 8 turns, single-tool rule on, nothing pinned).
+      '';
     };
     profiles = lib.mkOption {
-      type = lib.types.attrs;
-      default = {
-        # Chat tiers: real windows from llama-swap.nix, so trimming only fires
-        # when the slot itself would reject the request.
-        "qwen3.8-27b-abliterated" = {
-          ctx = 32768;
-        };
-        "qwen3.8" = {
-          target = "qwen3.8-27b-abliterated";
-          ctx = 32768;
-        };
-        "ru" = {
-          target = "qwen3.8-27b-abliterated";
-          ctx = 32768;
-        };
-        "gemma4-26b-abliterated" = {
-          ctx = 32768;
-        };
-        "gemma4" = {
-          target = "gemma4-26b-abliterated";
-          ctx = 32768;
-        };
-        "devstral-small-2-24b" = {
-          ctx = 32768;
-        };
-        "devstral" = {
-          target = "devstral-small-2-24b";
-          ctx = 32768;
-        };
-        "coder" = {
-          target = "devstral-small-2-24b";
-          ctx = 32768;
-        };
-        "qwen3.8-27b-bartowski" = {
-          ctx = 16384;
-        };
-        "bart27b" = {
-          target = "qwen3.8-27b-bartowski";
-          ctx = 16384;
-        };
-        "qwen3.8-27b-unsloth" = {
-          ctx = 32768;
-        };
-        "ud" = {
-          target = "qwen3.8-27b-unsloth";
-          ctx = 32768;
-        };
-        "qwen3.8-flash-next-abliterated" = {
-          ctx = 131072;
-        };
-        "qwen3.8-flash" = {
-          target = "qwen3.8-flash-next-abliterated";
-          ctx = 131072;
-        };
-        # Small tiers: `mini` is the 32k entry point the fleet uses for them;
-        # the vision slot itself keeps its native 64k.
-        "qwen3-vl-8b-abliterated" = {
-          ctx = 65536;
-          single_tool = false;
-        };
-        "vision" = {
-          target = "qwen3-vl-8b-abliterated";
-          ctx = 65536;
-          single_tool = false;
-        };
-        "mini" = {
-          target = "qwen3-vl-8b-abliterated";
-          ctx = 32768;
-        };
-        "falcon-h1-3b" = {
-          ctx = 65536;
-          single_tool = false;
-        };
-        "falcon" = {
-          target = "falcon-h1-3b";
-          ctx = 65536;
-          single_tool = false;
-        };
-      };
+      type = lib.types.attrsOf (lib.types.submodule guardModule);
+      default = { };
       description = ''
-        Per-model guards: `ctx` is the slot's context window, `target` rewrites
-        the model name sent upstream (aliases), `single_tool` injects the
-        one-tool-per-turn rule when `tools` are present, `thinking = false`
-        pins chat_template_kwargs.enable_thinking.
+        Per-model guards, merged key by key over the built-in set, so
+        overriding one field keeps the rest of the profile:
+        `profiles.devstral.single_tool = false` keeps the alias and the
+        context window. `ctx` is the slot's context window, `target`
+        rewrites the model name sent upstream (aliases), `single_tool`
+        injects the one-tool-per-turn rule when `tools` are present,
+        `thinking = false` pins chat_template_kwargs.enable_thinking.
       '';
     };
   };
