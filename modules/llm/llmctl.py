@@ -557,6 +557,84 @@ def cmd_use(args):
     print_status()
 
 
+def cmd_prewarm(args):
+    """Warm the page cache for a model's gguf files without touching VRAM.
+
+    The load path is mmap, so a prewarmed file turns an 8.3 s cold start into
+    a 2.5 s one (measured 2026-11-11 on the 27B vision slot). It does not
+    create speed out of nothing: the same ~12 GB is read from disk, just
+    before the answer is needed instead of inside the request. Pages are
+    reclaimable, so under memory pressure the warmth is lost again.
+    """
+    name = resolve(args.model)
+    if not name:
+        sys.exit(f"unknown model: {args.model}")
+    if not shutil.which("vmtouch"):
+        sys.exit("vmtouch not found (nixpkgs#vmtouch)")
+    files = model_files(name)
+    total = sum(os.path.getsize(f) for f in files)
+    if args.check:
+        subprocess.run(["vmtouch", *files], check=False)
+        return
+    t0 = time.time()
+    subprocess.run(["vmtouch", "-t", *files], capture_output=True, check=False)
+    dt = time.time() - t0
+    rate = total / dt / 2**30 if dt else 0
+    print(
+        f"prewarmed {name}: {len(files)} files, {total / 2**30:.1f} GiB "
+        f"in {dt:.1f}s ({rate:.1f} GiB/s)",
+        flush=True,
+    )
+    subprocess.run(["vmtouch", *files], check=False)
+
+
+def model_files(name):
+    """gguf paths the router will mmap for `name`.
+
+    Read out of the live llama-swap config (the unit names it with
+    `--config=`), so the paths have one source of truth in llama-swap.nix and
+    cannot drift from a copy in here.
+    """
+    try:
+        unit = subprocess.run(
+            ["systemctl", "cat", "llama-swap"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        unit = ""
+    cfg = ""
+    for tok in unit.split():
+        # The unit quotes every argument ('--config=/nix/store/...yaml'), so
+        # the quote has to come off before the prefix check.
+        tok = tok.strip("'\"")
+        if tok.startswith("--config="):
+            cfg = tok.split("=", 1)[1].strip("'\"")
+            break
+    if not cfg or not os.path.exists(cfg):
+        sys.exit(
+            "cannot find the llama-swap config (systemctl cat llama-swap)"
+        )
+    block, current = [], None
+    for line in open(cfg):
+        m = re.match(r"^  ([A-Za-z0-9][A-Za-z0-9._-]*):\s*$", line)
+        if m:
+            current = m.group(1)
+            continue
+        if current == name:
+            block.append(line)
+    text = "".join(block)
+    files = []
+    for flag in ("-m", "--mmproj"):
+        m = re.search(rf"(?:^|\s){re.escape(flag)}\s+(/\S+?\.gguf)", text)
+        if m:
+            files.append(m.group(1))
+    if not files:
+        sys.exit(f"no gguf paths in the llama-swap cmd for {name}")
+    return files
+
+
 def cmd_unload(_args):
     # Targeted unload, not GET /unload: that form blocks until every backend
     # is gone, so it hung for its whole 15 s timeout whenever a model was
@@ -2417,6 +2495,15 @@ def main():
     s = sub.add_parser("use", help="загрузить модель (или выбрать в fzf)")
     s.add_argument("name", nargs="?")
     sub.add_parser("unload", help="выгрузить текущую модель")
+    s = sub.add_parser(
+        "prewarm", help="прогреть page cache модели, не трогая GPU"
+    )
+    s.add_argument("model", nargs="?", default="vision")
+    s.add_argument(
+        "--check",
+        action="store_true",
+        help="только показать, сколько уже в памяти",
+    )
     s = sub.add_parser("ask", help="один вопрос модели")
     s.add_argument("model")
     s.add_argument("text")
@@ -2512,6 +2599,8 @@ def main():
         cmd_use(args)
     elif args.cmd == "unload":
         cmd_unload(args)
+    elif args.cmd == "prewarm":
+        cmd_prewarm(args)
     elif args.cmd == "ask":
         cmd_ask(args)
     elif args.cmd == "commit":

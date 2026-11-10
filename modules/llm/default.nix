@@ -65,6 +65,13 @@
 #   it POSTs `/api/models/unload` per resident model and returns in ~0.1 s,
 #   where the blanket `GET /unload` blocked until the backend was gone and
 #   hung for its whole timeout when a model was still starting.
+# - `llmctl prewarm [model]` (default `vision`) reads the model's gguf files
+#   into the page cache with `vmtouch -t` and never touches VRAM: 12.7 GB
+#   ahead of time turns the 8.3 s cold load of the 27B slot into 2.5 s
+#   (measured 2026-11-11). It moves the disk read, it does not remove it, and
+#   the pages are reclaimable — `llmctl prewarm --check` reports the current
+#   residency without reading anything. The gguf paths come from the live
+#   llama-swap config, so they cannot drift from llama-swap.nix.
 # - One model is resident at a time. All of them fit the 16 GB card except the
 #   streaming tier (Qwen3.8-Flash-Next); the 8B vision unit on :8080 is
 #   separate and started by hand.
