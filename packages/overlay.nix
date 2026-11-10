@@ -189,6 +189,7 @@ slimChunks
           vowel = final.callPackage ./vowel { inherit (final.neg.functions) mkScQuark; }; # Vowel SC quark (formant tables) used by SuperDirt
           dsh-patch = final.callPackage ./dsh-patch { }; # count-asserted patcher for dsh bundles and profiles
           dsh = final.callPackage ./dsh { inherit (final.neg) dsh-patch; }; # DeepSeek Harness agent CLI (dsh)
+          natshell = final.callPackage ./natshell { }; # natural-language shell agent TUI (remote inference via llama-swap)
           aurora = final.callPackage ./aurora.nix {
             src = inputs.aurora-src;
           }; # aurora: local MPD player with a Vulkan UI
