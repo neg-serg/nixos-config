@@ -116,6 +116,15 @@ CATALOG = {
         "lean": "-",
         "fp": "-",
     },
+    "qwen3-coder-30b": {
+        "aliases": ["qwen3-coder", "agent"],
+        "role": "30B-A3B MoE tool-calling agent",
+        "ctx": "16k",
+        "size": "11 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "2.2/6",
+    },
     "falcon-h1-3b": {
         "aliases": ["falcon-3b", "falcon3b", "falcon"],
         "role": "3B parallel-hybrid Mamba, fast",
