@@ -1,9 +1,10 @@
 # The headphone chain: what is left after the 2026-11-10 split
 
-The split itself is committed as `e1168f2` (`[hardware/audio] Split the DSP per output and make the
-inserts lazy`): a second CamillaDSP instance on port 1235, its own `headphones` sink, a router that
-wires it to the USB DAC, and lazy lifetime for both inserts. This note is the backlog: what has to
-happen before the chain is usable, and what is still a guess.
+The split itself is committed as `e1168f2`
+(`[hardware/audio] Split the DSP per output and make the inserts lazy`): a second CamillaDSP
+instance on port 1235, its own `headphones` sink, a router that wires it to the USB DAC, and lazy
+lifetime for both inserts. This note is the backlog: what has to happen before the chain is usable,
+and what is still a guess.
 
 ## 0. It is not switched yet
 
