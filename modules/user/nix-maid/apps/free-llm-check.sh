@@ -113,7 +113,7 @@ route() {
 
 echo "free-llm-check: keys from $KEY_FILE; proxy $PROXY"
 route pollinations "https://text.pollinations.ai/openai" "openai-fast" "" ""
-route gemini "https://generativelanguage.googleapis.com/v1beta/openai" "gemini-3.8-flash" "GEMINI_API_KEY" "$PROXY"
+route gemini "https://generativelanguage.googleapis.com/v1beta/openai" "gemini-3.6-flash" "GEMINI_API_KEY" "$PROXY"
 
 printf '\n%d passed, %d throttled, %d failed, %d skipped\n' \
   "$pass" "$throttled" "$fail" "$skip"

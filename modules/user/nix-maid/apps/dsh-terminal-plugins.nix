@@ -250,6 +250,27 @@ rec {
             apiKeyEnv: LLAMA_SWAP_API_KEY
             defaultContextWindow: 32768
             defaultMaxTokens: 8192
+            # A 22k-token agent prompt needs ~4.5 min of prefill here (~85
+            # tok/s measured 2026-11-10; the single llama-server slot adds
+            # queue time while another session or `llmctl` holds it). The
+            # 300 s pi-ai default expired just before the first token, and
+            # each retry re-ran the same prefill, so the 2026-11-10 turn died
+            # after six 5-minute attempts. 30 min covers a near-full 128k
+            # prompt (~26 min at that rate) without hanging on a dead stream.
+            streamIdleTimeoutMs: 1800000
+            # TIMEOUT is deliberately not retryable: with the long idle window
+            # above it means the server is really stuck, and a retry replays
+            # the same multi-minute wait. Transport errors and llama-swap swap
+            # races still get two attempts.
+            retryPolicy:
+              mode: normal
+              maxRetries: 2
+              retryableCodes:
+                - EMPTY_RESPONSE
+                - SERVER
+                - STREAM_CLOSED
+                - TRANSPORT
+                - MALFORMED_RESPONSE
             models:
               - id: qwen3.8-flash-next-abliterated
                 name: Qwen3.8-Flash-Next 180B (thinking, 128k)
@@ -303,9 +324,10 @@ rec {
           # pollinations: anonymous, no signup, one reply per 45 seconds per
           # IP — a last-resort single shot, not an agent loop.
           #
-          # gemini: free tier of the Gemini API. gemini-3.8-flash is free of
+          # gemini: free tier of the Gemini API. gemini-3.6-flash is free of
           # charge and tool-capable, but the free tier trains on what it is
-          # sent — do not put private code through it.
+          # sent — do not put private code through it. 3.7/3.8 do not answer on
+          # this key's free tier (requests hang), so 3.6 is the newest usable.
           pollinations:
             displayName: Pollinations (free, no key)
             api: openai-completions
@@ -325,8 +347,8 @@ rec {
             defaultContextWindow: 1048576
             defaultMaxTokens: 65536
             models:
-              - id: gemini-3.8-flash
-                name: Gemini 3.8 Flash (free tier)
+              - id: gemini-3.6-flash
+                name: Gemini 3.6 Flash (free tier)
                 contextWindow: 1048576
                 input:
                   - text
