@@ -26,7 +26,10 @@ let
       desc = "warnings";
     };
     kernel = {
-      tty = "tty12";
+      # tty12 belongs to bootvine (it draws the boot's systemd job tree there
+      # with TTYPath=/dev/tty12, from the initrd on) — a viewer writing to the
+      # same VT would interleave its lines with that tree.
+      tty = "tty17";
       desc = "kernel messages";
       filter = "_TRANSPORT=kernel";
     };

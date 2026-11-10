@@ -13,6 +13,9 @@
     # NERV boot menu — reads the BLS entries systemd-boot writes and hands the
     # picked entry back to systemd-boot
     inputs.nerv-boot.nixosModules.default
+    # bootvine — live tree of the boot's systemd jobs on the console (tty12),
+    # from the systemd initrd through stage 2 and shutdown. Enabled below.
+    inputs.bootvine.nixosModules.default
   ]
   ++ neg.importDir {
     dir = ./.; # unbound-hosts.nix is generated data (a list), not a module
@@ -53,6 +56,8 @@
   # profiles.performance.quietBoot, so this only adds the daemon, the initrd
   # payload and the theme. adi1090x ships all ~30 themes in one derivation;
   # `selected_themes` keeps the closure to the two we switch between.
+  # Plymouth only owns the first second of the boot now: bootvine (below) starts
+  # at sysinit and switches the console to its own VT.
   boot.plymouth = {
     enable = true;
     theme = "lone";
@@ -65,6 +70,15 @@
       })
     ];
   };
+
+  # Boot screen: a live tree of the boot's systemd jobs on tty12, instead of
+  # the scrolling kernel/systemd lines. It starts in the systemd initrd (the
+  # only initrd left on 26.11) and follows the switch to the real root, the
+  # boot up to the default target and the shutdown. The console comes back once
+  # graphical.target is reached or greetd switches to its own VT.
+  # tty12 is bootvine's: the kernel journal viewer moved to tty17 accordingly
+  # (modules/system/log-ttys.nix) — two writers on that VT would interleave.
+  services.bootvine.enable = true;
 
   # Host-specific overrides (above profile defaults)
   # Obsidian installed via Flatpak (to avoid Electron in Nix closure)
