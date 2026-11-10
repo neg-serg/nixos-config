@@ -36,6 +36,14 @@ let
     attr = "losslesscut-bin";
     binary = "losslesscut";
   };
+
+  # RustGIS ships the GUI and a `rustgis-cli` companion in one output, so the
+  # CLI rides the same GC root as an alias instead of a second build.
+  rustgis = onDemand {
+    name = "rustgis";
+    attr = "rustgis";
+    aliases = [ "rustgis-cli" ];
+  };
 in
 {
   config = lib.mkMerge [
@@ -120,6 +128,33 @@ in
             "audio/mpeg"
             "audio/flac"
           ];
+        })
+
+        # Desktop GIS: maps, raster/vector datasets, geoprocessing and a CLI
+        # (packages/rustgis). On demand because the GUI binary alone is 122 MB.
+        # Upstream's `application/x-rustgis-project` MIME definition travels
+        # inside the on-demand root and therefore never lands on XDG_DATA_DIRS
+        # (same caveat as apps/craft-apps.nix), so only standard GeoJSON gets a
+        # handler; the `.rgis`/`.rgisx` globs stay unknown until the type is
+        # registered system-wide.
+        rustgis
+        (pkgs.makeDesktopItem {
+          name = "rustgis";
+          desktopName = "RustGIS";
+          genericName = "Geographic Information System";
+          comment = "Make maps and analyse spatial data";
+          exec = "rustgis %F";
+          icon = "${appRoot}/rustgis/share/icons/hicolor/512x512/apps/rustgis.png";
+          categories = [
+            "Science"
+            "Geography"
+            "Education"
+          ];
+          mimeTypes = [
+            "application/x-rustgis-project"
+            "application/geo+json"
+          ];
+          startupWMClass = "org.rustgis.RustGIS";
         })
       ];
 

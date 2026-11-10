@@ -33,6 +33,11 @@ in
   # Waylandar is a standalone Quickshell calendar/dashboard; exposed as a flake
   # package so the system only carries an on-demand launcher.
   waylandar = callPkg (pkg "waylandar") { };
+  # RustGIS — desktop GIS built from the prebuilt upstream release binaries
+  # (~200 MB of ELF). Exposed here so the flake carries `.#rustgis` and the
+  # system only installs an on-demand launcher
+  # (modules/user/nix-maid/apps/gui-apps.nix).
+  rustgis = callPkg (pkg "rustgis") { };
   # Patched Vivaldi build (wayland flags, bundled libffmpeg RUNPATH); the system
   # only carries a launcher.
   vivaldi-fixed = callPkg (pkg "vivaldi") { };
