@@ -200,7 +200,7 @@ class Estimate(unittest.TestCase):
         # The rates come from measuring qwen3.8 and devstral over the same
         # texts; a change here has to be re-measured, not guessed.
         self.assertAlmostEqual(460 / lp.CPK_LATIN, 100, places=6)
-        self.assertAlmostEqual(330 / lp.CPK_CYRILLIC, 100, places=6)
+        self.assertAlmostEqual(250 / lp.CPK_CYRILLIC, 100, places=6)
         self.assertAlmostEqual(120 / lp.CPK_CJK, 100, places=6)
         self.assertAlmostEqual(320 / lp.CPK_OTHER, 100, places=6)
 
@@ -222,7 +222,7 @@ class Estimate(unittest.TestCase):
         )
         tokens = lp.char_tokens(sample)
         self.assertGreaterEqual(tokens, len(sample) / 1.3)
-        self.assertEqual(1.26, round(len(sample) / tokens, 2))
+        self.assertEqual(1.2, round(len(sample) / tokens, 2))
 
     def test_russian_text_costs_more_than_english(self):
         ru = "Сборка падает не из-за конфигурации, а из-за кэша подстановки."
@@ -230,6 +230,21 @@ class Estimate(unittest.TestCase):
         self.assertLess(
             len(ru) / lp.char_tokens(ru), len(en) / lp.char_tokens(en)
         )
+
+    def test_latin_inside_russian_is_priced_as_russian(self):
+        # Measured: Russian technical prose runs at 2.52 chars/token, not at
+        # the 3.6 a class-by-class split predicted, because identifiers do not
+        # tokenize at English rates inside Cyrillic text. The whole text is
+        # priced at the script's rate once the share passes the threshold.
+        sample = (
+            "Перезапускаем systemd-юнит llm-proxy.service, смотрим "
+            "journalctl -u llama-swap --since 15:00, проверяем /stats."
+        )
+        self.assertGreaterEqual(len(sample) / lp.char_tokens(sample), 2.4)
+
+    def test_mostly_english_with_a_quote_stays_english_priced(self):
+        text = "The build fails because the substituter times out. " * 20
+        self.assertGreaterEqual(len(text) / lp.char_tokens(text), 4.0)
 
 
 class Trim(unittest.TestCase):

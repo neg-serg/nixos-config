@@ -33,12 +33,14 @@ SINGLE_TOOL_RULE = (
     "next one. Never guess a value that a tool can return."
 )
 
-# Chars per token by character class, measured on qwen3.8 and devstral (the
-# lower of the two, minus a little). See `char_tokens` for the sample rates.
+# Chars per token by script, measured on qwen3.8 and devstral and rounded down
+# to the pessimistic end. See `char_tokens` for the samples and the reason the
+# whole text is priced at the rate of the dominant non-Latin script.
 CPK_CJK = 1.2
-CPK_CYRILLIC = 3.3
+CPK_CYRILLIC = 2.5
 CPK_LATIN = 4.6
 CPK_OTHER = 3.2
+MIXED_SCRIPT_SHARE = 0.15  # share of CJK/Cyrillic that makes it text-defining
 SAFETY = 1.05  # never tighten a request to the exact edge of the slot
 PROMPT_OVERHEAD = 4  # per-message template tokens (role markers, separators)
 
@@ -118,14 +120,19 @@ def profile_for(cfg, model):
 def char_tokens(text):
     """Tokens for `text`, by character class.
 
-    A single chars-per-token constant cannot cover the fleet: measured on
-    qwen3.8 and devstral over the same texts, English runs at 4.7 chars/token,
-    Russian at 3.3, source code at 3.6 and Chinese at 1.2 (devstral, whose
-    BPE splits Cyrillic and CJK hardest). One constant would either
-    underestimate CJK badly — the request hits the slot limit and fails with
-    400, the very thing this guard prevents — or overestimate English by half
-    and trim conversations that would have fit. The rates below are the
-    pessimistic end of those measurements.
+    Measured on qwen3.8 and devstral over the same texts, baseline
+    subtracted: English prose runs at 4.7 chars/token, source code at 3.6,
+    Russian at 2.9, Russian technical prose (paths, unit names, numbers) at
+    2.5, and Chinese at 1.2 on devstral. One constant understates CJK by a
+    factor of two — the request then hits the slot limit and fails with the
+    400 this guard exists to prevent.
+
+    A mixed text cannot be priced class by class either: `systemd-юнит` and
+    `journalctl -u` do not tokenize at English rates when they sit inside
+    Russian prose, and doing so understated exactly that case by a third. So
+    once a script is a substantial share of the text, the whole text is
+    priced at that script's rate — the pessimistic end, which can trim a
+    little early but never overflows the slot.
     """
     cjk = cyrillic = latin = other = 0
     for ch in text:
@@ -149,6 +156,12 @@ def char_tokens(text):
             latin += 1
         else:
             other += 1
+    total = cjk + cyrillic + latin + other
+    if total:
+        if cjk / total >= MIXED_SCRIPT_SHARE:
+            return total / CPK_CJK
+        if cyrillic / total >= MIXED_SCRIPT_SHARE:
+            return total / CPK_CYRILLIC
     return (
         cjk / CPK_CJK
         + cyrillic / CPK_CYRILLIC
