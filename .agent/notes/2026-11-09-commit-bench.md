@@ -73,8 +73,8 @@ llmctl bench commit --models tiny --show --scopes alpha
 ```
 
 From the repository root, `just commit` wraps the same call (arguments pass through, so
-`just commit --all` and `just commit --dry-run` work); it uses the repo copy of `llmctl.py`, so
-the command is current even before the next system switch.
+`just commit --all` and `just commit --dry-run` work); it uses the repo copy of `llmctl.py`, so the
+command is current even before the next system switch.
 
 Run results are JSON under `~/.local/state/llmctl/commit-*.json` (for this session's runs, under
 `/tmp/llm-bench-commit/...` because of the agent file sandbox). Every reply is stored with its
