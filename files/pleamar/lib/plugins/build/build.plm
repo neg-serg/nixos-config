@@ -24,7 +24,6 @@ language 0.4
 // Compile proof: build.check.plm.
 
 import "../../palette.plm"
-import "../../capsule.plm"
 
 library Build strict {
 
@@ -50,38 +49,59 @@ library Build strict {
     fact hot = false
 
     // ------------------------------------------------------------------- tile
-    // One capsule, as in QS: the phase's glyph in its tone and the summary beside it.
-    // `label.w` is fixed because a plugin cannot measure text; the summary is one
-    // line and the engine elides what does not fit.
+    // One capsule, as in QS: the phase's glyph in its tone, what the tool is building above it
+    // and the phase word below. The two-row readout is the centre row's own (the bar's
+    // `LlmCapsule`), so the build badge and the resident model beside it read as one family
+    // rather than a caption next to a card.
+    //
+    // The plate is that capsule's, not `Capsule`'s: `box { from: 0, 1; size: w, bar.plate }`, the
+    // same 69 % plate fill and the 1 px hairline at 8 % — bar geometry §3.6, "one plate line"
+    // (a 23-tall slot painted its plate from the strip's top edge and sat a pixel above its
+    // neighbour). The tones come from the caller for the reason genelec's do: a strict library
+    // cannot see the scene's live palette, and the child shell has two palettes; the defaults are
+    // palette.plm's dark ones, so a bench that does not care keeps working.
+    //
+    // `label.w` is fixed because a plugin cannot measure text, and a width composed from the
+    // summary would change with every derivation and make the badge jitter (the same reason the
+    // logic drops the tool's clock); the engine elides inside it and the tooltip carries the line.
+    //
     // The tile is a button, and what a press means is the scene's to say: QS's BuildStatus is
     // `autoToggleOnTap` and opens its popup, which here is the `build` drawer, and a plugin
     // may not run `pleamar --say`. So the event comes in as a parameter, as `chosen` does in
     // the language's own example.
     // `type_scale` is the scene's `fontScale` (the bar's `text_scale` fact): a strict library
-    // cannot read the scene's facts, so the multiplier comes in as a parameter.
+    // cannot read the scene's facts, so the multiplier comes in as a parameter. `row` is the
+    // strip's band (25): the plate is 23 of it, 1 px down, and the press area is the whole band.
     // `hover` is the scene's own hook for its tooltip: QS shows `PanelTooltip { text:
     // statusTooltip }` while the capsule is hovered (BuildStatus.qml:84-87), and a library emits
     // nothing on its own.
-    component Tile(tap: event, hover: event, scale: number = ui, type_scale: number = 1) {
-        let size.icon = 14
-        let label.w = 150
-        let w = 2 * capsule.pad + size.icon + capsule.gap + label.w
-        let h = bar.plate
-        size: w * scale, h * scale
+    component Tile(tap: event, hover: event, scale: number = ui, type_scale: number = 1,
+                   row: number = 25, plate: color = coal, ink_tone: color = ink,
+                   lit: color = accent.hover) {
+        // The centre capsules' box: 6 px of air, the 14 px glyph, 6, the words.
+        let pad = 6
+        let icon = 14
+        let icon.gap = 6
+        let label.w = 104
+        let w = pad + icon + icon.gap + label.w + pad
+        size: w * scale, row * scale
         group zoom {
             scale: scale
-            Capsule(w, h, scale: 1) {
-                // `row content`, not `row tile`: a named layout is a region of its own, so a row
-                // called `tile` next to the `zone box tile` below made two zones of one name and
-                // the button read as "covered by" its own decoration in `describe`/`press`.
-                row content {
-                    gap: capsule.gap
-                    align: center
-                    text "{glyph}" { family: "Material Symbols Outlined"; size: size.icon; color: if(tone == 2, amber, if(tone == 1, accent, ink.dim)); opacity: if(hot, 1, 0.85) }
-                    text "{summary}" { family: "Iosevka"; size: 13 * type_scale; weight: 500; width: label.w; lines: 1; color: if(tone == 2, amber, ink) }
-                }
+            body {
+                color: plate
+                opacity: 69%
+                border: 1, mix(plate, ink_tone, 8%)
+                box { from: 0, 1; size: w, bar.plate; corner: corner }
             }
-            zone box tile { from: 0, 0; size: w, h; corner: corner; cursor: pointer; label: "Nix build"; role: button }
+            // The idle tone never paints (the scene shows the tile only while a build runs) and
+            // stays on the palette's dim, which is not a theme's role to change.
+            text "{glyph}" { at: pad, row / 2; anchor: left center; family: "Material Symbols Outlined"; size: icon; color: if(tone == 2, amber, if(tone == 1, lit, ink.dim)); opacity: if(hot, 1, 0.85) }
+            // The tool's own line (the derivation it names, "+N" for the ones behind it) on top,
+            // the phase word below in the accent — `accent.hover`, which is the text-safe shade
+            // (§3.6: accent itself is 4.1:1 on a plate).
+            text "{summary}" { at: pad + icon + icon.gap, row / 2 - 4; anchor: left center; size: 9.6 * type_scale; weight: 700; family: "Iosevka"; width: label.w; lines: 1; color: ink_tone }
+            text "{stage}" { at: pad + icon + icon.gap, row / 2 + 4; anchor: left center; size: 9.6 * type_scale; weight: 700; family: "Iosevka"; lines: 1; color: if(tone == 2, amber, lit) }
+            zone box tile { from: 0, 0; size: w, row; corner: corner; cursor: pointer; label: "Nix build"; role: button }
             on enter tile { hot = true; emit hover(1) }
             on leave tile { hot = false; emit hover(0) }
             on press tile { emit tap }
