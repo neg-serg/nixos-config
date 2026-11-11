@@ -12,9 +12,11 @@ Done 2026-11-10: the switch ran, and `systemctl --user restart pipewire wireplum
 afterwards — a switch alone does not create `headphones`, because the loopback is a
 `pipewire.conf.d` module the running daemon reads only at startup. `pwout status` now reads:
 
-    default output: game-stereo
-    monitors:       game-stereo  (CamillaDSP running, present)
-    headphones:     headphones  (CamillaDSP stopped, present; DAC match none)
+```
+default output: game-stereo
+monitors:       game-stereo  (CamillaDSP running, present)
+headphones:     headphones  (CamillaDSP stopped, present; DAC match none)
+```
 
 `camilladsp-headphones` is stopped (no DAC yet), `pwout headphones` refuses, and the speaker daemon
 is started by its router rather than at login.
@@ -32,12 +34,13 @@ logs `dsp: headphones -> camilladsp-headphones -> <dac>`; unplugging the DAC ret
 
 ## 2. Done in aurora: the pane and the CLI point at 1235
 
-Fixed in the aurora repo, commit `808f9fd` (`[camilla] The headphone EQ belongs to the headphone
-chain, and the frame names it`): the core `:headphones` pane and the `headphones` CLI address the
-headphone instance (`camilla::chain::DAEMON`, port 1235), and an apply writes the model into
+Fixed in the aurora repo, commit `808f9fd`
+(`[camilla] The headphone EQ belongs to the headphone chain, and the frame names it`): the core
+`:headphones` pane and the `headphones` CLI address the headphone instance
+(`camilla::chain::DAEMON`, port 1235), and an apply writes the model into
 `~/.config/camilladsp/headphones.yml` after the daemon validates it — the title carries the model's
-name (`EQ: Sennheiser — HD 600`), restore removes it, and the pane's chip and the player's status bar
-read the file without a socket, so the answer survives the lazy chain being stopped.
+name (`EQ: Sennheiser — HD 600`), restore removes it, and the pane's chip and the player's status
+bar read the file without a socket, so the answer survives the lazy chain being stopped.
 
 The `[[plugin]] name = "camilla"` tab stays on 1234 on purpose: it is the speaker DSP surface. The
 known hazard is closed from the other side — the tab now refuses a config whose `capture.node_name`
