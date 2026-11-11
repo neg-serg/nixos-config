@@ -84,6 +84,16 @@ CATALOG = {
         "lean": "-",
         "fp": "4.2/6",
     },
+    "qwen3.8-4b": {
+        "aliases": ["commit", "commit-4b", "q4b"],
+        "role": "4B distill: commit messages",
+        "ctx": "16k",
+        "size": "2.8 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+        "commit": "76.9/90",
+    },
     "qwen3.8-flash-next-abliterated": {
         "aliases": ["qwen3.8-flash", "next"],
         "role": "180B-A6B MoE, next tier",
@@ -483,23 +493,24 @@ def print_models():
     live = set(model_names())
     print(
         f"{'NAME':32s} {'ROLE':28s} {'CTX':>4s} {'VRAM':>6s} {'CHEM':>6s} "
-        f"{'LEAN':>5s} {'FP':>5s}  ALIASES"
+        f"{'LEAN':>5s} {'FP':>5s} {'COMMIT':>6s}  ALIASES"
     )
     for name, meta in CATALOG.items():
         mark = "*" if name in live else " "
         print(
             f"{mark}{name:31s} {meta['role']:28s} {meta['ctx']:>4s} "
             f"{meta['size']:>6s} {meta['chem']:>6s} {meta['lean']:>5s} "
-            f"{meta['fp']:>5s}  "
+            f"{meta['fp']:>5s} {meta.get('commit', '-'):>6s}  "
             f"{', '.join(meta['aliases'])}"
         )
     print(
         "\n* = present in the live catalog. Scores are measured on trantor; "
         "chem = 6 olympiad problems (13 values), lean = 7 core-Lean "
-        "theorems, fp = 6 build-planning cases (partial credit). * = fp with "
-        "the tier's own thinking config; every other fp score has thinking "
-        "pinned off for comparability. The qwen tiers repeat exactly across "
-        "runs. The Lean prover (oprover) is "
+        "theorems, fp = 6 build-planning cases (partial credit), "
+        "commit = 9 real diffs from this repository (10 points each). "
+        "* = fp with the tier's own thinking config; every other fp score has "
+        "thinking pinned off for comparability. The qwen tiers repeat exactly "
+        "across runs. The Lean prover (oprover) is "
         "trained against Mathlib, which this host does not have, so its "
         "core-only score understates it and is not comparable with the "
         "general tiers."
@@ -1292,14 +1303,16 @@ COMMIT_CASES = [
     ("rct32-repro", "859a320f6"),
 ]
 
-# The default commit-writer set, measured 2026-11-09 (9 real diffs; totals
-# of 90 under the 0-10 rubric): qwen3.8-27b 81.6, devstral 76.5, qwen3-vl-8b
-# 73.3, gemma4 70.8. The 27B is the quality tier; the 8B is the fast default
-# when no model is resident (see COMMIT_DEFAULT_MODEL / `--model auto`).
+# The default commit-writer set, measured 2026-11-09 and re-run 2026-11-11 (9
+# real diffs; totals of 90 under the 0-10 rubric): qwen3.8-27b 81.2,
+# qwen3.8-4b 76.9, qwen3-vl-8b 73.9, gemma4 70.8. The 27B is the quality tier
+# and stays the pick when it is already resident; the 4B is the dedicated
+# writer (COMMIT_DEFAULT_MODEL, `commit` alias) and the 8B vision model left
+# this lane with the 2026-11-11 change — it is the image tier only now.
 # devstral left the fleet on 2026-11-11 with its weights; its 76.5 stands as
 # the recorded score, the remaining three keep the comparison.
 COMMIT_MODELS = [
-    "qwen3-vl-8b-abliterated",
+    "qwen3.8-4b",
     "gemma4-26b-abliterated",
     "qwen3.8-27b-abliterated",
 ]
@@ -1773,6 +1786,36 @@ def _commit_shorten(model, messages, text, subject, max_tokens):
     return _commit_clean(r["content"])
 
 
+def _commit_condense(model, messages, text, max_tokens):
+    """One repair round when the reply ran into the token cap.
+
+    Observed 2026-11-11 with the 4B writer on a diff that is mostly
+    documentation: it copied the new prose into the body instead of
+    summarising it, hit COMMIT_MAX_TOKENS mid-sentence and lost the closing
+    paragraph. The cap is the detectable half of the failure, and feeding the
+    draft back with the length rule is cheaper than a longer budget that would
+    only buy more copied prose.
+    """
+    ask = (
+        messages[1]["content"]
+        + "\n\nYour draft:\n"
+        + text
+        + "\n\nThat reply was cut off: the body is longer than the 2-5 "
+        "sentences the rules allow. Rewrite the whole message with the same "
+        "scope and subject, and a body of at most four sentences that "
+        "summarises the change in your own words instead of quoting the new "
+        "text. Return only the message."
+    )
+    r = chat(
+        model,
+        [messages[0], {"role": "user", "content": ask}],
+        max_tokens=max_tokens,
+        cache=True,
+        extra={"chat_template_kwargs": {"enable_thinking": False}},
+    )
+    return _commit_clean(r["content"])
+
+
 def _commit_grade(case, text, all_scopes):
     """Score one reply 0-10 against the real commit and the diff.
 
@@ -1971,7 +2014,24 @@ def bench_commit(
 
 # ------------------------------------------------------------- commit command
 
-COMMIT_DEFAULT_MODEL = "qwen3-vl-8b-abliterated"
+# The dedicated writer: a 4B distill of the Qwen3.8 teacher (see the
+# `qwen3.8-4b` slot). It beats the 8B vision tier this lane used to fall back
+# to and costs a third of the VRAM, so a cold fleet loads it instead of the
+# quality tier — `llmctl bench commit` is what put it here.
+COMMIT_DEFAULT_MODEL = "qwen3.8-4b"
+
+# `--model auto` reuses the resident tier only from this set: the same card
+# also serves OCR, GUI-agent and k8s specialists, and handing one of those a
+# diff produces a message-shaped non-answer while evicting a model that could
+# have written it. Everything else swaps in COMMIT_DEFAULT_MODEL.
+COMMIT_REUSE = {
+    "qwen3.8-4b",
+    "qwen3.8-27b-abliterated",
+    "qwen3.8-27b-bartowski",
+    "qwen3.8-27b-unsloth",
+    "qwen3.8-flash-next-abliterated",
+    "gemma4-26b-abliterated",
+}
 
 
 def _commit_diff(repo, staged):
@@ -1997,10 +2057,11 @@ def _commit_diff(repo, staged):
 
 
 def _commit_message(args, repo, model, case, scopes):
-    """Ask for one commit message and repair an over-long subject.
+    """Ask for one commit message and repair a cut-off or over-long subject.
 
     Shared by the single-commit path and every group of `--split`, so both get
-    the same prompt, the same examples and the same 72-character repair round.
+    the same prompt, the same examples, the same token-cap condense round and
+    the same 72-character repair round.
     """
     messages = _commit_prompt(
         case,
@@ -2020,6 +2081,18 @@ def _commit_message(args, repo, model, case, scopes):
     except Exception as exc:  # noqa: BLE001
         sys.exit(f"model request failed: {exc}")
     text = _commit_clean(r["content"])
+    if r["finish"] == "length":
+        try:
+            condensed = _commit_condense(model, messages, text, args.max)
+        except Exception as exc:  # noqa: BLE001
+            print(f"note: condense retry failed: {exc}", file=sys.stderr)
+        else:
+            if _commit_parse(condensed)[0]:
+                text = condensed
+                print(
+                    "note: reply hit the token cap, asked for a shorter body",
+                    file=sys.stderr,
+                )
     subject = _commit_parse(text)[0]
     if len(subject) > 72:
         try:
@@ -2312,12 +2385,14 @@ def cmd_commit(args):
             "note: committing is the default now; --apply is redundant",
             file=sys.stderr,
         )
-    # `auto` keeps the resident model, so a commit message does not evict the
-    # tier the user is actually working with; a cold fleet falls back to the
-    # small writer instead of loading the expensive one.
+    # `auto` keeps a resident text tier, so a commit message does not evict the
+    # model the user is actually working with; anything that is not a writer
+    # (vision, OCR, GUI agent, k8s specialist) is the wrong tool even warm, so
+    # a cold or busy fleet falls back to the dedicated 4B writer.
     if args.model == "auto":
         live = running()
-        model = live[0]["model"] if live else COMMIT_DEFAULT_MODEL
+        resident = live[0]["model"] if live else None
+        model = resident if resident in COMMIT_REUSE else COMMIT_DEFAULT_MODEL
     else:
         model = resolve(args.model) or args.model
     if args.split:
@@ -2507,7 +2582,7 @@ def main():
     s.add_argument(
         "--model",
         default="auto",
-        help="модель; auto = резидент llama-swap, иначе дефолт",
+        help="модель; auto = резидент-писатель, иначе qwen3.8-4b (commit)",
     )
     s.add_argument("--repo", help="репозиторий (по умолчанию cwd)")
     s.add_argument(
@@ -2520,8 +2595,14 @@ def main():
         action="store_true",
         help="устарело: коммит теперь по умолчанию",
     )
+    # The example is on by default: without it the small tiers dropped the
+    # body or glued it to the subject, and it was worth ~3 points on the 8B
+    # (`.agent/notes/2026-11-09-commit-bench.md`). It costs ~120 prompt tokens.
     s.add_argument(
-        "--example", action="store_true", help="добавить one-shot пример"
+        "--example",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="one-shot пример в system prompt (--no-example, чтобы убрать)",
     )
     s.add_argument("--max", type=int, default=COMMIT_MAX_TOKENS)
     s.add_argument("--verbose", action="store_true", help="тайминги в stderr")

@@ -380,6 +380,28 @@ let
       --reasoning-format deepseek
   '';
 
+  # Qwen3.8-4B (Apache-2.0) — the commit-message writer. A full-parameter
+  # distillation of the 180B Qwen3.8 teacher into the Qwen3.5-4B architecture,
+  # so it carries the fleet's style at a 4B budget. Measured 2026-11-11 with
+  # `llmctl bench commit` (nine real diffs, one-shot example, one model
+  # resident): 76.9/90 against 73.9 for the 8B Qwen3-VL it replaces in this
+  # lane and 81.2 for the 27B, at ~1.3 s per message, ~127 tok/s decode and
+  # 2.8 GB of weights. The 8B still owns images (`vision-fast`); it is no
+  # longer the commit fallback.
+  # 16k, not the 32k the bench used: the prompt is bounded by
+  # COMMIT_DIFF_CHARS (24000 characters, ~7k tokens), so 16k holds it plus the
+  # reply with a 2x margin and keeps the tier cheap to swap in.
+  # `--reasoning off` is not cosmetic: the distill thinks by default (its
+  # teacher's chain of thought), and a client that cannot read
+  # `reasoning_content` would wait through thoughts it never sees.
+  qwen38small = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/commit/Qwen3.8-4B-Q4_K_M.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 16384 -np 1 --flash-attn on --fit off --reasoning off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0
+  '';
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -558,6 +580,18 @@ in
           aliases = [
             "unsloth27b"
             "ud"
+          ];
+        };
+
+        # The commit-message writer: one message costs a couple of seconds and
+        # the 60 s global TTL already covers a second commit in the same
+        # session, so the slot sets no TTL of its own — holding ~4 GiB longer
+        # would only starve the chat tiers.
+        "qwen3.8-4b" = {
+          cmd = qwen38small;
+          aliases = [
+            "commit"
+            "commit-4b"
           ];
         };
 
