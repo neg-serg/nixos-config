@@ -4,10 +4,10 @@ pleamar's services carry audio, network, bluetooth, battery, media, tray, notifi
 window and apps. The system monitor, weather, calendar and keyboard-layout views need data no
 service has, so each view spawns one small stateless worker while it exists and kills it on close —
 the same pattern as Vitreus' `vitreus-sysmon`. All workers are the Rust crates
-`packages/pleamar-sysmon`, `packages/pleamar-weather`, `packages/pleamar-calendar`,
-`packages/pleamar-journal` and `packages/pleamar-kbdlayout`; this directory keeps the picker's
-commands in the `packages/pleamar-picker` crate (apply/still/the deck CLI). None of them runs in the
-background on its own.
+`packages/pleamar-sysmon`, `packages/pleamar-weather`, `packages/pleamar-calendar` and
+`packages/pleamar-kbdlayout`; this directory keeps the picker's commands in the
+`packages/pleamar-picker` crate (apply/still/the deck CLI). None of them runs in the background on
+its own.
 
 The protocol is **INTERFACES.md §7, frozen by PH1-T1**; this file repeats it for convenience and
 adds the data keys each worker emits. Where this file and §7 disagree, §7 wins.
@@ -29,7 +29,6 @@ adds the data keys each worker emits. Where this file and §7 disagree, §7 wins
   | `packages/pleamar-weather`   | `pleamar-weather`   | `weather`            | `weather`                                             |
   | `packages/pleamar-calendar`  | `pleamar-calendar`  | `calendar`           | `calendar`                                            |
   | `packages/pleamar-kbdlayout` | `pleamar-kbdlayout` | `kbdlayout`          | `layout`                                              |
-  | `packages/pleamar-journal`   | `pleamar-journal`   | `journal`            | — (one snapshot per dashboard open)                   |
 
 - **Handshake.** The first line a worker writes is
   `{"ok":true,"worker":"sysmon","version":1,"topics":["sysmon",…]}`. A scene that does not know
@@ -195,18 +194,6 @@ plain line `switch [next|prev|DEVICE [next|prev]]`; both answer with an ack and 
 `pleamar-kbdlayout switch …` does the same from the command line and exits. Missing `hyprctl` is a
 start error (exit 1). Needs `hyprctl`; `socat` only for the live event stream (without it the worker
 polls).
-
-### journal — `pleamar-journal` (Rust crate `packages/pleamar-journal`)
-
-```
-pleamar-journal [--since "-24h"] [--entries N]
-```
-
-One JSON snapshot per dashboard open (`run(...)`, no handshake, commands or cadence): `logs` and
-`errors` are journal line counts since `--since`, `services` the running user units, and `entries`
-the last `--entries` warnings as `{time, service, msg}` (local `HH:MM`, message cut to 120
-codepoints). Exit 0 on success, 2 for an unknown argument, 1 when journalctl/systemctl fail to
-start; needs only `journalctl` and `systemctl`.
 
 ## The picker's commands
 

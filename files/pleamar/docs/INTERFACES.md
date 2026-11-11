@@ -186,15 +186,15 @@ Read them with `pleamar --say <scene> "get <fact>"` and set them with
 \-------------------------------------------------------------------------------------------- | |
 `bar` | `shown` | bool | `true` | the strip is there; `reserve` counts only while true | | `bar` |
 `startup` | bool | `false` | login gate is up (clean bar) — written by its logic, read by tests | |
-`panels` | `drawer` | enum
-`none \| volume \| network \| media \| calendar \| weather \| build \| system` | `none` | which
-drawer is open (one at a time, D1) | | `notifications` | `dnd` | bool | `false` | do not disturb | |
-`notifications` | `centre` | bool | `false` | the notification centre is open | | `notifications` |
-`count` | number | `0` | notifications currently shown or kept (read-only for other scenes) | |
-`toast` | `visible` | number | `0` | how many toasts are on screen | | `overlay` | `active` | bool |
-`false` | the dismissal catcher is up | | `lock` | `locked` | bool | `true` | the lock surface wants
-the session (the compositor's own `lock.held` says whether it has it) | | `launcher` | `open` | bool
-| `false` | the launcher is up | | `launcher` | `query` | text | `""` | what has been typed |
+`panels` | `drawer` | enum `none \| volume \| network \| media \| calendar \| weather \| build` |
+`none` | which drawer is open (one at a time, D1) | | `notifications` | `dnd` | bool | `false` | do
+not disturb | | `notifications` | `centre` | bool | `false` | the notification centre is open | |
+`notifications` | `count` | number | `0` | notifications currently shown or kept (read-only for
+other scenes) | | `toast` | `visible` | number | `0` | how many toasts are on screen | | `overlay` |
+`active` | bool | `false` | the dismissal catcher is up | | `lock` | `locked` | bool | `true` | the
+lock surface wants the session (the compositor's own `lock.held` says whether it has it) | |
+`launcher` | `open` | bool | `false` | the launcher is up | | `launcher` | `query` | text | `""` |
+what has been typed |
 
 IPC examples that other tools (Hyprland binds, health probe, scripts) may rely on:
 
@@ -218,7 +218,7 @@ order.
 `panels/*` is the shell's name for the drawer family; each entry is a *drawer name*, not a scene,
 and all of them live in the one `panels` process:
 
-`volume`, `network`, `media`, `calendar`, `weather`, `build`, `system`, `theme`, `shell`, `power`,
+`volume`, `network`, `media`, `calendar`, `weather`, `build`, `theme`, `shell`, `power`,
 `bluetooth`, `toggles`, `keys`, `notes`, `timer`, `github`, `wifi`, `bar`.
 
 That is the whole list: the `drawer` fact names exactly the drawers that have a page behind them.
@@ -255,8 +255,9 @@ rules cannot run programs; the bar's *logic* does it with `run`/`spawn`, permiss
 `run: "pleamar"`), and `panels` closes on Escape, on outside press and when `drawer` is set to
 `none`.
 
-The names `none`, `volume`, …, `system` are also the placeholders for the drawer titles: use the
-label texts in §8 (`Volume`, `Network`, `Media`, `Calendar`, `Weather`, `Build`, `System monitor`).
+The names `none`, `volume`, …, `theme` are also the placeholders for the drawer titles: use the
+label texts in §8 (`Volume`, `Network`, `Media`, `Calendar`, `Weather`, `Build`). `system` left the
+list on 2026-11-11: the owner removed its monitoring dashboard, so nothing opens it any more.
 
 #`wifi` is the networks page: the radio, a scan, the networks by strength with a press to join, a
 password band for a secured network never joined here, and forget on a saved one. It reports what
@@ -1008,15 +1009,12 @@ never part of the protocol. Logs on stdout are a defect: a line that does not pa
 protocol error and the sample is dropped.
 
 **Names and permissions.** Workers are the Rust crates `packages/pleamar-sysmon`,
-`packages/pleamar-weather`, `packages/pleamar-calendar`, `packages/pleamar-journal` and
-`packages/pleamar-kbdlayout` (PH2-E scope), installed into `PATH` as `pleamar-<name>`
-(`pleamar-sysmon`, `pleamar-weather`, `pleamar-calendar`, `pleamar-kbdlayout`, `pleamar-journal`,
-`pleamar-wallpaper-palettes`, `pleamar-wallpaper-apply`, `pleamar-wallpaper-still`), and are spawned
-by that bare name. A scene declares only the ones it uses: `permissions { run: "pleamar-sysmon" }`.
-Never `sh -c`, never a path, never a second worker name the module does not install.
-
-`pleamar-journal` also installs beside them but is a command, not a streaming worker: the panels
-scene runs it once per dashboard open with `run(...)`, one JSON snapshot line, no handshake.
+`packages/pleamar-weather`, `packages/pleamar-calendar` and `packages/pleamar-kbdlayout` (PH2-E
+scope), installed into `PATH` as `pleamar-<name>` (`pleamar-sysmon`, `pleamar-weather`,
+`pleamar-calendar`, `pleamar-kbdlayout`, `pleamar-wallpaper-palettes`, `pleamar-wallpaper-apply`,
+`pleamar-wallpaper-still`), and are spawned by that bare name. A scene declares only the ones it
+uses: `permissions { run: "pleamar-sysmon" }`. Never `sh -c`, never a path, never a second worker
+name the module does not install.
 
 Two names install beside them and are **not** workers: `pleamar-wallpaper-palettes` and
 `pleamar-wallpaper-apply` are commands the `picker` scene runs to completion with `run(...)` — the
@@ -1166,7 +1164,7 @@ microphone | `Microphone {audio.input * 100, 0} %` | `slider` | `value: "{…} %
 `button` | — | — | | media capsule | `Media: {media.title}` / `Media` | `button` | — | — | |
 transport | `Previous track` / `Play` / `Pause` / `Next track` | `button` | — | — | | weather |
 `Weather: {temp, 0}°, {condition}` | `button` | — | — | | system monitor | `System monitor` |
-`button` | — | — | | tray item | `{tray.title}` (fall back to the app name) | `button` | — | — | |
+`region` | — | — | | tray item | `{tray.title}` (fall back to the app name) | `button` | — | — | |
 drawer opener | the drawer title, §2.2 | `button` | — | — | | drawer close | `Close {drawer}` |
 `button` | — | — | | power: lock | `Lock` | `button` | — | — | | power: suspend | `Suspend` |
 `button` | — | — | | power: log out | `Log out` | `button` | — | `no` | | power: reboot | `Reboot` |
