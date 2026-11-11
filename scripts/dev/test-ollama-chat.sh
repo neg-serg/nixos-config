@@ -55,7 +55,7 @@ partial=0
 # embedding/OCR-only one does not, so the filter is by what the model can do
 # rather than by its name.
 discover() {
-  python3 - "$HOST" <<'PY'
+  python3 - "$HOST" << 'PY'
 import json
 import sys
 import urllib.request
