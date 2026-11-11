@@ -2,14 +2,13 @@
 --
 -- What the declarative scene cannot do itself:
 --   · read settings.json and push defaults/clamps into the drawing facts;
---   · start a worker while one of the three worker-backed drawers is open and
+--   · start a worker while one of the two worker-backed drawers is open and
 --     kill it the moment the drawer closes;
 --   · turn worker samples into the live texts and models the drawers draw;
 --   · carry mixer presses/drags to the `audio` service commands.
 --
 -- Workers (INTERFACES.md §7; installed into PATH as pleamar-<name> and spawned
 -- by that bare name):
---   system   -> pleamar-sysmon    topic sysmon      one sample per second
 --   weather  -> pleamar-weather   topic weather     refreshed every five minutes
 --   calendar -> pleamar-calendar  topic calendar    one month, month navigation
 -- Each worker writes a `{"ok":true,"worker":…,"version":1,…}` handshake first;
@@ -22,8 +21,8 @@
 -- The deprecated draft shape (`{"ok":{…}}`, no handshake) is still accepted so
 -- a scene does not break against the older helpers, but §7 is the contract.
 -- A helper that is not installed (spawn fails) or that keeps dying leaves the
--- drawer in its documented "not available"/offline state: `cal.err`,
--- `weather.err` or `sysmon.err` says so and no data is invented.
+-- drawer in its documented "not available"/offline state: `cal.err` or
+-- `weather.err` says so and no data is invented.
 --
 -- The audio service needs no worker: the scene binds `service audio` for the
 -- drawing; this logic watches it only to remember the stream/device `id`s the
@@ -223,18 +222,6 @@ end
 local function fmt1(x)
     if type(x) ~= "number" or x ~= x then return "--" end
     return tostring(math.floor(x * 10 + 0.5) / 10)
-end
-
-local function rate_kibs(x)
-    if type(x) ~= "number" or x ~= x then return "--" end
-    if x >= 1024 then return fmt1(x / 1024) .. " MiB/s" end
-    return fmt0(x) .. " KiB/s"
-end
-
-local function tone(level, warn_at, crit_at)
-    if level >= crit_at then return 2 end
-    if level >= warn_at then return 1 end
-    return 0
 end
 
 -- WMO weather codes, as Open-Meteo and wttr.in report them.
@@ -1279,93 +1266,6 @@ notes_load()
 
 -- ==================== samples into the drawing ====================
 
--- ---- sysmon: one `tiles` record per metric -------------------------------
-
--- The worker samples once a second for as long as the scene runs, not only while the drawer is
--- open: the chart is worth more when it holds the minute before the open. This ring keeps that
--- minute and survives a close/open — the samples in it are real time, so the page never has to
--- explain a gap it drew as data.
-local SYS_HIST_LEN = 60
-local sys_hist = {}
-
--- One record per pair of neighbours, the shape the flow card settled on: the scene can loop over a
--- model but cannot build a path from it or hold the previous point of a series, so a segment is
--- published as its two ends. `t` runs over the whole window, so the curve grows in from the left
--- until the window is full and slides after that, one sample a step.
-local function sysmon_publish()
-    local n = #sys_hist
-    local span = math.max(SYS_HIST_LEN - 1, 1)
-    local rows = {}
-    for k = 2, n do
-        local a, b = sys_hist[k - 1], sys_hist[k]
-        rows[#rows + 1] = {
-            t0 = (k - 2) / span, t1 = (k - 1) / span,
-            cpu0 = a.cpu, cpu1 = b.cpu,
-            ram0 = a.ram, ram1 = b.ram,
-            temp0 = a.temp, temp1 = b.temp,
-            -- The temperature is broken, not drawn to zero, where its reading is missing: the
-            -- chart may not invent a dip the worker never measured.
-            temp_ok = a.temp_ok and b.temp_ok,
-        }
-    end
-    model.sys_hist = rows
-end
-
-local function sysmon_apply(d, topic)
-    -- The `sysmon` topic carries the whole sample; a subtopic we did not
-    -- subscribe to is not merged (its fields are the worker's, not this scene's).
-    if topic ~= "" and topic ~= "sysmon" then return end
-    local parts = type(d) == "table" and d or {}
-    local cpu = type(parts.cpu) == "table" and parts.cpu or {}
-    local mem = type(parts.mem) == "table" and parts.mem or {}
-    local swap = type(parts.swap) == "table" and parts.swap or {}
-    local disk = type(parts.disk) == "table" and parts.disk or {}
-    local temp = type(parts.temp) == "table" and parts.temp or {}
-    local cpu_pct = tonumber(cpu.percent) or 0
-
-    local mp = tonumber(mem.percent) or 0
-    local dp = tonumber(disk.percent) or 0
-    local sp = tonumber(swap.percent) or 0
-    local tc = tonumber(temp.celsius)
-    local tp = tonumber(temp.percent) or 0
-
-    local swap_value = "none"
-    if swap.available == true then
-        swap_value = fmt1(swap.used_gib) .. " / " .. fmt1(swap.total_gib) .. " GiB"
-    end
-
-    model.tiles = {
-        { label = "CPU", value = fmt0(cpu_pct) .. " %", level = cpu_pct / 100,
-          tone = tone(cpu_pct, 70, 90) },
-        { label = "Memory", value = fmt1(mem.used_gib) .. " / " .. fmt1(mem.total_gib) .. " GiB",
-          level = mp / 100, tone = tone(mp, 80, 95) },
-        { label = "Swap", value = swap_value, level = sp / 100, tone = tone(sp, 60, 85) },
-        { label = "Disk", value = "R " .. rate_kibs(disk.read_kibps) .. " · W " .. rate_kibs(disk.write_kibps),
-          level = dp / 100, tone = tone(dp, 70, 90) },
-        { label = "Temperature", value = tc and (fmt1(tc) .. " °C") or "--", level = tp / 100,
-          tone = tc and tone(tc, 75, 90) or 0 },
-    }
-
-    -- Every series is stored as a 0..1 share, so the chart's one 0..100 % scale is a plain
-    -- multiplication; `temp_ok` says whether the worker really reported that reading, so a missing
-    -- one breaks its line instead of drawing a dip to zero. There is no GPU series: the worker's
-    -- `gpu_busy_percent` reads 99-100 % on this card while it is idle, and a chart may not draw a
-    -- reading nobody can stand by.
-    local function share(v)
-        if type(v) ~= "number" or v ~= v then return 0 end
-        return math.min(1, math.max(0, v / 100))
-    end
-    sys_hist[#sys_hist + 1] = {
-        cpu = share(cpu_pct), ram = share(mp), temp = share(tp),
-        temp_ok = tc ~= nil and tp ~= nil,
-    }
-    if #sys_hist > SYS_HIST_LEN then table.remove(sys_hist, 1) end
-    sysmon_publish()
-    fact.sysmon_temp = (tc ~= nil) and 1 or 0
-    fact.sysmon_online = 1
-    text["sysmon.err"] = ""
-end
-
 -- ---- weather: formatted live texts plus the forecast ---------------------
 
 local function weather_apply(d, topic)
@@ -1637,7 +1537,6 @@ end
 -- ======================= worker platform =======================
 
 local WORKERS = {
-    sysmon = { drawer = "system", spawn = "pleamar-sysmon", topic = "sysmon" },
     weather = { drawer = "weather", spawn = "pleamar-weather", topic = "weather" },
     calendar = { drawer = "calendar", spawn = "pleamar-calendar", topic = "calendar" },
 }
@@ -1655,9 +1554,7 @@ end
 
 -- Domain arguments only; the cadence travels in the subscribe command.
 local function worker_args(name)
-    if name == "sysmon" then
-        return {}
-    elseif name == "weather" then
+    if name == "weather" then
         -- `--timeout 3`, not the helper's 8: it is one attempt's deadline, and eight seconds is a
         -- long time to wait for a failure. The worker dials both providers at once and takes the
         -- first payload, so this no longer decides what the card waits for — a reachable provider
@@ -1681,9 +1578,7 @@ end
 
 -- What the scene wants from the worker, per §7: one topic each, this cadence.
 local function subscribe_line(name)
-    if name == "sysmon" then
-        return '{"cmd":"subscribe","topic":"sysmon","interval_ms":1000}\n'
-    elseif name == "weather" then
+    if name == "weather" then
         return '{"cmd":"subscribe","topic":"weather","interval_ms":300000}\n'
     elseif name == "calendar" then
         return '{"cmd":"subscribe","topic":"calendar","interval_ms":300000,"month":"'
@@ -1693,18 +1588,11 @@ local function subscribe_line(name)
 end
 
 local function wanted(name)
-    -- The system worker is the one that outlives its drawer: the chart is the minute BEFORE the
-    -- open, so the sampling cannot start when the drawer does. It is one procfs read a second;
-    -- the other two call the network and a calendar and stay tied to their drawer.
-    if name == "sysmon" then return true end
     return fact.drawer == WORKERS[name].drawer
 end
 
 local function fail_worker(name, why)
-    if name == "sysmon" then
-        fact.sysmon_online = 0
-        text["sysmon.err"] = "System monitor " .. why
-    elseif name == "weather" then
+    if name == "weather" then
         fact.weather_ok = 0
         fact["weather.loading"] = false
         text["weather.err"] = "Weather " .. why
@@ -1713,7 +1601,7 @@ local function fail_worker(name, why)
     end
 end
 
-local APPLY = { sysmon = sysmon_apply, weather = weather_apply, calendar = calendar_apply }
+local APPLY = { weather = weather_apply, calendar = calendar_apply }
 
 local start_worker, stop_worker
 
@@ -2175,11 +2063,9 @@ end
 
 -- ==================== drawer lifecycle ====================
 
--- One worker at a time, and one of them without a drawer (`sysmon`: see `wanted`). Whatever
--- changed the drawer fact (a scene rule, --say from a bind, the bar's logic), this brings the
--- workers in line; the half-second pass is the safety net, not the main path (the fact listener
--- below is).
-local sysmon_ticks = 0
+-- One worker at a time. Whatever changed the drawer fact (a scene rule, --say from a bind, the
+-- bar's logic), this brings the workers in line; the half-second pass is the safety net, not the
+-- main path (the fact listener below is).
 local function reconcile()
     -- The date is the logic's own, and a scene lives for days: the "today" marker, the holidays row
     -- and the pill's `pending` are all decided against `today_*` when the grid is built. Turn them
@@ -2191,18 +2077,6 @@ local function reconcile()
         cal_rebuild()
     end
     ensure_audio_watch()
-    -- The system worker is never stopped by a drawer closing, so a give-up is never cleared by one
-    -- either. Time it instead: one attempt a minute, so a helper that comes back is picked up
-    -- without a restart of the shell.
-    sysmon_ticks = sysmon_ticks + 1
-    if sysmon_ticks >= 120 then
-        sysmon_ticks = 0
-        local h = H.sysmon
-        if h.gave_up and not h.id and not h.timer then
-            h.gave_up = false
-            h.tries = 0
-        end
-    end
     for name in pairs(WORKERS) do
         if wanted(name) then
             if name == "calendar" and fact.cal_year == 0 then
@@ -2217,48 +2091,13 @@ local function reconcile()
     end
 end
 
--- The journal worker (`pleamar-journal`): one JSON snapshot per call, counts and
--- the last few entries. Nothing streams here — a dashboard opened on demand does
--- not need a process of its own to sit there.
-local function journal_refresh()
-    local ok = pcall(run, "pleamar-journal", {}, function(out)
-        if type(out) ~= "string" then return end
-        local got, v = pcall(json.decode, out:match("[^\n]+") or out)
-        if not got or type(v) ~= "table" or type(v.data) ~= "table" then return end
-        local d = v.data
-        text["sys.logs"] = d.logs and tostring(d.logs) or "--"
-        text["sys.errors"] = d.errors and tostring(d.errors) or "--"
-        text["sys.services"] = d.services and tostring(d.services) or "--"
-        local rows, lines = {}, {}
-        for _, e in ipairs(d.entries or {}) do
-            rows[#rows + 1] = { time = e.time or "", service = e.service or "", msg = e.msg or "" }
-            lines[#lines + 1] = "[" .. (e.time or "") .. "] " .. (e.service or "") .. ": " .. (e.msg or "")
-        end
-        model.journal = rows
-        -- The reference copies the journal's problems to the clipboard every time the dashboard is
-        -- opened (SystemMonitorPopup.qml:17-40, `onOpened` -> `copyProblemsToClipboard`), so a paste
-        -- into a chat carries the lines; the worker hands over the problems themselves, with no
-        -- level to filter on. A clipboard with nothing to say is left alone.
-        if #lines > 0 then
-            local copied = pcall(run, "wl-copy", {}, nil, { input = table.concat(lines, "\n") })
-            if not copied then log("panels: the journal was not copied") end
-        end
-        fact.journal_ok = true
-        fact["sys.have"] = true
-    end)
-    if not ok then
-        text["sys.logs"], text["sys.errors"], text["sys.services"] = "--", "--", "--"
-        fact.journal_ok = false
-    end
-end
-
 -- A drawer closes on Escape, on a press outside it, on `WIN+SPACE` (the bind asks this scene the
 -- same way it asks the notification centre), or when the fact is set to `none`.
 --
 -- It also closes itself when left alone: a card nobody dismisses would otherwise stand there for
 -- the rest of the session, which is what "the plates hang forever" looked like. The first timer
 -- was six seconds (`DRAWER_TIMEOUT_MS`, 6000) and it closed cards while they were being read —
--- the calendar turned to the wrong month, the system dashboard went away mid-look — so the wait
+-- the calendar turned to the wrong month — so the wait
 -- is twenty now, and every new fact, drawer change or press on the card's own zones starts it
 -- over (`touch_drawer`).
 -- ==================== the theme drawer ====================
@@ -2474,13 +2313,6 @@ on("fact:drawer", function(v)
         net_stop()
     end
 
-    -- The system dashboard reads the journal once, when it opens: the worker prints a single line
-    -- and exits. The history ring is not touched here — sysmon sampled all along, so the chart
-    -- already holds the minute before the open.
-    if v == "system" then
-        journal_refresh()
-    end
-
     -- The theme card is a list of files, so it is read when the card opens and
     -- after every apply (which reloads the scene anyway).
     if v == "theme" then
@@ -2498,7 +2330,7 @@ end)
 
 every(500, reconcile)
 
--- The grid is ready before the first open; the only worker that runs without a drawer is sysmon.
+-- The grid is ready before the first open.
 fact.cal_year, fact.cal_month = today_y, today_m
 fact.sel_day = today_d
 cal_rebuild()

@@ -900,7 +900,6 @@ on("open_media_panel", function() open_drawer("media") end)
 on("open_network_panel", function() open_drawer("network") end)
 on("open_calendar_panel", function() open_drawer("calendar") end)
 on("open_weather_panel", function() open_drawer("weather") end)
-on("open_system_panel", function() open_drawer("system") end)
 on("open_build_panel", function() open_drawer("build") end)
 
 -- Each pressable capsule's drawer, by the name `panels` declares (`panels.plm`'s `drawer`
@@ -924,7 +923,6 @@ on("toggle_bar_panel", function() toggle_drawer("bar") end)
 
 on("toggle_calendar_panel", function() toggle_drawer("calendar") end)
 on("toggle_weather_panel", function() toggle_drawer("weather") end)
-on("toggle_system_panel", function() toggle_drawer("system") end)
 on("toggle_build_panel", function() toggle_drawer("build") end)
 on("toggle_theme_panel", function() toggle_drawer("theme") end)
 on("toggle_shell_panel", function() toggle_drawer("shell") end)
@@ -1514,7 +1512,8 @@ local function tip_line(i)
             .. "\n" .. net_state_line()
     elseif i == 4 then
         -- SystemMonitorCapsule.qml:22-35, `TooltipText.compose("Monitoring", "", hints)`: CPU, GPU
-        -- (only when the probe found one), RAM with the pair, the temperature, and the click line.
+        -- (only when the probe found one), RAM with the pair, and the temperature. No click line:
+        -- the monitoring dashboard it used to open was removed at the owner's request.
         local lines = { "Monitoring" }
         lines[#lines + 1] = string.format("CPU: %d%%", math.floor((fact.cpu or 0) * 100 + 0.5))
         if fact["has.gpu"] == true then
@@ -1525,7 +1524,6 @@ local function tip_line(i)
             tonumber(fact.ram_total_gib) or 0)
         local c = (tonumber(fact.temp) or 0) * 70 + 30
         lines[#lines + 1] = string.format("Temperature: %d°C", math.floor(c + 0.5))
-        lines[#lines + 1] = "Click — monitoring panel"
         return table.concat(lines, "\n")
     elseif i == 6 then
         -- (the media card is built below from `mediaNow`, a *service* — those are live for this

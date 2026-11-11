@@ -540,14 +540,12 @@ scene bar {
     event vpn_menu ->
     // The rest of the reference's pressable capsules, each with the drawer QS opened
     // from it: the clock its calendar (ClockWidget's `calendar.toggle()`), the weather
-    // capsule its card (WeatherButton's overlay), the system cluster the monitoring
-    // dashboard (SystemMonitorCapsule's `qs-monitor` overlay), the build badge the build
-    // list (BuildStatus's `qs-buildstatus` popup). Drawer names are §2.2 of INTERFACES.md;
+    // capsule its card (WeatherButton's overlay), the build badge the build list
+    // (BuildStatus's `qs-buildstatus` popup). Drawer names are §2.2 of INTERFACES.md;
     // the logic says which, because a rule cannot run `pleamar --say`. These `open_*`
     // events stay for callers that want the drawer shown regardless of what is on screen.
     event open_calendar_panel ->
     event open_weather_panel ->
-    event open_system_panel ->
     event open_build_panel ->
     // The presses toggle instead: every one of those capsules is QS's `OverlayToggleCapsule`
     // with `autoToggleOnTap: true`, so the same drawer a second time closes it (the legacy
@@ -557,7 +555,6 @@ scene bar {
     event toggle_weather_panel ->
     event toggle_media_panel ->
     event toggle_network_panel ->
-    event toggle_system_panel ->
     event toggle_build_panel ->
     // The theme picker has no capsule of its own: M4+SH+t reaches it through this
     // event and the same `toggle_drawer` every other drawer uses.
@@ -1214,13 +1211,13 @@ scene bar {
                 SysmonPair(icon_swap, swap, has.swap and swap >= 0.4, swap < 0.03, 0.5, 0.8, scale: 1)
             }
             // The cluster had no zone at all, so a hand could not hover it and the line
-            // `tip_line` already writes for it (case 4) never reached the screen. The plate is
-            // the pressable area, as on every other capsule, and the press toggles the
-            // monitoring dashboard (QS: `autoToggleOnTap` on SystemMonitorCapsule).
-            zone box sysmon { from: 0, 0; size: inner + 12, strip; corner: corner; cursor: pointer; label: "System monitor"; role: button }
+            // `tip_line` already writes for it (case 4) never reached the screen. The monitoring
+            // dashboard this plate used to open (QS: `autoToggleOnTap` on SystemMonitorCapsule) was
+            // removed at the owner's request, so the zone is a hover target now — a region, with no
+            // `cursor: pointer` promising a press.
+            zone box sysmon { from: 0, 0; size: inner + 12, strip; corner: corner; label: "System monitor"; role: region }
             on enter sysmon { emit tip(4) }
             on leave sysmon { emit tip_hide }
-            on press sysmon { emit toggle_system_panel }
         }
     }
 
