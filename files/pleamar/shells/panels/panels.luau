@@ -1190,7 +1190,7 @@ end
 -- one answer a line) and the writes go the other way: the bar owns its file.
 local BAR_WIDGETS = {
     "clock", "workspaces", "keyboard", "pill", "network", "bluetooth", "sysmon", "weather",
-    "media", "mpd", "volume", "mic", "genelec", "systray", "build",
+    "media", "transport", "mpd", "volume", "mic", "genelec", "systray", "build",
 }
 local bar_on = {}
 
