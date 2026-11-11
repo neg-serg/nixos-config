@@ -3,11 +3,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794353963,
-        "narHash": "sha256-me5LxLVy+PJFHPa3d6SUgBh1VQcWDR/jNd07Z5eqpxA=",
+        "lastModified": 1794357443,
+        "narHash": "sha256-PVsEFk3QBntaOaV9p/ZR87y5Bjqey89DReun9eNTqsw=",
         "ref": "refs/heads/main",
-        "rev": "e383210fe3c7dc06d5d1ec5f903c64a3280cebcf",
-        "revCount": 943,
+        "rev": "b5f3e7287aba94c08179f8389e83d59ff81b6c0f",
+        "revCount": 946,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -868,11 +868,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794268972,
-        "narHash": "sha256-onk4vjkxwkIgeLJbw8TA9loSpvj6PflE6ugpCorYCcw=",
+        "lastModified": 1794355456,
+        "narHash": "sha256-WKM7tJBPiIxL9q0iYgrto3h2evgmYw4/RCboJQnM0y4=",
         "owner": "nix-community",
         "repo": "neovim-nightly-overlay",
-        "rev": "a1f9dc03b509787a1d82cc7639c056d65c81b491",
+        "rev": "ef5c3cddf9da267d367feb4da0b371d65f0e3083",
         "type": "github"
       },
       "original": {
@@ -884,11 +884,11 @@
     "neovim-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794257791,
-        "narHash": "sha256-7s8aMPHBZHqImfmy0HRQFf1JzyklydrqHub9Vniuzv8=",
+        "lastModified": 1794354148,
+        "narHash": "sha256-mJ+1uOB5L1ulhOFyZXWIpLaJwUgpkgRRq8cqk/En58s=",
         "owner": "neovim",
         "repo": "neovim",
-        "rev": "d175a05e0d24b2796f9624f8b6965d690394116e",
+        "rev": "5a53f3bb9e41e5d2866545323d6fd0d160dc31c4",
         "type": "github"
       },
       "original": {
