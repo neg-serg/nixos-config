@@ -54,13 +54,42 @@ flags.
    with decode 38.5/34.0/39.4 tok/s. The spread is inside rubric noise, so the quant choice should
    follow the science/fp benches, not this one.
 
+## 2026-11-11: a dedicated 4B writer
+
+The 8B Qwen3-VL was the fast fallback only because it was the smallest general tier on the card; it
+is a vision model and this lane has no images. Four 4B candidates were measured on the same nine
+diffs, each served standalone on the 9070 XT (Vulkan, 32k, q8_0 KV), temperature 0, thinking pinned
+off per request, example on, prompt cache off, one model at a time:
+
+| model                               | total/90 | median wall | decode      | weights |
+| ----------------------------------- | -------- | ----------- | ----------- | ------- |
+| qwen3.8-4b (empero distill, Q4_K_M) | **76.9** | 1.3 s       | 114-130 t/s | 2.8 GB  |
+| qwen3.5-4b-instruct (Q4_K_M)        | 76.3     | 1.2 s       | 127-131 t/s | 2.7 GB  |
+| qwen3-vl-8b-abliterated (re-run)    | 73.9     | 1.7 s       | 88-97 t/s   | 5.0 GB  |
+| git-commit-splitter-qwen3-4b Q4_K_M | 70.5     | 0.8 s       | 136-151 t/s | 2.5 GB  |
+| qwen3-4b-instruct-2507 (Q4_K_M)     | 70.2     | 1.1 s       | 143-151 t/s | 2.5 GB  |
+| falcon-h1-3b (in-fleet)             | 64.8     | 2.6 s       | 46-110 t/s  | 3.4 GB  |
+
+qwen3.8-4b and qwen3.5-4b are inside the +-2 repeat spread of each other, so family broke the tie:
+the writer is a distillation of the same Qwen3.8 teacher the `next` tier runs, which keeps the
+wording of the 27B. The fine-tune trained on commit messages did not transfer — it invented scopes
+(`[lib/package-checks]`, `[utils/ansi]`) and lost 5 points on `btm-alias` alone. Its 0.8 s wall is
+real (short replies), but a wrong scope is a wrong message.
+
+The `--split` plan survives the 4B: a scratch repository with four changed files and three unrelated
+mechanisms came back as one valid two-group JSON array on the first call (a dropped or invented path
+gets a repair round, and a bad plan aborts before any commit).
+
+What the tier costs: 2.8 GB of weights, ~3.1 GiB of VRAM next to a Steam desktop, ~127 tok/s decode.
+Thinking is off in the slot (`--reasoning off`): the distill carries its teacher's chain of thought,
+and a caller that cannot read `reasoning_content` would wait through thoughts it never sees.
+
 ## Practical default
 
-`llmctl commit` defaults to `--model auto`: keep whatever llama-swap already has resident, else load
-`qwen3-vl-8b-abliterated`. That gives either the quality tier at no swap cost, or a ~1.5 s warm
-message plus a one-time 8 s load. For the best possible text at ~5-6 s warm, pass
-`--model qwen3.8-27b-abliterated` (or `bartowski`); for a GPU-free run, `tiny` at ~17 s is close in
-quality to the 8B but does not touch VRAM.
+`llmctl commit` defaults to `--model auto`: reuse a resident model when it is a writer (the 27B, the
+4B, gemma4, `next`), otherwise load `qwen3.8-4b` (the `commit` slot) — a ~1 s warm message plus a ~2
+s cold load. The 8B Qwen3-VL left this chain on 2026-11-11 and stays `vision-fast` for images. For
+the best text at ~5-6 s warm, pass `--model qwen3.8-27b-abliterated` (or `bartowski`).
 
 ```
 llmctl commit                        # git diff HEAD, message + commit
@@ -68,8 +97,8 @@ llmctl commit --dry-run              # print the message only
 llmctl commit --all                  # include new (untracked) files
 llmctl commit --staged --verbose     # commit the index
 llmctl commit --model qwen3.8-27b-abliterated
-llmctl bench commit --models qwen3-vl-8b-abliterated --example
-llmctl bench commit --models tiny --show --scopes alpha
+llmctl bench commit --models qwen3.8-4b,qwen3-vl-8b-abliterated --example
+llmctl bench commit --models qwen3.8-4b --show --scopes alpha
 ```
 
 From the repository root, `just commit` wraps the same call (arguments pass through, so

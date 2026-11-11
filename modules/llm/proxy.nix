@@ -170,6 +170,13 @@ let
       ctx = 65536;
       single_tool = false;
     };
+    # The commit writer: the slot's real window, so the guard trims only
+    # requests the slot itself would reject. `commit` is its llmctl alias.
+    "qwen3.8-4b".ctx = 16384;
+    "commit" = {
+      target = "qwen3.8-4b";
+      ctx = 16384;
+    };
   };
 
   wireProfiles = lib.mapAttrs (

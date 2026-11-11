@@ -142,6 +142,19 @@
 # - `gemma4-26b` is text-only (the projector does not fit next to 12.5 GB of
 #   weights); `qwen3.8-27b-vision` serves images as the `vision` alias and
 #   `qwen3-vl-8b-abliterated` is the `vision-fast` path.
+# - `qwen3.8-4b` (`commit`, `commit-4b` aliases) is the commit-message
+#   writer: a full-parameter distillation of the 180B Qwen3.8 teacher into
+#   the Qwen3.5-4B architecture, 2.8 GB Q4_K_M at 16k. It costs +3.1 GiB of
+#   VRAM next to a 10.9 GiB Steam desktop, so it loads beside a running
+#   session instead of evicting it. Measured 2026-11-11 on nine real diffs
+#   (`llmctl bench commit`): 76.9/90 at ~1.3 s and ~127 tok/s decode — better
+#   than the 8B Qwen3-VL it replaced in this lane (73.9) at a third of the
+#   weights, behind the 27B (81.2) that stays the quality pick when it is
+#   already resident. The slot runs `--reasoning off`: the distill thinks by
+#   default and a caller that cannot read `reasoning_content` would wait for
+#   thoughts it never sees. `llmctl commit` defaults to this tier, and
+#   `--model auto` reuses a resident model only when it is a writer — the
+#   vision, OCR, GUI-agent and k8s slots are the wrong tool even warm.
 # - `qwen3.8-flash-next-abliterated` (`qwen3.8-flash`, `next` aliases) is the
 #   next tier: 78 GB split GGUF (Swift IQ3_S of the huihui v2 abliteration;
 #   pass the -00001 shard), 180B total but 6B active, 262k-native. Four layers
