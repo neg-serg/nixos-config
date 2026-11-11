@@ -84,16 +84,19 @@ library Pill strict {
         // The glyph fills the capsule it sits in: 10 inside an 18 px plate read as a speck on
         // a square, which is what "too small" was looking at.
         let size.icon = capsule.height - 4
-        // Tighter than a capsule's padding: the mark is one glyph, and the capsule's 4 px on each
-        // side left it floating in a pill wider than the thing it holds.
-        let pad.mark = capsule.pad - 2
-        let w = 2 * pad.mark + size.icon
+        // The plate is the capsule's own padding around that glyph, `capsule.pad` on each side:
+        // the tighter 2 px pair drew 18 px of plate inside a 22 px slot, which left four px of
+        // air on its right — the gap to the workspace read 11 against the 7 to the clock, so the
+        // pill looked narrower than the space it was given. 22 is also what the QS reference
+        // composes (`capsule.horizontalPadding * 2 + pillIcon.width`).
+        let w = 2 * capsule.pad + size.icon
         let h = plate.h
+        // The slot is the plate plus the same air below it, the band the neighbours' slots are:
+        // `plate.top + plate.h` alone left the zone a px short of the strip (24 in 25).
+        let band = 2 * plate.top + plate.h
         prop pulse = 0
         wave pulse = 0.35 at 6.28
-        // The slot is the plate's size, not the plate the glyph had before it grew: 22 drawn
-        // inside an 18 slot ran into the keyboard capsule beside it, hit zone and all.
-        size: (2 * capsule.pad + size.icon) * scale, (plate.top + plate.h) * scale
+        size: w * scale, band * scale
         group zoom {
             scale: scale
             // The plate the neighbours wear: the bar's capsules are `coal` at 69 %, and the
@@ -110,7 +113,7 @@ library Pill strict {
                 }
             }
             }
-            zone box mark { from: 0, 0; size: w, plate.top + h; corner: corner; cursor: pointer; label: "Pill taken"; role: toggle; checked: taken; value: "{streak}" }
+            zone box mark { from: 0, 0; size: w, band; corner: corner; cursor: pointer; label: "Pill taken"; role: toggle; checked: taken; value: "{streak}" }
             on enter mark { hot = true }
             on leave mark { hot = false }
             on press mark { emit toggle }
