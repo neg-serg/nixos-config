@@ -233,16 +233,13 @@ let
   # nix-maid links them into ~/.local/bin so `spawn("pleamar-sysmon", …)` resolves
   # (the unit PATH already puts %h/.local/bin first). The names are the contract
   # INTERFACES.md §7 fixes. All workers are the Rust crates
-  # packages/pleamar-sysmon/-weather/-calendar/-journal/-kbdlayout.
+  # packages/pleamar-sysmon/-weather/-calendar/-kbdlayout.
   pleamarHelperLinks = {
     ".local/bin/pleamar-sysmon" = {
       source = lib.getExe pkgs.neg.pleamar-sysmon;
     };
     ".local/bin/pleamar-weather" = {
       source = lib.getExe pkgs.neg.pleamar-weather;
-    };
-    ".local/bin/pleamar-journal" = {
-      source = lib.getExe pkgs.neg.pleamar-journal;
     };
     ".local/bin/pleamar-calendar" = {
       source = lib.getExe pkgs.neg.pleamar-calendar;
