@@ -74,7 +74,6 @@ let
     "pleamar-calendar"
     "pleamar-fixtures"
     "pleamar-harness"
-    "pleamar-journal"
     "pleamar-kbdlayout"
     "pleamar-picker"
     "pleamar-sysmon"
@@ -208,7 +207,6 @@ slimChunks
           pleamar-sysmon = final.callPackage ./pleamar-sysmon { }; # pleamar system monitor worker (procfs/sysfs, JSON lines)
           pleamar-weather = final.callPackage ./pleamar-weather { }; # pleamar weather worker (Open-Meteo/MET Norway/wttr.in, JSON lines)
           pleamar-kbdlayout = final.callPackage ./pleamar-kbdlayout { }; # pleamar keyboard-layout worker (hyprctl, JSON lines)
-          pleamar-journal = final.callPackage ./pleamar-journal { }; # pleamar journal snapshot command (journalctl, one JSON line)
           pleamar-theme = final.callPackage ./pleamar-theme { }; # pleamar theme pipeline (wallpaper colours -> theme.plm)
           pleamar-calendar = final.callPackage ./pleamar-calendar { }; # pleamar calendar worker (khal, holidays, production calendar, JSON lines)
           pleamar-picker = final.callPackage ./pleamar-picker { }; # picker scene commands (wallpaper still/apply, deck CLI)
