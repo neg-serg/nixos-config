@@ -11,6 +11,7 @@ language 0.4
 // Reading order, left to right, is the legacy one:
 //   left row:  clock · workspaces · pill · keyboard · network · sysmon · weather
 //   right row: media · MPD · voice (while the command runs) · tray · mic · volume · Genelec
+//              plus the optional play/pause button (`widget.transport`, off by default)
 //   centre:    the build badge, and — while a take runs — the screen-recording
 //              capsule (red dot and clock) with its four-bar sound meter
 // This slice draws clock/date, the workspace tabs, the network capsule (left)
@@ -289,6 +290,10 @@ scene bar {
     fact pill.streak = 0
     text pill.at = ""
     fact widget.media = true
+    // The optional play/pause button left of the media capsule (the owner's own addition,
+    // 2026-11-11): off until `widgets` in settings.json names it. bar.luau's default keeps the
+    // no-file case off too, unlike every other widget.
+    fact widget.transport = false
     // Set by bar.luau from the `media` service: a player is there (the QS
     // `MusicManager.hasPlayer`). The language compares numbers only, so the
     // scene cannot ask `media.player != ""` itself.
@@ -1954,6 +1959,42 @@ scene bar {
         }
     }
 
+    // The optional play/pause button (`widget.transport`, off by default): a stand-alone control
+    // for the owner who wants the transport reachable without hovering the capsule. It is the
+    // pill's middle button in one square plate — the glyph is the action, not the state
+    // (`MediaTransport.qml:73`), and a player that can neither play nor pause keeps it dim.
+    component PlayToggle(toggle: event, scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
+        let btn = 25
+        let glyph = 14
+        size: btn * scale, strip * scale
+        group zoom {
+            scale: scale
+            // The plate every capsule wears, square: 25 wide is the pill's own button width, so
+            // the two controls read as one family when both are up.
+            body {
+                color: live.coal
+                opacity: 69%
+                border: 1, mix(live.coal, live.ink, 8%)
+                box { from: 0, 1; size: btn, 23; corner: corner }
+            }
+            image icon_play { at: (btn - glyph) / 2, (strip - glyph) / 2; size: glyph, glyph
+                tint: pick(media.can_play or media.can_pause, live.ink.off, live.ink)
+                show: not media.playing }
+            image icon_pause { at: (btn - glyph) / 2, (strip - glyph) / 2; size: glyph, glyph
+                tint: pick(media.can_play or media.can_pause, live.ink.off, live.ink)
+                show: media.playing }
+            // The capsule's own tooltip (the media card, `tip(6)`), so a hover asks the same
+            // question of either control.
+            zone box z_play_toggle { from: 0, 0; size: btn, strip; corner: corner
+                cursor: pick(media.can_play or media.can_pause, not_allowed, pointer)
+                label: pick(media.playing, "Play", "Pause")
+                role: button }
+            on enter z_play_toggle { emit tip(6) }
+            on leave z_play_toggle { emit tip_hide }
+            on press z_play_toggle while media.can_play or media.can_pause { emit toggle }
+        }
+    }
+
     component Right(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
 
         // `side`, not `side - 8`: with the Genelec tile always present the row ends 5 logical px
@@ -1965,6 +2006,11 @@ scene bar {
             // The controls ride out to the left of the capsule, so they are declared
             // before it: the row grows leftwards and the capsule slides aside, which is
             // what `SlideReveal` does in the reference.
+            // The optional play/pause button (the owner's addition, not in the reference) sits
+            // left of the pill: one press there is the pill's middle button without the hover.
+            // While the pointer is on the capsule the pill already carries that toggle, so this
+            // button steps aside instead of drawing the control twice.
+            row play_slot { show: widget.transport and media.present and not media.hot; PlayToggle(media_toggle) }
             row transport_slot { show: widget.media and media.present and media.hot; Transport(media_prev, media_toggle, media_next) }
             row media_slot { show: widget.media and media.present; MediaCapsule(media_prev, media_toggle, media_next) }
             // QS shows the flag badges only while media is up AND there is a

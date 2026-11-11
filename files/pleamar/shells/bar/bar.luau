@@ -98,7 +98,7 @@ local weatherCity = ""
 local weatherLat, weatherLon = 59.9375, 30.3086
 local useFahrenheit = false
 
-local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "bluetooth", "sysmon", "weather", "media", "mpd", "volume", "mic", "genelec", "systray", "build" }
+local WIDGETS = { "clock", "workspaces", "keyboard", "pill", "network", "bluetooth", "sysmon", "weather", "media", "transport", "mpd", "volume", "mic", "genelec", "systray", "build" }
 
 -- The canonical clamp of INTERFACES §6.1: a wrong type and NaN keep the default.
 local function num(v, lo, hi, def)
@@ -205,7 +205,15 @@ local startup = {
 function startup.apply_widgets()
     local wanted = startup.wanted
     for _, name in ipairs(WIDGETS) do
-        local shown = (wanted == nil) or (wanted[name] == true)
+        local shown
+        if wanted == nil then
+            -- No `widgets` key: the reference's own strip, without the optional additions. This
+            -- is the one name that stays off until the file names it — the play/pause button the
+            -- owner added (`bar.plm`'s PlayToggle); every other widget is shown as before.
+            shown = name ~= "transport"
+        else
+            shown = wanted[name] == true
+        end
         if startup.active and not startup.clean[name] then shown = false end
         fact["widget." .. name] = shown
     end
