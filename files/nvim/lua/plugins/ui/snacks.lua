@@ -42,25 +42,6 @@ return {
               { section = "startup" },
           },
       },
-      indent = {
-        enabled = true,
-        chunk = {
-          enabled = true,
-          char = '│',
-          priority = 50,
-          filter = function(buf)
-            local ft = vim.bo[buf].filetype
-            return ft ~= 'help' and ft ~= 'markdown' and ft ~= 'norg' and ft ~= 'org'
-          end,
-        },
-        -- rainbow scope highlighting replaces rainbow-delimiters
-        scope = {
-          enabled = true,
-          priority = 200,
-          animate = { enabled = false },
-          char = '│',
-        },
-      },
       input = { enabled = true },
       notifier = { enabled = false }, -- noice.nvim handles notifications
       quickfile = { enabled = has_args },
