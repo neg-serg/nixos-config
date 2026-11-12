@@ -29,6 +29,16 @@ _exists journalctl && journalctl() {command journalctl "${@:--b}";}
 # git over https, curl/yt-dlp...). Thin wrapper over `proxy run <cmd...>`.
 _exists proxy && xp() { proxy run "$@"; }
 _exists proxy && nxp() { xp nix "$@"; } # nix through the proxy: nxp flake update / nxp flake lock --update-input <name>
+# Completion for the two proxy wrappers. `xp`'s first argument is the command to
+# run, which is exactly what the shell's precommand completer does; `nxp` has
+# `nix` baked in, so its completer restores the full word list and lets the
+# normal dispatch complete nix's own arguments. Without this both only complete
+# file names.
+if (( $+functions[compdef] )); then
+    (( $+functions[xp] )) && compdef _precommand xp
+    _nxp_complete() { words=(nix "${words[2,-1]}"); (( CURRENT++ )); _normal }
+    (( $+functions[nxp] )) && compdef _nxp_complete nxp
+fi
 _exists mpc && {
     cdm(){
         dirname="$XDG_MUSIC_DIR/$(dirname "$(mpc -f '%file%'|head -1)")"
@@ -56,6 +66,16 @@ if [[ -e /etc/NIXOS ]]; then
     _nix_root_ssh="ssh -F $HOME/.ssh/config -i $HOME/.ssh/id_ed25519 -o IdentitiesOnly=yes"
     nfu(){ sudo env GIT_SSH_COMMAND="$_nix_root_ssh" nix flake update --flake /etc/nixos "$@" || return; [[ -w /etc/nixos/flake.lock ]] || sudo chown --reference=/etc/nixos/flake.nix /etc/nixos/flake.lock } # root rewrote flake.lock: give it back to the caller, or the next user-side `just update` hits EACCES
     nsw(){ sudo env GIT_SSH_COMMAND="$_nix_root_ssh" nixos-rebuild switch --flake /etc/nixos --option substituters https://cache.nixos.org "$@" } # same, for the switch
+    # Completion for those two: the command they run is baked into the function,
+    # so the completer restores the full word list (including the flags the
+    # function adds) and lets the normal dispatch complete the tool's own
+    # options. Without it both complete file names.
+    if (( $+functions[compdef] )); then
+        _nfu_complete() { words=(nix flake update --flake /etc/nixos "${words[2,-1]}"); (( CURRENT += 5 )); _normal }
+        _nsw_complete() { words=(nixos-rebuild switch --flake /etc/nixos --option substituters https://cache.nixos.org "${words[2,-1]}"); (( CURRENT += 7 )); _normal }
+        compdef _nfu_complete nfu
+        compdef _nsw_complete nsw
+    fi
 
     qi(){ NIXPKGS_ALLOW_UNFREE=1 nix shell --impure 'nixpkgs#'$1 }
     q(){ nix shell 'nixpkgs#'$1 }
