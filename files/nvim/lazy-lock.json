@@ -6,6 +6,7 @@
   "codediff.nvim": { "branch": "main", "commit": "e08a35a56a52c290398ebfaec33c34cfcf2d0f3c" },
   "conform.nvim": { "branch": "master", "commit": "016802de402556da54c36bd7359b441266b01cdd" },
   "diffview.nvim": { "branch": "main", "commit": "4516612fe98ff56ae0415a259ff6361a89419b0a" },
+  "dooing": { "branch": "main", "commit": "7ff620e11d023331403883280711e26d351809c6" },
   "ex-colors.nvim": { "branch": "main", "commit": "76a20ce29d160a4eb9f275a615dc8257cb15c58c" },
   "fastaction.nvim": { "branch": "main", "commit": "b147d91727cb35be4f722f17e7d4ed5b4a5801d8" },
   "flit.nvim": { "branch": "main", "commit": "ef18183b22377741e154cffb5b914516381d3870" },
