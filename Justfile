@@ -169,9 +169,10 @@ stats-check:
 
 # Commit the pending tree with a message written by the local model
 # (`llmctl commit`): message and commit in one step, tracked changes only.
-# `just commit --all` also stages new (untracked) files; `--dry-run` prints
-# the message without committing. `just commit --split` asks the model for a
-# few logical commits and makes them one by one (whole files, never hunks).
+# Several unrelated changes are split into one commit each by default (the
+# model groups whole files, never hunks); `--no-split` keeps a single commit,
+# `--all` also stages new (untracked) files, `--dry-run` prints the messages
+# without committing.
 commit *args:
     python3 "{{repo_root}}/modules/llm/llmctl.py" commit --repo "{{repo_root}}" {{args}}
 

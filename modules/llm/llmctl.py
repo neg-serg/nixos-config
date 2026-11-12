@@ -1750,6 +1750,10 @@ def _commit_plan_parse(text, allowed):
     return groups, problems, notes
 
 
+class _PlanRejected(Exception):
+    """The model's split plan failed validation twice."""
+
+
 def _commit_plan(model, messages, allowed):
     """Ask for the split plan, with one repair round on a bad reply.
 
@@ -1758,6 +1762,8 @@ def _commit_plan(model, messages, allowed):
     scratch. Nothing is staged yet, so a rejected plan costs model time only.
     The repair round doubles the token budget: a reply cut at the cap is the
     one failure the model cannot fix by rewording, only by having more room.
+    A plan that still fails raises `_PlanRejected`; only the caller knows
+    whether a split was demanded or merely the default.
     """
     budget = COMMIT_PLAN_MAX_TOKENS
     for attempt in (1, 2):
@@ -1784,7 +1790,7 @@ def _commit_plan(model, messages, allowed):
             budget *= 2
         if attempt == 2:
             print(text, file=sys.stderr)
-            sys.exit("split plan rejected:\n  " + "\n  ".join(problems))
+            raise _PlanRejected("\n  ".join(problems))
         print(
             "note: repairing the split plan: " + problems[0], file=sys.stderr
         )
@@ -2266,8 +2272,39 @@ def _commit_plan_merge_renames(repo, groups, paths):
     return [g for g in groups if g["files"]]
 
 
+def _commit_staged_paths(repo):
+    """Paths staged against HEAD."""
+    return {
+        p
+        for p in _git(
+            repo, "diff", "--cached", "--name-only", "--no-renames", "HEAD"
+        ).stdout.splitlines()
+        if p
+    }
+
+
+def _commit_partially_staged(repo):
+    """Paths staged yet changed again since, i.e. a hand-picked hunk set.
+
+    A path that is merely staged (all of it) or merely dirty carries no
+    decision a reset would throw away; one that is both was selected by hand
+    with `git add -p`, and such a selection cannot be regrouped by file.
+    """
+    staged = _commit_staged_paths(repo)
+    if not staged:
+        return []
+    return sorted(
+        staged
+        & {
+            p
+            for p in _git(repo, "diff", "--name-only").stdout.splitlines()
+            if p
+        }
+    )
+
+
 def _commit_unstage(repo):
-    """Clear the index so `--split` stages each group from the worktree.
+    """Clear the index so the split stages each group from the worktree.
 
     The split commits whole files, so an index that mirrors the worktree holds
     nothing the split would not stage itself. An index that does *not* mirror
@@ -2290,38 +2327,21 @@ def _commit_unstage(repo):
             "--split cannot split a staged rename: unstaging it would leave "
             "the new path untracked ("
             + ", ".join(renames)
-            + "). Run `git reset` and then --split --all, or commit it "
-            "with --staged and no --split."
+            + "). Run `git reset` and then --all, or commit it "
+            "with --staged and --no-split."
         )
-    staged = {
-        p
-        for p in _git(
-            repo, "diff", "--cached", "--name-only", "--no-renames", "HEAD"
-        ).stdout.splitlines()
-        if p
-    }
-    if not staged:
-        return
-    # Only a path that is staged *and* changed again since carries a decision
-    # the reset would throw away; a file that is merely staged, or merely
-    # dirty, loses nothing.
-    both = sorted(
-        staged
-        & {
-            p
-            for p in _git(repo, "diff", "--name-only").stdout.splitlines()
-            if p
-        }
-    )
+    both = _commit_partially_staged(repo)
     if both:
         sys.exit(
-            "--split commits whole files from the working tree, but these "
+            "the split commits whole files from the working tree, but these "
             "files are staged and changed again since (a partially staged "
             "file): "
             + ", ".join(both)
             + ". Run `git reset` first, or commit them with --staged and "
-            "no --split."
+            "--no-split."
         )
+    if not _commit_staged_paths(repo):
+        return
     reset = _git(repo, "reset", "-q")
     if reset.returncode:
         sys.exit(f"git reset failed: {reset.stderr.strip()}")
@@ -2535,23 +2555,53 @@ def _commit_split(args, repo, model, scopes, new_files):
     print(f"committed {done} of {total} planned commit(s)", file=sys.stderr)
 
 
+def _commit_mode(args, repo):
+    """Return (split, required) for this run.
+
+    Splitting is the default because several unrelated changes are the daily
+    case, and one message stretched over all of them is exactly what reads as
+    wrong: the model groups the files and every group gets its own message.
+    The two modes that cannot be regrouped stay a single commit — `--staged`
+    commits the index as it is, and a hand-picked hunk set (`git add -p`, a
+    file staged and edited again) would lose its selection to the per-file
+    staging — and the default says so on stderr instead of changing what gets
+    committed silently. `--split` states the intent, so a rejected plan is an
+    error there; `--no-split` asks for one commit and never plans.
+    """
+    if args.split is True:
+        if args.staged:
+            sys.exit(
+                "--split cannot describe the index: each group is staged and "
+                "committed by path, and such a commit takes the working tree "
+                "version of the file. Run --split without --staged."
+            )
+        return True, True
+    if args.split is False or args.staged:
+        return False, False
+    both = _commit_partially_staged(repo)
+    if both:
+        print(
+            "note: these files are staged and changed again since, so the "
+            "hunks were picked by hand and cannot be regrouped; committing "
+            "the working tree as one change: " + ", ".join(both),
+            file=sys.stderr,
+        )
+        return False, False
+    return True, False
+
+
 def cmd_commit(args):
     repo = args.repo or os.getcwd()
     if _git(repo, "rev-parse", "--git-dir").returncode:
         sys.exit(f"not a git repository: {repo}")
     if args.all and args.staged:
         sys.exit("--all and --staged are mutually exclusive")
-    if args.split and args.staged:
-        sys.exit(
-            "--split cannot describe the index: each group is staged and "
-            "committed by path, and such a commit takes the working tree "
-            "version of the file. Run --split without --staged."
-        )
     if args.apply:
         print(
             "note: committing is the default now; --apply is redundant",
             file=sys.stderr,
         )
+    split, split_required = _commit_mode(args, repo)
     # `auto` keeps a resident text tier, so a commit message does not evict the
     # model the user is actually working with; anything that is not a writer
     # (vision, OCR, GUI agent, k8s specialist) is the wrong tool even warm, so
@@ -2565,11 +2615,12 @@ def cmd_commit(args):
     # Everything from here on mutates the index; a second run in the same
     # repository must not interleave with it (see _commit_lock).
     _commit_lock(repo)
-    if args.split:
-        # `--split` commits whole files from the working tree, so a staged index
-        # adds nothing it would not stage itself — and a leftover entry would
-        # be swept into the first group. Cleared here, while that is lossless
-        # (a partially staged file aborts instead, see _commit_unstage).
+    if split:
+        # The split commits whole files from the working tree, so a staged
+        # index adds nothing it would not stage itself — and a leftover entry
+        # would be swept into the first group. Cleared here, while that is
+        # lossless (a partially staged file never reaches this point: the
+        # default falls back on it and `--split` aborts, see _commit_unstage).
         _commit_unstage(repo)
     new_files = []
     if args.all:
@@ -2590,9 +2641,19 @@ def cmd_commit(args):
             if add.returncode:
                 sys.exit(f"git add -N failed: {add.stderr.strip()}")
     scopes, _ = _commit_scopes(repo)
-    if args.split:
-        _commit_split(args, repo, model, scopes, new_files)
-        return
+    if split:
+        try:
+            _commit_split(args, repo, model, scopes, new_files)
+            return
+        except _PlanRejected as exc:
+            if split_required:
+                sys.exit("split plan rejected:\n  " + str(exc))
+            print(
+                "note: the model could not group this change ("
+                + str(exc).replace("\n", "; ")
+                + "); committing it as one",
+                file=sys.stderr,
+            )
     diff, files = _commit_diff(repo, args.staged)
     if len(diff) > COMMIT_DIFF_CHARS:
         diff = diff[:COMMIT_DIFF_CHARS] + "\n... [diff truncated]\n"
@@ -2747,9 +2808,11 @@ def main():
     )
     s.add_argument(
         "--split",
-        action="store_true",
-        help="разбить изменения на несколько коммитов (группы по файлам "
-        "выбирает модель)",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="разбить изменение на логические коммиты; по умолчанию — авто "
+        "(несколько несвязанных изменений дают несколько коммитов), "
+        "--no-split — один коммит на всё",
     )
     s.add_argument(
         "--model",
