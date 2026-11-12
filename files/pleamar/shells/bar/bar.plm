@@ -2058,8 +2058,10 @@ scene bar {
             // The tile's own tones are the theme's: the plugin is a library and cannot read
             // `skin.*`, so the plate, the live.ink and the live.accent are handed to it here.
             // The gear of the reference's `Settings` capsule: one press opens the bar's settings
-            // page in `panels`, which is also the door to the rest of the shell's pages.
-            row gear_slot { align: center
+            // page in `panels`, which is also the door to the rest of the shell's pages. It is
+            // hidden at idle like the microphone and volume capsules: `strip.hot` brings it in
+            // while the pointer is on the bar, and a false `show:` takes its zone with it.
+            row gear_slot { align: center; show: strip.hot
                 group gear { size: 28 * scale, strip * scale
                     body { color: live.coal; opacity: 69%; border: 1, mix(live.coal, live.ink, 8%)
                            box { from: 1, 1; size: 26 * scale, 23 * scale; corner: 6 * scale } }
