@@ -1408,7 +1408,10 @@ scene bar {
     // carries the glyph and `--say bar describe` carries the state, and the drawer is one press
     // away, which is where the names belong.
     component BtCapsule(scale: number = ui * user_scale * mon_scale[min(screen.index, 3)]) {
-        let w.card = 34
+        // A single 14 px glyph, so the plate is the glyph plus the same 7 px edge the gear
+        // keeps: 28 wide. The old 34 left 10 px on each side, which read as air around the
+        // lone icon next to the dense capsules.
+        let w.card = 28
         size: w.card * scale, strip * scale
         group zoom {
             scale: scale
