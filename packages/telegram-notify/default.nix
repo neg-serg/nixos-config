@@ -12,6 +12,9 @@
 #   delete notes in the user's zk notebook, and run `nb` to pull/commit/push
 #   it. Writes drop from the unit's root to the notebook owner through
 #   `runuser`, so new notes stay neg-owned.
+#   `assets/avatar.svg` is the bot's profile picture: a pure-vector phosphor CRT
+#   (labels are outlined from a bitmap font, so no font or image dependency),
+#   with the 512/1024 raster exports that BotFather's `/setuserpic` needs.
 #
 # Rust, no crates. The sender/curl invocation stays external on purpose: the
 # repo already ships `telegram-send` with the socks-proxy retry policy, and the
