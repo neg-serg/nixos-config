@@ -68,6 +68,26 @@ pkgs.writeShellApplication {
 }
 ```
 
+## In-tree projects
+
+A project that lives in the repo and carries its own manifest (`Cargo.toml`)
+takes its version from that file instead of repeating a literal:
+
+```nix
+# packages/my-package/default.nix
+{ lib, rustPlatform }:
+
+rustPlatform.buildRustPackage {
+  pname = "my-package";
+  version = (lib.importTOML ./Cargo.toml).package.version;
+  # ...
+}
+```
+
+`just bump <package> [<version>]` bumps the manifest and its lockfile(s); the
+derivation and the binary (`CARGO_PKG_VERSION`) follow without an edit here.
+The `manifest-version` lint guard rejects a literal next to a `Cargo.toml`.
+
 ## Get Hash
 
 ```bash

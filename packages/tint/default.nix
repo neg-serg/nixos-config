@@ -164,7 +164,7 @@
 
 rustPlatform.buildRustPackage {
   pname = "tint";
-  version = "0.1.0";
+  version = (lib.importTOML ./Cargo.toml).package.version;
 
   src = ./.;
 

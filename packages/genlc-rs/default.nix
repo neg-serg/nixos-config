@@ -9,7 +9,10 @@
 
 rustPlatform.buildRustPackage {
   pname = "genlc";
-  version = "0.2.0";
+  # Single source of truth: clap reports CARGO_PKG_VERSION from this manifest,
+  # and the derivation reads the same file, so the CLI and the store path cannot
+  # drift (they did: 0.1.0 in the binary, 0.2.0 in the package attr).
+  version = (lib.importTOML ./Cargo.toml).package.version;
 
   src = lib.cleanSource ./.;
 
