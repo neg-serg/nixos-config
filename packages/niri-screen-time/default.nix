@@ -18,6 +18,13 @@ buildGoModule rec {
 
   vendorHash = "sha256-9y1F2ZrmpiQJ9ZTq9SoRE2PxR65DDNCeBKf4M0HUQC4=";
 
+  # The daemon drives `hyprctl activewindow`, which exits 6 when Hyprland's
+  # IPC reply misses its 5 s socket read timeout. Upstream panics on any poll
+  # error and spawns a goroutine per 200 ms tick, so a starved compositor both
+  # piles up hyprctl children and crash-loops the unit. The patch logs a lost
+  # sample instead and keeps one poll in flight at a time.
+  patches = [ ./daemon-survive-ipc-stalls.patch ];
+
   nativeBuildInputs = [ makeWrapper ];
 
   # The daemon shells out to `hyprctl activewindow` (class + title). systemd

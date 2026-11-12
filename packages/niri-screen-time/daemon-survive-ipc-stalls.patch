@@ -1,0 +1,62 @@
+--- a/daemon/daemon.go
++++ b/daemon/daemon.go
+@@ -23,24 +23,44 @@
+ 		log.Panic(fn, err)
+ 	}
+ 
++	// One sample at a time. The compositor's IPC is the slow part: under load
++	// `hyprctl activewindow` can block for longer than a tick, and the old
++	// goroutine-per-tick loop piled further samples on a compositor that was
++	// already behind. A tick that finds the previous sample still in flight is
++	// dropped instead.
++	inFlight := make(chan struct{}, 1)
++
+ 	for {
+-		go func() {
+-			appID, title, err := wm.GetActiveWindow()
+-			if err != nil {
+-				log.Panic(fn, err)
+-			}
+-
+-			if appID != "" {
+-				sc := model.ScreenTime{
+-					Date:  time.Now(),
+-					AppID: appID,
+-					Title: title,
+-					Sleep: sleepMs,
++		select {
++		case inFlight <- struct{}{}:
++			go func() {
++				defer func() { <-inFlight }()
++
++				appID, title, err := wm.GetActiveWindow()
++				if err != nil {
++					// A lost sample is not a crash. hyprctl exits 6 when
++					// Hyprland's reply misses its 5 s socket read timeout,
++					// which happens whenever the compositor is starved; dying
++					// here only restarts the tracker and adds load to the same
++					// machine.
++					log.Println(fn, err)
++					return
+ 				}
+ 
+-				stc.Add(sc)
+-			}
+-		}()
++				if appID != "" {
++					sc := model.ScreenTime{
++						Date:  time.Now(),
++						AppID: appID,
++						Title: title,
++						Sleep: sleepMs,
++					}
++
++					stc.Add(sc)
++				}
++			}()
++		default:
++			// The previous sample is still waiting on the compositor.
++		}
+ 
+ 		time.Sleep(sleepMs * time.Millisecond)
+ 	}
