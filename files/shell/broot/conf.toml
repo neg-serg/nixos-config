@@ -1,7 +1,12 @@
 # broot configuration — neg.nvim-themed, full file-manager setup.
-# default_flags: s = sizes, d = dates, p = permissions.
+#
+# Keep only permissions (p) as a default column. Sizes (s) and dates (d) are
+# computed by walking the whole subtree — dates look for the most recently
+# modified file, even deep — so on a multi-terabyte $HOME the tree freezes on
+# "computing" before it becomes usable. Toggle them per view with
+# :toggle_sizes / :toggle_dates; small trees (e.g. this repo) stay instant.
 
-default_flags = "sdp"
+default_flags = "p"
 true_colors = true
 icon_theme = "vscode"
 show_selection_mark = true
@@ -82,6 +87,19 @@ execution = ":page_up"
 [[verbs]]
 key = "ctrl-g"
 execution = ":toggle_git_status"
+
+# Jump to a path: alt-p, paste packages/telegram-notify/assets/avatar.svg, enter.
+# The filter input parses "/" as a search-mode separator, so a pasted path is
+# rejected as an unknown mode; :show takes the argument as a path instead, adds
+# the missing tree lines and selects the file. The path must be under the
+# current root. :select_first runs first because :show resolves a relative
+# argument from the selected directory, and the point of the key is a
+# root-relative path (an absolute path ignores the selection anyway).
+[[verbs]]
+invocation = "goto {path}"
+key = "alt-p"
+cmd = ":select_first;:show {path}"
+auto_exec = false
 
 [ext-colors]
 png = "rgb(0, 160, 130)"
