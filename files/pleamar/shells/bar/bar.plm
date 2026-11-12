@@ -1617,13 +1617,13 @@ scene bar {
         let glyph.w = 14
         // One plate, as wide as the string it prints: `slot` is `vol.w`/`mic.w`, composed by the
         // logic from the same reading the tile draws, so a route name or a percentage cannot
-        // outgrow the plate it belongs to. The glyph keeps the right end at the capsule's own
+        // outgrow the plate it belongs to. The glyph keeps the left end at the capsule's own
         // pad and never moves — the hover reveal that used to slide it to the plate's centre was
         // dropped with the two-capsule design, and a glyph that moves under the pointer reads as
-        // a fault. The reading is right-anchored in the space that is left: its box is exactly
-        // the text's own width, so a longer string elides instead of spilling onto the strip.
+        // a fault. The reading is left-anchored in the space beside it: its box is exactly the
+        // text's own width, so a longer string elides instead of spilling onto the strip.
         let w = slot
-        let gx = w - capsule.pad - glyph.w / 2
+        let gx = capsule.pad + glyph.w / 2
         size: w * scale, strip * scale
         group zoom {
             scale: scale
@@ -1633,7 +1633,7 @@ scene bar {
                 border: 1, mix(live.coal, live.ink, 8%)
                 box { from: 0, 1; size: w, 23; corner: corner }
             }
-            // The icon keeps the right end of the plate, the reading grows to its left. One of
+            // The icon keeps the left end of the plate, the reading follows it. One of
             // five pictures, chosen by the logic's number: 0 up, 1 down, 2 off, 3 live mic,
             // 4 muted mic. The glyph is 14 px, the plate's edge is the capsule's 4.
             image icon_vol_up { at: gx - glyph.w / 2, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 0 }
@@ -1643,8 +1643,8 @@ scene bar {
             image icon_mic_off { at: gx - glyph.w / 2, strip / 2 - glyph.w / 2; size: glyph.w, glyph.w; tint: fill; show: glyph == 4 }
             text "{readout}" {
                 measure w.out
-                at: w - capsule.pad - glyph.w - capsule.gap, strip / 2
-                anchor: right center
+                at: capsule.pad + glyph.w + capsule.gap, strip / 2
+                anchor: left center
                 width: w - 2 * capsule.pad - glyph.w - capsule.gap
                 lines: 1
                 size: 14 * text_scale
