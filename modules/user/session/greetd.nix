@@ -49,7 +49,16 @@ in
   config = lib.mkIf guiEnabled {
     services.greetd = {
       enable = true;
-      restart = false;
+      # A failed session start must not cost the login: the wrapper exits with
+      # the compositor, greetd ends with "greeter exited without creating a
+      # session" and, with Restart=no, nothing brings the login screen back.
+      # That is what happened on the 2026-11-12 boot — Aquamarine could not
+      # activate the logind session (bootvine had taken the console), Hyprland
+      # aborted and the host stayed on a text console. `restart = true` gives
+      # greetd another attempt (nixpkgs renders it as Restart=on-success, which
+      # is the path a failed session takes: greetd exits 0); the start limit
+      # below keeps a persistent failure from respawning it forever.
+      restart = true;
       # Single-compositor login: this *is* the session — no greeter process, no
       # second compositor, no DRM mode re-set on login.
       #
@@ -79,12 +88,29 @@ in
     # Type=simple.
     # mkForce: the nixpkgs greetd module hardcodes Type=idle on this unit.
     systemd.services.greetd.serviceConfig.Type = lib.mkForce "simple";
+    # Pace and cap the restarts from the option above: one retry after bootvine
+    # has yielded the console is the point, a compositor respawn every 100 ms is
+    # not. After five attempts in five minutes systemd leaves greetd failed,
+    # which is the honest state when the session itself is broken.
+    systemd.services.greetd.serviceConfig.RestartSec = "5s";
+    systemd.services.greetd.startLimitIntervalSec = 300;
+    systemd.services.greetd.startLimitBurst = 5;
     # Wait for input devices before starting greetd to avoid keyboard/mouse
     # not working during the first few seconds after greeter appears.
     systemd.services.greetd.preStart = ''
       while ! ls /dev/input/event* >/dev/null 2>&1; do
         sleep 0.2
       done
+      # bootvine owns tty12 and re-activates it every frame until its watcher
+      # sees greetd's unit leave the inactive state — about 0.4 s after the
+      # start job begins. greetd switches to its own VT ~30 ms after the main
+      # process starts, so without a margin bootvine flips the console back to
+      # tty12, the logind session never becomes active and Aquamarine's 5 s
+      # wait for it expires (2026-11-12: Hyprland aborted with
+      # CBackend::create() failed!, crash report 479). The delay puts greetd's
+      # VT switch after bootvine's handover has begun; bootvine then sees the
+      # console taken and leaves it alone.
+      sleep 2
     '';
     security.pam.services.greetd.enableGnomeKeyring = true;
     # The lock scene checks the password through the PAM service `pleamar`
