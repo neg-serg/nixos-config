@@ -108,6 +108,26 @@ scan_dsh_plugin_source_kind() {
   fi
 }
 
+# A local Rust package must read its version from the manifest
+# (`version = (lib.importTOML ./Cargo.toml).package.version;`); a literal next
+# to a Cargo.toml is exactly the drift this repo hit once — genlc's binary
+# reported 0.1.0 while the package attr said 0.2.0. Versions are bumped with
+# `just bump <package>`, which edits the manifest and its lockfile(s).
+scan_manifest_version() {
+  local hits="" file
+  for file in packages/*/default.nix; do
+    [ -f "${file%/default.nix}/Cargo.toml" ] || continue
+    if grep -qE '^[[:space:]]+version[[:space:]]*=[[:space:]]*"' "$file"; then
+      hits+="$file: literal version next to Cargo.toml"$'\n'
+    fi
+  done
+  if [ -n "$hits" ]; then
+    printf '%s\n' "Found a hardcoded version in a Rust package: read the manifest instead — version = (lib.importTOML ./Cargo.toml).package.version; (bump with \`just bump <package>\`)." >&2
+    printf '%s' "$hits" >&2
+    exit 1
+  fi
+}
+
 list_only=0
 repo_arg=""
 for arg in "$@"; do
@@ -124,6 +144,7 @@ if [ "$list_only" -eq 1 ]; then
   printf 'restart-preset\n'
   printf 'restart-preset-system\n'
   printf 'dsh-plugin-source-kind\n'
+  printf 'manifest-version\n'
   exit 0
 fi
 
@@ -149,5 +170,6 @@ done < <(lint_rules)
 scan_restart_preset user
 scan_restart_preset system
 scan_dsh_plugin_source_kind
+scan_manifest_version
 
 exit 0

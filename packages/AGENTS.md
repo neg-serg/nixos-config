@@ -18,3 +18,8 @@ Guidelines
     instead of inventing one.
 - Put small helper scripts intended for `$PATH` in `packages/local-bin` with clear names and minimal
   dependencies.
+- Do not repeat a Rust project's version in `default.nix`; read the manifest instead:
+  `version = (lib.importTOML ./Cargo.toml).package.version;`. The store path, the package attr and
+  the binary (`CARGO_PKG_VERSION`) then share one source, and a bump is the manifest plus its
+  lockfile(s) — `just bump <package> [<version>]` does both. The `manifest-version` lint guard
+  rejects a literal next to a `Cargo.toml`.

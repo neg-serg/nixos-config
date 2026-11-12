@@ -393,6 +393,13 @@ update:
 bump-own *ARGS:
     bash "{{repo_root}}/scripts/dev/flake-bump-own.sh" {{ARGS}}
 
+# Bump an in-tree Rust project's version in one place: the manifest and its
+# lockfile(s). The derivations read `version` from the manifest and the binary
+# reports CARGO_PKG_VERSION from the same file, so nothing else needs editing.
+# Usage: just bump <package> [<version>]
+bump pkg *ARGS:
+    bash "{{repo_root}}/scripts/dev/bump-version.sh" "{{pkg}}" {{ARGS}}
+
 # Search a nix-cache-pin pin for binary-cache hits without touching the tree.
 # The CLI edits ./flake.nix of the flake it runs in, so run this from the repo
 # root. Pins live in flake/cache-pin.nix; pass extra CLI flags (--plan,

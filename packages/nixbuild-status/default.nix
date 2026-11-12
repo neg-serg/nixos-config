@@ -69,7 +69,7 @@
 # milliseconds and is safe to use as a panel interval command.
 rustPlatform.buildRustPackage {
   pname = "nixbuild-status";
-  version = "0.1.0";
+  version = (lib.importTOML ./Cargo.toml).package.version;
 
   src = ./.;
 
