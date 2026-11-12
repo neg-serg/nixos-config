@@ -88,12 +88,51 @@ _exists lazytail && {
 # sensors, lspci, smartctl, uptime, env, find, tar, diff, nmap, iptables,
 # systemd-analyze). The command list lives in the tint package (builtin table)
 # plus ~/.config/tint/config.toml, so the wrappers are generated here instead of
-# being a second copy in this file. Pager/progress/tty tools (git, nix, cargo,
+# being a second copy in this file. Pager/progress/tty tools (nix, cargo,
 # python, docker, kubectl, journalctl, ...) are deliberately not wrapped; use
 # `cmd | tint -r NAME`. tint execs the
 # command when stdout is not a tty, so a pipe pays one exec and keeps its exit
 # code; lines that a tool already coloured are passed through untouched.
 _exists tint && eval "$(tint --shell zsh)"
+
+# `git` under tint: its transport and pack commands are the ones that print a
+# plain progress ladder, and git draws that ladder only on a terminal (`git push
+# | cat` loses it entirely). Under `tint --pty` git really sees a terminal, tint
+# relays the ladder and colours it, and the exit code stays git's.
+#
+# Everything else stays on git: status, diff and log already colour themselves,
+# and they own a pager or an editor that a relay would only get in the way of.
+# Pipes and redirects go straight to git as well, or `git log | grep` would
+# suddenly receive pager output.
+#
+# A function, not an alias: the command word stays `git`, so zsh and carapace
+# keep completing subcommands, refs and paths. Aliases that expand to git
+# (`gp = git push`) keep their completion for the same reason.
+if _exists tint; then
+  git() {
+    emulate -L zsh
+    local sub=
+    local -i i=1
+    # Skip the global options that take a value, so `git -C repo push` and
+    # `git -c k=v fetch` are recognised as the commands they are.
+    while (( i <= $# )); do
+      case $argv[i] in
+        -c|-C|--git-dir|--work-tree|--namespace|--config-env|--super-prefix) (( i += 2 )) ;;
+        --*) (( i += 1 )) ;;
+        *) sub=$argv[i]; break ;;
+      esac
+    done
+    case $sub in
+      (push|fetch|pull|clone|ls-remote|remote|submodule|gc|repack|fsck|prune|checkout|switch|restore|reset)
+        if [[ -t 1 && -t 2 ]]; then
+          command tint --pty -r generic -- git "$@"
+          return
+        fi
+        ;;
+    esac
+    command git "$@"
+  }
+fi
 
 autoload zc
 
