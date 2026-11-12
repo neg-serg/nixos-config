@@ -49,32 +49,34 @@ if [ -f "$MANIFEST" ] && [ "$(jq -r '.version // ""' "$MANIFEST" 2> /dev/null)" 
   fi
 fi
 
-# Every store-seeded plugin is declared as a profile dependency, as a `link:`
-# into the store (seededDeps in dsh-tui.nix). The seed below only *copies* the
+# Every store-seeded plugin is declared as a profile dependency, as a `file:`
+# from the store (seededDeps in dsh-tui.nix). The seed below only *copies* the
 # package into node_modules, and pnpm's hoisted-linker reconciliation removes
 # every entry it does not own on each install — including this script's own
 # dsh-tui / dsh-free-search / dsh-find-plugin installs. When that happens the
 # rows stay in cordis.patch.yml but nothing can import them, and the next boot
 # prints "N entries did not activate ... failed to import" with every plugin
 # inert (observed 2026-11-12: one `dsh plugin add` parked 36 entries and 29
-# rows died). A link dependency is a symlink pnpm maintains itself: the
-# reconciliation leaves it alone, and the harness resolution lists the package
-# as profile-scope. Placed ahead of the registry installs below so they never
-# see the plugins as unowned.
+# rows died). A `file:` dependency is pnpm's own copy inside node_modules: the
+# reconciliation leaves it alone, and the package stays where the harness
+# resolves a plugin's `@deepseek-ai/*` peers — a `link:` symlink into the store
+# loses that fallback (14 importers of `dsh-llm`/`dsh-tools` died in the link
+# experiment). Placed ahead of the registry installs below so they never see
+# the plugins as unowned.
 #
 # The spec pins the store path, so a rebuild changes it; the guard rewrites the
-# manifest only when a spec or a link is actually missing. The install itself
-# needs no registry: link dependencies resolve locally.
+# manifest only when a spec or a copy is missing. The install needs no
+# registry: `file:` dependencies resolve from the store.
 PLUGIN_DEPS=@pluginDeps@
+STAMP="$PROFILE_DIR/.dsh-seeded-deps.json"
 deps_missing() {
+  [ "$(cat "$STAMP" 2> /dev/null || true)" = "$PLUGIN_DEPS" ] || return 0
   jq -e --argjson deps "$PLUGIN_DEPS" '
     (.dependencies // {}) as $have
     | all($deps[]; ($have[.name] // "") == .spec)
   ' "$MANIFEST" > /dev/null 2>&1 || return 0
   while IFS= read -r name; do
-    # A plain copy also satisfies `-f`; only the symlink means pnpm owns the
-    # entry and will keep it through the next reconciliation.
-    [ -L "$PROFILE_DIR/node_modules/$name" ] || return 0
+    [ -f "$PROFILE_DIR/node_modules/$name/package.json" ] || return 0
   done < <(printf '%s' "$PLUGIN_DEPS" | jq -r '.[].name')
   return 1
 }
@@ -86,17 +88,17 @@ if deps_missing; then
     ' "$MANIFEST" > "$tmp"; then
     chmod 600 "$tmp"
     mv "$tmp" "$MANIFEST"
-    echo "dsh-tui-ensure: pinning $(printf '%s' "$PLUGIN_DEPS" | jq 'length') seeded plugins as link dependencies"
+    echo "dsh-tui-ensure: pinning $(printf '%s' "$PLUGIN_DEPS" | jq 'length') seeded plugins as file dependencies"
   else
     rm -f "$tmp"
     echo "dsh-tui-ensure: could not pin the seeded plugins in $MANIFEST" >&2
   fi
-  # pnpm removes an extraneous node_modules entry with rm -rf, which needs a
+  # pnpm replaces an entry it did not install with rm -rf, which needs a
   # writable parent at every level; a store copy is 0555/0444, so the install
   # aborts with ERR_PNPM_PACKAGE_MANAGER_REMOVE_MODULES_DIR. A rename parks the
-  # entry without touching its contents and leaves an empty slot for the link.
-  # Parked copies go back if the install fails, so the seeded fallback below
-  # still boots the profile.
+  # entry without touching its contents and leaves the slot free for pnpm's own
+  # copy. Parked copies go back if the install fails, so the seeded fallback
+  # below still boots the profile.
   park="$(mktemp -d "$PROFILE_DIR/.seed-park.XXXXXX")"
   parked=0
   for entry in "$PROFILE_DIR"/node_modules/* "$PROFILE_DIR"/node_modules/@*/*; do
@@ -107,10 +109,14 @@ if deps_missing; then
   done
   out="$(mktemp)"
   if (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui install) > "$out" 2>&1; then
+    printf '%s' "$PLUGIN_DEPS" > "$STAMP.tmp"
+    chmod 600 "$STAMP.tmp"
+    mv "$STAMP.tmp" "$STAMP"
     chmod -R u+w "$park" 2> /dev/null || true
     rm -rf "$park"
   else
-    echo "dsh-tui-ensure: link install failed — restoring $parked seeded copies" >&2
+    rm -f "$STAMP"
+    echo "dsh-tui-ensure: plugin install failed — restoring $parked seeded copies" >&2
     tail -5 "$out" >&2
     for entry in "$park"/*; do
       [ -e "$entry" ] || continue

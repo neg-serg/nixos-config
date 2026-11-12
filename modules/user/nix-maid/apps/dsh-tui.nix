@@ -51,7 +51,7 @@ let
   categoryDir = pkgs.copyPathToStore ./dsh-category-skill-reminder;
   ttsrDir = pkgs.copyPathToStore ./dsh-ttsr;
 
-  # Profile dependencies for every store-seeded plugin (`link:` into the store).
+  # Profile dependencies for every store-seeded plugin (`file:` from the store).
   #
   # The caretaker mounts these packages by name, but a package that is only
   # *copied* into node_modules is not a dependency: pnpm's hoisted-linker
@@ -60,28 +60,31 @@ let
   # window is a dead boot: 2026-11-12 a single `dsh plugin add` parked 36
   # entries and the next start printed "29 entries did not activate ... failed
   # to import", with every one of these plugins inert until the next switch.
-  # A `link:` dependency is a symlink pnpm maintains itself, so reconciliation
-  # leaves it alone, and the harness resolution lists the package as
-  # profile-scope instead of relying on a native fallback. The spec pins a store
-  # path, which moves with every rebuild, so the caretaker re-checks it on each
-  # run (see `PLUGIN_DEPS` in dsh-tui-ensure.sh).
+  # A `file:` dependency is the package copied into node_modules as a real
+  # directory pnpm then owns, so reconciliation leaves it alone. Real
+  # directories, not `link:` symlinks: the harness resolves the plugins'
+  # `@deepseek-ai/*` peers by the importing layer, and a module under a linked
+  # store root loses that fallback (14 plugins importing `dsh-llm`/`dsh-tools`
+  # died with `failed to import` in the link: experiment).
+  # The spec pins a store path, which moves with every rebuild, so the caretaker
+  # re-checks it on each run (see `PLUGIN_DEPS` in dsh-tui-ensure.sh).
   seededDeps = builtins.toJSON (
     map (p: {
       name = p.name;
-      spec = "link:${p.path}";
+      spec = "file:${p.path}";
     }) roster.plugins
     ++ [
       {
         name = "dsh-advisor";
-        spec = "link:${advisorDir}";
+        spec = "file:${advisorDir}";
       }
       {
         name = "dsh-category-skill-reminder";
-        spec = "link:${categoryDir}";
+        spec = "file:${categoryDir}";
       }
       {
         name = "dsh-ttsr";
-        spec = "link:${ttsrDir}";
+        spec = "file:${ttsrDir}";
       }
     ]
   );
