@@ -45,7 +45,7 @@ let
     # generated with. jq keeps the JSON semantics of the former python step.
     jq 'del(.devDependencies)
         | .overrides = {
-            "@modelcontextprotocol/client": "2.2.0",
+            "@modelcontextprotocol/client": "2.3.0",
             "fflate": "0.8.3"
           }' "$out/package.json" > "$out/package.json.tmp"
     mv "$out/package.json.tmp" "$out/package.json"
@@ -94,11 +94,14 @@ buildNpmPackage {
 
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`.
   # The lockfile carries two security overrides: fflate 0.8.2 -> 0.8.3
-  # (GHSA-px8p-9vwx-vf98) and @modelcontextprotocol/client 2.0.0 -> 2.2.0
-  # (GHSA-6qxp-vccf-f47h, OAuth credential leak; dsh-mcp-client pins it
-  # exactly). They are injected into package.json by `src` below, because npm ci
-  # cannot replay a lockfile that resolves past a declared pin without them.
-  npmDepsHash = "sha256-pA4usAobMGeYgWpo07+bOJC0yoK990hCJ1cWReYon2c=";
+  # (GHSA-px8p-9vwx-vf98) and @modelcontextprotocol/client 2.0.0 -> 2.3.0
+  # (GHSA-6qxp-vccf-f47h OAuth credential leak, GHSA-6prh-2h8m-c8cw cross-origin
+  # redirect credential leak; dsh-mcp-client pins it exactly). They are injected
+  # into package.json by `src` below, because npm ci cannot replay a lockfile that
+  # resolves past a declared pin without them. Bumps that already sit inside the
+  # declared ranges need no override: undici 8.11.2 -> 8.12.2, zod 4.6.5 -> 4.6.6,
+  # fast-uri 3.1.8 -> 3.1.9 (the Dependabot set as of 2026-11).
+  npmDepsHash = "sha256-9XZ8JfzASabTOjQEs+IYd8L0IYy1sUEQRhL0zDIsL6U=";
 
   meta = {
     description = "DeepSeek Harness (dsh) — open-source agent harness, everything is a plugin";
