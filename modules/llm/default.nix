@@ -239,6 +239,36 @@
 #   GiB (`maxMemoryAllocationSize = 0xfffffffc`) — any component needing a bigger compute buffer (full
 #   VAE decode = 8.5 GB) must go to CPU or use TAESD.
 #
+# ### Qwen-Image (official bf16 checkpoint, diffusers + ROCm)
+#
+# - Weights: the reference `Qwen/Qwen-Image` diffusers repo (Apache-2.0), 54 GB at
+#   `/zero/ai/video/models/Qwen-Image/weights` — the bf16 checkpoint the model card documents, not
+#   the GGUF conversion ComfyUI loads. Operator notes live next to it, in that directory's
+#   `README.md`.
+# - Why a custom runner: the transformer is 41.9 GB bf16 against 15.9 GiB of VRAM, so the card's
+#   `device_map="cuda"` cannot work, and `enable_sequential_cpu_offload()` fails as well — encoder
+#   (16.5 GB) plus transformer (41.9 GB) exceed the 60 GB of RAM, the weights get paged out, and a
+#   single 512x512 step never finishes (verified: swap thrashing in both directions).
+# - Runner: `/zero/ai/video/models/Qwen-Image/run2.py`, two processes. `--phase embeds` loads only
+#   the text encoder and caches prompt embeddings; `--phase image` loads only the transformer and
+#   streams it per block with `enable_group_offload(..., offload_to_disk_path=...)` — 60 group
+#   safetensors (39 GB) written once under `offload/`, re-read per step, so RAM stays flat and ZFS
+#   throughput (5.6 GB/s measured) sets the step cost.
+# - Verified (RX 9070 XT): 1328x1328, 50 steps, `true_cfg_scale=4.0` — 20.9 s/step, 19 min/image.
+#   `--blocks 3 --no-stream` is 2.7x slower; streams only work with one block per group.
+# - Run it from a normal shell, not from a tool sandbox (`/dev/kfd` is unreachable there and torch
+#   reports zero HIP devices):
+#
+#     cd /zero/ai/video/comfyui
+#     HSA_OVERRIDE_GFX_VERSION=12.0.0 TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1 \
+#     venv/bin/python /zero/ai/video/models/Qwen-Image/run2.py \
+#       --prompt '...' --width 1328 --height 1328 --steps 50 \
+#       --disk-offload /zero/ai/video/models/Qwen-Image/offload \
+#       --out /zero/ai/video/comfyui-output/qwen.png
+#
+# - `no_proxy` containing a bare `::1` breaks huggingface_hub/httpx (`Invalid port: ':1]'`); the
+#   runner pops it, and the download command in the README strips it with `env -u`.
+#
 # ### Embeddings & reranker (RAG)
 #
 # - Embeddings: **qwen3-embedding** (already in the ollama store, Q4_K_M, 4096 dims) — use via
@@ -333,6 +363,11 @@
 #   (5.8 GB) and the unused DeepThought-STEM (5.3 GB) and qed-nano (4 GB).
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
 #   (created by tmpfiles)
+# - `/zero/ai/video/comfyui` — ComfyUI checkout: `venv` (torch 2.9.1+rocm6.4), custom nodes (incl.
+#   ComfyUI-GGUF), GGUF/safetensors weights for Qwen-Image, Wan, LTX and Hunyuan, shared with
+#   `/zero/ai/video/models` through symlinks (filled by hand, not a Nix package)
+# - `/zero/ai/video/models/Qwen-Image` — official Qwen-Image bf16 diffusers weights (54 GB), the
+#   two-phase runner and its 39 GB group-offload cache
 # - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
 #   tmpfiles)
 # - `/zero/ai/asr` — GigaAM-v3 and Parakeet-TDT-v3 ONNX models for sherpa-onnx (activation dir,
