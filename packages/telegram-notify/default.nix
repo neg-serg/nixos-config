@@ -12,6 +12,12 @@
 #   delete notes in the user's zk notebook, and run `nb` to pull/commit/push
 #   it. Writes drop from the unit's root to the notebook owner through
 #   `runuser`, so new notes stay neg-owned.
+#   It also drives the local Herdr farm (`src/herdr.rs`): `/herdr` renders the
+#   workspaces, tabs, panes and agent states, and `/herdr read|run|prompt`
+#   reads a pane, types a command into a shell pane, or submits a task to an
+#   agent and waits for its state. The model gets the same operations as tools,
+#   with the write ones gated on an explicit request. Every call drops to the
+#   Herdr owner with `runuser` and uses that user's API socket.
 #   `assets/avatar.svg` is the bot's profile picture: a pure-vector phosphor CRT
 #   (labels are outlined from a bitmap font, so no font or image dependency),
 #   with the 512/1024 raster exports that BotFather's `/setuserpic` needs.

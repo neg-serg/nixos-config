@@ -60,6 +60,24 @@ let
   # index is refreshed by hand with `rag-search index`).
   ragUserBin = "${config.lib.neg.homeDir}/.local/bin/rag-search";
 
+  # Herdr farm control (packages/telegram-notify/src/herdr.rs): the bot shells
+  # out to the user's herdr CLI and drops to that user with runuser, so the
+  # socket path and the owner are explicit. Gated by the flag that installs
+  # Herdr; without it the bot reports the feature as off instead of calling a
+  # missing binary.
+  herdrEnv =
+    if config.features.dev.ai.herdr.enable then
+      ''
+        export PILL_BOT_HERDR=1
+        export PILL_BOT_HERDR_BIN=${lib.getExe pkgs.herdr}
+        export PILL_BOT_HERDR_SOCKET=${config.lib.neg.homeDir}/.config/herdr/herdr.sock
+        export PILL_BOT_HERDR_USER=${pillPanelUser}
+      ''
+    else
+      ''
+        export PILL_BOT_HERDR=0
+      '';
+
   # Daily 12:00 pill reminder: sends a Telegram message with an inline
   # "Mark taken" button; telegram-pill-bot turns a press into confirmation.
   # The message is skipped when the panel already recorded today's dose,
@@ -124,6 +142,7 @@ let
     export PILL_BOT_HYPRCTL=${pkgs.hyprland}/bin/hyprctl
     export PILL_BOT_GRIM=${pkgs.grim}/bin/grim
     export PILL_BOT_ALERTMANAGER_URL=http://127.0.0.1:${toString config.monitoring.alertmanager.port}/api/v2/alerts
+    ${herdrEnv}
     exec ${lib.getExe' pkgs.neg.telegram-notify "telegram-pill-bot"} "$@"
   '';
 
@@ -260,11 +279,12 @@ in
           };
         };
 
-        # Telegram bot: long-polls callback queries for the reminder button
-        # and text messages for /status, the notes commands and the
-        # local-model answers to any question.
+        # Telegram bot: long-polls callback queries for the reminder button and
+        # text messages for /status, the notes commands, local-model answers
+        # and the Herdr farm (/herdr: panes, agents, prompt/run).
+
         systemd.services."telegram-pill-bot" = {
-          description = "Telegram assistant: pill buttons, /status, notes and local-model answers";
+          description = "Telegram assistant: pill buttons, /status, notes, local-model answers and Herdr farm control";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
