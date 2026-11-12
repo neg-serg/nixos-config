@@ -33,6 +33,14 @@ in
     pkgs.wireguard-tools # tools for the WireGuard secure network tunnel
     pkgs.update-resolv-conf # apply pushed DNS options to resolv.conf
     pkgs.sing-box # universal proxy platform
-  ]
-  ++ lib.optional (config.lib.neg.enabled "apps.throne") pkgs.throne;
+  ];
+  # Throne (features.apps.throne): optional Qt GUI for proxy profile editing,
+  # nothing more. `programs.throne` is the nixpkgs module — it installs the
+  # package and, only with tunMode, the capability wrapper the core needs to
+  # open a TUN device. It ships no unit and no autostart, so a disabled flag
+  # costs nothing and an enabled one stays inert until started by hand.
+  programs.throne = lib.mkIf (config.lib.neg.enabled "apps.throne") {
+    enable = true;
+    tunMode.enable = config.lib.neg.enabled "apps.throne.tunMode";
+  };
 }
