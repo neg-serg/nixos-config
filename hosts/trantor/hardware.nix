@@ -116,6 +116,17 @@ in
     kernelModules = lib.mkAfter kernelData.kernelModules;
     extraModulePackages = kernelData.extraModulePackages;
 
+    # The Radeon 610M iGPU (and its HDMI/DP audio) belongs to vfio-pci, not to
+    # amdgpu: a guest VM drives the iGPU's USB4 Type-C DisplayPort-alt outputs
+    # while the host keeps exactly one DRM device (the RX 9070 XT on DP-2).
+    # The softdep loads vfio-pci before amdgpu, so the ids below win the probe
+    # race; /etc/modprobe.d lands in the initrd, where amdgpu is loaded from.
+    # Do not unbind amdgpu at runtime instead: its teardown hangs in D-state.
+    extraModprobeConfig = ''
+      options vfio-pci ids=1002:13c0,1002:1640
+      softdep amdgpu pre: vfio-pci
+    '';
+
     initrd = {
       kernelModules = kernelData.initrdKernelModules;
       # No `systemd.enable` / `verbose` here: the 2026-10 nixpkgs removed both
