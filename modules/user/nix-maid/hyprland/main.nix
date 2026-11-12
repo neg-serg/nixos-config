@@ -515,6 +515,15 @@ let
   # services.nix builds for its modules.
   systemdUser = neg.systemdUser lib;
 
+  # Login-transition load race, shared by every setup helper that polls: a plugin
+  # load issued while the compositor is still busy (the config reload after
+  # greetd, or a manual `hyprctl reload`) does not always stick, so the helpers
+  # re-check `hyprctl plugin list` instead of trusting the first load. One knob on
+  # purpose — hy3, hymission, hyprcapture and hyprdynamiccursors observed the same
+  # ~5 s window, and widening it must not mean editing four scripts.
+  pluginLoadAttempts = 20;
+  pluginLoadDelay = "0.25";
+
   # hy3 is back on 0.56: nixpkgs carries 0.56.0.1 (hl0.56.0.1), built by
   # mkHyprlandPlugin against the same Hyprland 0.56.2 commit as the compositor,
   # so @hy3_setup@ only has to dlopen it — the layout is selected by
@@ -549,10 +558,10 @@ let
       "$hyprctl_bin" plugin list 2> /dev/null | grep -q "^Plugin hy3 "
     }
 
-    for _ in $(seq 1 20); do
+    for _ in $(seq 1 ${toString pluginLoadAttempts}); do
       loaded && break
       "$hyprctl_bin" plugin load "$plugin" || true
-      sleep 0.25
+      sleep ${pluginLoadDelay}
     done
 
     if ! loaded; then
@@ -830,10 +839,10 @@ let
 
     # ~5 s budget: the login-transition race hyprdynamiccursors hits too — a
     # load issued while the compositor is still settling does not stick.
-    for _ in $(seq 1 20); do
+    for _ in $(seq 1 ${toString pluginLoadAttempts}); do
       loaded && break
       "$hyprctl_bin" plugin load "$plugin" || true
-      sleep 0.25
+      sleep ${pluginLoadDelay}
     done
 
     if ! loaded; then
@@ -896,10 +905,10 @@ let
     # ~5 s budget, the hyprdynamiccursors pattern: a load issued while the
     # compositor is still busy with the login transition does not stick, so
     # retry until `hyprctl plugin list` really reports the plugin.
-    for _ in $(seq 1 20); do
+    for _ in $(seq 1 ${toString pluginLoadAttempts}); do
       loaded && break
       "$hyprctl_bin" plugin load "$plugin" || true
-      sleep 0.25
+      sleep ${pluginLoadDelay}
     done
 
     if ! loaded; then
@@ -950,10 +959,10 @@ let
 
     # ~5 s budget: enough for the reload to settle and for a load that gets
     # wiped by the reload finalization to be retried.
-    for _ in $(seq 1 20); do
+    for _ in $(seq 1 ${toString pluginLoadAttempts}); do
       loaded && break
       "$hyprctl_bin" plugin load "$plugin" || true
-      sleep 0.25
+      sleep ${pluginLoadDelay}
     done
 
     if ! loaded; then
