@@ -22,8 +22,13 @@ execution = "$EDITOR {file}"
 leave_broot = false
 apply_to = "file"
 
+# New file in one keystroke: ctrl-n pre-fills `:create `, type the name, enter.
+# With auto_exec disabled the key only opens the prompt, so the name is typed
+# on the same input line instead of going through the `:` command search.
 [[verbs]]
 invocation = "create {subpath}"
+key = "ctrl-n"
+auto_exec = false
 execution = "$EDITOR {directory}/{subpath}"
 leave_broot = false
 
@@ -32,8 +37,12 @@ invocation = "mkdir {subpath}"
 execution = "mkdir -p {directory}/{subpath}"
 leave_broot = false
 
+# Empty file without the editor: alt-n pre-fills `:touch `, type the name,
+# enter. `touch` stays available as a command for the same action.
 [[verbs]]
 invocation = "touch {new_file}"
+key = "alt-n"
+auto_exec = false
 execution = "touch {directory}/{new_file}"
 leave_broot = false
 
