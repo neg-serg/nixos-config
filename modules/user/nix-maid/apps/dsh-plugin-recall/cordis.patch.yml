@@ -1,0 +1,8 @@
+# The upstream release ships its loader rows here, but this profile mounts the
+# plugin with an explicit row (dsh-terminal-plugins.nix): the package is a
+# profile dependency, never a profile bundle. The file stays empty so the plugin
+# manager's compatibility preflight can read the overlay the manifest declares
+# (a missing file rejects the whole `dsh plugin install` with
+# "Cannot validate installed package ... failed to read overlay"), and a
+# package added to `dsh.profile.bundles` later adds no duplicate row.
+[]
