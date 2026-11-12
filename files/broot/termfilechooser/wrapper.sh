@@ -81,6 +81,13 @@ fi
 for flag in "${flags[@]}"; do
   inner+=" $(printf '%q' "$flag")"
 done
+
+# A file dialog needs names, not metadata. Sizes and dates make broot walk the
+# whole subtree to build them (dates take the deepest mtime), which stalls a
+# dialog opened on a multi-terabyte $HOME. CLI flags are applied after the
+# config's default_flags, so these win over the user's conf.
+inner+=" --no-sizes --no-dates"
+
 inner+=" --conf $(printf '%q' "$conf") > $(printf '%q' "$out")"
 
 read -r -a term <<< "${TERMCMD:-@kitty@ --class termfilechooser --title broot}"
