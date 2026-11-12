@@ -15,6 +15,15 @@ let
   # policy/ (same directory, no default.nix so importDir leaves them alone).
   adguardLists = import ./policy/adguard-lists.nix;
   fanCurves = import ./policy/fan-curves.nix;
+
+  # Resilio Sync is an optional integration: the SOPS file decides whether the
+  # service block exists, and every secret, tmpfiles rule and ExecStartPre entry
+  # depends on the same file plus the service switch. Name the two conditions
+  # once — an edit that enables only part of the integration is exactly the kind
+  # that stays unnoticed while the switch is off.
+  hasResilioSecret = builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml");
+  resilioActive = hasResilioSecret && config.services.resilio.enable;
+
   resilioAuthScript = pkgs.writeShellScript "resilio-auth" ''
     CONFIG_FILE="/run/rslsync/config.json"
 
@@ -353,7 +362,7 @@ lib.mkMerge [
         xserver.enable = lib.mkForce false;
 
         # Resilio Sync (interactive Web UI, auth via SOPS)
-        resilio = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml")) {
+        resilio = lib.mkIf hasResilioSecret {
           enable = false;
 
           # state / DB
@@ -383,22 +392,16 @@ lib.mkMerge [
     # when rotating files under non-standard paths or missing until first run.
 
     # Resilio Sync: Web UI auth via SOPS, data under /zero/sync
-    sops.secrets."resilio/http-login" =
-      lib.mkIf
-        (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
-        {
-          sopsFile = config.lib.neg.path "secrets/resilio.sops.yaml";
-          owner = "rslsync";
-          mode = "0400";
-        };
-    sops.secrets."resilio/http-pass" =
-      lib.mkIf
-        (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
-        {
-          sopsFile = config.lib.neg.path "secrets/resilio.sops.yaml";
-          owner = "rslsync";
-          mode = "0400";
-        };
+    sops.secrets."resilio/http-login" = lib.mkIf resilioActive {
+      sopsFile = config.lib.neg.path "secrets/resilio.sops.yaml";
+      owner = "rslsync";
+      mode = "0400";
+    };
+    sops.secrets."resilio/http-pass" = lib.mkIf resilioActive {
+      sopsFile = config.lib.neg.path "secrets/resilio.sops.yaml";
+      owner = "rslsync";
+      mode = "0400";
+    };
 
     environment.variables.GAME_PIN_AUTO_LIMIT = "8"; # Limit auto-picked V-Cache CPU set size for game-run pinning
 
@@ -417,13 +420,10 @@ lib.mkMerge [
         [
           "d /zero/sync/upload-next 0755 neg neg - -"
         ]
-        ++
-          lib.optionals
-            (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
-            [
-              # Resilio state / license storage (service runs as rslsync)
-              "d /zero/sync/.state 0700 rslsync rslsync - -"
-            ]
+        ++ lib.optionals resilioActive [
+          # Resilio state / license storage (service runs as rslsync)
+          "d /zero/sync/.state 0700 rslsync rslsync - -"
+        ]
       );
       services = {
         # Power saving by default for less heat/noise
@@ -444,12 +444,9 @@ lib.mkMerge [
         logrotate-checkconf.enable = false;
 
         # Inject Resilio Web UI credentials from SOPS into generated config.json
-        resilio =
-          lib.mkIf
-            (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
-            {
-              serviceConfig.ExecStartPre = lib.mkAfter [ resilioAuthScript ];
-            };
+        resilio = lib.mkIf resilioActive {
+          serviceConfig.ExecStartPre = lib.mkAfter [ resilioAuthScript ];
+        };
       };
 
     };
