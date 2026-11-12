@@ -8,6 +8,7 @@ scores so `llmctl models` answers "which one for what".
 """
 
 import argparse
+import atexit
 import glob
 import json
 import os
@@ -1619,13 +1620,54 @@ def _plan_resolve(raw_path, allowed):
     return hits[0] if len(hits) == 1 else None
 
 
+def _json_plan_value(text, start):
+    """Return (value, appended) for the first JSON value starting at `start`.
+
+    `appended` counts the closers the reply never wrote; it is None when the
+    reply stops inside a string. Small tiers close every object but forget the
+    array bracket — the 4B writer does it every time — and such a reply is a
+    complete plan in everything the caller can check, so the missing closers
+    are appended instead of costing a repair round. A repair round is useless
+    here anyway: asked to fix the JSON, the same model repeats the same
+    unterminated reply. A reply that stops inside a string is cut mid-token,
+    where appending would fabricate a path, so that one is refused.
+    """
+    stack, in_string, escaped = [], False, False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in "[{":
+            stack.append("]" if ch == "[" else "}")
+        elif ch in "]}":
+            # A closer past its opener is a real syntax error; hand the slice
+            # to json.loads so the problem message names the offset.
+            if not stack or stack.pop() != ch:
+                return text[start : i + 1], 0
+            if not stack:
+                return text[start : i + 1], 0
+    if in_string:
+        return None
+    return text[start:] + "".join(reversed(stack)), len(stack)
+
+
 def _commit_plan_parse(text, allowed):
-    """Return (groups, problems) for a planning reply.
+    """Return (groups, problems, notes) for a planning reply.
 
     The plan drives `git add` paths, so validation is strict: an invented,
     dropped or repeated path would either stage the wrong content or leave a
     change behind, and both failures must abort before the first commit rather
-    than surface as a half-split history.
+    than surface as a half-split history. The *envelope* is tolerated down to
+    a missing closing bracket (`_json_plan_value`): the path checks are what
+    make a plan safe, so a forgotten `]` must not abort the split.
     """
     raw = text.strip()
     # Both bracket kinds: a plan may arrive as an array of groups or as an
@@ -1635,13 +1677,22 @@ def _commit_plan_parse(text, allowed):
     start = min(
         (i for i in (raw.find("["), raw.find("{")) if i >= 0), default=-1
     )
-    end = max(raw.rfind("]"), raw.rfind("}"))
-    if start < 0 or end <= start:
-        return [], ["the reply has no JSON array"]
+    if start < 0:
+        return [], ["the reply has no JSON array"], []
+    got = _json_plan_value(raw, start)
+    if got is None:
+        return [], ["the reply stops inside a JSON string (cut off)"], []
+    payload, appended = got
+    notes = []
+    if appended:
+        notes.append(
+            f"note: the plan reply left {appended} bracket(s) unclosed; "
+            "closed them before parsing"
+        )
     try:
-        data = json.loads(raw[start : end + 1])
+        data = json.loads(payload)
     except json.JSONDecodeError as exc:
-        return [], [f"invalid JSON at offset {exc.pos}: {exc.msg}"]
+        return [], [f"invalid JSON at offset {exc.pos}: {exc.msg}"], notes
     if isinstance(data, dict):
         # A wrapped answer (`{"groups": [...]}`) or a single group object is
         # the same plan; neither is worth a repair round.
@@ -1657,9 +1708,9 @@ def _commit_plan_parse(text, allowed):
     if isinstance(data, list) and any(isinstance(x, str) for x in data):
         # A flat path list says nothing about the groups; one repair round with
         # the shape spelled out beats guessing a split.
-        return [], ["each group must be an object with a files list"]
+        return [], ["each group must be an object with a files list"], notes
     if not isinstance(data, list) or not data:
-        return [], ["the reply is not a non-empty array of groups"]
+        return [], ["the reply is not a non-empty array of groups"], notes
     groups, problems, seen = [], [], {}
     for idx, item in enumerate(data, 1):
         if isinstance(item, dict):
@@ -1696,7 +1747,7 @@ def _commit_plan_parse(text, allowed):
         problems.append(
             f"{len(groups)} groups is more than the {COMMIT_PLAN_MAX_GROUPS} allowed"
         )
-    return groups, problems
+    return groups, problems, notes
 
 
 def _commit_plan(model, messages, allowed):
@@ -1705,22 +1756,32 @@ def _commit_plan(model, messages, allowed):
     Local tiers answer free-form or drop a file the first time, so the broken
     rule goes back into the same conversation instead of re-planning from
     scratch. Nothing is staged yet, so a rejected plan costs model time only.
+    The repair round doubles the token budget: a reply cut at the cap is the
+    one failure the model cannot fix by rewording, only by having more room.
     """
+    budget = COMMIT_PLAN_MAX_TOKENS
     for attempt in (1, 2):
         try:
             r = chat(
                 model,
                 messages,
-                max_tokens=COMMIT_PLAN_MAX_TOKENS,
+                max_tokens=budget,
                 cache=True,
                 extra={"chat_template_kwargs": {"enable_thinking": False}},
             )
         except Exception as exc:  # noqa: BLE001
             sys.exit(f"model request failed: {exc}")
         text = _commit_clean(r["content"])
-        groups, problems = _commit_plan_parse(text, allowed)
+        groups, problems, notes = _commit_plan_parse(text, allowed)
+        for note in notes:
+            print(note, file=sys.stderr)
         if not problems:
             return groups
+        if r["finish"] == "length":
+            problems.append(
+                f"the reply was cut at the {budget}-token cap, mid-answer"
+            )
+            budget *= 2
         if attempt == 2:
             print(text, file=sys.stderr)
             sys.exit("split plan rejected:\n  " + "\n  ".join(problems))
@@ -2270,6 +2331,111 @@ def _commit_unstage(repo):
     )
 
 
+def _commit_paths(files):
+    """Strip the ` (+3/-1)` stat suffix that `case["files"]` carries.
+
+    The suffix is appended by this module, so the last ` (` is the split point;
+    a binary file reads ` (+-/-)` and must survive the same way as a text one.
+    """
+    out = []
+    for item in files:
+        path, sep, stat = item.rpartition(" (")
+        out.append(path if sep and stat.endswith(")") else item)
+    return out
+
+
+def _pid_alive(pid):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _commit_unlock(path):
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+
+def _commit_lock(repo):
+    """Take the per-repository commit lock; exit naming the other run.
+
+    Every commit path reads and writes the index, and `--split` keeps it
+    staged across the pre-commit hook, which runs the whole lint devshell and
+    takes tens of seconds, so two runs overlap for whole seconds. Overlap
+    corrupts: one run's `git reset` clears the index while the other sits in
+    `git commit`, and git then records an *empty* commit with the right
+    message and leaves the change in the worktree. Reproduced on this
+    repository on 2026-11-12 — an empty `[cli/broot]` commit with two files
+    still modified. The pid in the file keeps a crash from wedging the
+    repository: a lock whose process is gone is taken over, not honoured.
+    """
+    gitdir = _git(repo, "rev-parse", "--absolute-git-dir").stdout.strip()
+    path = os.path.join(gitdir, "llmctl-commit.lock")
+    for _ in range(2):
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        except FileExistsError:
+            try:
+                with open(path) as handle:
+                    pid = int(handle.read().split()[0])
+            except (OSError, ValueError, IndexError):
+                pid = 0
+            if pid and _pid_alive(pid):
+                sys.exit(
+                    f"another llmctl commit is running in {repo} (pid {pid}); "
+                    f"wait for it, or remove {path} if that process is gone"
+                )
+            os.unlink(path)
+            continue
+        with os.fdopen(fd, "w") as handle:
+            handle.write(f"{os.getpid()}\n")
+        atexit.register(_commit_unlock, path)
+        return path
+    sys.exit(f"could not take the commit lock {path}")
+
+
+def _commit_verify(repo, files, label):
+    """Abort when HEAD does not hold exactly the files just committed.
+
+    A zero exit from `git commit` is not proof of content: the pre-commit hook
+    runs for tens of seconds, and anything that touches the index in that
+    window makes git record an empty or shifted commit under the intended
+    message. Checking the recorded tree turns that silent drop into a stop
+    right after the first bad commit, while the message is still on screen.
+    Renames are listed as both halves, matching how the plan builds groups.
+    """
+    out = _git(
+        repo,
+        "diff-tree",
+        "--no-commit-id",
+        "-r",
+        "--name-only",
+        "--no-renames",
+        "HEAD",
+    )
+    got = {p for p in out.stdout.splitlines() if p}
+    missing = sorted(set(files) - got)
+    extra = sorted(got - set(files))
+    if not missing and not extra:
+        return
+    detail = []
+    if missing:
+        detail.append("missing " + ", ".join(missing))
+    if extra:
+        detail.append("unexpected " + ", ".join(extra))
+    sys.exit(
+        f"{label}: HEAD does not match the files of this commit "
+        f"({'; '.join(detail) or 'empty commit'}); the message above describes "
+        "a tree that is not in history — inspect `git log -1 --stat` and the "
+        "working tree before continuing"
+    )
+
+
 def _commit_split(args, repo, model, scopes, new_files):
     """Make the several commits the model groups the pending change into.
 
@@ -2357,6 +2523,7 @@ def _commit_split(args, repo, model, scopes, new_files):
                 f"git commit failed for group {i}/{total}: {done} earlier "
                 f"commit(s) kept; {total - i} group(s) still pending"
             )
+        _commit_verify(repo, files, f"group {i}/{total}")
         done += 1
     if args.dry_run:
         _commit_reset(repo, new_files)
@@ -2395,6 +2562,9 @@ def cmd_commit(args):
         model = resident if resident in COMMIT_REUSE else COMMIT_DEFAULT_MODEL
     else:
         model = resolve(args.model) or args.model
+    # Everything from here on mutates the index; a second run in the same
+    # repository must not interleave with it (see _commit_lock).
+    _commit_lock(repo)
     if args.split:
         # `--split` commits whole files from the working tree, so a staged index
         # adds nothing it would not stage itself — and a leftover entry would
@@ -2453,7 +2623,9 @@ def cmd_commit(args):
         input=text,
         text=True,
     )
-    sys.exit(proc.returncode)
+    if proc.returncode:
+        sys.exit(proc.returncode)
+    _commit_verify(repo, _commit_paths(files), "commit")
 
 
 # ----------------------------------------------------------------------- menu
