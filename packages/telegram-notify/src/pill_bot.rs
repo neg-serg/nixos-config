@@ -26,6 +26,8 @@
 //!   PILL_BOT_ALERTMANAGER_URL  active alerts for the snapshot
 //!   PILL_BOT_NOTES_DIR, PILL_BOT_NB, PILL_BOT_HOME  notes notebook access
 //!                              (see `notes.rs`; the unit sets them)
+//!   PILL_BOT_HERDR_BIN, PILL_BOT_HERDR_SOCKET, PILL_BOT_HERDR_USER,
+//!   PILL_BOT_HERDR_TIMEOUT_MS  Herdr farm control (see `herdr.rs`)
 //!   PILL_BOT_CURL, PILL_BOT_PROXY, PILL_BOT_API_BASE
 //!   PILL_BOT_ONCE=1            process one poll batch and exit (tests)
 //!   PILL_BOT_SLEEP             pause between iterations, seconds (default 5)
@@ -36,6 +38,7 @@ mod shared;
 
 mod actions;
 mod ask;
+mod herdr;
 mod notes;
 mod screen;
 
