@@ -44,12 +44,54 @@ let
   # calls it on every run and leaves compatibility symlinks behind).
   xdgMigrate = pkgs.writeShellScript "dsh-xdg-migrate" (builtins.readFile ./dsh-xdg-migrate.sh);
 
+  # The agent-plane plugins the neg preset declares by name (rows live in
+  # dsh-presets.nix). Seeded like the roster ones, so they need the same
+  # dependency ownership below.
+  advisorDir = pkgs.copyPathToStore ./dsh-advisor;
+  categoryDir = pkgs.copyPathToStore ./dsh-category-skill-reminder;
+  ttsrDir = pkgs.copyPathToStore ./dsh-ttsr;
+
+  # Profile dependencies for every store-seeded plugin (`link:` into the store).
+  #
+  # The caretaker mounts these packages by name, but a package that is only
+  # *copied* into node_modules is not a dependency: pnpm's hoisted-linker
+  # reconciliation parks everything it does not own on every install — and this
+  # script itself installs dsh-tui, dsh-free-search and dsh-find-plugin. That
+  # window is a dead boot: 2026-11-12 a single `dsh plugin add` parked 36
+  # entries and the next start printed "29 entries did not activate ... failed
+  # to import", with every one of these plugins inert until the next switch.
+  # A `link:` dependency is a symlink pnpm maintains itself, so reconciliation
+  # leaves it alone, and the harness resolution lists the package as
+  # profile-scope instead of relying on a native fallback. The spec pins a store
+  # path, which moves with every rebuild, so the caretaker re-checks it on each
+  # run (see `PLUGIN_DEPS` in dsh-tui-ensure.sh).
+  seededDeps = builtins.toJSON (
+    map (p: {
+      name = p.name;
+      spec = "link:${p.path}";
+    }) roster.plugins
+    ++ [
+      {
+        name = "dsh-advisor";
+        spec = "link:${advisorDir}";
+      }
+      {
+        name = "dsh-category-skill-reminder";
+        spec = "link:${categoryDir}";
+      }
+      {
+        name = "dsh-ttsr";
+        spec = "link:${ttsrDir}";
+      }
+    ]
+  );
+
   ensureTui = pkgs.writeShellScript "dsh-tui-ensure" (
     builtins.readFile (
       pkgs.replaceVars ./dsh-tui-ensure.sh {
-        advisor = pkgs.copyPathToStore ./dsh-advisor;
-        categoryPlugin = pkgs.copyPathToStore ./dsh-category-skill-reminder;
-        ttsr = pkgs.copyPathToStore ./dsh-ttsr;
+        advisor = advisorDir;
+        categoryPlugin = categoryDir;
+        ttsr = ttsrDir;
         inherit dshPatch;
         themeJson = pkgs.copyPathToStore themeJson;
         inherit homeDir;
@@ -58,6 +100,7 @@ let
         pluginRows = lib.escapeShellArg roster.rows;
         searchRows = lib.escapeShellArg roster.searchRows;
         llmRows = lib.escapeShellArg roster.llmRows;
+        pluginDeps = lib.escapeShellArg seededDeps;
         presetData = presets.json;
       }
     )

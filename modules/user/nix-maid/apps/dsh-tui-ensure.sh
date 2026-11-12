@@ -49,6 +49,84 @@ if [ -f "$MANIFEST" ] && [ "$(jq -r '.version // ""' "$MANIFEST" 2> /dev/null)" 
   fi
 fi
 
+# Every store-seeded plugin is declared as a profile dependency, as a `link:`
+# into the store (seededDeps in dsh-tui.nix). The seed below only *copies* the
+# package into node_modules, and pnpm's hoisted-linker reconciliation removes
+# every entry it does not own on each install — including this script's own
+# dsh-tui / dsh-free-search / dsh-find-plugin installs. When that happens the
+# rows stay in cordis.patch.yml but nothing can import them, and the next boot
+# prints "N entries did not activate ... failed to import" with every plugin
+# inert (observed 2026-11-12: one `dsh plugin add` parked 36 entries and 29
+# rows died). A link dependency is a symlink pnpm maintains itself: the
+# reconciliation leaves it alone, and the harness resolution lists the package
+# as profile-scope. Placed ahead of the registry installs below so they never
+# see the plugins as unowned.
+#
+# The spec pins the store path, so a rebuild changes it; the guard rewrites the
+# manifest only when a spec or a link is actually missing. The install itself
+# needs no registry: link dependencies resolve locally.
+PLUGIN_DEPS=@pluginDeps@
+deps_missing() {
+  jq -e --argjson deps "$PLUGIN_DEPS" '
+    (.dependencies // {}) as $have
+    | all($deps[]; ($have[.name] // "") == .spec)
+  ' "$MANIFEST" > /dev/null 2>&1 || return 0
+  while IFS= read -r name; do
+    # A plain copy also satisfies `-f`; only the symlink means pnpm owns the
+    # entry and will keep it through the next reconciliation.
+    [ -L "$PROFILE_DIR/node_modules/$name" ] || return 0
+  done < <(printf '%s' "$PLUGIN_DEPS" | jq -r '.[].name')
+  return 1
+}
+if deps_missing; then
+  tmp="$(mktemp)"
+  if jq --argjson deps "$PLUGIN_DEPS" '
+      .dependencies = ((.dependencies // {}) + (reduce $deps[] as $d ({}; .[$d.name] = $d.spec)))
+      | .dependencies = (.dependencies | to_entries | sort_by(.key) | from_entries)
+    ' "$MANIFEST" > "$tmp"; then
+    chmod 600 "$tmp"
+    mv "$tmp" "$MANIFEST"
+    echo "dsh-tui-ensure: pinning $(printf '%s' "$PLUGIN_DEPS" | jq 'length') seeded plugins as link dependencies"
+  else
+    rm -f "$tmp"
+    echo "dsh-tui-ensure: could not pin the seeded plugins in $MANIFEST" >&2
+  fi
+  # pnpm removes an extraneous node_modules entry with rm -rf, which needs a
+  # writable parent at every level; a store copy is 0555/0444, so the install
+  # aborts with ERR_PNPM_PACKAGE_MANAGER_REMOVE_MODULES_DIR. A rename parks the
+  # entry without touching its contents and leaves an empty slot for the link.
+  # Parked copies go back if the install fails, so the seeded fallback below
+  # still boots the profile.
+  park="$(mktemp -d "$PROFILE_DIR/.seed-park.XXXXXX")"
+  parked=0
+  for entry in "$PROFILE_DIR"/node_modules/* "$PROFILE_DIR"/node_modules/@*/*; do
+    [ -d "$entry" ] && [ ! -L "$entry" ] || continue
+    if [ -n "$(find "$entry" -type d ! -writable -print -quit 2> /dev/null)" ]; then
+      if mv "$entry" "$park/"; then parked=$((parked + 1)); fi
+    fi
+  done
+  out="$(mktemp)"
+  if (cd "$PROFILE_DIR" && timeout 300 dsh plugin --profile tui install) > "$out" 2>&1; then
+    chmod -R u+w "$park" 2> /dev/null || true
+    rm -rf "$park"
+  else
+    echo "dsh-tui-ensure: link install failed — restoring $parked seeded copies" >&2
+    tail -5 "$out" >&2
+    for entry in "$park"/*; do
+      [ -e "$entry" ] || continue
+      dest="$PROFILE_DIR/node_modules/$(basename "$entry")"
+      if [ -e "$dest" ] || [ -L "$dest" ]; then
+        chmod -R u+w "$entry" 2> /dev/null || true
+        rm -rf "$entry"
+      else
+        mv "$entry" "$dest"
+      fi
+    done
+    rmdir "$park" 2> /dev/null || true
+  fi
+  rm -f "$out"
+fi
+
 # The retired preset root. Until dsh 0.1.6 the harness discovered presets as
 # $DSH_HOME/.agent-presets/<id>/{preset.yml,agent.cordis.yml} and the two preset
 # modules (dsh-fast.nix, dsh-liangshen-fork.nix — both retired with the 0.2.0
