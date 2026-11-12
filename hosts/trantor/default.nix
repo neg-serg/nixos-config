@@ -200,7 +200,7 @@
   # the out-of-tree cmspam/mt7927-nixos package is gone. Bluetooth was always
   # in-tree (BT_MTK + BT_HCIBTUSB_MTK); the MT6639 RAM-code blob comes from
   # hosts/trantor/hardware/system.nix.
-  features.input.kanata.enable = true; # Caps→Ctrl via kanata
+  features.input.kanata.enable = true; # Caps→Ctrl + q+w→esc chord (F+J toggles it)
   features.input.ruHotkeys.enable = true; # us layout in kitty/mpv on focus (RU hotkey fix)
   features.input.neru.enable = true; # Ctrl+Alt+… hints/grids/vim-keys navigation (neru daemon)
   # features.security.tpmSudo.enable = true; # TPM-backed passwordless sudo — flip AFTER enabling fTPM in UEFI/BIOS

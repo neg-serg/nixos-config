@@ -3,6 +3,27 @@
 ;;
 ;; All unmapped keys pass through unchanged.
 ;; Add key codes to (defsrc) and corresponding actions to (deflayer).
+;;
+;; Chord mode (v1 input chords, `defchords`)
+;; ----------------------------------------
+;; `q`+`w` -> esc. The two keys are the chord this file exists for.
+;;
+;;   f+j   toggles the chord layer: `plain` (startup, no chords) <-> `chords`.
+;;         Both index fingers on the homing bumps, so it is a deliberate two-hand
+;;         gesture; `fj` is not a bigram in en/ru typing and no game binds the two
+;;         together, which keeps it out of the way of both.
+;;
+;; Why layers and not `defchordsv2`: v1 chords exist only on layers that map
+;; `(chord group key)`, so switching the base layer to `plain` removes the whole
+;; mechanism instead of just its output. That is the point -- while `plain` is
+;; active, `q` and `w` are ordinary keys with no resolution delay, so games
+;; (where `w` is held down permanently and `q` is an ability) are untouched.
+;; The only keys that pay the chord timeout in `plain` are `f` and `j`.
+;;
+;; Timeouts: the toggle resolves within 80 ms (two hands hit together, so a
+;; short window only costs accuracy in games where `f` is "interact"); the
+;; typing chord gets 120 ms, which is the comfortable one-hand slap window for
+;; adjacent keys.
 
 (defcfg
   process-unmapped-keys yes
@@ -21,9 +42,35 @@
 )
 
 (defsrc
-  caps
+  caps f j q w
 )
 
-(deflayer base
-  lctl
+;; Startup layer: chords off. `q`/`w` are plain keys; only the toggle pair
+;; enters chording mode.
+(deflayer plain
+  lctl (chord to-chords f) (chord to-chords j) q w
+)
+
+;; Chords on. `q`/`w` go through the chord group: alone they type themselves,
+;; pressed within 120 ms they emit esc.
+(deflayer chords
+  lctl (chord to-plain f) (chord to-plain j) (chord qw-esc q) (chord qw-esc w)
+)
+
+(defchords qw-esc 120
+  (q) q
+  (w) w
+  (q w) esc
+)
+
+(defchords to-chords 80
+  (f) f
+  (j) j
+  (f j) (layer-switch chords)
+)
+
+(defchords to-plain 80
+  (f) f
+  (j) j
+  (f j) (layer-switch plain)
 )
