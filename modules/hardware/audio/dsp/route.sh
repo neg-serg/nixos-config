@@ -184,7 +184,13 @@ armed() {
   app_streams
 }
 
-# The four links the insert is, both ways, and nothing else on the two DSP ports.
+# The four links the insert is, both ways, and nothing else on the DSP ports or
+# on the monitor stream. The last two matter: WirePlumber rescans every
+# autoconnect stream when a sink appears and links the loopback's playback
+# stream into it (measured 2026-11-13: a replugged USB DAC received the
+# monitors' mix in parallel with the DSP, and being priority.driver = 1109 it
+# also took the graph clock from the RME, whose capture then xran every few
+# seconds).
 route_complete() {
   has_link "$GAME:output_FL" "$CAP:input_FL" \
     && has_link "$GAME:output_FR" "$CAP:input_FR" \
@@ -198,6 +204,8 @@ route_complete() {
     && ! has_link "$GAME:output_FR" "$AES_L" \
     && only_sources "$CAP:input_FL" "$GAME:output_FL" \
     && only_sources "$CAP:input_FR" "$GAME:output_FR" \
+    && only_dests "$GAME:output_FL" "$CAP:input_FL" \
+    && only_dests "$GAME:output_FR" "$CAP:input_FR" \
     && only_dests "$PB:output_FL" "$AES_L" \
     && only_dests "$PB:output_FR" "$AES_R"
 }
@@ -220,6 +228,11 @@ route_dsp() {
   add "$GAME:output_FR" "$CAP:input_FR"
   prune_sources "$CAP:input_FL" "$GAME:output_FL"
   prune_sources "$CAP:input_FR" "$GAME:output_FR"
+  # A second destination on the monitor stream is WirePlumber's stray link into
+  # a sink that just appeared, not a route: the speakers' audio must not play
+  # anywhere but through the insert.
+  prune_dests "$GAME:output_FL" "$CAP:input_FL"
+  prune_dests "$GAME:output_FR" "$CAP:input_FR"
   # Exactly one path to AES: the DSP's.
   del "$GAME:output_FL" "$AES_L"
   del "$GAME:output_FR" "$AES_R"
@@ -235,6 +248,8 @@ route_dsp() {
 route_direct() {
   add "$GAME:output_FL" "$AES_L"
   add "$GAME:output_FR" "$AES_R"
+  prune_dests "$GAME:output_FL" "$AES_L"
+  prune_dests "$GAME:output_FR" "$AES_R"
   del "$GAME:output_FL" "$STRAY_L"
   del "$GAME:output_FR" "$STRAY_R"
   del "$GAME:output_FL" "$AES_R"
@@ -311,6 +326,8 @@ host_capture_complete() { # $1 = host node
     && ! has_link "$GAME:output_FR" "$AES_R" \
     && only_sources "$CAP:input_FL" "$1:audio-out1" \
     && only_sources "$CAP:input_FR" "$1:audio-out2" \
+    && only_dests "$GAME:output_FL" "$1:audio-in1" \
+    && only_dests "$GAME:output_FR" "$1:audio-in2" \
     && only_dests "$PB:output_FL" "$AES_L" \
     && only_dests "$PB:output_FR" "$AES_R" \
     && ! has_link "$1:audio-out1" "$AES_L" \
@@ -325,6 +342,8 @@ host_playback_complete() { # $1 = host node
     && ! has_link "$PB:output_FR" "$AES_R" \
     && only_sources "$CAP:input_FL" "$GAME:output_FL" \
     && only_sources "$CAP:input_FR" "$GAME:output_FR" \
+    && only_dests "$GAME:output_FL" "$CAP:input_FL" \
+    && only_dests "$GAME:output_FR" "$CAP:input_FR" \
     && only_dests "$PB:output_FL" "$1:audio-in1" \
     && only_dests "$PB:output_FR" "$1:audio-in2" \
     && ! has_link "$GAME:output_FL" "$1:audio-in1" \
@@ -345,6 +364,8 @@ route_host_capture() { # $1 = host node
   add "$1:audio-out2" "$CAP:input_FR"
   prune_sources "$CAP:input_FL" "$1:audio-out1"
   prune_sources "$CAP:input_FR" "$1:audio-out2"
+  prune_dests "$GAME:output_FL" "$1:audio-in1"
+  prune_dests "$GAME:output_FR" "$1:audio-in2"
   del "$GAME:output_FL" "$CAP:input_FL"
   del "$GAME:output_FR" "$CAP:input_FR"
   del "$GAME:output_FL" "$AES_L"
@@ -360,6 +381,8 @@ route_host_playback() { # $1 = host node
   add "$GAME:output_FR" "$CAP:input_FR"
   prune_sources "$CAP:input_FL" "$GAME:output_FL"
   prune_sources "$CAP:input_FR" "$GAME:output_FR"
+  prune_dests "$GAME:output_FL" "$CAP:input_FL"
+  prune_dests "$GAME:output_FR" "$CAP:input_FR"
   add "$PB:output_FL" "$1:audio-in1"
   add "$PB:output_FR" "$1:audio-in2"
   add "$1:audio-out1" "$AES_L"
@@ -505,6 +528,8 @@ while :; do
       direct)
         has_link "$GAME:output_FL" "$AES_L" \
           && has_link "$GAME:output_FR" "$AES_R" \
+          && only_dests "$GAME:output_FL" "$AES_L" \
+          && only_dests "$GAME:output_FR" "$AES_R" \
           && ! has_link "$GAME:output_FL" "$STRAY_L" \
           && ! has_link "$GAME:output_FR" "$STRAY_R" \
           && ! has_link "$GAME:output_FL" "$AES_R" \
