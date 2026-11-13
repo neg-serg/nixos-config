@@ -248,6 +248,15 @@ while :; do
   del "$GAME:output_FL" "$SINK:playback_FL"
   del "$GAME:output_FR" "$SINK:playback_FR"
 
+  # ...and one node further: the same stream lands in the DAC itself whenever
+  # it is plugged in (measured 2026-11-13: the monitors' mix played on the
+  # headphones in parallel with this chain). The speaker router prunes that
+  # too; this is the guard for the DAC port itself.
+  if [[ -n $dac ]]; then
+    del "$GAME:output_FL" "$dac:playback_FL"
+    del "$GAME:output_FR" "$dac:playback_FR"
+  fi
+
   # The chosen output must not be a dead end: give it back to the speakers when
   # the DAC it needs is gone. The check runs before routing, so the direct path
   # for the speakers is already the router's business.
