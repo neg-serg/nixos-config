@@ -44,7 +44,10 @@ library Mpd strict {
     // The QS capsule is as wide as its content (`horizontalPadding * 2 +
     // content.implicitWidth`), so the width follows the number of flags that are
     // on: bools add, and an empty capsule is not drawn at all (the scene hides
-    // it). The glyphs are the Material Symbols names QS passed to MaterialIcon
+    // it). Vertically it hangs on the strip's line: `row` is the scene's band
+    // (25), not the plate's 23, because a group as tall as the plate and a row at
+    // its top put the badges ~3 px above the capsules beside them.
+    // The glyphs are the Material Symbols names QS passed to MaterialIcon
     // (`repeat`, `shuffle`, `repeat_one`, `auto_delete`, `blur_linear`), drawn
     // from the same font with its ligatures, at the QS size
     // (fontSizeSmall * capsuleScale = 14) and its emphasis opacity.
@@ -53,8 +56,9 @@ library Mpd strict {
     // `Theme.uiIconEmphasisOpacity`, whether or not anything is playing. Measured on the
     // two bars: the reference's shuffle badge is #804060, the port's was ink.dim grey.
     // `type_scale` is the scene's `fontScale` (the bar's `text_scale` fact): a strict library
-    // cannot read the scene's facts, so the multiplier comes in as a parameter.
-    component Flags(scale: number = ui, type_scale: number = 1) {
+    // cannot read the scene's facts, so the multiplier comes in as a parameter. `row` is the
+    // same arrangement for the strip's band, which `build.Tile` and `genelec.Tile` take too.
+    component Flags(scale: number = ui, type_scale: number = 1, row: number = 25) {
         let glyph.gap = 2
         let glyph.size = 14
         let shown = repeat + random + single + consume + xfade
@@ -63,20 +67,25 @@ library Mpd strict {
         // reference's shuffle badge is 11 logical px of ink, the port's 25, because the 25 was
         // the capsule's rim, not the glyph.
         let w = shown * glyph.size + max(0, shown - 1) * glyph.gap
-        let h = bar.plate
-        size: ((repeat + random + single + consume + xfade) * 14 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, bar.plate * scale
+        size: ((repeat + random + single + consume + xfade) * 14 + max(0, repeat + random + single + consume + xfade - 1) * 2) * scale, row * scale
         group zoom {
             scale: scale
-            row flags {
+            // The badges hang on the band's line — the row's middle at `row / 2`, as every
+            // capsule glyph's `anchor:` is — instead of sitting at the top of the box, which
+            // is what made them read high. The row is left unnamed on purpose: a named layout
+            // is a zone of its own in `describe`, and a second `flags` beside the box's own
+            // zone reads as two widgets overlapping (which is what the geometry gate caught).
+            row {
+                    at: 0, row / 2
+                    anchor: left middle
                     gap: 2
-                    align: center
                     text "repeat" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: repeat }
                     text "shuffle" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: random }
                     text "repeat_one" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: single }
                     text "auto_delete" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: consume }
                     text "blur_linear" { family: "Material Symbols Outlined"; size: 14 * type_scale; color: skin.ink; opacity: 75%; show: xfade }
             }
-            zone box flags { from: 0, 0; size: w, h; corner: corner; label: "MPD"; role: region; value: "{state}" }
+            zone box flags { from: 0, 0; size: w, row; corner: corner; label: "MPD"; role: region; value: "{state}" }
             on enter flags { hot = true }
             on leave flags { hot = false }
         }

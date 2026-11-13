@@ -2022,7 +2022,9 @@ scene bar {
             // shuffle badge while the port drew nothing, because the port had tied the badges
             // to "something is playing" and nothing was. A flag the owner set is not a media
             // state — it is shown while any flag is on.
-            row mpd_slot { show: widget.mpd and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags(type_scale: text_scale) }
+            // The badges ride the strip's own band (`row: strip`): the plugin cannot read the
+            // scene's facts, and a `bar.plate` box left the glyphs high beside the capsules.
+            row mpd_slot { show: widget.mpd and (Mpd.repeat or Mpd.random or Mpd.single or Mpd.consume or Mpd.xfade); mpd.Flags(type_scale: text_scale, row: strip) }
             // The voice command's badge: `mpd-voice once` (Super+Shift+Q) listens to the
             // microphone and then speaks the answer, so the capsule says a client is on
             // instead of leaving a voice from the speakers unexplained. `Voice.active` is
