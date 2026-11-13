@@ -33,6 +33,16 @@
 }:
 
 let
+  # The version is the **crate's**, read from the source being built: `[workspace.package] version`
+  # in the repository's `Cargo.toml` is the one place a release is spelled. A literal here is how
+  # this package came to call itself 0.1.0 while the binary inside it printed `aurora 0.2.0` — two
+  # numbers, one release, and the store path is the one a person reads.
+  #
+  # The fallback is for an `aurora-src` pinned *before* the workspace grew that table: such a tree
+  # spells the version in `[package]` instead, and the number is the same either way. Drop the
+  # `or` once the input can no longer point at one of those commits.
+  cargoToml = lib.importTOML "${src}/Cargo.toml";
+  version = cargoToml.workspace.package.version or cargoToml.package.version;
   # The renderer dlopens these by soname (src/preload.rs does it before winit
   # and ash ask, and it knows the NixOS store layout), but the wrapper is what
   # makes the package self-contained: a session without vulkan-loader in its
@@ -49,9 +59,7 @@ let
   ];
   player = rustPlatform.buildRustPackage {
     pname = "aurora";
-    version = "0.1.0";
-
-    inherit src;
+    inherit version src;
 
     cargoLock.lockFile = "${src}/Cargo.lock";
 
@@ -158,9 +166,7 @@ let
   # Vulkan stack, and building them apart is what keeps `nix why-depends` honest.
   tools = rustPlatform.buildRustPackage {
     pname = "aurora-tools";
-    version = "0.1.0";
-
-    inherit src;
+    inherit version src;
 
     cargoLock.lockFile = "${src}/Cargo.lock";
 

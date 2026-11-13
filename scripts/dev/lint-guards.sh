@@ -113,6 +113,14 @@ scan_dsh_plugin_source_kind() {
 # to a Cargo.toml is exactly the drift this repo hit once — genlc's binary
 # reported 0.1.0 while the package attr said 0.2.0. Versions are bumped with
 # `just bump <package>`, which edits the manifest and its lockfile(s).
+#
+# The second half is the same rule for a crate that is *not* in this repo: a
+# single-file package builds a source input (`src = inputs.<name>`), so there is
+# no Cargo.toml beside the derivation for the first half to find, and that is
+# how aurora's literal 0.1.0 outlived the crate's 0.2.0 for a month — the store
+# path and the package attr said 0.1.0 while the binary printed 0.2.0. Such a
+# file reads the version out of the input it is built from
+# (`version = (lib.importTOML "${src}/Cargo.toml").package.version;`).
 scan_manifest_version() {
   local hits="" file
   for file in packages/*/default.nix; do
@@ -121,8 +129,14 @@ scan_manifest_version() {
       hits+="$file: literal version next to Cargo.toml"$'\n'
     fi
   done
+  for file in packages/*.nix; do
+    grep -q "buildRustPackage" "$file" || continue
+    if grep -qE '^[[:space:]]+version[[:space:]]*=[[:space:]]*"' "$file"; then
+      hits+="$file: literal version in a packaged Rust crate — read it out of the source input"$'\n'
+    fi
+  done
   if [ -n "$hits" ]; then
-    printf '%s\n' "Found a hardcoded version in a Rust package: read the manifest instead — version = (lib.importTOML ./Cargo.toml).package.version; (bump with \`just bump <package>\`)." >&2
+    printf '%s\n' "Found a hardcoded version in a Rust package: read the manifest instead — version = (lib.importTOML ./Cargo.toml).package.version; and for a crate that arrives as an input, version = (lib.importTOML \"\${src}/Cargo.toml\").package.version; (in-tree bumps with \`just bump <package>\`)." >&2
     printf '%s' "$hits" >&2
     exit 1
   fi
