@@ -222,7 +222,13 @@ in
 
   # Host-specific hardware tools
   # Bakecore udev rules for Dygma keyboards
-  services.udev.extraRules = config.lib.neg.readFile "files/hardware/udev/trantor-host.rules";
+  # VFIO group nodes are created root-only, so every VM start needs sudo even
+  # when the caller owns the setup. Handing them to the kvm group keeps the
+  # device out of unprivileged reach while letting the desktop user run QEMU.
+  services.udev.extraRules = ''
+    ${config.lib.neg.readFile "files/hardware/udev/trantor-host.rules"}
+    SUBSYSTEM=="vfio", GROUP="kvm", MODE="0660"
+  '';
   environment.systemPackages = [ systemData.kexecRebuild ];
 
   # Skip unnecessary boot-time services (~1s saved)
@@ -253,6 +259,21 @@ in
   # remedy without reboot: sudo prlimit --pid <pid> --memlock=unlimited:unlimited
   systemd.settings.Manager.DefaultLimitMEMLOCK = "infinity";
   systemd.user.settings.Manager.DefaultLimitMEMLOCK = "infinity";
+
+  # VFIO group nodes are created root-only, so every VM start needs sudo even
+  # when the caller owns the whole setup. Handing them to the kvm group keeps
+  # the device out of unprivileged reach while letting the desktop user run
+  # QEMU directly. The oneshot re-triggers udev for the vfio subsystem, so the
+  # rule also lands in the running boot, not only after the next reboot.
+  systemd.services.vfio-node-perms = {
+    description = "Apply vfio device permissions to the existing group nodes";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${config.systemd.package}/bin/udevadm trigger --subsystem-match=vfio";
+    };
+  };
   security.pam.loginLimits = lib.mkAfter [
     {
       domain = "neg";
