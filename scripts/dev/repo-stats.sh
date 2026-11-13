@@ -28,8 +28,8 @@ domains=$(
 )
 commits=$(git rev-list --count HEAD)
 
-# The flake surface is 143 attributes; custom-packages.nix itself has 137
-# entries, the other six come from packages/flake/default.nix.
+# The flake surface is 144 attributes; custom-packages.nix itself has 142
+# entries, the other two (default, pleamar-wm) come from flake/per-system.nix.
 packages=""
 if command -v nix > /dev/null 2>&1 && command -v jq > /dev/null 2>&1; then
   packages=$(

@@ -637,7 +637,7 @@
           "harbor-rs",
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay_3",
+        "rust-overlay": "rust-overlay_2",
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
@@ -668,7 +668,7 @@
           "nixpkgs"
         ],
         "osxcross": "osxcross",
-        "rust-overlay": "rust-overlay_4",
+        "rust-overlay": "rust-overlay_3",
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
@@ -895,27 +895,6 @@
         "owner": "neovim",
         "repo": "neovim",
         "type": "github"
-      }
-    },
-    "nerv-boot": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "rust-overlay": "rust-overlay_2"
-      },
-      "locked": {
-        "lastModified": 1791300367,
-        "narHash": "sha256-PnTy/TmckYIsoQoN4CQCkWoX/ZiVPsDLocPPu0hOdhQ=",
-        "ref": "refs/heads/main",
-        "rev": "ba5bc2a582474b71ebc3c04cff8ac0f12dbe2969",
-        "revCount": 4,
-        "type": "git",
-        "url": "https://codeberg.org/GuillotineMelody/nervboot"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://codeberg.org/GuillotineMelody/nervboot"
       }
     },
     "nix-bundle": {
@@ -1307,7 +1286,6 @@
         "multiverse": "multiverse",
         "neg-pkgs": "neg-pkgs",
         "neovim-nightly": "neovim-nightly",
-        "nerv-boot": "nerv-boot",
         "nix-cache-pin": "nix-cache-pin",
         "nix-cachyos-kernel": "nix-cachyos-kernel",
         "nix-flatpak": "nix-flatpak",
@@ -1388,27 +1366,6 @@
     "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
-          "nerv-boot",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1791276535,
-        "narHash": "sha256-iwqAmHTX1IgzTumJR3JayNAQAo5xEmmOuGzB6b2pT/Q=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "b962e5d0c8cd97196c6a882d659fe451b52ad989",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "type": "github"
-      }
-    },
-    "rust-overlay_3": {
-      "inputs": {
-        "nixpkgs": [
           "nix-cache-pin",
           "harbor-rs",
           "harbor-meta",
@@ -1429,7 +1386,7 @@
         "type": "github"
       }
     },
-    "rust-overlay_4": {
+    "rust-overlay_3": {
       "inputs": {
         "nixpkgs": [
           "nix-cache-pin",

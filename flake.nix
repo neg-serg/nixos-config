@@ -195,14 +195,6 @@
       url = "github:samjoshuadud/waylandar/b46d5c348f846ca489071f2d271312ea35c019b4";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # NERV-styled UEFI boot menu (GuillotineMelody/nervboot on Codeberg) — the
-    # visible boot menu on trantor: firmware boots its NERV entry, it reads the
-    # BLS entries systemd-boot writes and hands the pick back to systemd-boot.
-    # Imported in hosts/trantor/default.nix; standalone build: `nix build .#nerv-boot`.
-    nerv-boot = {
-      url = "git+https://codeberg.org/GuillotineMelody/nervboot";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # bootvine — live dependency tree of the boot's systemd jobs, drawn on
     # tty12 instead of the scrolling kernel/systemd lines (the boot-screen
     # counterpart of nix-output-monitor). Imported and enabled in

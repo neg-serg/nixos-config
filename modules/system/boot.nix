@@ -1,6 +1,6 @@
 ##
 # Module: system/boot
-# Purpose: Bootloader (systemd-boot + NERV/EFI), initrd modules, kexec.
+# Purpose: Bootloader (systemd-boot), initrd modules, kexec.
 # Key options: none (uses config.boot.* directly).
 # Dependencies: pkgs (efibootmgr/efivar).
 {
@@ -18,14 +18,14 @@
 
     loader = {
       efi.canTouchEfiVariables = true;
-      # systemd-boot owns the ESP side: it writes the BLS entries NERV lists,
-      # does the actual booting after NERV's handoff, and keeps random-seed /
-      # boot-counting state. NERV's own settings live in hosts/trantor.
+      # systemd-boot owns the ESP side: it writes the BLS entries, boots the
+      # picked one and keeps random-seed / boot-counting state. Its menu is the
+      # only one now — no second-stage menu in front of it.
       systemd-boot = {
         enable = true;
         configurationLimit = 25; # Keep at most 25 generations in boot menu
       };
-      timeout = lib.mkDefault 0; # Skip the systemd-boot menu; NERV's countdown governs
+      timeout = lib.mkDefault 5; # seconds on the systemd-boot menu before autoboot
     };
     # Boot-specific options only; no activation scripts touching /boot
     initrd = lib.mkMerge [
