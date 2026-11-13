@@ -52,12 +52,13 @@
       description = "Background Slice (bounded)";
       sliceConfig = {
         # High throttles, Max kills. The crawler runs a real browser in
-        # rootless podman, so 2G of reclaim would make every crawl crawl;
-        # 3G/6G still bounds the class well below the interactive work.
-        MemoryHigh = "3G";
-        MemoryMax = "6G";
-        MemorySwapMax = "1G";
-        CPUQuota = "200%";
+        # rootless podman, and a page with heavy JS can hold several GB and all
+        # the cores it gets: 6G/12G and 4 cores leave the crawler comfortable
+        # while still keeping the class away from the interactive work.
+        MemoryHigh = "6G";
+        MemoryMax = "12G";
+        MemorySwapMax = "2G";
+        CPUQuota = "400%";
       };
     };
   };
