@@ -66,6 +66,11 @@ lib.mkIf cfg.enable {
       WorkingDirectory = cfg.repo;
       # A failing eval must not loop; the next weekly tick retries from HEAD.
       Restart = "no";
+      # The eval of the whole toplevel is the only heavy work here, so it keeps
+      # a generous per-unit ceiling instead of the tight background slice: a
+      # 4G slice cap would OOM the gate rather than bound it.
+      MemoryMax = "12G";
+      MemorySwapMax = "4G";
     };
   };
 

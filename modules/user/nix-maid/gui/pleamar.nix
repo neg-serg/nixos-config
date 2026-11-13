@@ -384,6 +384,11 @@ let
         MemoryHigh = "256M";
         MemoryMax = "512M";
         CPUQuota = "100%";
+        # Reclaim protection, the other half of the ceilings above: memory.min
+        # keeps the scene's working set resident while a neighbour (an agent
+        # build, a browser) is being reclaimed. The bar's measured peak is
+        # ~74M, the other scenes stay under 20M.
+        MemoryMin = if scene == "bar" then "96M" else "32M";
         Environment = [
           # ~/.local/bin first: scenes shell out to user helpers that live there
           # (rsmetrx, …), then the system profile.

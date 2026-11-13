@@ -48,6 +48,10 @@ in
               # Exit 7 = stopped (TERM/INT) while downloads were unfinished but none
               # failed; don't mark the unit as failed on a graceful stop.
               SuccessExitStatus = "7";
+              # Downloads have no interactive peak: the background class carries
+              # the hard memory cap and the CPU quota
+              # (modules/system/systemd/resource-policy.nix).
+              Slice = "background.slice";
             };
           };
           # aria2 is installed via cli/file-ops.nix
