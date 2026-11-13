@@ -298,6 +298,11 @@ in
           # the daemon inherit this policy.
           CPUSchedulingPolicy = "fifo";
           CPUSchedulingPriority = 19;
+          # Reclaim protection for the same deadline: under memory pressure the
+          # kernel picks small cgroups first, and a stalled DSP thread is an
+          # audible gap. memory.min keeps the daemon's pages resident; the
+          # working set is ~3M, so this is a floor, not a reservation.
+          MemoryMin = "32M";
           # Locking the daemon's pages would help the same way, but this systemd
           # (262) has no `MemoryLock=` key — it reports the one that used to be
           # here as unknown and ignores it — so the policy above is the protection.

@@ -1,7 +1,7 @@
 ##
 # Module: user/nix-maid/sys/user-services/crawl4ai
 # Purpose: run the Crawl4AI server locally, so pages can be turned into
-# LLM-ready Markdown over REST (POST /md, /crawl, /screenshot, /pdf) or MCP
+# LLM-ready Markdown over REST (POST /md, /crawl, /screenshot, /pdf, /execute_js) or MCP
 # (/mcp/sse) without handing the pages to a hosted service. The server is the
 # official container image, rootless podman, bound to 127.0.0.1:11235.
 #
@@ -138,6 +138,11 @@ let
       CRAWL4AI_UPSTREAM_PROXY="http://host.containers.internal:${toString splitProxyPort}"
       export CRAWL4AI_UPSTREAM_PROXY
 
+      # /execute_js answers 403 unless this flag is set; it also unlocks the
+      # js_code step in /crawl (run page JS before extraction).
+      CRAWL4AI_EXECUTE_JS_ENABLED=true
+      export CRAWL4AI_EXECUTE_JS_ENABLED
+
       # --shm-size=1g: Chromium needs more than the 64M default for tabs.
       # --rm: a crash leaves no stopped container behind; systemd restarts the
       # unit and podman creates a fresh one.
@@ -153,6 +158,7 @@ let
         -p 127.0.0.1:11235:11235 \
         -e CRAWL4AI_API_TOKEN \
         -e CRAWL4AI_UPSTREAM_PROXY \
+        -e CRAWL4AI_EXECUTE_JS_ENABLED \
         ${image}
     '';
   };
@@ -261,6 +267,9 @@ mkIf enabled {
     serviceConfig = {
       ExecStart = "${lib.getExe pkgs.sing-box} run -c ${splitProxyChecked}";
       RestartSec = 5;
+      # Both halves of the crawler have no interactive peak; start them on
+      # demand (`crawl4ai up`), so the background class is the right home.
+      Slice = "background.slice";
     };
   };
 
@@ -272,6 +281,7 @@ mkIf enabled {
     serviceConfig = {
       ExecStart = getExe server;
       RestartSec = 10;
+      Slice = "background.slice";
     };
   };
 }
