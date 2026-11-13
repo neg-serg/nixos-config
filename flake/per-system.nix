@@ -14,9 +14,6 @@ in
 {
   packages = (mkCustomPkgs pkgs) // {
     default = pkgs.zsh; # default shell for flake environment
-    # NERV UEFI boot menu (external flake) — standalone EFI build; the NixOS
-    # module is imported by hosts/trantor for the actual boot wiring.
-    nerv-boot = inputs.nerv-boot.packages.${system}.nerv-boot;
     # The headless compositor the developer harnesses run scenes in. The scripts
     # find it as `nix build <repo>#pleamar-wm` (`resolve_pleamar_tool`), which is
     # why it is exported rather than only installed.

@@ -10,9 +10,6 @@
   # unbound-hosts.nix is generated data (a list), imported by services/policy.nix —
   # not a module, so it stays out of the auto-import.
   imports = [
-    # NERV boot menu — reads the BLS entries systemd-boot writes and hands the
-    # picked entry back to systemd-boot
-    inputs.nerv-boot.nixosModules.default
     # bootvine — live tree of the boot's systemd jobs on the console (tty12),
     # from the systemd initrd through stage 2 and shutdown. Enabled below.
     inputs.bootvine.nixosModules.default
