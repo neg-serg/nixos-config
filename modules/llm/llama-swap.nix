@@ -752,7 +752,9 @@ in
         # Swift-1.5 27B MXFP4: 15.8 GB weights plus the projector over the
         # gyro-coder SMB share, MTP self-speculation, 64k. The quality tier of
         # the 24 GB box; a cold load streams the weights over SMB (minutes),
-        # hence the 15 min TTL.
+        # hence the 15 min TTL. A user timer on that box (llm-game-guard.timer,
+        # every 5 s) stops swift27b/nano/gyro-coder when a game appears, and
+        # the start script refuses while one already runs.
         "swift-1.5-27b-mxfp4" = {
           cmd = swift27b;
           cmdStop = swift27bStop;
