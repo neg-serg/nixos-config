@@ -86,16 +86,6 @@ in
           if [[ -f ~/.config/dircolors/dircolors ]]; then
             eval "$(${pkgs.coreutils}/bin/dircolors -b ~/.config/dircolors/dircolors)" # GNU Core Utilities
           fi
-        ''
-        + (
-          if config.lib.neg.enabled "cli.broot" then
-            ''
-              eval "$(${pkgs.broot}/bin/broot --print-shell-function bash)"
-            ''
-          else
-            ""
-        )
-        + ''
           source ~/.config/bash/oh-my-posh.bash
         '';
       };

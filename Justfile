@@ -473,8 +473,8 @@ music-ai-status *ARGS:
 music-apply-tags *ARGS:
     music-apply-tags {{ARGS}}
 
-# Eval one trantor feature flag: just flag features.cli.broot.enable
-flag flag-path="features.cli.broot.enable":
+# Eval one trantor feature flag: just flag features.cli.yazi.enable
+flag flag-path="features.cli.yazi.enable":
     nix eval .#nixosConfigurations.trantor.config.{{ flag-path }} --option substitute false
 
 # Memoized `nix eval` in two tiers, keyed on a content hash of the files the

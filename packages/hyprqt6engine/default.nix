@@ -18,8 +18,8 @@
 # always answers false and QFileDialog falls back to Qt's built-in widget
 # dialog. The patch adds `theme:standard_dialogs`, which creates the named
 # platform theme (xdgdesktopportal) and delegates FileChooser dialogs to it —
-# so Qt apps use xdg-desktop-portal and therefore the broot picker from
-# features.gui.termfilechooser. Drop the patch when upstream grows the setting.
+# so Qt apps use xdg-desktop-portal and therefore the GTK chooser. Drop the
+# patch when upstream grows the setting.
 {
   lib,
   stdenv,

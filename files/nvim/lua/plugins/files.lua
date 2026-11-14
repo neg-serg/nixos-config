@@ -1,79 +1,57 @@
--- File plugins: broot, sshfs, vim-fetch
+-- File plugins: yazi, sshfs, vim-fetch
 --
--- broot is THE file manager of this config: the old LustyExplorer filesystem
+-- yazi is THE file manager of this config: the old LustyExplorer filesystem
 -- keys (,l / ,C), the snacks smart-find key (ee) and cwd-open (_) all launch
--- broot now, and any directory buffer (nvim <dir>, :e <dir>) is redirected to
+-- yazi now, and any directory buffer (nvim <dir>, :e <dir>) is redirected to
 -- it too. LustyExplorer keeps its buffer/grep/recent pickers (:Lusty*), snacks
 -- keeps the pure file finders (,ff / ,e / gz / ,L).
 return {
-  -- │ █▓▒░ aohoyd/broot.nvim                                                        │
-  -- broot in a floating terminal; Enter on a file runs `echo +{line} {file}` and
-  -- the plugin opens the echoed path (upstream lua/broot/init.lua parse_lines).
+  -- │ █▓▒░ mikavilpas/yazi.nvim                                                      │
+  -- yazi in a floating window; the keys pressed inside it are yazi.nvim's own
+  -- (opts.keymaps), so yazi's stock bindings stay reachable in the tree.
   {
-    "aohoyd/broot.nvim",
-    enabled = function() return vim.fn.executable("broot") == 1 end,
-    cmd = { "Broot", "BrootCurrentDir", "BrootWorkingDir", "BrootHomeDir", "BrootProjectDir" },
+    "mikavilpas/yazi.nvim",
+    event = "VeryLazy",
     keys = {
-      { "<leader>l",  "<Cmd>BrootCurrentDir<CR>", desc = "Broot: current file's dir" },
-      { "<leader>fb", "<Cmd>BrootCurrentDir<CR>", desc = "Broot: current file's dir" },
-      { "<leader>fB", "<Cmd>BrootProjectDir<CR>", desc = "Broot: project root (git)" },
-      { "<leader>C",  "<Cmd>BrootWorkingDir<CR>", desc = "Broot: working dir" },
-      { "<leader>fm", "<Cmd>BrootWorkingDir<CR>", desc = "Broot: working dir (file manager)" },
-      { "ee",         "<Cmd>BrootWorkingDir<CR>", desc = "Files (broot)" },
-      { "_",          "<Cmd>BrootWorkingDir<CR>", desc = "Open cwd (broot)" },
+      { "<leader>l",  function() require("yazi").yazi() end, desc = "Yazi: current file's dir" },
+      { "<leader>fb", function() require("yazi").yazi() end, desc = "Yazi: current file's dir" },
+      { "<leader>fB", function() require("yazi").yazi(nil, require("utils.fzf").project_root()) end, desc = "Yazi: project root (git)" },
+      { "<leader>C",  function() require("yazi").yazi(nil, vim.fn.getcwd()) end, desc = "Yazi: working dir" },
+      { "<leader>fm", function() require("yazi").yazi(nil, vim.fn.getcwd()) end, desc = "Yazi: working dir (file manager)" },
+      { "ee",         function() require("yazi").yazi(nil, vim.fn.getcwd()) end, desc = "Files (yazi)" },
+      { "_",          function() require("yazi").yazi(nil, vim.fn.getcwd()) end, desc = "Open cwd (yazi)" },
     },
     -- netrw is disabled (01-plugins.lua), so `nvim <dir>` / `:e <dir>` would
-    -- leave a dead directory buffer: hand every such buffer to broot instead
-    -- (the full replacement for vim's file browser). Registered in `init` so
-    -- it is active from startup, while the plugin itself stays lazy: broot is
-    -- only loaded when a directory is actually opened.
+    -- leave a dead directory buffer: `open_for_directories` hands it to yazi,
+    -- including the buffer that already exists when nvim starts on a
+    -- directory. Marking netrw as loaded is what yazi.nvim asks for in that
+    -- mode (documentation/installation); it is already disabled above.
     init = function()
-      vim.api.nvim_create_autocmd("BufEnter", {
-        group = vim.api.nvim_create_augroup("BrootDirHijack", { clear = true }),
-        desc = "Open directory buffers in broot",
-        callback = function(args)
-          if vim.api.nvim_get_current_buf() ~= args.buf or vim.bo[args.buf].buftype ~= "" then
-            return
-          end
-          local name = vim.api.nvim_buf_get_name(args.buf)
-          if name == "" or vim.fn.isdirectory(name) == 0 then
-            return
-          end
-          vim.schedule(function()
-            if not vim.api.nvim_buf_is_valid(args.buf)
-              or vim.api.nvim_get_current_buf() ~= args.buf then
-              return
-            end
-            local ok, broot = pcall(require, "broot")
-            if not ok or type(broot.open) ~= "function" then
-              return
-            end
-            -- Drop the dead directory listing before broot takes over: an
-            -- empty placeholder keeps the window valid, and re-entering it
-            -- (e.g. after closing broot) cannot re-trigger this autocmd.
-            vim.bo[args.buf].bufhidden = "wipe"
-            vim.cmd("enew")
-            broot.open(name)
-          end)
-        end,
-      })
+      vim.g.loaded_netrwPlugin = 1
     end,
     opts = {
-      -- The repo broot conf is TOML (files/shell/broot/conf.toml); the verb file
-      -- the plugin appends is TOML too — broot picks the parser per file
-      -- extension, so a mixed --conf list is fine.
-      broot_conf_path = vim.fn.expand("~/.config/broot/conf.toml"),
-      broot_vim_conf_path = vim.fn.expand(vim.fn.stdpath("data") .. "/broot.nvim/conf_nvim.toml"),
-      broot_vim_conf = {
-        "[[verbs]]",
-        'key = "enter"',
-        'external = "echo +{line} {file}"',
-        'apply_to = "file"',
+      open_for_directories = true,
+      floating_window_scaling_factor = 1.0,
+      yazi_floating_window_border = "none",
+      keymaps = {
+        open_file_in_vertical_split = "<c-v>",
+        open_file_in_horizontal_split = "<c-x>",
+        open_file_in_tab = "<c-t>",
+        -- Keep clear of the yazi keymap in modules/user/nix-maid/cli/yazi.nix:
+        -- <c-f>, <c-s> and <c-q> already mean enter/confirm/close there, so the
+        -- nvim-side actions take keys yazi itself does not use.
+        grep_in_directory = "<c-g>",
+        replace_in_directory = "<c-r>",
+        copy_relative_path_to_selected_files = "<c-y>",
+        cycle_open_buffers = false,
+        send_to_quickfix_list = false,
+        change_working_directory = false,
       },
-      -- The plugin splices 'shellredir' into the command line as-is, but nvim
-      -- defaults it to ">%s 2>&1": the literal %s would eat the redirect and the
-      -- tmp file would come out as broot's second root argument.
-      shellredir = ">",
+      integrations = {
+        -- snacks is the picker of record here (plugins/ui/snacks.lua).
+        grep_in_directory = "snacks.picker",
+        grep_in_selected_files = "snacks.picker",
+      },
     },
   },
 

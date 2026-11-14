@@ -97,8 +97,6 @@ _exists docker && {
     ipmi_two(){ docker run -p 8080:8080 solarkennedy/ipmi-kvm-docker; echo xdg-open localhost:8080|wl-copy }
 }
 
-_exists broot && autoload -Uz br
-
 _exists lazytail && {
     alias lt=lazytail # TUI log viewer (sources from ~/.config/lazytail/config.yaml)
     ltc(){ lazytail -n "$@" } # cmd | ltc NAME  ->  ~/.config/lazytail/data/NAME.log (tee-like)

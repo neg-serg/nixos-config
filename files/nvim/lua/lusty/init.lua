@@ -10,8 +10,8 @@
 --   <C-b>       buffer explorer
 --   <C-g>       buffer grep
 --   <Leader>.   recent files
--- The filesystem explorer keys (,l from here / ,C cwd) moved to broot
--- (plugins/files.lua — broot is the file manager now); the picker itself stays
+-- The filesystem explorer keys (,l from here / ,C cwd) moved to yazi
+-- (plugins/files.lua — yazi is the file manager now); the picker itself stays
 -- available through the :LustyFilesystemExplorer* commands below.
 --
 -- The pickers are rendered by the Rust backend (`lusty serve`, see native.lua);
@@ -78,8 +78,8 @@ function M.setup()
   -- Default mappings are ON unless the option explicitly disables them.
   local dm = vim.g.LustyExplorerDefaultMappings
   if not (dm == 0 or dm == false or dm == '0') then
-    -- The filesystem explorer keys (,l from here / ,C cwd) now live on broot
-    -- (plugins/files.lua): broot is the file manager, LustyExplorer keeps the
+    -- The filesystem explorer keys (,l from here / ,C cwd) now live on yazi
+    -- (plugins/files.lua): yazi is the file manager, LustyExplorer keeps the
     -- buffer/grep/recent pickers. The old ,l[fbgr] chords are gone with them,
     -- so nvim no longer has to wait a timeoutlen before firing ,l.
     vim.keymap.set('n', '<leader>.', function()
