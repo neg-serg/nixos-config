@@ -39,6 +39,18 @@ if (( $+functions[compdef] )); then
     _nxp_complete() { words=(nix "${words[2,-1]}"); (( CURRENT++ )); _normal }
     (( $+functions[nxp] )) && compdef _nxp_complete nxp
 fi
+# yazi with a returning cwd: `q` drops the shell in the last visited directory,
+# `Q` leaves it where it was. The binary itself is still `yazi`/`ya`.
+_exists yazi && y() {
+    local cwd_file
+    cwd_file=$(mktemp "${TMPDIR:-/tmp}/yazi-cwd.XXXXXX") || return 1
+    command yazi --cwd-file "$cwd_file" "$@"
+    if [[ -s $cwd_file ]]; then
+        builtin cd -- "$(<$cwd_file)" || true
+    fi
+    command rm -f -- "$cwd_file"
+}
+
 _exists mpc && {
     cdm(){
         dirname="$XDG_MUSIC_DIR/$(dirname "$(mpc -f '%file%'|head -1)")"

@@ -107,3 +107,8 @@ zshcache_time="$(date +%s%N)"
 autoload -Uz add-zsh-hook
 
 # vim: ft=zsh:nowrap
+
+# `y` (02-cmds.zsh) browses directories.
+if (( $+functions[compdef] )); then
+  compdef '_files -/' y
+fi

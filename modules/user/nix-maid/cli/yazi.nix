@@ -218,26 +218,25 @@ let
   yaziBindNoDesc = on: run: { inherit on run; };
   keymap = {
     mgr.prepend_keymap = [
-      (yaziBind [ "g" "s" ] "plugin save-file --args=overwrite" "Save (Default/Overwrite)")
-      (yaziBind [ "g" "z" ] "plugin save-file --args=input" "Save as new file (Input)")
-      (yaziBind [ "<C-s>" ] "quit" "Confirm selection (Save)")
+      # yazi's stock keymap stays in force except for the binds below. `<Esc>`,
+      # `<C-a>`, `<C-b>`, `<C-f>` and `<C-s>` keep their stock meaning (escape/
+      # clear, select all, page up/down, cancel search): they are too useful to
+      # shadow, and the emacs-style additions use keys stock leaves free. The
+      # `~` help inside yazi shows every desc below.
+      (yaziBind [ "d" ] "yank --cut" "Cut selected files (stock x also cuts)")
+      (yaziBind [ "D" ] "remove --force" "Trash selected files without confirmation")
+      (yaziBind [ "X" ] "remove --permanently" "Delete selected files permanently")
       (yaziBind [ "g" "r" ] ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'' "Go to git root")
-      (yaziBindNoDesc [ "<Esc>" ] "close")
-      (yaziBindNoDesc [ "<C-q>" ] "close")
-      (yaziBindNoDesc [ "d" ] "yank --cut")
-      (yaziBindNoDesc [ "D" ] "remove --force")
-      (yaziBindNoDesc [ "X" ] "remove --permanently")
-      (yaziBind [ "f" ] ''shell "$SHELL" --block'' "Open $SHELL here")
-      (yaziBind [ "p" ] "plugin smart-paste" "Smart paste")
-      (yaziBind [ "g" "p" ] "plugin paste-to-select" "Reveal file from clipboard")
-      # --- Emacs-style navigation (additive; vi keys still work) ---
+      (yaziBind [ "f" ] ''shell "$SHELL" --block'' "Open $SHELL here (stock filter is g f)")
+      (yaziBind [ "g" "f" ] "filter --smart" "Filter files")
+      (yaziBind [ "p" ] "plugin smart-paste" "Paste (into the hovered directory)")
+      (yaziBind [ "g" "p" ] "plugin paste-to-select" "Reveal the file on the clipboard")
+      (yaziBind [ "<C-q>" ] "close" "Close the current tab")
+      # --- Emacs-style additions on keys stock yazi leaves free in the manager ---
       # Ctrl binds are layout-independent, so no RU duplicates are needed.
-      (yaziBind [ "<C-n>" ] "arrow next" "Down (emacs C-n)")
-      (yaziBind [ "<C-p>" ] "arrow prev" "Up (emacs C-p)")
-      (yaziBind [ "<C-b>" ] "leave" "Parent directory (emacs C-b)")
-      (yaziBind [ "<C-f>" ] "enter" "Open entry (emacs C-f)")
-      (yaziBind [ "<C-a>" ] "arrow top" "First entry (emacs C-a)")
-      (yaziBind [ "<C-e>" ] "arrow bottom" "Last entry (emacs C-e)")
+      (yaziBind [ "<C-n>" ] "arrow next" "Next file (emacs C-n)")
+      (yaziBind [ "<C-p>" ] "arrow prev" "Previous file (emacs C-p)")
+      (yaziBind [ "<C-e>" ] "arrow bottom" "Last file (emacs C-e)")
       # --- Russian layout duplicates (ЙЦУКЕН) -------------------------------------
       # yazi matches keys by the produced char; latin-letter binds break under the
       # ru layout. Lowercase Cyrillic only (uppercase implies SHIFT, which the RU
@@ -253,14 +252,6 @@ let
         "g"
       ]) "arrow top")
       (yaziBindNoDesc (ruKeys.mkRuKeys [ "d" ]) "yank --cut")
-      (yaziBindNoDesc (ruKeys.mkRuKeys [
-        "g"
-        "s"
-      ]) "plugin save-file --args=overwrite")
-      (yaziBindNoDesc (ruKeys.mkRuKeys [
-        "g"
-        "z"
-      ]) "plugin save-file --args=input")
       (yaziBindNoDesc (ruKeys.mkRuKeys [
         "g"
         "r"
@@ -292,8 +283,6 @@ let
     return { entry = entry }
   '';
 
-  save-file-plugin = config.lib.neg.readFile "files/yazi/plugins/save-file.yazi/main.lua";
-
   yazi-plugins = pkgs.fetchFromGitHub {
     owner = "yazi-rs";
     repo = "plugins";
@@ -318,7 +307,6 @@ lib.mkIf (cfg.enable or false) (
       ".config/yazi/keymap.toml".source = tomlFormat.generate "keymap.toml" keymap;
       ".config/yazi/plugins/smart-paste.yazi".source = "${yazi-plugins}/smart-paste.yazi";
       ".config/yazi/plugins/paste-to-select.yazi/main.lua".text = paste-to-select-plugin;
-      ".config/yazi/plugins/save-file.yazi/main.lua".text = save-file-plugin;
     })
   ]
 )
