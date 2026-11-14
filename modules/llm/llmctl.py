@@ -95,6 +95,15 @@ CATALOG = {
         "fp": "-",
         "commit": "76.9/90",
     },
+    "gpt-oss-20b": {
+        "aliases": ["gpt-oss", "oss20b"],
+        "role": "21B MoE, MXFP4 fast tier",
+        "ctx": "64k",
+        "size": "10.8 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
     "qwen3.8-flash-next-abliterated": {
         "aliases": ["qwen3.8-flash", "next"],
         "role": "180B-A6B MoE, next tier",
@@ -202,6 +211,17 @@ CATALOG = {
         "role": "125B MoE coder (7900 XTX box, remote)",
         "ctx": "64k",
         "size": "19.9 GB remote",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    # Same box; the weights and projector ride the gyro-coder SMB share under
+    # mxfp4/, so a cold load streams them over the LAN (minutes).
+    "swift-1.5-27b-mxfp4": {
+        "aliases": ["swift27b", "swift"],
+        "role": "27B dense MXFP4 (7900 XTX box, remote)",
+        "ctx": "64k",
+        "size": "15.8 GB remote",
         "chem": "-",
         "lean": "-",
         "fp": "-",
