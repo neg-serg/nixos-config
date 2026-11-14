@@ -3,9 +3,13 @@
 [Wellum](https://github.com/braindefender/wellum) is a 34/36-key layout by braindefender. These
 files are a verbatim copy of `firmware/qmk` from braindefender/wellum at commit
 `2b0fd86a1996b4ce7b4f33e80f9d557120f5258f` (README version v3.1.1); `keymap-34.c` is renamed to
-`keymap.c`.
+`keymap.c`. One local change is layered on top: the bottom outer keys are Shift mod-taps —
+`LSFT_T(KC_Z)` on the left, `RSFT_T(KC_SLSH)` on the right — so a tap types the letter and a hold
+holds Shift. `config.h` carries the matching policy (`PERMISSIVE_HOLD`, `CHORDAL_HOLD`), and
+`keymap.c` defines `chordal_hold_layout`, which keeps same-hand rolls as letters and lets only an
+opposite-hand chord produce Shift.
 
-The copy drops onto `ferris/sweep` unchanged:
+The copy drops onto `ferris/sweep` without layout changes:
 
 - The Sweep implements `LAYOUT_split_3x5_2` in the standard `split_3x5_2` element order (three 5-key
   rows per half, then thumb keys in the order left outer, left inner, right inner, right outer),

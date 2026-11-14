@@ -13,6 +13,10 @@
 #define LA_CMD MO(_CMD)
 #define LA_GFN MO(_GFN)
 
+// Bottom-row Shift mod-taps: tap sends the letter, hold holds Shift.
+#define Z_SFT    LSFT_T(KC_Z)
+#define SLSH_SFT RSFT_T(KC_SLSH)
+
 #define QUOT  S(KC_GRV)
 #define PIPE  S(KC_BSLS)
 #define DPIPE S(RALT(KC_BSLS))
@@ -54,7 +58,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_DEF] = LAYOUT_split_3x5_2(
 KC_Q,       KC_W,       KC_E,       KC_R,       KC_T,             KC_Y,       KC_U,       KC_I,       KC_O,       KC_P,
 KC_A,       KC_S,       KC_D,       KC_F,       KC_G,             KC_H,       KC_J,       KC_K,       KC_L,       KC_SCLN,
-KC_Z,       KC_X,       KC_C,       KC_V,       KC_B,             KC_N,       KC_M,       KC_COMM,    KC_DOT,     KC_SLSH,
+Z_SFT,      KC_X,       KC_C,       KC_V,       KC_B,             KC_N,       KC_M,       KC_COMM,    KC_DOT,     SLSH_SFT,
                                     KC_SPC,     LA_NAV,           LA_SYM,     KC_LSFT
     ),
 
@@ -108,6 +112,16 @@ MEH(KC_Z),  MEH(KC_X),  MEH(KC_C),  MEH(KC_V),  MEH(KC_B),        MEH(KC_N),  ME
                                     _______,    _______,          KC_LGUI,    _______
     )
 };
+
+// Chordal Hold handedness for LAYOUT_split_3x5_2: the matrix rows of the left
+// half come first, then the right half, and the thumb keys follow the hands
+// they sit on. Only the Z and / mod-taps depend on it.
+const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_split_3x5_2(
+    'L', 'L', 'L', 'L', 'L',         'R', 'R', 'R', 'R', 'R',
+    'L', 'L', 'L', 'L', 'L',         'R', 'R', 'R', 'R', 'R',
+    'L', 'L', 'L', 'L', 'L',         'R', 'R', 'R', 'R', 'R',
+                        'L', 'L',     'R', 'R'
+);
 
 bool is_oneshot_cancel_key(uint16_t keycode) {
     switch (keycode) {
