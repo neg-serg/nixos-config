@@ -41,7 +41,7 @@ esac
 
 # Keep in sync with the source directory: QMK only sees the oneshot/swapper
 # helpers when they sit next to keymap.c.
-keymap_files=(keymap.c oneshot.c oneshot.h rules.mk swapper.c swapper.h)
+keymap_files=(keymap.c config.h oneshot.c oneshot.h rules.mk swapper.c swapper.h)
 
 if [[ ! -d "$QMK_HOME/.git" ]]; then
   echo "==> Cloning QMK firmware into $QMK_HOME"
@@ -50,12 +50,13 @@ if [[ ! -d "$QMK_HOME/.git" ]]; then
 fi
 
 # AVR builds (Pro Micro/Elite-C) link against LUFA; RP2040 builds go through
-# ChibiOS with the RP port and the Pi Pico SDK. QMK errors out when the
-# submodules it needs are missing.
+# ChibiOS with the RP port and the Pi Pico SDK. LUFA is needed either way —
+# ChibiOS's usb_main pulls the lufa_utils headers in — and quantum/logging
+# always compiles lib/printf. QMK errors out when the submodules it needs are
+# missing.
+submodules=(lib/lufa lib/printf)
 if [[ -n "$CONVERT" ]]; then
-  submodules=(lib/chibios lib/chibios-contrib lib/pico-sdk)
-else
-  submodules=(lib/lufa)
+  submodules+=(lib/chibios lib/chibios-contrib lib/pico-sdk)
 fi
 echo "==> Ensuring required QMK submodules (${submodules[*]})"
 git -C "$QMK_HOME" submodule update --init --depth 1 "${submodules[@]}"
