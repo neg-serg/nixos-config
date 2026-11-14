@@ -349,7 +349,9 @@
 #   the abliterated set (Gemma 26B IQ3, Qwen3.8-27B IQ3, Qwen3-VL-8B),
 #   Qwen3.8-Flash-Next IQ3_S (78 GB, two shards
 #   in `qwen38-flash-next-iq3s/`), the Lean prover (oprover), the OCR tiers
-#   and the small specialists. DeepSeek-Prover-V2 and Devstral left the fleet
+#   and the small specialists. The `mxfp4/` pair (gpt-oss-20b Q4_K_M,
+#   Swift-1.5 27B MXFP4 + mmproj) is hardlinked into `gyro-coder/mxfp4`
+#   for the 24 GB box. DeepSeek-Prover-V2 and Devstral left the fleet
 #   on 2026-11-11 (16.7 GB); ArduinoLLM's weights were already gone from disk,
 #   so its slot was dead and went with them. 34 GB of dead
 #   weights (gpt-oss-20b, the 24 GB-box Gemma MXFP4 + its mmproj, Gemma E4B)

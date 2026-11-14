@@ -94,10 +94,10 @@ lib.mkMerge [
       # Enable Avahi (mDNS) so iOS/macOS can resolve *.local and discover SMB shares
       avahi.enable = true;
       # Samba profile: the guest share under /zero/sync/smb stays off, but smbd
-      # also publishes the Gyro-Coder weights read-only to the 7900 XTX box
-      # (192.168.0.144, "debian-I"). That box has 57.6 GB free and the file is
-      # 75.8 GB, so it mounts the share instead of keeping a copy; NFS was the
-      # first choice but this kernel has no nfsd/rpc_pipefs modules at all.
+      # publishes the llama weights read-only to the 7900 XTX box
+      # (192.168.0.144, "debian-I"): the Gyro-Coder tier and, under mxfp4/,
+      # the Swift MXFP4 pair. That box keeps no copies; NFS was the first
+      # choice but this kernel has no nfsd/rpc_pipefs modules at all.
       samba = {
         enable = true;
         interfaces = [
@@ -288,6 +288,12 @@ lib.mkMerge [
         # image and shows the one-time setup wizard (see modules/llm/vane.nix).
         vane.enable = true;
 
+        # `bind interfaces only = yes` (from servicesProfiles.samba's
+        # interfaces list) resolved net1 before it had an address at boot and
+        # left smbd on loopback, so the 7900 XTX box could not mount the share.
+        # Bind everything; the firewall still scopes 445 to net1.
+        samba.settings.global."bind interfaces only" = lib.mkForce "no";
+
         # llama-swap swaps one model at a time by default, and a local load
         # aborts a *starting* remote tier (its ~4 min cold load is the longest in
         # the fleet). The remote tier runs on the other machine's card, so nothing
@@ -299,7 +305,7 @@ lib.mkMerge [
           local = {
             swap = true;
             exclusive = false;
-            members = lib.filter (m: m != "gyro-coder" && m != "nano") (
+            members = lib.filter (m: m != "gyro-coder" && m != "nano" && m != "swift-1.5-27b-mxfp4") (
               lib.attrNames config.services.llama-swap.settings.models
             );
           };
@@ -310,6 +316,7 @@ lib.mkMerge [
             members = [
               "gyro-coder"
               "nano"
+              "swift-1.5-27b-mxfp4"
             ];
           };
         };

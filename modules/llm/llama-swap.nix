@@ -402,6 +402,22 @@ let
       --cache-type-k q8_0 --cache-type-v q8_0
   '';
 
+  # gpt-oss-20b (MXFP4, 21B total / 3.6B active) — the only MXFP4 model that
+  # fits the 16 GB card. Q4_K_M keeps the MoE experts in MXFP4 and quantizes
+  # the rest; 10.8 GiB of weights plus q8_0 KV at 64k. The base OpenAI weights
+  # need `--jinja` for the harmony template; low effort keeps a short chat from
+  # burning the budget on reasoning. The model lost the FP planning bench in
+  # the old abliterated build and returns as the fast MXFP4 tier, not as a
+  # planner. Flags follow the removed 2026-11-05 slot (same file size, 12 GB).
+  gptOss20b = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/mxfp4/gpt-oss-20b-Q4_K_M.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 65536 -np 1 --flash-attn on --fit off --jinja \
+      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 \
+      --reasoning-effort low
+  '';
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -497,6 +513,22 @@ let
   # allow-absolute-home: the path is on the remote host, which has no root
   nanoStop = ''
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/nano-stop
+  '';
+
+  # Swift-1.5 27B MXFP4 on the same 7900 XTX box. The 15.8 GB of weights and
+  # the projector ride in the gyro-coder SMB share under mxfp4/ (hardlinks to
+  # /zero/ai/llama/mxfp4, so no second copy): the remote disk has only ~19 GB
+  # free and no other share is automounted there. Stock ROCm image, MTP
+  # self-speculation, 64k of the model's 131k window. A cold load streams the
+  # weights over SMB (minutes), hence the 15 min TTL in the slot below.
+  # allow-absolute-home: the path is on the remote host, which has no root
+  swift27b = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/swift27b-start
+  '';
+
+  # allow-absolute-home: the path is on the remote host, which has no root
+  swift27bStop = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/swift27b-stop
   '';
 in
 {
@@ -595,6 +627,17 @@ in
           ];
         };
 
+        # Base OpenAI gpt-oss-20b, MXFP4 experts. Fast MoE tier for the 16 GB
+        # card; it does not replace the 27B on quality or the 180B on planning.
+        "gpt-oss-20b" = {
+          cmd = gptOss20b;
+          ttl = 600;
+          aliases = [
+            "gpt-oss"
+            "oss20b"
+          ];
+        };
+
         "falcon-h1-3b" = {
           cmd = falcon3b;
           # A general fast tier, not a specialist: ten minutes like the other
@@ -672,9 +715,9 @@ in
           aliases = [ "embeddings" ];
         };
 
-        # The only remote tier: started and stopped over ssh on the 7900 XTX
-        # box, requests go straight to it through `proxy`. 15 min TTL because a
-        # cold load costs ~3.5 min; `llmctl unload` still frees the card at once.
+        # Remote tiers on the 7900 XTX box: started and stopped over ssh,
+        # requests go straight to them through `proxy`. 15 min TTL because a
+        # cold load is minutes; `llmctl unload` still frees the card at once.
         # On the remote side a 1-minute watchdog stops the container if this
         # router disappears, so a crash or reboot here cannot strand 21 GiB of
         # VRAM on a machine nobody can reach.
@@ -703,6 +746,22 @@ in
           aliases = [
             "orcacyber"
             "cyber"
+          ];
+        };
+
+        # Swift-1.5 27B MXFP4: 15.8 GB weights plus the projector over the
+        # gyro-coder SMB share, MTP self-speculation, 64k. The quality tier of
+        # the 24 GB box; a cold load streams the weights over SMB (minutes),
+        # hence the 15 min TTL.
+        "swift-1.5-27b-mxfp4" = {
+          cmd = swift27b;
+          cmdStop = swift27bStop;
+          proxy = "http://192.168.0.144:8095";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "swift27b"
+            "swift"
           ];
         };
       };
