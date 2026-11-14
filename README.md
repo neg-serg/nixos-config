@@ -32,6 +32,7 @@
 - [🗂️ Module Categories](#-module-categories)
 - [🔧 Development Workflow](#-development-workflow)
 - [🎮 Gaming Setup](#-gaming-setup)
+- [🗃️ File Management](#-file-management)
 - [🌐 Hyprland Configuration](#-hyprland-configuration)
 - [🛠️ Custom Packages](#-custom-packages)
 - [📚 Documentation](#-documentation)
@@ -471,6 +472,47 @@ gamescope-hdr %command%
 | `GAME_PIN_CPUSET` | Override CPU cores | `1-3,16-19` |
 | `GAME_RUN_USE_GAMEMODE` | Toggle gamemode | `0` or `1` |
 | `MANGOHUD` | Performance overlay | `1` |
+
+---
+
+## 🗃️ File Management
+
+**yazi** is the file manager: a keyboard-first terminal TUI. It opens in kitty, and
+`inode/directory` resolves to the `Yazi` desktop entry, so "Open" in any file chooser lands
+there too.
+
+| Entry point | Where it lands |
+|-------------|----------------|
+| `y` | yazi at the current directory; `q` puts the shell in the directory you left, `Q` stays put |
+| `yazi` / `ya` | the binary itself (on-demand launcher, built on first call) |
+| "Open" on a folder | `kitty yazi <folder>` via `~/.local/share/applications/yazi.desktop` |
+| nvim `,l` / `,fb` | yazi at the current file's directory |
+| nvim `,fB` | yazi at the project root |
+| nvim `,C` / `,fm` / `ee` / `_` | yazi at the working directory |
+| inside yazi `C-v` / `C-x` / `C-t` | open the selection in a vertical/horizontal split or a tab |
+
+Stock yazi keys work, and `~` inside yazi opens the help with these descriptions. The only
+deviations from stock are the file-manager keymap in `modules/user/nix-maid/cli/yazi.nix`:
+
+| Key | Action |
+|-----|--------|
+| `d` / `D` / `X` | cut / trash without confirmation / delete permanently (stock `x` also cuts; stock `D` moved to `X`) |
+| `f` / `g f` | open `$SHELL` here / filter files (stock filter moved off `f`) |
+| `p` | smart paste: into the hovered directory when one is hovered |
+| `g p` / `g r` | reveal the file on the clipboard / jump to the git root |
+| `<C-q>` | close the current tab |
+| `<C-n>` / `<C-p>` / `<C-e>` | next / previous / last file (emacs) |
+
+Russian-layout duplicates of `j k h l gg d p g r g p` come from `lib/ru-keys.nix`. The
+config lives in `~/.config/yazi/{yazi,keymap,theme}.toml`.
+
+Other file managers in the closure, for different jobs:
+
+- **sonda** (`features.gui.sonda`, enabled on trantor) — GUI file manager whose search reads
+  file contents (EmbeddingGemma 2 on llama.cpp). `sonda` opens the window; the first
+  `sonda setup` downloads 865 MB of models.
+- **elio** — three-pane terminal file manager, installed as an alternative TUI; nothing points
+  to it by default (`elio` runs it).
 
 ---
 

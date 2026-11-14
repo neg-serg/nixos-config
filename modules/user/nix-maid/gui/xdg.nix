@@ -53,7 +53,7 @@ let
     "application/x-cbr" = pdfreader;
 
     # --- Directories ---
-    "inode/directory" = "kitty-open.desktop";
+    "inode/directory" = "yazi.desktop";
 
     # --- Playlists ---
     "audio/x-mpegurl" = video;
@@ -167,13 +167,18 @@ in
       ".config/mimeapps.list".text = mimeAppsList;
       ".config/user-dirs.dirs".text = userDirs;
 
-      ".local/share/applications/kitty-open.desktop".text = ''
+      ".local/share/applications/yazi.desktop".text = ''
         [Desktop Entry]
         Type=Application
-        Name=Isotope (Open)
+        Name=Yazi
+        GenericName=File Manager
+        Comment=Terminal file manager (opens in kitty)
         Exec=kitty yazi %f
-        Icon=kitty
-        Categories=System;TerminalEmulator;
+        Icon=system-file-manager
+        Terminal=false
+        Categories=System;FileManager;
+        MimeType=inode/directory;
+        Keywords=files;folders;manager;
       '';
     })
   ];
