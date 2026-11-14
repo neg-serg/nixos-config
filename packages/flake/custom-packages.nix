@@ -22,6 +22,7 @@
   nixbuild-status = pkgs.neg.nixbuild-status; # one-line NixOS build status for status bars
   geekbench-ai = pkgs.neg.geekbench-ai; # Geekbench AI — on-device inference benchmark (unfree binary)
   rustgis = pkgs.rustgis; # RustGIS — desktop GIS + `rustgis-cli` (binaries from upstream releases)
+  irori = pkgs.irori; # game launcher (on-demand root, modules/user/games/irori.nix)
   neru = pkgs.neg.neru; # Desktop keyboard navigation: hints, grids, vim-style modes (upstream main)
 
   brrtfetch = pkgs.neg.brrtfetch;
