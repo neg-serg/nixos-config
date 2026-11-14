@@ -15,6 +15,7 @@ let
     pkgs.imagemagick # fallback convert/mogrify for pipelines
     pkgs.media-player-info # udev HW database for player IDs
     pkgs.mediainfo # inspect video/audio metadata quickly
+    pkgs.chromaprint # audio fingerprinting (fpcalc) for aurora's AcoustID tag scan
     pkgs.mpvc # mpv TUI controller
   ];
 in
