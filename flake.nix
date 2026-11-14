@@ -98,8 +98,12 @@
     # which authenticates with the fetching user's GitHub key, so no token has to
     # be stored anywhere. Re-lock with
     # `nix flake lock --update-input aurora-src` after pushing to it.
+    #
+    # Pinned to the `autoeq` branch until it merges into `main`: the branch replaces the
+    # Squiglink catalogue download with AutoEq in the `headphones` CLI. Point the URL back at
+    # the default branch after the merge.
     aurora-src = {
-      url = "git+ssh://git@github.com/neg-serg/aurora";
+      url = "git+ssh://git@github.com/neg-serg/aurora?ref=autoeq";
       flake = false;
     };
     # Vendored Renoise/Redux installers (licensed builds, >100 MB). They cannot
