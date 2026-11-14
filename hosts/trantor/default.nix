@@ -187,7 +187,6 @@
   features.dev.ai.herdr.enable = true; # Herdr — agent runtime: workspaces/panes for dsh sessions, state sidebar
   features.dev.pkgs.joern = false; # Joern (2.9 GB JVM stack) off: not used on this host
   features.llm.enable = true; # Local LLM stack: Ollama (ROCm, models on /zero/ai/ollama), voxinput
-  features.cli.broot.enable = true;
   features.text.wordcraft.enable = true; # WordCraft — Word-style word processor, replaces LibreOffice
   features.apps.craftApps.enable = true; # ArtCraft suite (vector/design/DAW/slides/sheets/CAD) as on-demand launchers
   features.hardware.usbAutomount.enable = true;
