@@ -63,6 +63,7 @@ let
     # --- Misc ---
     "x-scheme-handler/tg" = telegram;
     "x-scheme-handler/magnet" = torrent;
+    "x-scheme-handler/irori" = "irori.desktop";
 
     # --- Archives ---
     "application/zip" = editor;

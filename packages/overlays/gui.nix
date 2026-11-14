@@ -62,6 +62,10 @@ in
   wordcraft = callPkg (pkg "wordcraft") { }; # Word-style word processor (docx/odt/rtf) + converter CLI
   sonda = callPkg (pkg "sonda") { }; # file manager for pleamar-wm that searches files by what they hold
   craft-anything = callPkg (pkg "craft-anything") { }; # reverse-engineering workbench + rebuild assistant (desktop app, CLI, MCP server)
+  # Irori — game launcher repacked from the upstream release tarball. The
+  # WebKitGTK sign-in helper makes the closure heavy, so the system installs the
+  # on-demand launcher (modules/user/games/irori.nix) instead of the package.
+  irori = callPkg (pkg "irori") { };
 
   # ArtCraft suite: the six creative/office apps are on-demand roots
   # (modules/user/nix-maid/apps/craft-apps.nix) built on first launch, so the
