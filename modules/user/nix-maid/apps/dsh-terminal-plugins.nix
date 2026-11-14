@@ -300,6 +300,9 @@ rec {
                 input:
                   - text
                   - image
+              - id: gpt-oss-20b
+                name: GPT-OSS 20B MXFP4 (fast, 64k)
+                contextWindow: 65536
               # Runs on the other machine (192.168.0.144, RX 7900 XTX): the
               # weights sit on /zero and are read over SMB, llama-swap starts the
               # container there on the first request over ssh. Cold start is
@@ -315,6 +318,15 @@ rec {
               - id: nano
                 name: OrcaCyber Nano 27B VL (7900 XTX, vision)
                 contextWindow: 32768
+                input:
+                  - text
+                  - image
+              # Swift 1.5 27B MXFP4 on the same 7900 XTX box; cold start
+              # ~3 min over SMB, 70 tok/s with MTP, 64k. A user timer on the
+              # remote box stops it (with nano/gyro) while a game runs.
+              - id: swift-1.5-27b-mxfp4
+                name: Swift 1.5 27B MXFP4 (7900 XTX, ~3 min cold)
+                contextWindow: 65536
                 input:
                   - text
                   - image
