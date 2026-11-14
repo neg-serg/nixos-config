@@ -37,6 +37,20 @@ in
     ];
   });
 
+  # broot: ctrl-v in a tree acts on the files a file manager copied. Upstream
+  # :input_paste asks the clipboard for UTF-8 text only, so a copied directory
+  # arrives as `file:///…` and turns into a pattern that matches nothing.
+  # packages/broot carries the patch that reads text/uri-list and GNOME's
+  # x-special/gnome-copied-files list and jumps: a directory is entered, a file
+  # is revealed, several files open the directory that holds them. Typed text
+  # still pastes as text. The patch targets the nixpkgs broot version (1.61.0);
+  # a nixpkgs bump rebases it.
+  broot = prev.broot.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [
+      (paths.path "packages/broot/0001-input-paste-file-lists.patch")
+    ];
+  });
+
   # ROCm (HIP) twin — Vulkan/RADV llama.cpp is pathologically slow on this host
   # (~0.2 tok/s for VRAM-resident models); ROCm is the working compute path.
   llama-cpp-qwen4exp-rocm = callPkg (pkg "llama-cpp-qwen4exp-rocm") { };

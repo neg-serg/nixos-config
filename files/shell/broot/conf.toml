@@ -110,6 +110,14 @@ key = "alt-p"
 cmd = ":select_first;:show {path}"
 auto_exec = false
 
+# The clipboard: ctrl-v (the built-in :input_paste) also reads what a file
+# manager copies — text/uri-list, and GNOME's x-special/gnome-copied-files
+# list — and acts on the files rather than on their raw URIs: a copied
+# directory is entered, a copied file is revealed, several files open the
+# directory that holds them. With something already typed in the input,
+# ctrl-v inserts the decoded paths instead, so `:show ` + ctrl-v is the same
+# jump as alt-p without typing the path.
+
 [ext-colors]
 png = "rgb(0, 160, 130)"
 jpg = "rgb(0, 160, 130)"
