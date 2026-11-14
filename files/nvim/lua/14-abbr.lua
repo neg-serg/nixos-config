@@ -20,18 +20,19 @@ abbrev('Wq', 'wq')
 abbrev('WQ', 'wq')
 abbrev('wQ', 'wq')
 
--- Git shortcuts (!git / diffview)
-abbrev('gb', 'FzfLua git_branches')
+-- Git shortcuts (!git / diffview / snacks pickers). fzf-lua is not installed:
+-- these used to expand to `FzfLua ...`, which no longer exists.
+abbrev('gb', 'lua Snacks.picker.git_branches()')
 abbrev('gc', '!git commit -v')
 abbrev('gca', '!git commit --amend -v')
 abbrev('gcc', '!git checkout ')
 abbrev('gd', 'DiffviewOpen')
-abbrev('gl', 'FzfLua git_commits')
+abbrev('gl', 'lua Snacks.picker.git_log_file()') -- commits touching the current file
 abbrev('gp', '!git push')
-abbrev('gs', 'FzfLua git_status')
+abbrev('gs', 'lua Snacks.picker.git_status()')
 
--- Misc
-abbrev('T', 'FzfLua')
+-- Misc: bare picker list (the old `FzfLua` with no source)
+abbrev('T', 'lua Snacks.picker()')
 
 -- ── Smart CR: expand abbreviations on keyword-only cmdlines ─────────
 vim.keymap.set('c', '<CR>', function()
