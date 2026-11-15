@@ -5,7 +5,7 @@
 //! `os.path.relpath`) rather than the most convenient Rust equivalents, because
 //! the cache keys and the MPD queue URIs are derived from the resulting strings.
 
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
@@ -41,7 +41,9 @@ pub fn expand_user(path: &Path) -> PathBuf {
 /// All regular files below `root` with one of `exts`, sorted by path text.
 ///
 /// Matches `sorted(root.rglob("*"))` filtered by `is_file()`: hidden files are
-/// included, file symlinks are followed, directory symlinks are not.
+/// included, file symlinks are followed, directory symlinks are not. The one
+/// deliberate exception is macOS copy metadata (`__MACOSX/` directories and
+/// `._*` AppleDouble stubs), see [`is_macos_metadata`].
 pub fn scan(root: &Path, exts: &[&str]) -> Vec<PathBuf> {
     let mut files = Vec::new();
     walk(root, exts, &mut files);
@@ -56,6 +58,9 @@ fn walk(dir: &Path, exts: &[&str], files: &mut Vec<PathBuf>) {
     };
     for entry in entries.flatten() {
         let path = entry.path();
+        if is_macos_metadata(&path) {
+            continue;
+        }
         match entry.file_type() {
             Ok(kind) if kind.is_dir() => walk(&path, exts, files),
             Ok(kind) if kind.is_file() => {
@@ -75,6 +80,21 @@ fn walk(dir: &Path, exts: &[&str], files: &mut Vec<PathBuf>) {
             _ => {}
         }
     }
+}
+
+/// macOS copy metadata: a `__MACOSX` directory, or an AppleDouble sidecar
+/// (`._track.flac`) anywhere else.
+///
+/// Copying a library off a Mac leaves these next to the real tracks. The
+/// sidecars keep the audio extension while holding only a resource fork, so
+/// `ffmpeg` (and therefore `music-embed`) fails on them; before this filter 40
+/// such stubs burned the bisection failure budget and failed a whole weekly
+/// pass with "music-embed failed repeatedly".
+fn is_macos_metadata(path: &Path) -> bool {
+    let Some(name) = path.file_name() else {
+        return false;
+    };
+    name == OsStr::new("__MACOSX") || name.to_str().is_some_and(|name| name.starts_with("._"))
 }
 
 fn has_audio_extension(path: &Path, exts: &[&str]) -> bool {
@@ -236,6 +256,26 @@ mod tests {
                 format!("{base}/link.mp3"),
             ]
         );
+    }
+
+    #[test]
+    fn scan_skips_macos_metadata() {
+        let temp = TempDir::new("scan-macos").unwrap();
+        let root = temp.path().join("music");
+        fs::create_dir_all(root.join("album")).unwrap();
+        fs::create_dir_all(root.join("__MACOSX")).unwrap();
+        touch(&root.join("album").join("a.flac"), b"");
+        touch(&root.join("album").join("._a.flac"), b"");
+        touch(&root.join("__MACOSX").join("._b.flac"), b"");
+        touch(&root.join("__MACOSX").join("b.flac"), b"");
+        touch(&root.join("._c.mp3"), b"");
+
+        let found: Vec<String> = scan(&root, crate::AUDIO_EXTS)
+            .iter()
+            .map(|path| path_str(path))
+            .collect();
+        let base = path_str(&root);
+        assert_eq!(found, vec![format!("{base}/album/a.flac")]);
     }
 
     #[test]
