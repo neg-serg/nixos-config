@@ -99,11 +99,12 @@
     # be stored anywhere. Re-lock with
     # `nix flake lock --update-input aurora-src` after pushing to it.
     #
-    # Pinned to the `autoeq` branch until it merges into `main`: the branch replaces the
-    # Squiglink catalogue download with AutoEq in the `headphones` CLI. Point the URL back at
-    # the default branch after the merge.
+    # Tracks the default branch (`main`): `autoeq` — the branch that swapped the Squiglink
+    # catalogue download for AutoEq in the `headphones` CLI — merged into `main` (a3a7049),
+    # so the `?ref=autoeq` pin went away with the branch and would only break `nix flake
+    # update` ("couldn't find remote ref refs/heads/autoeq").
     aurora-src = {
-      url = "git+ssh://git@github.com/neg-serg/aurora?ref=autoeq";
+      url = "git+ssh://git@github.com/neg-serg/aurora";
       flake = false;
     };
     # Vendored Renoise/Redux installers (licensed builds, >100 MB). They cannot
