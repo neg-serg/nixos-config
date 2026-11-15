@@ -180,7 +180,7 @@ commit *args:
 # replays their output in a fixed table order, so the report reads
 # top-to-bottom like the serial suite while the work overlaps: LINT_JOBS gates
 # in flight (default nproc), PMAP_JOBS per-gate fan-out for the checkers that
-# parallelise files (default LINT_JOBS/4, 2..16). A missing tool is a skip with
+# parallelise files (default LINT_JOBS/2, 2..16). A missing tool is a skip with
 # a notice; a failing gate is reported and does not cancel the others.
 lint:
     bash "{{repo_root}}/scripts/dev/lint.sh" "{{repo_root}}"
