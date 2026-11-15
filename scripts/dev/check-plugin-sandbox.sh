@@ -80,28 +80,63 @@ chmod 700 "$TMP/run"
 # renderer panics, and with a GPU the scene exits by `--seconds`. What the test
 # reads is the log (`logic ·` proves the plugin's logic was started at all) and
 # the marker file.
-run_scene() {
-  local runner="$1"
+#
+# The pass starts the scene in the background and returns as soon as EVIDENCE
+# holds, then stops it. The plugin logic runs at load time, so the evidence is
+# there within ~0.1 s; waiting out the full `--seconds 3` twice made this gate
+# 6.1 s of the suite's wall time, more than all the others together. The poll
+# ceiling (10 s at TICK) is the safety net the old `timeout` provided: a scene
+# that never gets to its logic ends the pass like a plain exit.
+TICK=0.05
+TICKS=200
+
+stop_scene() {
+  local pid="$1" i
+  kill "$pid" 2> /dev/null || return 0
+  for ((i = 0; i < 100; i++)); do
+    kill -0 "$pid" 2> /dev/null || break
+    sleep 0.01
+  done
+  kill -9 "$pid" 2> /dev/null || true
+  wait "$pid" 2> /dev/null || true
+}
+
+run_scene_until() {
+  local runner="$1" evidence="$2" pid i
   rm -f "$MARKER"
   : > "$LOG"
   if [ "$runner" = headless ]; then
     printf '%s --scene %s --no-hud\n' "$PLEAMAR_BIN" "$SCENE" > "$TMP/autostart"
     PLEAMAR_WM_AUTOSTART="$TMP/autostart" XDG_RUNTIME_DIR="$TMP/run" \
-      timeout -k 5 40 "$PLEAMAR_WM_BIN" headless --seconds 3 >> "$LOG" 2>&1 || true
+      "$PLEAMAR_WM_BIN" headless --seconds 3 >> "$LOG" 2>&1 &
   else
     XDG_RUNTIME_DIR="$SESSION_RUNTIME" \
-      timeout -k 5 20 "$PLEAMAR_BIN" --scene "$SCENE" --seconds 3 --no-hud >> "$LOG" 2>&1 || true
+      "$PLEAMAR_BIN" --scene "$SCENE" --seconds 3 --no-hud >> "$LOG" 2>&1 &
   fi
+  pid=$!
+  for ((i = 0; i < TICKS; i++)); do
+    if "$evidence"; then
+      stop_scene "$pid"
+      return 0
+    fi
+    kill -0 "$pid" 2> /dev/null || break
+    sleep "$TICK"
+  done
+  stop_scene "$pid"
+  "$evidence"
 }
 
+refused() { grep -qE "NOT APPROVED|wants to run 'sh', but nobody has approved its permissions" "$LOG"; }
+logic_loaded() { grep -q "logic  · plugin 'Hostile'" "$LOG"; }
+marker_written() { [ -e "$MARKER" ]; }
+
 # The logic is started on its own thread; a renderer that dies first can take the
-# process with it. So a run only counts once the log shows the plugin was loaded,
-# and each runner gets a chance before the test calls the environment blind.
-run_until_logic() {
-  local runner
+# process with it. So a pass only counts once EVIDENCE holds, and each runner
+# gets a chance before the test calls the environment blind.
+run_until() {
+  local evidence="$1" runner
   for runner in "${RUNNERS[@]}"; do
-    run_scene "$runner"
-    if grep -q "logic  · plugin 'Hostile'" "$LOG"; then
+    if run_scene_until "$runner" "$evidence"; then
       RUNNER_USED="$runner"
       return 0
     fi
@@ -115,7 +150,7 @@ if [ "${#RUNNERS[@]}" -eq 0 ]; then
   echo "hostile-plugin test: skipped (no pleamar-wm and no Wayland session)"
   exit 0
 fi
-if ! run_until_logic; then
+if ! run_until refused; then
   echo "hostile-plugin test: skipped (the scene never reached its logic: no graphics adapter in this environment)"
   exit 0
 fi
@@ -146,10 +181,10 @@ if ! "$PLEAMAR_BIN" --approve "$SCENE" --yes > "$TMP/approve.log" 2>&1; then
   sed -n '1,20p' "$TMP/approve.log" | sed 's/^/       /'
   failures=$((failures + 1))
 else
-  if ! run_until_logic; then
-    echo "hostile-plugin test: skipped the approved half (the scene never reached its logic)"
-  elif [ -e "$MARKER" ]; then
+  if run_until marker_written; then
     echo "  ok   approved plugin ran its command"
+  elif ! logic_loaded; then
+    echo "hostile-plugin test: skipped the approved half (the scene never reached its logic)"
   else
     echo "  FAIL approved plugin did not run — see $LOG"
     sed -n '1,40p' "$LOG" | sed 's/^/       /'
