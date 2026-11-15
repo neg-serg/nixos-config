@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2154  # pmap_ok/pmap_failed are set by pmap in lib.sh
 # Compile-check every pleamar scene in the repository with `pleamar --check`.
 #
 # The compiler is the only thing that can decide whether a .plm file is valid:
@@ -49,22 +50,21 @@ done
 
 echo "pleamar --check: ${#SCENES[@]} scene(s), ${skipped} library/part file(s) skipped"
 
-REPORT="$(mktemp)"
-trap 'rm -f "$REPORT"' EXIT
-failures=0
-for f in "${SCENES[@]}"; do
-  if ! output="$(pleamar --check "$f" 2>&1)"; then
-    {
-      echo "ERROR: $f"
-      printf '%s\n\n' "$output"
-    } >> "$REPORT"
-    failures=$((failures + 1))
+# Worker for pmap: `pleamar --check` on one scene, diagnostics printed only on
+# failure. pmap buffers each call and replays the blocks in scene order, so the
+# failure report still reads like the serial loop this replaced.
+plm_one() {
+  local f=$1 output
+  if ! output=$(pleamar --check "$f" 2>&1); then
+    printf 'ERROR: %s\n%s\n\n' "$f" "$output"
+    return 1
   fi
-done
+}
 
-if [ "$failures" -gt 0 ]; then
-  cat "$REPORT"
-  echo "FAILED: $failures of ${#SCENES[@]} scene(s) failed pleamar --check"
+# The compiler is a per-file process with no shared state; check the scenes
+# concurrently (bounded by pmap) instead of one at a time.
+if ! pmap -0 -- plm_one < <(printf '%s\0' "${SCENES[@]}"); then
+  echo "FAILED: $pmap_failed of ${#SCENES[@]} scene(s) failed pleamar --check"
   exit 1
 fi
 
