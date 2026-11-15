@@ -14,9 +14,6 @@ if ! command -v nvim > /dev/null 2>&1; then
   exit 0
 fi
 
-log="$(mktemp)"
-trap 'rm -f "$log"' EXIT
-
 # All headless suites: the native picker suites (native_pick pickers, the
 # serve-backed filesystem picker, the split-window contract, the one-line
 # mode) plus the shared-helper and parity checks.
@@ -40,9 +37,21 @@ suites=(
   files/nvim/lua/lusty/tests/theme_parity_smoke.lua
   files/nvim/lua/lusty/tests/ls_colors_parity_smoke.lua
 )
-for suite in "${suites[@]}"; do
-  if ! nvim --clean --headless -l "$suite" > "$log" 2>&1; then
-    cat "$log" >&2
-    exit 1
+# Worker for pmap: one headless nvim per suite. Every suite uses its own
+# /tmp names (suffixed with the suite), so concurrent runs cannot collide; the
+# log is printed only for a failure, and pmap replays failures in list order.
+lusty_one() {
+  local suite=$1 log rc=0
+  log="$(mktemp)"
+  nvim --clean --headless -l "$suite" > "$log" 2>&1 || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    printf 'FAILED: %s\n' "$suite"
+    cat "$log"
   fi
-done
+  rm -f "$log"
+  return "$rc"
+}
+
+if ! pmap -- lusty_one < <(printf '%s\n' "${suites[@]}"); then
+  exit 1
+fi

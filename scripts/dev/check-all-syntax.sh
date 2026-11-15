@@ -76,28 +76,43 @@ sections=(
   "CSS brace balance|has_cmd|python3|check_css|CSS|*.css|python3 not found; skipping CSS brace check"
 )
 
+# Worker for pmap: check one file with the checker of the current section and
+# print its diagnostics only when it fails. pmap replays these blocks in input
+# order, so the report reads exactly like the serial loop this replaced.
+syntax_one() {
+  local file=$1 output
+  if ! output=$("$SYNTAX_CHECKER" "$file"); then
+    printf 'ERROR: %s\n' "$file"
+    printf '%s\n' "$output" | head -5
+    printf '\n'
+    return 1
+  fi
+}
+
 # Run one section: announce it, skip when the tool is absent, otherwise check
-# every tracked match and report the first 5 lines of each failure.
+# every tracked match concurrently (one process per file, bounded by pmap) and
+# report the first 5 lines of each failure.
 run_section() {
   local header=$1 guard=$2 guard_arg=$3 checker=$4 count_label=$5 globs=$6 warning=$7
   local -a pathspecs
-  local count=0 file output
+  local -a files=()
+  local file
   read -ra pathspecs <<< "$globs"
   echo "Checking $header..."
-  if "$guard" "$guard_arg"; then
-    while IFS= read -r -d '' file; do
-      ((count++)) || true
-      if ! output=$("$checker" "$file"); then
-        echo "ERROR: $file"
-        echo "$output" | head -5
-        echo ""
-        fail=1
-      fi
-    done < <(tracked "${pathspecs[@]}")
-    echo "Checked $count $count_label file(s)"
-  else
+  if ! "$guard" "$guard_arg"; then
     echo "WARNING: $warning" >&2
+    return 0
   fi
+  while IFS= read -r -d '' file; do
+    files+=("$file")
+  done < <(tracked "${pathspecs[@]}")
+  if [ "${#files[@]}" -gt 0 ]; then
+    SYNTAX_CHECKER="$checker"
+    if ! pmap -0 -- syntax_one < <(printf '%s\0' "${files[@]}"); then
+      fail=1
+    fi
+  fi
+  echo "Checked ${#files[@]} $count_label file(s)"
 }
 
 for section in "${sections[@]}"; do

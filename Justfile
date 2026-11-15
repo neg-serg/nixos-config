@@ -176,50 +176,14 @@ stats-check:
 commit *args:
     python3 "{{repo_root}}/modules/llm/llmctl.py" commit --repo "{{repo_root}}" {{args}}
 
+# Every repo gate in one pass. scripts/dev/lint.sh runs them concurrently and
+# replays their output in a fixed table order, so the report reads
+# top-to-bottom like the serial suite while the work overlaps: LINT_JOBS gates
+# in flight (default nproc), PMAP_JOBS per-gate fan-out for the checkers that
+# parallelise files (default LINT_JOBS/4, 2..16). A missing tool is a skip with
+# a notice; a failing gate is reported and does not cancel the others.
 lint:
-    set -eu
-    statix check -- .
-    deadnix --fail .
-    # Guard: repo-wide Nix anti-patterns (with-pkgs forms, ExecStart file/dir
-    # mutations, bare `with lib`). Rule list and env gates:
-    #   bash scripts/dev/lint-guards.sh --list
-    bash "{{repo_root}}/scripts/dev/lint-guards.sh" "{{repo_root}}"
-    # `&&` so a failing ruff fails this line: the recipe runs under `bash -cu`
-    # (no -e) and a plain `;` would let black's success mask it.
-    if git ls-files -- '*.py' >/dev/null 2>&1; then \
-      ruff check -- . && \
-      black --check --line-length 79 --extend-exclude files/kitty .; \
-    fi
-    # TOML syntax/style — tracked files only: a bare `taplo lint` follows result/
-    # into the nix store (pyright's typeshed alone is ~200 METADATA.toml) plus the
-    # local nix/ dump, for ~1s of pointless walking; RUST_LOG=warn hides taplo's
-    # file-list INFO line.
-    if command -v taplo >/dev/null 2>&1; then git ls-files -z -- '*.toml' 2>/dev/null | RUST_LOG=warn xargs -0 -r taplo lint; else echo "taplo not found — skipping TOML lint"; fi
-    # Rust formatting (edition-aware via nearest Cargo.toml)
-    if command -v rustfmt >/dev/null 2>&1; then bash scripts/dev/check-rustfmt.sh; else echo "rustfmt not found — skipping Rust check"; fi
-    # Lua (non-nvim; nvim is a vendored config)
-    if command -v selene >/dev/null 2>&1; then selene files/gui files/mpv; else echo "selene not found — skipping Lua lint"; fi
-    # Music index/similar payloads: offline stub-embedder selftests (no
-    # torch/model/venv), skipped with a notice when python3 is missing —
-    # same style as rustfmt/selene above.
-    if command -v python3 >/dev/null 2>&1; then just music-selftest; else echo "python3 not found — skipping music payload selftest"; fi
-    # Shellcheck opt-in: check only files that declare a POSIX/Bash shebang
-    git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
-      | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \
-      | xargs -0 -r shellcheck -S warning -x
-    bash "{{repo_root}}/scripts/dev/check-plm.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-scene-events.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-hyprland-vars.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-relative-paths.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-absolute-home.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-doc-links.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-markdown-language.sh" && \
-    bash "{{repo_root}}/scripts/dev/repo-stats.sh" --check "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-all-syntax.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-osh-syntax.sh" "{{repo_root}}" && \
-    bash "{{repo_root}}/scripts/dev/check-lusty-smoke.sh"
-    just lint-annotations
+    bash "{{repo_root}}/scripts/dev/lint.sh" "{{repo_root}}"
 
 # Compile-check every pleamar scene in the repo (`pleamar --check`). Skips when
 # the binary is missing from PATH; also runs as part of `lint`.

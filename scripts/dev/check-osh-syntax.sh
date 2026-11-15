@@ -19,23 +19,44 @@ if ! command -v osh > /dev/null 2>&1; then
   exit 0
 fi
 
+# Worker for pmap: parse one file and print the first 5 diagnostics of a
+# failure. pmap replays the blocks in input order.
+osh_one() {
+  local file=$1 output
+  if ! output=$(osh -n "$file" 2>&1); then
+    printf 'ERROR: %s\n' "$file"
+    printf '%s\n' "$output" | head -5
+    printf '\n'
+    return 1
+  fi
+}
+
 fail=0
-count=0
+# Only files that declare a POSIX/Bash shebang — the same filter as the lint
+# step in Justfile, but covering extensionless scripts too.
+#
+# The first line is read with the `read` builtin rather than `head | grep`:
+# this loop walks every tracked file (thousands of them) and one fork pair per
+# file was most of the gate's runtime. The pattern mirrors the old grep's
+# `\b` (a non-word character, or end of line, must follow `sh`).
+shells=()
 while IFS= read -r -d '' file; do
-  # Only files that declare a POSIX/Bash shebang — the same filter as the
-  # lint step in Justfile, but covering extensionless scripts too.
-  if head -n 1 "$file" | grep -qE '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh\b'; then
-    ((count++)) || true
-    if ! output=$(osh -n "$file" 2>&1); then
-      echo "ERROR: $file"
-      echo "$output" | head -5
-      echo ""
-      fail=1
-    fi
+  first=""
+  IFS= read -r first < "$file" || true
+  if [[ $first =~ ^#![[:space:]]*/(usr/)?bin/(env[[:space:]]+)?(ba)?sh([^A-Za-z0-9_]|$) ]]; then
+    shells+=("$file")
   fi
 done < <(git ls-files -z -- .)
 
-echo "Checked $count shell script(s) with osh -n"
+# osh is a per-file parser with a noticeable startup cost; parse the corpus
+# concurrently and let pmap put the failures back in tree order.
+if [ "${#shells[@]}" -gt 0 ]; then
+  if ! pmap -0 -- osh_one < <(printf '%s\0' "${shells[@]}"); then
+    fail=1
+  fi
+fi
+
+echo "Checked ${#shells[@]} shell script(s) with osh -n"
 if [[ $fail -ne 0 ]]; then
   echo "FAILED: osh parse errors found (see above)"
   exit 1
