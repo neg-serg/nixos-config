@@ -11,8 +11,10 @@
 # Two knobs, both for a loaded or small machine:
 #   LINT_JOBS  gates in flight (default nproc)
 #   PMAP_JOBS  per-gate fan-out for the checkers that parallelise files
-#              (default LINT_JOBS/4, 2..16): the gates already run side by
-#              side, so one gate does not get the whole box.
+#              (default LINT_JOBS/2, 2..16): the gates already run side by
+#              side, so one gate does not get the whole box. Sixteen is the
+#              knee on this box — 32 oversubscribes and makes shellcheck slower.
+#   LINT_TIMING=1  append each gate's wall time to the report, in table order.
 #
 # Missing tools are a skip with a notice, not a failure — same policy as the
 # individual gates; this driver does not decide which tools exist.
@@ -29,7 +31,7 @@ if ! [ "$LINT_JOBS" -ge 1 ] 2> /dev/null; then
   LINT_JOBS=$(nproc 2> /dev/null || echo 4)
 fi
 if [ -z "${PMAP_JOBS:-}" ]; then
-  PMAP_JOBS=$((LINT_JOBS / 4))
+  PMAP_JOBS=$((LINT_JOBS / 2))
   [ "$PMAP_JOBS" -ge 2 ] || PMAP_JOBS=2
   [ "$PMAP_JOBS" -le 16 ] || PMAP_JOBS=16
 fi
@@ -205,9 +207,11 @@ declare -a pids=()
 running=0
 for name in "${GATES[@]}"; do
   (
+    start=$EPOCHREALTIME
     rc=0
     "gate_$name" || rc=$?
     printf '%s\n' "$rc" > "$TMP/$name.rc"
+    printf '%s %s\n' "$start" "$EPOCHREALTIME" > "$TMP/$name.time"
   ) > "$TMP/$name.log" 2>&1 &
   pids+=("$!")
   running=$((running + 1))
@@ -235,6 +239,19 @@ for ((i = 0; i < ${#GATES[@]}; i++)); do
     fi
   fi
 done
+
+# Gate wall times, on request: the table order is the report order, so a slow
+# gate is found without re-running the suite with tracing.
+if [ "${LINT_TIMING:-0}" = 1 ]; then
+  echo "lint: gate wall times"
+  {
+    for name in "${GATES[@]}"; do
+      read -r start end < "$TMP/$name.time" 2> /dev/null || continue
+      printf '%s %s %s\n' "$name" "$start" "$end"
+    done
+  } | awk '{ printf "  %-18s %6.2fs\n", $1, $3 - $2 }'
+  echo
+fi
 
 echo
 if [ "${#failed[@]}" -eq 0 ]; then
