@@ -3,11 +3,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794781130,
-        "narHash": "sha256-DoMriPvA51XJ2jKzrKYe+kDqynilDSyVHZuKVbYPEd8=",
+        "lastModified": 1794787005,
+        "narHash": "sha256-eU5p/2z3zVbIM60e9c6XOpCbpNdOZ7fNjU5n/634mjQ=",
         "ref": "refs/heads/main",
-        "rev": "b2617be387b4dd74f3882f11badb1727c72efc00",
-        "revCount": 1159,
+        "rev": "e06764361f25581daaf20e173d9fc0cb5e93de5d",
+        "revCount": 1161,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
