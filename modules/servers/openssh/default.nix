@@ -26,6 +26,17 @@ in
       default = false;
       description = "Allow tunnel forwarding. Default false for security.";
     };
+
+    useDns = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Resolve client addresses in sshd (UseDNS). Keep it on only where the
+        host answers PTR queries for its clients: a lookup that hangs holds the
+        connection in the pre-auth phase until LoginGraceTime, and that failure
+        also trips the per-source penalty, so every LAN login dies there.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -51,7 +62,7 @@ in
         PasswordAuthentication = false;
         KbdInteractiveAuthentication = false;
         PermitRootLogin = "no";
-        UseDns = true;
+        UseDns = cfg.useDns;
 
         # PidFile must live under /run/sshd (see RuntimeDirectory below):
         # ProtectSystem=strict makes /run itself read-only, so the default
