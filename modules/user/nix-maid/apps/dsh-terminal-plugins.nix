@@ -249,7 +249,12 @@ rec {
             baseURL: http://127.0.0.1:9292/v1
             apiKeyEnv: LLAMA_SWAP_API_KEY
             defaultContextWindow: 32768
-            defaultMaxTokens: 8192
+            # 8k was too small for the 128k remote tiers: a hard solution on the
+            # 7900 XTX nears 13k output tokens (Muse-Glimmer on CF 833B), and
+            # reasoning models burn the whole budget before emitting code. The
+            # server clamps n_predict to the remaining context, so 32k is safe
+            # for the 32k local models too.
+            defaultMaxTokens: 32768
             # A 22k-token agent prompt needs ~4.5 min of prefill here (~85
             # tok/s measured 2026-11-10; the single llama-server slot adds
             # queue time while another session or `llmctl` holds it). The
