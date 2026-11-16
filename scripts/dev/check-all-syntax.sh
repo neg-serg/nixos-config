@@ -43,18 +43,53 @@ check_js() {
 # preserved.
 check_json() { { jq . "$1" > /dev/null; } 2>&1; }
 check_jsonc() { { sed -e '/^[[:space:]]*\/\//d' -e '/^[[:space:]]*\/\*/,/^[[:space:]]*\*\//d' "$1" | jq . > /dev/null; } 2>&1; }
-check_yaml() { python3 -c 'import sys, yaml; yaml.safe_load(open(sys.argv[1]))' "$1" 2>&1; }
-check_toml() { python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' "$1" 2>&1; }
 
-# No CSS parser in the devshell; brace balance catches the common error class.
-check_css() {
-  python3 - "$1" << 'EOF'
+# One python3 process for a whole section. A python startup and import per file
+# cost ~11 ms × 139 files, more than the parsers themselves; the checks are the
+# same ones, only the loop moved inside. Failures print in file order, in the
+# same shape as `syntax_one` (header, up to five diagnostic lines, blank).
+# The YAML/TOML parsers are PyYAML and the stdlib tomllib; the CSS "parser" is
+# the brace-balance check no devshell tool covers.
+batch_check() {
+  local mode=$1
+  shift
+  python3 - "$mode" "$@" << 'EOF'
 import sys
-text = open(sys.argv[1]).read()
-if text.count('{') != text.count('}'):
-    raise ValueError(f"Unbalanced braces: {text.count('{')} open vs {text.count('}')} close")
+
+mode, paths = sys.argv[1], sys.argv[2:]
+failed = False
+for path in paths:
+    try:
+        if mode == "yaml":
+            import yaml
+
+            with open(path) as fh:
+                yaml.safe_load(fh)
+        elif mode == "toml":
+            import tomllib
+
+            with open(path, "rb") as fh:
+                tomllib.load(fh)
+        else:  # css brace balance
+            with open(path) as fh:
+                text = fh.read()
+            if text.count("{") != text.count("}"):
+                raise ValueError(
+                    f"Unbalanced braces: {text.count('{')} open vs {text.count('}')} close"
+                )
+    except Exception as exc:
+        failed = True
+        print(f"ERROR: {path}")
+        for line in str(exc).splitlines()[:5]:
+            print(line)
+        print()
+sys.exit(1 if failed else 0)
 EOF
 }
+
+batch_yaml() { batch_check yaml "$@"; }
+batch_toml() { batch_check toml "$@"; }
+batch_css() { batch_check css "$@"; }
 
 has_cmd() { command -v "$1" > /dev/null 2>&1; }
 has_pyyaml() { python3 -c 'import yaml' 2> /dev/null; }
@@ -71,9 +106,9 @@ sections=(
   "JavaScript syntax|has_cmd|node|check_js|JavaScript|*.js|node not found; skipping JavaScript syntax check"
   "JSON syntax|has_cmd|jq|check_json|JSON|*.json|jq not found; skipping JSON syntax check"
   "JSONC syntax|has_cmd|jq|check_jsonc|JSONC|*.jsonc|jq not found; skipping JSONC syntax check"
-  "YAML syntax|has_pyyaml||check_yaml|YAML|*.yml *.yaml|PyYAML not found; skipping YAML syntax check"
-  "TOML syntax|has_cmd|python3|check_toml|TOML|*.toml|python3 not found; skipping TOML syntax check"
-  "CSS brace balance|has_cmd|python3|check_css|CSS|*.css|python3 not found; skipping CSS brace check"
+  "YAML syntax|has_pyyaml||batch_yaml|YAML|*.yml *.yaml|PyYAML not found; skipping YAML syntax check"
+  "TOML syntax|has_cmd|python3|batch_toml|TOML|*.toml|python3 not found; skipping TOML syntax check"
+  "CSS brace balance|has_cmd|python3|batch_css|CSS|*.css|python3 not found; skipping CSS brace check"
 )
 
 # Worker for pmap: check one file with the checker of the current section and
@@ -91,7 +126,9 @@ syntax_one() {
 
 # Run one section: announce it, skip when the tool is absent, otherwise check
 # every tracked match concurrently (one process per file, bounded by pmap) and
-# report the first 5 lines of each failure.
+# report the first 5 lines of each failure. Checkers named `batch_*` take the
+# whole file list in one process instead — cheaper than a startup per file for
+# the sections a single interpreter can loop over.
 run_section() {
   local header=$1 guard=$2 guard_arg=$3 checker=$4 count_label=$5 globs=$6 warning=$7
   local -a pathspecs
@@ -107,10 +144,15 @@ run_section() {
     files+=("$file")
   done < <(tracked "${pathspecs[@]}")
   if [ "${#files[@]}" -gt 0 ]; then
-    SYNTAX_CHECKER="$checker"
-    if ! pmap -0 -- syntax_one < <(printf '%s\0' "${files[@]}"); then
-      fail=1
-    fi
+    case "$checker" in
+      batch_*) "$checker" "${files[@]}" || fail=1 ;;
+      *)
+        SYNTAX_CHECKER="$checker"
+        if ! pmap -0 -- syntax_one < <(printf '%s\0' "${files[@]}"); then
+          fail=1
+        fi
+        ;;
+    esac
   fi
   echo "Checked ${#files[@]} $count_label file(s)"
 }

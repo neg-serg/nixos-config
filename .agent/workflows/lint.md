@@ -21,7 +21,7 @@ fixed order, so a green run still reads top-to-bottom. Four knobs, all environme
 - `PMAP_JOBS` — files per gate for the checkers that fan out (default `LINT_JOBS/2`, clamped to
   2..16);
 - `LINT_TIMING=1` — append each gate's wall time to the report, in table order. Use it to find the
-  slow gate instead of guessing; `shellcheck` is normally the longest pole (~1.5 s, most of a green
+  slow gate instead of guessing; `shellcheck` is normally the longest pole (~1.3 s, most of a green
   run), because it re-parses every sourced file for each of the 86 scripts;
 - `LINT_COLOR=always|never` — force the colour decision. The default is decided once per run, from
   the suite's own stdout: coloured on a terminal, plain into a pipe or a file, and off whenever
