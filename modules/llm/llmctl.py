@@ -64,7 +64,7 @@ CATALOG = {
     "ornith-1.5-35b-a3b": {
         "aliases": ["ornith", "ornith35b"],
         "role": "35B-A3B coding agent (7900 XTX box, remote)",
-        "ctx": "32k",
+        "ctx": "128k",
         "size": "19.4 GB remote",
         "chem": "-",
         "lean": "-",
@@ -75,7 +75,7 @@ CATALOG = {
     "muse-glimmer-30b": {
         "aliases": ["muse", "muse-glimmer"],
         "role": "30B dense vision (7900 XTX box, remote)",
-        "ctx": "32k",
+        "ctx": "128k",
         "size": "18.2 GB remote",
         "chem": "-",
         "lean": "-",
@@ -86,7 +86,7 @@ CATALOG = {
     "gpt-oss-20b-mxfp4": {
         "aliases": ["gptoss-mxfp4", "gpt-oss-mxfp4"],
         "role": "20B MoE native MXFP4 + eagle3 (7900 XTX box, remote)",
-        "ctx": "64k",
+        "ctx": "128k",
         "size": "12.1 GB remote",
         "chem": "-",
         "lean": "-",
@@ -106,7 +106,7 @@ CATALOG = {
     "qwen3.8-27b-mxfp4": {
         "aliases": ["qwen27-mxfp4", "qwen3.8-mxfp4"],
         "role": "27B MXFP4 IQ4_XS + vision (7900 XTX box, remote)",
-        "ctx": "32k",
+        "ctx": "128k",
         "size": "14.8 GB remote",
         "chem": "-",
         "lean": "-",
