@@ -203,18 +203,6 @@ CATALOG = {
         "lean": "-",
         "fp": "-",
     },
-    # Runs on the other machine (RX 7900 XTX, 24 GB): llama-swap only routes to
-    # it over ssh/proxy, so the cold load is ~3.5 min and the "VRAM" figure is
-    # the remote card's, not trantor's.
-    "gyro-coder": {
-        "aliases": ["gyro", "gyrocoder"],
-        "role": "125B MoE coder (7900 XTX box, remote)",
-        "ctx": "64k",
-        "size": "19.9 GB remote",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
-    },
     # Same box; the weights and projector ride the gyro-coder SMB share under
     # mxfp4/, so a cold load streams them over the LAN (minutes).
     "swift-1.5-27b-mxfp4": {

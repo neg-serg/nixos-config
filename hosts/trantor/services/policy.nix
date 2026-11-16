@@ -100,9 +100,10 @@ lib.mkMerge [
       avahi.enable = true;
       # Samba profile: the guest share under /zero/sync/smb stays off, but smbd
       # publishes the llama weights read-only to the 7900 XTX box
-      # (192.168.0.144, "debian-I"): the Gyro-Coder tier and, under mxfp4/,
-      # the Swift MXFP4 pair. That box keeps no copies; NFS was the first
-      # choice but this kernel has no nfsd/rpc_pipefs modules at all.
+      # (192.168.0.144, "debian-I"): the Swift MXFP4 pair under mxfp4/. The
+      # share keeps its historical `gyro-coder` name (the remote fstab and the
+      # start scripts mount it by that name). That box keeps no copies; NFS was
+      # the first choice but this kernel has no nfsd/rpc_pipefs modules at all.
       samba = {
         enable = true;
         interfaces = [
@@ -190,7 +191,7 @@ lib.mkMerge [
           8090 # flohmarkt small-ads board (servicesProfiles.flohmarkt above)
           8091 # minibbs board (servicesProfiles.minibbs above)
           11434 # ollama (no auth — LAN only)
-          445 # samba: read-only Gyro-Coder share for the 7900 XTX box
+          445 # samba: read-only llama-weights share for the 7900 XTX box
           27015 # Steam
           27036 # Steam Remote Play
           27037 # Steam Remote Play
@@ -310,7 +311,7 @@ lib.mkMerge [
           local = {
             swap = true;
             exclusive = false;
-            members = lib.filter (m: m != "gyro-coder" && m != "nano" && m != "swift-1.5-27b-mxfp4") (
+            members = lib.filter (m: m != "nano" && m != "swift-1.5-27b-mxfp4") (
               lib.attrNames config.services.llama-swap.settings.models
             );
           };
@@ -319,7 +320,6 @@ lib.mkMerge [
             exclusive = false;
             persistent = true;
             members = [
-              "gyro-coder"
               "nano"
               "swift-1.5-27b-mxfp4"
             ];

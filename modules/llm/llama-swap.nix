@@ -472,37 +472,10 @@ let
     '';
   };
 
-  # Gyro-Coder (Qwen3.8-Flash-Next, 125B MoE at 2.125 bpw) does not run on this
-  # host: its 19.9 GiB of weights need the 24 GB card in the other machine
-  # (192.168.0.144, RX 7900 XTX), which reads them read-only over SMB from
-  # /zero/ai/llama/gyro-coder. llama-swap is only the router: `cmd` starts the
-  # container there over ssh and stays attached so the log stream and the
-  # process lifecycle stay visible, `proxy` sends the requests straight to it,
-  # `cmdStop` stops the container on unload. Nothing here touches trantor's own
-  # 16 GB card, so this tier never competes with the local models.
-  #
-  # Two reasons the model entry below differs from the local ones: the remote
-  # server has a fixed port instead of ${PORT} (hence `proxy`), and a cold load
-  # is ~3.5 min -- weights arrive over the LAN and the shaders warm up -- so its
-  # TTL is 15 min rather than the 60 s global one.
-  # llama-swap execs `cmd` directly -- no shell -- so this has to be a plain
-  # argv: absolute ssh path, simple flags, one-word remote command. The real
-  # container invocation lives in /usr/local/bin/gyro-coder-start on the other
-  # machine (a shell-style cmd with quotes and `|| true` fails with
-  # `exec: "ssh": executable file not found in $PATH`).
-  # accept-new: unknown hosts are trusted once, a *changed* host key still fails.
-  gyroCoder = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 gyro-coder-start
-  '';
-
-  gyroCoderStop = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 gyro-coder-stop
-  '';
-
   # OrcaCyber Nano 1.0 (27B vision-language) on the same 7900 XTX box, but on
-  # stock upstream llama.cpp with the ROCm backend: the Agention Vulkan fork the
-  # gyro tier runs is ~4x slower for arch `qwen35` (8.6 vs 36.4 tok/s decode,
-  # measured 2026-11-08). The start/stop scripts live in the remote user's home
+  # stock upstream llama.cpp with the ROCm backend: the Agention Vulkan fork is
+  # ~4x slower for arch `qwen35` (8.6 vs 36.4 tok/s decode, measured 2026-11-08).
+  # The start/stop scripts live in the remote user's home
   # rather than /usr/local/bin because no root is available there; the `cmd`
   # still has to be a plain argv, so the remote command is one absolute path.
   # allow-absolute-home: the path is on the remote host, which has no root
@@ -721,19 +694,8 @@ in
         # On the remote side a 1-minute watchdog stops the container if this
         # router disappears, so a crash or reboot here cannot strand 21 GiB of
         # VRAM on a machine nobody can reach.
-        "gyro-coder" = {
-          cmd = gyroCoder;
-          cmdStop = gyroCoderStop;
-          proxy = "http://192.168.0.144:8090";
-          checkEndpoint = "/health";
-          ttl = 900;
-          aliases = [
-            "gyro"
-            "gyrocoder"
-          ];
-        };
 
-        # Same box, second remote tier. 15.7G build + DFlash2 drafter + mmproj
+        # Another remote tier. 15.7G build + DFlash2 drafter + mmproj
         # occupy 22.2 GiB of the 24 GiB card at 32k and decode at ~42 tok/s; a
         # cold load is ~30 s (page cache warm from the earlier runs), so the
         # 15 min TTL only exists to release the card between sessions.
@@ -753,8 +715,8 @@ in
         # gyro-coder SMB share, MTP self-speculation, 64k. The quality tier of
         # the 24 GB box; a cold load streams the weights over SMB (minutes),
         # hence the 15 min TTL. A user timer on that box (llm-game-guard.timer,
-        # every 5 s) stops swift27b/nano/gyro-coder when a game appears, and
-        # the start script refuses while one already runs.
+        # every 5 s) stops swift27b/nano when a game appears, and the start
+        # script refuses while one already runs.
         "swift-1.5-27b-mxfp4" = {
           cmd = swift27b;
           cmdStop = swift27bStop;
