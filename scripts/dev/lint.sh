@@ -8,13 +8,15 @@
 # changed. A gate that fails does not cancel the others: everything runs, every
 # failure is reported, and the exit status is 1 when any gate failed.
 #
-# Two knobs, both for a loaded or small machine:
+# Knobs, all environment variables:
 #   LINT_JOBS  gates in flight (default nproc)
 #   PMAP_JOBS  per-gate fan-out for the checkers that parallelise files
 #              (default LINT_JOBS/2, 2..16): the gates already run side by
 #              side, so one gate does not get the whole box. Sixteen is the
 #              knee on this box — 32 oversubscribes and makes shellcheck slower.
 #   LINT_TIMING=1  append each gate's wall time to the report, in table order.
+#   LINT_COLOR=always|never  force the colour decision (below); the default is
+#              on for a terminal and off for a pipe, and NO_COLOR turns it off.
 #
 # Missing tools are a skip with a notice, not a failure — same policy as the
 # individual gates; this driver does not decide which tools exist.
@@ -25,6 +27,45 @@ set -euo pipefail
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 REPO_ROOT="$(repo_root "${1:-}")"
 cd "$REPO_ROOT"
+
+# ── colour ───────────────────────────────────────────────────────────────────
+# A gate's output is captured to a file and replayed afterwards, so a tool
+# inside it sees a pipe rather than the terminal and drops its colour even when
+# the report ends up on one. The decision is therefore made once, here, against
+# the suite's own stdout, and the gates receive it as explicit per-tool flags.
+# A global FORCE_COLOR is the blunt version of that: it would also recolour
+# `nix`, `git` and `just`, whose output some gates parse.
+#
+# Not every tool can be steered: statix writes SGR codes even into a pipe (it
+# honours neither NO_COLOR nor CLICOLOR) and deadnix writes none at all, so
+# those two keep whatever they do on their own.
+case "${LINT_COLOR:-auto}" in
+  always | 1 | yes) colour=1 ;;
+  never | 0 | no) colour=0 ;;
+  *)
+    if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != "dumb" ]; then
+      colour=1
+    else
+      colour=0
+    fi
+    ;;
+esac
+
+if [ "$colour" -eq 1 ]; then
+  c_reset=$'\033[0m' c_dim=$'\033[2m' c_bold=$'\033[1m'
+  c_pass=$'\033[1;32m' c_fail=$'\033[1;31m' c_warn=$'\033[1;33m'
+  ruff_colour=(--color always)
+  taplo_colour=(--colors always)
+  selene_colour=(--color Always)
+  shellcheck_colour=(--color=always)
+else
+  c_reset='' c_dim='' c_bold=''
+  c_pass='' c_fail='' c_warn=''
+  ruff_colour=(--color never)
+  taplo_colour=(--colors never)
+  selene_colour=(--color Never)
+  shellcheck_colour=(--color=never)
+fi
 
 LINT_JOBS="${LINT_JOBS:-$(nproc 2> /dev/null || echo 4)}"
 if ! [ "$LINT_JOBS" -ge 1 ] 2> /dev/null; then
@@ -52,7 +93,7 @@ gate_python() {
   # ruff first, then black: under `set -e` a failing ruff aborts the gate, so
   # black's success cannot mask it.
   if git ls-files -- '*.py' > /dev/null 2>&1; then
-    ruff check -- .
+    ruff check "${ruff_colour[@]}" -- .
     black --check --line-length 79 --extend-exclude files/kitty .
   fi
 }
@@ -62,9 +103,10 @@ gate_toml() {
   # (pyright's typeshed alone is ~200 METADATA.toml) plus the local nix/ dump,
   # for ~1s of pointless walking. RUST_LOG=warn hides taplo's file-list INFO.
   if command -v taplo > /dev/null 2>&1; then
-    git ls-files -z -- '*.toml' 2> /dev/null | RUST_LOG=warn xargs -0 -r taplo lint
+    git ls-files -z -- '*.toml' 2> /dev/null \
+      | RUST_LOG=warn xargs -0 -r taplo lint "${taplo_colour[@]}"
   else
-    echo "taplo not found — skipping TOML lint"
+    printf '%s\n' "${c_warn}taplo not found — skipping TOML lint${c_reset}"
   fi
 }
 
@@ -73,16 +115,16 @@ gate_rust() {
   if command -v rustfmt > /dev/null 2>&1; then
     bash "$REPO_ROOT/scripts/dev/check-rustfmt.sh"
   else
-    echo "rustfmt not found — skipping Rust check"
+    printf '%s\n' "${c_warn}rustfmt not found — skipping Rust check${c_reset}"
   fi
 }
 
 gate_lua() {
   # Lua (non-nvim; nvim is a vendored config)
   if command -v selene > /dev/null 2>&1; then
-    selene files/gui files/mpv
+    selene "${selene_colour[@]}" files/gui files/mpv
   else
-    echo "selene not found — skipping Lua lint"
+    printf '%s\n' "${c_warn}selene not found — skipping Lua lint${c_reset}"
   fi
 }
 
@@ -93,12 +135,12 @@ gate_music() {
   if command -v python3 > /dev/null 2>&1; then
     just music-selftest
   else
-    echo "python3 not found — skipping music payload selftest"
+    printf '%s\n' "${c_warn}python3 not found — skipping music payload selftest${c_reset}"
   fi
 }
 
 shellcheck_one() {
-  shellcheck -S warning -x "$1"
+  shellcheck -S warning -x "${shellcheck_colour[@]}" "$1"
 }
 
 gate_shellcheck() {
@@ -227,9 +269,10 @@ for ((i = 0; i < ${#GATES[@]}; i++)); do
   wait "${pids[$i]}" 2> /dev/null || true
   rc=$(cat "$TMP/$name.rc" 2> /dev/null || echo 1)
   if [ "$rc" -eq 0 ]; then
-    printf '\n>>> %s\n' "$name"
+    printf '\n%s>>>%s %s%s%s\n' "$c_dim" "$c_reset" "$c_pass" "$name" "$c_reset"
   else
-    printf '\n>>> %s (FAILED)\n' "$name"
+    printf '\n%s>>>%s %s%s (FAILED)%s\n' \
+      "$c_dim" "$c_reset" "$c_fail" "$name" "$c_reset"
     failed+=("$name")
   fi
   if [ -s "$TMP/$name.log" ]; then
@@ -243,7 +286,7 @@ done
 # Gate wall times, on request: the table order is the report order, so a slow
 # gate is found without re-running the suite with tracing.
 if [ "${LINT_TIMING:-0}" = 1 ]; then
-  echo "lint: gate wall times"
+  printf '%s\n' "${c_bold}lint: gate wall times${c_reset}"
   {
     for name in "${GATES[@]}"; do
       read -r start end < "$TMP/$name.time" 2> /dev/null || continue
@@ -255,8 +298,9 @@ fi
 
 echo
 if [ "${#failed[@]}" -eq 0 ]; then
-  echo "lint: all ${#GATES[@]} gates passed"
+  printf '%slint: all %s gates passed%s\n' "$c_pass" "${#GATES[@]}" "$c_reset"
   exit 0
 fi
-echo "lint: ${#failed[@]} of ${#GATES[@]} gates failed: ${failed[*]}" >&2
+printf '%slint: %s of %s gates failed: %s%s\n' \
+  "$c_fail" "${#failed[@]}" "${#GATES[@]}" "${failed[*]}" "$c_reset" >&2
 exit 1
