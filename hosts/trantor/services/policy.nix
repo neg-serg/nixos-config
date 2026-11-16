@@ -87,6 +87,11 @@ lib.mkMerge [
       # only via PermitOpen below, so the hardened profile stays intact.
       openssh.enable = true;
       openssh.allowTcpForwarding = true;
+      # PTR queries for LAN clients never return here: resolved forwards them
+      # to sing-box, which leaves them unanswered, so sshd held every LAN
+      # connection until LoginGraceTime and the per-source penalty turned that
+      # into a permanent refusal. The lookup is for logging only.
+      openssh.useDns = false;
       # Local DNS rewrites for LAN names
       adguardhome.rewrites = adguardLists.rewrites;
       # Enable curated AdGuardHome filter lists
