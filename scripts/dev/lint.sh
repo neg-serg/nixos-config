@@ -144,13 +144,15 @@ shellcheck_one() {
 }
 
 gate_shellcheck() {
-  # Opt-in shell lint: only files that declare a POSIX/Bash shebang. One
-  # checker process per file — the old single invocation was serial and
-  # dominated the suite's wall time.
-  local file
-  local -a files=()
+  # Opt-in shell lint: only files that declare a POSIX/Bash shebang. The
+  # shebang is read with a builtin — a `grep` per file cost ~0.1 s before the
+  # first checker started. One checker process per file: the old single
+  # invocation was serial and dominated the suite's wall time.
+  local file shebang
+  local -a files=() ordered=()
   while IFS= read -r -d '' file; do
-    if grep -qE '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' "$file"; then
+    IFS= read -r shebang < "$file" || true
+    if [[ $shebang =~ ^#![[:space:]]*/(usr/)?bin/(env[[:space:]]+)?(ba)?sh ]]; then
       files+=("$file")
     fi
   done < <(git ls-files -z -- '*.sh' '*.bash')
@@ -158,7 +160,14 @@ gate_shellcheck() {
     return 0
   fi
   echo "shellcheck: ${#files[@]} file(s)"
-  pmap -0 -- shellcheck_one < <(printf '%s\0' "${files[@]}")
+  # Longest first: shellcheck cost tracks file size, and a 1300-line parity
+  # harness takes ~0.65 s on its own. Started last in git order, it would hold
+  # up the whole gate's tail; started first, the rest fits underneath it.
+  # `du`+`sort` are two processes for the whole list.
+  while IFS=$'\t' read -r _size file; do
+    ordered+=("$file")
+  done < <(du -b -- "${files[@]}" | sort -rn)
+  pmap -0 -- shellcheck_one < <(printf '%s\0' "${ordered[@]}")
 }
 
 gate_plm() {
