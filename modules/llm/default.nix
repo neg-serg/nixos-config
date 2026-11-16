@@ -352,8 +352,8 @@
 #   and the small specialists. The `mxfp4/` pair (gpt-oss-20b Q4_K_M,
 #   Swift-1.5 27B MXFP4 + mmproj) is hardlinked into
 #   `gyro-coder/mxfp4` — the share keeps that directory name — for the
-#   24 GB box. The Gyro-Coder 125B tier left the fleet on 2026-11-16;
-#   its 87 GB directory is now dead weight and can be deleted.
+#   24 GB box. The Gyro-Coder 125B tier left the fleet on 2026-11-16 and its
+#   71 GB TQ2_0 file was deleted; only the `mxfp4/` hardlinks remain there.
 #   DeepSeek-Prover-V2 and Devstral left the fleet
 #   on 2026-11-11 (16.7 GB); ArduinoLLM's weights were already gone from disk,
 #   so its slot was dead and went with them. 34 GB of dead
