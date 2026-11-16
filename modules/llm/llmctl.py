@@ -49,6 +49,69 @@ CATALOG = {
         "lean": "0/7",
         "fp": "-",
     },
+    # Ornith-1.5 (MIT, released 2026-08-18): qwen35 family, tool calls and
+    # vision. The 9B is the fast tier on the 16 GB card, the 35B-A3B (3B
+    # active) is the coding agent tier on the 7900 XTX box, weights local.
+    "ornith-1.5-9b": {
+        "aliases": ["ornith9b", "ornith-small"],
+        "role": "fast agent/vision 9B (local)",
+        "ctx": "32k",
+        "size": "6.3 GB",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    "ornith-1.5-35b-a3b": {
+        "aliases": ["ornith", "ornith35b"],
+        "role": "35B-A3B coding agent (7900 XTX box, remote)",
+        "ctx": "32k",
+        "size": "19.4 GB remote",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    # Muse-Glimmer-30B (Apache-2.0, 30B dense, vision, 131k native): the
+    # comparison tier on the 7900 XTX box, weights + DFlash drafter local.
+    "muse-glimmer-30b": {
+        "aliases": ["muse", "muse-glimmer"],
+        "role": "30B dense vision (7900 XTX box, remote)",
+        "ctx": "32k",
+        "size": "18.2 GB remote",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    # Native MXFP4 tier (4-bit float with shared scales) and a 26B-A4B MoE;
+    # both fit the 24 GB card with room for their drafters/projectors.
+    "gpt-oss-20b-mxfp4": {
+        "aliases": ["gptoss-mxfp4", "gpt-oss-mxfp4"],
+        "role": "20B MoE native MXFP4 + eagle3 (7900 XTX box, remote)",
+        "ctx": "64k",
+        "size": "12.1 GB remote",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    "gemma-4-26b-a4b-mxfp4": {
+        "aliases": ["gemma4-mxfp4", "gemma4-a4b"],
+        "role": "26B-A4B MoE MXFP4 + vision (7900 XTX box, remote)",
+        "ctx": "32k",
+        "size": "15.5 GB remote",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
+    # The same Qwen3.8-27B weights as the local quality tier, quantized to
+    # MXFP4 IQ4_XS and served on the 24 GB card with the 27B projector.
+    "qwen3.8-27b-mxfp4": {
+        "aliases": ["qwen27-mxfp4", "qwen3.8-mxfp4"],
+        "role": "27B MXFP4 IQ4_XS + vision (7900 XTX box, remote)",
+        "ctx": "32k",
+        "size": "14.8 GB remote",
+        "chem": "-",
+        "lean": "-",
+        "fp": "-",
+    },
     "qwen3.8-27b-abliterated": {
         "aliases": ["qwen3.8", "ru"],
         "role": "dense 27B: text quality tier",

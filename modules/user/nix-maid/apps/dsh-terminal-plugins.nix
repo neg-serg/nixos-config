@@ -303,6 +303,47 @@ rec {
               - id: gpt-oss-20b
                 name: GPT-OSS 20B MXFP4 (fast, 64k)
                 contextWindow: 65536
+              # Ornith-1.5 (MIT): the 9B is the fast vision/agent tier on the
+              # 16 GB card; the 35B-A3B runs on the 7900 XTX box with its
+              # weights on that box's own SSD (see llama-swap.nix).
+              - id: ornith-1.5-9b
+                name: Ornith-1.5 9B (fast, vision)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
+              - id: ornith-1.5-35b-a3b
+                name: Ornith-1.5 35B-A3B (7900 XTX, coding agent)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
+              # Muse-Glimmer-30B: the comparison tier on the same box, 30B
+              # dense with a DFlash drafter and a vision projector.
+              - id: muse-glimmer-30b
+                name: Muse-Glimmer 30B (7900 XTX, vision, drafter)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
+              # MXFP4 tiers on the same box: gpt-oss-20b is natively MXFP4
+              # (with an eagle3 drafter), Gemma 4 is a 26B MoE with vision.
+              - id: gpt-oss-20b-mxfp4
+                name: GPT-OSS 20B MXFP4 + eagle3 (7900 XTX)
+                contextWindow: 65536
+              - id: gemma-4-26b-a4b-mxfp4
+                name: Gemma 4 26B-A4B MXFP4 (7900 XTX, vision)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
+              # The local quality tier requantized to MXFP4 for the 24 GB card.
+              - id: qwen3.8-27b-mxfp4
+                name: Qwen3.8 27B MXFP4 IQ4_XS (7900 XTX, vision)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
               # OrcaCyber Nano 1.0 — 27B vision-language on the same 7900 XTX
               # box (a remote tier in llama-swap.nix). Stock ROCm
               # llama.cpp, DFlash2 drafter + mmproj, 32k context, ~42 tok/s,
@@ -338,6 +379,31 @@ rec {
           # charge and tool-capable, but the free tier trains on what it is
           # sent — do not put private code through it. 3.7/3.8 do not answer on
           # this key's free tier (requests hang), so 3.6 is the newest usable.
+          # ollama: the local daemon on 127.0.0.1:11434 has its own store (the
+          # same Qwen3.8-27B at Q4_K_M, 262k, plus the abliterated 8B vision
+          # model). Its /v1 is OpenAI-compatible and ignores the key; the
+          # dummy OLLAMA_API_KEY only satisfies the adapter. The 27B is 17 GB
+          # against a 16 GB card, so Ollama spills part of it to RAM.
+          ollama:
+            displayName: Ollama (local daemon)
+            api: openai-completions
+            baseURL: http://127.0.0.1:11434/v1
+            apiKeyEnv: OLLAMA_API_KEY
+            defaultContextWindow: 32768
+            defaultMaxTokens: 8192
+            models:
+              - id: qwen3.8:27b
+                name: Qwen3.8 27B Q4_K_M (Ollama)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
+              - id: qwen3-vl-abliterated:8b
+                name: Qwen3-VL-8B abliterated (Ollama)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
           pollinations:
             displayName: Pollinations (free, no key)
             api: openai-completions

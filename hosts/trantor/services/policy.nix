@@ -311,9 +311,16 @@ lib.mkMerge [
           local = {
             swap = true;
             exclusive = false;
-            members = lib.filter (m: m != "nano" && m != "swift-1.5-27b-mxfp4") (
-              lib.attrNames config.services.llama-swap.settings.models
-            );
+            members = lib.filter (
+              m:
+              m != "nano"
+              && m != "swift-1.5-27b-mxfp4"
+              && m != "ornith-1.5-35b-a3b"
+              && m != "muse-glimmer-30b"
+              && m != "gpt-oss-20b-mxfp4"
+              && m != "gemma-4-26b-a4b-mxfp4"
+              && m != "qwen3.8-27b-mxfp4"
+            ) (lib.attrNames config.services.llama-swap.settings.models);
           };
           remote = {
             swap = true;
@@ -322,6 +329,11 @@ lib.mkMerge [
             members = [
               "nano"
               "swift-1.5-27b-mxfp4"
+              "ornith-1.5-35b-a3b"
+              "muse-glimmer-30b"
+              "gpt-oss-20b-mxfp4"
+              "gemma-4-26b-a4b-mxfp4"
+              "qwen3.8-27b-mxfp4"
             ];
           };
         };

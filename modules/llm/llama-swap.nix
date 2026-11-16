@@ -40,6 +40,18 @@ let
   # prefill, both shapes and colours read correctly. Text is fine too: the code
   # K7Q-42 was read correctly from a rendered image, with and without 31.6k
   # tokens of text in front of it (2229 tok/s prefill).
+  # Ornith-1.5-9B (MIT) — the same qwen35 family as the 27B, so the installed
+  # llama.cpp already serves it. 5.4 GB of weights + 0.9 GB projector leave
+  # room for a wide KV on the 16 GB card; 32k is the practical agent window.
+  # Tool calls and vision ride the model's own chat template (--jinja).
+  ornith9b = ''
+    ${llamaVulkan} --device Vulkan0 \
+      -m ${modelDir}/ornith-9b/Ornith-1.5-9B-Q4_K_M.gguf \
+      --mmproj ${modelDir}/ornith-9b/mmproj-Ornith-1.5-9B-BF16.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --jinja
+  '';
+
   vision8b = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/abliterated/Qwen3-VL-8B-abliterated-Q4_K_M.gguf \
@@ -503,6 +515,70 @@ let
   swift27bStop = ''
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/swift27b-stop
   '';
+
+  # Ornith-1.5-35B-A3B (MIT, 35B MoE with 3B active, 262k native): the coding
+  # agent tier that replaced Gyro-Coder. Its weights live on the box's own
+  # /srv/models (220 GB SSD), so a cold load is a local mmap instead of an SMB
+  # stream; the 15 min TTL only releases the card between sessions.
+  # allow-absolute-home: the path is on the remote host, which has no root
+  ornith = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/ornith-start
+  '';
+
+  # allow-absolute-home: the path is on the remote host, which has no root
+  ornithStop = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/ornith-stop
+  '';
+
+  # Muse-Glimmer-30B (Apache-2.0, 30B dense, 131k, vision): the comparison
+  # tier on the same box, third port. Weights, DFlash drafter and projector
+  # live on its SSD; 3 sliding-window layers per 1 full layer with 2 KV heads
+  # keeps the 32k KV under 0.5 GiB.
+  # allow-absolute-home: the path is on the remote host, which has no root
+  muse = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/muse-start
+  '';
+
+  # allow-absolute-home: the path is on the remote host, which has no root
+  museStop = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/muse-stop
+  '';
+
+  # gpt-oss-20b in its native MXFP4 format (11.28 GiB) with the eagle3
+  # drafter: the MXFP4 reference tier on the box. Weights local on its SSD.
+  # allow-absolute-home: the path is on the remote host, which has no root
+  gptoss = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/gptoss-start
+  '';
+
+  # allow-absolute-home: the path is on the remote host, which has no root
+  gptossStop = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/gptoss-stop
+  '';
+
+  # Gemma 4 26B-A4B (26B MoE, 4B active) in MXFP4_MOE with its projector.
+  # allow-absolute-home: the path is on the remote host, which has no root
+  gemma4 = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/gemma-start
+  '';
+
+  # allow-absolute-home: the path is on the remote host, which has no root
+  gemma4Stop = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/gemma-stop
+  '';
+
+  # Qwen3.8-27B in MagicQuant MXFP4 (IQ4_XS, 13.95 GiB) with the stock 27B
+  # bf16 projector, on the box's SSD: the MXFP4 quant of the local quality
+  # tier, for a like-for-like comparison against IQ3_S on the 24 GB card.
+  # allow-absolute-home: the path is on the remote host, which has no root
+  qwen27 = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/qwen27-start
+  '';
+
+  # allow-absolute-home: the path is on the remote host, which has no root
+  qwen27Stop = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/qwen27-stop
+  '';
 in
 {
   services.llama-swap = lib.mkIf enabled {
@@ -518,6 +594,15 @@ in
       # enough not to reload between messages.
       globalTTL = 60;
       models = {
+        # Ornith-1.5-9B: fast agent/vision tier on the 16 GB card (MIT).
+        "ornith-1.5-9b" = {
+          cmd = ornith9b;
+          ttl = 300;
+          aliases = [
+            "ornith9b"
+            "ornith-small"
+          ];
+        };
         "qwen3-vl-8b-abliterated" = {
           cmd = vision8b;
           # `vision` moved to the 27B on 2026-11-11; this stays the fast path
@@ -726,6 +811,78 @@ in
           aliases = [
             "swift27b"
             "swift"
+          ];
+        };
+
+        # Ornith-1.5-35B-A3B IQ4_XS: 18.8 GiB of weights + projector on the
+        # box's own SSD, 32k by default. Replaces Gyro-Coder as the coding
+        # agent tier; 3B active tokens make it much faster than the 27B dense
+        # tiers on the same card. The freed 8090 port is reused.
+        "ornith-1.5-35b-a3b" = {
+          cmd = ornith;
+          cmdStop = ornithStop;
+          proxy = "http://192.168.0.144:8090";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "ornith"
+            "ornith35b"
+          ];
+        };
+
+        # Muse-Glimmer-30B UD-Q4_K_XL + DFlash drafter: the comparison tier
+        # (30B dense, vision, 131k native) on the box's third port. Local
+        # weights on the SSD; 32k default with a cheap hybrid-attention KV.
+        "muse-glimmer-30b" = {
+          cmd = muse;
+          cmdStop = museStop;
+          proxy = "http://192.168.0.144:8091";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "muse"
+            "muse-glimmer"
+          ];
+        };
+
+        # gpt-oss-20b MXFP4 (native 4-bit) + eagle3 drafter: 11.3 GiB of
+        # weights leave room for a 64k window on the 24 GB card.
+        "gpt-oss-20b-mxfp4" = {
+          cmd = gptoss;
+          cmdStop = gptossStop;
+          proxy = "http://192.168.0.144:8092";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "gptoss-mxfp4"
+            "gpt-oss-mxfp4"
+          ];
+        };
+
+        # Gemma 4 26B-A4B MXFP4_MOE: 14.4 GiB weights + projector, 4B active.
+        "gemma-4-26b-a4b-mxfp4" = {
+          cmd = gemma4;
+          cmdStop = gemma4Stop;
+          proxy = "http://192.168.0.144:8093";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "gemma4-mxfp4"
+            "gemma4-a4b"
+          ];
+        };
+
+        # Qwen3.8-27B MagicQuant MXFP4 IQ4_XS + the 27B projector: the same
+        # weights as the local quality tier, at MXFP4 on the 24 GB card.
+        "qwen3.8-27b-mxfp4" = {
+          cmd = qwen27;
+          cmdStop = qwen27Stop;
+          proxy = "http://192.168.0.144:8096";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "qwen27-mxfp4"
+            "qwen3.8-mxfp4"
           ];
         };
       };
