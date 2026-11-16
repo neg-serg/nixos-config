@@ -17,6 +17,8 @@
 #   LINT_TIMING=1  append each gate's wall time to the report, in table order.
 #   LINT_COLOR=always|never  force the colour decision (below); the default is
 #              on for a terminal and off for a pipe, and NO_COLOR turns it off.
+#   LINT_NO_CACHE=1  lint for real instead of replaying the cached shellcheck
+#              verdict (the cache section below explains what the key covers).
 #
 # Missing tools are a skip with a notice, not a failure — same policy as the
 # individual gates; this driver does not decide which tools exist.
@@ -143,12 +145,171 @@ shellcheck_one() {
   shellcheck -S warning -x "${shellcheck_colour[@]}" "$1"
 }
 
+# ── shellcheck result cache ──────────────────────────────────────────────────
+# The gate's inputs are the repo's shell scripts: their contents, which of them
+# exist, the shellcheck version/flags/options, and its rc files. With `-x`
+# It follows `source`d paths *statically* — a `$var` target is refused
+# (SC1090/SC1091), and the `$(dirname …)/literal` idiom resolves inside the
+# repo — so every file it reads is one of those scripts. One key over the whole
+# set is therefore exact: a hit cannot report a pass a fresh run would not.
+#
+# `shellcheck_cache_sources_safe` is what keeps that claim true as the tree
+# changes. It walks every `source` line in the set and rejects the run (no
+# cache, plain execution) when one could resolve outside it: a literal absolute
+# path, a literal target that is not a `*.sh`/`*.bash` file, or the dirname
+# idiom whose tail is not one. Dynamic targets need no key — shellcheck will
+# not follow them either.
+#
+# Content-addressed entries are never rewritten, so a stale one is simply never
+# looked up again. LINT_NO_CACHE=1 turns the whole thing off.
+shellcheck_cache_rc=0
+SHELLCHECK_CACHE_DIR=""
+if [ "${LINT_NO_CACHE:-0}" != "1" ]; then
+  if [ -n "${XDG_CACHE_HOME:-}" ]; then
+    SHELLCHECK_CACHE_DIR="$XDG_CACHE_HOME/just-lint/shellcheck"
+  elif [ -n "${HOME:-}" ]; then
+    SHELLCHECK_CACHE_DIR="$HOME/.cache/just-lint/shellcheck"
+  fi
+  if [ -n "$SHELLCHECK_CACHE_DIR" ] \
+    && ! mkdir -p "$SHELLCHECK_CACHE_DIR" 2> /dev/null; then
+    SHELLCHECK_CACHE_DIR=""
+  fi
+fi
+
+# Return 1 when a `source` line could resolve to a file the key does not hash.
+# $@ is the hashed file set.
+shellcheck_cache_sources_safe() {
+  local line rest word
+  local -a words=()
+  while IFS= read -r line; do
+    rest="${line#"${line%%[![:space:]]*}"}"
+    if [ "${rest#\#}" != "$rest" ]; then
+      # A directive line: judge the paths it names, not the whole line.
+      # `source-path=` widens what `source=` may point at, so it is judged too.
+      read -ra words <<< "${rest#\#}"
+      for word in "${words[@]}"; do
+        case "$word" in
+          source-path=*) ;;
+          *) continue ;;
+        esac
+        case "${word#source-path=}" in
+          SCRIPTDIR | SRCDIR) ;;
+          # Any other search path may leave the repo or follow a variable.
+          *'$'* | *'`'* | /* | *..* | '') return 1 ;;
+        esac
+      done
+      for word in "${words[@]}"; do
+        case "$word" in
+          source=*) shellcheck_cache_target_safe "${word#source=}" || return 1 ;;
+        esac
+      done
+      continue
+    fi
+    case "$rest" in
+      source*) rest="${rest#source}" ;;
+      .*) rest="${rest#.}" ;;
+    esac
+    rest="${rest#"${rest%%[![:space:]]*}"}"
+    shellcheck_cache_target_safe "$rest" || return 1
+  done < <(
+    grep -hE '^[[:space:]]*(\.|source)[[:space:]]|^# shellcheck source' -- "$@" \
+      2> /dev/null || true
+  )
+  return 0
+}
+
+# Judge a source expression: 0 when it can only name a file the key hashes (a
+# `*.sh`/`*.bash` inside the repo), or when shellcheck cannot resolve it at all
+# (a `$var`/backtick target is refused with SC1090/SC1091). 1 when it might
+# reach outside the set, which turns the cache off for that run.
+shellcheck_cache_target_safe() {
+  local expr=$1 target
+  case "$expr" in
+    # The dirname idiom: shellcheck resolves the literal tail after the last
+    # `)`, and that tail is relative to the directory it resolved — so only the
+    # name is judged, not the leading slash it starts with.
+    *'$('*)
+      target="${expr##*)}"
+      target="${target#[\"\']}"
+      target="${target%%[[:space:]]*}"
+      target="${target%[\"\']}"
+      case "$target" in
+        *.sh | *.bash) return 0 ;;
+        *) return 1 ;;
+      esac
+      ;;
+    *'$'* | *'`'*) return 0 ;;
+  esac
+  # First word, unquoted — `./lib.sh "$@"` names ./lib.sh.
+  target="${expr#[\"\']}"
+  target="${target%%[[:space:]]*}"
+  target="${target%[\"\']}"
+  case "$target" in
+    /*) return 1 ;;
+    *.sh | *.bash) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Print the cache key for the current tree, or nothing (and fail) when the run
+# must not be cached.
+shellcheck_cache_digest() {
+  local -a scripts=()
+  local bin file version
+  # The exact build, not just its version string: the devshell and the system
+  # may ship different derivations of the same upstream release.
+  bin=$(command -v shellcheck 2> /dev/null) || return 1
+  version=$(shellcheck --version 2> /dev/null | sed -n 's/^version: //p') \
+    || return 1
+  [ -n "$version" ] || return 1
+  while IFS= read -r -d '' file; do
+    [ -e "$file" ] && scripts+=("$file")
+  done < <(
+    git ls-files -z -- '*.sh' '*.bash'
+    git ls-files -z --others --exclude-standard -- '*.sh' '*.bash'
+  )
+  [ "${#scripts[@]}" -gt 0 ] || return 1
+  shellcheck_cache_sources_safe "${scripts[@]}" || return 1
+  {
+    printf 'bin %s\nversion %s\n' "$bin" "$version"
+    printf 'args -S warning -x %s\n' "${shellcheck_colour[*]}"
+    printf 'opts %s\n' "${SHELLCHECK_OPTS:-}"
+    # rc files in the tree and in the user's config dirs change the verdict.
+    sha256sum -- .shellcheckrc \
+      "${HOME:-/nonexistent}/.shellcheckrc" \
+      "${XDG_CONFIG_HOME:-${HOME:-/nonexistent}/.config}/shellcheckrc" \
+      2> /dev/null || true
+    sha256sum -z -- "${scripts[@]}"
+  } | sha256sum | cut -d' ' -f1
+}
+
+# Echo the cached log for key $1 and set shellcheck_cache_rc; return 1 on miss.
+shellcheck_cache_hit() {
+  local entry
+  for entry in "$SHELLCHECK_CACHE_DIR/$1"-*.log; do
+    [ -e "$entry" ] || return 1
+    shellcheck_cache_rc="${entry##*-}"
+    shellcheck_cache_rc="${shellcheck_cache_rc%.log}"
+    printf '%s\n' "$entry"
+    return 0
+  done
+  return 1
+}
+
+# Keys are one per tree state, so the directory only grows. Half of it goes
+# when it passes 512 entries: the report never needs an old state to survive.
+shellcheck_cache_prune() {
+  local -a entries=("$SHELLCHECK_CACHE_DIR"/*.log)
+  [ "${#entries[@]}" -gt 512 ] || return 0
+  rm -f -- "${entries[@]:0:256}"
+}
+
 gate_shellcheck() {
   # Opt-in shell lint: only files that declare a POSIX/Bash shebang. The
   # shebang is read with a builtin — a `grep` per file cost ~0.1 s before the
   # first checker started. One checker process per file: the old single
   # invocation was serial and dominated the suite's wall time.
-  local file shebang
+  local file shebang digest entry rc=0 tmp
   local -a files=() ordered=()
   while IFS= read -r -d '' file; do
     IFS= read -r shebang < "$file" || true
@@ -159,7 +320,16 @@ gate_shellcheck() {
   if [ "${#files[@]}" -eq 0 ]; then
     return 0
   fi
-  echo "shellcheck: ${#files[@]} file(s)"
+  digest=""
+  if [ -n "$SHELLCHECK_CACHE_DIR" ]; then
+    digest=$(shellcheck_cache_digest) || digest=""
+  fi
+  if [ -n "$digest" ] && entry=$(shellcheck_cache_hit "$digest"); then
+    printf 'shellcheck: %s file(s) (cached)\n' "${#files[@]}"
+    cat -- "$entry"
+    return "$shellcheck_cache_rc"
+  fi
+  printf 'shellcheck: %s file(s)\n' "${#files[@]}"
   # Longest first: shellcheck cost tracks file size, and a 1300-line parity
   # harness takes ~0.65 s on its own. Started last in git order, it would hold
   # up the whole gate's tail; started first, the rest fits underneath it.
@@ -167,7 +337,25 @@ gate_shellcheck() {
   while IFS=$'\t' read -r _size file; do
     ordered+=("$file")
   done < <(du -b -- "${files[@]}" | sort -rn)
-  pmap -0 -- shellcheck_one < <(printf '%s\0' "${ordered[@]}")
+  # The stored log is the part after the header line above: replaying it gives
+  # the same report a fresh run prints below its own header.
+  tmp=""
+  if [ -n "$digest" ]; then
+    tmp=$(mktemp "$SHELLCHECK_CACHE_DIR/.tmp.XXXXXXXX" 2> /dev/null) || tmp=""
+  fi
+  if [ -z "$tmp" ]; then
+    pmap -0 -- shellcheck_one < <(printf '%s\0' "${ordered[@]}")
+    return
+  fi
+  pmap -0 -- shellcheck_one < <(printf '%s\0' "${ordered[@]}") > "$tmp" 2>&1 \
+    || rc=$?
+  cat -- "$tmp"
+  if mv -f -- "$tmp" "$SHELLCHECK_CACHE_DIR/$digest-$rc.log" 2> /dev/null; then
+    shellcheck_cache_prune
+  else
+    rm -f -- "$tmp"
+  fi
+  return "$rc"
 }
 
 gate_plm() {
