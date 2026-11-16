@@ -303,16 +303,8 @@ rec {
               - id: gpt-oss-20b
                 name: GPT-OSS 20B MXFP4 (fast, 64k)
                 contextWindow: 65536
-              # Runs on the other machine (192.168.0.144, RX 7900 XTX): the
-              # weights sit on /zero and are read over SMB, llama-swap starts the
-              # container there on the first request over ssh. Cold start is
-              # ~4 min, decode ~50 tok/s; the model unloads on TTL (15 min) or on
-              # /model switch, which frees the remote card.
-              - id: gyro-coder
-                name: Gyro-Coder 125B (7900 XTX box, ~4 min cold)
-                contextWindow: 65536
               # OrcaCyber Nano 1.0 — 27B vision-language on the same 7900 XTX
-              # box (the second remote tier in llama-swap.nix). Stock ROCm
+              # box (a remote tier in llama-swap.nix). Stock ROCm
               # llama.cpp, DFlash2 drafter + mmproj, 32k context, ~42 tok/s,
               # ~30 s cold load. Vision goes through the mmproj, hence `image`.
               - id: nano
@@ -323,7 +315,7 @@ rec {
                   - image
               # Swift 1.5 27B MXFP4 on the same 7900 XTX box; cold start
               # ~3 min over SMB, 70 tok/s with MTP, 64k. A user timer on the
-              # remote box stops it (with nano/gyro) while a game runs.
+              # remote box stops it (with nano) while a game runs.
               - id: swift-1.5-27b-mxfp4
                 name: Swift 1.5 27B MXFP4 (7900 XTX, ~3 min cold)
                 contextWindow: 65536
