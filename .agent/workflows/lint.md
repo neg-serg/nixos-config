@@ -12,10 +12,10 @@ just lint    # Run linters only
 just fmt     # Format code
 ```
 
-## Parallelism
+## Knobs
 
 `just lint` is `scripts/dev/lint.sh`: the gates run concurrently and their output is replayed in a
-fixed order, so a green run still reads top-to-bottom. Four knobs, all environment variables:
+fixed order, so a green run still reads top-to-bottom. Five knobs, all environment variables:
 
 - `LINT_JOBS` — gates in flight (default `nproc`);
 - `PMAP_JOBS` — files per gate for the checkers that fan out (default `LINT_JOBS/2`, clamped to
@@ -29,6 +29,16 @@ fixed order, so a green run still reads top-to-bottom. Four knobs, all environme
   the same thing with their own flags (`ruff --color`, `taplo --colors`, `selene --color`,
   `shellcheck --color`), because their output is captured to a file and replayed afterwards. `black`
   colours only its `--diff` and `statix` always emits SGR, so those two ignore the knob.
+- `LINT_NO_CACHE=1` — lint for real instead of replaying the cached shellcheck verdict.
+
+The shellcheck gate caches its verdict, which is what takes a repeat `just lint` from about 1.3 s to
+0.7 s; the report says `shellcheck: 86 file(s) (cached)` when a stored run was replayed. The key is
+the content of every tracked and untracked `*.sh`/`*.bash` file plus the shellcheck build, its
+flags, `SHELLCHECK_OPTS` and the rc files, so a hit is the verdict a fresh run would give. A
+`source` line that could resolve outside that set — a literal absolute path, a non-`.sh` target, an
+unusual `source-path=` — turns the cache off for that run rather than risk a stale pass. Entries are
+content-addressed under `${XDG_CACHE_HOME:-~/.cache}/just-lint/`, so an obsolete one is never looked
+up again; `scripts/dev/lint-cache.test.sh` pins all of this down.
 
 A failure is reported per gate and does not cancel the others; the summary names the failed gates
 and the exit status is 1. To reproduce one gate in isolation or force a serial run:
