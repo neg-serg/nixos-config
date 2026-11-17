@@ -286,17 +286,6 @@
 #   default and still spawns its own instance when the service is down.
 # - Both are multilingual (RU/EN); reranker should be the top-k filter before LLM context assembly.
 #
-# ### FIM completion (editor)
-#
-# - Service: `services.llama-fim` (`modules/llm/fim.nix`) — llama.cpp with Qwen2.5-Coder-1.5B
-#   Q8_0 (`/zero/ai/llama/fim`), port 8012, Vulkan device, 4k ctx. A **user** unit without
-#   `wantedBy`: Neovim starts it on VimEnter and stops it when the last nvim exits, so the
-#   1.5B model does not compete with the chat tiers for the card.
-# - Client: `minuet-ai.nvim` (`files/nvim/lua/plugins/completion/minuet.lua`) with the Qwen FIM
-#   tokens over `/v1/completions`; ghost text on `<M-CR>`, line on `<M-l>`, next/prev `<M-]>`/
-#   `<M-[>`, dismiss `<M-e>`. `<C-j>`/`<C-k>` stay with LuaSnip.
-# - `-c 4096` is enough: minuet sends 2048 characters of context (~500 tokens).
-#
 # ### OCR (documents)
 #
 # - `PaddleOCR-VL-1.6` (0.47B, Apache-2.0, GGUF + mmproj on /zero) is a llama-swap model:
@@ -377,7 +366,7 @@
 #   tmpfiles)
 # - `/zero/ai/asr` — GigaAM-v3 and Parakeet-TDT-v3 ONNX models for sherpa-onnx (activation dir,
 #   files downloaded by hand)
-# - `/zero/ai/llama/{ocr,embed,fim}` — PaddleOCR-VL, Qwen3-Embedding-0.6B and the FIM coder GGUF .
+# - `/zero/ai/llama/{ocr,embed}` — PaddleOCR-VL and Qwen3-Embedding-0.6B GGUFs
 # - `/zero/ai/glm52_i4` — empty directory; the colibrì int4 weights were deleted
 #   2026-11-05 and `/zero/ai` is root-owned, so removing the directory itself
 #   needs root
@@ -392,7 +381,7 @@
 #   into the active store — all 23 models now visible to `ollama list`, no re-download.
 # - stable-diffusion.cpp: package added (Vulkan), models in `/zero/ai/image`.
 # - Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT),
-#   8012 (llama-fim, user unit started by nvim), 8080 (llama-server, manual),
+#   8080 (llama-server, manual),
 #   8013 (llama-rerank, also the rag-search default), 9292 (llama-swap API: chat, ocr, embed)
 
 {

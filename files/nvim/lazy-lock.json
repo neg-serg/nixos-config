@@ -29,7 +29,6 @@
   "log-highlight.nvim": { "branch": "main", "commit": "b2e00cfd41ca94338265a595f3f3f423d9f9322e" },
   "md-render.nvim": { "branch": "main", "commit": "4f6d73a276356bc23dbffa594d2a54dc978e98bb" },
   "mini.nvim": { "branch": "main", "commit": "a311ed247d527db9592bb434356badc705363746" },
-  "minuet-ai.nvim": { "branch": "main", "commit": "50bf63b031c0391e926fdf0b3d044d37846e6e34" },
   "molten-nvim": { "branch": "main", "commit": "a286aa914d9a154bc359131aab788b5a077a5a99" },
   "namu.nvim": { "branch": "main", "commit": "e7afbdf63a75ace6ccc6202d58a4f6f9ac09db92" },
   "neg.nvim": { "branch": "master", "commit": "e82e0560662e154710dbab50c11c81916268ae70" },
