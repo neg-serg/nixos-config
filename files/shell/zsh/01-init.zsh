@@ -62,6 +62,14 @@ _exists nvim && {
     typeset -gx VISUAL="${EDITOR}"
     typeset -gx MANPAGER="nvim +Man!"
 }
+# tint pages the tools it wraps (systemctl today) through `$TINT_PAGER` and then
+# `$PAGER` (packages/tint/src/main.rs). NixOS exports `PAGER=less` with no flags,
+# and a bare `less` takes the whole screen — alternate screen, waits for `q` — even
+# for one screenful. systemd's own pager passes its `FRSX` default instead, which
+# is the behaviour that disappeared when tint started wrapping `systemctl`. Pin
+# the flags tint would pick on its own: quit when the output fits (-F), keep the
+# colours it just added (-R), leave the output in the scrollback (-X).
+_exists less && typeset -gx TINT_PAGER="less -FRX"
 
 
 # Initialize zoxide (smarter cd) if available
