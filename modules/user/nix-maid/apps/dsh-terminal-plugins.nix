@@ -282,6 +282,13 @@ rec {
                 # Serves with thinking (xhigh, 4096-token budget); a hard
                 # question costs minutes at ~8 tok/s. See llama-swap.nix.
                 contextWindow: 131072
+              # The same weights on the Strata engine: 30-50 tok/s decode and
+              # a 4k prompt in ~5 s against ~8 tok/s and ~30 s on the
+              # llama.cpp tier. 27 GiB of pinned RAM, 32k window, no images,
+              # one request at a time (llama-swap.nix, /zero/strata/README.md).
+              - id: qwen3.8-flash-next-strata
+                name: Qwen3.8-Flash-Next 180B on Strata (fast, 32k)
+                contextWindow: 32768
               - id: qwen3.8-27b-abliterated
                 name: Qwen3.8-27B abliterated (quality, RU)
                 # 32k measured at 13.75 GiB with the desktop, 30.5 tok/s at a
