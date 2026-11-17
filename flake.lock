@@ -3,11 +3,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794903793,
-        "narHash": "sha256-C8SqoRCKwkuxCazybCPyXHRiIjzsHygYDlVS/Txtowo=",
+        "lastModified": 1794910385,
+        "narHash": "sha256-Ty8KBJEZ9aCQTjxR0hSx4weyCY/ApqyHtWvH1qE7Hfs=",
         "ref": "refs/heads/main",
-        "rev": "1f6c45191d4a642ae32c1ff20252b7ee88a5ffe9",
-        "revCount": 1175,
+        "rev": "cd68a916f0e4181a1789e8163d5db672f96e99d9",
+        "revCount": 1180,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -36,17 +36,19 @@
     "bootvine": {
       "inputs": {
         "crane": "crane",
+        "flake-parts": "flake-parts",
+        "import-tree": "import-tree",
         "nixpkgs": [
           "nixpkgs"
         ],
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1794730498,
-        "narHash": "sha256-pwzcPy/J/zeOVRfUZgcPgBWFaSnnH7GQlGoOfBfX3eQ=",
+        "lastModified": 1794911102,
+        "narHash": "sha256-GhBFO8YTghugWlNZRXs5VdyYXo4didsxhF6riupbBhA=",
         "ref": "refs/heads/main",
-        "rev": "91b7cd28c25d339d79f83956ba7d6ba99fdbe0d3",
-        "revCount": 135,
+        "rev": "c1e99c33bf1654849b1c42926c5e93e9ce61afa0",
+        "revCount": 147,
         "type": "git",
         "url": "https://codeberg.org/wvhulle/bootvine"
       },
@@ -268,6 +270,27 @@
     },
     "flake-parts": {
       "inputs": {
+        "nixpkgs-lib": [
+          "bootvine",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793576659,
+        "narHash": "sha256-V1h85lUaJBQoHFrB2vpXZOE0Ju1MYSnIpsehoVZYlDo=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "ea2630b7470978622c7689a1ff75d2b389175399",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "flake-parts_2": {
+      "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
@@ -285,7 +308,7 @@
         "type": "github"
       }
     },
-    "flake-parts_2": {
+    "flake-parts_3": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib_2"
       },
@@ -303,7 +326,7 @@
         "type": "github"
       }
     },
-    "flake-parts_3": {
+    "flake-parts_4": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib_3"
       },
@@ -321,7 +344,7 @@
         "type": "github"
       }
     },
-    "flake-parts_4": {
+    "flake-parts_5": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib_4"
       },
@@ -339,7 +362,7 @@
         "type": "github"
       }
     },
-    "flake-parts_5": {
+    "flake-parts_6": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib_5"
       },
@@ -357,7 +380,7 @@
         "type": "github"
       }
     },
-    "flake-parts_6": {
+    "flake-parts_7": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib_6"
       },
@@ -375,7 +398,7 @@
         "type": "github"
       }
     },
-    "flake-parts_7": {
+    "flake-parts_8": {
       "inputs": {
         "nixpkgs-lib": [
           "nix-src",
@@ -395,7 +418,7 @@
         "url": "https://flakehub.com/f/hercules-ci/flake-parts/0.1"
       }
     },
-    "flake-parts_8": {
+    "flake-parts_9": {
       "inputs": {
         "nixpkgs-lib": [
           "steam-config-nix",
@@ -594,7 +617,7 @@
     },
     "harbor-android": {
       "inputs": {
-        "flake-parts": "flake-parts_4",
+        "flake-parts": "flake-parts_5",
         "git-hooks": "git-hooks_2",
         "harbor-meta": [
           "nix-cache-pin",
@@ -631,7 +654,7 @@
     },
     "harbor-meta": {
       "inputs": {
-        "flake-parts": "flake-parts_5",
+        "flake-parts": "flake-parts_6",
         "nixpkgs": [
           "nix-cache-pin",
           "harbor-rs",
@@ -658,7 +681,7 @@
     "harbor-rs": {
       "inputs": {
         "crane": "crane_3",
-        "flake-parts": "flake-parts_3",
+        "flake-parts": "flake-parts_4",
         "git-hooks": "git-hooks",
         "harbor-android": "harbor-android",
         "harbor-meta": "harbor-meta",
@@ -708,6 +731,21 @@
       }
     },
     "import-tree": {
+      "locked": {
+        "lastModified": 1788467110,
+        "narHash": "sha256-ljEMTXP/rH0tOvDzc9gzwww6KcHRPRnEHzd9lK48V7s=",
+        "owner": "vic",
+        "repo": "import-tree",
+        "rev": "eb1b52eaecc57f7c136d07ae8a93e724dfecac46",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vic",
+        "repo": "import-tree",
+        "type": "github"
+      }
+    },
+    "import-tree_2": {
       "locked": {
         "lastModified": 1788467110,
         "narHash": "sha256-ljEMTXP/rH0tOvDzc9gzwww6KcHRPRnEHzd9lK48V7s=",
@@ -923,7 +961,7 @@
     "nix-cache-pin": {
       "inputs": {
         "crane": "crane_2",
-        "flake-parts": "flake-parts_2",
+        "flake-parts": "flake-parts_3",
         "harbor-rs": "harbor-rs",
         "nixpkgs": [
           "nixpkgs"
@@ -946,7 +984,7 @@
     "nix-cachyos-kernel": {
       "inputs": {
         "flake-compat": "flake-compat_3",
-        "flake-parts": "flake-parts_6",
+        "flake-parts": "flake-parts_7",
         "nixpkgs": "nixpkgs"
       },
       "locked": {
@@ -1021,7 +1059,7 @@
     "nix-src": {
       "inputs": {
         "bdwgc": "bdwgc",
-        "flake-parts": "flake-parts_7",
+        "flake-parts": "flake-parts_8",
         "git-hooks-nix": "git-hooks-nix",
         "nixpkgs": [
           "nixpkgs"
@@ -1278,9 +1316,9 @@
         "aurora-src": "aurora-src",
         "bootvine": "bootvine",
         "determinate": "determinate",
-        "flake-parts": "flake-parts",
+        "flake-parts": "flake-parts_2",
         "hyprscratch": "hyprscratch",
-        "import-tree": "import-tree",
+        "import-tree": "import-tree_2",
         "iosevka-neg": "iosevka-neg",
         "lusty": "lusty",
         "multiverse": "multiverse",
@@ -1489,7 +1527,7 @@
     },
     "steam-config-nix": {
       "inputs": {
-        "flake-parts": "flake-parts_8",
+        "flake-parts": "flake-parts_9",
         "nixpkgs": [
           "nixpkgs"
         ],
