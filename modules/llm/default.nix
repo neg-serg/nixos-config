@@ -87,6 +87,16 @@
 #   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 32k | 13.8G | 30-36 |
 #   | vision-27b   | same IQ3_S + bf16 mmproj                 | 16k | 15.3G | 37.9  |
 #   | qwen3.8-next | Qwen3.8-Flash-Next abl-v2 IQ3_S          | 128k| 6.0G  | 5.9   |
+#   | qwen3.8-next-strata | same IQ3_S on Strata (HIP)         | 32k | 9.1G + 27G RAM | 30-50 |
+#
+#   `qwen3.8-next-strata` (`strata` alias) is the same weights on Strata's
+#   expert-offload engine instead of llama.cpp: 30-50 tok/s decode, a 4k
+#   prompt in ~5 s, 16k in ~12 s, 69% prompt reuse over a six-turn agent
+#   session (2026-11-17, see /zero/strata/README.md for both benchmark
+#   reports). It costs 27 GiB of pinned RAM, holds 32k of context, serves no
+#   images, and handles one request at a time, so `next` stays the deep-context
+#   tier. The engine lives outside Nix; the slot wrapper and the GC-root note
+#   are in llama-swap.nix.
 #
 # - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
 #   ~3.5 bpw, the highest bits-per-weight served here. Dense KV is expensive,
