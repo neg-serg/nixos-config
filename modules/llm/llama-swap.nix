@@ -171,6 +171,41 @@ let
       --reasoning-budget 4096
   '';
 
+  # Qwen3.8-Flash-Next on Strata (`strata` slot): the engine is built outside
+  # Nix under /zero/strata (HIP gfx1201, source build; README there has the
+  # numbers and the rebuild recipe), so this wrapper is the only part of that
+  # tree the system knows about. Strata's serve.server is started in its own
+  # session: a llama-swap stop takes the whole group down, because the Python
+  # server does not reap its engine child on every signal.
+  # The engine's RUNPATH points at ROCm store paths (hipblas, rocblas,
+  # hipblaslt); /zero/strata/env-root is the GC root that keeps them alive.
+  strataPython = pkgs.python3.withPackages (
+    ps: with ps; [
+      ps.numpy
+      ps.jinja2
+      ps.pyyaml
+      ps.tqdm
+      ps.requests
+      ps.pillow
+      ps.psutil
+      ps.regex
+    ]
+  );
+  strataBackend = pkgs.writeShellScript "strata-backend" ''
+    set -u
+    # llama-swap only exports PORT when it appears in cmd; the argument wins.
+    port="''${1:-''${PORT:-}}"
+    [ -n "$port" ] || { echo "strata-backend: no port given" >&2; exit 2; }
+    export STRATA_PLE_AUTO_RAM=0          # the 27 GB n-gram table stays on the SSD
+    cd /zero/strata/src || exit 1
+    ${pkgs.util-linux}/bin/setsid ${strataPython}/bin/python3 -m serve.server \
+      --engine strata \
+      --config /zero/strata/strata-iq3s-32k.json \
+      --port "$port" &
+    srv=$!
+    trap 'kill -TERM -- -"$srv" 2>/dev/null; wait "$srv" 2>/dev/null; exit 0' TERM INT
+    wait "$srv"
+  '';
   # OProver-8B (Apache-2.0) — Qwen3-8B continued-pretrained and RL'd on Lean 4
   # (the OProofs corpus). It is trained for the agentic loop: retrieve verified
   # proofs, attempt, read the compiler error, repair — so it wants Lean
@@ -628,6 +663,36 @@ in
           aliases = [
             "qwen3.8-flash"
             "next"
+          ];
+        };
+
+        # The same abliterated IQ3_S weights, served by Strata instead of
+        # llama.cpp. Measured 2026-11-17 on this box: 30-50 tok/s decode
+        # against 5.9, a 4k prompt in ~5 s against ~30 s, 16k in ~12 s
+        # against ~2 min, and a parked-conversation cache that answers agent
+        # follow-ups in seconds (69% of the prompt reused over six turns).
+        #
+        # Trade-offs against the `next` tier (same weights, llama.cpp):
+        # - 27 GiB of experts are pinned in RAM: the box has to be quiet,
+        #   and the slot cannot share the card with anything else.
+        # - 32k context, text only (no mmproj for this fine-tune); `next`
+        #   stays the deep-context and vision tier (128k).
+        # - one request at a time, cold start ~50 s.
+        # - a cold 16k+ prompt on a memory-tight box can trip the 20 s
+        #   verify watchdog (#267); the server restarts the engine and that
+        #   one request fails. Warm page cache has been stable.
+        # Use it for planning and benchmark work on the big MoE; use `next`
+        # when the window, images or a long cold prompt matter.
+        "qwen3.8-flash-next-strata" = {
+          # ${PORT} must appear in cmd: llama-swap only exports it then.
+          cmd = "${strataBackend} \${PORT}";
+          checkEndpoint = "/health";
+          # 50 s to load: hold it across a session. A model switch drops it
+          # anyway, and the game guard unloads it as soon as a game starts.
+          ttl = 900;
+          aliases = [
+            "strata"
+            "next-strata"
           ];
         };
         "oprover-8b" = {
