@@ -77,6 +77,30 @@
           description = "Loopback port the Sola MPD backend listens on.";
         };
       };
+      # The headphone catalogue has a loopback web page: the model list, the
+      # picker, and the equalizer panel at `/eq` (camillaEQ in its own clothes)
+      # that edits the live `hp.*` chain. The unit is what keeps the page
+      # reachable; the menu entry and the key only open the address.
+      headphonesWeb = {
+        enable = mkBool "enable the headphones web page (catalogue + /eq panel) on loopback" true;
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 8787;
+          description = "Loopback port the headphones page listens on.";
+        };
+      };
+      # Upstream CamillaEQ (the neg-serg fork): a Svelte UI behind a Fastify
+      # server, talking to CamillaDSP's websocket from the browser. Ours (`/eq`
+      # above) is one page of the headphones tools; this is the reference app,
+      # pointed at whichever daemon the Connect page names.
+      camillaEq = {
+        enable = mkBool "enable upstream CamillaEQ (browser EQ for CamillaDSP) on loopback" true;
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 8788;
+          description = "Loopback port the CamillaEQ server listens on.";
+        };
+      };
       # LAN audio access: MPD binds to all interfaces, PipeWire exposes a
       # Pulse-compatible TCP server (port 4713) and an RTP multicast sink.
       lanAccess = {

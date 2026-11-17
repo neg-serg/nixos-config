@@ -19,6 +19,9 @@ in
   genlc = call (pkg "genlc-rs") { };
   # MPD client for large libraries: Node backend + React UI, served on loopback.
   sola-mpd = call (pkg "sola-mpd") { };
+  # CamillaDSP's browser equalizer (Svelte client + Fastify server): the upstream
+  # reference UI on loopback; the headphone catalogue serves aurora's own /eq page.
+  camillaeq = call (pkg "camillaeq") { };
   # Voice control for MPD: microphone -> local speech recognition -> player
   # commands. Rust with no crates (MPD protocol client, capture argv, HTTP
   # speech clients, intent parser), so the closure is the binary plus whatever
