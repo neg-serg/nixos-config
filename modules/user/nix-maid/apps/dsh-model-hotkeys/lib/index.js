@@ -35,6 +35,7 @@ export const ROUTES = [
   ['5', 'qwen3.8-27b-vision', 'Qwen3.8-27B vision (local)'],
   ['6', 'gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (free)'],
   ['7', 'openai-fast', 'GPT-OSS 20B (Pollinations, free)'],
+  ['8', 'qwen3.8-flash-next-strata', 'Qwen3.8-Flash-Next Strata (local)'],
   ['9', 'gemini-3.5-flash', 'Gemini 3.5 Flash (free)'],
 ]
 

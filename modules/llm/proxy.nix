@@ -135,6 +135,13 @@ let
       target = "qwen3.8-flash-next-abliterated";
       ctx = 131072;
     };
+    # The same weights on Strata (32k, text only): the guard must trim to the
+    # Strata window, not to the llama.cpp tier's 128k.
+    "qwen3.8-flash-next-strata".ctx = 32768;
+    "strata" = {
+      target = "qwen3.8-flash-next-strata";
+      ctx = 32768;
+    };
     # Small tiers: `mini` is the 32k entry point the fleet uses for them. The
     # `vision` alias moved to the 27B on 2026-11-11 (its slot carries the
     # mmproj); `vision-fast` keeps the 8B and its native 64k.
