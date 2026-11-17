@@ -33,6 +33,7 @@
 
   aurora = pkgs.neg.aurora; # aurora: local MPD player with a Vulkan UI (winit + ash + cosmic-text)
   aurora-tools = pkgs.neg.aurora-tools; # the headphone model catalogue CLI (aurora-camilla headphones)
+  camillaeq = pkgs.camillaeq; # CamillaDSP browser equalizer (Svelte UI + Fastify server)
 
   mpd-voice = pkgs.mpd-voice; # voice control for MPD: local STT -> player commands (Rust)
   audio-cpp = pkgs.audio-cpp; # ggml audio runtime (Audio Flamingo Next, TTS, ASR) — prebuilt Vulkan build

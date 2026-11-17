@@ -466,6 +466,14 @@ hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class t
 -- M4+u used to open a `tun status` pad; full-TUN was dropped in 317181e6 and
 -- `tun` went with it, so the key spawned a kitty that died on exec. Removed
 -- rather than repointed: a status pad belongs to whatever proxy tool wins next.
+-- mod4+u: the headphone equalizer — the live chain's bands in camillaEQ's
+-- clothes, served by the `headphones-web` user unit. The launcher starts the
+-- unit and hands the URL to the default browser, so the key works whether or
+-- not the page is already up.
+hl.bind(M4 .. "+u", hl.dsp.exec_cmd("aurora-eq"), { locked = true })
+-- mod4+ctrl+u: the reference CamillaEQ app (its own server, its own config
+-- library). Same idea, a different UI: its Connect page names the daemon.
+hl.bind(M4 .. "+" .. C .. "+u", hl.dsp.exec_cmd("camillaeq-ui"), { locked = true })
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch toggle mixer"))
 -- Wallpaper deck: the pleamar scene `picker` (files/pleamar/shells/picker/picker.plm) opens over
 -- the current wallpaper and sets the card Enter lands on. `pleamar-picker` is the scene's command
