@@ -241,8 +241,8 @@ let
   # uncensored Qwen3.8-27B (13.9 GB file, i.e. ~18% more bits than the IQ3_S
   # above), kept as the second half of the quant-source comparison. Flags are
   # identical to `qwen38` except the context: at 32k this file filled the card
-  # to 15.8 of 15.9 GiB next to the desktop and the always-on fim (:8012) and
-  # reranker (:8013) servers, and the next start then died on allocation —
+  # to 15.8 of 15.9 GiB next to the desktop and the fim (:8012, removed
+  # 2026-11-17) and reranker (:8013) servers, and the next start then died on allocation —
   # llama-swap surfaced it as `proxy error: EOF` / 502 on every other request
   # (observed 2026-11-09). 16k keeps the start reliable and does not touch the
   # benchmark: the chem and fp prompts are a few hundred tokens.
@@ -343,7 +343,7 @@ let
   # The GGUF carries the ChatML template, hence `--jinja`.
   #
   # Measured 2026-11-10 on the 9070 XT: +4.3 GiB of VRAM next to the desktop,
-  # the always-on fim and the reranker (8397 MiB against 4025 MiB after
+  # the fim (removed 2026-11-17) and the reranker (8397 MiB against 4025 MiB after
   # `/unload`) — 3.1 GiB of weights, ~1.07 GiB of q8_0 KV at 64k, the rest is
   # the compute buffer. 112 tok/s decode and 405 tok/s prefill on a cold short
   # prompt, ~2.5 s from request to first token. Quality is a 3B's: chem bench
