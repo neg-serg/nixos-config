@@ -43,15 +43,15 @@ let
     lib.replaceStrings
       [
         "path          = none"
-        "pathseparator = 4"
-        "path-to-dir   = 248,underline"
-        "history-expansion    = blue,bold"
+        "pathseparator = #005faf"
+        "path-to-dir   = #6c7e96,underline"
+        "history-expansion    = #127978,bold"
       ]
       [
-        "path          = white"
-        "pathseparator = blue,bold"
-        "path-to-dir   = white\npath-tilde    = green,bold"
-        "history-expansion    = blue,bold\n\n[param-expansion]\nparamvar     = 63\nparamoper    = 141\nparamdefault = 249"
+        "path          = #d1e5ff"
+        "pathseparator = #005faf,bold"
+        "path-to-dir   = #d1e5ff\npath-tilde    = #127a57,bold"
+        "history-expansion    = #127978,bold\n\n[param-expansion]\nparamvar     = #367cb0\nparamoper    = #a47ead\nparamdefault = #a5c1e6"
       ]
       (builtins.readFile (shellFiles + "/zsh-native-syntax/neg.ini"))
   );

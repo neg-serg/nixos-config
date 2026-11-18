@@ -410,6 +410,12 @@ gate_annotations() {
   bash "$REPO_ROOT/scripts/dev/check-package-annotations.sh" "$REPO_ROOT"
 }
 
+# The zsh syntax theme and LS_COLORS are two tables for the same shell; this
+# gate keeps them on one palette and on the same colour per extension.
+gate_shell_palette() {
+  bash "$REPO_ROOT/scripts/dev/check-shell-palette.sh" "$REPO_ROOT"
+}
+
 # Ordered gate table. Order is the report order; execution is concurrent.
 GATES=(
   nix
@@ -429,6 +435,7 @@ GATES=(
   markdown_language
   repo_stats
   all_syntax
+  shell_palette
   osh_syntax
   lusty_smoke
   annotations
