@@ -16,7 +16,7 @@
  * The notification is an OSC sequence on stdout — control-only, so it never
  * touches the visible grid and interleaving it with the renderer is safe. The
  * protocol table mirrors the bundle's own `notify-osc` patch: kitty OSC 99,
- * iTerm2/WezTerm/Ghostty OSC 9. An unrecognised terminal stays silent rather
+ * iTerm2/WezTerm OSC 9. An unrecognised terminal stays silent rather
  * than shelling out to `notify-send` (see docs/howto/dsh-notify-input.md).
  */
 
@@ -50,8 +50,7 @@ export function detectProtocol(env) {
   if (env.KITTY_WINDOW_ID !== undefined && env.KITTY_WINDOW_ID !== '') return 'kitty'
   const term = String(env.TERM ?? '')
   if (term.includes('kitty')) return 'kitty'
-  if (/^(iTerm\.app|WezTerm|ghostty)$/i.test(String(env.TERM_PROGRAM ?? ''))) return 'osc9'
-  if (term.includes('ghostty')) return 'osc9'
+  if (/^(iTerm\.app|WezTerm)$/i.test(String(env.TERM_PROGRAM ?? ''))) return 'osc9'
   return null
 }
 
