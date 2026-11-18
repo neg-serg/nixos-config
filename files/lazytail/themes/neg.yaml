@@ -3,7 +3,9 @@
 # Two layers, both taken from existing sources instead of being invented:
 #
 # 1. `palette:` is the *terminal* palette this viewer lives in — the same hexes
-#    as files/kitty/theme.conf. LazyTail paints named colours as truecolor, so
+#    as the v1 ANSI slots (files/shell/theme/v1/kitty.conf; `shell-theme use v2`
+#    switches the terminal to the neg roles, this file stays on v1). LazyTail
+#    paints named colours as truecolor, so
 #    mirroring the terminal keeps a line that says `error` here identical to
 #    the same ANSI colour in the shell. Its fg/bg/selection are already neg's
 #    own values (norm/bclr/selection_bg), so the family matches neg.nvim

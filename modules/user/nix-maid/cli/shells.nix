@@ -14,6 +14,20 @@ let
   shellFilesLive = config.lib.neg.live "files/shell";
   kittyConfLive = config.lib.neg.live "files/kitty";
 
+  # --- Switchable terminal palette -------------------------------------------
+  # files/shell/theme/{v1,v2} hold the two halves that change between variants:
+  # the sixteen ANSI slots (kitty.conf) and the p10k colour variables
+  # (prompt.zsh). files/kitty/theme.conf includes v1 as the default and then the
+  # state link, .zshrc sources the same two prompt files — so the link alone
+  # switches the look, with no rebuild. v1 is the table from before the
+  # variants; v2 maps the slots onto the neg.nvim roles (see v2/kitty.conf).
+  themeRoot = "${shellFilesLive}/theme";
+  shellTheme = pkgs.writeShellScriptBin "shell-theme" (
+    builtins.replaceStrings [ "@THEME_ROOT@" ] [ themeRoot ] (
+      builtins.readFile (config.lib.neg.path "files/shell/theme/shell-theme.sh")
+    )
+  );
+
   # --- Inputrc ---
   inputrc = builtins.readFile (config.lib.neg.path "files/cli/inputrc");
 
@@ -97,6 +111,7 @@ in
         pkgs.mtr # Network diagnostic tool
         pkgs.oh-my-posh # Cross-shell prompt theme engine
         pkgs.zinit # Zsh plugin manager (zi)
+        shellTheme # Terminal palette/prompt variant switch (v1/v2)
       ];
 
       environment.sessionVariables = {
@@ -117,6 +132,9 @@ in
       ".config/zsh".source = zshConfigSource;
       ".config/bash/oh-my-posh.bash".source = "${shellFilesLive}/bash/oh-my-posh.bash";
       ".config/zsh-native-syntax".source = zshNativeSyntaxTheme;
+      # v1 palette/prompt is the default half of the switchable pair; the state
+      # link that `shell-theme` repoints sits next to it and is not managed.
+      ".config/shell-theme/default".source = "${shellFilesLive}/theme/v1";
       # --- Terminal & Specific Shell Configs ---
       # kitty dir deployed as-is from files/kitty/ (live links: an edit lands
       # on the next config reload). The binds carry --allow-fallback so they

@@ -7,10 +7,13 @@
   emulate -L zsh -o extended_glob
   unset -m '(POWERLEVEL9K_*|DEFAULT_USER)~POWERLEVEL9K_GITSTATUS_DIR'
   [[ $ZSH_VERSION == (5.<1->*|<6->.*) ]] || return
-  SPROMPT="%F{249}Correct: %F{4}%R%f %F{249}-> %F{2}%r%F{249} [nyae]? %f"
-  PS2="%F{25}❭ %f"
+  # Prompt palette: NEG_PROMPT_* comes from files/shell/theme/<variant>/prompt.zsh
+  # (sourced by .zshrc). The defaults below are variant 1 — 256-colour indexes
+  # through the terminal's table — so the prompt works without either file.
+  SPROMPT="%F{${NEG_PROMPT_DIM:-249}}Correct: %F{${NEG_PROMPT_BLUE:-4}}%R%f %F{${NEG_PROMPT_DIM:-249}}-> %F{${NEG_PROMPT_GREEN:-2}}%r%F{${NEG_PROMPT_DIM:-249}} [nyae]? %f"
+  PS2="%F{${NEG_PROMPT_ACCENT:-25}}❭ %f"
   PS3='?# '
-  PS4='%F{23}+%F{25}%N:%i:%_>%F{-1} '
+  PS4='%F{${NEG_PROMPT_META:-23}}+%F{${NEG_PROMPT_ACCENT:-25}}%N:%i:%_>%F{-1} '
   typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
     neg
   )
@@ -444,9 +447,9 @@
   function prompt_neg() {
     setopt sh_word_split
     full_path="$PWD"
-    mainc="%(?.%F{4}.%F{4})"
-    tildac="%(?.%F{2}.%F{4})"
-    prompt_end=" %F{25}❯%B%F{26}>%B%f"
+    mainc="%(?.%F{${NEG_PROMPT_BLUE:-4}}.%F{${NEG_PROMPT_BLUE:-4}})"
+    tildac="%(?.%F{${NEG_PROMPT_GREEN:-2}}.%F{${NEG_PROMPT_BLUE:-4}})"
+    prompt_end=" %F{${NEG_PROMPT_ACCENT:-25}}❯%B%F{${NEG_PROMPT_ACCENT2:-26}}>%B%f"
     neg_user_pretok="%f"
     [[ ${UID} -ne 0 ]] && _neg_promptcolor="${tildac}" && _neg_user_pretoken="${mainc}%f"
     [[ ${UID} -ne 0 ]] && _neg_promptcolor="${tildac}" && _neg_user_token="${mainc}${prompt_end}"
@@ -470,14 +473,14 @@
           dyn_pwd=${dyn_pwd}${to_be_added}
         else
           to_be_added=${_neg_split_path[i]}
-          to_be_added=${to_be_added}"%F{4}/%F{249}"
+          to_be_added=${to_be_added}"%F{${NEG_PROMPT_BLUE:-4}}/%F{${NEG_PROMPT_DIM:-249}}"
           dyn_pwd=${dyn_pwd}${to_be_added}
         fi
     done
     IFS=${IFS_}
     [[ ${full_path/${HOME}/\~} != ${full_path} ]] && dyn_pwd=${dyn_pwd/\/~/~}
     # remove the slash in front of ${HOME}
-    neg_prompt="%F${_neg_promptcolor}${dyn_pwd[0,-2]}%F{0}$_neg_user_token%b%k%f"
+    neg_prompt="%F${_neg_promptcolor}${dyn_pwd[0,-2]}%F{${NEG_PROMPT_BLACK:-0}}$_neg_user_token%b%k%f"
     if [[ $full_path = $HOME ]]; then
       p10k segment -f 25 -t "${prompt_end}"
     else
