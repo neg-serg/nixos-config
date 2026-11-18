@@ -33,7 +33,6 @@ in
 {
   environment.shellAliases = {
     newsraft = "nix run nixpkgs#newsraft --";
-    tealdeer = "nix run nixpkgs#tealdeer --";
   };
 
   environment.systemPackages = [

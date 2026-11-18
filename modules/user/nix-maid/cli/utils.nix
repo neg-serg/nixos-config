@@ -21,7 +21,6 @@ lib.mkMerge [
         name = "fastfetch";
         attr = "fastfetch";
       }) # System info tool (neofetch successor); zfsSupport in the flake attr keeps the zpool module
-      pkgs.tealdeer # Fast tldr client
       pkgs.nxv # Find any version of any Nix package instantly
     ];
 
@@ -37,7 +36,5 @@ lib.mkMerge [
     ".config/fastfetch/skull".text = builtins.readFile (config.lib.neg.path "files/fastfetch/skull");
 
     ".config/amfora".source = config.lib.neg.live "files/config/amfora";
-
-    ".config/tealdeer/config.toml".text = config.lib.neg.readFile "files/tealdeer/config.toml";
   })
 ]

@@ -188,7 +188,6 @@ let
     "beet-update" = "beet update -F field_that_isnt -M"; # beets rescan without moving files
     "wl-restart" = "systemctl --user restart wl-daemon.service && sleep 0.5 && wl random ~/pic/wl"; # restart wallpaper daemon
     "jl" = "jupyter lab --no-browser";
-    "dosbox" = "${mkCmd "dosbox"} -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf";
     "gdb" = "${mkCmd "gdb"} -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit";
     "iostat" = "${mkCmd "iostat"} --compact -p -h -s";
     "mtrr" = "mtr -wzbe";

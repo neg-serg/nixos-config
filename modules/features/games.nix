@@ -3,7 +3,6 @@
   options.features = {
     games = {
       nethack.enable = mkBool "enable Nethack" true;
-      dosemu.enable = mkBool "enable Dosemu" true;
       oss.enable = mkBool "enable OSS Games (SuperTux, Wesnoth, etc.)" false;
       steamProxy.enable = mkBool "route Steam traffic through local SOCKS5 proxy (proxychains LD_PRELOAD)" false;
       openmw.enable = mkBool "enable OpenMW (Morrowind Engine)" false;
