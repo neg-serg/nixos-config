@@ -103,3 +103,12 @@ gpucore.*
 # from the published history. Never track a docs/ tree here again; the guard
 # also catches an accidental `git add -A` of a recreated docs directory.
 docs/
+
+# Pleamar harness artifacts — the date-stamped output of `pleamar-smoke`
+# (`<scene>.png` + frame log per scene) and `pleamar-measure` (TSV/MD/log per
+# run), written under `files/pleamar/tests/`. They are regenerable and were
+# committed run after run; keeping them ignored also keeps a render run out of
+# the flake source, which copies untracked non-ignored files in. A reviewed
+# golden shot or baseline is added on purpose with `git add -f`.
+/files/pleamar/tests/shots/
+/files/pleamar/tests/evidence/
