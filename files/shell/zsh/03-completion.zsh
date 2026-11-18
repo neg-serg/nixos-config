@@ -58,28 +58,46 @@ zstyle ':completion:*:*:(wine|wine64):*' file-patterns '*.exe:files:wine\ exec *
 # list-colors from LS_COLORS. NOTE: use %%:ec=* (not %ec=*) — the short
 # suffix match "ec=*" also hits inside "*.gemspec=…", truncating that entry
 # and breaking fzf-tab's namecolors parse ("bad set of key/value pairs").
+#
+# list-colors values are SGR parameters (zsh wraps them in \e[…m), so the
+# palette is spelled out below: $color[…]/$fg[…] resolve through the terminal's
+# 16-colour table, which no longer carries the theme. The hexes are the ones
+# files/shell/dircolors/dircolors and files/shell/zsh-native-syntax/neg.ini use.
+typeset -gA negcolor
+negcolor=(
+    black    '38;2;0;0;0'
+    ops1     '38;2;54;124;176'
+    ops3     '38;2;0;95;175'
+    dlim     '38;2;71;121;179'
+    lit2     '38;2;20;135;135'
+    lit3     '38;2;18;122;87'
+    dwarn    '38;2;200;168;239'
+    high     '38;2;165;193;230'
+    bold     '01'
+    bg_black '48;2;0;0;0'
+)
 zstyle ':completion:*:default' select-prompt \
-    "%{${fg[cyan]}%}Match %{${fg_bold[cyan]}%}%m%{${fg_no_bold[cyan]}%} Line %{${fg_bold[cyan]}%}%l%{${fg_no_bold[blue]}%} %p%{${reset_color}%}"
+    "%F{#148787}Match %B%F{#a5c1e6}%m%F{#148787} Line %B%F{#a5c1e6}%l%F{#367cb0} %p%f%b"
     zstyle ':completion:*:default' \
-    list-prompt "%{${fg[cyan]}%}Line %{${fg_bold[cyan]}%}%l%{${fg_no_bold[cyan]}%}  Continue?%{${reset_color}%}"
+    list-prompt "%F{#148787}Line %B%F{#a5c1e6}%l%F{#148787}  Continue?%f%b"
     zstyle ':completion:*:warnings' \
-    format "- %{${fg_no_bold[blue]}%}no match%{${reset_color}%} - %{${fg_no_bold[cyan]}%}%d%{${reset_color}%}"
-zstyle ":completion:*" list-colors ${(s.:.)LS_COLORS%%:ec=*} "ma=07;01;38;5;0;48;5;25"
-zstyle ':completion:*:options' list-colors '=^(-- *)=00;38;5;25'
+    format "- %F{#367cb0}no match%f - %F{#148787}%d%f"
+zstyle ":completion:*" list-colors ${(s.:.)LS_COLORS%%:ec=*} "ma=07;01;38;2;0;0;0;48;2;0;95;175"
+zstyle ':completion:*:options' list-colors '=^(-- *)=00;38;2;0;95;175'
 zstyle ':completion:*' squeeze-slashes true # e.g. ls foo//bar -> ls foo/bar
 # highlight the original input.
-zstyle ':completion:*:original' list-colors "=*=$color[blue];$color[bold]"
+zstyle ':completion:*:original' list-colors "=*=${negcolor[ops1]};${negcolor[bold]}"
 # colorize username completion
-zstyle ':completion:*:*:*:*:users' list-colors "=*=$color[blue];$color[bg-black]"
+zstyle ':completion:*:*:*:*:users' list-colors "=*=${negcolor[ops1]};${negcolor[bg_black]}"
 zstyle ':completion:*:wine:*' file-patterns '(#i)*.(exe):exe'
 # highlight parameters with uncommon names
-zstyle ':completion:*:parameters' list-colors "=[^a-zA-Z]*=$color[cyan]"
+zstyle ':completion:*:parameters' list-colors "=[^a-zA-Z]*=${negcolor[lit2]}"
 # highlight aliases
-zstyle ':completion:*:aliases' list-colors "=*=$color[green]"
+zstyle ':completion:*:aliases' list-colors "=*=${negcolor[lit3]}"
 # highlight words like 'esac' or 'end'
-zstyle ':completion:*:reserved-words' list-colors "=*=$color[blue]"
+zstyle ':completion:*:reserved-words' list-colors "=*=${negcolor[ops1]}"
 # colorize processlist for 'kill'
-zstyle ':completion:*:*:kill:*:processes' list-colors "=(#b) #([0-9]#) #([^ ]#)*=$color[cyan]=$color[yellow]=$color[green]"
+zstyle ':completion:*:*:kill:*:processes' list-colors "=(#b) #([0-9]#) #([^ ]#)*=${negcolor[lit2]}=${negcolor[dwarn]}=${negcolor[lit3]}"
 zstyle ':completion:*:*:kill:*:processes' command 'ps --forest -e -o pid,user,tty,cmd'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 zstyle ':completion:*:*:zathura:*' tag-order files
