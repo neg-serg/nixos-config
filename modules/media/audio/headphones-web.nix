@@ -77,6 +77,10 @@ in
         "defaultWanted"
         "restartOnFailure"
       ];
+      # `headphones-web` reaches Squiglink through `curl`; the preset's minimal PATH carries
+      # coreutils/findutils/grep/sed/systemd and not curl, which made every network-backed
+      # button (search preview, import, fit, sync) answer "не запустить curl".
+      path = [ pkgs.curl ];
       serviceConfig = {
         ExecStart = "${headphonesWeb} --bind 127.0.0.1:${toString port}";
         RestartSec = "2";
