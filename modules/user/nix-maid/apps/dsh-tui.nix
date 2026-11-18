@@ -9,7 +9,7 @@ let
 
   # The neg look for the TUI: the built-in palettes are upstream themes
   # (graphite/pastel/cobalt/...), none of them the muted navy/teal/violet the
-  # rest of the system uses (files/kitty/theme.conf, neg.omp.json). dsh-TUI
+  # rest of the system uses (files/shell/theme/v1/kitty.conf, neg.omp.json). dsh-TUI
   # discovers user themes as ~/.dsh-tui/themes/<name>.json (the file name is the
   # theme name) and persists the choice in ~/.dsh-tui/theme.json; the caretaker
   # below copies this file and seeds that preference.

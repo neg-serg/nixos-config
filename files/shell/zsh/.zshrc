@@ -17,6 +17,16 @@ zi load romkatv/powerlevel10k
 zi ice depth'1' lucid wait'0'
 zi light QuarticCat/zsh-smartcache
 source "${ZDOTDIR}/01-init.zsh"
+# Prompt palette (see files/shell/theme/): v1 is the default, the state link
+# selects v2 after `shell-theme use v2`. Both optional — .p10k.zsh falls back to
+# the v1 indexes when neither file is there.
+_neg_cfg=${XDG_CONFIG_HOME:-$HOME/.config}
+_neg_state=${XDG_STATE_HOME:-$HOME/.local/state}
+[[ -r "${_neg_cfg}/shell-theme/default/prompt.zsh" ]] &&
+  source "${_neg_cfg}/shell-theme/default/prompt.zsh"
+[[ -r "${_neg_state}/shell-theme/current/prompt.zsh" ]] &&
+  source "${_neg_state}/shell-theme/current/prompt.zsh"
+unset _neg_cfg _neg_state
 for file in {02-cmds,03-completion,04-bindings,04-fzf,05-neg-cd,07-hishtory}; do
   [[ -r "${ZDOTDIR}/$file.zsh" ]] && zsh-defer source "${ZDOTDIR}/$file.zsh"
 done
