@@ -88,7 +88,7 @@ lib.mkIf devEnabled (
         # Language-scoped servers are not installed system-wide; they come from
         # the devshell for that language: marksman/lemminx from the default
         # shell (flake/devshells/base.nix), clangd/CMake from `cpp`,
-        # rust-analyzer from `rust`, delve from `tools`, vale from `lint`.
+        # rust-analyzer from `rust`, delve from `tools`.
         # What stays below is needed in every session or is fetched on first
         # use, whatever the project.
         (onDemand {
@@ -138,6 +138,7 @@ lib.mkIf devEnabled (
         pkgs.selene # Lua linter (blazing fast, Rust)
         pkgs.hadolint # Dockerfile linter
         pkgs.yamllint # YAML linter
+        pkgs.vale # Prose linter (markdown, Google style via nvim-lint)
         pkgs.black # Python formatter (conform.nvim + just lint)
         pkgs.luajit # Lua syntax checker (just lint)
         # qmlls (QML LSP, configured in files/nvim/.../lspconfig.lua) for the
