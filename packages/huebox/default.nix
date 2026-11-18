@@ -6,7 +6,7 @@
 
 # huebox: terminal theme editor (ratatui TUI) with a live preview — it reads
 # the colours the terminal actually uses, edits them in place, and pushes the
-# palette back into the terminal config (kitty/ghostty/alacritty) line by line.
+# palette back into the terminal config (kitty/alacritty) line by line.
 # The crate lives in the `rust/` subdirectory of the repo (the root carries the
 # docs and the curl installer), so cargoRoot points there.
 rustPlatform.buildRustPackage rec {

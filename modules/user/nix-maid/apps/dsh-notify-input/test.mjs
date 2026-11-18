@@ -115,8 +115,6 @@ eq(detectProtocol({ KITTY_WINDOW_ID: "5", TERM: "xterm-256color" }), "kitty", "K
 eq(detectProtocol({ TERM: "xterm-kitty" }), "kitty", "TERM containing kitty");
 eq(detectProtocol({ TERM_PROGRAM: "iTerm.app" }), "osc9", "iTerm2");
 eq(detectProtocol({ TERM_PROGRAM: "WezTerm" }), "osc9", "WezTerm");
-eq(detectProtocol({ TERM_PROGRAM: "ghostty" }), "osc9", "Ghostty via TERM_PROGRAM");
-eq(detectProtocol({ TERM: "xterm-ghostty" }), "osc9", "Ghostty via TERM");
 eq(detectProtocol({ TERM: "xterm", DSH_NOTIFY_OSC: "0" }), null, "DSH_NOTIFY_OSC=0 forces off");
 eq(detectProtocol({ TERM: "xterm", DSH_NOTIFY_OSC: "1" }), "osc9", "DSH_NOTIFY_OSC=1 forces OSC 9");
 eq(detectProtocol({ TERM: "xterm", KITTY_WINDOW_ID: "1", DSH_NOTIFY_OSC: "0" }), null, "kill switch beats detection");

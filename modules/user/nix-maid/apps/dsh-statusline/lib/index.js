@@ -2,7 +2,7 @@
  * dsh-statusline: a session status line in the terminal's title.
  *
  * The TUI renders its own in-frame status line and never writes OSC 0/1/2, so
- * the terminal title is free: this plugin drives kitty/Ghostty/WezTerm/the tab
+ * the terminal title is free: this plugin drives kitty/WezTerm/the tab
  * bar with the output of the `dsh-statusline` script (packages/local-bin),
  * which speaks the Claude-Code-compatible protocol (session JSON on stdin, the
  * first stdout line is the status line).

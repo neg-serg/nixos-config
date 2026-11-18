@@ -3,11 +3,11 @@
 # Two layers, both taken from existing sources instead of being invented:
 #
 # 1. `palette:` is the *terminal* palette this viewer lives in — the same hexes
-#    as files/kitty/theme.conf (which ghostty.yaml was imported from). LazyTail
-#    paints named colours as truecolor, so mirroring the terminal keeps a line
-#    that says `error` here identical to the same ANSI colour in the shell.
-#    Its fg/bg/selection are already neg's own values (norm/bclr/selection_bg),
-#    so the family matches neg.nvim without a second palette to maintain.
+#    as files/kitty/theme.conf. LazyTail paints named colours as truecolor, so
+#    mirroring the terminal keeps a line that says `error` here identical to
+#    the same ANSI colour in the shell. Its fg/bg/selection are already neg's
+#    own values (norm/bclr/selection_bg), so the family matches neg.nvim
+#    without a second palette to maintain.
 #
 # 2. `ui:` is the neg.nvim semantic mapping — see the neg groups in brackets.
 #    LazyTail derives these from the palette by default; the overrides below
