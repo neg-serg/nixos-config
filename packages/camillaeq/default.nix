@@ -37,6 +37,12 @@ buildNpmPackage {
   # Filled from the build's own "got:" hash on the first failed run.
   npmDepsHash = "sha256-c4Kh5LIw9ymm/9BjXR2pWMVqUnbidTow0KrwU8g6Go8=";
 
+  # Three start-up reports the packaged app cannot live with: "No .env file
+  # found" on every run without a .env, a taken port surfacing as a raw Node
+  # stack, and "Serving static client build" logged before the listen that can
+  # fail. The patch header has the details; upstream keeps the raw behaviour.
+  patches = [ ./server-index.patch ];
+
   installPhase = ''
     runHook preInstall
 
