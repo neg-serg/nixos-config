@@ -84,8 +84,10 @@ local function icsText()
         "VERSION:2.0",
         "PRODID:-//Neg//PillTracker//EN",
         "BEGIN:VEVENT",
+        "UID:pill-" .. stamp .. "@trantor",
+        -- A DATE-valued DTSTART without DTEND already means a one-day event;
+        -- a zero-length DTEND only makes khal warn on every read.
         "DTSTART;VALUE=DATE:" .. stamp,
-        "DTEND;VALUE=DATE:" .. stamp,
         "SUMMARY:Pill ✅",
         "DESCRIPTION:Taken at " .. takenAt,
         "CATEGORIES:Health",
