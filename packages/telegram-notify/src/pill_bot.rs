@@ -335,8 +335,10 @@ pub fn write_panel_ics(ics_dir: &Path, ids: Option<(u32, u32)>, today: &str, tak
         "VERSION:2.0".to_string(),
         "PRODID:-//Neg//PillTracker//EN".to_string(),
         "BEGIN:VEVENT".to_string(),
+        format!("UID:pill-{compact}@trantor"),
+        // A DATE-valued DTSTART without DTEND already means a one-day event;
+        // a zero-length DTEND only makes khal warn on every read.
         format!("DTSTART;VALUE=DATE:{compact}"),
-        format!("DTEND;VALUE=DATE:{compact}"),
         "SUMMARY:Pill ✅".to_string(),
         format!("DESCRIPTION:Taken at {taken_at}"),
         "CATEGORIES:Health".to_string(),
@@ -741,6 +743,7 @@ mod tests {
         assert!(written.ends_with("}\n"), "{written}");
         let event = std::fs::read_to_string(ics.join("pill-2026-11-02.ics")).unwrap();
         assert!(event.contains("DTSTART;VALUE=DATE:20261102"), "{event}");
+        assert!(event.contains("UID:pill-20261102@trantor"), "{event}");
         assert!(event.contains("SUMMARY:Pill \u{2705}"), "{event}");
         assert!(event.contains("END:VCALENDAR\r\n"), "{event}");
         remove_panel_ics(&ics, "2026-11-02");
