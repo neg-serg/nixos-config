@@ -1,3 +1,41 @@
+# RME HDSPe AIO Pro: hardware mixer init, default PipeWire sink, AES routing.
+#
+# The card runs in the "Pro" profile: 16 non-interleaved S32 channels with a
+# fixed 256-frame period (which is why `default.clock.quantum` is 256 there).
+# snd_hdspe initializes the hardware mixer to zeros, so without
+# `hdspe-init-mixer` everything is silent even though the graph runs.
+#
+# Gotcha: a stuck playback DMA. If the PipeWire graph is rebuilt while a stream
+# is live (seen 2026-11-19: the first client connected to the game-stereo
+# loopback when Steam started), the card can stop its DMA for good. ALSA keeps
+# reporting `state: RUNNING`, but hw_ptr and the card's BUF_PTR/BUF_ID stay
+# frozen and the card replays its last buffer, which is audible as a looping
+# fragment. CamillaDSP then starves ("Capture: waited 1s ... skipping chunk")
+# and the router falls back to the direct loopback -> RME path, but the card is
+# still dead, so the monitors are silent.
+#
+# Reloading snd_hdspe does NOT clear it: the driver comes back, the PCM starts,
+# and the DMA engine never runs. Only a PCIe reset does (verified on trantor,
+# where the card is 0000:05:00.0; find the slot with `lspci -d 1d18:`):
+#
+#   systemctl --user stop camilladsp.service pipewire.socket pipewire-pulse.socket \
+#     pipewire.service pipewire-pulse.service wireplumber.service
+#   sudo sh -c 'echo 0000:05:00.0 > /sys/bus/pci/drivers/snd_hdspe/unbind
+#               sleep 1
+#               echo 1 > /sys/bus/pci/devices/0000:05:00.0/reset
+#               sleep 1
+#               echo 0000:05:00.0 > /sys/bus/pci/drivers/snd_hdspe/bind'
+#   sudo systemctl restart hdspe-init-mixer.service
+#   systemctl --user start pipewire.socket pipewire-pulse.socket wireplumber.service \
+#     pipewire.service pipewire-pulse.service
+#   systemctl --user start camilladsp.service
+#
+# Recovery signs: the card's IRQ fires again and
+# /proc/asound/card0/pcm0p/sub0/status shows hw_ptr advancing at ~48000
+# frames/s. The reset must precede the mixer init — the driver zeroes the mixer
+# on load, so a rebind alone leaves the monitors silent. A full power cycle also
+# works; a warm reboot may not, since it re-runs the same driver init that
+# already failed.
 {
   lib,
   pkgs,
