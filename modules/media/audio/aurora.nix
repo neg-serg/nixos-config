@@ -29,6 +29,24 @@ let
   # window actually exists, so a failed launch never leaves an empty special workspace on screen.
   playerClass = "player";
   playerWorkspace = "aurora";
+  # The live instrument's producer. The `spectroscope` plugin draws whatever
+  # `$XDG_RUNTIME_DIR/aurora-scope` carries — a text pipe of decimal samples — and nothing else on
+  # this machine writes it, which is why the plugin used to stand there dead. `pw-record` captures
+  # the monitor of the sink MPD is pinned to (`game-stereo`, modules/servers/mpd), the script turns
+  # f32 frames into that text. The rate is spelled twice on purpose: the samples are produced at
+  # this rate, while the player's own fallback would be MPD's `audio:` line, which describes the
+  # stream the daemon decodes rather than the monitor this captures.
+  scopeRate = 48000;
+  scopeFeed = pkgs.writeShellScript "aurora-scope-feed" ''
+    set -eu
+    fifo="''${XDG_RUNTIME_DIR:?}/aurora-scope"
+    # The player opens the path but never creates it, so the pipe is ours to make: a fresh session
+    # would otherwise have a producer with nowhere to write.
+    [ -p "$fifo" ] || { rm -f "$fifo"; mkfifo -m 0600 "$fifo"; }
+    exec ${lib.getExe' pkgs.pipewire "pw-record"} --target game-stereo \
+      --rate ${toString scopeRate} --channels 1 --format f32 - \
+      | exec ${lib.getExe pkgs.python3} ${config.lib.neg.path "files/media/aurora-scope-feed.py"} "$fifo"
+  '';
   aurora-focus = pkgs.writeShellScriptBin "aurora-focus" ''
     set -eu
     hyprctl=${pkgs.hyprland}/bin/hyprctl
@@ -37,8 +55,10 @@ let
     shown() { $hyprctl monitors -j 2>/dev/null | $jq -e --arg w "special:${playerWorkspace}" 'any(.[]; .specialWorkspace.name == $w)' > /dev/null; }
 
     if ! up; then
-      # Start detached, so the launcher does not hold the window.
-      setsid ${pkgs.neg.aurora}/bin/aurora "$@" > /dev/null 2>&1 < /dev/null &
+      # Start detached, so the launcher does not hold the window. `--scope-rate` names the rate
+      # `scopeFeed` above writes at: the instrument's scale is only as good as this number, and the
+      # daemon's own `audio:` line is not the one to trust for it.
+      setsid ${pkgs.neg.aurora}/bin/aurora --scope-rate=${toString scopeRate} "$@" > /dev/null 2>&1 < /dev/null &
       # Wait for the window to map (the rule parks it on the workspace, it is not shown yet).
       i=0
       while [ "$i" -lt 150 ] && ! up; do
@@ -70,6 +90,25 @@ in
       pkgs.neg.aurora-tools # headphones: the model catalogue CLI (apply/import/export)
       aurora-focus # what mod4+f runs: focus the player, or start it if it is not up
     ];
+
+    # The scope's producer, as a session service rather than a child of the player: the pipe is a
+    # resource of the session, and a player that restarts has to find it already flowing. The
+    # process blocks on the pipe's write end until the player opens the read end, so a session
+    # with no player up costs no CPU; `audioGraph` is what orders it after PipeWire and WirePlumber.
+    systemd.user.services.aurora-scope = config.lib.neg.systemdUser.mkUserService {
+      presets = [
+        "defaultWanted"
+        "audioGraph"
+        "restartAlways"
+      ];
+      description = "aurora: the playing audio as numbers on the scope FIFO";
+      serviceConfig = {
+        ExecStart = scopeFeed;
+        # A PipeWire restart takes the capture stream away and `pw-record` exits; the preset wants
+        # the unit back whatever the exit looked like, and this is the pause between attempts.
+        RestartSec = 2;
+      };
+    };
 
     # The player asks the compositor for a translucent window: the swapchain uses a
     # premultiplied alpha mode and the frame's own ground carries the alpha, so what is behind
