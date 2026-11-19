@@ -202,12 +202,19 @@
   # features.security.tpmSudo.enable = true; # TPM-backed passwordless sudo — flip AFTER enabling fTPM in UEFI/BIOS
   # AppArmor confinement for the network-facing daemons: the system ones
   # (sshd, unbound, AdGuard Home, ntfy, avahi) and the session ones that parse
-  # network data as user neg (sing-box, transmission, aria2). All of them ship
-  # in "complain" — denials are logged, nothing is blocked — so the first
-  # switch is observation-only. Flip a daemon to "enforce" in
-  # modules/features/security.nix after reviewing its denials:
-  # modules/security/apparmor.nix.
+  # network data as user neg (sing-box, transmission, aria2). sshd and unbound
+  # are "enforce"; the rest ship in "complain" (denials logged, nothing
+  # blocked) and get flipped one at a time after reviewing
+  # `just apparmor-denials <daemon>`: modules/security/apparmor.nix.
+  #
+  # sshd's enforce mode requires the unit to run without NoNewPrivileges: its
+  # sessions must leave the profile (ux), and the kernel refuses a
+  # confined->unconfined transition under no_new_privs
+  # (`operation="exec" ... info="no new privs"`), which denies every login.
+  # modules/servers/openssh carries the matching comment.
   features.security.apparmor.enable = true;
+  features.security.apparmor.sshd = "enforce";
+  features.security.apparmor.unbound = "enforce";
 
   # nixpkgs 26.05: service users need explicit isSystemUser + group.
   # Defined at host level because server modules gate behind mkIf cfg.enable,

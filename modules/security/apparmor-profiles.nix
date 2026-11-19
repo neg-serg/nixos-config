@@ -10,6 +10,28 @@
   pkgs,
   execStartPath,
 }:
+let
+  # pam_limits is `session required` in /etc/pam.d/sshd and reads a conf=
+  # file that nixpkgs renders (makeLimitsConf) from
+  # security.pam.services.sshd.limits. Re-render that file with the same name
+  # and the same body, so writeText resolves to the identical store path: the
+  # rule follows limits changes without wildcarding /nix/store, and an
+  # upstream rendering change surfaces as a fresh denial at the next login.
+  sshdPamLimits =
+    let
+      limits = (config.security.pam.services.sshd or { }).limits or [ ];
+    in
+    if limits == [ ] then
+      ""
+    else
+      "${
+        pkgs.writeText "limits.conf" (
+          builtins.concatStringsSep "" (
+            map (l: "${l.domain} ${l.type} ${l.item} ${toString l.value}\n") limits
+          )
+        )
+      } r,";
+in
 {
   # What the closure rules cannot know, per daemon: /etc, /run and /var state,
   # capabilities, network families. The closure rules already grant read on
@@ -46,6 +68,12 @@
       # glibc dlopens the systemd NSS module for users/groups coming from
       # systemd (nixpkgs' nameservice abstraction covers pkgs.nss only).
       ${config.systemd.package}/lib/libnss_systemd.so.2 mr,
+      # The NSS/PAM systemd integration resolves libsystemd through the unit's
+      # LD_LIBRARY_PATH (config.systemd.package/lib), which is outside the
+      # openssh closure the generated rules cover.
+      ${config.systemd.package}/lib/libsystemd.so.0* mr,
+      # Empty when the sshd PAM service defines no resource limits.
+      ${sshdPamLimits}
       # AuthorizedKeysFile %h/.ssh/authorized_keys for login users, plus the
       # per-user drop-in dir the NixOS module uses for authorized_keys.d.
       /root/.ssh/** r,
@@ -71,18 +99,25 @@
       /run/current-system/sw/bin/unix_chkpwd ixr,
       # Sessions must NOT inherit this profile. After the fork sshd execs the
       # user's login shell, and an interactive session legitimately runs
-      # arbitrary code — confining it here would break every login. The
-      # daemon and its privilege-separated child stay confined; the session
-      # process is started unconfined (Ux), which is the documented limit of
-      # this profile.
-      /bin/sh Ux,
-      /bin/bash Ux,
-      /run/current-system/sw/bin/bash Ux,
-      /run/current-system/sw/bin/zsh Ux,
-      /run/current-system/sw/bin/fish Ux,
-      /nix/store/*/bin/bash Ux,
-      /nix/store/*/bin/zsh Ux,
-      /nix/store/*/bin/fish Ux,
+      # arbitrary code — confining it here breaks every login. The daemon and
+      # its privilege-separated child stay confined; the session is meant to
+      # start unconfined (ux), which is the documented limit of this profile.
+      #
+      # That only holds while sshd does NOT run with NoNewPrivileges=1. Under
+      # no_new_privs the kernel refuses every confined->unconfined transition
+      # (`apparmor_bprm_creds_for_exec`: info="no new privs"), for `ux` as much
+      # as for `Ux`; the session then stays in this profile. Enforce mode denies
+      # the login, complain mode allows it and logs the would-be denials — which
+      # is why modules/servers/openssh deliberately leaves NoNewPrivileges
+      # unset on sshd.
+      /bin/sh ux,
+      /bin/bash ux,
+      /run/current-system/sw/bin/bash ux,
+      /run/current-system/sw/bin/zsh ux,
+      /run/current-system/sw/bin/fish ux,
+      /nix/store/*/bin/bash ux,
+      /nix/store/*/bin/zsh ux,
+      /nix/store/*/bin/fish ux,
       capability audit_write,
       capability chown,
       capability dac_override,
