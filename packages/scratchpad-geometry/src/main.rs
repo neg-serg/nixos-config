@@ -30,17 +30,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
 /// Scratchpad classes managed by hyprscratch (hyprland.lua + hyprscratch.conf).
-const SCRATCHPAD_CLASSES: [&str; 14] = [
-    "KotatogramDesktop",
-    "Skype",
-    "Slack",
+const SCRATCHPAD_CLASSES: [&str; 10] = [
     "TelegramDesktop",
     "org.telegram.desktop",
     "zoom",
     "music",
     "mutterfox",
     "neomutt",
-    "hyprpwcenter",
     "torrment",
     "teardown",
     "vpn",
