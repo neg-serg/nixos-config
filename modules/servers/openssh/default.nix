@@ -64,9 +64,8 @@ in
         PermitRootLogin = "no";
         UseDns = cfg.useDns;
 
-        # PidFile must live under /run/sshd (see RuntimeDirectory below):
-        # ProtectSystem=strict makes /run itself read-only, so the default
-        # /run/sshd.pid cannot be written ("Read-only file system" in logs).
+        # PidFile lives in the RuntimeDirectory the unit creates (/run/sshd),
+        # so the daemon writes nothing into the shared /run directly.
         PidFile = "/run/sshd/sshd.pid";
 
         # Hardening (ported from legacy Salt config: sshd-hardening.conf)
@@ -137,11 +136,22 @@ in
       ];
     };
     systemd.services.sshd.serviceConfig = {
-      # Hardening
-      ProtectSystem = "strict";
+      # Hardening. NoNewPrivileges is deliberately NOT set here: under
+      # no_new_privs the kernel refuses every confined->unconfined transition
+      # (`apparmor_bprm_creds_for_exec`: info="no new privs"), which is exactly
+      # what sshd's AppArmor profile needs for login sessions
+      # (modules/security/apparmor-profiles.nix, the `ux` shell rules), and it
+      # also disables setuid helpers such as sudo inside every SSH session.
+      # Enforce-mode AppArmor confines the daemon instead.
+      #
+      # ProtectSystem=strict would be inherited by the login sessions: they
+      # would see / and /run read-only, so sudo could not write its timestamp
+      # directory, nix could not write /nix/var, and /etc/nixos could not be
+      # edited over ssh. "yes" protects /usr, /boot and /efi (a bootkit is the
+      # concrete risk here) and leaves the rest writable for the session.
+      ProtectSystem = "yes";
       PrivateTmp = true;
-      NoNewPrivileges = true;
-      # Writable dir for PidFile (exempt from ProtectSystem=strict)
+      # Directory for the PidFile (the openssh module keeps it under /run/sshd).
       RuntimeDirectory = "sshd";
     };
   };
