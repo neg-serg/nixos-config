@@ -154,25 +154,7 @@ local cls = {
 -- per-display 1 (always on) held the panel in adaptive sync during ordinary
 -- work — the refresh followed frame pacing and visibly twitched — and
 -- overrode every misc.vrr value, so "fullscreen only" (2) looked broken.
--- HDR desktop: BT.2020 + PQ output, SDR clients are inverse-tonemapped by the
--- compositor. sdr_max_luminance is the SDR white level in cd/m²: 150 matches
--- the panel's measured SDR white (~150-200), not the dim 80 default;
--- sdr_min_luminance 0.005 keeps OLED blacks black — the 0.2 default visibly
--- lifts them. Raise panel brightness on the OSD instead of sdrbrightness.
--- Revert to "auto" for SDR desktop plus fullscreen auto-HDR.
-hl.monitor({
-  output = "DP-2",
-  mode = "3840x2160@240",
-  position = "0x0",
-  scale = 2,
-  vrr = 3,
-  bitdepth = 10,
-  cm = "hdr",
-  sdrbrightness = 1.0,
-  sdrsaturation = 1.0,
-  sdr_min_luminance = 0.005,
-  sdr_max_luminance = 150,
-})
+hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 3, bitdepth = 10, cm = "auto" })
 hl.monitor({ output = "DP-1", disabled = true })
 -- DP-4: second cable (motherboard iGPU) to the same MPG321UX panel — a phantom
 -- 4K60 screen that only shows if the monitor OSD input is switched. Keep disabled.
