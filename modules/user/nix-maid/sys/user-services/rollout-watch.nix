@@ -300,7 +300,7 @@ let
         write_state status "$1"
       }
 
-      # An activation we did not order — a human `nh os switch`, an agent
+      # An activation we did not order — a human `nixos-rebuild switch`, an agent
       # rollout, a rollback — moves the baseline. Rebase quietly on HEAD
       # instead of deploying over it: a rollback is a deliberate act, and the
       # next commit is deployed as usual.

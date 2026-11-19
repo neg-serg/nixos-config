@@ -136,8 +136,9 @@ _: _: finalPrev: {
   # 9.10.3, while the very same derivation passed in another nix build — the
   # annotation is not lost, the status is simply read too early. The library is
   # unaffected, and nixpkgs pulls sandwich in only as a *test* dependency of
-  # fsnotify (nix-output-monitor -> nh), so skipping the suite drops nothing we
-  # ship.
+  # fsnotify, so skipping the suite drops nothing we ship. The consumers that
+  # made it reachable here (nix-output-monitor -> nh) are no longer installed,
+  # but the override stays: any future fsnotify consumer would hit the same flake.
   # Haskell packages run their checks regardless of doCheckByDefault (the
   # generic builder defaults to `doCheck ? !isCross`), hence the package-set
   # override; a top-level `sandwich` attribute does not exist in nixpkgs.

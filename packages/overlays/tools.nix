@@ -37,6 +37,22 @@ in
     ];
   });
 
+  # rom: the pinned nixpkgs still carries 0.3.1 while upstream is 0.6.1.
+  # nixpkgs master already packages 0.6.1 — the src/cargo hashes below are
+  # copied from its pkgs/by-name/ro/rom/package.nix and the rest of the recipe
+  # is identical, so this is a version pin rather than a fork. Drop the override
+  # once the pin moves to 0.6.1 or newer.
+  rom = prev.rom.overrideAttrs (_: {
+    version = "0.6.1";
+    src = prev.fetchFromGitHub {
+      owner = "manic-systems";
+      repo = "rom";
+      tag = "v0.6.1";
+      hash = "sha256-KRYqHqIOlfcpkxDTQJT7FDlmNpucexRlgWF24AvajuI=";
+    };
+    cargoHash = "sha256-XcFgDZQQGY9HMGEf6K8RSEOS5bRcjo4wdWIrlbMOhtw=";
+  });
+
   # ROCm (HIP) twin — Vulkan/RADV llama.cpp is pathologically slow on this host
   # (~0.2 tok/s for VRAM-resident models); ROCm is the working compute path.
   llama-cpp-qwen4exp-rocm = callPkg (pkg "llama-cpp-qwen4exp-rocm") { };

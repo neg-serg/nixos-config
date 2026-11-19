@@ -68,7 +68,7 @@ cd /etc/nixos
 sudo nixos-rebuild switch --flake .#trantor
 
 # 3️⃣ Or use the helper (if zcli is enabled)
-nh os switch
+sudo nixos-rebuild switch --flake .#trantor
 ```
 
 > [!NOTE]
@@ -556,7 +556,7 @@ Quick-access overlays for common applications:
 | ⬇️ **torrment** | Rustmission | `Super+T` | 98% × 40% (top-left) |
 | 📊 **teardown** | btop, plus the live dmesg log in a lazytail tab | `Super+D` | 98% × 50% (top-left) |
 | 🔒 **vpn** | tunnel status | `Super+U` | 50% × 30% (centered) |
-| 🔁 **rebuild** | `nh os switch` | `Super+Shift+N` | 98% × 50% (top-left) |
+| 🔁 **rebuild** | `nixos-rebuild switch` | `Super+Shift+N` | 98% × 50% (top-left) |
 
 `Super+Shift+H` hides all scratchpads. Every row mirrors the class match, bind and window rule in
 `files/gui/hypr/hyprland.lua`; there is no Discord/Vesktop scratchpad.

@@ -39,23 +39,17 @@ deploy host="trantor": check-eval hooks-ensure
     # Switch to new configuration
     sudo ./result/bin/switch-to-configuration switch
 
-# Deploy (Legacy/Slow) - keeps nh features like pretty print
-deploy-nh host="trantor": check-eval hooks-ensure
-    nh os switch . --hostname {{ host }}
-
-# Deploy with maximum verbosity (logs + trace + verbose)
+# Deploy with maximum verbosity (logs + verbose)
 deploy-debug host="trantor": check-eval hooks-ensure
-    nh os switch . --hostname {{ host }} -L -t -v
+    sudo nixos-rebuild switch --flake .#{{ host }} -L -v < /dev/null
 
 # Alias for deploy
 switch host="trantor":
     just deploy {{ host }}
 
-# Plain root switch: `nixos-rebuild` itself, no nh and no nom in the path.
-# This is the fallback when the agent rollout is off, when the change *is* the
-# mechanism, and the way out when nix-output-monitor cannot read the log of the
-# Nix it now runs with (nom 2.2.0 dies on activity type 10113, CopySourcePath,
-# emitted by Determinate Nix 3.23.3).
+# Plain root switch: `nixos-rebuild` itself.
+# This is the fallback when the agent rollout is off and when the change *is*
+# the mechanism.
 # The stdin redirect is not decoration: when the caller's stdin is a socket
 # (systemd-run --pipe, some agent runners) nixos-rebuild refuses it, builds the
 # whole system and applies nothing. `--option substitute false` because

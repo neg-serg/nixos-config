@@ -41,7 +41,7 @@ modules/
 | `shell`         | Shell — Zsh with plugins, Oh My Posh, aliases, env vars                                                                                  |
 | `system`        | Core system — boot (systemd-boot), kernel, networking, systemd, users, virtualisation                                                    |
 | `text`          | Text processing — editors, PDF tools, converters                                                                                         |
-| `tools`         | Miscellaneous — nix-output-monitor (Nerd Font icons), custom wraps                                                                       |
+| `tools`         | Nix tooling — formatters, evaluators, TUIs, custom wraps                                                                                 |
 | `torrent`       | BitTorrent — Transmission daemon, rustmission, stig TUI                                                                                  |
 | `user`          | User-level via nix-maid — session (Hyprland), apps, CLI, games, GUI, web                                                                 |
 
