@@ -71,6 +71,14 @@ buildNpmPackage {
     state="''${CONFIG_DIR:-''${XDG_STATE_HOME:-$HOME/.local/state}/camillaeq}"
     mkdir -p "$state/configs"
     export CONFIG_DIR="$state"
+    # The packaged entrypoint speaks the unit's dialect: production mode, and
+    # loopback only. Without these a bare `camillaeq` from $PATH takes the
+    # development defaults 0.0.0.0:3000 — and 127.0.0.1:3000 is AdGuard Home's
+    # admin UI on trantor. Explicit environment still wins for a one-off run;
+    # 8788 matches features.media.audio.camillaEq.port.
+    export NODE_ENV="''${NODE_ENV:-production}"
+    export SERVER_HOST="''${SERVER_HOST:-127.0.0.1}"
+    export SERVER_PORT="''${SERVER_PORT:-8788}"
     exec @node@ @app@/server/dist/index.js "$@"
     SH
     substituteInPlace $out/bin/camillaeq \
