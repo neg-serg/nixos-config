@@ -82,6 +82,7 @@ in
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/main/@projects/lusty
     telegram-notify = callPkg (pkg "telegram-notify") { }; # Rust Telegram notification binaries (calendar, pill, bot, alert scanner/bridge, zfs watch)
     tgchat = callPkg (pkg "tgchat") { }; # Telegram chat access via Telethon (read/send as the user)
+    tuigram = callPkg (pkg "tuigram") { }; # Terminal UI Telegram client (npm package, Node 26 + node:ffi)
     topowall = callPkg (pkg "topowall") { }; # Topographic contour wallpapers from real elevation data (GPU render)
     terrascope = callPkg (pkg "terrascope") { }; # Interactive world map for the terminal (braille; live weather/aircraft/earthquakes)
     geekbench-ai = callPkg (pkg "geekbench-ai") { }; # Geekbench AI — on-device inference benchmark (proprietary binary)

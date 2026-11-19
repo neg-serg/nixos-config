@@ -20,6 +20,7 @@
   lsfg-vk = pkgs.neg.lsfg-vk; # Vulkan frame-gen layer (LSFG on Linux; CC BY-NC-ND, needs Lossless Scaling on Steam)
   nixard = pkgs.neg.nixard; # TUI for exploring NixOS package closures
   nixbuild-status = pkgs.neg.nixbuild-status; # one-line NixOS build status for status bars
+  tuigram = pkgs.neg.tuigram; # Terminal UI Telegram client (on-demand root, modules/user/session/chat.nix)
   geekbench-ai = pkgs.neg.geekbench-ai; # Geekbench AI — on-device inference benchmark (unfree binary)
   rustgis = pkgs.rustgis; # RustGIS — desktop GIS + `rustgis-cli` (binaries from upstream releases)
   irori = pkgs.irori; # game launcher (on-demand root, modules/user/games/irori.nix)
