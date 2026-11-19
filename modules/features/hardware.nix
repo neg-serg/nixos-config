@@ -32,7 +32,7 @@
             "nwim" # nvim wrapper (kitty --class nwim)
             "teardown" # btop + dmesg/lazytail tabs (M4+d)
             "torrment" # rustmission (M4+t)
-            "rebuild" # nh os switch (M4+S+n)
+            "rebuild" # nixos-rebuild switch (M4+S+n)
             "mpv" # video player: no text input, vim-style keys
           ];
           description = ''

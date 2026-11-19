@@ -30,13 +30,11 @@ Scope
   where they conflict with this file.
 
 Quick Commands
-- Quick switch (user, primary): `nh os switch /etc/nixos#trantor --option substitute false`
 - Agent rollout (no password): `just agent-switch "$(readlink -f result)"` — the root-owned
   `nixos-agent-switch.service` activates the toplevel you already built and verified
   (`modules/security/agent-switch.nix`); details under "Builds: substitution through the proxy" below.
 - Human fallback (mechanism off, not yet activated, or the change *is* the mechanism):
   `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
-- Build & switch (alternative): `sudo nixos-rebuild switch --flake .#trantor --option substitute false`
 - Build only: `nixos-rebuild build --flake .#trantor --option substitute false`
 - Format all: `just fmt`
 - Full check: `just check` (runs `nix flake check -L --option substitute false`)
@@ -250,7 +248,8 @@ Builds: substitution through the proxy
   `poweroff`, `suspend`, `dmesg`, `ryzenadj`, `gpu-oc`); everything else,
   `sudo -n` included, prompts. The agent switch is not in this list: it is triggered by a polkit
   rule for one unit and the `start` verb.
-- The user's own switch binding is `nh os switch /etc/nixos#trantor --option substitute false`; the
+- The user's own switch binding is the `rebuild` scratchpad (`Super+Shift+N`), which runs
+  `sudo nixos-rebuild switch --flake /etc/nixos#trantor --option substitute false`; the
   flag there is now optional (it forces a from-source build when the proxy is down).
 - `just check` and `just flag` still pass the flag; the deploy targets do not, because
   substitution now works through the proxy. Keep that split in mind for new recipes: substitute,

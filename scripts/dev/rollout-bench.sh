@@ -18,7 +18,7 @@
 # `fix` re-evaluates inside every command, so a split would measure the caches
 # rather than the rollout. Activation is out of scope as well —
 # `switch-to-configuration` requires root and would switch the running system;
-# time that with the normal path (`just agent-switch`, `nh os switch`).
+# time that with the normal path (`just agent-switch`, `nixos-rebuild switch`).
 #
 # Usage: scripts/dev/rollout-bench.sh [--runs N] [--engines fix,nix]
 #                                    [--host trantor] [--flake DIR]

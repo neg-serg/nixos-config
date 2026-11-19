@@ -18,7 +18,7 @@ in
       attr = "nix-init";
     }) # easier creation of nix packages, on demand
     pkgs.nixos-shell # create VM for current config
-    pkgs.nix-output-monitor # fancy nix output (nom)
+    pkgs.rom # build-graph monitor for the Nix build tool (TUI)
     (onDemand {
       name = "npins";
       attr = "npins";

@@ -38,7 +38,7 @@
 #
 # - **VRAM**: the desktop (Hyprland+Vivaldi) holds ~13GB of 17GB — full LTX 22B renders do not fit. To
 #   render: free the GPU or lower the resolution/frame count.
-# - Parallel agents/sessions do not rebuild the system — only `nh os switch`.
+# - Parallel agents/sessions do not rebuild the system — only `nixos-rebuild switch`.
 #
 # ## Key nodes
 #

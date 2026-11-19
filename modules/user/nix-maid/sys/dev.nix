@@ -41,7 +41,6 @@ in
         environment.systemPackages = [
           pkgs.direnv # Extension for your shell to load/unload env vars
           pkgs.nix-direnv # A fast, persistent use_nix implementation for direnv
-          pkgs.nh # Yet another nix helper (CLI for NixOS/Home Manager)
           pkgs.sccache # Compiler cache for Rust and C/C++ (RUSTC_WRAPPER), shared by cargo builds
         ]
         ++ lib.optionals enableJoern [ pkgs.neg.joern ]

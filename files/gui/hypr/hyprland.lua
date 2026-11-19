@@ -573,7 +573,7 @@ hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swa
 hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl"))
 
 -- --- System ────────────────────────────────────────────────────────────
-hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("hyprscratch rebuild 'kitty-glass --class rebuild -e nh os switch /etc/nixos#trantor --option substitute false' special"))
+hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("hyprscratch rebuild 'kitty-glass --class rebuild -e sudo nixos-rebuild switch --flake /etc/nixos#trantor --option substitute false' special"))
 hl.bind(M4 .. "+" .. C .. "+v", hl.dsp.exec_cmd('raise --match "class:regex=^(Bazecor|Vial)$" --launch "Vial"'))
 hl.bind(M4 .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(steam|com\\.valvesoftware\\.Steam|steam_app.*|gamescope)$" --launch "steam"'))
 -- M4+CTRL+o used to launch OBS Studio; it is not installed here. The obs

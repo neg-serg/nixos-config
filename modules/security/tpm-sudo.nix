@@ -43,7 +43,7 @@
 # ## Step 3 — rebuild
 #
 #     just fmt && just check
-#     nh os switch /etc/nixos#trantor --option substitute false
+#     sudo nixos-rebuild switch --flake /etc/nixos#trantor --option substitute false < /dev/null
 #
 # ## Step 4 — verify the TPM
 #
@@ -85,7 +85,7 @@
 #
 #     features.security.tpmSudo.enable = false;
 #
-#     nh os switch /etc/nixos#trantor --option substitute false
+#     sudo nixos-rebuild switch --flake /etc/nixos#trantor --option substitute false < /dev/null
 #
 # TPM is disabled again: the modules are blacklisted, `/dev/tpmrm0` is not created, and `sudo` works
 # with a password as before.
