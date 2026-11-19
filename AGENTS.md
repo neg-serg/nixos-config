@@ -35,7 +35,7 @@ Quick Commands
   (`modules/security/agent-switch.nix`); details under "Builds: substitution through the proxy" below.
 - Human fallback (mechanism off, not yet activated, or the change *is* the mechanism):
   `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
-- Build only: `nixos-rebuild build --flake .#trantor --option substitute false`
+- Build only: `rom build .#nixosConfigurations.trantor.config.system.build.toplevel -- --out-link result`
 - Format all: `just fmt`
 - Full check: `just check` (runs `nix flake check -L --option substitute false`)
 - Update flake: `just update`
@@ -237,7 +237,7 @@ Builds: substitution through the proxy
 - Agent-side rollout, in order: `git status` clean/intentional (the switch consumes the working tree,
   so foreign edits get baked in — the unit prints the dirty-file list into the journal rather than
   guessing) → `just fmt` → `just lint` → build the closure
-  (`nix build .#nixosConfigurations.trantor.config.system.build.toplevel --out-link result`,
+  (`rom build .#nixosConfigurations.trantor.config.system.build.toplevel -- --out-link result`,
   adding `--option substitute false` only when the proxy is down) → verify what the build actually contains (grep the store paths
   `result` points at) → `just agent-switch "$(readlink -f result)"`. Hand the switch over to the human
   only when the mechanism is off or not activated yet, or when the change *is* the mechanism:
@@ -253,8 +253,8 @@ Builds: substitution through the proxy
   `sudo -n` included, prompts. The agent switch is not in this list: it is triggered by a polkit
   rule for one unit and the `start` verb.
 - The user's own switch binding is the `rebuild` scratchpad (`Super+Shift+N`), which runs
-  `sudo nixos-rebuild switch --flake /etc/nixos#trantor --option substitute false`; the
-  flag there is now optional (it forces a from-source build when the proxy is down).
+  `env -C /etc/nixos just deploy` — the rom build plus `switch-to-configuration` (the same steps as
+  `nixos-rebuild switch`).
 - `just check` and `just flag` still pass the flag; the deploy targets do not, because
   substitution now works through the proxy. Keep that split in mind for new recipes: substitute,
   unless the target is a check or a one-off comparison.

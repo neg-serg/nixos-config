@@ -24,12 +24,15 @@ seed host="trantor":
       ".#nixosConfigurations.{{ host }}.config.system.build.toplevel" \
       --option substitute false
 
-# Rebuild and switch to the new system configuration
+# Rebuild and switch to the new system configuration.
+# The build runs through rom (the build-graph monitor installed by
+# modules/tools), so the rebuild scratchpad gets the dependency tree instead of
+# raw nix output; `--` separates rom's own flags from the ones passed to nix.
 # Usage: just deploy [host]
 deploy host="trantor": check-eval hooks-ensure
     # Build system closure with network tuning
-    nix build .#nixosConfigurations.{{ host }}.config.system.build.toplevel \
-      --out-link result \
+    rom build .#nixosConfigurations.{{ host }}.config.system.build.toplevel \
+      -- --out-link result \
       --option connect-timeout 60 \
       --option download-attempts 2 \
       --option stalled-download-timeout 600
@@ -52,8 +55,7 @@ switch host="trantor":
 # the mechanism.
 # The stdin redirect is not decoration: when the caller's stdin is a socket
 # (systemd-run --pipe, some agent runners) nixos-rebuild refuses it, builds the
-# whole system and applies nothing. `--option substitute false` because
-# cache.nixos.org is unreliable from this host.
+# whole system and applies nothing.
 # Usage: just switch-sudo [host]
 switch-sudo host="trantor": check-eval hooks-ensure
     sudo nixos-rebuild switch --flake .#{{ host }} < /dev/null
