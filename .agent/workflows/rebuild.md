@@ -7,8 +7,12 @@ ______________________________________________________________________
 ## Quick Command
 
 ```bash
-sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null
+just deploy
 ```
+
+`deploy` builds the host toplevel through rom (the build-graph monitor), updates
+`/nix/var/nix/profiles/system` and runs `switch-to-configuration switch` — the same steps as
+`nixos-rebuild switch`, with the build rendered as a graph.
 
 ## Steps
 
@@ -21,13 +25,14 @@ sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/nul
 1. **Build without switching**:
 
    ```bash
-   nixos-rebuild build --flake .#trantor
+   rom build .#nixosConfigurations.trantor.config.system.build.toplevel \
+     -- --out-link result
    ```
 
 1. **Switch to new generation**:
 
    ```bash
-   sudo nixos-rebuild switch --flake .#trantor
+   just deploy
    ```
 
 ## Options
@@ -60,7 +65,7 @@ The build succeeds and nothing is applied, so retrying with stdin redirected fro
 whole fix:
 
 ```bash
-sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null
+sudo nixos-rebuild switch --flake .#trantor < /dev/null
 ```
 
 Keep the redirect in any scripted rollout.
@@ -80,8 +85,8 @@ Two paths, preferred one first:
    ```bash
    cd /etc/nixos
    just fmt && just lint
-   nix build .#nixosConfigurations.trantor.config.system.build.toplevel \
-     --out-link result --option substitute false
+   rom build .#nixosConfigurations.trantor.config.system.build.toplevel \
+     -- --out-link result
    just agent-switch "$(readlink -f result)"   # request + start unit + tail the journal
    ```
 
@@ -97,7 +102,7 @@ Two paths, preferred one first:
    the mechanism:
 
    ```bash
-   sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null
+   sudo nixos-rebuild switch --flake .#trantor < /dev/null
    ```
 
 `sudo` stays password-gated for everything else: the `nixos-rebuild` and `env *` NOPASSWD entries
