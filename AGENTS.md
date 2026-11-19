@@ -208,6 +208,10 @@ Builds: substitution through the proxy
   outright), while it answers reliably through the sing-box SOCKS5 proxy, which `nix-daemon` now
   uses (`systemd.services.nix-daemon.environment`, flag `features.net.nixDaemonProxy`). Binary
   substitution is enabled again, and the deploy recipes run without `--option substitute false`.
+  The daemon's list is pinned to `cache.nixos.org` by a `NIX_CONFIG` override in
+  `modules/nix/settings.nix`: Determinate's installer re-adds `install.determinate.systems` from
+  `/etc/nix/nix.conf` after the NixOS-generated config, and that cache's broken auth makes a
+  narinfo lookup hang for the stalled-download-timeout instead of 404ing.
 - Pass `--option substitute false` for one-off debugging/comparison builds, and whenever
   `sing-box-proxy` is down (then every substitute lookup stalls instead of falling back):
   `nix build .#nixosConfigurations.trantor.config.system.build.toplevel --dry-run --option substitute false`

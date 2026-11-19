@@ -7,6 +7,13 @@
 }:
 let
   caches = import (config.lib.neg.path "lib/caches.nix");
+
+  # cache.nixos.org is the only substituter that answers from this host (both
+  # directly and through the sing-box SOCKS5 proxy). Determinate's installer
+  # adds install.determinate.systems from /etc/nix/nix.conf; its auth is broken
+  # here and a narinfo lookup stalls for `stalled-download-timeout` instead of
+  # failing, which turns every missing path into minutes of waiting.
+  binaryCaches = [ "https://cache.nixos.org/" ];
 in
 {
   sops.age = {
@@ -81,11 +88,10 @@ in
       keep-outputs = true;
       keep-derivations = true;
       fallback = true;
-      # Determinate's default substituter (install.determinate.systems) is
-      # broken on this host (auth failure → 15s timeouts per narinfo, stalls
-      # every rebuild). Force cache.nixos.org only.
-      substituters = [ "https://cache.nixos.org/" ];
-      extra-substituters = [ ];
+      # cache.nixos.org only. The installer's /etc/nix/nix.conf re-adds its own
+      # cache after this file is included; the nix-daemon NIX_CONFIG override
+      # below is what removes it from the daemon's effective list.
+      substituters = binaryCaches;
       experimental-features = [
         "auto-allocate-uids" # allow nix to automatically pick UIDs, rather than creating nixbld* user accounts
         "flakes" # flakes for reproducibility
@@ -190,12 +196,29 @@ in
   #     work anyway. `no_proxy` keeps loopback and the LAN direct.
   #   - `socks5h://`, not `socks5://`: the proxy resolves names, because the
   #     local resolver sinks some blocked domains into sinkhole addresses.
-  systemd.services.nix-daemon.environment = lib.mkIf (config.lib.neg.enabled "net.nixDaemonProxy") {
-    http_proxy = "socks5h://127.0.0.1:10808";
-    https_proxy = "socks5h://127.0.0.1:10808";
-    all_proxy = "socks5h://127.0.0.1:10808";
-    no_proxy = "localhost,127.0.0.1,::1,.local,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16";
-  };
+  systemd.services.nix-daemon.environment = lib.mkMerge [
+    (lib.mkIf (config.lib.neg.enabled "net.nixDaemonProxy") {
+      http_proxy = "socks5h://127.0.0.1:10808";
+      https_proxy = "socks5h://127.0.0.1:10808";
+      all_proxy = "socks5h://127.0.0.1:10808";
+      no_proxy = "localhost,127.0.0.1,::1,.local,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16";
+    })
+
+    # The determinate module redirects environment.etc."nix/nix.conf" to
+    # nix/nix.custom.conf, so the installer-owned /etc/nix/nix.conf keeps
+    # `extra-substituters = https://install.determinate.systems/` after the
+    # include and nix.settings cannot remove it (list settings only append
+    # across config files). NIX_CONFIG is parsed after every file, and a plain
+    # `substituters` assignment there replaces the accumulated list. Changing
+    # this environment also changes the unit, so switch-to-configuration
+    # restarts nix-daemon on the switch that installs it and the running daemon
+    # stops querying the dead cache immediately. Clients that pass
+    # `--option substituters ...` still win: overridden settings are sent to the
+    # daemon, and trusted users may replace the list.
+    {
+      NIX_CONFIG = "substituters = ${lib.concatStringsSep " " binaryCaches}";
+    }
+  ];
 
   # Determinate Nix overrides netrc-file in /etc/nix/nix.conf after including
   # nix.custom.conf, so sops-managed netrc path doesn't take effect.
