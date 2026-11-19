@@ -32,6 +32,12 @@ lib.mkIf (cfg.enable or true) {
       attr = "tdl";
     })
 
+    # Terminal Telegram client (npm package on Node 26); built on first run.
+    (onDemand {
+      name = "tuigram";
+      attr = "tuigram";
+    })
+
     telegram
     (pkgs.makeDesktopItem {
       name = "org.telegram.desktop";
