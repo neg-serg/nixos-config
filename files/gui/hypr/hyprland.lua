@@ -107,9 +107,8 @@ local m = {
   steam_app          = "^(steam_app_.*)$",
   xwaylandvideobridge = "^(xwaylandvideobridge)$",
   -- scratchpad classes
-  im_scratchpad      = "^(KotatogramDesktop|Skype|Slack|TelegramDesktop|org\\.telegram\\.desktop|zoom)$",
+  im_scratchpad      = "^(TelegramDesktop|org\\.telegram\\.desktop|zoom)$",
   mail_scratchpad    = "^(mutterfox|neomutt)$",
-  mixer_scratchpad   = "^(hyprpwcenter)$",
   torrment_scratchpad = "^(torrment)$",
   rebuild_scratchpad = "^(rebuild)$",
   teardown_scratchpad = "^(teardown)$",
@@ -474,7 +473,6 @@ hl.bind(M4 .. "+u", hl.dsp.exec_cmd("aurora-eq"), { locked = true })
 -- mod4+ctrl+u: the reference CamillaEQ app (its own server, its own config
 -- library). Same idea, a different UI: its Connect page names the daemon.
 hl.bind(M4 .. "+" .. C .. "+u", hl.dsp.exec_cmd("camillaeq-ui"), { locked = true })
-hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch toggle mixer"))
 -- Wallpaper deck: the pleamar scene `picker` (files/pleamar/shells/picker/picker.plm) opens over
 -- the current wallpaper and sets the card Enter lands on. `pleamar-picker` is the scene's command
 -- line: it starts the on-demand unit when the session has no deck running and then talks to it
@@ -1306,7 +1304,6 @@ hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, 
 -- plugin is back.
 hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7-8 8", no_dim = true })
 hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, size = "monitor_w*0.5 monitor_h*0.5", center = true, no_dim = true })
-hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h-60", move = "monitor_w*0.6-8 8", no_dim = true })
 hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
 hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
@@ -1325,7 +1322,7 @@ hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratc
 -- makes the desk arrive with the window. Covers every scratchpad class the config
 -- knows about: the kitty terminals plus the app scratchpads (telegram, mail).
 for i, pattern in ipairs({
-  "^teardown$", "^torrment$", "^mixer$", "^rebuild$",
+  "^teardown$", "^torrment$", "^rebuild$",
   m.im_scratchpad, m.mail_scratchpad,
 }) do
   hl.window_rule({ name = "anim-scratchpad-" .. i, match = { class = pattern }, animation = "slidefadevert 12%" })

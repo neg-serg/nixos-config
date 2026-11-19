@@ -51,9 +51,6 @@ in
       attr = "hdspeconf";
     }) # HDSPe matrix mixer & config (snd-hdspe driver), built on first use
     alsaToolsHdsp # hdspmixer, hdspconf (RME HDSPe userland tools)
-
-    # -- Mixer --
-    pkgs.hyprpwcenter # PipeWire control center — the session mixer (M4+C+p scratchpad)
   ];
 
   services.udev.extraRules = ''
