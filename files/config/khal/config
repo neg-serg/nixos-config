@@ -1,6 +1,8 @@
 [calendars]
+# khal >= 0.12 discovers collections by globbing this path: a bare directory
+# matches only itself (one empty calendar), so keep the trailing `*/`.
 [[calendars_discovery]]
-path = ~/.config/vdirsyncer/calendars/
+path = ~/.config/vdirsyncer/calendars/*/
 type = discover
 
 
