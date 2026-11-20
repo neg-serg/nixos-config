@@ -77,6 +77,11 @@ in
   softcut-sc = call (pkg "softcut-sc") { inherit scPluginFarm mkScPlugin; }; # monome Softcut multi-voice looper as SC UGen
   signalbox = call (pkg "signalbox") { inherit mkScQuark; }; # SignalBox SC quark: time/frequency-domain analysis tools
   crucial-library = call (pkg "crucial-library") { inherit mkScQuark; }; # crucial-library SC quark: AbstractPlayer live-coding system
+  # -- metering / delivery --
+  # Prebuilt upstream bundles: the Flutter meter canvas (with the VST3 that
+  # feeds it from a DAW) and `oaa`, the same engine for one file at a time.
+  open-audio-analyzer = call (pkg "open-audio-analyzer") { };
+  oaa = call (pkg "oaa-cli") { }; # oaa master.wav --target streaming-14 -> exit code
   # -- analysis / spatial / VST hosting --
   scmir = call (pkg "scmir") { }; # SCMIR: music IR analysis library + CLI tools
   atk-sc3 = call (pkg "atk-sc3") { inherit mkScQuark; }; # Ambisonic Toolkit SC quark

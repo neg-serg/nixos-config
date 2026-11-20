@@ -38,6 +38,8 @@
 
   mpd-voice = pkgs.mpd-voice; # voice control for MPD: local STT -> player commands (Rust)
   audio-cpp = pkgs.audio-cpp; # ggml audio runtime (Audio Flamingo Next, TTS, ASR) — prebuilt Vulkan build
+  open-audio-analyzer = pkgs.open-audio-analyzer; # loudness/spectrum meter canvas + VST3 (upstream bundle)
+  oaa = pkgs.oaa; # its offline CLI: report + delivery verdict, exit code and all
 
   hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
   lusty = pkgs.neg.lusty; # Native file/buffer picker for Neovim (Lusty successor)

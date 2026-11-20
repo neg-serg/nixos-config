@@ -17,6 +17,10 @@ let
       attr = "dr14_tmeter";
     }) # DR14 dynamic-range meter, built on first use
     pkgs.essentia-extractor # bulk audio feature extractor (HQ descriptors)
+    # Loudness/spectrum meter canvas (Flutter bundle) with a VST3 for DAW
+    # metering; installed directly rather than on demand — the closure is the
+    # GTK stack the host already carries, and first launch stays network-free.
+    pkgs.open-audio-analyzer # LUFS/true-peak meter canvas + VST3 for DAW metering
     (onDemand {
       name = "sonic-visualiser";
       attr = "sonic-visualiser";
@@ -42,6 +46,7 @@ let
 
     # -- CLI --
     pkgs.sox # swiss-army audio CLI for conversions/effects
+    pkgs.oaa # same engine offline: LUFS/true-peak report, delivery verdict as exit code
     # -- Codecs / Ripping / Players --
     pkgs.cdparanoia # secure CD ripper w/ jitter correction
     pkgs.unflac # convert FLAC cuesheets quickly
