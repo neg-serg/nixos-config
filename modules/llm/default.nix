@@ -390,7 +390,7 @@
 # - Ollama: enabled; merged the orphaned 413 GB store (was nested under `/zero/ai/ollama/models/`)
 #   into the active store — all 23 models now visible to `ollama list`, no re-download.
 # - stable-diffusion.cpp: package added (Vulkan), models in `/zero/ai/image`.
-# - Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT),
+# - Ports: 11434 (Ollama), 8000 (omnirouter), 8002 (whisper STT),
 #   8080 (llama-server, manual),
 #   8013 (llama-rerank, also the rag-search default), 9292 (llama-swap API: chat, ocr, embed)
 

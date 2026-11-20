@@ -126,7 +126,7 @@
           description = "Beets runtime mode: native (Nixpkgs) or distrobox (CachyOS container)";
         };
       };
-      speech.enable = mkBool "enable local speech stack (Chatterbox TTS :8300, Piper TTS :8001, whisper.cpp STT :8002)" false;
+      speech.enable = mkBool "enable local speech stack (whisper.cpp STT :8002)" false;
       # Music tagging and embeddings on the local music-AI venv:
       # music-embed (MERT embeddings), music-tags (CLAP zero-shot tags),
       # music-index / music-similar (similarity search over the library).
