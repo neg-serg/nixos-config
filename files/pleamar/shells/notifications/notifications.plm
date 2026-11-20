@@ -116,6 +116,17 @@ scene notifications {
     // desktop it sits on. 55 % was the card's first value and was too light.
     let notify.card = mix(live.coal, live.slate, 15%)
 
+    // The urgency stripe's colours are the user's own, not the theme's. Both are
+    // the neg palette the shell and kitty share: `#0d1824` is its "bg-highlight"
+    // (the dark grey-blue every inset in the desktop is dipped in), and
+    // `#cf4f88` is its `err` — kitty color9, the one readable red of the table.
+    // They replace the theme's amber/warn (2026-11-20): nearly every notification
+    // arrives at normal urgency, so the amber stripe was the loudest thing on the
+    // card, louder than the red meant for the ones that matter. Low and normal
+    // share the grey-blue; only `urgency == 2` gets the red.
+    let notify.stripe = #0d1824
+    let notify.stripe.alert = #cf4f88
+
 
     // ---------------------------------------------------------------- data
     // What the toast stack draws; the logic fills it oldest first, so the
@@ -378,7 +389,7 @@ scene notifications {
         size: 340 * scale, 96 * scale
 
         Capsule(340, 96, fill: notify.card, alpha: 92%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 24%, shadow: 45%, scale: scale) { }
-        box { from: 2 * scale, 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(t.urgency == 2, live.warn, if(t.urgency == 1, live.amber, notify.accent)) }
+        box { from: 2 * scale, 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(t.urgency == 2, notify.stripe.alert, notify.stripe) }
         image t.pic { at: 12 * scale, 18 * scale; size: 44 * scale, 44 * scale }
         text t.title { at: 66 * scale, 24 * scale; anchor: left center; width: 230 * scale; lines: 1; family: "Iosevka"; size: 14; weight: 700; color: notify.ink }
 
@@ -453,7 +464,7 @@ scene notifications {
                 group bg { move: 0, oy
                     Capsule(336, 96, fill: notify.card, alpha: 92%, radius: 4, edge: 1, edge_tone: notify.accent, edge_alpha: 24%, shadow: 30%, scale: scale) { }
                 }
-                box { from: 2 * scale, oy + 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(n.urgency == 2, live.warn, if(n.urgency == 1, live.amber, notify.accent)) }
+                box { from: 2 * scale, oy + 8 * scale; size: 3 * scale, 80 * scale; corner: 1.5 * scale; color: if(n.urgency == 2, notify.stripe.alert, notify.stripe) }
                 image n.pic { at: 12 * scale, oy + 18 * scale; size: 40 * scale, 40 * scale }
                 text n.title { at: 60 * scale, oy + 24 * scale; anchor: left center; width: 262 * scale; lines: 1; family: "Iosevka"; size: 14; weight: 700; color: notify.ink }
                 // The same two lines and the same clip as a toast (see ToastCard):
