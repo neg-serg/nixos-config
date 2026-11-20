@@ -116,16 +116,15 @@ scene notifications {
     // desktop it sits on. 55 % was the card's first value and was too light.
     let notify.card = mix(live.coal, live.slate, 15%)
 
-    // The urgency stripe's colours are the user's own, not the theme's. Both are
-    // the neg palette the shell and kitty share: `#0d1824` is its "bg-highlight"
-    // (the dark grey-blue every inset in the desktop is dipped in), and
-    // `#cf4f88` is its `err` — kitty color9, the one readable red of the table.
-    // They replace the theme's amber/warn (2026-11-20): nearly every notification
-    // arrives at normal urgency, so the amber stripe was the loudest thing on the
-    // card, louder than the red meant for the ones that matter. Low and normal
-    // share the grey-blue; only `urgency == 2` gets the red.
+    // The urgency stripe's colours are the user's own, not the theme's: the
+    // default (low and normal) is `#0d1824`, the neg palette's "bg-highlight" —
+    // the dark grey-blue every inset in the desktop is dipped in; urgent is
+    // `#570b24`, the dark red the user picked for it (2026-11-20). They replace
+    // the theme's amber/warn: nearly every notification arrives at normal
+    // urgency, so the amber stripe was the loudest thing on the card, louder
+    // than the red meant for the ones that matter.
     let notify.stripe = #0d1824
-    let notify.stripe.alert = #cf4f88
+    let notify.stripe.alert = #570b24
 
 
     // ---------------------------------------------------------------- data
