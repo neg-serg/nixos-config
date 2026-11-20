@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "aurora-plugins-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795088351,
+        "narHash": "sha256-neNkDfuX+4+JaogDQ6X+QrMJeqiEYKgYhBvwo+Uq9+A=",
+        "owner": "neg-serg",
+        "repo": "aurora-plugins",
+        "rev": "f932b97028b880e4a0c2b9c0b8a26aa4d2f76c37",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "aurora-plugins",
+        "type": "github"
+      }
+    },
     "aurora-src": {
       "flake": false,
       "locked": {
@@ -1313,6 +1329,7 @@
     },
     "root": {
       "inputs": {
+        "aurora-plugins-src": "aurora-plugins-src",
         "aurora-src": "aurora-src",
         "bootvine": "bootvine",
         "determinate": "determinate",
