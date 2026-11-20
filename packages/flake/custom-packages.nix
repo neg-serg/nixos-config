@@ -205,16 +205,11 @@
   # CLI around this attr so the binary is built on first start/use.
   xray = pkgs.xray;
 
-  # Piper + whisper.cpp + their python env and ffmpeg, merged into one root that
+  # whisper.cpp + its python env and ffmpeg, merged into one root that
   # modules/media/audio/speech.nix materialises on first service start. The
-  # overrides must match what that module used to install: inference only (no
-  # torch/triton training extras, no Japanese dictionaries) and Vulkan whisper.
+  # override keeps the Vulkan whisper build the module runs.
   speech-stack =
     let
-      piper = pkgs.piper-tts.override {
-        withTrain = false;
-        withJapanese = false;
-      };
       whisper = pkgs.whisper-cpp.override { vulkanSupport = true; };
       serverPy = pkgs.python3.withPackages (ps: [
         ps.fastapi
@@ -226,7 +221,6 @@
     pkgs.symlinkJoin {
       name = "speech-stack";
       paths = [
-        piper
         whisper
         serverPy
         pkgs.ffmpeg
