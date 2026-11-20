@@ -88,6 +88,7 @@ in
     environment.systemPackages = lib.mkAfter [
       pkgs.neg.aurora # aurora: MPD player with a Vulkan UI (winit + ash + cosmic-text)
       pkgs.neg.aurora-tools # headphones: the model catalogue CLI (apply/import/export)
+      pkgs.neg.aurora-plugins # the four external plugins: notify, scrobble, mpris, remaining
       aurora-focus # what mod4+f runs: focus the player, or start it if it is not up
     ];
 
@@ -115,5 +116,14 @@ in
     # the window survives. Blurring that backdrop is the compositor's half, and it is what makes
     # the window read as glass instead of as a see-through hole.
     environment.sessionVariables.AURORA_WINDOW_OPACITY = "0.92";
+
+    # The plugins that talk to the rest of the machine — notify, scrobble, mpris and remaining —
+    # are programs in a repository of their own, and the player finds them by looking in a plugin
+    # directory: one directory per plugin, its `plugin.json` and the program beside it. The package
+    # installs the four under `$out/lib/aurora/plugins`, and this variable is the whole of the
+    # contract — a rebuilt plugin is picked up by the next player start, with no rebuild of the
+    # player. An explicitly empty value means "no external plugins", which is what a capture that
+    # must not depend on the machine says.
+    environment.sessionVariables.AURORA_PLUGIN_DIR = "${pkgs.neg.aurora-plugins}/lib/aurora/plugins";
   };
 }
