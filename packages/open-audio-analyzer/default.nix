@@ -6,7 +6,6 @@
   makeWrapper,
   gtk3,
   libepoxy,
-  libGL,
   libpulseaudio,
   alsa-lib,
   libusb1,
