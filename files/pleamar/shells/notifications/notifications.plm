@@ -326,10 +326,13 @@ scene notifications {
         box { from: x, 0; size: 1 * scale, h; color: live.ink; opacity: 12% }
 
         // Header: the title, a close button, the DND toggle and clear-all.
+        // The mark is 8 design px across in a 20 px hit box (12 in 26 until
+        // 2026-11-20, where it read as a second heading and its box reached
+        // further into the header than the mark it drew).
         text "Notifications" { at: x + 18 * scale, 28 * scale; anchor: left center; family: "Iosevka"; size: 16; weight: 700; color: notify.ink }
-        line { from: x + w - 31 * scale, 19 * scale; to: x + w - 19 * scale, 31 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
-        line { from: x + w - 19 * scale, 19 * scale; to: x + w - 31 * scale, 31 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
-        zone box close_zone { from: x + w - 36 * scale, 14 * scale; size: 26 * scale, 26 * scale; corner: 6 * scale; cursor: pointer; label: "Close notifications"; role: button }
+        line { from: x + w - 29 * scale, 21 * scale; to: x + w - 21 * scale, 29 * scale; width: 1.2 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        line { from: x + w - 21 * scale, 21 * scale; to: x + w - 29 * scale, 29 * scale; width: 1.2 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        zone box close_zone { from: x + w - 35 * scale, 15 * scale; size: 20 * scale, 20 * scale; corner: 5 * scale; cursor: pointer; label: "Close notifications"; role: button }
         on press close_zone { centre = false }
 
         box { from: x + 20 * scale, 57 * scale; size: 30 * scale, 14 * scale; corner: 7 * scale; color: mix(live.slate, live.accent, dnd); opacity: 1 }
@@ -422,9 +425,12 @@ scene notifications {
             for a in t.acts { Action(a, scale) }
         }
 
-        line { from: 319 * scale, 15 * scale; to: 327 * scale, 23 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
-        line { from: 327 * scale, 15 * scale; to: 319 * scale, 23 * scale; width: 1.4 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
-        zone box close_zone { from: 314 * scale, 10 * scale; size: 18 * scale, 18 * scale; corner: 5 * scale; cursor: pointer; label: "Dismiss {t.app}: {t.title}"; role: button }
+        // The mark is 6 design px across in a 14 px hit box (8 in 18 until
+        // 2026-11-20), drawn inside the card's corner where the pointer
+        // expects it and no further.
+        line { from: 320 * scale, 16 * scale; to: 326 * scale, 22 * scale; width: 1.1 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        line { from: 326 * scale, 16 * scale; to: 320 * scale, 22 * scale; width: 1.1 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        zone box close_zone { from: 316 * scale, 12 * scale; size: 14 * scale, 14 * scale; corner: 4 * scale; cursor: pointer; label: "Dismiss {t.app}: {t.title}"; role: button }
         on press close_zone { emit drop(t.slot) }
     }
 
