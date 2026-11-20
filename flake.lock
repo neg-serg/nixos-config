@@ -19,11 +19,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795173560,
-        "narHash": "sha256-bGVyjZh+KVNuEux+NIOmaQQ6bIF+t9RoZpK+5NH+roc=",
+        "lastModified": 1795181701,
+        "narHash": "sha256-NiyJihHv6FtTZkDEzQPkzOPX418oWYg6su5RoLLGE1o=",
         "ref": "refs/heads/main",
-        "rev": "c569ab5932340d6efafef5e15c48d86962658b81",
-        "revCount": 1263,
+        "rev": "c37206df6c45fd68b447e607311e224506bde939",
+        "revCount": 1273,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -60,11 +60,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1795114408,
-        "narHash": "sha256-lzJh3VbLfCoct5hMn31j4dv5tox250stl0YKD6OdAAQ=",
+        "lastModified": 1795177966,
+        "narHash": "sha256-sRE3N7Wl1M3kQ2v9UX+skYbG3GK+fQ9JANn9MjJV5ZQ=",
         "ref": "refs/heads/main",
-        "rev": "6c12d12698147403da7b05164e960b8158fd28cb",
-        "revCount": 149,
+        "rev": "958cfa1b54451a7481f315de76bcf5a4400e2793",
+        "revCount": 150,
         "type": "git",
         "url": "https://codeberg.org/wvhulle/bootvine"
       },
