@@ -448,12 +448,13 @@ scene notifications {
             for a in t.acts { Action(a, scale) }
         }
 
-        // The mark is 6 design px across in a 14 px hit box (8 in 18 until
-        // 2026-11-20), drawn inside the card's corner where the pointer
-        // expects it and no further.
-        line { from: 320 * scale, 16 * scale; to: 326 * scale, 22 * scale; width: 1.1 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
-        line { from: 326 * scale, 16 * scale; to: 320 * scale, 22 * scale; width: 1.1 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
-        zone box close_zone { from: 316 * scale, 12 * scale; size: 14 * scale, 14 * scale; corner: 4 * scale; cursor: pointer; label: "Dismiss {t.app}: {t.title}"; role: button }
+        // The mark is 6 design px across inside a 14 px hit box, and that box
+        // sits in the card's very corner — flush with the right and top edges,
+        // where nothing else is drawn — so it is out of the text's way and out
+        // of the card's own press (2026-11-20).
+        line { from: 330 * scale, 4 * scale; to: 336 * scale, 10 * scale; width: 1.1 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        line { from: 336 * scale, 4 * scale; to: 330 * scale, 10 * scale; width: 1.1 * scale; color: notify.ink; opacity: 55% + 45% * close_zone.hover }
+        zone box close_zone { from: 326 * scale, 0; size: 14 * scale, 14 * scale; corner: 4 * scale; cursor: pointer; label: "Dismiss {t.app}: {t.title}"; role: button }
         on press close_zone { emit drop(t.slot) }
     }
 
