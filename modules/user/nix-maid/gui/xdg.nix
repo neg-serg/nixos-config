@@ -182,6 +182,12 @@ let
       exec = "kitty-glass --class rebuild -e env -C /etc/nixos just deploy";
       icon = "nix-snowflake";
     };
+    gamescope = {
+      name = "Steam game";
+      comment = "The nested gamescope compositor a Steam game runs inside";
+      exec = "steam";
+      icon = "steam";
+    };
   };
 
   windowClassFiles = lib.mapAttrs' (
