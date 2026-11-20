@@ -20,8 +20,10 @@ import "../../lib/capsule.plm"
 // drawer is 364 design px wide and as tall as the monitor (`centre_panel`), the
 // toast stack is a corner box (`toast_stack`), and a one-pixel `keeper` holds the
 // process — and the notification server it IS — while both are closed. All three
-// are `level: overlay`, `reserve: -1`: nothing reserves room for them, and only
-// their zones take clicks. Windows rather than one full-monitor surface because
+// are `level: overlay` and reserve nothing, and only their zones take clicks:
+// the keeper and the drawer are `reserve: -1`, the toast stack is `reserve: 0`
+// so it lands in the work area, above the bar (see the surface below). Windows
+// rather than one full-monitor surface because
 // a zone claims the pointer for the whole box it covers, so the full-monitor
 // version claimed the desktop and its cursor with it; see the window block below.
 //
@@ -237,12 +239,19 @@ scene notifications {
 
     // A toast card is 340 design px wide and 96 tall; six of them plus their
     // gaps is the tallest the stack can get (`model toasts max 6`).
+    // `reserve: 0`, not -1: a negative exclusive zone places the surface against
+    // the output's edge, so the 12 px bottom margin put the newest card 13 px
+    // into the 25 px bar and it covered the strip's top half (measured
+    // 2026-11-20). Zero places the box in the work area, whose lower edge is
+    // already the bar's top — the idiom the tray menu in bar.plm uses — and the
+    // 12 px then sits above the strip, 2 px clear of the 10 px hotzone over it.
+    // Nothing is reserved either way.
     surface toast_stack {
         size: 360, 660
         anchor: bottom_right
         margin: 0, 12, 12, 0
         level: overlay
-        reserve: -1
+        reserve: 0
         screens: each
         // Not while the centre is open: the drawer covers this corner, and a
         // toast under it would be a card nobody can see (the arrival is in the
