@@ -115,6 +115,24 @@ let
       Keywords=mpd;music;player;audio;
       StartupWMClass=aurora
       DESKTOP
+          # The window's class is `player`, not `aurora`: the crate names its Wayland surface
+          # itself (`with_name("player", "player")` in ~/src/aurora, `src/bin/aurora.rs`) and the
+          # compositor's rules match that name (modules/media/audio/aurora.nix). A launcher, a
+          # taskbar or a window switcher ties an icon to a window by matching the class to a
+          # desktop entry's file name, so the package installs a second entry under the class's
+          # own name: the same icon, hidden from menus (`NoDisplay`) so the application list
+          # still shows one aurora.
+          install -Dm644 /dev/stdin $out/share/applications/player.desktop <<'PLAYER'
+      [Desktop Entry]
+      Type=Application
+      Name=aurora
+      Comment=MPD client with a Vulkan UI
+      Exec=aurora
+      Icon=aurora
+      Terminal=false
+      NoDisplay=true
+      StartupWMClass=player
+      PLAYER
           # The same four curtain ribbons the top bar and the window icon draw, as a scalable
           # asset: one mark, three renderers, no file that can drift out of date.
           install -Dm644 /dev/stdin $out/share/icons/hicolor/scalable/apps/aurora.svg <<'SVG'
