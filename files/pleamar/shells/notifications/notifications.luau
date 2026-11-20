@@ -292,12 +292,15 @@ local function entry_of(r, old, first, with_actions)
             end
         end
     end
+    local body = view_body(r.body)
     return {
         slot = r.slot,
         app = r.app,
         title = r.title,
-        body = view_body(r.body),
+        body = body,
         pic = r.pic,
+        has_pic = (r.pic ~= "") and 1 or 0,
+        has_body = (body ~= "") and 1 or 0,
         urgency = r.urgency,
         old = old,
         first = first,
