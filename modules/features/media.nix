@@ -282,7 +282,8 @@
         };
       };
       # MPD voice client (mpd-voice): one utterance -> local speech recognition
-      # -> MPD command -> spoken confirmation. Installing it starts nothing and
+      # -> MPD command; the reply is printed, not spoken (this host sets tts =
+      # "none" and ships no TTS models). Installing it starts nothing and
       # touches no microphone: the CLI is inert until it is run (or bound to a
       # key), and it also has a text mode that needs no audio at all.
       mpdVoice = {

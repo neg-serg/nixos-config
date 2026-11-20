@@ -163,6 +163,12 @@ pub fn parse_args(argv: &[String]) -> (Vec<String>, Options) {
             }
         }
     }
+    // `once` is the subcommand form of `--once`: the flag is what cmd_listen
+    // reads, so set the same field here. Without this the command behaves like
+    // `listen` and never returns after the first utterance.
+    if positional.first().map(String::as_str) == Some("once") {
+        options.once = true;
+    }
     (positional, options)
 }
 
@@ -647,6 +653,24 @@ mod tests {
         apply_options(&mut cfg, &options);
         assert_eq!(cfg.mpd_port, 7000);
         assert_eq!(cfg.language, "en");
+    }
+
+    #[test]
+    fn once_subcommand_is_single_shot() {
+        let argv: Vec<String> = ["once"].iter().map(|part| part.to_string()).collect();
+        let (positional, options) = parse_args(&argv);
+        assert_eq!(positional, vec!["once".to_string()]);
+        assert!(options.once, "the once subcommand must run one utterance");
+
+        let argv: Vec<String> = ["say", "once"]
+            .iter()
+            .map(|part| part.to_string())
+            .collect();
+        let (_, options) = parse_args(&argv);
+        assert!(
+            !options.once,
+            "only the subcommand enables the one-shot mode"
+        );
     }
 
     #[test]

@@ -2,8 +2,8 @@
 # Module: media/audio/mpd-voice
 # Purpose: install the MPD voice client (mpd-voice) and its system-wide config.
 # Key options: features.media.audio.mpdVoice.{enable,language,wakeWord,stt,tts}
-# Dependencies: pkgs.mpd-voice (overlay), optional speech backends from
-#               features.media.audio.speech (STT :8002 / TTS :8001).
+# Dependencies: pkgs.mpd-voice (overlay), speech recognition from
+#               features.media.audio.speech (STT :8002); no TTS on this host.
 {
   lib,
   config,
