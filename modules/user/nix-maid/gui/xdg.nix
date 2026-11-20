@@ -145,11 +145,12 @@ let
   # against every entry's `StartupWMClass` and then its id
   # (src/server/src/builtins/wm/switch-windows-view-host.cpp), and paints a
   # generic icon when nothing matches. `kitty.desktop` cannot answer for a kitty
-  # started with `--class`, so the `term` and `nwim` windows and the teardown pad
-  # (`--class teardown`, btop inside) need an entry of their own, named after the
-  # class. `NoDisplay` keeps them out of the application lists; `Exec` repeats the
-  # command the Hyprland binds launch (files/gui/hypr/hyprland.lua), so activating
-  # an entry from a picker does what the key does.
+  # started with `--class`, so every kitty surface with a custom class needs an
+  # entry of its own, named after the class: the `term` and `nwim` windows, and
+  # the teardown, torrment and rebuild pads (`--class teardown`, `torrment`,
+  # `rebuild`). `NoDisplay` keeps them out of the application lists; `Exec`
+  # repeats the command the Hyprland binds launch (files/gui/hypr/hyprland.lua),
+  # so activating an entry from a picker does what the key does.
   windowClassApps = {
     term = {
       name = "Terminal";
@@ -168,6 +169,18 @@ let
       comment = "System monitor and the live kernel log (the teardown pad)";
       exec = "kitty-glass --class teardown --session ${config.lib.neg.homeDir}/.config/kitty/teardown.session";
       icon = "btop";
+    };
+    torrment = {
+      name = "rustmission";
+      comment = "Transmission TUI in kitty (the torrment pad)";
+      exec = "kitty-glass --class torrment -e rustmission";
+      icon = "transmission";
+    };
+    rebuild = {
+      name = "NixOS rebuild";
+      comment = "just deploy in kitty (the rebuild pad)";
+      exec = "kitty-glass --class rebuild -e env -C /etc/nixos just deploy";
+      icon = "nix-snowflake";
     };
   };
 
