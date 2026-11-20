@@ -13,7 +13,7 @@ Custom packages and overlays for the configuration.
 Packages are available via `pkgs.<name>` or `pkgs.neg.<name>`:
 
 ```nix
-environment.systemPackages = [ pkgs.flight-gtk-theme ];
+environment.systemPackages = [ pkgs.swayimg ];
 ```
 
 ## Adding Packages

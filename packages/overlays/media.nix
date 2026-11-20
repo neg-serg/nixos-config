@@ -100,6 +100,4 @@ in
     inherit mkScQuark;
   }; # patterns, granulation, live coding utilities
   ixiquarks = call (pkg "ixiquarks") { inherit mkScQuark; }; # GUI instruments/effects toolset
-  # -- neural audio --
-  nn-ar = call (pkg "nn-ar") { inherit scPluginFarm; }; # nn.ar: PyTorch models in scsynth
 }

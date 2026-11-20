@@ -53,10 +53,6 @@ in
     cargoHash = "sha256-XcFgDZQQGY9HMGEf6K8RSEOS5bRcjo4wdWIrlbMOhtw=";
   });
 
-  # ROCm (HIP) twin — Vulkan/RADV llama.cpp is pathologically slow on this host
-  # (~0.2 tok/s for VRAM-resident models); ROCm is the working compute path.
-  llama-cpp-qwen4exp-rocm = callPkg (pkg "llama-cpp-qwen4exp-rocm") { };
-
   # neg sub-attributes are merged once in packages/overlay.nix — no
   # `(prev.neg or {})` accumulation here (prev is the unmodified base).
   neg = rec {

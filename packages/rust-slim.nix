@@ -10,7 +10,8 @@
 #   measured 62.6 MiB off the 67 repository Rust binaries (per-file strip -s).
 #
 #   LTO — `CARGO_PROFILE_RELEASE_LTO = "fat"` with a single codegen unit.
-#   Measured on graf: 5.19 MiB baseline -> 4.00 MiB stripped -> 3.46 MiB
+#   Measured on graf (the wikilink-graph TUI, since removed): 5.19 MiB baseline
+#   -> 4.00 MiB stripped -> 3.46 MiB
 #   stripped+LTO (-36 % overall). panic=abort is deliberately not set: it
 #   changes unwinding semantics and measured worse than plain fat LTO here.
 #

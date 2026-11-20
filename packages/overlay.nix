@@ -44,7 +44,7 @@ let
   # Rust slimming: see packages/rust-slim.nix for the two measured levers.
   # The name lists are the single place that knows which packages are Rust —
   # `neg` names live under pkgs.neg, `top` names are the top-level attributes
-  # the chunk overlays define (elio/graf/huebox/lazytail are defined below and
+  # the chunk overlays define (elio/huebox/lazytail are defined below and
   # wrapped at their definition instead).
   rustSlim = import ./rust-slim.nix;
   rustNegNames = [
@@ -72,7 +72,6 @@ let
     "music-index-tools"
     "nixbuild-status"
     "pleamar-calendar"
-    "pleamar-fixtures"
     "pleamar-harness"
     "pleamar-kbdlayout"
     "pleamar-picker"
@@ -102,7 +101,6 @@ let
     "genlc"
     "gridcraft"
     "mpd-voice"
-    "nixie"
     "pw-audioshare"
     "pwroute"
     "solidcraft"
@@ -203,7 +201,6 @@ slimChunks
           midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
           virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
           questyle-ctl = final.callPackage ./questyle-ctl { }; # USB/ALSA/PipeWire + vendor HID channel of the Questyle QCC dongle
-          pleamar-fixtures = final.callPackage ./pleamar-fixtures { }; # D-Bus fixtures for the pleamar engine (MPRIS player, nested tray item)
           pleamar-sysmon = final.callPackage ./pleamar-sysmon { }; # pleamar system monitor worker (procfs/sysfs, JSON lines)
           pleamar-weather = final.callPackage ./pleamar-weather { }; # pleamar weather worker (Open-Meteo/MET Norway/wttr.in, JSON lines)
           pleamar-kbdlayout = final.callPackage ./pleamar-kbdlayout { }; # pleamar keyboard-layout worker (hyprctl, JSON lines)
@@ -266,8 +263,6 @@ slimChunks
       }) rustNegNames
     );
 
-  jack-keyboard = final.callPackage ./jack-keyboard { }; # virtual MIDI keyboard for JACK/PipeWire synth hosts
-
   # tmd-top: real-time per-IP network traffic monitor (TUI) — pinned textual 1.0.0
   # stack on python312, see packages/tmd-top/default.nix
   tmd-top = final.callPackage ./tmd-top { };
@@ -287,10 +282,6 @@ slimChunks
   # huebox: terminal theme editor (ratatui TUI) — live preview, line-level
   # push of the palette into the terminal config — see packages/huebox/default.nix
   huebox = rustSlim (final.callPackage ./huebox { });
-
-  # graf: terminal force-directed graph of markdown wikilinks (ratatui canvas +
-  # fdg-sim physics) — see packages/graf/default.nix
-  graf = rustSlim (final.callPackage ./graf { });
 
   # Code200x Unicode font family by James Kass — Code2000 (BMP), Code2001
   # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H).

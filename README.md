@@ -51,8 +51,8 @@
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
 - 🎨 **Beautiful Hyprland** - 18 workspaces, 8 scratchpads, custom pleamar shell
-- 📦 **149 Custom Packages** - Tailored tools for productivity and performance
-- 🧩 **Modular Architecture** - 26 domain modules with feature flags, 626 Nix files
+- 📦 **146 Custom Packages** - Tailored tools for productivity and performance
+- 🧩 **Modular Architecture** - 26 domain modules with feature flags, 618 Nix files
 - 🔄 **Local Gates** - pre-commit hook (`just lint`) plus `nix flake check -L`; no CI service runs this repo
 
 ---
@@ -85,8 +85,8 @@ sudo nixos-rebuild switch --flake .#trantor
 | 📁 Category | 🔢 Count | 📊 Progress |
 |-------------|----------|-------------|
 | **Module Domains** | 26 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Nix Files** | 626 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Custom Packages** | 149 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 618 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Custom Packages** | 146 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Module Files** | 362 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
 | **Total Commits** | 5200+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
@@ -565,7 +565,7 @@ Quick-access overlays for common applications:
 
 ## 🛠️ Custom Packages
 
-**149 Custom Packages** exposed by the flake — selected highlights:
+**146 Custom Packages** exposed by the flake — selected highlights:
 
 ### 🎮 Game
 Rust launcher wrapper in `packages/game/`:

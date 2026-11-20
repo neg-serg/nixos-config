@@ -14,11 +14,6 @@ in
     checkPhase = ":";
   });
 
-  # The nixie workbench: the login clock's tubes drawn off-screen on the GPU
-  # (packages/nixie/, run as `nixie validate|render|sweep`), so their geometry
-  # and their discharge can be checked without a compositor in the way.
-  nixie = call (pkg "nixie") { };
-
   # Candidate Nix build: nixpkgs' 2.35 + upstream #16244 + the nine
   # evaluation-speedup patches (see packages/nix-eval-patched/default.nix).
   # Deliberately not wired into `nix.package` — it is a measurement/candidate
