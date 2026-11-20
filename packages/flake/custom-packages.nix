@@ -126,18 +126,11 @@
   # which is how the render gate reaches the binary when it is not on PATH.
   pleamar = pkgs.pleamar;
 
-  # Animated nixie-tube renderer; also ships `nixie-metrics`, the screenshot
-  # measurer the A1..A7 acceptance criteria are stated in.
-  nixie = pkgs.nixie;
-
   # Theme pipeline (cargo tests run in the package checkPhase).
   pleamar-theme = pkgs.neg.pleamar-theme;
 
   # Developer harnesses (measure, describe-snap, smoke).
   pleamar-harness = pkgs.neg.pleamar-harness;
-
-  # D-Bus fixtures for the pleamar engine tests (MPRIS player, nested tray item).
-  pleamar-fixtures = pkgs.neg.pleamar-fixtures;
 
   dsh = pkgs.neg.dsh;
 
@@ -256,7 +249,6 @@
   wordcraft = pkgs.wordcraft; # Word-style word processor (.docx/.odt/.rtf) + converter CLI
   craft-anything = pkgs.craft-anything; # reverse-engineering workbench + rebuild assistant (GUI + CLI + MCP)
   sonda = pkgs.sonda; # file manager searching files by what they contain (EmbeddingGemma 2 on llama.cpp)
-  graf = pkgs.graf; # terminal force-directed graph of markdown wikilinks (TUI)
 
   # ArtCraft suite (on-demand roots: the launchers in
   # modules/user/nix-maid/apps/craft-apps.nix build these on first use).

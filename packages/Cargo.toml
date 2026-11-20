@@ -6,7 +6,6 @@ members = [
   "hwctl",
   "genlc-rs",
   "tidalctl",
-  "nixie",
   "nixbuild-status",
   "tint",
 ]

@@ -23,8 +23,8 @@ let
     rev = "32a44ef83877cf74f92edeb46030023ff3c948a1";
     hash = "sha256-QGv/s2RQfPHg3T2swSJuWEg5O2KjLNsRGW+3rpUcGTo=";
   };
-  # nova-tt (thread priority helpers) — needed by nn.ar (and other plugins
-  # that include nova-tt/thread_priority.hpp).
+  # nova-tt (thread priority helpers) — exposed for plugins that include
+  # nova-tt/thread_priority.hpp.
   novaTt = fetchFromGitHub {
     owner = "supercollider";
     repo = "nova-tt";
