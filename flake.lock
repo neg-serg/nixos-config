@@ -3,11 +3,11 @@
     "aurora-plugins-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795088351,
-        "narHash": "sha256-neNkDfuX+4+JaogDQ6X+QrMJeqiEYKgYhBvwo+Uq9+A=",
+        "lastModified": 1795173572,
+        "narHash": "sha256-v6GDWFBgWDz/bomEpbIUu6X6RqxFLMee/xMnreA4K4c=",
         "owner": "neg-serg",
         "repo": "aurora-plugins",
-        "rev": "f932b97028b880e4a0c2b9c0b8a26aa4d2f76c37",
+        "rev": "40eea82877884bdc09f50f286df2e0d41e852839",
         "type": "github"
       },
       "original": {
@@ -19,11 +19,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795171975,
-        "narHash": "sha256-rGAmDjR3WfLzcrVMgnM0hb4LD94/N/KoAMc+0XzDWgI=",
+        "lastModified": 1795173560,
+        "narHash": "sha256-bGVyjZh+KVNuEux+NIOmaQQ6bIF+t9RoZpK+5NH+roc=",
         "ref": "refs/heads/main",
-        "rev": "6d84baffe1f05d40c196ec3e6b846dc42f46fd28",
-        "revCount": 1259,
+        "rev": "c569ab5932340d6efafef5e15c48d86962658b81",
+        "revCount": 1263,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
