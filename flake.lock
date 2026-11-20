@@ -19,11 +19,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795088479,
-        "narHash": "sha256-9ljpI93DLZrw1TlQeFGfamDT2hvWH3bmB4bxmq0W/KA=",
+        "lastModified": 1795095064,
+        "narHash": "sha256-kXOpY15Wf/x9MKlJVAyXbK03/e8lDgybbNB8ge7JAUE=",
         "ref": "refs/heads/main",
-        "rev": "5ab1ef4cc6df0322f2595b81660801bb634cc034",
-        "revCount": 1246,
+        "rev": "20408620dd476f5fcdd8166bd4590405cc1f3ac7",
+        "revCount": 1247,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -60,11 +60,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1794911102,
-        "narHash": "sha256-GhBFO8YTghugWlNZRXs5VdyYXo4didsxhF6riupbBhA=",
+        "lastModified": 1795114408,
+        "narHash": "sha256-lzJh3VbLfCoct5hMn31j4dv5tox250stl0YKD6OdAAQ=",
         "ref": "refs/heads/main",
-        "rev": "c1e99c33bf1654849b1c42926c5e93e9ce61afa0",
-        "revCount": 147,
+        "rev": "6c12d12698147403da7b05164e960b8158fd28cb",
+        "revCount": 149,
         "type": "git",
         "url": "https://codeberg.org/wvhulle/bootvine"
       },
@@ -922,11 +922,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795046558,
-        "narHash": "sha256-UpNKNDL7ztdlVrUMaoxxylYuB8RElVuG47WL/do8pdk=",
+        "lastModified": 1795132945,
+        "narHash": "sha256-SlAtSmtqZpWWQduEely2kcr44sa3wSV/qhGx+/7ekSQ=",
         "owner": "nix-community",
         "repo": "neovim-nightly-overlay",
-        "rev": "3888eebc37811d35dfe4dd17c0c136635c4e3fc9",
+        "rev": "28534684d592b1bd7f82399607ca3588ee4a8c48",
         "type": "github"
       },
       "original": {
@@ -938,11 +938,11 @@
     "neovim-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795030039,
-        "narHash": "sha256-Yn4v5GqZubIGGLVRupm1H2GcJvRYDvJDdm6hp78BQ4c=",
+        "lastModified": 1795082216,
+        "narHash": "sha256-v7S8jpoZ6u9LZMaCHYqBnK+m8aNbsx+HHGWpKJ0p9iY=",
         "owner": "neovim",
         "repo": "neovim",
-        "rev": "d9a842e291ae481a0fc281aaac08e89aaba432d4",
+        "rev": "2843068c7a9c78c206189c37b53cdb6f464e57ae",
         "type": "github"
       },
       "original": {
