@@ -2,6 +2,7 @@
   pkgs,
   lib,
   neg,
+  config,
   ...
 }:
 let
@@ -135,6 +136,57 @@ let
     XDG_TEMPLATES_DIR="$HOME/.local/templates"
     XDG_VIDEOS_DIR="$HOME/vid"
   '';
+
+  # Desktop entries that give a window its icon.
+  #
+  # A launcher or a window switcher finds an application's icon by matching the
+  # window class to a desktop entry: vicinae's Switch Windows view
+  # (`vicinae://launch/wm/switch-windows`, M1+g / Alt+Tab) matches the class
+  # against every entry's `StartupWMClass` and then its id
+  # (src/server/src/builtins/wm/switch-windows-view-host.cpp), and paints a
+  # generic icon when nothing matches. `kitty.desktop` cannot answer for a kitty
+  # started with `--class`, so the `term` and `nwim` windows and the teardown pad
+  # (`--class teardown`, btop inside) need an entry of their own, named after the
+  # class. `NoDisplay` keeps them out of the application lists; `Exec` repeats the
+  # command the Hyprland binds launch (files/gui/hypr/hyprland.lua), so activating
+  # an entry from a picker does what the key does.
+  windowClassApps = {
+    term = {
+      name = "Terminal";
+      comment = "kitty on the term workspace";
+      exec = "kitty --class term";
+      icon = "kitty";
+    };
+    nwim = {
+      name = "Neovim";
+      comment = "Neovim in kitty (the v wrapper)";
+      exec = "kitty --class nwim -e ${config.lib.neg.homeDir}/.local/bin/v";
+      icon = "nvim";
+    };
+    teardown = {
+      name = "btop";
+      comment = "System monitor and the live kernel log (the teardown pad)";
+      exec = "kitty-glass --class teardown --session ${config.lib.neg.homeDir}/.config/kitty/teardown.session";
+      icon = "btop";
+    };
+  };
+
+  windowClassFiles = lib.mapAttrs' (
+    class: app:
+    lib.nameValuePair ".local/share/applications/${class}.desktop" {
+      text = ''
+        [Desktop Entry]
+        Type=Application
+        Name=${app.name}
+        Comment=${app.comment}
+        Exec=${app.exec}
+        Icon=${app.icon}
+        Terminal=false
+        NoDisplay=true
+        StartupWMClass=${class}
+      '';
+    }
+  ) windowClassApps;
 in
 {
   config = lib.mkMerge [
@@ -163,23 +215,26 @@ in
         };
       };
     }
-    (neg.mkHomeFiles {
-      ".config/mimeapps.list".text = mimeAppsList;
-      ".config/user-dirs.dirs".text = userDirs;
+    (neg.mkHomeFiles (
+      {
+        ".config/mimeapps.list".text = mimeAppsList;
+        ".config/user-dirs.dirs".text = userDirs;
 
-      ".local/share/applications/yazi.desktop".text = ''
-        [Desktop Entry]
-        Type=Application
-        Name=Yazi
-        GenericName=File Manager
-        Comment=Terminal file manager (opens in kitty)
-        Exec=kitty yazi %f
-        Icon=system-file-manager
-        Terminal=false
-        Categories=System;FileManager;
-        MimeType=inode/directory;
-        Keywords=files;folders;manager;
-      '';
-    })
+        ".local/share/applications/yazi.desktop".text = ''
+          [Desktop Entry]
+          Type=Application
+          Name=Yazi
+          GenericName=File Manager
+          Comment=Terminal file manager (opens in kitty)
+          Exec=kitty yazi %f
+          Icon=system-file-manager
+          Terminal=false
+          Categories=System;FileManager;
+          MimeType=inode/directory;
+          Keywords=files;folders;manager;
+        '';
+      }
+      // windowClassFiles
+    ))
   ];
 }
