@@ -19,11 +19,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795235295,
-        "narHash": "sha256-cruBtVtujiVwDAZQYlcyBBfXItSiaJ8ZzSzd4OYJaWg=",
+        "lastModified": 1795264294,
+        "narHash": "sha256-VzIV4aIMOWbpZ8tLpv1W+ihaQIrEcFBCGIkPNTUZAGQ=",
         "ref": "refs/heads/main",
-        "rev": "c6dc332f0b412d467f00273528faf2e0e7c77194",
-        "revCount": 1288,
+        "rev": "1ff6dcf09aa3b3b78b44cbe5bddd16c76566f027",
+        "revCount": 1394,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -1280,11 +1280,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795216288,
-        "narHash": "sha256-GbSWuDTOcWsdBHq+VaMf2VQHPh9x3ncWm/sv8MV79Qs=",
+        "lastModified": 1795257042,
+        "narHash": "sha256-4Jt5QN9NPLVcS6QCg4HDn9GGWZXzsiE8oPjVWCPuJHU=",
         "owner": "k4ditano",
         "repo": "pleamar-wm",
-        "rev": "45722a4f385d46c7a5b5dcf0df2d54eabd231e17",
+        "rev": "e3d122017725029178c56bbda650919eb24a2ad8",
         "type": "github"
       },
       "original": {
