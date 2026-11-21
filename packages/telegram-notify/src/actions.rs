@@ -28,7 +28,7 @@ use std::time::Instant;
 use crate::shared::json::{self, Value};
 use crate::{env_or, Api, DEFAULT_CURL};
 
-const DEFAULT_LLM_MODEL: &str = "qwen3-vl-8b-abliterated";
+const DEFAULT_LLM_MODEL: &str = "vision";
 const DEFAULT_HOME: &str = "/home/neg";
 const DEFAULT_RT_PY: &str = ".dsh/skills/rutracker/scripts/.venv/bin/python";
 const DEFAULT_RT_SCRIPT: &str = ".dsh/skills/rutracker/scripts/rt.py";

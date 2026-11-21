@@ -20,7 +20,7 @@ Roles and models (all overridable):
 
   planner   qwen3.8-27b-abliterated  text only: turns the goal into <=5 steps
   actor     gui-owl-4b             sees the screenshot, picks ONE action
-  verifier  qwen3-vl-8b-abliterated  checks progress every --verify-every
+  verifier  vision                  checks progress every --verify-every
 
 The actor returns JSON: {thought, action, x, y, text, key, reason}, with
 x/y normalized to 0-1000 over the screenshot for the Qwen3-VL/Qwen2-VL GUI
@@ -794,7 +794,7 @@ def main() -> int:
     runp.add_argument("--max-steps", type=int, default=12)
     runp.add_argument("--act-model", default="gui-owl-4b")
     runp.add_argument("--plan-model", default="qwen3.8-27b-abliterated")
-    runp.add_argument("--check-model", default="qwen3-vl-8b-abliterated")
+    runp.add_argument("--check-model", default="vision")
     runp.add_argument("--coord-space", choices=["normalized", "absolute"], default="normalized")
     runp.add_argument("--verify-every", type=int, default=3)
     runp.add_argument("--replan", action="store_true")
@@ -822,7 +822,7 @@ def main() -> int:
     batchp.add_argument("--file", action="append", default=None)
     batchp.add_argument("--dir", action="append", default=None)
     batchp.add_argument("--expect", default=None)
-    batchp.add_argument("--check-model", default="qwen3-vl-8b-abliterated")
+    batchp.add_argument("--check-model", default="vision")
     batchp.add_argument("--dialog-app", default="xdg-desktop-portal-gtk")
     batchp.add_argument("--attach-xy", default="44,976",
                         help="normalized x,y of the attach control in the chat")

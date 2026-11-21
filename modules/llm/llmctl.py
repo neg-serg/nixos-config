@@ -31,24 +31,6 @@ STATE = os.path.expanduser("~/.local/state/llmctl")
 # Measured on trantor 2026-11-05: chem = six olympiad problems (13 values),
 # lean = seven core-Lean theorems (7 tasks).
 CATALOG = {
-    "gemma4-26b-abliterated": {
-        "aliases": ["gemma4", "gemma4-26b"],
-        "role": "26B-A4B MoE, creative",
-        "ctx": "32k",
-        "size": "12 GB",
-        "chem": "12/13",
-        "lean": "2/7",
-        "fp": "3.0/6",
-    },
-    "qwen3-vl-8b-abliterated": {
-        "aliases": ["vision-fast", "vision-8b", "qwen3-vl-8b"],
-        "role": "fast vision (8B) / chemistry",
-        "ctx": "64k",
-        "size": "5 GB",
-        "chem": "13/13",
-        "lean": "0/7",
-        "fp": "-",
-    },
     # Ornith-1.5 (MIT, released 2026-08-18): qwen35 family, tool calls and
     # vision. The 9B is the fast tier on the 16 GB card, the 35B-A3B (3B
     # active) is the coding agent tier on the 7900 XTX box, weights local.
@@ -201,15 +183,6 @@ CATALOG = {
         "chem": "-",
         "lean": "-",
         "fp": "-",
-    },
-    "qwen3.8-flash-next-abliterated": {
-        "aliases": ["qwen3.8-flash", "next"],
-        "role": "180B-A6B MoE, next tier",
-        "ctx": "128k",
-        "size": "78 GB",
-        "chem": "13/13",
-        "lean": "7/7",
-        "fp": "6.0/6*",
     },
     "ui-tars-1.5-7b": {
         "aliases": ["uitars", "ui-tars"],
@@ -1048,8 +1021,8 @@ def bench_lean(models):
                         # Thinking has to be off: the cap is 2000 tokens and a
                         # thinking tier spends all of them on thoughts, so the
                         # reply carries no code at all (measured: 2/7 with
-                        # thinking on, 7/7 off on qwen3.8-flash-next). The
-                        # bench grades compiled code, not prose.
+                        # thinking on, 7/7 off on a thinking tier). The bench
+                        # grades compiled code, not prose.
                         extra={
                             "chat_template_kwargs": {"enable_thinking": False}
                         },
@@ -1412,15 +1385,12 @@ COMMIT_CASES = [
 
 # The default commit-writer set, measured 2026-11-09 and re-run 2026-11-11 (9
 # real diffs; totals of 90 under the 0-10 rubric): qwen3.8-27b 81.2,
-# qwen3.8-4b 76.9, qwen3-vl-8b 73.9, gemma4 70.8. The 27B is the quality tier
-# and stays the pick when it is already resident; the 4B is the dedicated
-# writer (COMMIT_DEFAULT_MODEL, `commit` alias) and the 8B vision model left
-# this lane with the 2026-11-11 change — it is the image tier only now.
-# devstral left the fleet on 2026-11-11 with its weights; its 76.5 stands as
-# the recorded score, the remaining three keep the comparison.
+# qwen3.8-4b 76.9. The 27B is the quality tier and stays the pick when it is
+# already resident; the 4B is the dedicated writer (COMMIT_DEFAULT_MODEL,
+# `commit` alias). The 8B vision model (73.9) and Gemma 4 26B (70.8) left the
+# fleet on 2026-11-21, so their scores are history, not candidates.
 COMMIT_MODELS = [
     "qwen3.8-4b",
-    "gemma4-26b-abliterated",
     "qwen3.8-27b-abliterated",
 ]
 
@@ -2202,8 +2172,6 @@ COMMIT_REUSE = {
     "qwen3.8-27b-abliterated",
     "qwen3.8-27b-bartowski",
     "qwen3.8-27b-unsloth",
-    "qwen3.8-flash-next-abliterated",
-    "gemma4-26b-abliterated",
 }
 
 

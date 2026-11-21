@@ -40,26 +40,13 @@
 #   2026-11-05 (358 GB back on `zero`). The empty `/zero/ai/glm52_i4` directory
 #   stays: `/zero/ai` is root-owned, so unlinking it needs root.
 #
-# ### llama-server (qwen3-vl vision, Vulkan/RADV)
-#
-# - Module: `modules/llm/llama-server.nix`
-# - Engine: `pkgs.llama-cpp-vulkan`, GPU-backed (RX 9070 XT, RADV).
-# - Role: local vision engine for the `vision-review` skill — images never leave the machine.
-# - Model dir: `/zero/ai/llama` (qwen3-vl-8b GGUF + mmproj) — on the `zero` ZFS pool, never on
-#   system disks.
-# - Deliberately not auto-started; start on demand:
-#       systemctl start llama-server          # 8b on 127.0.0.1:8080
-#       /zero/ai/llama/start-llama-server.sh  # same, manual run (optional port/model args)
-#
 # ### llama-swap (one OpenAI-compatible endpoint, 127.0.0.1:9292)
 #
 # - Module: `modules/llm/llama-swap.nix`; the `model` field selects a backend,
 #   one model is resident at a time (16 GB VRAM, ~4 GB of it is the desktop).
-# - Every model the router serves is uncensored: abliterated Gemma 4 26B
-#   (Q3_K_M), Qwen3-VL-8B and the Qwen tiers. The base Gemma/Qwen
-#   weights and
-#   the censored ollama peers were removed — aligned models refuse too much for
-#   this stack. Base files still lie on disk until they are deleted.
+# - Every model the router serves is uncensored: the abliterated Qwen3.8-27B
+#   tiers and the Inkling quants. Aligned weights and the censored ollama
+#   peers refuse too much for this stack.
 # - Idle backends are unloaded after `globalTTL` 60 s, and the game guard
 #   unloads them at once when a game starts. The heavy `vision` slot frees
 #   itself after 30 s (`ttl`), and `llmctl unload` clears the card on demand:
@@ -73,30 +60,21 @@
 #   the pages are reclaimable — `llmctl prewarm --check` reports the current
 #   residency without reading anything. The gguf paths come from the live
 #   llama-swap config, so they cannot drift from llama-swap.nix.
-# - One model is resident at a time. All of them fit the 16 GB card except the
-#   streaming tier (Qwen3.8-Flash-Next); the 8B vision unit on :8080 is
-#   separate and started by hand.
+# - One model is resident at a time, and every local tier fits the 16 GB card
+#   whole now that the 180B streaming tier is gone; the 24 GB tiers are proxied
+#   to the other box.
 # - Vulkan (`pkgs.llama-cpp-vulkan`) is the fast path on gfx1201; `--cpu-moe`
 #   is a trap here (3-8 tok/s).
-# - Models (quant, measured on 2026-11-05):
+# - Models (2026-11-21; the local column is the card, the remote column the
+#   7900 XTX box):
 #
-#   | model        | weights                                  | ctx | VRAM  | tok/s |
-#   | ------------ | ---------------------------------------- | --- | ----- | ----- |
-#   | gemma4-26b   | Gemma-4-26B-A4B-abliterated Q3_K_M (MoE)  | 32k | 16.2G | 105-110 |
-#   | qwen3-vl-8b  | Qwen3-VL-8B-abliterated Q4 + mmproj      | 64k | 14.8G | 45    |
-#   | qwen3.8-27b  | Qwen3.8-27B-abliterated IQ3_S (dense)    | 32k | 13.8G | 30-36 |
-#   | vision-27b   | same IQ3_S + bf16 mmproj                 | 16k | 15.3G | 37.9  |
-#   | qwen3.8-next | Qwen3.8-Flash-Next abl-v2 IQ3_S          | 128k| 6.0G  | 5.9   |
-#   | qwen3.8-next-strata | same IQ3_S on Strata (HIP)         | 32k | 9.1G + 27G RAM | 30-50 |
-#
-#   `qwen3.8-next-strata` (`strata` alias) is the same weights on Strata's
-#   expert-offload engine instead of llama.cpp: 30-50 tok/s decode, a 4k
-#   prompt in ~5 s, 16k in ~12 s, 69% prompt reuse over a six-turn agent
-#   session (2026-11-17, see /zero/strata/README.md for both benchmark
-#   reports). It costs 27 GiB of pinned RAM, holds 32k of context, serves no
-#   images, and handles one request at a time, so `next` stays the deep-context
-#   tier. The engine lives outside Nix; the slot wrapper and the GC-root note
-#   are in llama-swap.nix.
+#   | model            | weights                              | ctx | VRAM  | tok/s      |
+#   | ---------------- | ------------------------------------ | --- | ----- | ---------- |
+#   | qwen3.8-27b      | Qwen3.8-27B-abliterated IQ3_S (dense)| 32k | 13.8G | 30-36      |
+#   | vision-27b       | same IQ3_S + bf16 mmproj             | 16k | 15.3G | 37.9       |
+#   | inkling-2-mini   | Inkling-2-Mini IQ3_XXS + mmproj      | 32k | 16.0G | 27.4       |
+#   | inkling-2-mini-q3| same weights at Q3_K_XL              | 16k | 16.2G | 19.2       |
+#   | inkling-2-mini-q4| same weights at Q4_K_XL + DSpark     | 32k | remote| 46-58      |
 #
 # - `qwen3.8-27b-abliterated` (`ru` alias) is the quality tier: dense 27B at
 #   ~3.5 bpw, the highest bits-per-weight served here. Dense KV is expensive,
@@ -113,9 +91,8 @@
 #   GiB). The 27B is hybrid attention, so the KV is small and the window is
 #   not what costs — the image graph and the projector are. Measured warm on
 #   a 963-token screenshot: 9.5 s, 753 tok/s prefill, 37.9 tok/s decode.
-#   The 8B Qwen3-VL stays as `vision-fast` (2.8 s, 93 tok/s, 64k) and reads
-#   the same image with a neutral prompt, but refused the structured
-#   "list the table rows verbatim" request — that is why the alias moved.
+#   The 8B Qwen3-VL that held `vision-fast` was removed on 2026-11-21 with the
+#   rest of the retired tiers; the alias now points at ornith-1.5-9b.
 #   Why the 27B: it is the only bigger vision model that fits next to the
 #   desktop — the removed 30B-A3B needs 11.04 GB at IQ3_XXS plus a 1.01 GB
 #   projector and ~1.6 GiB of KV, i.e. ~17.3 GiB.
@@ -149,39 +126,25 @@
 #   (`pgrep -f 'RCT[C]lassic'`) — or any spelling without the literal token —
 #   when benching or driving models while Steam is open.
 #   The detection itself lives in `modules/llm/llama-swap.nix`.
-# - `gemma4-26b` is text-only (the projector does not fit next to 12.5 GB of
-#   weights); `qwen3.8-27b-vision` serves images as the `vision` alias and
-#   `qwen3-vl-8b-abliterated` is the `vision-fast` path.
+# - `qwen3.8-27b-vision` serves images as the `vision` alias; `vision-fast`
+#   points at ornith-1.5-9b, and Inkling carries its own projector.
 # - `qwen3.8-4b` (`commit`, `commit-4b` aliases) is the commit-message
 #   writer: a full-parameter distillation of the 180B Qwen3.8 teacher into
 #   the Qwen3.5-4B architecture, 2.8 GB Q4_K_M at 16k. It costs +3.1 GiB of
 #   VRAM next to a 10.9 GiB Steam desktop, so it loads beside a running
 #   session instead of evicting it. Measured 2026-11-11 on nine real diffs
 #   (`llmctl bench commit`): 76.9/90 at ~1.3 s and ~127 tok/s decode — better
-#   than the 8B Qwen3-VL it replaced in this lane (73.9) at a third of the
+#   than the 8B that used to serve this lane (73.9) at a third of the
 #   weights, behind the 27B (81.2) that stays the quality pick when it is
 #   already resident. The slot runs `--reasoning off`: the distill thinks by
 #   default and a caller that cannot read `reasoning_content` would wait for
 #   thoughts it never sees. `llmctl commit` defaults to this tier, and
 #   `--model auto` reuses a resident model only when it is a writer — the
 #   vision, OCR, GUI-agent and k8s slots are the wrong tool even warm.
-# - `qwen3.8-flash-next-abliterated` (`qwen3.8-flash`, `next` aliases) is the
-#   next tier: 78 GB split GGUF (Swift IQ3_S of the huihui v2 abliteration;
-#   pass the -00001 shard), 180B total but 6B active, 262k-native. Four layers
-#   on the card (~4.8 GiB buffer, 8.1 GiB total with the desktop), the rest
-#   mmap'd from `/zero`. Measured 2026-11-05: 5.9 tok/s decode on a cold page
-#   cache. `--reasoning off` is mandatory — it thinks by default and returns an
-#   empty `content`. The repo also ships an mmproj, so vision can be added
-#   without another model. It is also the core-Lean tier: 7/7 on
-#   `llmctl bench lean` (2026-11-05), the only streaming model that solved all
-#   seven tasks, so route Lean work here.
 # - Context is cheap where only part of the layers keep keys: moving 32k -> 64k
 #   cost <200 MB with q8_0 KV, and `-ub 1024` bought +29% prefill.
 #   MTP speculation was tested and rejected: slower (46 vs 65 tok/s) and it
 #   answers wrong on quantized targets (llama.cpp issue #25618).
-# - The Gemma command starts with `--fit off`: auto-fit reads the
-#   VRAM of the model being swapped out as free, offloads a few layers, and
-#   gemma4 then crashes on the first request.
 # - The ollama store still holds base models for `rag-search`; the router does
 #   not expose them.
 #
@@ -344,11 +307,10 @@
 #
 # - `/zero/ai/ollama` — Ollama model store (32 GB, 3 tags: qwen3.8 27b,
 #   qwen3-vl-abliterated 8b, qwen3-embedding)
-# - `/zero/ai/llama` — llama.cpp GGUFs (250 GB): qwen3-vl-8b, qwen3.8-27B,
-#   the abliterated set (Gemma 26B IQ3, Qwen3.8-27B IQ3, Qwen3-VL-8B),
-#   Qwen3.8-Flash-Next IQ3_S (78 GB, two shards
-#   in `qwen38-flash-next-iq3s/`), the Lean prover (oprover), the OCR tiers
-#   and the small specialists. The `mxfp4/` pair (gpt-oss-20b Q4_K_M,
+# - `/zero/ai/llama` — llama.cpp GGUFs: Qwen3.8-27B IQ3_S, the two Inkling
+#   quants with their projector (`inkling-2-mini/`), the Lean prover
+#   (oprover), the OCR tiers and the small specialists. The `mxfp4/` pair
+#   (gpt-oss-20b Q4_K_M,
 #   Swift-1.5 27B MXFP4 + mmproj) is hardlinked into
 #   `gyro-coder/mxfp4` — the share keeps that directory name — for the
 #   24 GB box. The Gyro-Coder 125B tier left the fleet on 2026-11-16 and its
@@ -362,7 +324,10 @@
 #   Qwen3.6-35B, Qwen3.5-4B and MegaSciMoE-1.2B were deleted on 2026-11-08
 #   (16 GB) and their router entries are gone with them. The gpt-oss-120b
 #   MXFP4 weights (63 GB on disk) went the same way on 2026-11-10, when the
-#   RAM tier left the fleet. The same pass removed the abliteration
+#   RAM tier left the fleet. On 2026-11-21 the last three retired tiers left
+#   with their weights: Qwen3-VL-8B (4.7 GB), Gemma 4 26B Q3_K_M (12 GB) and
+#   Qwen3.8-Flash-Next IQ3_S (78 GB, with the Strata tree under /zero/strata).
+#   The same pass removed the abliteration
 #   experiment's Qwen3.5-VL base (52 GB), the censored Qwen3-VL-8B pair
 #   (5.8 GB) and the unused DeepThought-STEM (5.3 GB) and qed-nano (4 GB).
 # - `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
@@ -475,7 +440,7 @@ in
           "d /zero/ai 0755 root root -"
           "d /zero/ai/ollama 0770 ollama ollama -"
           "Z /zero/ai/ollama 0770 ollama ollama -"
-          # llama-server (qwen3-vl GGUF) model store — main user manages files
+          # llama.cpp / llama-swap model store — main user manages files
           "d /zero/ai/llama 0755 ${config.users.main.name} ${config.users.main.name} -"
         ];
         # tmpfiles refuses paths under /zero/ai: /zero is owned by neg, so the

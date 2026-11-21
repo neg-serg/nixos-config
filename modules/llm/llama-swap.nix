@@ -2,9 +2,7 @@
 # stack. The `model` field of a request selects the backend: llama-swap starts
 # it (or proxies to it) and shuts the previously running one down; an idle
 # backend is unloaded after `globalTTL` (60 s) or the model's own `ttl`. Small
-# models fit the 16 GB card whole; the RAM tier (qwen3.8-flash) mmaps most
-# weights from /zero. The 8B vision unit on
-# :8080 is manual and separate.
+# models fit the 16 GB card whole; the 24 GB remote tiers are proxied.
 # Clients use http://127.0.0.1:9292/v1.
 #
 # The per-model units stay available for manual use, but do not run them while
@@ -23,10 +21,8 @@ let
   enabled = config.lib.neg.enabled "llm";
 
   # Models live on the zero ZFS pool, never in the store (multi-GB files).
-  # Anything that fits the 16 GB card is served whole; the RAM tiers keep only
-  # a few layers on the card and mmap the rest from /zero. The 30B vision
-  # weights (18 GB) were removed on 2026-11-06; the manual llama-server unit
-  # serves the 8B model on :8080.
+  # Anything that fits the 16 GB card is served whole; the remote tiers run on
+  # the 7900 XTX box and are proxied, never loaded here.
   modelDir = "/zero/ai/llama";
   llamaVulkan = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
   # Inkling-2-Mini is the only model here that needs a llama.cpp newer than
@@ -35,16 +31,6 @@ let
   # a second binary so the rest of the stack stays on the stable build.
   llamaInkling = lib.getExe' pkgs.llama-cpp-inkling "llama-server";
 
-  # Vision model (Vulkan/RADV): abliterated Qwen3-VL-8B — the base build
-  # refuses too much for this stack. 64k of the 262k-native window: all 36
-  # layers are full attention with 8 KV heads x 128 dims, so the KV is
-  # ~78 KB/token at q8_0 — 64k costs ~4.8 GiB and leaves ~1.1 GiB of VRAM next
-  # to the desktop, where 32k left 3.5 GiB sitting idle. Images eat thousands
-  # of tokens, so the window is what the model is for. ~45 tok/s. Checked with
-  # a real image plus ~50k tokens of text: 49,836 prompt tokens, 1763 tok/s
-  # prefill, both shapes and colours read correctly. Text is fine too: the code
-  # K7Q-42 was read correctly from a rendered image, with and without 31.6k
-  # tokens of text in front of it (2229 tok/s prefill).
   # Ornith-1.5-9B (MIT) — the same qwen35 family as the 27B, so the installed
   # llama.cpp already serves it. 5.4 GB of weights + 0.9 GB projector leave
   # room for a wide KV on the 16 GB card; 32k is the practical agent window.
@@ -74,11 +60,10 @@ let
   #
   # The price is speed, and it is the looped graph, not the card: layers 6-17
   # run three times, so the model costs ~3x the layer compute of a same-size
-  # plain MoE. For scale, on the same 7.5k prompt and this box: gemma4-26b
-  # prefills at 3701 t/s and decodes 114.8, qwen3.8-27b at 1051 / 37.9, and the
-  # 9B ornith at 3671 / 88.5 (whole-fleet probe, 2026-11-21). What it buys on
-  # the fleet's own tasks: chem 13/13, fp 6.0/6, Lean 5/7 — tied with the 180B
-  # on the first two, second behind it (7/7) on Lean.
+  # plain MoE. For scale, on the same 7.5k prompt and this box: qwen3.8-27b
+  # prefills at 1051 t/s and decodes 37.9, the 9B ornith at 3671 / 88.5
+  # (fleet probe, 2026-11-21). What it buys on the fleet's own tasks:
+  # chem 13/13, fp 6.0/6, Lean 5/7 — the top two scores in the catalog.
   #
   # `inkling` is the IQ3 tier on purpose — the prefill is what any prompt over a
   # few hundred tokens feels, and it is 7x. An agent loop over a 20k prompt is
@@ -104,14 +89,6 @@ let
       --host 127.0.0.1 --port ''${PORT} \
       -c 16384 -np 1 --flash-attn on --fit off --jinja \
       --reasoning-effort low
-  '';
-
-  vision8b = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/abliterated/Qwen3-VL-8B-abliterated-Q4_K_M.gguf \
-      --mmproj ${modelDir}/abliterated/mmproj-qwen3-vl-8b-ablit-f16.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -c 65536 -np 1 --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 --jinja
   '';
 
   # PaddleOCR-VL-1.6 (0.47B, Apache-2.0) — document parsing: layout, tables,
@@ -157,109 +134,6 @@ let
       -c 8192 -np 1 --embeddings --pooling last
   '';
 
-  # Gemma 4 26B A4B — the MoE tier (25.2B total, 3.8B active), abliterated.
-  # Q3_K_M on purpose: the IQ3_S build loops on multi-step prompts at greedy
-  # decoding — a cold prefill falls into a repetition basin (the same prompt
-  # with a warm prefix solves fine); repeat-penalty/DRY only mask it. Q3_K_M
-  # does not loop: a chemistry olympiad and a math problem both finish,
-  # ~105 tok/s at 32k. VRAM is tight (~16.2 GiB with the desktop open); if it
-  # spills, drop -c to 16384. Text-only, the Qwen3-VL above handles images.
-  # The base QAT/Q3 weights are gone: everything served here is uncensored.
-  # `--fit off` is required: with auto-fit, the VRAM still held by the model
-  # being swapped out makes llama.cpp silently offload a few layers, and a
-  # partially offloaded gemma4 backend dies on the first request.
-  gemma26b = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/abliterated/Gemma-4-26B-A4B-abliterated-Q3_K_M.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -c 32768 -np 1 --flash-attn on --fit off --reasoning off \
-      --cache-type-k q8_0 --cache-type-v q8_0 --jinja
-  '';
-
-  # Qwen3.8-Flash-Next abliterated v2 (Swift IQ3_S, 78 GB in two shards, split
-  # GGUF: point llama.cpp at -00001). 180B total but only 6B active: 48 layers
-  # of ~0.95 GiB (the hot set, ~45 GiB; a token reads ~0.82 GiB of it — 10 of
-  # 512 experts across 48 layers) plus a 26.8 GiB per-token embedding table
-  # (320M rows, one row touched per token, so it stays cold). Four layers stay
-  # on the card (~4.8 GiB buffer, 8.1 GiB with the desktop), the rest is mmap'd
-  # from /zero. Measured 2026-11-05 with `llama-bench` (tg64, q8_0 KV, fa on):
-  # decode 4.6 tok/s cold / 7.7 warm at -ub 512, 8.4-9.1 at -ub 1024; prefill
-  # (pp1024) 80 tok/s at -ub 512, 133 at -ub 1024. `-ub 2048` is a trap (41
-  # tok/s) and `-ngl` 8/10 buys nothing (7.6/7.4 warm): decode is bound by
-  # reading expert weights from RAM, not by GPU compute. Speculative decoding
-  # does not pay either — a Qwen3.5-4B draft (same 248320 vocab) costs 9%
-  # because acceptance is low, `--spec-type ngram-simple` is noise, and
-  # `draft-mtp` is rejected (no MTP head in this GGUF).
-  #
-  # Context is 128k of the 262k native window. The KV is cheap because only
-  # the 12 full-attention layers keep keys (`full_attention_interval` 4, 2 KV
-  # heads x 256 dims), so q8_0 costs ~4 GiB at 128k, ~8 GiB at 262k, and a
-  # fully used 262k window would need a ~33 min prefill at 133 tok/s — not
-  # usable. Depth does not slow decode down (tg32: 8.4 at d32768 vs 9.1 at
-  # d8192), and 128k idles at 9.9 GiB VRAM with the desktop, ~6 GiB of
-  # headroom (the game guard unloads the model before a game anyway).
-  #
-  # Thinking is ON: xhigh effort, 4096-token budget, thoughts moved to
-  # `reasoning_content` by `--reasoning-format deepseek` (without it the reply
-  # arrives with an empty `content`). What it buys is planning, not chemistry.
-  # `llmctl bench fp`: 6.00/6 with thinking against 3.40/6 pinned off — every
-  # case exact, ~24 min for the six (F3 alone 10 min), and the best score in
-  # the fleet (the next best model is 4.4/6). Without thinking the same model
-  # rebuilds spared dependents and misses the waves. The hard phosphorus task,
-  # by contrast, is 5/5 either way (568 s off, 823 s on), so the earlier
-  # "never finishes without thinking" note was an artefact of service restarts.
-  # The 128k window was checked with a needle at 93,907 tokens: found, 87 tok/s
-  # prefill (18 min), 5.9 tok/s decode at that depth. Planning survives depth
-  # too: the F6 build-plan case buried in 22,855 tokens still scores 1.00
-  # (10 min, 1.8k tokens), where the 120B drops to 0.70. The budget keeps a hard
-  # prompt from running 20+ minutes at ~8 tok/s;
-  # clients can opt out per request with
-  # `chat_template_kwargs: {"enable_thinking": false}`.
-  qwen38next = ''
-    ${llamaVulkan} --device Vulkan0 \
-      -m ${modelDir}/abliterated/qwen38-flash-next-iq3s/Swift-Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf \
-      --host 127.0.0.1 --port ''${PORT} \
-      -ngl 4 -c 131072 -np 1 --flash-attn on --fit off --jinja \
-      --cache-type-k q8_0 --cache-type-v q8_0 -ub 1024 \
-      --reasoning-format deepseek --reasoning-effort xhigh \
-      --reasoning-budget 4096
-  '';
-
-  # Qwen3.8-Flash-Next on Strata (`strata` slot): the engine is built outside
-  # Nix under /zero/strata (HIP gfx1201, source build; README there has the
-  # numbers and the rebuild recipe), so this wrapper is the only part of that
-  # tree the system knows about. Strata's serve.server is started in its own
-  # session: a llama-swap stop takes the whole group down, because the Python
-  # server does not reap its engine child on every signal.
-  # The engine's RUNPATH points at ROCm store paths (hipblas, rocblas,
-  # hipblaslt); /zero/strata/env-root is the GC root that keeps them alive.
-  strataPython = pkgs.python3.withPackages (
-    ps: with ps; [
-      ps.numpy
-      ps.jinja2
-      ps.pyyaml
-      ps.tqdm
-      ps.requests
-      ps.pillow
-      ps.psutil
-      ps.regex
-    ]
-  );
-  strataBackend = pkgs.writeShellScript "strata-backend" ''
-    set -u
-    # llama-swap only exports PORT when it appears in cmd; the argument wins.
-    port="''${1:-''${PORT:-}}"
-    [ -n "$port" ] || { echo "strata-backend: no port given" >&2; exit 2; }
-    export STRATA_PLE_AUTO_RAM=0          # the 27 GB n-gram table stays on the SSD
-    cd /zero/strata/src || exit 1
-    ${pkgs.util-linux}/bin/setsid ${strataPython}/bin/python3 -m serve.server \
-      --engine strata \
-      --config /zero/strata/strata-iq3s-32k.json \
-      --port "$port" &
-    srv=$!
-    trap 'kill -TERM -- -"$srv" 2>/dev/null; wait "$srv" 2>/dev/null; exit 0' TERM INT
-    wait "$srv"
-  '';
   # OProver-8B (Apache-2.0) — Qwen3-8B continued-pretrained and RL'd on Lean 4
   # (the OProofs corpus). It is trained for the agentic loop: retrieve verified
   # proofs, attempt, read the compiler error, repair — so it wants Lean
@@ -312,10 +186,10 @@ let
 
   # The `vision` tier: same IQ3_S weights, plus the bf16 projector and a
   # smaller window (see the note above). Warm numbers on that screenshot:
-  # 9.5 s, 753 tok/s prefill, 37.9 tok/s decode. The 8B `vision-fast` is much
-  # faster (2.8 s, 93 tok/s) and transcribed the image with a neutral prompt,
-  # but refused the structured "list the table rows verbatim" request
-  # outright — the 27B answered it. Abliteration thins refusals, it does not
+  # 9.5 s, 753 tok/s prefill, 37.9 tok/s decode. The 8B that used to hold
+  # `vision-fast` was faster (2.8 s, 93 tok/s) and transcribed the image with a
+  # neutral prompt, but refused the structured "list the table rows verbatim"
+  # request outright — the 27B answered it. Abliteration thins refusals, it does not
   # remove them, so the bigger model owns the alias.
   qwen38vision = ''
     ${llamaVulkan} --device Vulkan0 \
@@ -436,7 +310,7 @@ let
   # `/unload`) — 3.1 GiB of weights, ~1.07 GiB of q8_0 KV at 64k, the rest is
   # the compute buffer. 112 tok/s decode and 405 tok/s prefill on a cold short
   # prompt, ~2.5 s from request to first token. Quality is a 3B's: chem bench
-  # 8/13 (the whole phosphorus problem 0/5; the 8B vision-fast tier 13/13), and it
+  # 8/13 (the whole phosphorus problem 0/5), and it
   # slipped 17x23 -> 431 at temperature 0. Use it
   # as the fast chat/rewrite tier, not as a reasoner.
   falcon3b = ''
@@ -468,10 +342,9 @@ let
   # 16000-token retry ran 4m18s and ended empty, still in `reasoning_content`.
   # Lean is 0/7 measured, kept as "-" in the catalog because the harness pins
   # thinking off for that bench and this template has no such switch: the
-  # 2000-token cap goes to thoughts, so no code arrives (the same bench scores
-  # 2/7 with thoughts on for qwen3.8-flash-next against 7/7 off). So this is
-  # the local tier that shows its work on easy-to-mid problems; hard ones still
-  # belong to the 180B on the other box.
+  # 2000-token cap goes to thoughts, so no code arrives. So this is the local
+  # tier that shows its work on easy-to-mid problems; hard ones belong to the
+  # 27B quality tier or to Inkling.
   falconH1r = ''
     ${llamaVulkan} --device Vulkan0 \
       -m ${modelDir}/falcon/Falcon-H1R-7B-Q6_K.gguf \
@@ -485,10 +358,9 @@ let
   # distillation of the 180B Qwen3.8 teacher into the Qwen3.5-4B architecture,
   # so it carries the fleet's style at a 4B budget. Measured 2026-11-11 with
   # `llmctl bench commit` (nine real diffs, one-shot example, one model
-  # resident): 76.9/90 against 73.9 for the 8B Qwen3-VL it replaces in this
-  # lane and 81.2 for the 27B, at ~1.3 s per message, ~127 tok/s decode and
-  # 2.8 GB of weights. The 8B still owns images (`vision-fast`); it is no
-  # longer the commit fallback.
+  # resident): 76.9/90 against 73.9 for the 8B that used to serve this lane
+  # and 81.2 for the 27B, at ~1.3 s per message, ~127 tok/s decode and 2.8 GB
+  # of weights.
   # 16k, not the 32k the bench used: the prompt is bounded by
   # COMMIT_DIFF_CHARS (24000 characters, ~7k tokens), so 16k holds it plus the
   # reply with a 2x margin and keeps the tier cheap to swap in.
@@ -717,6 +589,9 @@ in
           aliases = [
             "ornith9b"
             "ornith-small"
+            # The fast vision name the retired 8B used to hold; the 9B reads
+            # screenshots at roughly the same speed on a third of the weights.
+            "vision-fast"
           ];
         };
         # Inkling-2-Mini on the 16 GB card: see the `inkling` command for what
@@ -741,63 +616,6 @@ in
           aliases = [
             "inkling-q3"
             "inkling-quality"
-          ];
-        };
-        "qwen3-vl-8b-abliterated" = {
-          cmd = vision8b;
-          # `vision` moved to the 27B on 2026-11-11; this stays the fast path
-          # (twice the prefill, 64k window) for screenshots that need a read,
-          # not a document.
-          aliases = [
-            "vision-fast"
-            "vision-8b"
-            "qwen3-vl-8b"
-          ];
-        };
-        "gemma4-26b-abliterated" = {
-          cmd = gemma26b;
-          aliases = [
-            "gemma4"
-            "gemma4-26b"
-          ];
-        };
-
-        "qwen3.8-flash-next-abliterated" = {
-          cmd = qwen38next;
-          ttl = 900;
-          aliases = [
-            "qwen3.8-flash"
-            "next"
-          ];
-        };
-
-        # The same abliterated IQ3_S weights, served by Strata instead of
-        # llama.cpp. Measured 2026-11-17 on this box: 30-50 tok/s decode
-        # against 5.9, a 4k prompt in ~5 s against ~30 s, 16k in ~12 s
-        # against ~2 min, and a parked-conversation cache that answers agent
-        # follow-ups in seconds (69% of the prompt reused over six turns).
-        #
-        # Trade-offs against the `next` tier (same weights, llama.cpp):
-        # - 27 GiB of experts are pinned in RAM: the box has to be quiet,
-        #   and the slot cannot share the card with anything else.
-        # - 32k context, text only (no mmproj for this fine-tune); `next`
-        #   stays the deep-context and vision tier (128k).
-        # - one request at a time, cold start ~50 s.
-        # - a cold 16k+ prompt on a memory-tight box can trip the 20 s
-        #   verify watchdog (#267); the server restarts the engine and that
-        #   one request fails. Warm page cache has been stable.
-        # Use it for planning and benchmark work on the big MoE; use `next`
-        # when the window, images or a long cold prompt matter.
-        "qwen3.8-flash-next-strata" = {
-          # ${PORT} must appear in cmd: llama-swap only exports it then.
-          cmd = "${strataBackend} \${PORT}";
-          checkEndpoint = "/health";
-          # 50 s to load: hold it across a session. A model switch drops it
-          # anyway, and the game guard unloads it as soon as a game starts.
-          ttl = 900;
-          aliases = [
-            "strata"
-            "next-strata"
           ];
         };
         "oprover-8b" = {
@@ -856,7 +674,7 @@ in
         };
 
         # Base OpenAI gpt-oss-20b, MXFP4 experts. Fast MoE tier for the 16 GB
-        # card; it does not replace the 27B on quality or the 180B on planning.
+        # card; it does not replace the 27B on quality.
         "gpt-oss-20b" = {
           cmd = gptOss20b;
           ttl = 600;
@@ -1079,7 +897,7 @@ in
   # need the real user (render/video groups), /dev/kfd + /dev/dri and a
   # writable shader cache, and RADV/ACO JIT dies under MemoryDenyWriteExecute.
   # Keep nixpkgs' scheduling (auto-start; the daemon itself holds no VRAM),
-  # but mirror the permissive shape of the lib/llama-server.nix units.
+  # but mirror the permissive shape the per-model units used to have.
   systemd.services.llama-swap = lib.mkIf enabled {
     serviceConfig = {
       DynamicUser = lib.mkForce false;

@@ -30,12 +30,12 @@ export const ROUTES = [
   ['0', 'deepseek-flash', 'DeepSeek V4.1 Flash'],
   ['1', 'gemini-3.6-flash', 'Gemini 3.6 Flash (free)'],
   ['2', 'qwen3.8-27b-abliterated', 'Qwen3.8-27B (local)'],
-  ['3', 'qwen3.8-flash-next-abliterated', 'Qwen3.8-Flash-Next (local)'],
-  ['4', 'gemma4-26b-abliterated', 'Gemma 4 26B (local)'],
+  ['3', 'inkling-2-mini', 'Inkling-2-Mini (local)'],
+  ['4', 'inkling-2-mini-q3', 'Inkling-2-Mini Q3 (local)'],
   ['5', 'qwen3.8-27b-vision', 'Qwen3.8-27B vision (local)'],
   ['6', 'gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (free)'],
   ['7', 'openai-fast', 'GPT-OSS 20B (Pollinations, free)'],
-  ['8', 'qwen3.8-flash-next-strata', 'Qwen3.8-Flash-Next Strata (local)'],
+  ['8', 'inkling-2-mini-q4', 'Inkling-2-Mini Q4 (7900 XTX)'],
   ['9', 'gemini-3.5-flash', 'Gemini 3.5 Flash (free)'],
 ]
 

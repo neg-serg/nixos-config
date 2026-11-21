@@ -259,10 +259,6 @@ rec {
   # config.lib.neg.systemdUser there is an infinite recursion).
   systemdUser = lib: import ./systemd-user.nix { inherit lib; };
 
-  # llamaServer LIB — the shared llama-server systemd unit skeleton
-  # (lib/llama-server.nix) as a factory, wired exactly like systemdUser.
-  llamaServer = lib: import ./llama-server.nix { inherit lib; };
-
   # jackApp { lib, pkgs, pipewire, mkUserService } — the PipeWire/JACK unit
   # shapes (port watcher, pw-jack launcher) from lib/jack-app.nix. Takes the
   # mkUserService it builds on as an argument instead of importing

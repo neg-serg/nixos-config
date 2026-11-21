@@ -13,7 +13,7 @@
 #     unwrapped to plain text with a `name`, which is what small models read
 #     correctly, and the "one tool per turn" rule is available per profile.
 #     The rule is off by default — it was measured on 2026-11-10 against its
-#     own intended target (mini = qwen3-vl-8b) and changed nothing: no batched
+#     own intended target (mini = inkling-2-mini) and changed nothing: no batched
 #     turns in either arm, 0/6 tasks passed with and without it. A profile has
 #     to ask for it until something shows a case where it pays.
 #  3. Retry the llama-swap swap race (500 "group starting ... aborted", 502
@@ -83,7 +83,7 @@ let
   # Mirrors the base set in the proxy's `load_config`; the generated JSON is
   # the authoritative copy, the Python one is the fallback for a file that
   # carries no `defaults` at all. `single_tool` is opt-in: on 2026-11-10 the
-  # guard was measured against its own profile (mini = qwen3-vl-8b) with a
+  # guard was measured against its own profile (mini = inkling-2-mini) with a
   # client prompt that does not ask for one command per turn — 0 batched
   # turns out of 54 with the rule and out of 36 without, 0/6 tasks passed in
   # both arms. It has not earned a default-on, so a profile asks for it.
@@ -115,11 +115,6 @@ let
       target = "qwen3.8-27b-abliterated";
       ctx = 32768;
     };
-    "gemma4-26b-abliterated".ctx = 32768;
-    "gemma4" = {
-      target = "gemma4-26b-abliterated";
-      ctx = 32768;
-    };
     "qwen3.8-27b-bartowski".ctx = 16384;
     "bart27b" = {
       target = "qwen3.8-27b-bartowski";
@@ -130,28 +125,24 @@ let
       target = "qwen3.8-27b-unsloth";
       ctx = 32768;
     };
-    "qwen3.8-flash-next-abliterated".ctx = 131072;
-    "qwen3.8-flash" = {
-      target = "qwen3.8-flash-next-abliterated";
-      ctx = 131072;
-    };
-    # The same weights on Strata (32k, text only): the guard must trim to the
-    # Strata window, not to the llama.cpp tier's 128k.
-    "qwen3.8-flash-next-strata".ctx = 32768;
-    "strata" = {
-      target = "qwen3.8-flash-next-strata";
+    # Small tiers: `mini` is the 32k entry point the fleet uses for them, and
+    # since 2026-11-21 that is the Inkling IQ3 tier. The `vision` alias moved
+    # to the 27B on 2026-11-11 (its slot carries the mmproj); `vision-fast`
+    # points at ornith-1.5-9b now that the 8B is gone.
+    "inkling-2-mini".ctx = 32768;
+    "inkling-mini" = {
+      target = "inkling-2-mini";
       ctx = 32768;
     };
-    # Small tiers: `mini` is the 32k entry point the fleet uses for them. The
-    # `vision` alias moved to the 27B on 2026-11-11 (its slot carries the
-    # mmproj); `vision-fast` keeps the 8B and its native 64k.
-    "qwen3-vl-8b-abliterated" = {
-      ctx = 65536;
-      single_tool = false;
+    "inkling-2-mini-q3".ctx = 16384;
+    "inkling-q3" = {
+      target = "inkling-2-mini-q3";
+      ctx = 16384;
     };
+    "inkling-2-mini-q4".ctx = 32768;
     "vision-fast" = {
-      target = "qwen3-vl-8b-abliterated";
-      ctx = 65536;
+      target = "ornith-1.5-9b";
+      ctx = 32768;
       single_tool = false;
     };
     "vision" = {
@@ -165,7 +156,7 @@ let
       single_tool = false;
     };
     "mini" = {
-      target = "qwen3-vl-8b-abliterated";
+      target = "inkling-2-mini";
       ctx = 32768;
     };
     "falcon-h1-3b" = {

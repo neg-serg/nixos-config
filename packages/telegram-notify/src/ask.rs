@@ -32,7 +32,7 @@
 //!
 //! Environment (set by the unit, `hosts/trantor/services/telegram-units.nix`):
 //!   PILL_BOT_LLM_URL           OpenAI-compatible base (default http://127.0.0.1:9292)
-//!   PILL_BOT_LLM_MODEL         llama-swap model (default qwen3-vl-8b-abliterated)
+//!   PILL_BOT_LLM_MODEL         llama-swap model (default vision)
 //!   PILL_BOT_LLM_TIMEOUT       curl timeout in seconds (default 180)
 //!   PILL_BOT_ALERTMANAGER_URL  active-alerts API (default .../api/v2/alerts)
 //!   PILL_BOT_OWNER             desktop user for `systemctl --user --machine`
@@ -47,7 +47,7 @@ use crate::shared::json::{self, Value};
 use crate::{env_or, stamp_now, Api, DEFAULT_CURL};
 
 const DEFAULT_LLM_URL: &str = "http://127.0.0.1:9292";
-const DEFAULT_LLM_MODEL: &str = "qwen3-vl-8b-abliterated";
+const DEFAULT_LLM_MODEL: &str = "vision";
 const DEFAULT_LLM_TIMEOUT: u64 = 180;
 const DEFAULT_ALERTMANAGER_URL: &str = "http://127.0.0.1:9093/api/v2/alerts";
 const MAX_QUESTION_CHARS: usize = 2000;
@@ -928,10 +928,7 @@ mod tests {
     #[test]
     fn model_request_body_is_valid_json() {
         let body = Value::Object(vec![
-            (
-                "model".to_string(),
-                Value::Str("qwen3-vl-8b-abliterated".into()),
-            ),
+            ("model".to_string(), Value::Str("vision".into())),
             (
                 "messages".to_string(),
                 Value::Array(vec![chat_message("user", "статус 📊?")]),

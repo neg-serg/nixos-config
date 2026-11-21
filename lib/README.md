@@ -32,9 +32,6 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
 - `test-suite.nix` — `check cond msg` + `suite checks`: the assertion harness every
   `lib/*-tests.nix` file shares (the `checks`/`failures`/`report` trio `mkOkCheck` consumes). A new
   suite is then imports + assertions only.
-- `llama-server.nix` — `mkService { description, execStart, user }`, the systemd unit skeleton
-  shared by `modules/llm/llama-server.nix` and `llama-server-flash-next.nix` (manual-start-only
-  policy, `render`/`video` groups); exposed as `config.lib.neg.llamaServer` like `systemdUser`.
 - `aliae.nix` — shell alias definitions (`alias`-style helpers for the user's shell); imports
   `package-checks.nix` to skip aliases whose packages are missing.
 - `package-checks.nix` — package availability checks (`hasRg`, `hasNmap`, `hasCurl`, …) for the

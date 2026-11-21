@@ -277,25 +277,10 @@ rec {
                 - TRANSPORT
                 - MALFORMED_RESPONSE
             models:
-              - id: qwen3.8-flash-next-abliterated
-                name: Qwen3.8-Flash-Next 180B (thinking, 128k)
-                # Serves with thinking (xhigh, 4096-token budget); a hard
-                # question costs minutes at ~8 tok/s. See llama-swap.nix.
-                contextWindow: 131072
-              # The same weights on the Strata engine: 30-50 tok/s decode and
-              # a 4k prompt in ~5 s against ~8 tok/s and ~30 s on the
-              # llama.cpp tier. 27 GiB of pinned RAM, 32k window, no images,
-              # one request at a time (llama-swap.nix, /zero/strata/README.md).
-              - id: qwen3.8-flash-next-strata
-                name: Qwen3.8-Flash-Next 180B on Strata (fast, 32k)
-                contextWindow: 32768
               - id: qwen3.8-27b-abliterated
                 name: Qwen3.8-27B abliterated (quality, RU)
                 # 32k measured at 13.75 GiB with the desktop, 30.5 tok/s at a
                 # 9.5k prompt (see modules/llm/llama-swap.nix).
-                contextWindow: 32768
-              - id: gemma4-26b-abliterated
-                name: Gemma 4 26B abliterated
                 contextWindow: 32768
               # The `vision` alias: the same IQ3_S weights plus the bf16
               # projector, 16k window, 15.3 GiB next to the desktop, so the
@@ -303,12 +288,6 @@ rec {
               - id: qwen3.8-27b-vision
                 name: Qwen3.8-27B vision (27B + mmproj)
                 contextWindow: 16384
-                input:
-                  - text
-                  - image
-              - id: qwen3-vl-8b-abliterated
-                name: Qwen3-VL-8B abliterated (vision-fast)
-                contextWindow: 65536
                 input:
                   - text
                   - image
