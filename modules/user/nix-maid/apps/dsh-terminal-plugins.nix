@@ -372,12 +372,12 @@ rec {
                 input:
                   - text
                   - image
-              # Inkling-2-Mini at Q4_K_XL on the same 24 GB card: the same
-              # weights as the local tier one quant up. Prepared 2026-11-21
-              # while the box was off — the start script and the weights move
-              # are still to be done on the box (llama-swap.nix says what).
+              # Inkling-2-Mini at Q4_K_XL on the same 24 GB card, with the
+              # DSpark drafter: Unsloth's prebuilt ROCm build reads the root
+              # layout, and 708 tok/s prefill / ~47 tok/s decode is what that
+              # buys over the local quant (llama-swap.nix has the why).
               - id: inkling-2-mini-q4
-                name: Inkling-2-Mini 26B MoE Q4_K_XL (7900 XTX, vision)
+                name: Inkling-2-Mini 26B MoE Q4_K_XL + DSpark (7900 XTX, vision)
                 contextWindow: 32768
                 input:
                   - text

@@ -661,15 +661,21 @@ let
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/qwen27-stop
   '';
 
-  # Inkling-2-Mini on the 24 GB card, prepared 2026-11-21 while the box was off
-  # (`No route to host` from here, so nothing below was run): Q4_K_XL, 16.4 GiB
-  # of weights plus the f16 projector, the same family as the local tier one
-  # quant up, on port 8097 (8090-8096 are the other tiers). Three things must
-  # exist on the box before this slot can serve: the weights copied out of the
-  # gyro-coder share (staged there under inkling-2-mini/), the start/stop pair
-  # in /home/user/bin, and a llama.cpp carrying #32694 + #32704 — the box runs
-  # containers, so its image needs a build from after that merge; the stock
-  # image reads the file and answers wrongly rather than refusing it.
+  # Inkling-2-Mini on the 24 GB card: Q4_K_XL (16.4 GiB) plus the f16 projector
+  # and the DSpark drafter, on port 8097 (8090-8096 are the other tiers). The
+  # GGUF in the repository *root* uses Unsloth's looped layout, and that is the
+  # only layout this box can read: the stock `llama.cpp:server-rocm` image and
+  # upstream mainline both refuse it (`unknown model architecture:
+  # 'inkling2_loop'` is what the Mainline_Support files get, and mainline needs
+  # the unmerged #32704 before they would answer correctly anyway). So this tier
+  # runs Unsloth's own prebuilt ROCm build — b12588-mix-c0c3de8, gfx110X,
+  # bundled ROCm libs — from a local `inkling-llama:local` image (debian:13-slim
+  # plus the unpacked tarball in /opt/llama), and the DSpark drafter gives it
+  # speculative decode. Box side: /home/user/bin/inkling-start|stop and the name
+  # in llm-game-guard; weights ride in the gyro-coder share under
+  # inkling-2-mini/root/ so the box keeps no copy (measured 2026-11-21: 708 t/s
+  # prefill on 7.4k, 46-50 t/s decode with the drafter, ~4.6 min cold load
+  # streaming 16.4 GiB over SMB).
   # allow-absolute-home: the path is on the remote host, which has no root
   inklingRemote = ''
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/inkling-start
@@ -1040,9 +1046,9 @@ in
           ];
         };
 
-        # Inkling-2-Mini at Q4_K_XL on the 24 GB card — the same weights as the
-        # local tier one quant up. See `inklingRemote` above: the box was off
-        # when this was added, so the slot is prepared, not proven.
+        # Inkling-2-Mini at Q4_K_XL on the 24 GB card — the same model as the
+        # local tier one quant up, served by Unsloth's prebuilt ROCm build with
+        # the DSpark drafter (see `inklingRemote` above for why that build).
         "inkling-2-mini-q4" = {
           cmd = inklingRemote;
           cmdStop = inklingRemoteStop;

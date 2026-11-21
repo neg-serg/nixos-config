@@ -96,7 +96,7 @@ CATALOG = {
     },
     "inkling-2-mini-q4": {
         "aliases": ["inkling-q4", "inkling-24g"],
-        "role": "26B MoE Q4_K_XL + vision (7900 XTX box, remote)",
+        "role": "26B MoE Q4_K_XL + DSpark + vision (7900 XTX box, remote)",
         "ctx": "32k",
         "size": "16.4 GB remote",
         "chem": "-",
