@@ -33,7 +33,7 @@
   sola-mpd = pkgs.sola-mpd; # browser MPD client (Node backend + React UI)
 
   aurora = pkgs.neg.aurora; # aurora: local MPD player with a Vulkan UI (winit + ash + cosmic-text)
-  aurora-tools = pkgs.neg.aurora-tools; # the headphone model catalogue CLI (aurora-camilla headphones)
+  aurora-tools = pkgs.neg.aurora-tools; # the headphone model catalogue CLI (headphones-tools crate)
   aurora-plugins = pkgs.neg.aurora-plugins; # the player's external plugins: notify, scrobble, mpris, remaining
   camillaeq = pkgs.camillaeq; # CamillaDSP browser equalizer (Svelte UI + Fastify server)
 

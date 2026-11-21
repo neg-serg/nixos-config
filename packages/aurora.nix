@@ -179,9 +179,10 @@ let
   };
 
   # The catalogue tools: the same pinned source, a different crate and a different closure. Both
-  # bins live in `aurora-camilla`: `headphones` files models and applies them over the daemon's
-  # websocket, `headphones-web` serves the same catalogue on loopback; neither needs the player's
-  # Vulkan stack, and building them apart is what keeps `nix why-depends` honest.
+  # bins live in `headphones-tools` (split out of `aurora-camilla`, which stays the plugin crate):
+  # `headphones` files models and applies them over the daemon's websocket, `headphones-web` serves
+  # the same catalogue on loopback; neither needs the player's Vulkan stack, and building them apart
+  # is what keeps `nix why-depends` honest.
   tools = rustPlatform.buildRustPackage {
     pname = "aurora-tools";
     inherit version src;
@@ -191,7 +192,7 @@ let
     cargoBuildFlags = [
       "--locked"
       "-p"
-      "aurora-camilla"
+      "headphones-tools"
       "--bin"
       "headphones"
       "--bin"
