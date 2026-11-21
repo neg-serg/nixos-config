@@ -324,6 +324,22 @@ rec {
                 input:
                   - text
                   - image
+              # Inkling-2-Mini (26B MoE, vision, 1M native): the only tiers on
+              # their own llama.cpp build (packages/llama-cpp-inkling). IQ3_XXS
+              # prefills at 443 tok/s on the 16 GB card; the Q3_K_XL variant is
+              # 61 tok/s for the cases that need the extra bits.
+              - id: inkling-2-mini
+                name: Inkling-2-Mini 26B MoE IQ3_XXS (vision, 32k)
+                contextWindow: 32768
+                input:
+                  - text
+                  - image
+              - id: inkling-2-mini-q3
+                name: Inkling-2-Mini 26B MoE Q3_K_XL (quality, 16k, slow)
+                contextWindow: 16384
+                input:
+                  - text
+                  - image
               - id: ornith-1.5-35b-a3b
                 name: Ornith-1.5 35B-A3B (7900 XTX, coding agent)
                 contextWindow: 131072
@@ -353,6 +369,16 @@ rec {
               - id: qwen3.8-27b-mxfp4
                 name: Qwen3.8 27B MXFP4 IQ4_XS (7900 XTX, vision)
                 contextWindow: 131072
+                input:
+                  - text
+                  - image
+              # Inkling-2-Mini at Q4_K_XL on the same 24 GB card: the same
+              # weights as the local tier one quant up. Prepared 2026-11-21
+              # while the box was off — the start script and the weights move
+              # are still to be done on the box (llama-swap.nix says what).
+              - id: inkling-2-mini-q4
+                name: Inkling-2-Mini 26B MoE Q4_K_XL (7900 XTX, vision)
+                contextWindow: 32768
                 input:
                   - text
                   - image

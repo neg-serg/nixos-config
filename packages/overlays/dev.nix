@@ -28,6 +28,12 @@ in
   # modules/nix/nix-pgo.nix).
   nix-det-pgo = call (pkg "nix-det-pgo") { };
 
+  # llama.cpp with the Inkling-2-Mini looped-layer fix (#32704, still open) —
+  # a second binary beside the stable `llama-cpp-vulkan`, used by the Inkling
+  # tier only. The header of packages/llama-cpp-inkling/default.nix carries the
+  # why and the removal condition.
+  llama-cpp-inkling = call (pkg "llama-cpp-inkling") { };
+
   # Reserved for development/toolchain overlays
 
   # Patch pre-commit to add a space before "Skipped" message

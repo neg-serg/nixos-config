@@ -29,6 +29,11 @@ let
   # serves the 8B model on :8080.
   modelDir = "/zero/ai/llama";
   llamaVulkan = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
+  # Inkling-2-Mini is the only model here that needs a llama.cpp newer than
+  # nixpkgs' 0.7.0: its `inkling2_loop` graph (#32694) and the looped-layer
+  # scale fix (#32704, still open) live in packages/llama-cpp-inkling, kept as
+  # a second binary so the rest of the stack stays on the stable build.
+  llamaInkling = lib.getExe' pkgs.llama-cpp-inkling "llama-server";
 
   # Vision model (Vulkan/RADV): abliterated Qwen3-VL-8B — the base build
   # refuses too much for this stack. 64k of the 262k-native window: all 36
@@ -50,6 +55,47 @@ let
       --mmproj ${modelDir}/ornith-9b/mmproj-Ornith-1.5-9B-BF16.gguf \
       --host 127.0.0.1 --port ''${PORT} \
       -c 32768 -np 1 --flash-attn on --jinja
+  '';
+
+  # Inkling-2-Mini (Apache-2.0, 26.07B MoE, vision, 1M native window) — the
+  # first tiers that run on `llamaInkling` rather than the stable build (see the
+  # binding above). Two local variants, both with the f16 projector, measured
+  # 2026-11-21 with 2.4 GiB of desktop on the card:
+  #
+  #   IQ3_XXS  10.87 GiB: prefill 443 t/s at 16k, 287 t/s at the 32k the tier
+  #            ships, decode 27-28 t/s, 15.8-16.1 GiB of VRAM either way —
+  #            llama.cpp sizes the compute buffers from what is free, so the
+  #            wider window costs ~35% of the prefill and nothing in memory.
+  #   Q3_K_XL  12.68 GiB: 834 MiB left for KV and compute, so prefill collapses
+  #            to 61 t/s and decode to 17.6 t/s. Better fidelity (KLD 0.0108 vs
+  #            0.0269 on the publisher's table), and it needs a quiet desktop:
+  #            the tier loads with 66 MiB to spare and a browser tab can push
+  #            it into a spill.
+  #
+  # `inkling` is the IQ3 tier on purpose — the prefill is what any prompt over a
+  # few hundred tokens feels, and it is 7x. An agent loop over a 20k prompt is
+  # ~70 s here against ~5.5 min on Q3.
+  #
+  # `--reasoning-effort low` on both: the template's own knob. At the model's
+  # 0.9 default a one-line RU question spent 500 tokens thinking and returned an
+  # empty `content`; at `low` the same question answers in ~450 tokens, a third
+  # of them thinking.
+  inkling = ''
+    ${llamaInkling} --device Vulkan0 \
+      -m ${modelDir}/inkling-2-mini/Inkling-2-Mini-UD-IQ3_XXS.gguf \
+      --mmproj ${modelDir}/inkling-2-mini/mmproj-F16.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 32768 -np 1 --flash-attn on --fit off --jinja \
+      --reasoning-effort low
+  '';
+
+  inklingQ3 = ''
+    ${llamaInkling} --device Vulkan0 \
+      -m ${modelDir}/inkling-2-mini/Inkling-2-Mini-UD-Q3_K_XL.gguf \
+      --mmproj ${modelDir}/inkling-2-mini/mmproj-F16.gguf \
+      --host 127.0.0.1 --port ''${PORT} \
+      -c 16384 -np 1 --flash-attn on --fit off --jinja \
+      --reasoning-effort low
   '';
 
   vision8b = ''
@@ -614,6 +660,25 @@ let
   qwen27Stop = ''
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/qwen27-stop
   '';
+
+  # Inkling-2-Mini on the 24 GB card, prepared 2026-11-21 while the box was off
+  # (`No route to host` from here, so nothing below was run): Q4_K_XL, 16.4 GiB
+  # of weights plus the f16 projector, the same family as the local tier one
+  # quant up, on port 8097 (8090-8096 are the other tiers). Three things must
+  # exist on the box before this slot can serve: the weights copied out of the
+  # gyro-coder share (staged there under inkling-2-mini/), the start/stop pair
+  # in /home/user/bin, and a llama.cpp carrying #32694 + #32704 — the box runs
+  # containers, so its image needs a build from after that merge; the stock
+  # image reads the file and answers wrongly rather than refusing it.
+  # allow-absolute-home: the path is on the remote host, which has no root
+  inklingRemote = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/inkling-start
+  '';
+
+  # allow-absolute-home: the path is on the remote host, which has no root
+  inklingRemoteStop = ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/inkling-stop
+  '';
 in
 {
   services.llama-swap = lib.mkIf enabled {
@@ -636,6 +701,30 @@ in
           aliases = [
             "ornith9b"
             "ornith-small"
+          ];
+        };
+        # Inkling-2-Mini on the 16 GB card: see the `inkling` command for what
+        # fits and what it costs. 15 min TTL because a cold load of 10.9 GiB
+        # from /zero is ~20-30 s and the card is tight enough that the tier
+        # should not sit on it once the conversation stops.
+        "inkling-2-mini" = {
+          cmd = inkling;
+          ttl = 900;
+          aliases = [
+            "inkling"
+            "inkling-mini"
+          ];
+        };
+        # The quality variant: same model at Q3_K_XL, 61 t/s prefill. Kept for
+        # the cases where the extra bits matter and the prompt is short; a
+        # browser tab beside it can spill the model into RAM, so it is not the
+        # default.
+        "inkling-2-mini-q3" = {
+          cmd = inklingQ3;
+          ttl = 900;
+          aliases = [
+            "inkling-q3"
+            "inkling-quality"
           ];
         };
         "qwen3-vl-8b-abliterated" = {
@@ -948,6 +1037,21 @@ in
           aliases = [
             "qwen27-mxfp4"
             "qwen3.8-mxfp4"
+          ];
+        };
+
+        # Inkling-2-Mini at Q4_K_XL on the 24 GB card — the same weights as the
+        # local tier one quant up. See `inklingRemote` above: the box was off
+        # when this was added, so the slot is prepared, not proven.
+        "inkling-2-mini-q4" = {
+          cmd = inklingRemote;
+          cmdStop = inklingRemoteStop;
+          proxy = "http://192.168.0.144:8097";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "inkling-q4"
+            "inkling-24g"
           ];
         };
       };
