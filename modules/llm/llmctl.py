@@ -109,15 +109,6 @@ CATALOG = {
         "lean": "-",
         "fp": "-",
     },
-    "gemma-4-26b-a4b-mxfp4": {
-        "aliases": ["gemma4-mxfp4", "gemma4-a4b"],
-        "role": "26B-A4B MoE MXFP4 + vision (7900 XTX box, remote)",
-        "ctx": "32k",
-        "size": "15.5 GB remote",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
-    },
     # The same Qwen3.8-27B weights as the local quality tier, quantized to
     # MXFP4 IQ4_XS and served on the 24 GB card with the 27B projector.
     "qwen3.8-27b-mxfp4": {

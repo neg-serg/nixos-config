@@ -517,17 +517,6 @@ let
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/gptoss-stop
   '';
 
-  # Gemma 4 26B-A4B (26B MoE, 4B active) in MXFP4_MOE with its projector.
-  # allow-absolute-home: the path is on the remote host, which has no root
-  gemma4 = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/gemma-start
-  '';
-
-  # allow-absolute-home: the path is on the remote host, which has no root
-  gemma4Stop = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/gemma-stop
-  '';
-
   # Qwen3.8-27B in MagicQuant MXFP4 (IQ4_XS, 13.95 GiB) with the stock 27B
   # bf16 projector, on the box's SSD: the MXFP4 quant of the local quality
   # tier, for a like-for-like comparison against IQ3_S on the 24 GB card.
@@ -844,19 +833,6 @@ in
           aliases = [
             "gptoss-mxfp4"
             "gpt-oss-mxfp4"
-          ];
-        };
-
-        # Gemma 4 26B-A4B MXFP4_MOE: 14.4 GiB weights + projector, 4B active.
-        "gemma-4-26b-a4b-mxfp4" = {
-          cmd = gemma4;
-          cmdStop = gemma4Stop;
-          proxy = "http://192.168.0.144:8093";
-          checkEndpoint = "/health";
-          ttl = 900;
-          aliases = [
-            "gemma4-mxfp4"
-            "gemma4-a4b"
           ];
         };
 

@@ -338,12 +338,6 @@ rec {
               - id: gpt-oss-20b-mxfp4
                 name: GPT-OSS 20B MXFP4 + eagle3 (7900 XTX)
                 contextWindow: 131072
-              - id: gemma-4-26b-a4b-mxfp4
-                name: Gemma 4 26B-A4B MXFP4 (7900 XTX, vision)
-                contextWindow: 32768
-                input:
-                  - text
-                  - image
               # The local quality tier requantized to MXFP4 for the 24 GB card.
               - id: qwen3.8-27b-mxfp4
                 name: Qwen3.8 27B MXFP4 IQ4_XS (7900 XTX, vision)

@@ -327,6 +327,8 @@
 #   RAM tier left the fleet. On 2026-11-21 the last three retired tiers left
 #   with their weights: Qwen3-VL-8B (4.7 GB), Gemma 4 26B Q3_K_M (12 GB) and
 #   Qwen3.8-Flash-Next IQ3_S (78 GB, with the Strata tree under /zero/strata).
+#   The same pass took the remote Gemma 4 26B-A4B MXFP4 tier off the 24 GB box
+#   (16 GB under /srv/models/gemma4 there).
 #   The same pass removed the abliteration
 #   experiment's Qwen3.5-VL base (52 GB), the censored Qwen3-VL-8B pair
 #   (5.8 GB) and the unused DeepThought-STEM (5.3 GB) and qed-nano (4 GB).
