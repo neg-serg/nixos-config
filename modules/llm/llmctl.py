@@ -72,18 +72,20 @@ CATALOG = {
     },
     # Inkling-2-Mini (Apache-2.0, 26B MoE, vision, 1M native): needs the
     # #32704 fix in `llama-cpp-inkling`, so it is the one model the stable
-    # build cannot serve. Two local quants, measured 2026-11-21: IQ3_XXS
-    # prefills at 443 t/s (28 t/s decode), Q3_K_XL at 61 t/s (17.6 t/s) —
-    # the 16 GB card leaves the latter 834 MiB for KV and compute, and the
-    # numbers live in llama-swap.nix.
+    # build cannot serve. Benchmarks 2026-11-21 with the fleet's own tasks
+    # (`llmctl bench chem|lean|fp`): the model is a quality tier, not a fast
+    # one — it matches the 180B on chemistry and the FP planner, sits between
+    # the 27B and the 180B on Lean, and prefills 4-16x slower than anything
+    # else here (the looped layers 6-17 run three times, and the 16 GB card
+    # leaves little compute headroom). Speed per tier is in llama-swap.nix.
     "inkling-2-mini": {
         "aliases": ["inkling", "inkling-mini"],
         "role": "26B MoE IQ3_XXS + vision (local)",
         "ctx": "32k",
         "size": "11.7 GB",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
+        "chem": "13/13",
+        "lean": "5/7",
+        "fp": "6.0/6",
     },
     "inkling-2-mini-q3": {
         "aliases": ["inkling-q3", "inkling-quality"],
@@ -92,16 +94,16 @@ CATALOG = {
         "size": "13.6 GB",
         "chem": "-",
         "lean": "-",
-        "fp": "-",
+        "fp": "6.0/6",
     },
     "inkling-2-mini-q4": {
         "aliases": ["inkling-q4", "inkling-24g"],
         "role": "26B MoE Q4_K_XL + DSpark + vision (7900 XTX box, remote)",
         "ctx": "32k",
         "size": "16.4 GB remote",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
+        "chem": "13/13",
+        "lean": "4/7",
+        "fp": "6.0/6",
     },
     # Muse-Glimmer-30B (Apache-2.0, 30B dense, vision, 131k native): the
     # comparison tier on the 7900 XTX box, weights + DFlash drafter local.

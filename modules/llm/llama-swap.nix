@@ -62,15 +62,23 @@ let
   # binding above). Two local variants, both with the f16 projector, measured
   # 2026-11-21 with 2.4 GiB of desktop on the card:
   #
-  #   IQ3_XXS  10.87 GiB: prefill 443 t/s at 16k, 287 t/s at the 32k the tier
-  #            ships, decode 27-28 t/s, 15.8-16.1 GiB of VRAM either way —
-  #            llama.cpp sizes the compute buffers from what is free, so the
-  #            wider window costs ~35% of the prefill and nothing in memory.
-  #   Q3_K_XL  12.68 GiB: 834 MiB left for KV and compute, so prefill collapses
-  #            to 61 t/s and decode to 17.6 t/s. Better fidelity (KLD 0.0108 vs
+  #   IQ3_XXS  10.87 GiB: prefill 232 t/s on a 7.5k prompt (287 at 2.9k),
+  #            decode 27.4 t/s, 15.8-16.1 GiB of VRAM at 16k and at the 32k the
+  #            tier ships — llama.cpp sizes the compute buffers from what is
+  #            free, so the wider window costs prefill and nothing in memory.
+  #   Q3_K_XL  12.68 GiB: 834 MiB left for KV and compute, so prefill drops to
+  #            58.6 t/s and decode to 19.2 t/s. Better fidelity (KLD 0.0108 vs
   #            0.0269 on the publisher's table), and it needs a quiet desktop:
   #            the tier loads with 66 MiB to spare and a browser tab can push
   #            it into a spill.
+  #
+  # The price is speed, and it is the looped graph, not the card: layers 6-17
+  # run three times, so the model costs ~3x the layer compute of a same-size
+  # plain MoE. For scale, on the same 7.5k prompt and this box: gemma4-26b
+  # prefills at 3701 t/s and decodes 114.8, qwen3.8-27b at 1051 / 37.9, and the
+  # 9B ornith at 3671 / 88.5 (whole-fleet probe, 2026-11-21). What it buys on
+  # the fleet's own tasks: chem 13/13, fp 6.0/6, Lean 5/7 — tied with the 180B
+  # on the first two, second behind it (7/7) on Lean.
   #
   # `inkling` is the IQ3 tier on purpose — the prefill is what any prompt over a
   # few hundred tokens feels, and it is 7x. An agent loop over a 20k prompt is
@@ -673,9 +681,11 @@ let
   # plus the unpacked tarball in /opt/llama), and the DSpark drafter gives it
   # speculative decode. Box side: /home/user/bin/inkling-start|stop and the name
   # in llm-game-guard; weights ride in the gyro-coder share under
-  # inkling-2-mini/root/ so the box keeps no copy (measured 2026-11-21: 708 t/s
-  # prefill on 7.4k, 46-50 t/s decode with the drafter, ~4.6 min cold load
-  # streaming 16.4 GiB over SMB).
+  # inkling-2-mini/root/ so the box keeps no copy. Measured 2026-11-21:
+  # 595-708 t/s prefill on a 7.5k prompt, 46-58 t/s decode with the drafter (the
+  # spread is prompt length and cache warmth), ~4.6 min cold load streaming
+  # 16.4 GiB over SMB — 2.6x the local IQ3 tier's prefill and 2.1x its decode
+  # on the same probe, at Q4.
   # allow-absolute-home: the path is on the remote host, which has no root
   inklingRemote = ''
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/inkling-start
