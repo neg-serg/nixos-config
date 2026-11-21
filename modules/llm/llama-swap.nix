@@ -445,22 +445,6 @@ let
     '';
   };
 
-  # OrcaCyber Nano 1.0 (27B vision-language) on the same 7900 XTX box, but on
-  # stock upstream llama.cpp with the ROCm backend: the Agention Vulkan fork is
-  # ~4x slower for arch `qwen35` (8.6 vs 36.4 tok/s decode, measured 2026-11-08).
-  # The start/stop scripts live in the remote user's home
-  # rather than /usr/local/bin because no root is available there; the `cmd`
-  # still has to be a plain argv, so the remote command is one absolute path.
-  # allow-absolute-home: the path is on the remote host, which has no root
-  nano = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/nano-start
-  '';
-
-  # allow-absolute-home: the path is on the remote host, which has no root
-  nanoStop = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/nano-stop
-  '';
-
   # Swift-1.5 27B MXFP4 on the same 7900 XTX box. The 15.8 GB of weights and
   # the projector ride in the gyro-coder SMB share under mxfp4/ (hardlinks to
   # /zero/ai/llama/mxfp4, so no second copy): the remote disk has only ~19 GB
@@ -489,20 +473,6 @@ let
   # allow-absolute-home: the path is on the remote host, which has no root
   ornithStop = ''
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/ornith-stop
-  '';
-
-  # Muse-Glimmer-30B (Apache-2.0, 30B dense, 131k, vision): the comparison
-  # tier on the same box, third port. Weights, DFlash drafter and projector
-  # live on its SSD; 3 sliding-window layers per 1 full layer with 2 KV heads
-  # keeps the 32k KV under 0.5 GiB.
-  # allow-absolute-home: the path is on the remote host, which has no root
-  muse = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/muse-start
-  '';
-
-  # allow-absolute-home: the path is on the remote host, which has no root
-  museStop = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/muse-stop
   '';
 
   # gpt-oss-20b in its native MXFP4 format (11.28 GiB) with the eagle3
@@ -757,28 +727,12 @@ in
         # router disappears, so a crash or reboot here cannot strand 21 GiB of
         # VRAM on a machine nobody can reach.
 
-        # Another remote tier. 15.7G build + DFlash2 drafter + mmproj
-        # occupy 22.2 GiB of the 24 GiB card at 32k and decode at ~42 tok/s; a
-        # cold load is ~30 s (page cache warm from the earlier runs), so the
-        # 15 min TTL only exists to release the card between sessions.
-        "nano" = {
-          cmd = nano;
-          cmdStop = nanoStop;
-          proxy = "http://192.168.0.144:8094";
-          checkEndpoint = "/health";
-          ttl = 900;
-          aliases = [
-            "orcacyber"
-            "cyber"
-          ];
-        };
-
         # Swift-1.5 27B MXFP4: 15.8 GB weights plus the projector over the
         # gyro-coder SMB share, MTP self-speculation, 64k. The quality tier of
         # the 24 GB box; a cold load streams the weights over SMB (minutes),
         # hence the 15 min TTL. A user timer on that box (llm-game-guard.timer,
-        # every 5 s) stops swift27b/nano when a game appears, and the start
-        # script refuses while one already runs.
+        # every 5 s) stops the tier when a game appears, and the start script
+        # refuses while one already runs.
         "swift-1.5-27b-mxfp4" = {
           cmd = swift27b;
           cmdStop = swift27bStop;
@@ -804,21 +758,6 @@ in
           aliases = [
             "ornith"
             "ornith35b"
-          ];
-        };
-
-        # Muse-Glimmer-30B UD-Q4_K_XL + DFlash drafter: the comparison tier
-        # (30B dense, vision, 131k native) on the box's third port. Local
-        # weights on the SSD; 32k default with a cheap hybrid-attention KV.
-        "muse-glimmer-30b" = {
-          cmd = muse;
-          cmdStop = museStop;
-          proxy = "http://192.168.0.144:8091";
-          checkEndpoint = "/health";
-          ttl = 900;
-          aliases = [
-            "muse"
-            "muse-glimmer"
           ];
         };
 

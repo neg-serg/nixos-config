@@ -87,17 +87,6 @@ CATALOG = {
         "lean": "4/7",
         "fp": "6.0/6",
     },
-    # Muse-Glimmer-30B (Apache-2.0, 30B dense, vision, 131k native): the
-    # comparison tier on the 7900 XTX box, weights + DFlash drafter local.
-    "muse-glimmer-30b": {
-        "aliases": ["muse", "muse-glimmer"],
-        "role": "30B dense vision (7900 XTX box, remote)",
-        "ctx": "128k",
-        "size": "18.2 GB remote",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
-    },
     # Native MXFP4 tier (4-bit float with shared scales) and a 26B-A4B MoE;
     # both fit the 24 GB card with room for their drafters/projectors.
     "gpt-oss-20b-mxfp4": {

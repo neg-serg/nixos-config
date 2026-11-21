@@ -316,10 +316,8 @@ lib.mkMerge [
             exclusive = false;
             members = lib.filter (
               m:
-              m != "nano"
-              && m != "swift-1.5-27b-mxfp4"
+              m != "swift-1.5-27b-mxfp4"
               && m != "ornith-1.5-35b-a3b"
-              && m != "muse-glimmer-30b"
               && m != "gpt-oss-20b-mxfp4"
               && m != "qwen3.8-27b-mxfp4"
             ) (lib.attrNames config.services.llama-swap.settings.models);
@@ -329,10 +327,8 @@ lib.mkMerge [
             exclusive = false;
             persistent = true;
             members = [
-              "nano"
               "swift-1.5-27b-mxfp4"
               "ornith-1.5-35b-a3b"
-              "muse-glimmer-30b"
               "gpt-oss-20b-mxfp4"
               "qwen3.8-27b-mxfp4"
             ];
