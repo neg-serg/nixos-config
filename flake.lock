@@ -3,11 +3,11 @@
     "aurora-plugins-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795173572,
-        "narHash": "sha256-v6GDWFBgWDz/bomEpbIUu6X6RqxFLMee/xMnreA4K4c=",
+        "lastModified": 1795179558,
+        "narHash": "sha256-PpgthwqZ4ChnwMM9ESrD8kb7UkB3K3/VendKL5j7nFw=",
         "owner": "neg-serg",
         "repo": "aurora-plugins",
-        "rev": "40eea82877884bdc09f50f286df2e0d41e852839",
+        "rev": "e9d1ecc8902d646c2b157bbde6686ccf53acc5c3",
         "type": "github"
       },
       "original": {
