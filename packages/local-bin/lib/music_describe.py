@@ -422,12 +422,16 @@ def parse_tags(answer: str) -> dict:
         return tags
     # The model sometimes drops the labels and answers with the bare
     # "genres | moods | instruments" line it was asked for (seen on instrumental
-    # techno). Trust that only when the answer has the pipe structure and short
-    # fields: a prose sentence parses to nothing rather than to one giant label.
+    # techno, and on every Audio Flamingo Next answer). Trust that only when the
+    # answer has the pipe structure: a prose sentence parses to nothing rather
+    # than to one giant label. The per-field cap was 40 characters, which
+    # rejected ordinary three-label answers ("dark, aggressive, intense,
+    # mechanical, dystopian" is 48) and left 507 rows with empty tags; 120 still
+    # excludes a paragraph while accepting the real format.
     chunks = [
         chunk.strip() for chunk in re.split(r"[|\n]", answer) if chunk.strip()
     ]
-    if len(chunks) < 2 or any(len(chunk) > 40 for chunk in chunks[:3]):
+    if len(chunks) < 2 or any(len(chunk) > 120 for chunk in chunks[:3]):
         return tags
     for index, chunk in enumerate(chunks[:3]):
         labels = []
@@ -631,6 +635,20 @@ def selftest() -> int:
         return 1
     if parse_tags("no structure here"):
         print("fail: tag parsing invented labels")
+        return 1
+    # Audio Flamingo Next drops the labels and answers with the bare pipe line;
+    # ordinary fields are longer than the old 40-character cap.
+    bare = parse_tags(
+        "electronic, industrial, electro-industrial | "
+        "dark, aggressive, intense, mechanical, dystopian | "
+        "synthesizers, drum machines, distorted guitars"
+    )
+    if [tag["label"] for tag in bare.get("mood", [])] != [
+        "dark",
+        "aggressive",
+        "intense",
+    ]:
+        print(f"fail: unlabelled pipe answer was not parsed ({bare})")
         return 1
     text, metrics = parse_afnext_output(
         "mode=offline\n"
