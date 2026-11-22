@@ -44,6 +44,15 @@ map('n', '<C-g>', 'g<C-g>')
 -- column, so swap them
 map('n', "'", "`")
 map('n', "`", "'")
+-- `;` opens the command line (`;w`, `;q`, `;bd`), `:` repeats the last
+-- command-line command (`@:`), and `.` keeps repeating the last change. The
+-- no-remap default matters twice: the `;` RHS must stay a raw command-line
+-- character, and the `@:` RHS must keep reading the `:` register rather than
+-- this mapping. Deliberately not a stock `;`/`:` swap: `f`/`t` are flit/leap
+-- motions here (lua/plugins/navigation.lua) and never set Vim's charsearch,
+-- so there was no `;`-repeat of them to move onto `:`.
+map({'n', 'x'}, ';', ':')
+map('n', ':', '@:')
 map('n', '<M-w>', '<Cmd>bd<CR>', {silent=true, desc = 'Delete buffer'})
 map('i', '<C-V>', '<C-R>+')
 map('c', '<C-a>', '<home>', {noremap=true})
