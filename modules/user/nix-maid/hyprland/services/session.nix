@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  systemdUser,
   ...
 }:
 {
@@ -18,24 +17,11 @@
   };
 
   systemdServices = {
-    # Hyprland Polkit Agent
-    hyprpolkitagent = systemdUser.mkUserService {
-      presets = [
-        "graphicalWanted"
-        "restartOnFailure"
-      ];
-      description = "Hyprland Polkit Agent";
-      after = [ "graphical-session-pre.target" ];
-      serviceConfig = {
-        ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent"; # Polkit authentication agent written in QT/QML
-        Environment = [
-          "QT_QPA_PLATFORM=wayland"
-          "XDG_SESSION_TYPE=wayland"
-          "XDG_CURRENT_DESKTOP=Hyprland"
-        ];
-        RestartSec = "2s";
-      };
-    };
+    # No hyprpolkitagent unit: the desktop lives in the greetd session, and a
+    # user unit runs in the user-manager session, which polkitd refuses to
+    # register an agent for (the passed XDG_SESSION_ID and the caller's session
+    # differ; the agent then crashes on exit). hyprland.lua starts it from the
+    # compositor's session instead — see @hyprpolkitagent@ in main.nix.
 
     # Screen time tracker: polls `hyprctl activewindow` every 200 ms and writes
     # per class/window-title time into ~/.local/share/niri-screen-time/db.db.

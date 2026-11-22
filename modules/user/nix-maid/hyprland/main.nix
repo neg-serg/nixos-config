@@ -988,6 +988,7 @@ let
         "@hyprdynamiccursors_setup@"
         "@gloview_setup@"
         "@hymission_setup@"
+        "@hyprpolkitagent@"
       ]
       [
         "${hy3Setup}/bin/hy3-setup"
@@ -997,6 +998,7 @@ let
         "${hyprdynamiccursorsSetup}/bin/hyprdynamiccursors-setup"
         "${gloviewSetup}/bin/gloview-setup"
         "${hymissionSetup}/bin/hymission-setup"
+        "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent"
       ]
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
 in

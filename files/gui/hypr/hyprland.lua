@@ -1528,6 +1528,14 @@ end)()
 hl.session_start = function()
   hl.exec_cmd("systemctl --user start wl-daemon.service")
   hl.exec_cmd("wl-restore")
+  -- The polkit agent has to run in *this* compositor's session. As a user unit
+  -- it lands under user@1000.service, whose XDG_SESSION_ID still names the greetd
+  -- session, while polkitd reports the caller in the user-manager session; the
+  -- registration is refused ("passed session ... differs"), the agent exits and
+  -- its sdbus destructor segfaults — a restart loop, one coredump every 2 s.
+  -- Desktop apps and pkexec run in this session, so the agent belongs here; the
+  -- pgrep keeps the rescue bind's second session_start call from stacking one.
+  hl.exec_cmd("sh -c 'pgrep -x hyprpolkitagent > /dev/null || @hyprpolkitagent@'")
   hl.exec_cmd("kitty --single-instance --class term")
   -- Only the on-demand launcher is on PATH (modules/user/session/chat.nix): the
   -- package's own executable is `Telegram` and the launcher builds it on first
