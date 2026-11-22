@@ -185,7 +185,7 @@ let
   # honest.
 
   tools = rustPlatform.buildRustPackage {
-    pname = "aurora-tools";
+    pname = "aurora-headphones";
     inherit version src;
 
     cargoLock.lockFile = "${src}/Cargo.lock";
@@ -201,7 +201,7 @@ let
     doCheck = false;
 
     meta = lib.mkMeta {
-      description = "aurora tools: the headphone catalogue CLI";
+      description = "aurora-headphones: the headphone model catalogue CLI";
       license = lib.licenses.mit;
       mainProgram = "headphones";
     };

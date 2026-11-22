@@ -49,8 +49,8 @@ let
   rustSlim = import ./rust-slim.nix;
   rustNegNames = [
     "aurora"
+    "aurora-headphones"
     "aurora-plugins"
-    "aurora-tools"
     "blizzard"
     "dnsglobe"
     "dsh-patch"
@@ -191,10 +191,10 @@ slimChunks
           aurora = final.callPackage ./aurora.nix {
             src = inputs.aurora-src;
           }; # aurora: local MPD player with a Vulkan UI
-          aurora-tools = final.callPackage ./aurora.nix {
+          aurora-headphones = final.callPackage ./aurora.nix {
             src = inputs.aurora-src;
             toolsOnly = true;
-          }; # aurora-tools: the headphone model catalogue CLI, without the player's Vulkan closure
+          }; # aurora-headphones: the headphone model catalogue CLI, without the player's Vulkan closure
           # The four plugins that talk to the rest of the machine, as programs the player spawns
           # (a JSON line each way, no shared library). The derivation is the plugins repository's
           # own `nix/package.nix`, so the layout of a plugin directory is decided where the
