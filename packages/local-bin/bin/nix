@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# nix: the system `nix`, with a fetcher cache that survives a read-only $HOME.
+#
+# A DSH agent session runs under the workspace-write file sandbox: the workspace
+# and /tmp stay writable, $HOME does not. Every nix command that touches a flake
+# writes its fetcher locks and caches under $XDG_CACHE_HOME/nix (~/.cache/nix),
+# so inside such a session `nix flake update`, `nix build`, `nix eval` and
+# `nix flake metadata` all die before fetching anything:
+#
+#   error: opening lock file "/home/neg/.cache/nix/fetcher-locks/<sha>.lock":
+#   Permission denied
+#
+# The sandbox is Landlock-based, so the cheap checks lie: `[ -w ]` reports the
+# directory writable and `mkdir -p` succeeds because the directory already
+# exists, while the actual open is denied. The guard below therefore probes with
+# a real create, and only when that fails does it point XDG_CACHE_HOME at a
+# per-user scratch cache that the sandbox does allow. Outside a sandbox the
+# probe succeeds and nix runs exactly as the system packaged it.
+#
+# Env:
+#   NIX_SANDBOX_CACHE    scratch cache root (default ${TMPDIR:-/tmp}/nix-cache-<uid>)
+#   NIX_SANDBOX_REAL     binary to exec (default /run/current-system/sw/bin/nix)
+#   NIX_SANDBOX_VERBOSE  non-empty: say which cache was chosen, on stderr
+#
+# The wrapper is rendered into ~/.local/bin by nix-maid (modules/user/nix-maid/cli/
+# local-bin.nix), which sits ahead of /run/current-system/sw/bin on PATH. Root,
+# systemd units and the store do not see it: their PATH starts at /run/current-system.
+set -uo pipefail
+
+real="${NIX_SANDBOX_REAL:-/run/current-system/sw/bin/nix}"
+if [ ! -x "$real" ]; then
+  printf 'nix: %s is not executable\n' "$real" >&2
+  exit 127
+fi
+
+cache="${XDG_CACHE_HOME:-$HOME/.cache}"
+probe="$cache/nix/.wrapper-probe.$$"
+if ! { mkdir -p "$cache/nix" && : > "$probe"; } 2> /dev/null; then
+  scratch="${NIX_SANDBOX_CACHE:-${TMPDIR:-/tmp}/nix-cache-$(id -u)}"
+  # -O rather than -w: the scratch root lives in a shared temp dir, so a
+  # predictable name must not be trusted just because it exists.
+  if mkdir -p "$scratch/nix" 2> /dev/null && [ -O "$scratch" ] && chmod 700 "$scratch" 2> /dev/null; then
+    [ -z "${NIX_SANDBOX_VERBOSE:-}" ] || printf 'nix: %s is read-only, using %s\n' "$cache" "$scratch" >&2
+    export XDG_CACHE_HOME="$scratch"
+  else
+    printf 'nix: %s is read-only and no usable scratch cache\n' "$cache" >&2
+  fi
+else
+  rm -f "$probe" 2> /dev/null
+  [ -z "${NIX_SANDBOX_VERBOSE:-}" ] || printf 'nix: using %s\n' "$cache" >&2
+fi
+
+exec "$real" "$@"

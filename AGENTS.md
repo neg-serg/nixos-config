@@ -258,6 +258,14 @@ Builds: substitution through the proxy
 - `just check` and `just flag` still pass the flag; the deploy targets do not, because
   substitution now works through the proxy. Keep that split in mind for new recipes: substitute,
   unless the target is a check or a one-off comparison.
+- Bare `nix …` works inside a sandboxed agent session again: `packages/local-bin/bin/nix`
+  renders to `~/.local/bin/nix`, ahead of `/run/current-system/sw/bin` on PATH, and keeps the
+  fetcher cache writable. Landlock makes `[ -w ]` and `mkdir -p` succeed on `~/.cache/nix`
+  while the real open is denied, so the wrapper probes with an actual file create and only
+  then points `XDG_CACHE_HOME` at `${TMPDIR:-/tmp}/nix-cache-<uid>` (`NIX_SANDBOX_CACHE`
+  overrides it; `NIX_SANDBOX_VERBOSE=1` reports the choice). Outside a sandbox it is a pure
+  passthrough. `scripts/dev/check-nix-wrapper.sh` (flake check `nix-wrapper-guard`) pins that
+  conditionality, so a shim that swallows nix fails `just check` instead of the command.
 
 Commit style
 - Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/trantor] …`, `[dev/pkgs] …`, `[docs] …`.

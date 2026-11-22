@@ -237,6 +237,20 @@ in
     bash ${../scripts/dev}/check-dsh-statusline.sh ${pkgs.neg.local-bin-system}/bin/dsh-statusline
   '';
 
+  # ── nix wrapper guard ──────────────────────────────────────────────
+  # packages/local-bin/bin/nix is the ~/.local/bin shim that keeps `nix …` usable
+  # inside the DSH workspace-write sandbox, where $HOME is read-only and nix
+  # cannot open its fetcher locks under ~/.cache/nix. The guard pins the
+  # conditionality (a writable cache root stays untouched), the argument
+  # passthrough, the warning when no scratch cache is usable, and the 127 on a
+  # missing real binary — a shim that silently swallows nix would be worse than
+  # the original error.
+
+  "nix-wrapper-guard" = mkScriptCheck "nix-wrapper" [ ] ''
+    # Splice the whole scripts/dev dir so the gate finds lib.sh next to itself.
+    bash ${../scripts/dev}/check-nix-wrapper.sh ${../packages/local-bin/bin/nix}
+  '';
+
   # ── nix-maid app directory guard ───────────────────────────────────
   # modules/user/nix-maid/apps/default.nix imports sibling directories via
   # neg.importDir { includeDirs = true; }, which skips any directory without a
