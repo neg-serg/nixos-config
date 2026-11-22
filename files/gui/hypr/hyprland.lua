@@ -1269,6 +1269,19 @@ hl.animation({ leaf = "workspacesOut",    enabled = true, speed = 1, spring = "s
 hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 1, spring = "spring_glide", style = "slidefadevert 15%" })
 hl.animation({ leaf = "zoomFactor",       enabled = true, speed = 1, spring = "spring_glide" })
 
+-- The master switch on M4+Ctrl+a: everything above turns off and back on at
+-- once (it is `animations:enabled`, not the per-leaf flags). In Lua mode
+-- `hl.config` is the only live path — `hyprctl keyword` does not apply options
+-- here (see the render note above) — and `hl.get_config` reads the value back,
+-- so the bind stays correct when the switch was flipped by hand with
+-- `hyprctl eval 'hl.config({ animations = { enabled = false } })'`. A config
+-- reload re-parses this file and the option is back at its default (on); that
+-- is the reset path, not a bug. A nil from `hl.get_config` (option not
+-- registered) makes the bind *enable* animations: it fails open to the default.
+hl.bind(M4 .. "+" .. C .. "+a", function()
+  hl.config({ animations = { enabled = not hl.get_config("animations:enabled") } })
+end)
+
 -- =====================================================================
 -- Window rules (rules.conf + workspaces.nix)
 -- =====================================================================
