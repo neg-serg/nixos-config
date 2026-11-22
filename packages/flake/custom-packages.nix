@@ -34,7 +34,7 @@
 
   aurora = pkgs.neg.aurora; # aurora: local MPD player with a Vulkan UI (winit + ash + cosmic-text)
   aurora-headphones = pkgs.neg.aurora-headphones; # the headphone model catalogue CLI (headphones-tools crate)
-  aurora-plugins = pkgs.neg.aurora-plugins; # the player's external plugins: notify, scrobble, mpris, remaining
+  aurora-plugins = pkgs.neg.aurora-plugins; # the player's external plugins: autodj, lyrics, mpris, musicbrainz, notify, remaining, scrobble and spectroscope
   camillaeq = pkgs.camillaeq; # CamillaDSP browser equalizer (Svelte UI + Fastify server)
 
   mpd-voice = pkgs.mpd-voice; # voice control for MPD: local STT -> player commands (Rust)

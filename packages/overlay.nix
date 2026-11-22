@@ -195,11 +195,11 @@ slimChunks
             src = inputs.aurora-src;
             toolsOnly = true;
           }; # aurora-headphones: the headphone model catalogue CLI, without the player's Vulkan closure
-          # The four plugins that talk to the rest of the machine, as programs the player spawns
+          # The eight plugins that talk to the rest of the machine, as programs the player spawns
           # (a JSON line each way, no shared library). The derivation is the plugins repository's
           # own `nix/package.nix`, so the layout of a plugin directory is decided where the
           # programs live; this line only pins the source it builds from.
-          aurora-plugins = final.callPackage "${inputs.aurora-plugins-src}/nix/package.nix" { }; # aurora-plugins: notify, scrobble, mpris and remaining as programs
+          aurora-plugins = final.callPackage "${inputs.aurora-plugins-src}/nix/package.nix" { }; # aurora-plugins: autodj, lyrics, mpris, musicbrainz, notify, remaining, scrobble and spectroscope as programs
           renoise-redux = final.callPackage ./renoise-redux {
             renoiseSrc = inputs.renoise-src;
           }; # Renoise Redux VST3 plugin (licensed build)

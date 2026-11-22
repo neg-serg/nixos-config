@@ -107,12 +107,13 @@
       url = "git+ssh://git@github.com/neg-serg/aurora";
       flake = false;
     };
-    # aurora-plugins: the player's four service plugins as their own programs — `notify`,
-    # `scrobble`, `mpris` and `remaining`. A repository of its own, so changing a plugin rebuilds a
-    # plugin and never the player (the split is the player's `docs/plugins-external.md`). Public,
-    # unlike the player: there is no secret in it, and a public input fetches over HTTPS with no
-    # key to manage. The derivation lives in that repository's `nix/package.nix`, and the player
-    # finds the programs through `AURORA_PLUGIN_DIR` (modules/media/audio/aurora.nix). Re-lock with
+    # aurora-plugins: the player's external plugins as their own programs — `autodj`, `lyrics`,
+    # `mpris`, `musicbrainz`, `notify`, `remaining`, `scrobble` and `spectroscope`. A repository of
+    # its own, so changing a plugin rebuilds a plugin and never the player (the split is the
+    # player's `docs/plugins-external.md`). Public, unlike the player: there is no secret in it,
+    # and a public input fetches over HTTPS with no key to manage. The derivation lives in that
+    # repository's `nix/package.nix`, and the player finds the programs through
+    # `AURORA_PLUGIN_DIR` (modules/media/audio/aurora.nix). Re-lock with
     # `nix flake lock --update-input aurora-plugins-src` after pushing to it.
     aurora-plugins-src = {
       url = "github:neg-serg/aurora-plugins";
