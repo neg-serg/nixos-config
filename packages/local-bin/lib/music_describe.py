@@ -42,6 +42,7 @@ PYTHONPATH.  Same soundfile -> soxr -> ffmpeg ladder as music_embed.py.
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import hashlib
 import json
 import os
@@ -488,6 +489,40 @@ def _load_done(out: Path) -> dict:
     return done
 
 
+def _skip_file(out: Path) -> Path:
+    """Sidecar next to the batch output listing files this stack cannot describe.
+
+    Without it the head of the newest-first order stays occupied by an
+    undescribable track forever: every pass retries it, fails, and the whole
+    refresh chain exits nonzero (the 2026-11-22 restart loop). A skip is only
+    honoured while path+mtime+size+model+prompt still match, so an edited file
+    or a different engine gets retried.
+    """
+    return out.with_suffix(".failed.jsonl")
+
+
+def _record_skip(
+    path: Path, out: Path, model_ref: str, prompt_sha: str, error: str
+) -> None:
+    try:
+        mtime, size = _stat(path)
+    except OSError:
+        return
+    row = {
+        "path": str(path),
+        "mtime": mtime,
+        "size": size,
+        "model": model_ref,
+        "prompt_sha": prompt_sha,
+        "error": error,
+        "when": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    target = _skip_file(out)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
 def selftest() -> int:
     """Offline checks of everything that does not need torch: decode + cache keys."""
     try:
@@ -554,6 +589,33 @@ def selftest() -> int:
             print(f"fail: cache index lost a row ({done})")
             return 1
 
+        # Skips live in the sidecar and are keyed to the file, so an edited
+        # track is retried; the batch must find them without the JSONL cache.
+        _record_skip(older, out, "m", "s", "boom")
+        skips = _load_done(_skip_file(out))
+        if skips.get(str(older), {}).get("error") != "boom":
+            print(f"fail: skip sidecar lost the failure ({skips})")
+            return 1
+        if (
+            _skip_file(out).parent != out.parent
+            or "failed" not in _skip_file(out).name
+        ):
+            print(
+                f"fail: skip sidecar is not next to the cache ({_skip_file(out)})"
+            )
+            return 1
+
+        # samples/ nests several levels; the one pattern must cover the subtree.
+        deep = lib / "samples" / "kit" / "hit.wav"
+        deep.parent.mkdir(parents=True)
+        deep.write_bytes(b"")
+        if [item.name for item in _iter_library(lib, "samples/*")] != [
+            "b.flac",
+            "a.flac",
+        ]:
+            print("fail: --exclude did not skip a nested samples/ subtree")
+            return 1
+
     if _sha("abc") != _sha("abc") or _sha("abc") == _sha("abd"):
         print("fail: prompt hashing is not stable")
         return 1
@@ -592,6 +654,24 @@ def selftest() -> int:
     return 0
 
 
+def _excluded(path: Path, root: Path, pattern: str) -> bool:
+    """Match --exclude against the path as written and against the library-relative one.
+
+    Path.match anchors at the right and its ``*`` does not cross a separator, so
+    ``samples/*`` skipped only the first level under samples/ and let the
+    deeper subtree through — the sample library is 11.5k of the 38.5k files, and
+    the refresh chain now excludes it by that one pattern. fnmatch on the
+    relative path is what makes the subtree claim true.
+    """
+    if path.match(pattern):
+        return True
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return False
+    return fnmatch.fnmatch(str(relative), pattern)
+
+
 def _iter_library(root: Path, exclude: str | None):
     exts = {
         ".flac",
@@ -613,7 +693,7 @@ def _iter_library(root: Path, exclude: str | None):
     for path in root.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in exts:
             continue
-        if exclude and Path(path).match(exclude):
+        if exclude and _excluded(path, root, exclude):
             continue
         try:
             mtime = path.stat().st_mtime
@@ -747,6 +827,11 @@ def main(argv: list[str]) -> int:
         if not args.quiet:
             print(msg, file=sys.stderr, flush=True)
 
+    def warn(msg: str):
+        # Failures stay visible even under --quiet: the weekly unit used to fail
+        # silently and the reason was only recoverable by re-running by hand.
+        print(msg, file=sys.stderr, flush=True)
+
     # --tags swaps the free-form prompt for the machine-readable one unless the
     # caller passed their own; the answer is parsed into tag records below.
     prompt = (
@@ -783,8 +868,10 @@ def main(argv: list[str]) -> int:
     prompt_sha = _sha(prompt)
     todo: list[Path] = []
     done: dict = {}
+    skips: dict = {}
     if args.dir:
         done = {} if args.force else _load_done(args.out)
+        skips = {} if args.force else _load_done(_skip_file(args.out))
         for path in _iter_library(args.dir, args.exclude):
             entry = done.get(str(path))
             mtime, size = _stat(path)
@@ -794,6 +881,15 @@ def main(argv: list[str]) -> int:
                 and entry.get("size") == size
                 and entry.get("model") == model_ref
                 and entry.get("prompt_sha") == prompt_sha
+            ):
+                continue
+            skip = skips.get(str(path))
+            if (
+                skip
+                and skip.get("mtime") == mtime
+                and skip.get("size") == size
+                and skip.get("model") == model_ref
+                and skip.get("prompt_sha") == prompt_sha
             ):
                 continue
             todo.append(path)
@@ -893,6 +989,7 @@ def main(argv: list[str]) -> int:
         )
 
     failures = 0
+    failed: list[tuple[Path, str]] = []
     for index, path in enumerate(todo, 1):
         try:
             t0 = time.time()
@@ -903,9 +1000,9 @@ def main(argv: list[str]) -> int:
             Exception
         ) as exc:  # noqa: BLE001 - one bad file must not kill a batch
             failures += 1
-            log(
-                f"[music-describe] {path}: FAILED ({type(exc).__name__}: {exc})"
-            )
+            detail = f"{type(exc).__name__}: {exc}"
+            failed.append((path, detail))
+            warn(f"[music-describe] {path}: FAILED ({detail})")
             continue
         mtime, size = _stat(path)
         entry = {
@@ -944,6 +1041,31 @@ def main(argv: list[str]) -> int:
                     f"[music-describe] {stats['new_tokens']} tokens in "
                     f"{stats['generate_seconds']}s ({stats['new_tokens'] / max(stats['generate_seconds'], 1e-6):.2f} tok/s)"
                 )
+    described = len(todo) - failures
+    if args.dir:
+        # Batch mode is the weekly background pass: a file this stack cannot
+        # describe is recorded in the sidecar and left alone while the batch
+        # moves on. Exiting nonzero here made systemd restart the whole chain
+        # every RestartSec forever, because the same file stays at the head of
+        # the newest-first order (2026-11-22: 13 runs in one day, ~1 h and
+        # 14 cores each). A pass where nothing at all worked records nothing,
+        # so a broken engine cannot blacklist the library and the next
+        # scheduled run retries.
+        if failures and described == 0:
+            warn(
+                f"[music-describe] no track could be described ({failures} failures); "
+                "nothing recorded, check the engine"
+            )
+        elif failures:
+            for path, detail in failed:
+                _record_skip(path, args.out, model_ref, prompt_sha, detail)
+            warn(
+                f"[music-describe] {described}/{len(todo)} described, "
+                f"{failures} skipped (recorded in {_skip_file(args.out)})"
+            )
+        else:
+            log(f"[music-describe] {described}/{len(todo)} described")
+        return 0
     return 1 if failures else 0
 
 

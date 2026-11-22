@@ -10,6 +10,7 @@
 #   music-refresh.sh [--index-args "ARGS"] [--tags-file FILE] [--playlists DIR]
 #                    [--by GROUPS] [--music-dir DIR] [--min-score X]
 #                    [--per-list N] [--describe-limit N] [--mf-tags FILE]
+#                    [--describe-exclude GLOB]
 #                    [--skip-tags] [--skip-playlists] [--skip-describe]
 #                    [--check] [--dry-run]
 #
@@ -27,6 +28,9 @@
 #                    CPU, so the weekly run takes a handful, not the library)
 #   --mf-tags        where those rows go (default
 #                    ~/.cache/music-describe/tags.jsonl)
+#   --describe-exclude glob the describe step skips (default "samples/*": the
+#                    sample library is 11.5k files and none of them is a track
+#                    worth describing; leaving them in wastes the whole pass)
 #   --skip-describe  keep the index/tags/playlists steps only
 #   --skip-tags      only refresh the index (and playlists from existing tags)
 #   --skip-playlists skip playlist generation
@@ -45,13 +49,17 @@ MIN_SCORE="0.15"
 PER_LIST="120"
 DESCRIBE_LIMIT="0"
 MF_TAGS="${MUSIC_DESCRIBE_TAGS:-$HOME/.cache/music-describe/tags.jsonl}"
+# Samples are not tracks: describing them costs a full model pass each and
+# their "genre/mood" answer feeds nothing. Deep nesting is why the matcher
+# works on the library-relative path (see _excluded in music_describe.py).
+DESCRIBE_EXCLUDE="${MUSIC_DESCRIBE_EXCLUDE:-samples/*}"
 SKIP_TAGS=""
 SKIP_DESCRIBE=""
 SKIP_PLAYLISTS=""
 MODE="apply"
 
 usage() {
-  sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,41p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -91,6 +99,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --mf-tags)
       MF_TAGS="${2:?--mf-tags needs a path}"
+      shift 2
+      ;;
+    --describe-exclude)
+      DESCRIBE_EXCLUDE="${2:?--describe-exclude needs a glob}"
       shift 2
       ;;
     --skip-describe)
@@ -160,7 +172,7 @@ if [[ -z "$SKIP_TAGS" ]]; then
 fi
 if [[ -z "$SKIP_DESCRIBE" && "$DESCRIBE_LIMIT" -gt 0 ]]; then
   if describe_tool="$(resolve_tool music-describe)"; then
-    steps+=("describe:$describe_tool --tags --quiet --dir $MUSIC_DIR --out $MF_TAGS --limit $DESCRIBE_LIMIT")
+    steps+=("describe:$describe_tool --tags --quiet --dir $MUSIC_DIR --out $MF_TAGS --limit $DESCRIBE_LIMIT --exclude '$DESCRIBE_EXCLUDE'")
   else
     steps+=("describe:MISSING")
   fi

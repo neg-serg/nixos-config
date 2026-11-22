@@ -39,7 +39,11 @@ let
     + lib.optionalString (autoIndex.limit > 0) " --limit ${toString autoIndex.limit}"
     + lib.optionalString (autoIndex.extraArgs != [ ]) " ${lib.escapeShellArgs autoIndex.extraArgs}";
   # A bounded music-describe pass belongs to the refresh chain; without it the
-  # timer only embeds and never spends minutes per track on descriptions.
+  # timer only embeds and never spends minutes per track on descriptions. A file
+  # the stack cannot describe is recorded in ~/.cache/music-describe/tags.failed.jsonl
+  # and skipped on later passes, so one bad track no longer fails the step and
+  # makes Restart=on-failure rerun the whole chain every RestartSec (2026-11-22);
+  # samples/ is excluded by the script — they are not tracks.
   describeArgs = lib.optionalString (
     autoIndex.describeLimit > 0
   ) " --describe-limit ${toString autoIndex.describeLimit}";
@@ -85,6 +89,15 @@ in
           "restartOnFailure"
         ];
         description = "Refresh the MERT similarity index incrementally";
+        # Safety net against a deterministic failure looping the whole chain:
+        # a run lasts ~1 h, so three starts inside six hours pass and the fourth
+        # is refused until the window closes (the weekly timer fires far outside
+        # it). Without this, one bad file restarted the chain every RestartSec
+        # for the rest of the session (2026-11-22: 13 runs in a day).
+        unitConfig = {
+          StartLimitIntervalSec = "6h";
+          StartLimitBurst = 3;
+        };
         # The refresh chain resolves `music-index` through PATH when it is not
         # in ~/.local/bin any more (the Rust binary lives in the store); the
         # binary shells out to ffprobe for each new track, and the timer's PATH
