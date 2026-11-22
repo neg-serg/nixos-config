@@ -29,6 +29,13 @@ let
   # window actually exists, so a failed launch never leaves an empty special workspace on screen.
   playerClass = "player";
   playerWorkspace = "aurora";
+  # Where the external plugins live. `environment.sessionVariables` below is the session-wide
+  # answer, and a session imports it when it *starts*: a compositor that outlives a `switch` keeps
+  # exporting the previous generation's store path, so the player it starts finds the old bundle
+  # and says `[plugins] unknown plugin musicbrainz`. This launcher is what starts the player, so it
+  # pins the directory its own generation names — the next launch picks up a rebuilt plugin
+  # package with no re-login and no compositor restart.
+  pluginDir = "${pkgs.neg.aurora-plugins}/lib/aurora/plugins";
   # The live instrument's producer. The `spectroscope` plugin draws whatever
   # `$XDG_RUNTIME_DIR/aurora-scope` carries — a text pipe of decimal samples — and nothing else on
   # this machine writes it, which is why the plugin used to stand there dead. `pw-record` captures
@@ -49,6 +56,8 @@ let
   '';
   aurora-focus = pkgs.writeShellScriptBin "aurora-focus" ''
     set -eu
+    # See `pluginDir`: the session's copy of this variable is older than the last switch.
+    export AURORA_PLUGIN_DIR=${lib.escapeShellArg pluginDir}
     hyprctl=${pkgs.hyprland}/bin/hyprctl
     jq=${pkgs.jq}/bin/jq
     up() { $hyprctl clients -j 2>/dev/null | $jq -e --arg c ${lib.escapeShellArg playerClass} 'any(.[]; .class == $c)' > /dev/null; }
@@ -88,7 +97,7 @@ in
     environment.systemPackages = lib.mkAfter [
       pkgs.neg.aurora # aurora: MPD player with a Vulkan UI (winit + ash + cosmic-text)
       pkgs.neg.aurora-tools # headphones: the model catalogue CLI (apply/import/export)
-      pkgs.neg.aurora-plugins # the four external plugins: notify, scrobble, mpris, remaining
+      pkgs.neg.aurora-plugins # the eight external plugins: notify, scrobble, mpris, remaining, autodj, lyrics, musicbrainz, spectroscope
       aurora-focus # what mod4+f runs: focus the player, or start it if it is not up
     ];
 
@@ -117,13 +126,15 @@ in
     # the window read as glass instead of as a see-through hole.
     environment.sessionVariables.AURORA_WINDOW_OPACITY = "0.92";
 
-    # The plugins that talk to the rest of the machine — notify, scrobble, mpris and remaining —
+    # The eight plugins that talk to the rest of the machine — notifications, scrobbling, MPRIS, the
+    # queue's time left and its top-up, the lyrics line, the release lookup and the spectrogram —
     # are programs in a repository of their own, and the player finds them by looking in a plugin
     # directory: one directory per plugin, its `plugin.json` and the program beside it. The package
-    # installs the four under `$out/lib/aurora/plugins`, and this variable is the whole of the
-    # contract — a rebuilt plugin is picked up by the next player start, with no rebuild of the
-    # player. An explicitly empty value means "no external plugins", which is what a capture that
-    # must not depend on the machine says.
-    environment.sessionVariables.AURORA_PLUGIN_DIR = "${pkgs.neg.aurora-plugins}/lib/aurora/plugins";
+    # installs all eight under `$out/lib/aurora/plugins`, and this variable is the session-wide
+    # answer of the contract — a rebuilt plugin is picked up by the next player start, with no
+    # rebuild of the player. The launcher above names the same directory from its own generation,
+    # for the session that outlived a switch. An explicitly empty value means "no external
+    # plugins", which is what a capture that must not depend on the machine says.
+    environment.sessionVariables.AURORA_PLUGIN_DIR = pluginDir;
   };
 }
