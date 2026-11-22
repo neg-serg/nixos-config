@@ -385,6 +385,17 @@ def describe(processor, model, pcm, prompt: str, max_new: int):
     }
 
 
+def _labels(chunk: str) -> list[str]:
+    """Split one answer field into unique normalised labels, keeping order."""
+    labels: list[str] = []
+    for raw in re.split(r"[,/]", chunk):
+        label = raw.strip().strip("-*. ").strip().lower()
+        label = re.sub(r"\s+", " ", label)
+        if label and label not in labels:
+            labels.append(label)
+    return labels
+
+
 def parse_tags(answer: str) -> dict:
     """Turn the one-line GENRES/MOODS/INSTRUMENTS answer into tag records.
 
@@ -408,12 +419,7 @@ def parse_tags(answer: str) -> dict:
         head = heads.get(name.strip().lower().strip("*"))
         if not head or not value.strip():
             continue
-        labels = []
-        for raw in re.split(r"[,/]", value):
-            label = raw.strip().strip("-*.").strip().lower()
-            label = re.sub(r"\s+", " ", label)
-            if label and label not in labels:
-                labels.append(label)
+        labels = _labels(value)
         if labels:
             tags.setdefault(head, []).extend(
                 {"label": label, "score": 1.0} for label in labels[:3]
@@ -431,20 +437,24 @@ def parse_tags(answer: str) -> dict:
     chunks = [
         chunk.strip() for chunk in re.split(r"[|\n]", answer) if chunk.strip()
     ]
-    if len(chunks) < 2 or any(len(chunk) > 120 for chunk in chunks[:3]):
+    if len(chunks) < 2:
         return tags
+    parsed: dict[str, list[dict]] = {}
     for index, chunk in enumerate(chunks[:3]):
-        labels = []
-        for raw in re.split(r"[,/]", chunk):
-            label = raw.strip().strip("-*. ").strip().lower()
-            label = re.sub(r"\s+", " ", label)
-            if label and label not in labels:
-                labels.append(label)
-        if labels:
-            tags[TAG_HEADS[index]] = [
-                {"label": label, "score": 1.0} for label in labels[:3]
-            ]
-    return tags
+        labels = _labels(chunk)
+        if not labels:
+            continue
+        # Long ambient/electronic tracks make the model repeat the same handful
+        # of labels until the field is thousands of characters long. The unique
+        # set is still the answer, so judge it rather than the raw length that
+        # used to reject the whole row. Prose stays rejected: it has more than a
+        # dozen unique fragments, or a unique set longer than the field cap.
+        if len(labels) > 12 or sum(map(len, labels)) > 120:
+            return tags
+        parsed[TAG_HEADS[index]] = [
+            {"label": label, "score": 1.0} for label in labels[:3]
+        ]
+    return parsed
 
 
 def current_track() -> str | None:
@@ -525,6 +535,65 @@ def _record_skip(
     target.parent.mkdir(parents=True, exist_ok=True)
     with target.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def reparse(out: Path, dry_run: bool = False, drop_empty: bool = False) -> int:
+    """Fill empty tag records from the answers already stored in the cache.
+
+    Only the parser changes between runs, never the model output that was paid
+    for, so a cache row whose ``tags`` came out empty can be healed offline.
+    Rows that already carry tags are kept verbatim, and the file is replaced
+    atomically so an interrupted run cannot truncate it. Rows the parser still
+    rejects (prose, a bare genre line) are reported and left untouched unless
+    ``--drop-empty`` is given: dropping them makes the next batch describe that
+    track again, which is the only fix when the answer itself is unusable.
+    """
+    rows: list[dict] = []
+    filled = 0
+    still = 0
+    dropped = 0
+    if not out.exists():
+        print(
+            f"[music-describe] reparse: no cache at {out} yet",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 0
+    with out.open(encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            if not row.get("tags"):
+                tags = parse_tags(row.get("text", ""))
+                if tags:
+                    row["tags"] = tags
+                    filled += 1
+                else:
+                    still += 1
+                    if drop_empty:
+                        dropped += 1
+                        continue
+            rows.append(row)
+    if not dry_run:
+        tmp = out.with_suffix(out.suffix + ".tmp")
+        with tmp.open("w", encoding="utf-8") as handle:
+            for row in rows:
+                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+        tmp.replace(out)
+    suffix = " (dry run)" if dry_run else ""
+    dropped_note = ""
+    if drop_empty:
+        action = "would be dropped" if dry_run else "dropped"
+        dropped_note = f", {dropped} {action} for a retry"
+    print(
+        f"[music-describe] reparse: {filled} restored, {still} still "
+        f"unparsed{dropped_note}, {len(rows)} rows{suffix}",
+        file=sys.stderr,
+        flush=True,
+    )
+    return 0
 
 
 def selftest() -> int:
@@ -649,6 +718,27 @@ def selftest() -> int:
         "intense",
     ]:
         print(f"fail: unlabelled pipe answer was not parsed ({bare})")
+        return 1
+    # Long ambient tracks make the model repeat the same labels until a field
+    # is thousands of characters long; the unique set is still the answer.
+    looped = parse_tags(
+        "electronic, ambient | "
+        + ", ".join(["dark", "eerie", "unsettling", "dystopian"] * 40)
+        + " | synthesizers, drones"
+    )
+    if [tag["label"] for tag in looped.get("mood", [])] != [
+        "dark",
+        "eerie",
+        "unsettling",
+    ]:
+        print(f"fail: repetition loop was not collapsed ({looped})")
+        return 1
+    if parse_tags(
+        "a slow brooding intro with a long echoing guitar line and a shimmering "
+        "pad, a distant choir singing over a rumbling bass, a bell tolling far "
+        "away, a crackling fire, a whispered voice | dark | synth pad"
+    ):
+        print("fail: tag parsing invented labels from prose")
         return 1
     text, metrics = parse_afnext_output(
         "mode=offline\n"
@@ -827,9 +917,30 @@ def main(argv: list[str]) -> int:
         action="store_true",
         help="run the offline checks (no torch, no model) and exit",
     )
+    parser.add_argument(
+        "--reparse",
+        action="store_true",
+        help="re-derive tags from the answers stored in --out (no model is "
+        "loaded) and rewrite the file",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="with --reparse: report what would change without rewriting",
+    )
+    parser.add_argument(
+        "--drop-empty",
+        action="store_true",
+        help="with --reparse: drop rows the parser still cannot read, so the "
+        "next batch describes those tracks again",
+    )
     args = parser.parse_args(argv)
     if args.selftest:
         return selftest()
+    if args.reparse:
+        if not args.out:
+            parser.error("--reparse requires --out")
+        return reparse(args.out, args.dry_run, args.drop_empty)
 
     # The engine decides what "the model" means for the cache: a HuggingFace id
     # for mf, the GGUF path for afnext. Keeping them in the same field is what

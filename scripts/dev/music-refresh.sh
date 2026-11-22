@@ -172,6 +172,10 @@ if [[ -z "$SKIP_TAGS" ]]; then
 fi
 if [[ -z "$SKIP_DESCRIBE" && "$DESCRIBE_LIMIT" -gt 0 ]]; then
   if describe_tool="$(resolve_tool music-describe)"; then
+    # A parser fix heals the cache without paying for the model again: this
+    # rewrites only the tag records whose stored answer the current parser
+    # reads. It runs before the batch so the batch's skip keys see the update.
+    steps+=("reparse:$describe_tool --reparse --out $MF_TAGS")
     steps+=("describe:$describe_tool --tags --quiet --dir $MUSIC_DIR --out $MF_TAGS --limit $DESCRIBE_LIMIT --exclude '$DESCRIBE_EXCLUDE'")
   else
     steps+=("describe:MISSING")
