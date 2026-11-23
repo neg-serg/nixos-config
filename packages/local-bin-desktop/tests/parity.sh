@@ -902,28 +902,24 @@ wl_state_setup() {
   printf '%s' "{\"outputs\":{\"eDP-1\":{\"wallpaper_path\":\"$HOME_DIR/wall.png\"}}}" \
     > "$HOME_DIR/.local/state/wl/state.json"
 }
-wl_stale_setup() {
-  mkdir -p "$HOME_DIR/.local/state/wl" "$HOME_DIR/pic/wl"
-  printf '%s' "{\"outputs\":{\"eDP-1\":{\"wallpaper_path\":\"$HOME_DIR/gone.png\"}}}" \
-    > "$HOME_DIR/.local/state/wl/state.json"
-}
-wl_empty_setup() {
-  mkdir -p "$HOME_DIR/pic/wl"
-}
 if tool_enabled wl-restore; then
   begin_tool wl-restore
   compare "wl-restore: valid state restores" wl_state_setup
-  compare "wl-restore: stale state falls back to a random pick" wl_stale_setup
-  compare "wl-restore: no state falls back to a random pick" wl_empty_setup
-  set_env "FAKE_WL_RESTORE_EXIT=1"
-  compare "wl-restore: failing restore falls back to random" wl_state_setup
   set_env "FAKE_WL_COUNTER=$FAKE_WL_COUNTER"
   wl_retry_setup() {
     wl_state_setup "$@"
     printf '3' > "$FAKE_WL_COUNTER"
   }
   compare "wl-restore: waits for the daemon socket" wl_retry_setup
-  # There is no "greeter cache sync" scenario any more: the copy into
+  # Intentional divergence from the shell original: it ended a stale state, an
+  # empty state and a refused `wl restore` alike in `wl random ~/pic/wl`, so after
+  # a compositor crash the desktop came back on a random picture instead of the
+  # one that was on screen (2026-11-23). The port never randomises, so those three
+  # cases have no counterpart to compare against; the fallback ladder is covered
+  # by the crate's own tests (tests/wl_restore.rs), which assert the exact `wl`
+  # argv.
+  #
+  # There is no "greeter cache sync" scenario any more either: the copy into
   # /home/greeter went with that account on 2026-11-03, and the port no longer
   # reads the legacy `~/.cache/quickshell-wallpaper-path` — the stale-state
   # fallback walks wl's last-good, the producer cache and the old
