@@ -46,12 +46,19 @@
         # `backend->backend` (SIGSEGV in `CBackend::log`; path `CPointerManager::
         # attemptHardwareCursor` -> `setHWCursorBuffer` -> `setCursor`). A detached backend
         # cannot set a cursor, so the guard returns early and the next tick re-arms it.
+        #
+        # The 240 s idle timerfd was the fifth path: after the backend was gone the wayland
+        # event loop kept the idle poll source registered, the fd number was reused, and the
+        # callback ran `dispatchIdle` on a dead CBackend (crashes every four minutes at 22:02,
+        # 22:06, 22:10 and 22:18; core: the faulting `this + 0x268` is outside the object). The
+        # callback now holds the backend's weak self and no-ops once it expired.
         aquamarine = prev.aquamarine.overrideAttrs (old: {
           patches = (old.patches or [ ]) ++ [
             ./null-backend-in-session-active.patch
             ./null-backend-in-drm-output-schedule-frame.patch
             ./dead-session-in-poll-fds.patch
             ./null-backend-in-drm-output-set-cursor.patch
+            ./weak-self-in-idle-poll-fd.patch
           ];
         });
 

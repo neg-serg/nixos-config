@@ -1,0 +1,21 @@
+--- a/src/backend/Backend.cpp
++++ b/src/backend/Backend.cpp
+@@ -212,7 +212,17 @@
+     }
+ 
+     log(AQ_LOG_DEBUG, std::format("backend: poll fd {} for idle", idle.fd));
+-    result.emplace_back(makeShared<SPollFD>(idle.fd, [this]() { dispatchIdle(); }));
++    // The wayland event loop keeps this source registered after the backend is
++    // torn down or replaced, and the fd number can be reused by the next file:
++    // the raw `this` then points at a dead CBackend and the 240 s idle timer
++    // crashes inside log() (trantor 2026-11-23, every 4 min, `dispatchIdle`
++    // reading `this + 0x268`). Hold the weak self instead: an expired backend
++    // turns the callback into a no-op.
++    const auto weakSelf = self;
++    result.emplace_back(makeShared<SPollFD>(idle.fd, [weakSelf]() {
++        if (const auto BACKEND = weakSelf.lock())
++            BACKEND->dispatchIdle();
++    }));
+ 
+     return result;
+ }
