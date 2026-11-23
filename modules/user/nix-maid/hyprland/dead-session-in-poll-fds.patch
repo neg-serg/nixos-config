@@ -1,0 +1,34 @@
+--- a/src/backend/Session.cpp
++++ b/src/backend/Session.cpp
+@@ -502,6 +502,9 @@
+ }
+ 
+ void Aquamarine::CSession::dispatchLibseatEvents() {
++    if (!libseatHandle)
++        return;
++
+     if (libseat_dispatch(libseatHandle, 0) == -1)
+         backend->log(AQ_LOG_ERROR, "Couldn't dispatch libseat events");
+ }
+@@ -518,11 +521,18 @@
+ }
+ 
+ std::vector<Hyprutils::Memory::CSharedPointer<SPollFD>> Aquamarine::CSession::pollFDs() {
++    // The consumer's event loop owns these callbacks and can keep them registered
++    // after a teardown has freed this session, so a raw `this` capture is a
++    // use-after-free: the dispatch then ran libseat_dispatch() on a closed seat
++    // (SIGABRT from `assert(seat && seat->impl)`, trantor 2026-11-23 20:32:05; the
++    // core has the freed session with libseatHandle == nullptr). Hold the weak self
++    // instead: an expired session turns the callback into a no-op.
++    const auto weakSelf = self;
+     // clang-format off
+     return {
+-        makeShared<SPollFD>(libseat_get_fd(libseatHandle), [this](){    dispatchLibseatEvents();  }),
+-        makeShared<SPollFD>(udev_monitor_get_fd(udevMonitor), [this](){ dispatchUdevEvents();     }),
+-        makeShared<SPollFD>(libinput_get_fd(libinputHandle), [this](){  dispatchLibinputEvents(); })
++        makeShared<SPollFD>(libseat_get_fd(libseatHandle), [weakSelf](){ if (const auto SESSION = weakSelf.lock()) SESSION->dispatchLibseatEvents();  }),
++        makeShared<SPollFD>(udev_monitor_get_fd(udevMonitor), [weakSelf](){ if (const auto SESSION = weakSelf.lock()) SESSION->dispatchUdevEvents();     }),
++        makeShared<SPollFD>(libinput_get_fd(libinputHandle), [weakSelf](){ if (const auto SESSION = weakSelf.lock()) SESSION->dispatchLibinputEvents(); })
+     };
+     // clang-format on
+ }

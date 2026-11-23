@@ -1,0 +1,20 @@
+--- a/src/backend/drm/DRM.cpp
++++ b/src/backend/drm/DRM.cpp
+@@ -3010,6 +3010,17 @@
+ }
+ 
+ void Aquamarine::CDRMOutput::scheduleFrame(const scheduleFrameReason reason) {
++    // The backend is held weakly, and a cursor move can reach this point after the
++    // CBackend it points at has been torn down: `backend->backend` is then null and
++    // CBackend::addIdleEvent() dereferences it (SIGSEGV at addIdleEvent+0xb with
++    // rdi == null, trantor 2026-11-23 20:32:43; the path was
++    // CPointerManager::attemptHardwareCursor -> CDRMAtomicImpl::moveCursor -> here).
++    // There is no frame to schedule on a dead backend; the next damage from a live
++    // one schedules the redraw.
++    const auto BACKEND = backend.lock();
++    if (!BACKEND || !BACKEND->backend)
++        return;
++
+     TRACE(backend->backend->log(AQ_LOG_TRACE,
+                                 std::format("CDRMOutput::scheduleFrame: reason {}, needsFrame {}, isPageFlipPending {}, frameEventScheduled {}", (uint32_t)reason, needsFrame,
+                                             connector->sched.frameInFlight(), connector->sched.frameScheduled())));

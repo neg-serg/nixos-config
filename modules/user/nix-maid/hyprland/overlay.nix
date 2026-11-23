@@ -29,8 +29,22 @@
         # compositor cannot reach a guard inside the library, so the library's own query
         # answers false when its owner is gone (0.16.0 is the last release; both callers only
         # act on the answer). Hyprland has to be relinked against it, hence the override.
+        #
+        # Two more teardown races surfaced in the cores of the 2026-11-23 20:31 login loop,
+        # both outside the guards above. (1) `CDRMOutput::scheduleFrame` dereferenced its two
+        # weak pointers unguarded and called `CBackend::addIdleEvent` with a null `this`
+        # (core: rdi = 0, path `CPointerManager::attemptHardwareCursor` ->
+        # `CDRMAtomicImpl::moveCursor`; the Hyprland-side guard sits in `CMonitor::scheduleFrame`
+        # and never sees this call). (2) `CSession::pollFDs` handed the consumer's event loop
+        # callbacks that capture a raw `this`; after a teardown freed the session they still ran
+        # and `libseat_dispatch` aborted on its `assert(seat && seat->impl)` (core: the freed
+        # session with `libseatHandle == nullptr`, seatName already a dangling string).
         aquamarine = prev.aquamarine.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [ ./null-backend-in-session-active.patch ];
+          patches = (old.patches or [ ]) ++ [
+            ./null-backend-in-session-active.patch
+            ./null-backend-in-drm-output-schedule-frame.patch
+            ./dead-session-in-poll-fds.patch
+          ];
         });
 
         hyprland = (prev.hyprland.override { aquamarine = final.aquamarine; }).overrideAttrs (old: {
