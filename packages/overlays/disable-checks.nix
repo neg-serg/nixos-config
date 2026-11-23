@@ -173,4 +173,18 @@ _: _: finalPrev: {
       doCheck = false;
     });
   };
+
+  # netwatch 0.39 (nixpkgs bumped it with the 2026-11-21 pin) has a
+  # threat-model test that assumes Landlock leaves TCP fast-open `sendto(2)`
+  # alone: it sends with MSG_FASTOPEN from inside its own Parser sandbox and
+  # expects 9 bytes. On this host's kernel the call is denied (EACCES), so the
+  # assertion no longer describes the kernel under it; the other ~1998 tests
+  # pass. Skip that single test, keep the rest of the suite. `checkFlags` is
+  # the harness-argument list (the cargo-check hook prepends the `--`).
+  netwatch = finalPrev.netwatch.overrideAttrs (old: {
+    checkFlags = (old.checkFlags or [ ]) ++ [
+      "--skip"
+      "sandbox::linux::tests::parser_layer_leaves_fast_open_and_autobind_open"
+    ];
+  });
 }
