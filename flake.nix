@@ -50,10 +50,10 @@
     # --recreate-lock-file all leave it at the old rev). Bump this rev with
     # `nix flake lock --update-input nixpkgs` once the ref resolution settles.
     # The current rev is the published nixos-unstable channel release of
-    # 2026-10-27 (Herdr 0.9.5): a channel release keeps the closure
-    # substitutable from cache.nixos.org instead of building from source, and
-    # Herdr >= 0.9.2 is what enables native agent-session restore.
-    nixpkgs.url = "github:NixOS/nixpkgs/1c89083e451e891152365b799595cf7790a43325";
+    # 2026-11-21 (Hyprland 0.57.2, Herdr 0.9.5): a channel release keeps the
+    # closure substitutable from cache.nixos.org instead of building from
+    # source, and Herdr >= 0.9.2 is what enables native agent-session restore.
+    nixpkgs.url = "github:NixOS/nixpkgs/2786a2a72088ecf32aea5b3ec52099e6a7cff78f";
 
     nix-flatpak = {
       url = "github:gmodena/nix-flatpak";
