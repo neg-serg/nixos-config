@@ -39,11 +39,19 @@
         # callbacks that capture a raw `this`; after a teardown freed the session they still ran
         # and `libseat_dispatch` aborted on its `assert(seat && seat->impl)` (core: the freed
         # session with `libseatHandle == nullptr`, seatName already a dangling string).
+        #
+        # The hyprcursor animation tick found a fourth path after those guards (dumps at 21:23,
+        # 21:38 and 21:54): a config reload detaches the implementation's CBackend, then
+        # `CDRMOutput::setCursor` logs a bad/unready cursor buffer through the null
+        # `backend->backend` (SIGSEGV in `CBackend::log`; path `CPointerManager::
+        # attemptHardwareCursor` -> `setHWCursorBuffer` -> `setCursor`). A detached backend
+        # cannot set a cursor, so the guard returns early and the next tick re-arms it.
         aquamarine = prev.aquamarine.overrideAttrs (old: {
           patches = (old.patches or [ ]) ++ [
             ./null-backend-in-session-active.patch
             ./null-backend-in-drm-output-schedule-frame.patch
             ./dead-session-in-poll-fds.patch
+            ./null-backend-in-drm-output-set-cursor.patch
           ];
         });
 

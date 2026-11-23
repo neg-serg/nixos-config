@@ -1,0 +1,19 @@
+--- a/src/backend/drm/DRM.cpp
++++ b/src/backend/drm/DRM.cpp
+@@ -2903,6 +2903,16 @@
+ }
+ 
+ bool Aquamarine::CDRMOutput::setCursor(SP<IBuffer> buffer, const Vector2D& hotspot) {
++    // The hyprcursor publish timer calls this on every animation tick, and a config
++    // reload can detach the implementation's CBackend first: `backend->backend` is
++    // then null and the log calls below dereference it (SIGSEGV in CBackend::log,
++    // trantor 2026-11-23 21:23/21:38/21:54; path CPointerManager::
++    // attemptHardwareCursor -> setHWCursorBuffer -> here). A detached backend
++    // cannot set a cursor; the next tick from a live one re-arms it.
++    const auto BACKEND = backend.lock();
++    if (!BACKEND || !BACKEND->backend)
++        return false;
++
+     if (!connector->crtc)
+         return false;
+ 
