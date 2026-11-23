@@ -1,0 +1,17 @@
+--- a/src/output/Monitor.cpp
++++ b/src/output/Monitor.cpp
+@@ -1071,6 +1071,14 @@
+ }
+ 
+ void CMonitor::scheduleFrame(Aquamarine::IOutput::scheduleFrameReason reason) {
++    // A deferred config-property refresh can damage a monitor while the backend it would
++    // schedule a frame on is already gone: `hasSession()` is called on a null `this` and takes
++    // the compositor down with a SIGSEGV (0.57.2, trantor 2026-11-23, CPropRefresher::refreshProp
++    // -> IHyprRenderer::damageMonitor -> here). A frame nobody can draw is not worth a crash --
++    // the next damage, from a backend that exists, schedules the redraw.
++    if (!g_pCompositor->m_aqBackend)
++        return;
++
+     if ((g_pCompositor->m_aqBackend->hasSession() && !g_pCompositor->m_aqBackend->session->active) || !g_pCompositor->m_sessionActive)
+         return;
+ 

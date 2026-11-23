@@ -12,6 +12,31 @@
       # inputs.hyprland.overlays.hyprland-packages  # disabled: hyprutils 0.14.0 breaks hyprlock/hypridle
       # inputs.xdg-desktop-portal-hyprland.overlays.default  # disabled: see above
       (final: prev: {
+        # The compositor's one local patch. On 0.57.2 a deferred config-property refresh
+        # (`CPropRefresher::refreshProp`, an idle callback) can damage a monitor after the
+        # aquamarine backend it would schedule a frame on is gone, and `CMonitor::scheduleFrame`
+        # dereferences that backend unguarded — SIGSEGV inside `Aquamarine::CBackend::hasSession`
+        # with a null `this`. Four dumps on 2026-11-23 (~/.cache/hyprland): the login at 15:54,
+        # the two `nixos-rebuild switch` runs at 18:30 and 18:52 that restarted maid-activation
+        # and rewrote ~/.config/hypr, and the login at 19:28. Upstream has no fix and nixpkgs
+        # carries 0.57.2, so the guard skips the frame; the next damage from a backend that
+        # exists schedules the redraw.
+        #
+        # Aquamarine 0.16.0 (the nixpkgs bump turned 0.15.1 into it) has the same shape one
+        # layer down: a page-flip event can outlive the backend it belongs to, and
+        # `CDRMBackend::handlePageFlip` then queries `sessionActive()`, which reads a cleared
+        # owner and SIGSEGVs. That is the fifth dump of the day, 19:34 right after login — the
+        # compositor cannot reach a guard inside the library, so the library's own query
+        # answers false when its owner is gone (0.16.0 is the last release; both callers only
+        # act on the answer). Hyprland has to be relinked against it, hence the override.
+        aquamarine = prev.aquamarine.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [ ./null-backend-in-session-active.patch ];
+        });
+
+        hyprland = (prev.hyprland.override { aquamarine = final.aquamarine; }).overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [ ./null-backend-in-schedule-frame.patch ];
+        });
+
         # No glass plugin on purpose: 0.57 ships blur materials natively
         # (decoration:blur:variant — frost, acrylic, prism, haze, aurora, drops,
         # water, ripple, heat_shimmer, fluid_jar in src/render/gl/blur/), applied

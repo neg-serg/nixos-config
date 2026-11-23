@@ -1,0 +1,17 @@
+--- a/src/backend/drm/DRM.cpp
++++ b/src/backend/drm/DRM.cpp
+@@ -592,6 +592,14 @@
+ }
+ 
+ bool Aquamarine::CDRMBackend::sessionActive() {
++    // A page-flip event can outlive the backend it belongs to: handlePageFlip() runs from
++    // the DRM fd dispatch after the owner (or its session) has already released this
++    // implementation, and the unguarded deref is a SIGSEGV (0.16.0, trantor 2026-11-23
++    // 19:34: a page flip on DP-2 right after login). A dead owner has no active session
++    // to report, and both callers only act on the answer.
++    if (!backend || !backend->session)
++        return false;
++
+     return backend->session->active;
+ }
+ 
