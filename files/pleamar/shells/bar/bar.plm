@@ -2177,6 +2177,11 @@ scene bar {
         // Hover is the strip, not the tooltip's headroom: the 10 px above the paint exist so the
         // tooltip card is not cut, and counting them as the bar's zone took the pointer over the
         // windows below for a band nothing is drawn in.
+        // Its width is `screen.width`, the monitor measurement the scene read once at load, while
+        // the panel header prints the width the surface really has. `pleamar-scale-guard --check`
+        // compares the two to catch a compositor that changed the scale after the bar started
+        // (2026-11-23: 3840 px of layout on a 1920 px surface, the right row off the panel). Keep
+        // this zone `screen.width`-wide rather than a fixed number: it is the probe's tell.
         zone box strip_hover { from: 0, hot; size: screen.width, band; label: "Bar"; role: region }
         // `tray_panel` is the same moment told to the logic: the tray machine needs to know when the
         // strip is *left* (`panelHover`, SystemTray.qml:14), which a fact cannot say.
