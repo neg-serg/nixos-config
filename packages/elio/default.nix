@@ -3,6 +3,7 @@
   rustPlatform,
   fetchFromGitHub,
   pkg-config,
+  sqlite,
   zstd,
 }:
 
@@ -15,6 +16,13 @@
 #
 # zstd is a real build input: the zstd crate builds zstd-sys, which is told to
 # use the system library through pkg-config instead of vendoring its own C copy.
+#
+# sqlite is linked for the same reason, one level deeper: rusqlite asks for the
+# "bundled" C library, but with the 1.99.1 toolchain that comes with the
+# 2026-11-21 nixpkgs pin the bundled object is not on the linker's search path
+# for the elio binary and the build dies with `cannot find -lsqlite3`. Building
+# against the nixpkgs sqlite (the same 3.54.0 the rest of the system links)
+# resolves it explicitly instead of relying on the crate's vendored copy.
 rustPlatform.buildRustPackage rec {
   pname = "elio";
   version = "1.14.0";
@@ -29,7 +37,10 @@ rustPlatform.buildRustPackage rec {
   cargoHash = "sha256-Ejk1CJxjKljIhf/Fa12LYCzeubzZ7HGNAh9eo1dK/9I=";
 
   nativeBuildInputs = [ pkg-config ];
-  buildInputs = [ zstd ];
+  buildInputs = [
+    sqlite
+    zstd
+  ];
   env.ZSTD_SYS_USE_PKG_CONFIG = "1";
 
   # Upstream keeps the suite out of install builds: it drives real shells (bash,
