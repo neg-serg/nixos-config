@@ -525,12 +525,19 @@ fn resolve_volume_target(db: Option<&str>, by: Option<f64>) -> Result<f64> {
 }
 
 /// Set a level through the daemon when it is running, otherwise straight to the
-/// adapter, and write the state file either way: it is the bar's and the plugin's
-/// read-back channel, and it must agree with what the monitors were told.
+/// adapter, and write the state file only when the write actually happened: it is
+/// the bar's and the plugin's read-back channel, and a value the monitors never got
+/// would move the bar while the sound stayed put.
 fn set_volume_routed(db: f64) -> Result<()> {
     match client::round_trip(&client::default_socket(), &format!("volume {db}")) {
-        Ok(reply) if !reply.starts_with("error") => {}
-        Ok(reply) => anyhow::bail!("genlc daemon refused volume {db}: {reply}"),
+        // The daemon answers after the frame is on the bus, so `ok` is the applied
+        // outcome. The old daemon answered `ok queued` before trying and kept the
+        // failing write in its own log.
+        Ok(reply) if reply.starts_with("ok") => {}
+        Ok(reply) if reply.starts_with("error") => {
+            anyhow::bail!("genlc daemon refused volume {db}: {reply}")
+        }
+        Ok(reply) => anyhow::bail!("unexpected reply to volume {db}: {reply}"),
         Err(_) => {
             let transport = protocol::HidTransport::open()?;
             protocol::SamGroup::new(transport).set_volume(db)?;

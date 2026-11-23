@@ -7,9 +7,9 @@
 //!
 //! Socket protocol (one command per line, one reply line each, the daemon serves it):
 //! ```text
-//! status            -> one JSON line: cycles, volume_db, leases, telemetry
-//! volume -30.5      -> ok queued
-//! mute on|off       -> ok queued
+//! status            -> one JSON line: adapter, cycles, volume_db, leases, telemetry
+//! volume -30.5      -> the applied outcome: `ok volume -30.5 dB` / `error …`
+//! mute on|off       -> the applied outcome: `ok mute on` / `error …`
 //! lease             -> ok queued
 //! ```
 //!
@@ -97,7 +97,18 @@ pub fn print_status(json: &str, socket: &Path) -> Result<()> {
     let leases = container_field(json, "leases", '[', ']')
         .map(lease_entries)
         .unwrap_or_default();
+    // The daemon writes the state as a quoted string (`"ok"` / `"lost"`); the quotes
+    // are JSON syntax, not part of the value.
+    let adapter = scalar_field(json, "adapter")
+        .map(|value| value.trim_matches('"'))
+        .unwrap_or("unknown");
 
+    println!("adapter {adapter}");
+    if adapter == "lost" {
+        // The daemon keeps the socket up while it retries, so `status` stays readable;
+        // the hint belongs here because a lost handle is not a monitor problem.
+        println!("        no HID handle — genlc reopens it every second; check the USB link");
+    }
     println!("cycles  {cycles}");
     println!("volume  {volume}");
     if leases.is_empty() {
