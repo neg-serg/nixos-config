@@ -204,6 +204,52 @@ def load_done(path: Path) -> dict[str, tuple[int, int, str]]:
     return done
 
 
+def _skip_file(out_path: Path) -> Path:
+    """Sidecar listing files this stack cannot tag, next to the batch output.
+
+    Without it a permanently unreadable file stays pending forever: every pass
+    retries it, writes nothing new, and the batch returns nonzero, so the
+    weekly unit fails and systemd restarts the whole chain (2026-11-22). A
+    skip is honoured only while path+mtime+size+settings still match.
+    """
+    return out_path.with_suffix(".failed.jsonl")
+
+
+def _load_skips(out_path: Path, settings: str) -> dict[str, tuple[int, int]]:
+    """path -> (mtime, size) of the files already recorded as untaggable."""
+    skips: dict[str, tuple[int, int]] = {}
+    skip_file = _skip_file(out_path)
+    if not skip_file.exists():
+        return skips
+    for line in skip_file.read_text(errors="replace").splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if row.get("settings") != settings or "path" not in row:
+            continue
+        skips[row["path"]] = (row.get("mtime", 0), row.get("size", 0))
+    return skips
+
+
+def _record_skip(
+    path: Path, out_path: Path, settings: str, error: str
+) -> None:
+    try:
+        stat = path.stat()
+    except OSError:
+        return
+    row = {
+        "path": str(path),
+        "mtime": stat.st_mtime_ns,
+        "size": stat.st_size,
+        "settings": settings,
+        "error": error,
+    }
+    with _skip_file(out_path).open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
 def _record(path: Path, partial: dict, settings: str) -> dict:
     """Full JSONL record: tags plus the resume key of the file itself."""
     stat = path.stat()
@@ -265,10 +311,15 @@ def run_batch(backbone, heads, files, keys, models_dir: Path, args) -> int:
         return 2
     settings = settings_key(args.head_set, keys, args.seconds, args.top)
     done = {} if args.rebuild else load_done(out_path)
+    skips = {} if args.rebuild else _load_skips(out_path, settings)
     pending = []
+    known_bad = 0
     for path in files:
         stat = path.stat()
         if done.get(str(path)) == (stat.st_mtime_ns, stat.st_size, settings):
+            continue
+        if skips.get(str(path)) == (stat.st_mtime_ns, stat.st_size):
+            known_bad += 1
             continue
         pending.append(path)
     if args.limit:
@@ -304,6 +355,7 @@ def run_batch(backbone, heads, files, keys, models_dir: Path, args) -> int:
     written = 0
     skipped = 0
     short = 0
+    failed: list[tuple[Path, str]] = []
     with open(out_path, "a", encoding="utf-8") as handle:
         if executor is not None:
             from concurrent.futures import as_completed
@@ -327,6 +379,7 @@ def run_batch(backbone, heads, files, keys, models_dir: Path, args) -> int:
                         print(
                             f"[music-mtg] skip {path}: {exc}", file=sys.stderr
                         )
+                        failed.append((path, str(exc)))
                         skipped += 1
                         continue
                 else:
@@ -343,6 +396,7 @@ def run_batch(backbone, heads, files, keys, models_dir: Path, args) -> int:
                         print(
                             f"[music-mtg] skip {path}: {exc}", file=sys.stderr
                         )
+                        failed.append((path, str(exc)))
                         skipped += 1
                         continue
                 if (
@@ -364,11 +418,31 @@ def run_batch(backbone, heads, files, keys, models_dir: Path, args) -> int:
         finally:
             if executor is not None:
                 executor.shutdown(wait=False, cancel_futures=True)
+    # A file that cannot be tagged is recorded once and skipped on later
+    # passes, the same ledger the describe step uses: otherwise the pending
+    # list keeps it forever, every pass ends with "0 new, N skipped" and the
+    # weekly unit is marked failed for good (2026-11-22: the corrupt FLACs and
+    # the macOS ._ sidecars did exactly that). A broken engine still fails
+    # before the loop (load_heads exits 2), and the ledger is keyed to
+    # mtime+size+settings, so deleting the sidecar re-enables every file.
+    for path, detail in failed:
+        _record_skip(path, out_path, settings, detail)
+    if written == 0 and failed:
+        print(
+            "[music-mtg] nothing new was tagged; untaggable files recorded in "
+            f"{_skip_file(out_path)}",
+            file=sys.stderr,
+        )
     print(
         f"[music-mtg] {written} new, {skipped} skipped -> {out_path} "
         f"({time.time() - started:.1f}s)"
     )
-    return 0 if written or not skipped else 1
+    if known_bad:
+        print(
+            f"[music-mtg] {known_bad} previously failed files skipped",
+            file=sys.stderr,
+        )
+    return 0
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:

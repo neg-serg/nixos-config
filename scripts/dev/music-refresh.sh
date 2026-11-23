@@ -165,7 +165,11 @@ else
 fi
 if [[ -z "$SKIP_TAGS" ]]; then
   if tag_tool="$(resolve_tool music-mtg-tags)"; then
-    steps+=("tags:$tag_tool --dir $MUSIC_DIR --out $TAGS_FILE --quiet")
+    # The sample library is 11.5k one-shot files: EffNet cannot frame them,
+    # they are not tracks, and tagging them would only add junk labels to the
+    # playlists. Same exclusion the describe step uses; the 2026-11-22 pass
+    # skipped 3647 of them and then failed the unit for it.
+    steps+=("tags:$tag_tool --dir $MUSIC_DIR --out $TAGS_FILE --quiet --exclude 'samples/*'")
   else
     steps+=("tags:MISSING")
   fi
