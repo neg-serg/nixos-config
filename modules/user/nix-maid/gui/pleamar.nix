@@ -45,14 +45,19 @@
 #   `systemctl --user start pleamar-lock.service`.
 # - `pleamar-health` + `pleamar-health.timer` — hang watchdog: probes every scene in
 #   `pleamarHealthScenes` (the bar and the panels; 2-minute period, first run after 5 minutes) and
-#   restarts the one that stops answering.
+#   restarts the one that stops answering. A scene that answers can still be laid out wrong, so a
+#   healthy bar hands the guard below a `--check` as well: the guard is the only thing that sees a
+#   width the compositor has changed without a reload event to follow it.
 # - `pleamar-scale-guard` — hard restart of the scene set when the monitor layout changes under it.
 #   `--check` (called from `files/gui/hypr/hyprland.lua` on `config.reloaded` and `monitor.added`)
 #   compares the live layout with the one recorded at `hyprland.start` and, on a change, SIGKILLs
 #   every scene unit's cgroup and starts it again; `--force` is the same restart by hand. Scenes read
 #   `screen.width` once, so a live scale change (`hyprctl reload` re-applies the monitor rule) leaves
 #   right-anchored rows past the surface: on 2026-11-05 a 1x -> 2x reload put the bar's media capsule,
-#   settings gear and Genelec tile off a 1920 px surface until the bar was restarted by hand.
+#   settings gear and Genelec tile off a 1920 px surface until the bar was restarted by hand. The
+#   scale can also settle *after* the recorded baseline — a compositor restart applies the monitor
+#   rule with no `config.reloaded` to catch (2026-11-23) — so `--check` also compares the bar's own
+#   account of its width with the width its surface really has, and restarts the set when they differ.
 # - `pleamar-login-cpu` + `pleamar-login-cpu.timer` — the login-window CPU record: a minute after
 #   the session target it writes one file per login under `~/.local/state/pleamar/login-cpu/`,
 #   holding the per-scene `systemctl show` counters. This is the only moment a scene's login burst
@@ -489,6 +494,14 @@ let
 
       if timeout 15 pleamar --say "$scene" describe > /dev/null 2>&1; then
         rm -f "$fails_file" 2>/dev/null || true
+        # Answering is not being laid out right: a scene reads its monitor once, so a compositor that
+        # applies the monitor rule after the scenes started leaves every right-anchored row past the
+        # surface with no event to notice it. The bar's probe carries the tell (its `strip_hover` is
+        # drawn `screen.width` wide), and the guard owns the restart; this timer is what gives the
+        # guard a reason to look when no `config.reloaded` comes.
+        if [ "$scene" = bar ]; then
+          ${pleamarScaleGuard}/bin/pleamar-scale-guard --check || true
+        fi
         # `continue`, not `exit 0`: this probe watches every scene in `healthScenes`, and leaving
         # the script on the first healthy one meant a wedged `panels` was never looked at while
         # the bar answered — which is the normal case.
@@ -540,14 +553,23 @@ let
   # each unit's whole cgroup (SIGKILL, helpers included), clears a possible start limit, and starts
   # it again. `hyprland.lua` records the layout at `hyprland.start` and checks it on
   # `config.reloaded`/`monitor.added`; `--force` is the same restart by hand.
+  #
+  # `--check` also asks the running bar how wide it thinks its monitor is (`strip_hover` is drawn
+  # `screen.width` wide, the panel header tells the surface's real width). A compositor restart that
+  # applies the monitor rule after the scenes started raises no event, so the recorded layout alone
+  # cannot see it: the scene keeps the old width and draws its right row off a surface that has
+  # already shrunk. `pleamar-health` calls `--check` every 2 minutes, which is what makes that case
+  # recover without a hand restart.
   pleamarScaleGuard = pkgs.writeShellScriptBin "pleamar-scale-guard" ''
     set -u
 
     PATH=${
       lib.makeBinPath [
         pkgs.coreutils # timeout, date, mkdir: the guard's shell tools
+        pkgs.gawk # reads the two widths out of the bar's describe
         pkgs.jq # reads the monitor layout out of `hyprctl -j monitors`
         pkgs.hyprland # hyprctl: the live monitor layout
+        pkgs.pleamar # `--say bar describe`: the scene's own account of its layout
         pkgs.systemd # systemctl --user: kill/stop/start of every scene unit
       ]
     }
@@ -577,6 +599,30 @@ let
     remember() {
       mkdir -p "$(dirname "$state")" 2>/dev/null || true
       printf '%s\n' "$1" > "$state" 2>/dev/null || true
+    }
+
+    # The width the bar laid itself out against, next to the width its surface really has: the
+    # panel header prints the surface, and `strip_hover` is drawn `screen.width` wide — the number
+    # the scene read once, when it loaded. Prints "panel strip"; nothing when there is no bar up or
+    # the describe cannot be read.
+    bar_widths() {
+      timeout 10 pleamar --say bar describe 2>/dev/null | awk '
+        / · panel / && panel == "" { p = $0; sub(/.* · panel /, "", p); sub(/×.*/, "", p); panel = p }
+        /strip_hover/ { s = $NF; sub(/×.*/, "", s); strip = s }
+        END { if (panel ~ /^[0-9]+$/ && strip ~ /^[0-9]+$/) print panel, strip }
+      '
+    }
+
+    # 0 when the two disagree (and the set is about to be restarted), 1 when they agree, 2 when
+    # there is nothing to compare — a stopped bar, or a describe this cannot parse.
+    width_is_stale() {
+      local widths panel strip
+      widths="$(bar_widths)"
+      [ -n "$widths" ] || return 2
+      read -r panel strip <<< "$widths"
+      [ "$panel" = "$strip" ] && return 1
+      say "bar laid out against ''${strip}px on a ''${panel}px surface: restarting the scene set"
+      return 0
     }
 
     hard_restart() {
@@ -615,13 +661,21 @@ let
         previous="''${previous:-$current}"
         if [ "$previous" = "$current" ]; then
           remember "$current"
+        else
+          remember "$current"
+          # Behind the login screen nothing of the shell is up: the layer owns the screen, and the
+          # scene set starts with the next session at this layout.
+          [ -e "$login_marker" ] && exit 0
+          hard_restart "$previous" "$current"
           exit 0
         fi
-        remember "$current"
-        # Behind the login screen nothing of the shell is up: the layer owns the screen, and the
-        # scene set starts with the next session at this layout.
-        [ -e "$login_marker" ] && exit 0
-        hard_restart "$previous" "$current"
+        # The layout can also settle *after* the baseline above was recorded — a compositor restart
+        # applies the monitor rule with no `config.reloaded` — so the recorded layout never changes
+        # while the scenes keep the width they read before it. Their own account is the only signal
+        # left, and it costs one `describe` of a bar that is already answering.
+        if width_is_stale; then
+          hard_restart "stale scene width" "$current"
+        fi
         ;;
       --force)
         hard_restart forced "$current"
