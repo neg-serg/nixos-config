@@ -188,6 +188,13 @@ Upstream claims are linked inline; the ones that could not be reproduced locally
 - 2026-11-23: analysis only. No venv, timer, package or config was modified; porting decisions are
   deferred until the questions above are answered.
 - 2026-11-23 (later): hygiene mode enabled. Removed `video/comfyui/venv.broken-usrbin` (6.3 GiB) and
-  `venv-analysis/.../nvidia` (2.3 GiB; torch still imports); fixed the MTG tags exit path and the
-  refresh exclusion. `midi-gen` (33 GiB: three venvs, model checkpoints, a `bin/midi-gen` entry
-  point) was held back for an explicit decision.
+  `venv-analysis/.../nvidia` (2.3 GiB; torch still imports) and the three `midi-gen` venvs (21 GiB
+  du), keeping `models/`, `repos/`, `bin/` by request; fixed the MTG tags exit path and the refresh
+  exclusion.
+- 2026-11-23 (deployed): the fix reached the system together with the pending nixpkgs bump
+  (generation 2971, `26.11.20261121`); the store script carries `--exclude 'samples/*'` and an
+  end-to-end run of the deployed `music-mtg-tags` recorded 120 untaggable files and exited 0.
+- 2026-11-23 (dedupe): `music-ai-dedupe.sh --apply` hardlinked 2690 duplicate files (0 failures);
+  only 0.1 GiB remained reclaimable because the big duplicates lived in the deleted `midi-gen`
+  venvs. `df /zero` is unchanged at ~156 GiB while logical `du` dropped, so verifying what still
+  holds the blocks (`zpool list`, `zfs list -t snapshot -r zero`) needs root.
