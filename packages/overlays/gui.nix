@@ -167,12 +167,12 @@ in
       src = prev.fetchFromGitHub {
         owner = "vicinaehq";
         repo = "vicinae";
-        tag = "v0.29.0";
-        hash = "sha256-+Ti1hcYdjgdAZWu5f6myDckjp7ox0mtux7q8U1t44jo=";
+        tag = "v0.30.0";
+        hash = "sha256-uZYp/eYUhO9udRfE2hLf/+zl4tEY49EzqBwH5IH8BF8=";
       };
     in
     prev.vicinae.overrideAttrs (old: {
-      version = "0.29.0";
+      version = "0.30.0";
       inherit src;
       # Tab/Shift+Tab walk the item list (launcher-menu style: grids step
       # across a row and spill onto the next one), work window-wide via a
@@ -182,7 +182,8 @@ in
       # list navigation chords hybrid — emacs C-n/C-p/C-Alt-b/f and vim
       # C-j/C-k/C-h/C-l both work in one launcher. The QML patches target the
       # LauncherPage's view (root.commandView), not the page wrapper — ported
-      # to v0.29.0. The dmenu patch keeps
+      # to v0.30.0 (SearchBar's dismiss goes through Launcher.nav; the generic
+      # `Nav` singleton no longer exists). The dmenu patch keeps
       # the `vicinae dmenu` picker alive across focus changes and resolves the
       # CLI request when the window closes (upstream issue #1827). The lusty
       # patch ranks the root search with the lusty-fuzzy crate's matcher

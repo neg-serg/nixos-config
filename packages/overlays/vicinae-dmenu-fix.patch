@@ -1,8 +1,8 @@
 diff --git a/src/lib/figura/src/codegen/glaze-qt.hpp b/src/lib/figura/src/codegen/glaze-qt.hpp
+index d8ccda9..767d880 100644
 --- a/src/lib/figura/src/codegen/glaze-qt.hpp
 +++ b/src/lib/figura/src/codegen/glaze-qt.hpp
-@@ -200,9 +200,13 @@
-   }
+@@ -190,7 +190,11 @@ public:
  
  private:
    AbstractLogger* m_logger = nullptr;
@@ -15,15 +15,14 @@ diff --git a/src/lib/figura/src/codegen/glaze-qt.hpp b/src/lib/figura/src/codege
    std::unordered_map<std::string, std::vector<ResponseHandler>> m_handlers;
    std::unordered_map<int, PendingRequest> m_requestMap;
    AbstractTransport &m_transport;
-   std::string m_buf;
 diff --git a/src/lib/figura/src/codegen/glaze.hpp b/src/lib/figura/src/codegen/glaze.hpp
+index c38ed8d..54d4747 100644
 --- a/src/lib/figura/src/codegen/glaze.hpp
 +++ b/src/lib/figura/src/codegen/glaze.hpp
-@@ -147,9 +147,13 @@
-     return {};
+@@ -206,7 +206,11 @@ private:
+     m_transport.send(buf);
    }
  
- private:
 -  int m_id = 1;
 +  // Each client process must use ids that cannot collide with another
 +  // concurrent client: the IPC server routes asynchronous replies by id
@@ -31,11 +30,9 @@ diff --git a/src/lib/figura/src/codegen/glaze.hpp b/src/lib/figura/src/codegen/g
 +  // or drop it entirely. See vicinaehq/vicinae#1827.
 +  int m_id = static_cast<int>(std::chrono::steady_clock::now().time_since_epoch().count() & 0x7fffffff) | 1;
    std::unordered_map<std::string, std::vector<ResponseHandler>> m_handlers;
+   std::unordered_map<std::string, RequestHandler> m_requestHandlers;
    std::unordered_map<int, ResponseHandler> m_requestMap;
-   AbstractTransport &m_transport;
-   std::string m_buf;
-@@ -433,8 +437,9 @@
-     std::ostringstream oss;
+@@ -513,6 +517,7 @@ public:
  
      oss << R"(
  #pragma once
@@ -43,66 +40,11 @@ diff --git a/src/lib/figura/src/codegen/glaze.hpp b/src/lib/figura/src/codegen/g
  #include <expected>
  #include <functional>
  #include <glaze/glaze.hpp>
- #include <string>
-diff --git a/src/server/src/navigation-controller.cpp b/src/server/src/navigation-controller.cpp
---- a/src/server/src/navigation-controller.cpp
-+++ b/src/server/src/navigation-controller.cpp
-@@ -335,12 +335,14 @@
- bool NavigationController::windowActivated() { return m_windowActivated; }
- 
- void NavigationController::setCloseOnFocusLoss(bool value) { m_closeOnFocusLoss = value; }
- 
-+bool NavigationController::isTopView(const BaseView *view) const { return topView() == view; }
-+
- void NavigationController::setWindowActivated(bool value) {
-   if (m_windowActivated == value) return;
- 
--  if (!value && m_closeOnFocusLoss) { closeWindow(); }
-+  if (!value && m_closeOnFocusLoss && m_focusLossSuppressors == 0) { closeWindow(); }
- 
-   m_windowActivated = value;
-   emit windowActivationChanged(value);
- }
-diff --git a/src/server/src/navigation-controller.hpp b/src/server/src/navigation-controller.hpp
---- a/src/server/src/navigation-controller.hpp
-+++ b/src/server/src/navigation-controller.hpp
-@@ -227,8 +227,21 @@
-   void unloadActiveCommand();
- 
-   void setCloseOnFocusLoss(bool value);
- 
-+  /** Whether `view` currently sits on top of the navigation stack. */
-+  bool isTopView(const BaseView *view) const;
-+
-+  /**
-+   * Suppress close-on-focus-loss while a modal view keeps its own
-+   * lifetime (dmenu picker, file chooser). A transient focus change
-+   * must not dismiss such a view; release is called when it is gone.
-+   */
-+  void acquireFocusLossSuppression() { ++m_focusLossSuppressors; }
-+  void releaseFocusLossSuppression() {
-+    if (m_focusLossSuppressors > 0) { --m_focusLossSuppressors; }
-+  }
-+
-   /**
-    * Go back to previous navigation state.
-    * If the `instantDismiss` flag is set, this will close the window and pop to root
-    * no matter what and then clear the flag.
-@@ -277,8 +290,9 @@
-   bool m_windowActivated = false;
-   bool m_isPanelOpened = false;
-   bool m_popToRootOnClose = false;
-   bool m_instantDismiss = false;
-+  int m_focusLossSuppressors = 0;
-   bool m_closeOnFocusLoss = false;
-   QWindow *m_window = nullptr;
-   std::vector<std::unique_ptr<ViewState>> m_views;
-   std::optional<PendingPopToRoot> m_pendingPopToRoot;
 diff --git a/src/server/src/ipc/ipc-command-server.cpp b/src/server/src/ipc/ipc-command-server.cpp
+index c020f43..7145d3d 100644
 --- a/src/server/src/ipc/ipc-command-server.cpp
 +++ b/src/server/src/ipc/ipc-command-server.cpp
-@@ -270,10 +270,10 @@
-   static constexpr const int DMENU_SMALL_WIDTH_THRESHOLD = 500;
+@@ -406,8 +406,8 @@ ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenu
    auto &nav = m_ctx.navigation;
    auto &cfg = m_ctx.services->config()->value();
  
@@ -113,9 +55,7 @@ diff --git a/src/server/src/ipc/ipc-command-server.cpp b/src/server/src/ipc/ipc-
  
    if (request.width.has_value() && request.width.value() < DMENU_SMALL_WIDTH_THRESHOLD) {
      qInfo() << "dmenu: disabling quicklook and footer because width is too low";
-     request.noFooter = true;
-@@ -287,14 +287,31 @@
-   using Watcher = QFutureWatcher<ipc_gen::Result<ipc_gen::DMenuResponse>::Type>;
+@@ -423,12 +423,29 @@ ipc_gen::Result<ipc_gen::DMenuResponse>::Future IpcService::dmenu(ipc_gen::DMenu
    auto watcher = new Watcher;
    watcher->setFuture(future);
  
@@ -150,4 +90,53 @@ diff --git a/src/server/src/ipc/ipc-command-server.cpp b/src/server/src/ipc/ipc-
                     });
  
    nav->popToRoot({.clearSearch = false});
-   nav->pushView(view);
+diff --git a/src/server/src/navigation-controller.cpp b/src/server/src/navigation-controller.cpp
+index 9243daa..f3c283d 100644
+--- a/src/server/src/navigation-controller.cpp
++++ b/src/server/src/navigation-controller.cpp
+@@ -377,10 +377,12 @@ bool NavigationController::windowActivated() { return m_windowActivated; }
+ 
+ void NavigationController::setCloseOnFocusLoss(bool value) { m_closeOnFocusLoss = value; }
+ 
++bool NavigationController::isTopView(const BaseView *view) const { return topView() == view; }
++
+ void NavigationController::setWindowActivated(bool value) {
+   if (m_windowActivated == value) return;
+ 
+-  if (!value && m_closeOnFocusLoss) { closeWindowOnFocusLoss(); }
++  if (!value && m_closeOnFocusLoss && m_focusLossSuppressors == 0) { closeWindowOnFocusLoss(); }
+ 
+   m_windowActivated = value;
+   emit windowActivationChanged(value);
+diff --git a/src/server/src/navigation-controller.hpp b/src/server/src/navigation-controller.hpp
+index ad8e2fa..2e1c0e4 100644
+--- a/src/server/src/navigation-controller.hpp
++++ b/src/server/src/navigation-controller.hpp
+@@ -248,6 +248,19 @@ public:
+ 
+   void setCloseOnFocusLoss(bool value);
+ 
++  /** Whether `view` currently sits on top of the navigation stack. */
++  bool isTopView(const BaseView *view) const;
++
++  /**
++   * Suppress close-on-focus-loss while a modal view keeps its own
++   * lifetime (dmenu picker, file chooser). A transient focus change
++   * must not dismiss such a view; release is called when it is gone.
++   */
++  void acquireFocusLossSuppression() { ++m_focusLossSuppressors; }
++  void releaseFocusLossSuppression() {
++    if (m_focusLossSuppressors > 0) { --m_focusLossSuppressors; }
++  }
++
+   /**
+    * Go back to previous navigation state.
+    * If the `instantDismiss` flag is set, this will close the window and pop to root
+@@ -300,6 +313,7 @@ private:
+   bool m_isPanelOpened = false;
+   bool m_popToRootOnClose = false;
+   bool m_instantDismiss = false;
++  int m_focusLossSuppressors = 0;
+   bool m_closeOnFocusLoss = false;
+   QWindow *m_window = nullptr;
+   std::vector<std::unique_ptr<ViewState>> m_views;

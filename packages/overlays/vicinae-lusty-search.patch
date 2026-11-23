@@ -1,5 +1,7 @@
 diff --git a/src/lib/fuzzy/include/fuzzy/lusty.hpp b/src/lib/fuzzy/include/fuzzy/lusty.hpp
---- a/src/lib/fuzzy/include/fuzzy/lusty.hpp
+new file mode 100644
+index 0000000..3565d15
+--- /dev/null
 +++ b/src/lib/fuzzy/include/fuzzy/lusty.hpp
 @@ -0,0 +1,348 @@
 +/**
@@ -351,6 +353,7 @@ diff --git a/src/lib/fuzzy/include/fuzzy/lusty.hpp b/src/lib/fuzzy/include/fuzzy
 +
 +} // namespace lusty
 diff --git a/src/lib/fuzzy/tests/main.cpp b/src/lib/fuzzy/tests/main.cpp
+index 791132d..64b0a25 100644
 --- a/src/lib/fuzzy/tests/main.cpp
 +++ b/src/lib/fuzzy/tests/main.cpp
 @@ -1,5 +1,7 @@
@@ -361,7 +364,7 @@ diff --git a/src/lib/fuzzy/tests/main.cpp b/src/lib/fuzzy/tests/main.cpp
  #include "fuzzy/fuzzy-searchable.hpp"
  #include "order-helpers.hpp"
  
-@@ -269,3 +271,78 @@
+@@ -269,3 +271,78 @@ TEST_CASE("match: coherence separates substrings/abbreviations/acronyms from sca
    REQUIRE_FALSE(fuzzy::scoreWeighted({{"Play this game on Steam", 1.0}}, fuzzy::Query{"time"}).accepted());
    REQUIRE(fuzzy::scoreWeighted({{"Play this game on Steam", 1.0}}, fuzzy::Query{"steam"}).accepted());
  }
@@ -441,9 +444,10 @@ diff --git a/src/lib/fuzzy/tests/main.cpp b/src/lib/fuzzy/tests/main.cpp
 +  REQUIRE(lusty::scoreWeighted(strong, "pref") == Catch::Approx(1.05).epsilon(1e-9));
 +}
 diff --git a/src/server/src/services/root-item-manager/root-item-manager.cpp b/src/server/src/services/root-item-manager/root-item-manager.cpp
+index 680ac01..7016694 100644
 --- a/src/server/src/services/root-item-manager/root-item-manager.cpp
 +++ b/src/server/src/services/root-item-manager/root-item-manager.cpp
-@@ -9,6 +9,7 @@
+@@ -10,6 +10,7 @@
  #include "root-search/extensions/extension-root-provider.hpp"
  #include "fuzzy/fuzzy-searchable.hpp"
  #include "fuzzy/fzf.hpp"
@@ -451,7 +455,7 @@ diff --git a/src/server/src/services/root-item-manager/root-item-manager.cpp b/s
  #include "config/config.hpp"
  #include "services/local-storage/local-storage-service.hpp"
  #include "utils.hpp"
-@@ -146,15 +147,23 @@
+@@ -148,15 +149,23 @@ double RootItemManager::SearchableRootItem::frecency() const {
  double RootItemManager::SearchableRootItem::fuzzyScore(const fuzzy::Query &query) const {
    if (query.empty()) return 100.0 - fuzzy::FRECENCY_WEIGHT + fuzzy::FRECENCY_WEIGHT * frecency();
  
@@ -460,8 +464,6 @@ diff --git a/src/server/src/services/root-item-manager/root-item-manager.cpp b/s
 -  std::initializer_list<WS> ss = {{title, 1.0f}, {unlocalizedTitle, 1.0f}, {subtitle, 0.5f}, {alias, 1.0f}};
 -  auto kws = keywords | std::views::transform([](auto &&kw) { return WS{kw, 0.6f}; });
 -  auto const score = fzf::threadLocalMatcher().score_query(ss, kws, query);
--
--  if (score.quality < fuzzy::MIN_QUALITY) return 0;
 +  // Ranking comes from lusty's matcher (crates/lusty-fuzzy, ported in
 +  // fuzzy/lusty.hpp) instead of fzf's v2 scorer: the pickers, the tray and the
 +  // launcher then rank with one algorithm. Fields and weights stay upstream's —
@@ -478,6 +480,8 @@ diff --git a/src/server/src/services/root-item-manager/root-item-manager.cpp b/s
 +  double const score = lusty::scoreWeighted(fields, query.text);
 +  if (score <= 0) return 0;
  
+-  if (score.quality < fuzzy::MIN_QUALITY) return 0;
+-
 -  return score.score + fuzzy::FRECENCY_WEIGHT * frecency();
 +  return score + fuzzy::FRECENCY_WEIGHT * frecency();
  }

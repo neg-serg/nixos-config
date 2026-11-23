@@ -1,5 +1,5 @@
 diff --git a/src/server/src/ui/qml/actions/ActionPanelPopover.qml b/src/server/src/ui/qml/actions/ActionPanelPopover.qml
-index 6ce9738..1684a5b 100644
+index 00a48da..022fca2 100644
 --- a/src/server/src/ui/qml/actions/ActionPanelPopover.qml
 +++ b/src/server/src/ui/qml/actions/ActionPanelPopover.qml
 @@ -77,6 +77,18 @@ ViciPopover {
@@ -22,10 +22,10 @@ index 6ce9738..1684a5b 100644
          }
  
 diff --git a/src/server/src/ui/qml/controls/CompletionPopup.qml b/src/server/src/ui/qml/controls/CompletionPopup.qml
-index 21edee5..98b5cb6 100644
+index ebebc0c..1acad7f 100644
 --- a/src/server/src/ui/qml/controls/CompletionPopup.qml
 +++ b/src/server/src/ui/qml/controls/CompletionPopup.qml
-@@ -220,6 +220,9 @@ Popup {
+@@ -234,6 +234,9 @@ Popup {
                      Keys.onReturnPressed: root.acceptHighlighted()
                      Keys.onEscapePressed: root.close()
                      Keys.onTabPressed: event => {
@@ -36,10 +36,10 @@ index 21edee5..98b5cb6 100644
                      }
                      Keys.onBacktabPressed: event => {
 diff --git a/src/server/src/ui/qml/launcher/LauncherWindow.qml b/src/server/src/ui/qml/launcher/LauncherWindow.qml
-index 8a33bf5..56cd958 100644
+index e169f6c..6380c79 100644
 --- a/src/server/src/ui/qml/launcher/LauncherWindow.qml
 +++ b/src/server/src/ui/qml/launcher/LauncherWindow.qml
-@@ -99,6 +99,40 @@ LauncherWindowBase {
+@@ -104,6 +104,40 @@ LauncherWindowBase {
          width: root._w
          height: root._h
  
@@ -81,7 +81,7 @@ index 8a33bf5..56cd958 100644
              visible: Launcher.compacted
              width: root._w
 diff --git a/src/server/src/ui/qml/launcher/SearchBar.qml b/src/server/src/ui/qml/launcher/SearchBar.qml
-index 7ccd55b..0be0b83 100644
+index 6132cd5..1df8103 100644
 --- a/src/server/src/ui/qml/launcher/SearchBar.qml
 +++ b/src/server/src/ui/qml/launcher/SearchBar.qml
 @@ -6,6 +6,8 @@ import Vicinae
@@ -93,7 +93,7 @@ index 7ccd55b..0be0b83 100644
      property int horizontalPadding: 16
      property real textSize: Theme.regularFontSize * 1.2
      property bool flatAccessories: false
-@@ -147,8 +149,21 @@ Item {
+@@ -155,17 +157,50 @@ Item {
                              if (searchInput.cursorPosition < searchInput.text.length)
                                  searchInput.cursorPosition++;
                              return true;
@@ -115,14 +115,12 @@ index 7ccd55b..0be0b83 100644
                                  searchInput.text = searchInput.text.substring(0, searchInput.cursorPosition);
                                  _syncSearchText();
                                  return true;
-@@ -156,11 +171,30 @@ Item {
+                             }
                          case Qt.Key_U:
                              {
-                                 const pos = searchInput.cursorPosition;
++                                const pos = searchInput.cursorPosition;
 +                                root.killRing = searchInput.text.substring(0, pos);
-                                 searchInput.text = searchInput.text.substring(pos);
-                                 searchInput.cursorPosition = 0;
-                                 _syncSearchText();
+                                 _deleteToLineStart();
                                  return true;
                              }
 +                        case Qt.Key_W:
@@ -146,7 +144,7 @@ index 7ccd55b..0be0b83 100644
                          }
                      }
  
-@@ -294,12 +328,51 @@ Item {
+@@ -310,11 +345,43 @@ Item {
                          event.accepted = Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                      }
                  }
@@ -155,7 +153,9 @@ index 7ccd55b..0be0b83 100644
 +                // row (moveRight/moveLeft); flat lists step by item via
 +                // moveDown/moveUp. The target is the view hosted by the current
 +                // LauncherPage (root.commandView) — the page wrapper itself has
-+                // no navigation methods.
++                // no navigation methods. Item navigation wins over the AI Tab
++                // shortcut: the list stays keyboard-drivable, and 0.30's
++                // Launcher.handleTab() still runs when there is nothing to walk.
 +                function _navigateItems(forward) {
 +                    if (Launcher.compacted) {
 +                        Launcher.expand();
@@ -182,11 +182,18 @@ index 7ccd55b..0be0b83 100644
 -                    event.accepted = false;
 +                    event.accepted = _navigateItems(false) || Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
                  }
+                 Keys.onTabPressed: event => {
+-                    if (Launcher.canAskAI) {
++                    if (_navigateItems(true)) {
++                        event.accepted = true;
++                    } else if (Launcher.canAskAI) {
+                         Launcher.handleTab();
+                         event.accepted = true;
+                     } else {
+@@ -324,6 +391,15 @@ Item {
                  Keys.onPressed: event => {
                      if (_handleEmacsEditing(event)) {
                          event.accepted = true;
-+                    } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
-+                        event.accepted = _navigateItems(event.key === Qt.Key_Tab) || Launcher.forwardKey(event.key, event.modifiers, event.nativeScanCode);
 +                    } else if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier) && !(event.modifiers & ~(Qt.ControlModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier))) {
 +                        // Ctrl+C closes the launcher window (dismiss).
 +                        // Ctrl+C is explicitly excluded from forwardKey() at the C++ level
@@ -194,7 +201,7 @@ index 7ccd55b..0be0b83 100644
 +                        // so it falls through all existing handlers unhandled.
 +                        // We intercept it here to close the window instead of doing nothing.
 +                        // The action.copy is bound to Ctrl+Shift+C, so plain Ctrl+C is free.
-+                        Nav.closeWindow();
++                        Launcher.nav.closeWindow();
 +                        event.accepted = true;
                      } else if (_handleNavigation(event)) {
                          event.accepted = true;
