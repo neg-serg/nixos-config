@@ -28,14 +28,17 @@ in
     "firmware_class.path=/run/booted-system/firmware"
     "acpi_osi=!" # Fix ACPI compatibility on ASUS boards
     "acpi_osi=Linux" # Report Linux-compatible ACPI interface
-    # Start amdgpu on the compositor's own mode instead of the EDID preferred
-    # 4K@60: this marks the existing 3840x2160@240 EDID mode USERDEF, so
-    # drm_client picks it for the initial fbdev/console and Hyprland's identical
-    # monitor rule needs no mode change at login. Keep the connector prefix: a
-    # bare video= also creates a GTF user mode for simpledrm, which cannot
-    # mode-set it ("User-defined mode not supported"). If the sink rejects
-    # 240 Hz at probe, the mode is pruned and fbdev falls back to 4K@60 as before.
-    "video=DP-2:3840x2160@240"
+    # Make the panel's own 3840x2160@239.99 DisplayID timing the preferred mode.
+    # The base block's first DTD (4K@60) is always DRM_MODE_TYPE_PREFERRED for an
+    # EDID 1.4 monitor, and 4K@240 cannot be a base DTD at all (the 16-bit pixel
+    # clock field tops out at 655.35 MHz), so the preferred bit is carried by the
+    # DisplayID Type I timing instead. drm_mode_sort puts preferred modes first,
+    # ordered by resolution then refresh, so 4K@240 lands ahead of 4K@60 and both
+    # drm_client and aquamarine's preferredMode() choose it without a video= hint.
+    # The blob is this panel's EDID with that one bit set (and the two checksums
+    # fixed); it is panel-specific and must be in the initramfs: amdgpu probes
+    # there and reads the EDID before stage 2 has mounted /run/booted-system.
+    "drm.edid_firmware=DP-2:edid/mpg321ux-240-preferred.bin"
     "lru_gen=1" # Enable multi-gen LRU page reclaim
     "lru_gen.min_ttl_ms=1000" # Min TTL for multi-gen LRU
     "mem_sleep_default=deep" # Prefer deep sleep (S3) for suspend

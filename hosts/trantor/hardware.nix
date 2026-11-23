@@ -129,6 +129,31 @@ in
 
     initrd = {
       kernelModules = kernelData.initrdKernelModules;
+      # EDID override blob (panel-specific, see kernel.nix): the panel's own EDID
+      # with the preferred bit set on the 4K@239.99 DisplayID timing; sha256
+      # 69cb2b823d23fca735e9333fc96a83f86ce55a043b805e7f2953191e9ef60718.
+      # `secrets` rather than `systemd.contents`: /lib in the initrd is a symlink
+      # into the read-only modules store path, which the unprivileged initrd
+      # builder cannot create /lib/firmware/edid under; the secrets copy unit
+      # runs as root at boot instead.
+      # The blob is copied into a store path of its own first: the appender
+      # script runs at switch time, and only a derivation reference carries the
+      # store context that keeps the blob alive (neg.path is a context-less
+      # string by design).
+      secrets = {
+        "/lib/firmware/edid/mpg321ux-240-preferred.bin" = "${pkgs.runCommand "mpg321ux-240-preferred.bin"
+          { }
+          ''
+            cp ${config.lib.neg.path "files/firmware/edid/mpg321ux-240-preferred.bin"} $out
+          ''
+        }";
+      };
+      # The secrets copy runs at sysinit alongside module loading; amdgpu must
+      # not probe (and read the EDID) before the blob is in /lib/firmware.
+      systemd.services.initrd-nixos-copy-secrets.before = [
+        "systemd-modules-load.service"
+        "systemd-udev-trigger.service"
+      ];
       # No `systemd.enable` / `verbose` here: the 2026-10 nixpkgs removed both
       # options together with the scripted stage 1, so systemd in initrd is the
       # only implementation left and the old quiet-boot switch no longer exists.
