@@ -28,8 +28,14 @@ in
     "firmware_class.path=/run/booted-system/firmware"
     "acpi_osi=!" # Fix ACPI compatibility on ASUS boards
     "acpi_osi=Linux" # Report Linux-compatible ACPI interface
-    # video=3840x2160@240 removed: simpledrm rejects custom modelines, causes "User-defined mode not supported"
-    # systemd-boot runs at the firmware GOP resolution (no explicit mode), which covers the bootloader phase
+    # Start amdgpu on the compositor's own mode instead of the EDID preferred
+    # 4K@60: this marks the existing 3840x2160@240 EDID mode USERDEF, so
+    # drm_client picks it for the initial fbdev/console and Hyprland's identical
+    # monitor rule needs no mode change at login. Keep the connector prefix: a
+    # bare video= also creates a GTF user mode for simpledrm, which cannot
+    # mode-set it ("User-defined mode not supported"). If the sink rejects
+    # 240 Hz at probe, the mode is pruned and fbdev falls back to 4K@60 as before.
+    "video=DP-2:3840x2160@240"
     "lru_gen=1" # Enable multi-gen LRU page reclaim
     "lru_gen.min_ttl_ms=1000" # Min TTL for multi-gen LRU
     "mem_sleep_default=deep" # Prefer deep sleep (S3) for suspend

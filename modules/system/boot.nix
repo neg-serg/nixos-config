@@ -24,6 +24,13 @@
       systemd-boot = {
         enable = true;
         configurationLimit = 25; # Keep at most 25 generations in boot menu
+        # Fix the GOP mode once, as early as the firmware allows: systemd-boot
+        # hands its framebuffer to the kernel, simpledrm inherits it, and the
+        # console/initrd therefore never start at the firmware's default
+        # 1024x768. "max" picks the highest mode the VBIOS exposes (the panel's
+        # 4K on this board); systemd-boot 262 has no HiDPI scaling, so the menu
+        # font stays small — "keep" restores the old firmware-chosen mode.
+        consoleMode = "max";
       };
       timeout = lib.mkDefault 5; # seconds on the systemd-boot menu before autoboot
     };
