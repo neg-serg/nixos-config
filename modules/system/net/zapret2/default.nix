@@ -18,7 +18,10 @@ let
   systemdUser = config.lib.neg.systemdUser;
   cfg = config.features.net.zapret2 or { };
 
-  zapret2 = pkgs.zapret2;
+  # nixpkgs carries both lines: `zapret` is the v1 tree this module drives
+  # (`nfqws`, v72.13), `zapret2` is the rewritten v2 project with `nfqws2` and
+  # different flags. Switch through the package, not by renaming this module.
+  zapret2 = pkgs.zapret;
   nfqws = "${zapret2}/bin/nfqws";
 
   # Use the runtime RKN blocklist when enabled (fresh, ~56k domains incl.

@@ -38,7 +38,6 @@ let
   fixTinycc = importOv ./overlays/fix-tinycc.nix;
   trim = importOv ./overlays/trim.nix;
   fixSources = importOv ./overlays/fix-sources.nix;
-  aurPorted = import ./overlays/aur-ported.nix final finalPrev;
   vendored = importOvP ./overlays/vendored-sources.nix;
 
   # Rust slimming: see packages/rust-slim.nix for the two measured levers.
@@ -97,20 +96,15 @@ let
   ];
   rustTopNames = [
     "craft-anything"
-    "deckcraft"
     "figcraft"
     "genlc"
-    "gridcraft"
     "mpd-voice"
     "pw-audioshare"
     "pwroute"
     "solidcraft"
     "sonda"
-    "soundcraft"
     "tint"
-    "vectorcraft"
     "wl"
-    "wordcraft"
     "zalgo"
   ];
   chunks =
@@ -122,7 +116,6 @@ let
     // fixTinycc
     // trim
     // fixSources
-    // aurPorted
     // vendored
     // disableChecks;
   slimChunks =
@@ -344,26 +337,10 @@ slimChunks
     ) old.buildInputs;
   });
 
-  # Ollama ROCm: build the ROCm stack for only the local GPU architecture
-  # (gfx1201 — Navi 48 / RX 9070 XT) instead of all 10 default targets.
-  # hipblaslt's Tensile codegen generates ~323k assembly kernels per arch;
-  # scoping to one arch cuts the ROCm build from many hours to a fraction.
-  # qwen3.8:27b needs a real newer engine (the 0.32.7-src-with-fake-version
-  # hack lacks the qwen3.8 renderer) — vendored package copy at v0.32.15 with
-  # the matching llama.cpp b10488 pin and its own vendorHash.
-  # Scope llama.cpp's ROCm dependency closure to this host's GPU only
-  # (gfx1201) — nixpkgs' base rocmPackages targets every GCN/RDNA arch, so
-  # Tensile would generate kernels for all of them (hours of extra build).
-  llama-cpp-rocm = finalPrev.llama-cpp-rocm.override {
-    llama-cpp = finalPrev.llama-cpp.override {
-      rocmPackages = finalPrev.rocmPackages.gfx1201;
-    };
-  };
-
-  ollama-rocm = final.callPackage (inputs.self + "/packages/ollama-qwen38") {
-    acceleration = "rocm";
-    rocmPackages = finalPrev.rocmPackages.gfx1201;
-  };
+  # Ollama: the ROCm build is nixpkgs' own `ollama-rocm` again (0.40.16 at the
+  # 2026-11-21 pin, substitutable from cache.nixos.org). The local copy under
+  # packages/ollama-qwen38 existed because 0.32.x lacked the qwen3.8 renderer
+  # and its per-arch ROCm build was not cached; both reasons are gone.
 
   # untangle 1.2.1 (debugpy dep for the nvim python host env): the upstream
   # GitHub tag was re-pushed, so the archive no longer matches the hash pinned

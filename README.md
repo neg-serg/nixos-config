@@ -52,7 +52,7 @@
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
 - 🎨 **Beautiful Hyprland** - 18 workspaces, 8 scratchpads, custom pleamar shell
 - 📦 **147 Custom Packages** - Tailored tools for productivity and performance
-- 🧩 **Modular Architecture** - 26 domain modules with feature flags, 618 Nix files
+- 🧩 **Modular Architecture** - 26 domain modules with feature flags, 607 Nix files
 - 🔄 **Local Gates** - pre-commit hook (`just lint`) plus `nix flake check -L`; no CI service runs this repo
 
 ---
@@ -85,7 +85,7 @@ sudo nixos-rebuild switch --flake .#trantor
 | 📁 Category | 🔢 Count | 📊 Progress |
 |-------------|----------|-------------|
 | **Module Domains** | 26 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Nix Files** | 618 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 607 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Custom Packages** | 147 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Module Files** | 362 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 

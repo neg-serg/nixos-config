@@ -6,9 +6,11 @@ let
   mkVicinaeExtension = final.neg.functions.mkVicinaeExtension;
 in
 {
-  # nixpkgs' hyprland wraps hyprland-qtutils into its runtime PATH
-  # (wrapRuntimeDeps); the config runs hyprland-guiutils instead, so keep
-  # qtutils out of the closure.
+  # nixpkgs' hyprland wraps binutils, pciutils, pkgconf and hyprland-guiutils
+  # into its runtime PATH (wrapRuntimeDeps). hyprland-guiutils is installed
+  # system-wide anyway (modules/user/nix-maid/apps/gui-apps.nix), so keeping
+  # the wrapper off saves the wrapper itself and three build-time tools in the
+  # compositor's closure.
   hyprland = prev.hyprland.override { wrapRuntimeDeps = false; };
   # nixpkgs records propagatedBuildInputs as their *dev* outputs (make-derivation
   # maps them through getDev), so an icon theme's fallback propagation dragged
@@ -25,11 +27,6 @@ in
       "${prev.hicolor-icon-theme}"
     ];
   });
-  # hyprland-guiutils — not in the pinned nixpkgs yet, pinned locally (see
-  # packages/hyprland-guiutils). It supersedes hyprland-qtutils and ships the
-  # same five binaries (hyprland-dialog, -donate-screen, -update-screen,
-  # -welcome, -run), so installing both would collide in the system profile.
-  hyprland-guiutils = callPkg (pkg "hyprland-guiutils") { };
   # Waylandar is a standalone Quickshell calendar/dashboard; exposed as a flake
   # package so the system only carries an on-demand launcher.
   waylandar = callPkg (pkg "waylandar") { };
@@ -57,7 +54,6 @@ in
   aura = callPkg (pkg "aura") { inherit mkVicinaeExtension; }; # the emotion/CBT diary: record a note from the launcher
   camillagui = callPkg (pkg "camillagui") { }; # web GUI for CamillaDSP
   atrium = callPkg (pkg "atrium") { }; # Wayland multiseat display manager
-  wordcraft = callPkg (pkg "wordcraft") { }; # Word-style word processor (docx/odt/rtf) + converter CLI
   sonda = callPkg (pkg "sonda") { }; # file manager for pleamar-wm that searches files by what they hold
   craft-anything = callPkg (pkg "craft-anything") { }; # reverse-engineering workbench + rebuild assistant (desktop app, CLI, MCP server)
   # Irori — game launcher repacked from the upstream release tarball. The
@@ -65,20 +61,15 @@ in
   # on-demand launcher (modules/user/games/irori.nix) instead of the package.
   irori = callPkg (pkg "irori") { };
 
-  # ArtCraft suite: the six creative/office apps are on-demand roots
+  # ArtCraft suite: the apps are on-demand roots
   # (modules/user/nix-maid/apps/craft-apps.nix) built on first launch, so the
-  # system generation carries launchers and desktop entries only. Four of the
-  # names shadow older nixpkgs recipes on purpose — the overlay builds the
-  # newest upstream tags. `craft-fonts` is their shared build input (faces
-  # embedded at build time), shadowing nixpkgs' older pin — see
-  # packages/craft-fonts/default.nix.
-  vectorcraft = callPkg (pkg "vectorcraft") { }; # vector illustration editor (SVG/PDF) + converter CLI
+  # system generation carries launchers and desktop entries only. VectorCraft,
+  # SoundCraft, DeckCraft, GridCraft, WordCraft and the shared `craft-fonts`
+  # bundle come from nixpkgs now — its recipes are newer than the local copies
+  # used to be (the 2026-11-21 nixpkgs bump inverted the gap). FigCraft,
+  # SolidCraft and Craft Anything are still built here: nixpkgs has no recipe.
   figcraft = callPkg (pkg "figcraft") { }; # interface design and prototyping
-  soundcraft = callPkg (pkg "soundcraft") { }; # digital audio workstation
-  deckcraft = callPkg (pkg "deckcraft") { }; # presentations and slide shows
-  gridcraft = callPkg (pkg "gridcraft") { }; # spreadsheet workbooks
   solidcraft = callPkg (pkg "solidcraft") { }; # parametric 3D CAD + headless CLI/MCP
-  craft-fonts = callPkg (pkg "craft-fonts") { }; # shared ArtCraft font bundle (CRAFT_FONTS_DIR build input)
 
   # pleamar — Wayland desktop shell runtime (bars, launchers, notification
   # centres, docks, lock screens as animated scenes). Rev-pinned input in

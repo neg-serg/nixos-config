@@ -1,20 +1,18 @@
-# Shared builder for the ArtCraft desktop apps: VectorCraft, FigCraft,
-# SoundCraft, DeckCraft, GridCraft and SolidCraft.
+# Shared builder for the ArtCraft desktop apps still built here: FigCraft,
+# SolidCraft and Craft Anything. The rest of the suite (VectorCraft,
+# SoundCraft, DeckCraft, GridCraft, WordCraft) and the shared `craft-fonts`
+# bundle come from nixpkgs — since the 2026-11-21 pin its recipes are newer
+# than the local copies and are built by Hydra, so the on-demand launchers
+# fetch them instead of compiling Rust here.
 #
-# Six upstream repositories, one shape: an egui/wgpu Rust workspace that builds
-# a GUI binary plus a `-cli` companion, and a `packaging/linux/` tree that
-# stages the same desktop entry, MIME xml, AppStream metainfo and hicolor icons
-# as the official .deb/.rpm. Everything that differs between the apps — version,
-# hashes, file paths, native libraries — is data passed in by
-# packages/<app>/default.nix.
+# One shape, an egui/wgpu Rust workspace that builds a GUI binary plus a `-cli`
+# companion, and a `packaging/linux/` tree that stages the same desktop entry,
+# MIME xml, AppStream metainfo and hicolor icons as the official .deb/.rpm.
+# Everything that differs between the apps — version, hashes, file paths,
+# native libraries — is data passed in by packages/<app>/default.nix.
 #
 # Reachable as `pkgs.neg.functions.mkCraftApp`. It is a package builder, not a
 # `lib` extension (unlike mkMeta): it returns a derivation.
-#
-# Why local packages when the pinned nixpkgs already carries four of the six:
-# those recipes are several releases behind upstream (deckcraft 0.6.1 against
-# 0.16.0), and the module installs every app as an on-demand launcher that
-# builds the newest tag on first use.
 {
   lib,
   rustPlatform,

@@ -13,7 +13,6 @@ in
 {
   swayimg = call (pkg "swayimg") { };
   hdspeconf = call (pkg "hdspeconf") { };
-  waves = call (pkg "waves") { };
   pwroute = call (pkg "pwroute") { };
   pw-audioshare = call (pkg "pw-audioshare") { };
   genlc = call (pkg "genlc-rs") { };

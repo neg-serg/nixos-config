@@ -58,9 +58,10 @@
   lsp-plugins = pkgs.lsp-plugins; # Linux Studio Plugins (LV2/VST/VST3/CLAP) for Renoise
   dr14_tmeter = pkgs.dr14_tmeter; # DR14 dynamic-range meter (analysis CLI)
   carapace = pkgs.carapace; # multi-shell argument completer, called by zsh
-  # Ollama's ROCm build: the service and the model-ensure script both reach it
-  # through the on-demand launcher, so the 548 MiB closure sits in a GC root.
-  ollama = pkgs.ollama-rocm; # the custom ROCm build (packages/ollama-qwen38)
+  # Ollama's ROCm build (nixpkgs `ollama-rocm`): the service and the
+  # model-ensure script both reach it through the on-demand launcher, so the
+  # 548 MiB closure sits in a GC root.
+  ollama = pkgs.ollama-rocm;
   mangohud = pkgs.mangohud; # gaming HUD; launcher aliases mangoapp/mangohudctl/mangoplot
   # The plugin is normally built by the nix-maid Hyprland overlay inside the
   # NixOS pkgs; the on-demand launcher needs a flake attr, so the same upstream
