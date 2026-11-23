@@ -41,14 +41,23 @@ suites=(
 # /tmp names (suffixed with the suite), so concurrent runs cannot collide; the
 # log is printed only for a failure, and pmap replays failures in list order.
 lusty_one() {
-  local suite=$1 log rc=0
+  local suite=$1 log nvimlog rc=0
   log="$(mktemp)"
-  nvim --clean --headless -l "$suite" > "$log" 2>&1 || rc=$?
+  # When $XDG_STATE_HOME/nvim cannot be opened for writing (a read-only HOME,
+  # which is what the agent sandbox mounts), nvim falls back to ./nvim.log in
+  # its cwd — and this worker starts nvim in the repo root, 18 of them at once.
+  # Pin the log to the worker's own temp file so the tree stays clean.
+  nvimlog="$(mktemp)"
+  NVIM_LOG_FILE="$nvimlog" nvim --clean --headless -l "$suite" > "$log" 2>&1 || rc=$?
   if [ "$rc" -ne 0 ]; then
     printf 'FAILED: %s\n' "$suite"
     cat "$log"
+    if [ -s "$nvimlog" ]; then
+      printf 'nvim log (%s):\n' "$suite"
+      cat "$nvimlog"
+    fi
   fi
-  rm -f "$log"
+  rm -f "$log" "$nvimlog"
   return "$rc"
 }
 
