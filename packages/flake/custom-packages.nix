@@ -81,6 +81,7 @@
   espanso = pkgs.espanso; # text expander (launcher in modules/user/nix-maid/cli/espanso.nix)
   hdspeconf = pkgs.hdspeconf; # RME HDSPe matrix mixer (launcher in modules/media/audio/core-packages.nix)
   corectrl = pkgs.corectrl; # AMD GPU overclock/fan GUI (launcher in modules/user/games/performance.nix)
+  stress-ng = pkgs.stress-ng; # CPU/RAM stress testing (launcher in modules/user/games/performance.nix)
 
   # Second on-demand wave: each attr is what the launcher in the named module
   # builds on first use.

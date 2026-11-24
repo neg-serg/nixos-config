@@ -73,8 +73,10 @@ in
         # CoreCtrl is installed by modules/hardware/gpu-corectrl.nix
         # (hardware.gpu.corectrl) together with its polkit rule.
         pkgs.ryzenadj # AMD CPU overclocking (PBO, curve optimizer) via SMU
-        pkgs.stress-ng # CPU/RAM stress testing for stability verification
-        pkgs.glmark2 # OpenGL benchmark for GPU stability/performance
+        (onDemand {
+          name = "stress-ng";
+          attr = "stress-ng";
+        }) # CPU/RAM stress testing for stability verification, built on first use
         (onDemand {
           name = "vkmark";
           attr = "vkmark";
