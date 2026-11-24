@@ -43,7 +43,7 @@ let
   # Rust slimming: see packages/rust-slim.nix for the two measured levers.
   # The name lists are the single place that knows which packages are Rust —
   # `neg` names live under pkgs.neg, `top` names are the top-level attributes
-  # the chunk overlays define (elio/huebox/lazytail are defined below and
+  # the chunk overlays define (elio/lazytail are defined below and
   # wrapped at their definition instead).
   rustSlim = import ./rust-slim.nix;
   rustNegNames = [
@@ -277,10 +277,6 @@ slimChunks
   # tewi: TUI client for Transmission/qBittorrent/Deluge daemons
   # (python app, deps from nixpkgs + local geoip2fast, see packages/tewi/default.nix)
   tewi = final.callPackage ./tewi { };
-
-  # huebox: terminal theme editor (ratatui TUI) — live preview, line-level
-  # push of the palette into the terminal config — see packages/huebox/default.nix
-  huebox = rustSlim (final.callPackage ./huebox { });
 
   # Code200x Unicode font family by James Kass — Code2000 (BMP), Code2001
   # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H).
