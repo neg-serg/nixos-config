@@ -66,6 +66,10 @@
   # the way back is `nixos-rebuild switch --rollback` from a TTY.
   features.nix.pgoNix.enable = true;
 
+  # PATH-level Rust coreutils (experiment; tradeoffs and rollback note live in
+  # modules/cli/tools.nix). Set false to get the GNU binaries back.
+  features.cli.uutils.enable = true;
+
   features.web.vivaldi.enable = true;
   features.web.default = "vivaldi";
   features.mail.vdirsyncer.enable = false; # Disabled: no Google OAuth credentials (missing secrets/home/vdirsyncer/google.sops.yaml)

@@ -66,5 +66,10 @@ in
     # Python
     (pkgs.python3.withPackages (ps: [ ps.pexpect ])) # python3 with pexpect for expect-style automation
   ]
-  ++ lib.optional (hishtoryPkg != null) hishtoryPkg; # sync shell history w/ encryption, better than zsh-histdb
+  ++ lib.optional (hishtoryPkg != null) hishtoryPkg # sync shell history w/ encryption, better than zsh-histdb
+  # uutils wins the PATH name collisions: its default meta.priority (5) beats
+  # coreutils-full's (10), and GNU stays in the closure. Only PATH-level lookups
+  # change — absolute store paths (activation, units, shebangs) keep GNU. Measured:
+  # `sort` ~2x and `ls -R` ~1.9x slower, `cp`/`base64` faster.
+  ++ lib.optional (config.lib.neg.enabled "cli.uutils") pkgs.uutils-coreutils-noprefix;
 }
