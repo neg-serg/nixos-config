@@ -137,7 +137,6 @@ local cls = {
   keyboard    = "^(Bazecor|wootility-lekker|Vial|via)$",
   im          = "^(im.riot.Riot)$",
   remote      = "^(Vmware-view|xfreerdp|remmina|org.remmina.Remmina)$",
-  notes       = "^(Obsidian|md\\.obsidian\\.Obsidian|obsidian)$",
   photo       = "^(ai\\.storyteller\\.photocraft)$",
   -- Unity Hub (Electron) reports WM_CLASS "unityhub" verbatim (checked with
   -- hyprctl clients); the Editor is the X11 "Unity" class. The Hub's own
@@ -563,7 +562,6 @@ hl.bind(M4 .. "+" .. C .. "+v", hl.dsp.exec_cmd('raise --match "class:regex=^(Ba
 hl.bind(M4 .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(steam|com\\.valvesoftware\\.Steam|steam_app.*|gamescope)$" --launch "steam"'))
 -- M4+CTRL+o used to launch OBS Studio; it is not installed here. The obs
 -- workspace/route below stay for when it returns, the key is free.
-hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Obsidian|md\\.obsidian\\.Obsidian|obsidian)$" --launch "flatpak run md.obsidian.Obsidian"'))
 
 -- --- Media (media.conf) ---
 -- The swayosd-client binds (brightness, caps-lock) were removed with the
@@ -1057,7 +1055,6 @@ local wsTapeWidths = {
   [14] = 1.0, -- 𐌿:keyboard — QMK/VIA config windows
   [15] = 0.4, -- 𐍀:im — chats stay a narrow strip (scrolling-im-width)
   [16] = 1.0, -- 𐍁:remote — VDI/RDP at full width (scrolling-remote-width)
-  [17] = 0.6, -- Ⲣ:notes — Obsidian, default width
   [19] = 1.0, -- 𐍇:rack — VCV Rack at full width
 }
 local tapeDefaultWidth = 0.6
@@ -1409,7 +1406,6 @@ local routes = {
   { class = cls.keyboard,    id = 14 },
   { class = cls.im,          id = 15 },
   { class = cls.remote,      id = 16 },
-  { class = cls.notes,       id = 17 },
   { class = cls.vital,       id = 18 },
   { class = cls.photo,       id = 20, no_initial_focus = true },
 }

@@ -55,9 +55,6 @@
     # source, and Herdr >= 0.9.2 is what enables native agent-session restore.
     nixpkgs.url = "github:NixOS/nixpkgs/2786a2a72088ecf32aea5b3ec52099e6a7cff78f";
 
-    nix-flatpak = {
-      url = "github:gmodena/nix-flatpak";
-    };
     raise = {
       url = "github:neg-serg/raise";
       # Without follows the input pins its own nixpkgs, and every raise build

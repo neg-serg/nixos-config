@@ -8,8 +8,6 @@
       wordcraft.enable = mkBool "enable WordCraft word processor (Word-style GUI + docx/odt/rtf CLI)" false;
     };
 
-    flatpak.builder.enable = mkBool "enable flatpak-builder" false;
-
     llm.enable = mkBool "enable local LLM stack (Ollama, local-ai)" false;
 
     # Fun/extras (e.g., curated art assets) that are nice-to-have

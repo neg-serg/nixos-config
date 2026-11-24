@@ -19,11 +19,11 @@
     "aurora-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795542023,
-        "narHash": "sha256-XnJ9rB7Qpp3x1r4SoClYFc01EAaoa1FMlONhm+xtW8k=",
+        "lastModified": 1795544843,
+        "narHash": "sha256-c22fXlt69neC8qoi8SOvrbzAB+KLlbmp/ry9TCqd0M8=",
         "ref": "refs/heads/main",
-        "rev": "83b806b8724524c8271b9c62e7aa7c12abf2af5f",
-        "revCount": 1550,
+        "rev": "b1c495dd814ba731538063eb027318089d04f974",
+        "revCount": 1559,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -1018,21 +1018,6 @@
         "type": "github"
       }
     },
-    "nix-flatpak": {
-      "locked": {
-        "lastModified": 1791644268,
-        "narHash": "sha256-f7Z4PmfnRxf7+37NN48ep+KsQauGtL5REE99pJtMNp8=",
-        "owner": "gmodena",
-        "repo": "nix-flatpak",
-        "rev": "02656785ab214fa1c9655f1beaaf0269eeeec2ca",
-        "type": "github"
-      },
-      "original": {
-        "owner": "gmodena",
-        "repo": "nix-flatpak",
-        "type": "github"
-      }
-    },
     "nix-maid": {
       "locked": {
         "lastModified": 1795368880,
@@ -1343,7 +1328,6 @@
         "neovim-nightly": "neovim-nightly",
         "nix-cache-pin": "nix-cache-pin",
         "nix-cachyos-kernel": "nix-cachyos-kernel",
-        "nix-flatpak": "nix-flatpak",
         "nix-maid": "nix-maid",
         "nix-src": "nix-src",
         "nixpkgs": "nixpkgs_2",

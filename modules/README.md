@@ -25,7 +25,6 @@ modules/
 | `documentation` | Man pages, info pages, doc viewers                                                                                                       |
 | `emulators`     | Console/system emulators (RetroArch, standalone)                                                                                         |
 | `features`      | Feature flags (`features.gui.enable`, `features.dev.enable`, …) — auto-import                                                            |
-| `flatpak`       | Flatpak integration with overrides and env vars                                                                                          |
 | `fonts`         | Fonts — Iosevka (Nerd Font), Pango, fontconfig defaults                                                                                  |
 | `fun`           | Terminal toys, ASCII art, screensavers                                                                                                   |
 | `games`         | System-level gaming config (controllers, etc.)                                                                                           |

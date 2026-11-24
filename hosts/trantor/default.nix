@@ -61,7 +61,6 @@
   services.bootvine.enable = true;
 
   # Host-specific overrides (above profile defaults)
-  # Obsidian installed via Flatpak (to avoid Electron in Nix closure)
   # PGO build of Determinate Nix (packages/nix-det-pgo): -18 % on the toplevel eval,
   # lazy-trees intact, same drvPath. The rebuild restarts nix-daemon; if it ever breaks,
   # the way back is `nixos-rebuild switch --rollback` from a TTY.

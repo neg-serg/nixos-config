@@ -317,11 +317,14 @@ slimChunks
       }
     );
 
-  # Flatpak: drop gtk3 from buildInputs — upstream meson.build doesn't require it.
-  # Note: postInstall still wraps gtk-icon-cache.trigger with gtk3; the reference
-  # may persist in the closure but this is negligible (~10MB) vs what was removed.
-  flatpak = finalPrev.flatpak.overrideAttrs (old: {
-    buildInputs = builtins.filter (pkg: (pkg.pname or "") != "gtk3") (old.buildInputs or [ ]);
+  # xdg-desktop-portal takes the `flatpak` package only for the Flatpak portal
+  # interface XML (fed to gdbus-codegen) and for the PATH wrapGApps adds; no
+  # code links libflatpak. Dropping both keeps the Flatpak manager out of the
+  # system closure — nothing here runs Flatpak apps, and the portal tests
+  # synthesize their own fake `flatpak` executable.
+  xdg-desktop-portal = finalPrev.xdg-desktop-portal.overrideAttrs (old: {
+    mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dflatpak-interfaces=disabled" ];
+    buildInputs = builtins.filter (pkg: (pkg.pname or "") != "flatpak") (old.buildInputs or [ ]);
   });
 
   # vapoursynth-bestsource builds its own ffmpeg with `withLcms2 = true` inside
