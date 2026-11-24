@@ -9,7 +9,12 @@
 #   `cargo test` covers id parsing, --list ordering/shadowing, the byte-exact
 #   shader rewrite, texture2D legacy detection, Sourcegraph ranking from a fixture
 #   NDJSON stream, API JSON extraction, and CLI parity for all local paths.
-{ lib, rustPlatform }:
+{
+  lib,
+  rustPlatform,
+  makeWrapper,
+  esshader,
+}:
 
 rustPlatform.buildRustPackage {
   pname = "shtoy";
@@ -18,6 +23,15 @@ rustPlatform.buildRustPackage {
   src = ./.;
 
   cargoLock.lockFile = ./Cargo.lock;
+
+  nativeBuildInputs = [ makeWrapper ];
+
+  # shtoy locates the viewer with a plain PATH lookup (parity with the shell's
+  # `command -v esshader`, see src/viewer.rs), so the wrapper supplies it and
+  # esshader stays out of the system profile.
+  postInstall = ''
+    wrapProgram $out/bin/shtoy --prefix PATH : ${lib.makeBinPath [ esshader ]}
+  '';
 
   meta = lib.mkMeta {
     description = "Run Shadertoy shaders fullscreen in esshader";
