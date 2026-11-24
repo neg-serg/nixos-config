@@ -11,6 +11,7 @@ in
   environment.systemPackages = lib.unique ([
     pkgs.hyperfine # benchmarking tool
     pkgs.just # command runner for project tasks
+    pkgs.pahole # inspect/decode DWARF and BTF type info (dwarves suite)
     pkgs.pkgconf # pkg-config wrapper
     (onDemand {
       name = "scc";
