@@ -31,6 +31,5 @@ in
     pkgs.adguardian # terminal dashboard for AdGuard Home
     pkgs.sysstat # sar, iostat, mpstat, pidstat and friends
     pkgs.vmtouch # portable file system cache diagnostics and control
-    pkgs.hxtools # misc hx* admin/git/media utilities (hxnetload, git-forest, qplay)
   ];
 }

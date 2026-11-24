@@ -10,7 +10,6 @@
   # attr on first use and GC-roots it under ~/.local/state/nix-apps.
   yt-dlp = pkgs.yt-dlp;
   adguardian-term = pkgs.adguardian;
-  hxtools = pkgs.hxtools; # Collection of small tools over the years by j.eng
 
   waves = pkgs.waves;
 
