@@ -902,6 +902,36 @@ local function toggle_drawer(name)
     })
 end
 
+-- ---------------------------------------------------- a new cover asks for the card
+-- The now-playing plate announces a new track: a cover that changes while the
+-- chosen player is playing asks the `panels` scene for the `media` drawer. The
+-- first report of the session is not a change (nothing was on screen before),
+-- an open drawer is never taken over — the owner's own drawer stays — and the
+-- card closes on the scene's own idle timer, like every drawer.
+--
+-- The drawer is asked for only when nothing is open. The scene answers `none`
+-- from the load and nothing at all while it is not running (on demand), so both
+-- cases take the `open_drawer` path; a scene with another drawer up keeps it.
+-- The last cover is kept by a closure, not by a chunk-level local: the logic is
+-- at LuaJIT's 200-local ceiling for a chunk's main function, and this watcher is
+-- not allowed to push it over.
+sys.watch("media", (function()
+    local lastCover
+    return function(m)
+        if type(m) ~= "table" or type(m.art) ~= "string" or m.art == "" then return end
+        local changed = lastCover ~= nil and m.art ~= lastCover
+        lastCover = m.art
+        if not changed or m.playing ~= true then return end
+        run("dash", {
+            "-c",
+            "cur=$(\'" .. PLEAMAR .. "\' --say panels \'get drawer\' 2>/dev/null || true); "
+                .. "if [ -z \"$cur\" ] || [ \"$cur\" = none ]; then exit 0; fi; exit 1",
+        }, function(_, code)
+            if code == 0 then open_drawer("media") end
+        end)
+    end
+end)())
+
 -- The open-only events stay for callers that want a drawer shown regardless of what is on
 -- screen (IPC, or a rule in another scene); the bar's own presses use the toggles below.
 on("open_media_panel", function() open_drawer("media") end)
