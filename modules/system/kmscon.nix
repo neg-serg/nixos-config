@@ -17,11 +17,11 @@
 #   invisible. Those VTs are above NAutoVTs, so logind never spawns kmscon
 #   there.
 #
-# Rendering is software (drm2d). The OpenGL path (kmscon.conf `hwaccel`) needs
-# a working GBM/EGL stack on the DRM master kmscon owns, and a console that
-# fails to start costs the maintenance path itself, while a console at 4K that
-# copies a framebuffer is merely not accelerated. Turn hwaccel on only after
-# seeing the software console work.
+# Rendering uses the GL/GBM path (drm3d + gltex) since 2026-11-24, after the
+# software console (drm2d) had been verified working. kmscon itself falls back
+# to drm2d if the GL device cannot be created, and kmsconvt@'s
+# OnFailure=getty@%i.service keeps the VT usable if the whole console fails.
+# Set hwaccel = false to return to the software blit.
 #
 # Console hotkeys (kmscon grabs; session-control is enabled below):
 # - Shift+PgUp/PgDn page the scrollback, Shift+Up/Down scroll one line;
@@ -46,7 +46,7 @@ in
       enable = true;
 
       config = {
-        hwaccel = false; # software blit; see the header for the tradeoff
+        hwaccel = true; # GL/GBM (drm3d+gltex); drm2d is the internal fallback
 
         # kmscon's default picks the last DRM_MODE_TYPE_PREFERRED mode, and this
         # panel advertises both 4K240 and 4K60 as preferred, so the VT stayed at
