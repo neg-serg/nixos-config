@@ -49,7 +49,7 @@ in
     perfDataType = {
       enable = opts.mkBoolOpt {
         default = false;
-        description = "Install perf + dwarves(pahole) to use perf data-type profiling and related tooling.";
+        description = "Install perf + pahole to use perf data-type profiling and related tooling.";
       };
       enableKernelBtf = opts.mkBoolOpt {
         default = false;
@@ -57,7 +57,7 @@ in
       };
       installTools = opts.mkBoolOpt {
         default = true;
-        description = "Install perf and dwarves (pahole) into the system when perfDataType.enable is true.";
+        description = "Install perf and pahole (the dwarves suite) into the system when perfDataType.enable is true.";
       };
     };
   };
@@ -110,7 +110,7 @@ in
           (lib.mkIf (cfg.perfDataType.enable or false) {
             environment.systemPackages = lib.mkIf (cfg.perfDataType.installTools or false) [
               pkgs.perf # Linux perf tooling with bpftrace integration
-              pkgs.dwarves # provides pahole for BTF/DWARF work
+              pkgs.pahole # DWARF/BTF type inspection for -g/DEBUG_INFO_BTF builds
             ];
           })
           (lib.mkIf (cfg.perfDataType.enableKernelBtf or false) {
