@@ -1,6 +1,6 @@
 ##
 # Module: fun/misc-packages
-# Purpose: Provide novelty/entertainment utilities (matrix rain, ASCII art, text banners, etc.).
+# Purpose: Provide novelty/entertainment utilities (matrix rain, ASCII art, shader toys, etc.).
 {
   lib,
   config,
@@ -12,9 +12,6 @@ let
   packages = [
 
     pkgs.neo # matrix legacy digital rain solution
-    pkgs.nms # "No More Secrets" decrypt effect
-    pkgs.taoup # The Tao of Unix Programming
-    pkgs.toilet # text banners
 
     pkgs.neg.brrtfetch # animated ASCII art GIF renderer for sysinfo
 
