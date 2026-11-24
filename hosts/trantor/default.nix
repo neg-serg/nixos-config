@@ -49,10 +49,7 @@
     font = "${pkgs.terminus_font}/share/consolefonts/ter-124n.psf.gz";
   };
 
-  # No boot splash: bootvine (below) draws the boot itself, from the initrd
-  # on, so plymouth would only own tty1 for the first second and then be
-  # redundant. `splash` still rides in boot.kernelParams through
-  # profiles.performance.quietBoot and is harmless without the daemon.
+  # No boot splash: bootvine (below) draws the boot itself, from the initrd on.
 
   # Boot screen: a live tree of the boot's systemd jobs on tty12, instead of
   # the scrolling kernel/systemd lines. It starts in the systemd initrd (the

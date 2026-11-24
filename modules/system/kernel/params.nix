@@ -35,7 +35,6 @@ let
     # /dev/kmsg and bypass journald's LogFilterPatterns, which is unit-only).
     "loglevel=2"
     "udev.log_priority=3"
-    "splash"
     "systemd.show_status=false"
     "vt.global_cursor_default=0"
   ];
