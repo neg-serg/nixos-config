@@ -35,6 +35,11 @@
 # connector. DP-2 advertises both 4K240 and 4K60 as preferred, so the console
 # stayed at 60 Hz; the config forces 4K240. The kernel reports the panel's
 # 239.99 Hz mode as vrefresh=240, and kmscon matches that integer exactly.
+#
+# Palette: the console mirrors the default shell theme (variant 1,
+# files/shell/theme/v1/kitty.conf; the shell-theme `current` link is unset, so
+# kitty runs v1). kmscon takes the 16 ANSI slots plus fg/bg — the custom
+# 256-colour ladder, selection and cursor colours have no kmscon equivalent.
 { config, lib, ... }:
 let
   inherit (lib) mkForce mkIf;
@@ -55,10 +60,36 @@ in
         mode = "[DP-2]3840x2160@240";
 
         # Family name of the Iosevka nerd build from modules/fonts. The module
-        # asserts fontconfig is enabled whenever font-name is set. font-size
-        # stays at its default 0, which makes kmscon pick a size from the
-        # monitor resolution.
+        # asserts fontconfig is enabled whenever font-name is set.
         font-name = "Iosevka";
+        # 32 px matches the kitty setup (Iosevka at 12 pt on the scale-2 4K
+        # monitor). The auto size was 54 px at 3840x2160 and looked too large;
+        # Ctrl+=/- still zoom at runtime.
+        font-size = 32;
+
+        # kmscon's built-in palette is not the shell theme. Mirror the 16 ANSI
+        # slots of files/shell/theme/v1/kitty.conf (hex converted to the r,g,b
+        # bytes kmscon parses); the custom 256-colour ladder, selection and
+        # cursor colours from files/kitty/theme.conf have no kmscon equivalent.
+        palette = "custom";
+        palette-black = "2,2,2";
+        palette-red = "138,47,88";
+        palette-green = "40,115,115";
+        palette-yellow = "145,78,137";
+        palette-blue = "57,85,115";
+        palette-magenta = "94,70,140";
+        palette-cyan = "49,101,140";
+        palette-light-grey = "137,156,161";
+        palette-dark-grey = "61,61,61";
+        palette-light-red = "207,79,136";
+        palette-light-green = "83,166,166";
+        palette-light-yellow = "191,133,204";
+        palette-light-blue = "71,122,179";
+        palette-light-magenta = "126,98,179";
+        palette-light-cyan = "96,150,191";
+        palette-white = "97,114,135";
+        palette-foreground = "108,126,150";
+        palette-background = "0,0,0";
         # Same layout pair as the compositor (files/gui/hypr/hyprland.lua,
         # kb_layout = "us,ru"). The compositor switches with a Hyprland bind;
         # the console gets these two XKB toggles instead.
