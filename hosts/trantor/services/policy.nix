@@ -175,9 +175,9 @@ lib.mkMerge [
       allowedTCPPorts = lib.mkForce [
         # sshd — deliberately accepted on EVERY interface (net0/wlan0 are the
         # interfaces used on untrusted networks, see the comment above). The
-        # compensating control is services.fail2ban (modules/servers/openssh),
-        # not an interface restriction: narrow this to interfaces.net1 if SSH
-        # over untrusted networks is ever dropped.
+        # compensating control is sshd's built-in PerSourcePenalties
+        # (modules/servers/openssh), not an interface restriction: narrow this
+        # to interfaces.net1 if SSH over untrusted networks is ever dropped.
         22
       ];
       allowedUDPPorts = lib.mkForce [ ];

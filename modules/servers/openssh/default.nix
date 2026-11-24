@@ -7,7 +7,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 let
@@ -50,6 +49,11 @@ in
     users.groups.sshd = lib.mkForce { };
     services.openssh = {
       enable = true;
+      # The brute-force alert scanner (hosts/trantor/services/telegram-units.nix)
+      # greps the journal for "Failed password", which sshd only logs at
+      # VERBOSE. fail2ban used to set this via mkDefault; it stays explicit now
+      # that the package is gone.
+      settings.LogLevel = "VERBOSE";
       extraConfig = ''
         # TCP/tunnel forwarding (configurable)
         AllowTcpForwarding ${if cfg.allowTcpForwarding then "yes" else "no"}
@@ -104,37 +108,19 @@ in
       };
     };
     programs.mosh.enable = true; # Opens the relevant UDP ports.
-    # Scan/brute-force mitigation. The port-22 firewall rule in
-    # hosts/trantor/services/policy.nix is deliberately global (sshd must stay
-    # reachable on net0/wlan0, the interfaces used on untrusted networks), so
-    # this is the compensating control instead of narrowing that rule.
-    # nixpkgs ships a systemd-backend sshd jail and mkDefaults LogLevel=VERBOSE
-    # on sshd; loopback and the home LAN (192.168.0.0/24) are ignored so
-    # fail2ban cannot lock out the user's own devices.
-    services.fail2ban = {
-      # fail2ban 1.1.1 globs the journal files once and reuses that list when it
-      # reopens the reader. After journald's boot-time rotation a globbed file
-      # (a transient nix build user's user-*.journal, for one) can be gone:
-      # Reader() raises ENOENT, the old code left the reader as None and every
-      # pass of the main loop then died on AttributeError — 100 errors, "going
-      # idle", no banning at all (observed 2026-11-03). The patch re-globs, keeps
-      # the old reader and retries; drop it when fail2ban ships the fix.
-      package = pkgs.fail2ban.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ ./fail2ban-journal-reopen.patch ];
-      });
-      enable = true;
-      maxretry = 4;
-      bantime = "1h";
-      bantime-increment = {
-        enable = true;
-        maxtime = "1w";
-      };
-      ignoreIP = [
-        "127.0.0.1/8"
-        "::1"
-        "192.168.0.0/24"
-      ];
-    };
+    # Brute-force mitigation without a daemon: sshd's built-in
+    # PerSourcePenalties (OpenSSH >= 9.8) is on by default. It refuses a
+    # source address for authfail/invaliduser/grace-exceeded, accumulates
+    # repeated penalties up to max and tracks /32 and /128 separately
+    # (defaults: authfail 5s, min 15s, max 10m, so one bad key does not lock
+    # a device out). The port-22 rule in hosts/trantor/services/policy.nix is
+    # deliberately global (sshd must stay reachable on net0/wlan0, the
+    # interfaces used on untrusted networks), so this is the compensating
+    # control instead of narrowing that rule. fail2ban was removed on purpose:
+    # 325 MiB of closure, mostly Python, for zero bans observed, while
+    # key-only auth already rejects the scan traffic. PerSourcePenalties is
+    # not a Match-block keyword, so the home LAN cannot be exempted the way
+    # fail2ban's ignoreIP did.
     systemd.services.sshd.serviceConfig = {
       # Hardening. NoNewPrivileges is deliberately NOT set here: under
       # no_new_privs the kernel refuses every confined->unconfined transition
