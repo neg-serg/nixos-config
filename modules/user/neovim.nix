@@ -114,7 +114,6 @@ lib.mkIf devEnabled (
         pkgs.taplo # TOML
         pkgs.just-lsp # Justfiles
         pkgs.autotools-language-server # Autotools/Make
-        pkgs.dot-language-server # DOT graphs
         pkgs.yaml-language-server # YAML
         pkgs.nil # Nix (fast LSP with built-in nixpkgs docs)
         (onDemand {

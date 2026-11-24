@@ -3,7 +3,7 @@
   options.features = {
     text = {
       read.enable = mkBool "enable reading stack (CLI/GUI viewers, OCR, Recoll)" true;
-      manipulate.enable = mkBool "enable text/markup manipulation CLI tools (jq/yq/htmlq)" true;
+      manipulate.enable = mkBool "enable text/markup manipulation CLI tools (jq/yq/pup)" true;
       notes.enable = mkBool "enable notes tooling (zk CLI)" true;
       wordcraft.enable = mkBool "enable WordCraft word processor (Word-style GUI + docx/odt/rtf CLI)" false;
     };

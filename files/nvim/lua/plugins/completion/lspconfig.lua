@@ -102,7 +102,6 @@ return {
     configure('taplo', {})
     configure('just_ls', { cmd = { 'just-lsp' }, filetypes = { 'just' } })
     configure('autotools_ls', {})
-    configure('dotls', {})
     configure('lemminx', {})
     -- nvim-lspconfig (this version) ships no builtin for nil/just_ls, so cmd
   -- and filetypes must be explicit or the servers never start

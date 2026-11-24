@@ -10,7 +10,6 @@
 let
   enabled = config.lib.neg.enabled "text.manipulate";
   packages = [
-    pkgs.htmlq # jq-like for HTML
     pkgs.jc # convert command output to JSON/YAML
     pkgs.jq # JSON processor
     pkgs.pup # HTML parser
