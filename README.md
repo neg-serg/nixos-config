@@ -86,7 +86,7 @@ sudo nixos-rebuild switch --flake .#trantor
 |-------------|----------|-------------|
 | **Module Domains** | 26 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Nix Files** | 605 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Custom Packages** | 145 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Custom Packages** | 146 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Module Files** | 361 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
 | **Total Commits** | 5200+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |

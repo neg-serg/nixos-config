@@ -26,7 +26,10 @@ in
     pkgs.nix-fast-build # parallel evaluation+building with log renderer
     pkgs.nix-eval-jobs # parallel flake evaluator behind nix-fast-build; does the cache-status preflight for `just preflight`
     pkgs.dix # diff closures: dix /run/current-system result (Rust rewrite of nvd)
-    pkgs.nix-melt # TUI for nix flake lock --update
+    (onDemand {
+      name = "nix-melt";
+      attr = "nix-melt";
+    }) # ranger-like flake.lock viewer, on demand
     pkgs.neg.nixard # TUI for exploring NixOS package closures and generating Nix declarations
     pkgs.statix # static analyzer for nix
   ];

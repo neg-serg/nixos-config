@@ -153,6 +153,7 @@
   difftastic = pkgs.difftastic;
   npins = pkgs.npins;
   nix-init = pkgs.nix-init;
+  nix-melt = pkgs.nix-melt; # ranger-like flake.lock viewer (launcher in modules/tools/pkgs.nix)
   # On-demand stopgap: the launcher in modules/user/nix-maid/cli/utils.nix
   # builds this on first call. zfsSupport keeps the zpool module of
   # files/fastfetch/config.jsonc working. Drop with the blizzard stack.
