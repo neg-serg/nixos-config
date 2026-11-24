@@ -67,9 +67,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     wl = {
-      # Track main: the layer-surface damage fix and the suboptimal-present latch
-      # fix are both merged there. Only the local warning-level patch remains in
-      # packages/wl.
       url = "github:neg-serg/wl";
       flake = false;
     };
@@ -78,10 +75,6 @@
       url = "github:neg-serg/iosevka-neg";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # lusty: own repo on github (source of truth).
-    # Re-lock after pushes: nix flake lock --update-input lusty (via proxy).
-    # nixpkgs follows the top-level pin: one evaluation, one toolchain, and the
-    # package is built against the same glibc the session runs.
     lusty = {
       url = "github:neg-serg/lusty";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -92,29 +85,10 @@
       inputs.wl.follows = "wl";
       inputs.rsmetrx.follows = "rsmetrx";
     };
-    # aurora: the MPD player's own repository — private, so the source stays off
-    # the shelf while the package still builds the *committed* tree instead of
-    # whatever sits in the working directory (~/src/aurora). It arrives over SSH,
-    # which authenticates with the fetching user's GitHub key, so no token has to
-    # be stored anywhere. Re-lock with
-    # `nix flake lock --update-input aurora-src` after pushing to it.
-    #
-    # Tracks the default branch (`main`): `autoeq` — the branch that swapped the Squiglink
-    # catalogue download for AutoEq in the `headphones` CLI — merged into `main` (a3a7049),
-    # so the `?ref=autoeq` pin went away with the branch and would only break `nix flake
-    # update` ("couldn't find remote ref refs/heads/autoeq").
     aurora-src = {
       url = "git+ssh://git@github.com/neg-serg/aurora";
       flake = false;
     };
-    # aurora-plugins: the player's external plugins as their own programs — `autodj`, `lyrics`,
-    # `mpris`, `musicbrainz`, `notify`, `remaining`, `scrobble` and `spectroscope`. A repository of
-    # its own, so changing a plugin rebuilds a plugin and never the player (the split is the
-    # player's `docs/plugins-external.md`). Public, unlike the player: there is no secret in it,
-    # and a public input fetches over HTTPS with no key to manage. The derivation lives in that
-    # repository's `nix/package.nix`, and the player finds the programs through
-    # `AURORA_PLUGIN_DIR` (modules/media/audio/aurora.nix). Re-lock with
-    # `nix flake lock --update-input aurora-plugins-src` after pushing to it.
     aurora-plugins-src = {
       url = "github:neg-serg/aurora-plugins";
       flake = false;
@@ -146,11 +120,6 @@
       url = "github:k4ditano/pleamar/eebd61adf88b25b6f3fb607d632b84a359237f7c";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # pleamar-wm — the compositor the developer harnesses run scenes in headless
-    # (`pleamar-smoke`, `check-plugin-render`, `pleamar-rig`). Its package builds
-    # the wm beside pleamar's *source* (`../pleamar`), so it follows our pleamar
-    # pin; nixpkgs follows ours too, to keep one evaluation. A bump of the wm
-    # may want a newer pleamar than the pin below — then raise both together.
     pleamar-wm = {
       url = "github:k4ditano/pleamar-wm";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -166,7 +135,6 @@
     };
     tailray = {
       url = "github:NotAShelf/tailray";
-      # Same rule as every other input: build against the system nixpkgs.
       inputs.nixpkgs.follows = "nixpkgs";
     };
     steam-config-nix = {
@@ -199,43 +167,19 @@
     nix-cache-pin = {
       url = "github:neg-serg/nix-cache-pin";
       inputs.nixpkgs.follows = "nixpkgs";
-      # harbor-rs is the fork's own helper input; it used to pin an August
-      # nixpkgs, which only ever mattered to its dev tooling. Follow the system
-      # pin so no input in the tree carries a second nixpkgs (which also keeps
-      # the lock free of an unused snapshot).
       inputs.harbor-rs.inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Waylandar — standalone Wayland calendar widget + dashboard (Quickshell + Python).
-    # Local clone ~/src/waylandar is at the same rev; nixpkgs follows the top-level
-    # pin so the build reuses the cached quickshell/python closure.
     waylandar = {
       url = "github:samjoshuadud/waylandar/b46d5c348f846ca489071f2d271312ea35c019b4";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # bootvine — live dependency tree of the boot's systemd jobs, drawn on
-    # tty12 instead of the scrolling kernel/systemd lines (the boot-screen
-    # counterpart of nix-output-monitor). Imported and enabled in
-    # hosts/trantor/default.nix; it starts in the systemd initrd and follows the
-    # boot into stage 2, so the initrd must be the systemd one (the only kind
-    # left on 26.11). nixpkgs follows the system pin: the package is built with
-    # crane and must see the same toolchain as the system. Re-lock with
-    # `nix flake lock --update-input bootvine`.
     bootvine = {
       url = "git+https://codeberg.org/wvhulle/bootvine";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Neovim nightly (0.13.0-dev): guh.nvim needs `vim.async`, which does not
-    # exist in the 0.12.6 stable. The overlay builds neovim master on top of our
-    # neovim-unwrapped packaging and carries the workarounds master needs
-    # (already-applied CVE patch, loosened cmake requirements); the exact master
-    # rev is pinned in flake.lock through its own `neovim-src` input. nixpkgs
-    # follows the system pin, so the build reuses the same toolchain.
-    # Update with: nix flake lock --update-input neovim-nightly
     neovim-nightly = {
       url = "github:nix-community/neovim-nightly-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
-      # Same library the repo already pins: one flake-parts node in the lock
-      # instead of a duplicate copy that only shapes the overlay's outputs.
       inputs.flake-parts.follows = "flake-parts";
     };
   };
@@ -244,8 +188,6 @@
     inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" ];
-      # Dendritic layout: every file under flake/parts declares its outputs and
-      # is imported automatically; there is no hand-kept import list.
       imports = [ (inputs.import-tree ./flake/parts) ];
     };
 }
