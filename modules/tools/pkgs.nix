@@ -12,7 +12,6 @@ in
     pkgs.nixfmt # Nix formatter
     pkgs.cached-nix-shell # nix-shell with instant startup
     pkgs.deadnix # scan for dead nix code
-    pkgs.manix # nixos documentation
     (onDemand {
       name = "nix-init";
       attr = "nix-init";
