@@ -52,22 +52,13 @@ in
 
       config = {
         hwaccel = true; # GL/GBM (drm3d+gltex); drm2d is the internal fallback
-
         # kmscon's default picks the last DRM_MODE_TYPE_PREFERRED mode, and this
         # panel advertises both 4K240 and 4K60 as preferred, so the VT stayed at
         # 60 Hz. Force the mode the compositor runs; the kernel's vrefresh for
         # the 239.99 Hz mode is 240 and kmscon matches that integer exactly.
         mode = "[DP-2]3840x2160@240";
-
-        # The kitty face is Iosevka Medium; the nerd build exposes that family
-        # too (fc-match "Iosevka Medium" -> Iosevka-Medium.ttf), so the console
-        # matches the terminal's weight. The module asserts fontconfig is
-        # enabled whenever font-name is set.
         font-name = "Iosevka Medium";
-        # 32 px matches the kitty setup (Iosevka at 12 pt on the scale-2 4K
-        # monitor). The auto size was 54 px at 3840x2160 and looked too large;
-        # Ctrl+=/- still zoom at runtime.
-        font-size = 32;
+        font-size = 24;
 
         # kmscon's built-in palette is not the shell theme. Mirror the 16 ANSI
         # slots of files/shell/theme/v1/kitty.conf (hex converted to the r,g,b
