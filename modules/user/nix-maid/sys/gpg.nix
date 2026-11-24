@@ -88,8 +88,10 @@ in
       }
 
       # 1. Config Files via Maid
+      # GNUPGHOME is $XDG_DATA_HOME/gnupg (envs.nix), so the agent config has
+      # to live there — a file in ~/.gnupg is never read while that var is set.
       (neg.mkHomeFiles {
-        ".gnupg/gpg-agent.conf".text = agentConf;
+        ".local/share/gnupg/gpg-agent.conf".text = agentConf;
         # Ensure permissions for GPG dir? Maid handles file creation, but usually gnupg handles dir perms on run.
       })
     ]

@@ -82,6 +82,8 @@ in
     NPM_CONFIG_CACHE = "${cacheHome}/npm";
     NPM_CONFIG_INIT_MODULE = "${configHome}/npm/config/npm-init.js";
     NPM_CONFIG_TMP = "$XDG_RUNTIME_DIR/npm";
+    # Ren'Py saves: game-specific dirs live underneath this path (~/.renpy otherwise).
+    RENPY_PATH_TO_SAVES = "${dataHome}/renpy";
     TEXMFVAR = "${cacheHome}/texlive/texmf-var";
     TRITON_HOME = "${cacheHome}/triton"; # triton/torch kernel cache (~/.triton otherwise)
     W3M_DIR = "${dataHome}/w3m";

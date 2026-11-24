@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  neg,
 
   ...
 }:
@@ -106,6 +107,16 @@ in
           VAGRANT_HOME = "${home}/.local/share/vagrant";
         };
       }
+
+      # GHCi reads $XDG_CONFIG_HOME/ghc/ghci.conf (GHC user's guide, "The .ghci
+      # files") and never ~/.ghci, so the global tuning belongs here.
+      (neg.mkHomeFiles {
+        ".config/ghc/ghci.conf".text = ''
+          -- GHCi tuning: run loaded modules as native code and optimise them.
+          :set -fobject-code
+          :set -O2
+        '';
+      })
     ]
 
   );
