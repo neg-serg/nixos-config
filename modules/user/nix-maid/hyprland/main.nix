@@ -868,22 +868,28 @@ let
     hyprctl_bin=${lib.getExe' pkgs.hyprland "hyprctl"}
 
     # The plugin (217 MiB with its TFLite runtime and models) is not in the
-    # system closure: the first load after a clean/GC builds the flake attr and
-    # pins it under the per-user on-demand root. The retry loop below then polls
-    # `hyprctl plugin list`, so the build happens inside the same window as the
-    # load retries. The package embeds its own bin/hyprcapture-ui path, which is
-    # the same store path the root pins.
+    # system closure: the on-demand root below pins the flake attr, and the
+    # retry loop polls `hyprctl plugin list`, so the build happens inside the
+    # same window as the load retries. The package embeds its own
+    # bin/hyprcapture-ui path, which is the same store path the root pins.
+    #
+    # The plugin dlopen's aquamarine/hyprutils out of its own closure, so a pin
+    # built against an older compositor corrupts the running one (2026-11-24:
+    # the aquamarine 0.15.1 plugin loaded into 0.16.0 destroyed the CBackend and
+    # left the compositor wedged on the dead session's poll fds). Resolve the
+    # flake attr on every load so the pin tracks the compositor; the build is a
+    # cache hit unless Hyprland moved.
     root="$HOME/.local/state/nix-apps/hyprcapture"
-    if [ ! -e "$root" ]; then
-      mkdir -p "$(dirname "$root")"
+    mkdir -p "$(dirname "$root")"
+    out=$(${config.nix.package}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#hyprcapture" |
+      while IFS= read -r candidate; do
+        if [ -x "$candidate/bin/hyprcapture-ui" ]; then
+          printf '%s\n' "$candidate"
+          break
+        fi
+      done)
+    if [ -n "$out" ] && [ "$(readlink -f "$root" 2>/dev/null)" != "$out" ]; then
       rm -f "$root"
-      out=$(${config.nix.package}/bin/nix build --no-link --print-out-paths "git+file:///etc/nixos#hyprcapture" |
-        while IFS= read -r candidate; do
-          if [ -x "$candidate/bin/hyprcapture-ui" ]; then
-            printf '%s\n' "$candidate"
-            break
-          fi
-        done)
       ${config.nix.package}/bin/nix-store --add-root "$root" --indirect --realise "$out" >/dev/null
     fi
     plugin="$root/lib/libhyprcapture.so"
