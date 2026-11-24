@@ -3,14 +3,13 @@ language 0.4
 import "../../lib/palette.plm"
 import "../../lib/palette-live.plm"
 // The live.accent the album art gives (rewritten by the bar on every track change). The media card
-// tints its analyser and scrub line with it, the way Music.qml takes
+// tints its scrub line with it, the way Music.qml takes
 // `MusicManager.accentColor` over the wallpaper palette.
 import "../../art.plm" as artacc
 import "../../lib/capsule.plm"
 import "../../lib/controls.plm"
 import "../../lib/plugins/cover/cover.plm" as Cover
 import "../../lib/plugins/meta/meta.plm" as Meta
-import "../../lib/plugins/spectrum/spectrum.plm" as spec
 import "../../lib/plugins/build/build.plm" as build
 import "../../lib/sun.plm" as sun
 // The calendar drawer marks the days the pill was taken, was missed, is still pending or has no
@@ -173,7 +172,7 @@ scene panels {
     // (`media` and `build` were already equal; the rest now are.)
     //
     // What each popup anchors with — top, right, bottom, left:
-    //   media    420 x 320   right 4 (sidePanelPopupOuterMargin), bottom 1
+    //   media    420 x 303   right 4 (sidePanelPopupOuterMargin), bottom 1
     //   network  470 x 338   left 4 (max with the capsule's x), bottom 36
     //   volume   340 x 320   no popup in the reference; aligned with media
     //   weather  300 x 196   centred across the monitor, bottom 40
@@ -293,8 +292,8 @@ scene panels {
     // settings file) and commands it sends (audio.*). `ip` and `ping` are the connection's
     // own two probes while the network drawer is open — the same commands QS's
     // Connectivity.qml runs.
-    permissions { run: "pleamar-weather", "pleamar-calendar", "pleamar-themes", "flow", "ip", "ping", "pleamar", "systemctl", "hyprctl", "notify-send", "wlsunset", "gh"
-                  services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*", "bluetooth", "bluetooth.*", "network.*", "say:notifications", "say:bar", "clock" }
+    permissions { run: "pleamar-weather", "pleamar-calendar", "pleamar-themes", "flow", "ip", "ping", "pleamar", "systemctl", "hyprctl", "notify-send", "wlsunset", "gh", "playerctl", "mpc", "ffmpeg"
+                  services: "audio", "audio.*", "files", "files.write", "media", "media.*", "session.*", "bluetooth", "bluetooth.*", "network.*", "say:notifications", "say:bar", "clock", "env" }
 
     // ----***--------------- bluetooth (the `bluetooth` drawer)
     // The adapter's state and what bluetoothd is asking come from the service. The device rows
@@ -420,9 +419,21 @@ scene panels {
     fact cal_streak = 0
 
     // The media card's position, kept by the logic (`media_apply` + `every(1000)` in panels.luau):
-    // the service reports `media.position` only when the player says something, so the progress
-    // line reads this and moves under a playing track.
+    // the service reports `media.position` only when the player says something, so the rail reads
+    // this and moves under a playing track.
     fact media.pos = 0
+    // The rail's hand (pages/media.plm): the share of the card the pointer names while the band is
+    // held, and the clock that share lands on. `panels.luau` writes both on every `seek` — a clock
+    // is arithmetic a text cannot do, and the logic has the track's length when the press arrives.
+    fact seek_frac = 0
+    text seek_time = "0:00"
+    // The whole-track spectrogram (pages/media.plm): `ffmpeg showspectrumpic` draws it once per
+    // track into this scene's own folder, and the logic puts the path — with a version suffix, so a
+    // picture written again is read again — into `spectre_path`. The declared pair is the picture's
+    // own: 1024 x 256 levels, drawn at the card's band.
+    text spectre_path = ""
+    image spectre = from spectre_path, 1024, 256
+    fact spectre_on = false
 
     // Worker state, read by the drawers.
     // The flow dashboard: whether there is traffic right now. The curve itself needs no fact — the
@@ -623,6 +634,10 @@ scene panels {
     model sinks max 8 { id: text; name: text; default: bool }
     model sources max 8 { id: text; name: text; default: bool }
     model media_rows max 8 { glyph: text; value: text }
+    // The seek rail's ruler (pages/media.plm): one record per labelled step of the track, `x` the
+    // share of the card it sits at and `label` the clock it names. The logic picks the step and
+    // writes the times, because both are arithmetic a text cannot do.
+    model ticks max 8 { x: number; label: text }
     model themes max 6 { idx: number; name: text; detail: text; selected: bool; accent_r: number; accent_g: number; accent_b: number }
 
     // ----***------------------- audio (no worker)
@@ -640,14 +655,6 @@ scene panels {
     service media { playing: bool; title: text; artist: text; album: text
                     player: text; position: number; length: number; can_seek: bool }
 
-    // The media card's analyser is one-sided, as in QS (`mirror = false`).
-    // A plugin fact is set from a rule, never loose (spectrum.check.plm), so
-    // this rides on the drawer's own opening rule.
-
-
-
-
-
     // ----***---------------------- close behaviour
     // The catcher lives on the scene's own surface while every drawer is a surface of its own, and
     // surfaces stack in declaration order — that, not this zone's position inside the scene, is
@@ -658,24 +665,16 @@ scene panels {
 
     zone box catcher { from: 0, 0; size: screen.width, screen.height
         label: "Dismiss drawer"; role: region; show: drawer != none }
-    on press catcher while close_on_outside and drawer != none { drawer = none; Spectrum.active = false }
-    on key Escape while close_on_escape and drawer != none { drawer = none; Spectrum.active = false }
+    on press catcher while close_on_outside and drawer != none { drawer = none }
+    on key Escape while close_on_escape and drawer != none { drawer = none }
 
     on open_volume { drawer = volume }
     on open_calendar { drawer = calendar }
     on open_weather { drawer = weather }
     on open_build { drawer = build }
-    // The analyser runs only while the card that draws it is up (see spectrum.plm:
-    // a plugin deciding for itself kept cava and its decay timer alive in a
-    // scene with nothing on screen). `mirror = true`: the reference's band is
-    // symmetric.
-    // A rule cannot set a plugin fact (it compiled and did nothing); the logic
-    // says it over IPC instead, the way the bar opens a drawer.
     on open_media { drawer = media }
-    // One effect per rule for a plugin fact: a rule that also moves the drawer
-    // dropped these silently, which is why the analyser never woke up.
-    on open_network { drawer = network; Spectrum.active = false }
-    on close_drawer { drawer = none; Spectrum.active = false }
+    on open_network { drawer = network }
+    on close_drawer { drawer = none }
 
 
 }

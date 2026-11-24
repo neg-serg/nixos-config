@@ -453,12 +453,162 @@ local mediaNow = {}
 local mediaPos = 0
 local mediaPlaying = false
 
+-- ---- the whole track, as a picture
+-- The card's timeline (pages/media.plm) is aurora's, moved in: the whole-track
+-- spectrogram, the played part shaded, a ruler with its times and the playhead
+-- over a 3 px rail. ffmpeg draws the picture once per track (`showspectrumpic`:
+-- log amplitude and log frequency, no legend, greys the scene tints with the
+-- cover's accent) and it is cached in this scene's own folder, because the band
+-- is the same picture every time the card opens.
+--
+-- The file behind the track is the one thing MPRIS does not always carry: a
+-- player that publishes `xesam:url` (mpv, a browser) answers directly, while
+-- MPD's bridge does not, so an MPD track is resolved with `mpc current --format
+-- %file%` under the music directory this host's MPD serves ($HOME/music,
+-- modules/servers/mpd/default.nix). A stream answers neither and the band stays
+-- empty: there is no whole to draw.
+local spectreKey = nil
+local spectreFolder = nil
+local spectreVersion = 0
+
+local function spectre_folder()
+    if spectreFolder == nil then
+        local ok, path = pcall(function() return sys.ask("files.folder") end)
+        spectreFolder = (ok and type(path) == "string") and path or ""
+    end
+    return spectreFolder
+end
+
+-- The cache name: a small polynomial hash over the path, since the files service
+-- takes names inside the folder only — no slashes, no `..`.
+local function spectre_hash(s)
+    local h = 7
+    for i = 1, #s do
+        h = (h * 131 + s:byte(i)) % 2147483647
+    end
+    return tostring(math.floor(h))
+end
+
+-- The ruler's step, as aurora's `tick_step`: the smallest of the clock's own
+-- steps whose labels still fit the band, so every label is a time a person can
+-- name without arithmetic.
+local SPECTRE_STEPS = { 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 21600 }
+
+local function spectre_ticks(duration)
+    local step = SPECTRE_STEPS[#SPECTRE_STEPS]
+    for i = 1, #SPECTRE_STEPS do
+        step = SPECTRE_STEPS[i]
+        if math.floor(duration / step) + 1 <= 8 then break end
+    end
+    local rows = {}
+    local t = 0
+    while t <= duration and #rows < 8 do
+        local second = math.floor(t + 0.5)
+        rows[#rows + 1] = {
+            x = t / duration,
+            label = string.format("%d:%02d", math.floor(second / 60), second % 60),
+        }
+        t = t + step
+    end
+    model.ticks = rows
+end
+
+-- The cache is a FIFO of 64 pictures (about 6 MB): a long listening session would otherwise leave
+-- one picture per track in the scene's folder for good. The index is the order, oldest first, so a
+-- cache hit moves its own name to the end and the file that falls out is removed.
+local SPECTRE_KEEP = 64
+local SPECTRE_INDEX = "spectra.json"
+
+local function spectre_remember(name)
+    local ok, order = pcall(function() return sys.ask("files.read", SPECTRE_INDEX, "json") end)
+    if not ok or type(order) ~= "table" then order = {} end
+    local kept = {}
+    for i = 1, #order do
+        local old = order[i]
+        if type(old) == "string" and old ~= name then kept[#kept + 1] = old end
+    end
+    kept[#kept + 1] = name
+    while #kept > SPECTRE_KEEP do
+        local drop = table.remove(kept, 1)
+        pcall(function() sys.call("files.remove", drop) end)
+    end
+    sys.call("files.write", SPECTRE_INDEX, kept)
+end
+
+local function spectre_publish(name)
+    local folder = spectre_folder()
+    if folder == "" then return end
+    -- The version suffix is what tells the renderer to read the file again: the
+    -- same name written for another track would otherwise stay an atlas entry
+    -- from the first.
+    spectreVersion = spectreVersion + 1
+    text.spectre_path = folder .. "/" .. name .. "?" .. tostring(spectreVersion)
+    fact.spectre_on = true
+    spectre_remember(name)
+end
+
+local function spectre_build(path)
+    if type(path) ~= "string" then return end
+    path = path:gsub("%s+$", "")
+    if path:sub(1, 7) == "file://" then path = path:sub(8) end
+    if path:sub(1, 1) ~= "/" then return end
+    local length = tonumber(mediaNow.length) or 0
+    local folder = spectre_folder()
+    if length <= 0 or folder == "" then return end
+    spectre_ticks(length)
+    local name = "spectre-" .. spectre_hash(path) .. ".png"
+    local ok, there = pcall(function() return sys.ask("files.exists", name) end)
+    if ok and there == true then
+        spectre_publish(name)
+        return
+    end
+    run("ffmpeg", {
+        "-v", "error", "-y", "-i", path,
+        "-lavfi", "showspectrumpic=s=1024x256:legend=0:scale=log:fscale=log:color=intensity,format=gray,curves=all='0/0 0.5/0.12 1/1'",
+        "-pix_fmt", "gray", "-frames:v", "1", folder .. "/" .. name,
+    }, function(_, code)
+        if code == 0 then spectre_publish(name) end
+    end)
+end
+
+local function spectre_resolve(m)
+    local player = tostring(m.player or "")
+    if player == "" then return end
+    if player:find("^mpd") then
+        local ok, home = pcall(function() return sys.ask("env", "HOME") end)
+        if not ok or type(home) ~= "string" or home == "" then return end
+        run("mpc", { "current", "--format", "%file%" }, function(out, code)
+            if code ~= 0 or type(out) ~= "string" then return end
+            local file = out:gsub("%s+$", "")
+            if file ~= "" then spectre_build(home .. "/music/" .. file) end
+        end)
+    else
+        run("playerctl", { "-p", player, "metadata", "xesam:url" }, function(out, code)
+            if code ~= 0 or type(out) ~= "string" then return end
+            spectre_build(out)
+        end)
+    end
+end
+
 local function media_apply(m)
     if type(m) == "table" then
         mediaNow = m
         if type(m.position) == "number" then mediaPos = math.floor(m.position) end
         mediaPlaying = m.playing == true
         fact["media.pos"] = mediaPos
+        -- A new track is a new picture. The key is the whole identity — the title alone would
+        -- keep the old picture for a re-recorded file, and the length catches a different file
+        -- under the same tags.
+        local key = table.concat({
+            tostring(m.title or ""), tostring(m.artist or ""), tostring(m.album or ""),
+            tostring(m.player or ""), tostring(m.length or 0),
+        }, "|")
+        if key ~= spectreKey then
+            spectreKey = key
+            fact.spectre_on = false
+            model.ticks = {}
+            if (tonumber(m.length) or 0) > 0 then spectre_resolve(m) end
+        end
     end
     local rows = {}
     local function add(glyph, value)
@@ -505,6 +655,10 @@ on("seek", function(frac)
     if length <= 0 then return end
     local f = math.max(0, math.min(1, frac))
     local to = length * f
+    -- The rail's head and the clock under the hand (pages/media.plm): the share is the pointer's,
+    -- and the plate above names the second that share lands on.
+    fact.seek_frac = f
+    text.seek_time = string.format("%d:%02d", math.floor(to / 60), math.floor(to) % 60)
     sys.call("media.seek", to)
     -- The card's own position jumps at once, whatever the player reports back: a player that never
     -- says `Seeked` (MPD's MPRIS is one) would otherwise leave the line where it was.
@@ -2319,12 +2473,6 @@ on("fact:drawer", function(v)
         theme_refresh()
     end
 
-    -- The analyser runs only while the card that draws it is up. A scene rule
-    -- cannot set a plugin fact — it compiles and silently does nothing — so the
-    -- logic says it over IPC, the same way the bar opens a drawer.
-    -- `--say` takes the whole command as one argument: split into words it
-    -- answered "I do not understand 'false'" and set a fact called ''.
-    run("pleamar", { "--say", "panels", "fact Spectrum.active " .. ((v == "media") and "true" or "false") })
     reconcile()
 end)
 
