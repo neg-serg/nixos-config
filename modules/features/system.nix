@@ -40,6 +40,18 @@
   options.features.system.zfsSnapshots.enable =
     mkBool "periodic sanoid snapshots for the user-data ZFS datasets" true;
 
+  # Self-contained recovery environment on the ESP (a UKI, modules/system/
+  # recovery.nix): bootable from the systemd-boot menu or the firmware boot
+  # menu, so a broken system no longer needs a Live USB.
+  options.features.system.recovery.enable =
+    mkBool "recovery UKI on the ESP, bootable from systemd-boot or the firmware menu" true;
+
+  options.features.system.recovery.pool = lib.mkOption {
+    type = lib.types.str;
+    default = "tank";
+    description = "ZFS pool the recovery-enter helper imports under /mnt.";
+  };
+
   # Daily cap on the number of system generations (each one pins its whole
   # closure in the store until nix.gc runs).
   options.features.system.generationPrune.enable =
