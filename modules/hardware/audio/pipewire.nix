@@ -59,7 +59,14 @@ in
         # drop the mkForce and pay the closure again.
         alsa.support32Bit = lib.mkForce false;
         pulse.enable = true;
-        jack.enable = true;
+        # jack.enable is deliberately NOT set: it is deprecated because it puts
+        # pipewire-jack's lib/ on the *global* LD_LIBRARY_PATH. Every JACK client
+        # in this repo starts through the pw-jack wrapper (lib/jack-app.nix,
+        # sclang-pwj, the Renoise wrapper), which scopes the substitution to the
+        # process. The global value would not survive anyway: nix-maid's
+        # environment.variables mkForces LD_LIBRARY_PATH to glib only
+        # (modules/user/nix-maid/cli/envs.nix), which is what /etc/set-environment
+        # carries today.
         # Base low-latency tuning + optional RNNoise virtual mic.
         # The clock/quantum settings deliberately live in ONE place: the user
         # drop-in files/media/pipewire/pipewire.conf.d/clock-rate.conf (via
