@@ -129,7 +129,10 @@ lib.mkIf devEnabled (
         pkgs.tree-sitter # tree-sitter-cli equivalent in nixpkgs (0.26.11)
 
         # Formatters/linters (for conform.nvim and nvim-lint)
-        pkgs.prettierd # Multi-language formatter (JS/TS/CSS/HTML)
+        (onDemand {
+          name = "prettierd";
+          attr = "prettierd";
+        }) # JS/TS/CSS/HTML/JSON/YAML formatter for conform.nvim, built on first save
         pkgs.ruff # Python formatter + linter
         pkgs.shellcheck # Shell linter
         pkgs.shfmt # Shell formatter

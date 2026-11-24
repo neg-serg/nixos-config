@@ -89,6 +89,7 @@
   vscode-js-debug = pkgs.vscode-js-debug; # JS/TS DAP adapter (modules/user/nix-maid/apps/dsh-debug.nix)
   typescript-language-server = pkgs.typescript-language-server; # TS/JS LSP (modules/user/neovim.nix)
   vscode-langservers-extracted = pkgs.vscode-langservers-extracted; # CSS/HTML/JSON/ESLint LSPs (neovim)
+  prettierd = pkgs.prettierd; # Prettier daemon for conform.nvim (modules/user/neovim.nix)
   docker-language-server = pkgs.docker-language-server; # Dockerfile LSP (modules/user/neovim.nix)
   lazygit = pkgs.lazygit; # Git TUI for Snacks.lazygit (modules/user/neovim.nix)
   scc = pkgs.scc; # parallel code counter (modules/dev/pkgs/default.nix)
