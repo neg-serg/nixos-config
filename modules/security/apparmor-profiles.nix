@@ -60,6 +60,14 @@ in
       # stack, /etc/shadow and the name service files come from
       # <abstractions/authentication> and <abstractions/nameservice>.
       /etc/ssh/** r,
+      # nixpkgs adds a build-time check that runs
+      # `sshd -G -T -f <candidate sshd.conf-final store path>`. etcFiles above
+      # resolves the *installed* /etc/ssh/sshd_config to its store target, so
+      # the profile allowed only that path and denied the config produced by
+      # the next build: every rebuild that changed the sshd config failed
+      # check-sshd-config under the enforced profile. Allow reading any
+      # generated sshd.conf-final; it is read-only data.
+      /nix/store/*-sshd.conf-final r,
       /run/sshd/ rw,
       /run/sshd/** rw,
       # Only for configs that keep the upstream PidFile (the openssh module
