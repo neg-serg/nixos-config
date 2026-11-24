@@ -51,8 +51,8 @@
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
 - 🎨 **Beautiful Hyprland** - 18 workspaces, 8 scratchpads, custom pleamar shell
-- 📦 **145 Custom Packages** - Tailored tools for productivity and performance
-- 🧩 **Modular Architecture** - 26 domain modules with feature flags, 605 Nix files
+- 📦 **147 Custom Packages** - Tailored tools for productivity and performance
+- 🧩 **Modular Architecture** - 25 domain modules with feature flags, 604 Nix files
 - 🔄 **Local Gates** - pre-commit hook (`just lint`) plus `nix flake check -L`; no CI service runs this repo
 
 ---
@@ -565,7 +565,7 @@ Quick-access overlays for common applications:
 
 ## 🛠️ Custom Packages
 
-**145 Custom Packages** exposed by the flake — selected highlights:
+**147 Custom Packages** exposed by the flake — selected highlights:
 
 ### 🎮 Game
 Rust launcher wrapper in `packages/game/`:
