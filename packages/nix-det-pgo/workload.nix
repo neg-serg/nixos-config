@@ -19,7 +19,6 @@ let
 
   apps = map attr [
     "blender"
-    "firefox"
     "llvmPackages.clang"
     "python3Packages.torch"
     "qemu"

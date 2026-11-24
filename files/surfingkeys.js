@@ -943,27 +943,6 @@ const skEngines = [
     cb: (r) => JSON.parse(r.text).res.sug.map((s) => s[0]),
   },
   {
-    alias: 'fa', name: 'firefox-addons',
-    search: 'https://addons.mozilla.org/firefox/search/?q=',
-    compl: 'https://addons.mozilla.org/api/v4/addons/autocomplete/?q=',
-    favicon: ddgIcon('addons.mozilla.org'),
-    cb: (r) => JSON.parse(r.text).results.map((s) => skUrlItem(s.name, s.url)),
-  },
-  {
-    alias: 'fe', name: 'firefox-extensions',
-    search: 'https://addons.mozilla.org/firefox/search/?q=',
-    compl: 'https://addons.mozilla.org/api/v4/addons/autocomplete/?type=extension&q=',
-    favicon: ddgIcon('addons.mozilla.org'),
-    cb: (r) => JSON.parse(r.text).results.map((s) => skUrlItem(s.name, s.url)),
-  },
-  {
-    alias: 'ft', name: 'firefox-themes',
-    search: 'https://addons.mozilla.org/firefox/search/?q=',
-    compl: 'https://addons.mozilla.org/api/v4/addons/autocomplete/?type=statictheme&q=',
-    favicon: ddgIcon('addons.mozilla.org'),
-    cb: (r) => JSON.parse(r.text).results.map((s) => skUrlItem(s.name, s.url)),
-  },
-  {
     alias: 'gI', name: 'google-reverse-image',
     search: 'https://www.google.com/searchbyimage?image_url=',
     favicon: ddgIcon('www.google.com'),

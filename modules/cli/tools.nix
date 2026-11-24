@@ -36,9 +36,8 @@ in
     # Utilities
     pkgs.dcfldd # dd with progress/hash
     pkgs.dust # better du
-    pkgs.erdtree # modern tree
     pkgs.eza # modern 'ls' replacement
-    pkgs.huebox # terminal theme editor (TUI): live colour preview, pushes the palette into the kitty/alacritty config
+    pkgs.huebox # terminal theme editor (TUI): live colour preview, pushes the palette into the terminal config
     pkgs.lazytail # TUI log viewer: live filtering, follow mode, multi-tab; also runs as an MCP server (lazytail --mcp)
     pkgs.libnotify # notify-send helper used by CLI scripts
     pkgs.moreutils # assorted unix utils (sponge, etc.)

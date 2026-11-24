@@ -18,7 +18,6 @@ let
     hasNmap
     hasCurl
     hasJq
-    hasErd
     hasDuf
     hasDust
     hasHandlr
@@ -264,7 +263,6 @@ let
     (mkAliasIf hasMpc "love" "mpc sendmessage mpdas love")
     (mkAliasIf hasMpc "unlove" "mpc sendmessage mpdas unlove")
     (mkAliasIf hasHandlr "e" "handlr open")
-    (mkAliasIf hasErd "tree" "erd")
   ];
 
   content = lib.concatStrings [

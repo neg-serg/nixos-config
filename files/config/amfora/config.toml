@@ -35,9 +35,7 @@ auto_redirect = false
 #
 # The best way to define a command is using a string array.
 # Examples:
-# http = ['firefox']
 # http = ['custom-browser', '--flag', '--option=2']
-# http = ['/path/with spaces/in it/firefox']
 #
 # Note the use of single quotes, so that backslashes will not be escaped.
 # Using just a string will also work, but it is deprecated, and will degrade if

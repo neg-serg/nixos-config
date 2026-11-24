@@ -118,7 +118,6 @@ STICKY_OTHER_WRITABLE  38;2;20;135;135;48;2;21;24;31;1 # Dir that is sticky and 
 .deb                  00;38;2;71;121;179     # Packaged apps
 .ear                  00;38;2;53;123;99      # Packaged apps
 .egg                  00;38;2;71;121;179     # Packaged apps
-.flatpak              01;38;2;71;121;179     # Packaged apps
 .gem                  00;38;2;71;121;179     # Packaged apps
 .jad                  00;38;2;71;121;179     # Packaged apps
 .jar                  00;38;2;53;123;99      # Packaged apps
@@ -132,7 +131,6 @@ STICKY_OTHER_WRITABLE  38;2;20;135;135;48;2;21;24;31;1 # Dir that is sticky and 
 .vdf                  00;38;2;71;121;179     # Packaged apps (valve data file)
 .vpk                  00;38;2;71;121;179     # Packaged apps (valve data file)
 .war                  00;38;2;53;123;99      # Packaged apps
-.xpi                  04;38;2;71;121;179     # Packaged apps # Mozilla Firefox extension
 # ┌───────────────────────────────────────────────────────────┐
 # │ Disk images                                               │
 # └───────────────────────────────────────────────────────────┘

@@ -16,17 +16,13 @@ const TITLE_LIMIT: usize = 36;
 const WORKSPACE_LIMIT: usize = 16;
 const CLASS_LIMIT: usize = 18;
 /// Nerd Font private-use glyphs, one per window class family.
-const GLYPHS: [(&str, char); 12] = [
-    ("floorp", '\u{f269}'),
+const GLYPHS: [(&str, char); 8] = [
     ("kitty", '\u{f120}'),
     ("term", '\u{f120}'),
-    ("alacritty", '\u{f120}'),
-    ("foot", '\u{f120}'),
     ("mpv", '\u{f008}'),
     ("zathura", '\u{f1c1}'),
     ("org.pwmt.zathura", '\u{f1c1}'),
     ("steam", '\u{f1b6}'),
-    ("obsidian", '\u{f03d}'),
     ("obs", '\u{f03d}'),
     ("swayimg", '\u{f03e}'),
 ];
