@@ -69,7 +69,10 @@ in
   ++ lib.optional (hishtoryPkg != null) hishtoryPkg # sync shell history w/ encryption, better than zsh-histdb
   # uutils wins the PATH name collisions: its default meta.priority (5) beats
   # coreutils-full's (10), and GNU stays in the closure. Only PATH-level lookups
-  # change — absolute store paths (activation, units, shebangs) keep GNU. Measured:
-  # `sort` ~2x and `ls -R` ~1.9x slower, `cp`/`base64` faster.
-  ++ lib.optional (config.lib.neg.enabled "cli.uutils") pkgs.uutils-coreutils-noprefix;
+  # change — absolute store paths (activation, units, shebangs) keep GNU.
+  ++ lib.optional (config.lib.neg.enabled "cli.uutils") pkgs.uutils-coreutils-noprefix
+  # `sort` is the exception: stock uu_sort computes ICU collation keys serially
+  # and loses to GNU on UTF-8 input, so the patched uu_sort takes the name via
+  # hiPrio (priority -10) — see packages/uutils-sort.
+  ++ lib.optional (config.lib.neg.enabled "cli.uutils") (lib.hiPrio pkgs.neg.uutils-sort);
 }

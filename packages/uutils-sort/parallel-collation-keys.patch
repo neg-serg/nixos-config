@@ -1,0 +1,98 @@
+diff -ruN a/src/uu/sort/src/chunks.rs b/src/uu/sort/src/chunks.rs
+--- a/src/uu/sort/src/chunks.rs	2026-11-24 23:14:26.238696219 +0300
++++ b/src/uu/sort/src/chunks.rs	2026-11-24 23:14:26.240696221 +0300
+@@ -16,8 +16,12 @@
+ };
+ 
+ use memchr::memchr_iter;
++#[cfg(not(target_os = "wasi"))]
++use rayon::prelude::*;
+ use self_cell::self_cell;
+ use uucore::error::{UResult, USimpleError, strip_errno};
++#[cfg(feature = "i18n-collator")]
++use uucore::i18n::collator::compute_sort_key_utf8;
+ use uucore::translate;
+ 
+ use crate::{GeneralBigDecimalParseResult, GlobalSettings, Line, numeric_str_cmp::NumInfo};
+@@ -313,6 +317,62 @@
+     if settings.precomputed.whole_line_numeric {
+         line_data.line_num_floats.reserve(estimated);
+     }
++    // In a UTF-8 locale every line gets an ICU collation key, and those keys
++    // dominate the cost of a plain whole-line sort. They are independent per
++    // line, so compute them in parallel blocks and concatenate the blocks in
++    // order (the sort then compares keys by byte). The serial loop below stays
++    // for sorts that also need tokens/selections/numeric data, and for small
++    // chunks where the rayon overhead is not worth it.
++    #[cfg(all(feature = "i18n-collator", not(target_os = "wasi")))]
++    if settings.precomputed.fast_locale_collation
++        && !settings.precomputed.needs_tokens
++        && settings.precomputed.selections_per_line == 0
++        && settings.precomputed.num_infos_per_line == 0
++        && settings.precomputed.floats_per_line == 0
++        && !settings.precomputed.whole_line_numeric
++    {
++        let mut bounds: Vec<Range<usize>> = Vec::with_capacity(estimated);
++        let mut line_start = 0usize;
++        for sep_idx in memchr_iter(separator, read) {
++            bounds.push(line_start..sep_idx);
++            line_start = sep_idx + 1;
++        }
++        bounds.push(line_start..read.len());
++
++        if bounds.len() >= 1024 {
++            const BLOCK_LINES: usize = 256;
++            let blocks: Vec<(Vec<u8>, Vec<usize>)> = bounds
++                .par_chunks(BLOCK_LINES)
++                .map(|block| {
++                    let mut keys = Vec::with_capacity(block.len() * 16);
++                    let mut ends = Vec::with_capacity(block.len());
++                    for range in block {
++                        compute_sort_key_utf8(&read[range.clone()], &mut keys);
++                        ends.push(keys.len());
++                    }
++                    (keys, ends)
++                })
++                .collect();
++            line_data
++                .collation_key_buffer
++                .reserve(blocks.iter().map(|(keys, _)| keys.len()).sum());
++            for (keys, ends) in blocks {
++                let base = line_data.collation_key_buffer.len();
++                line_data.collation_key_buffer.extend_from_slice(&keys);
++                line_data
++                    .collation_key_ends
++                    .extend(ends.iter().map(|end| base + end));
++            }
++            lines.extend(
++                bounds
++                    .iter()
++                    .enumerate()
++                    .map(|(index, range)| Line::bare(&read[range.clone()], index)),
++            );
++            *line_count_hint = exact_line_count.unwrap_or(bounds.len());
++            return;
++        }
++    }
+     let mut start = 0usize;
+     let mut index = 0usize;
+     for sep_idx in memchr_iter(separator, read) {
+diff -ruN a/src/uu/sort/src/sort.rs b/src/uu/sort/src/sort.rs
+--- a/src/uu/sort/src/sort.rs	2026-11-24 23:14:26.244696226 +0300
++++ b/src/uu/sort/src/sort.rs	2026-11-24 23:14:26.246696228 +0300
+@@ -668,6 +668,15 @@
+ }
+ 
+ impl<'a> Line<'a> {
++    /// A `Line` whose sorting data has already been written to `line_data`.
++    ///
++    /// Used by the parallel collation-key path in `chunks::parse_lines`, which
++    /// fills `collation_key_buffer`/`collation_key_ends` before the `Line`s
++    /// exist.
++    pub(crate) fn bare(line: &'a [u8], index: usize) -> Self {
++        Self { line, index }
++    }
++
+     /// Creates a new `Line`.
+     ///
+     /// If additional data is needed for sorting it is added to `line_data`.

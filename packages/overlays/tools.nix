@@ -66,5 +66,6 @@ in
     terrascope = callPkg (pkg "terrascope") { }; # Interactive world map for the terminal (braille; live weather/aircraft/earthquakes)
     geekbench-ai = callPkg (pkg "geekbench-ai") { }; # Geekbench AI — on-device inference benchmark (proprietary binary)
     neru = callPkg (pkg "neru") { }; # Desktop keyboard navigation — hints, grids, vim-style modes (upstream main)
+    uutils-sort = callPkg (pkg "uutils-sort") { }; # uu_sort patched to compute ICU collation keys in parallel
   };
 }
