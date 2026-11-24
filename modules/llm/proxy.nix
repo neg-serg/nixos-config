@@ -168,12 +168,17 @@ let
       ctx = 65536;
       single_tool = false;
     };
-    # The commit writer: the slot's real window, so the guard trims only
-    # requests the slot itself would reject. `commit` is its llmctl alias.
+    # The commit writers: the slots' real windows, so the guard trims only
+    # requests the slot itself would reject. `commit` is the default writer's
+    # alias (the 27B, `COMMIT_DEFAULT_MODEL`); `commit-4b` is the fast tier.
     "qwen3.8-4b".ctx = 16384;
-    "commit" = {
+    "commit-4b" = {
       target = "qwen3.8-4b";
       ctx = 16384;
+    };
+    "commit" = {
+      target = "qwen3.8-27b-abliterated";
+      ctx = 32768;
     };
   };
 

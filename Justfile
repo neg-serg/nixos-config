@@ -165,6 +165,7 @@ stats-check:
 
 # Commit the pending tree with a message written by the local model
 # (`llmctl commit`): message and commit in one step, tracked changes only.
+# The writer is the 27B by default; `--model commit-4b` is the fast 4B.
 # Several unrelated changes are split into one commit each by default (the
 # model groups whole files, never hunks); `--no-split` keeps a single commit,
 # `--all` also stages new (untracked) files, `--dry-run` prints the messages

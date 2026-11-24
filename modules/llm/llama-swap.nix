@@ -354,13 +354,15 @@ let
       --reasoning-format deepseek
   '';
 
-  # Qwen3.8-4B (Apache-2.0) — the commit-message writer. A full-parameter
-  # distillation of the 180B Qwen3.8 teacher into the Qwen3.5-4B architecture,
-  # so it carries the fleet's style at a 4B budget. Measured 2026-11-11 with
-  # `llmctl bench commit` (nine real diffs, one-shot example, one model
-  # resident): 76.9/90 against 73.9 for the 8B that used to serve this lane
-  # and 81.2 for the 27B, at ~1.3 s per message, ~127 tok/s decode and 2.8 GB
-  # of weights.
+  # Qwen3.8-4B (Apache-2.0) — the fast commit writer (opt-in). A
+  # full-parameter distillation of the 180B Qwen3.8 teacher into the
+  # Qwen3.5-4B architecture, so it carries the fleet's style at a 4B budget.
+  # Measured 2026-11-11 with `llmctl bench commit` (nine real diffs, one-shot
+  # example, one model resident): 76.9/90 against 82.6 for the 27B that writes
+  # messages by default, at ~1.3 s per message, ~127 tok/s decode and 2.8 GB
+  # of weights. What keeps it in the fleet is the card it does not take: it
+  # loads next to a running Steam session rather than evicting it, so
+  # `--model commit-4b` still commits while a game holds the GPU.
   # 16k, not the 32k the bench used: the prompt is bounded by
   # COMMIT_DIFF_CHARS (24000 characters, ~7k tokens), so 16k holds it plus the
   # reply with a 2x margin and keeps the tier cheap to swap in.
@@ -590,6 +592,7 @@ in
           aliases = [
             "qwen3.8"
             "ru"
+            "commit"
           ];
         };
         # Same weights, projector + 16k window: the `vision` tier.
@@ -620,15 +623,16 @@ in
           ];
         };
 
-        # The commit-message writer: one message costs a couple of seconds and
-        # the 60 s global TTL already covers a second commit in the same
-        # session, so the slot sets no TTL of its own — holding ~4 GiB longer
-        # would only starve the chat tiers.
+        # The fast commit writer: one message costs a couple of seconds and the
+        # 60 s global TTL already covers a second commit in the same session,
+        # so the slot sets no TTL of its own — holding ~4 GiB longer would only
+        # starve the chat tiers. The default writer is the 27B (`commit`
+        # alias); this tier answers `--model commit-4b`.
         "qwen3.8-4b" = {
           cmd = qwen38small;
           aliases = [
-            "commit"
             "commit-4b"
+            "q4b"
           ];
         };
 

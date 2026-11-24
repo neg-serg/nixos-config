@@ -110,7 +110,7 @@ CATALOG = {
         "fp": "-",
     },
     "qwen3.8-27b-abliterated": {
-        "aliases": ["qwen3.8", "ru"],
+        "aliases": ["qwen3.8", "ru", "commit"],
         "role": "dense 27B: text quality tier",
         "ctx": "32k",
         "size": "11 GB",
@@ -146,8 +146,8 @@ CATALOG = {
         "fp": "4.2/6",
     },
     "qwen3.8-4b": {
-        "aliases": ["commit", "commit-4b", "q4b"],
-        "role": "4B distill: commit messages",
+        "aliases": ["commit-4b", "q4b"],
+        "role": "4B distill: fast commit writer (opt-in)",
         "ctx": "16k",
         "size": "2.8 GB",
         "chem": "-",
@@ -1363,15 +1363,16 @@ COMMIT_CASES = [
     ("rct32-repro", "859a320f6"),
 ]
 
-# The default commit-writer set, measured 2026-11-09 and re-run 2026-11-11 (9
-# real diffs; totals of 90 under the 0-10 rubric): qwen3.8-27b 81.2,
-# qwen3.8-4b 76.9. The 27B is the quality tier and stays the pick when it is
-# already resident; the 4B is the dedicated writer (COMMIT_DEFAULT_MODEL,
-# `commit` alias). The 8B vision model (73.9) and Gemma 4 26B (70.8) left the
-# fleet on 2026-11-21, so their scores are history, not candidates.
+# The commit bench pair, measured 2026-11-09 and re-run 2026-11-24 (9 real
+# diffs; totals of 90 under the 0-10 rubric): qwen3.8-27b 82.6 (81.2-81.6 on
+# the earlier runs), qwen3.8-4b 76.9. The 27B is the default writer since
+# 2026-11-24 — quality first, at the cost of an 11 GB cold load — and the 4B
+# stays the fast opt-in tier (`--model commit-4b`). The 8B vision model (73.9)
+# and Gemma 4 26B (70.8) left the fleet on 2026-11-21, so their scores are
+# history, not candidates.
 COMMIT_MODELS = [
-    "qwen3.8-4b",
     "qwen3.8-27b-abliterated",
+    "qwen3.8-4b",
 ]
 
 COMMIT_SCOPES_IN_PROMPT = 30
@@ -2137,21 +2138,25 @@ def bench_commit(
 
 # ------------------------------------------------------------- commit command
 
-# The dedicated writer: a 4B distill of the Qwen3.8 teacher (see the
-# `qwen3.8-4b` slot). It beats the 8B vision tier this lane used to fall back
-# to and costs a third of the VRAM, so a cold fleet loads it instead of the
-# quality tier — `llmctl bench commit` is what put it here.
-COMMIT_DEFAULT_MODEL = "qwen3.8-4b"
+# The default writer is the 27B text tier, not the 4B distill (since
+# 2026-11-24): on the nine-diff bench the 27B takes 82.6/90 against 76.9 for
+# the 4B, and the gap is in the body prose, which is what a reviewer actually
+# reads. The price is an ~11 GB cold load (~12 s) and the whole 16 GB card
+# while the message is written, so a resident tier is evicted. The 4B is one
+# flag away for the cheap case (`--model commit-4b`).
+COMMIT_DEFAULT_MODEL = "qwen3.8-27b-abliterated"
 
 # `--model auto` reuses the resident tier only from this set: the same card
 # also serves OCR, GUI-agent and k8s specialists, and handing one of those a
 # diff produces a message-shaped non-answer while evicting a model that could
-# have written it. Everything else swaps in COMMIT_DEFAULT_MODEL.
+# have written it. The 4B is deliberately absent — a resident 4B is the tier
+# `llmctl commit` just moved away from, and `--model commit-4b` names it when a
+# cheap message is wanted. Everything else swaps in COMMIT_DEFAULT_MODEL.
 COMMIT_REUSE = {
-    "qwen3.8-4b",
     "qwen3.8-27b-abliterated",
     "qwen3.8-27b-bartowski",
     "qwen3.8-27b-unsloth",
+    "qwen3.8-27b-vision",
 }
 
 
@@ -2871,7 +2876,8 @@ def main():
     s.add_argument(
         "--model",
         default="auto",
-        help="модель; auto = резидент-писатель, иначе qwen3.8-4b (commit)",
+        help="модель; auto = резидент-писатель (27B), иначе "
+        "qwen3.8-27b-abliterated (commit)",
     )
     s.add_argument("--repo", help="репозиторий (по умолчанию cwd)")
     s.add_argument(

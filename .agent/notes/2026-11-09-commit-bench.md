@@ -86,18 +86,19 @@ and a caller that cannot read `reasoning_content` would wait through thoughts it
 
 ## Practical default
 
-`llmctl commit` defaults to `--model auto`: reuse a resident model when it is a writer (the 27B, the
-4B, gemma4, `next`), otherwise load `qwen3.8-4b` (the `commit` slot) — a ~1 s warm message plus a ~2
-s cold load. The 8B Qwen3-VL left this chain on 2026-11-11 and stays `vision-fast` for images. For
-the best text at ~5-6 s warm, pass `--model qwen3.8-27b-abliterated` (or `bartowski`).
+Since 2026-11-24 the writer is the 27B (see the last section): `llmctl commit` defaults to
+`--model auto`, which reuses a resident 27B (abliterated, bartowski, unsloth or the vision slot) and
+otherwise loads `qwen3.8-27b-abliterated` (the `commit` slot) — a ~5 s warm message plus a ~12 s
+cold load. The 4B is one flag away for the cheap case; before that date a cold fleet got the 4B by
+default.
 
 ```
 llmctl commit                        # git diff HEAD, message + commit
 llmctl commit --dry-run              # print the message only
 llmctl commit --all                  # include new (untracked) files
 llmctl commit --staged --verbose     # commit the index
-llmctl commit --model qwen3.8-27b-abliterated
-llmctl bench commit --models qwen3.8-4b,qwen3-vl-8b-abliterated --example
+llmctl commit --model commit-4b      # the fast 4B writer, ~1 s
+llmctl bench commit --models qwen3.8-27b-abliterated,qwen3.8-4b --example
 llmctl bench commit --models qwen3.8-4b --show --scopes alpha
 ```
 
@@ -121,3 +122,30 @@ without rerunning the models.
 - The scope is the weakest part for every small tier. `--scopes none` lets a model pick a
   path-derived scope that is sometimes better than the vocabulary guess, at the cost of more
   invented scopes.
+
+## 2026-11-24: the 27B becomes the default writer
+
+`llmctl commit` used to load the 4B for a cold fleet; the 27B was the "quality pick" only when it
+happened to be resident. The default moved to `qwen3.8-27b-abliterated` (the `commit` alias):
+message prose first, load time second. `--model auto` still reuses a resident 27B (any of the three
+quants, or the vision slot, which carries the same weights), but no longer reuses a resident 4B —
+that is the quality the default just moved away from. `--model commit-4b` names it when a cheap
+message is wanted.
+
+Re-measured on the same nine diffs (example on, scopes freq, temperature 0, one model resident):
+
+| model                   | total/90 | median wall | decode      | weights |
+| ----------------------- | -------- | ----------- | ----------- | ------- |
+| qwen3.8-27b-abliterated | **82.6** | ~5.5 s      | 35-41 t/s   | 11 GB   |
+| qwen3.8-4b              | 76.9     | 1.3 s       | 114-130 t/s | 2.8 GB  |
+| inkling-2-mini          | 77.6     | 30-100 s    | 6.7 t/s     | 11.7 GB |
+
+Inkling-2-Mini was the candidate worth measuring (26B MoE, 13/13 chemistry): it beats the 4B on the
+rubric but takes 30-100 s per message — its decode collapses to 6.7 t/s on this prompt — so commit
+messages are not its lane. The 27B's price is the cold load (~12 s) and the whole 16 GB card: it
+evicts whatever is resident, so committing next to a game stays `--model commit-4b`.
+
+The rubric moves between runs (81.2 -> 81.6 -> 82.6 for the 27B across prompt and fleet changes);
+the ordering against the 4B and Inkling did not. Under the agent file sandbox the run prints its
+totals but cannot write `~/.local/state/llmctl/*.json` (`PermissionError` after the last case); set
+`HOME` to a writable directory to keep the JSON.

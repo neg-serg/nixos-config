@@ -128,19 +128,23 @@
 #   The detection itself lives in `modules/llm/llama-swap.nix`.
 # - `qwen3.8-27b-vision` serves images as the `vision` alias; `vision-fast`
 #   points at ornith-1.5-9b, and Inkling carries its own projector.
-# - `qwen3.8-4b` (`commit`, `commit-4b` aliases) is the commit-message
-#   writer: a full-parameter distillation of the 180B Qwen3.8 teacher into
-#   the Qwen3.5-4B architecture, 2.8 GB Q4_K_M at 16k. It costs +3.1 GiB of
-#   VRAM next to a 10.9 GiB Steam desktop, so it loads beside a running
-#   session instead of evicting it. Measured 2026-11-11 on nine real diffs
-#   (`llmctl bench commit`): 76.9/90 at ~1.3 s and ~127 tok/s decode — better
-#   than the 8B that used to serve this lane (73.9) at a third of the
-#   weights, behind the 27B (81.2) that stays the quality pick when it is
-#   already resident. The slot runs `--reasoning off`: the distill thinks by
-#   default and a caller that cannot read `reasoning_content` would wait for
-#   thoughts it never sees. `llmctl commit` defaults to this tier, and
-#   `--model auto` reuses a resident model only when it is a writer — the
-#   vision, OCR, GUI-agent and k8s slots are the wrong tool even warm.
+# - The commit-message writer is `qwen3.8-27b-abliterated` (the `commit`
+#   alias, 11 GB at 32k) since 2026-11-24: `llmctl commit` now buys message
+#   prose over load time — 82.6/90 against 76.9 for the 4B on the nine-diff
+#   bench — and pays for it with an ~12 s cold load and the whole 16 GB card,
+#   so it evicts a resident tier and is the wrong choice while a game holds
+#   the GPU. `--model auto` reuses a resident model only when it is a writer
+#   (the 27B quants, including the vision slot, which carries the same
+#   weights); the vision-fast, OCR, GUI-agent and k8s slots are the wrong tool
+#   even warm.
+# - `qwen3.8-4b` (`commit-4b`, `q4b` aliases) is the fast opt-in writer: a
+#   full-parameter distillation of the 180B Qwen3.8 teacher into the
+#   Qwen3.5-4B architecture, 2.8 GB Q4_K_M at 16k, 76.9/90 at ~1.3 s and
+#   ~127 tok/s decode. It costs +3.1 GiB of VRAM next to a 10.9 GiB Steam
+#   desktop, so `--model commit-4b` still commits beside a running session
+#   instead of evicting it. The slot runs `--reasoning off`: the distill
+#   thinks by default and a caller that cannot read `reasoning_content` would
+#   wait for thoughts it never sees.
 # - Context is cheap where only part of the layers keep keys: moving 32k -> 64k
 #   cost <200 MB with q8_0 KV, and `-ub 1024` bought +29% prefill.
 #   MTP speculation was tested and rejected: slower (46 vs 65 tok/s) and it
