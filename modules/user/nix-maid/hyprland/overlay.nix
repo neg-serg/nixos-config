@@ -210,8 +210,9 @@
               # Hymission: Mission-Control-style overview — live compositor-side
               # previews of every window, workspace strip, Stage mode, trackpad
               # gestures and a search box. Upstream ships CMake + a hyprpm manifest;
-              # its v0.12.1-v0.57.0 release targets Hyprland 0.57.0 (the commit this
-              # nixpkgs pins), so plugin and compositor stay in one commit family.
+              # its v0.12.1-v0.57.0 release was cut for Hyprland 0.57.0 while this
+              # nixpkgs ships 0.57.2 — upstream's v0.13.0-v0.57.2 is the matching
+              # pin, bump it if the plugin is used again.
               # Built with the nixpkgs helper against the session's Hyprland. Two
               # artifacts: the plugin module, and the search helper the plugin
               # posix_spawns — it resolves `hymission-search-input` next to its own
@@ -219,10 +220,11 @@
               # into $out/lib beside libhymission.so instead of upstream's install()
               # libexec dir. Review note: the pinned tree has no network or shell
               # calls; the only spawn is that helper.
-              # The .so is dlopen'd by the generated hymission-setup helper at
-              # session start (see main.nix): PLUGIN_INIT registers the
-              # plugin.hymission.* keys and reloads the config, which must not
-              # happen while hyprland.lua is still being parsed.
+              # The .so is dlopen'd by the generated hymission-setup helper, which
+              # lives in PATH but is NOT called by the session hook (see main.nix):
+              # it needs the same `shouldRenderWindow` hook GloView owns, and
+              # PLUGIN_INIT reloads the config, which must not happen while
+              # hyprland.lua is still being parsed.
               hymission = prev.hyprlandPlugins.mkHyprlandPlugin {
                 pluginName = "hymission";
                 version = "0.12.1";

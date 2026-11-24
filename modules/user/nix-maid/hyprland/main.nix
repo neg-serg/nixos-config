@@ -405,17 +405,20 @@
 # - **Why the helper**: without cmake in `nativeBuildInputs` its setup hook never claims
 #   `configurePhase` and the build falls back to "no configure script, doing nothing", so the
 #   derivation lists `cmake` and `pkg-config` explicitly instead of inheriting them.
-# - **Load**: `hymission-setup` (in PATH) from the start hook, before the login/session split like
-#   hyprexpo/gloview — PLUGIN_INIT registers `plugin.hymission.*`, the Lua factories and requests a
-#   config reload, so the .so must not be dlopen'd while `hyprland.lua` is parsed. The helper polls
-#   `hyprctl plugin list` for ~5 s (the hyprdynamiccursors login-transition race) and then pushes
-#   `files/gui/hypr/hymission.lua` (settings + the three-finger vertical gesture) with `hyprctl eval`.
-# - **Binds**: `SUPER+Tab` toggles Mission Control on the current workspace scope, `SUPER+SHIFT+Tab`
-#   the same across all workspaces, `SUPER+CTRL+Tab` closes it. All three are lazy closures: the
-#   namespace does not exist while `hyprland.lua` is parsed, and `hyprctl dispatch` mangles plugin
-#   dispatchers in Lua config mode. `SUPER+Tab` used to be `hl.dsp.window.cycle_next` — Mission
-#   Control selects a window directly, so the cycle was dropped; `ALT+Tab` (workspace back) and
-#   `SUPER+grave` (hyprexpo) are untouched.
+# - **Not loaded at session start**: `hymission-setup` stays in PATH but the start hook no
+#   longer calls it. GloView and Hymission both hook `IHyprRenderer::shouldRenderWindow`,
+#   Hyprland allows one hook per function, and GloView — which loads first — owns it. The
+#   second plugin cannot attach its hooks and paints nothing; Hymission reports that as
+#   "[hymission] surface pass hook attach failed" (measured live 2026-11-24: with GloView
+#   unloaded the same build opens its overview, with GloView loaded the notification
+#   appears). The two overviews are therefore mutually exclusive — loading Hymission by
+#   hand breaks GloView instead. A manual `hymission-setup` still polls for the plugin and
+#   pushes `files/gui/hypr/hymission.lua` (settings + three-finger vertical gesture).
+# - **Binds**: not bound any more — `SUPER+Tab`, `SUPER+SHIFT+Tab` and `SUPER+CTRL+Tab` now
+#   drive GloView (toggle / all workspaces / close) from `hyprland.lua`, where the calls are
+#   lazy closures because the plugin namespace does not exist while that file is parsed and
+#   `hyprctl dispatch` mangles plugin dispatchers in Lua config mode. `SUPER+Tab` used to be
+#   window cycling (`hl.dsp.window.cycle_next`) before it opened Mission Control.
 # - **Verified at install time** (2026-08-05): the package builds against this nixpkgs' Hyprland
 #   0.56.2, `libhymission.so` exports `pluginInit`/`pluginExit`/`pluginAPIVersion`, the embedded API
 #   version string is `0.56.2`, the search helper resolves all its libraries and sits next to the
@@ -993,7 +996,6 @@ let
         "@hyprwinwrap_setup@"
         "@hyprdynamiccursors_setup@"
         "@gloview_setup@"
-        "@hymission_setup@"
         "@hyprpolkitagent@"
       ]
       [
@@ -1003,7 +1005,6 @@ let
         "${hyprwinwrapSetup}/bin/hyprwinwrap-setup"
         "${hyprdynamiccursorsSetup}/bin/hyprdynamiccursors-setup"
         "${gloviewSetup}/bin/gloview-setup"
-        "${hymissionSetup}/bin/hymission-setup"
         "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent"
       ]
       (builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua"));
@@ -1026,7 +1027,7 @@ in
           hyprwinwrapSetup # loads the plugin and (re)applies the background-window declarations
           hyprdynamiccursorsSetup # loads the plugin and (re)applies the cursor stretch settings
           gloviewSetup # loads the macOS-style overview plugin (dispatch: hl.plugin.gloview.toggle())
-          hymissionSetup # loads the Mission-Control plugin and (re)applies its settings + gestures
+          hymissionSetup # loads the Mission-Control plugin by hand; left out of the start hook — it needs GloView's shouldRenderWindow hook
           hyprcaptureSetup # loads the plugin and (re)applies the screenshot/recording settings
           hyprExpo # `hypr-expo toggle|push`: loads the overview plugin on demand
         ];

@@ -1,5 +1,8 @@
 -- hymission: overview settings and trackpad gestures. The plugin is dlopen'd by
--- the generated hymission-setup helper at session start and this file is pushed
+-- the generated hymission-setup helper, which a session does NOT start by default
+-- (main.nix: Hymission needs the `shouldRenderWindow` hook GloView owns, so only
+-- one of the two overviews can be loaded — loading this one by hand breaks
+-- GloView). This file is pushed
 -- through `hyprctl eval` right after the load — the calls cannot live in
 -- hyprland.lua itself, because PLUGIN_INIT registers plugin.hymission.* (and
 -- asks for a config reload) only once the .so is loaded.

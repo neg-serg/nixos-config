@@ -412,7 +412,7 @@ hl.bind(M1 .. "+Tab", hl.dsp.focus({ workspace = "previous" }))
 
 hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
--- SUPER+Tab is Mission Control (see the Hymission block below); window cycling
+-- SUPER+Tab is the GloView overview (see the GloView block below); window cycling
 -- lost its key there and can be re-bound here if it is missed.
 hl.bind(M4 .. "+c", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/clipboard/history"))
 hl.bind(M4 .. "+Escape", hl.dsp.window.close())
@@ -494,32 +494,25 @@ hl.bind(M4 .. "+grave", hl.dsp.exec_cmd("hypr-expo toggle"))
 -- dispatcher"), while the runtime Lua namespace (addLuaFunction in the plugin's
 -- main.cpp) resolves at press time.
 --
--- Bound but deliberately left commented while the overview is being tried out;
--- to toggle it by hand in the meantime:
---   hyprctl eval 'hl.plugin.gloview.toggle()'
--- hl.bind(M4 .. "+o", function() hl.plugin.gloview.toggle() end)
-
--- --- Mission Control (Hymission) ────────────────────────────────────────
--- hymission-setup dlopen's the plugin from the start hook (main.nix), so
--- hl.plugin.hymission is nil *here*: the binds below are lazy closures that
--- resolve the namespace at press time, the same pattern as GloView above and
--- for the same reason (a plugin cannot be loaded while this file is parsed).
--- The settings and the three-finger gesture are pushed by the helper from
--- files/gui/hypr/hymission.lua; re-run `hymission-setup` after a reload.
+-- SUPER+Tab is the overview key. It used to open Hymission, which is packaged
+-- but deliberately NOT loaded any more (main.nix): GloView and Hymission both
+-- hook `IHyprRenderer::shouldRenderWindow`, Hyprland allows one hook per
+-- function, and GloView wins because it loads first — Hymission then failed with
+-- "[hymission] surface pass hook attach failed" and drew no overview (measured
+-- 2026-11-24: with GloView unloaded the same Hymission build opens fine). Do not
+-- load both plugins; the loser cannot attach its hooks and stays mute.
 --
--- SUPER+Tab was window cycling (hl.dsp.window.cycle_next) and now opens Mission
--- Control, whose previews pick any window directly — restore the old bind on a
--- free key if the cycle is still wanted.
-local hymission = function(mode)
-  return function()
-    if hl.plugin and hl.plugin.hymission then hl.plugin.hymission.toggle(mode) end
-  end
-end
-
-hl.bind(M4 .. "+Tab", hymission(nil)) -- Mission Control, current workspace scope
-hl.bind(M4 .. "+" .. SH .. "+Tab", hymission("forceall")) -- every workspace
+-- Lazy closures for the same reason as above: the namespace only exists after
+-- gloview-setup dlopen'd the .so from the start hook. `hl.plugin.gloview.close`
+-- is the explicit dismiss (Escape also works while the overview has focus).
+hl.bind(M4 .. "+Tab", function() -- overview: windows of the current workspace
+  if hl.plugin and hl.plugin.gloview then hl.plugin.gloview.toggle() end
+end)
+hl.bind(M4 .. "+" .. SH .. "+Tab", function() -- expo: every workspace
+  if hl.plugin and hl.plugin.gloview then hl.plugin.gloview.allworkspaces() end
+end)
 hl.bind(M4 .. "+" .. C .. "+Tab", function()
-  if hl.plugin and hl.plugin.hymission then hl.plugin.hymission.close() end
+  if hl.plugin and hl.plugin.gloview then hl.plugin.gloview.close() end
 end)
 
 -- The overview is driven from its own submap: on open the plugin enters `hyprexpo`
@@ -1582,18 +1575,19 @@ hl.on("hyprland.start", function()
   -- own unit loads and configures it after the login layer is gone, and the login
   -- screen must not be glazed. Re-runnable in a live session:
   -- `hy3-setup` / `hyprexpo-setup` /
-  -- `hyprwindowshade-setup` / `hyprwinwrap-setup` / `gloview-setup` /
-  -- `hymission-setup` (also in PATH).
+  -- `hyprwindowshade-setup` / `hyprwinwrap-setup` / `gloview-setup`
+  -- (also in PATH). `hymission-setup` is deliberately absent: Hymission and
+  -- GloView need the same `shouldRenderWindow` hook, and the one loaded second
+  -- cannot attach its hooks (see the GloView bind block above).
   hl.exec_cmd("@hy3_setup@")
   hl.exec_cmd("@hyprexpo_setup@")
   hl.exec_cmd("@hyprwindowshade_setup@")
   hl.exec_cmd("@hyprwinwrap_setup@")
   hl.exec_cmd("@gloview_setup@")
-  hl.exec_cmd("@hymission_setup@")
 
   -- 0.57 port status: only hy3 is built (overlay.nix `ported`). The other
-  -- setup helpers above are stubs, so the hyprexpo/hymission/... binds are
-  -- no-ops until those plugins are ported.
+  -- setup helpers above are stubs, so the hyprexpo/... binds are no-ops until
+  -- those plugins are ported.
 
   -- The layout the shell's scenes start with, remembered for the reload handler
   -- below: pleamar reads `screen.width` once per scene, so a scale change applied
