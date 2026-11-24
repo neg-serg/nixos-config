@@ -32,7 +32,14 @@
         # font stays small — "keep" restores the old firmware-chosen mode.
         consoleMode = "max";
       };
-      timeout = lib.mkDefault 5; # seconds on the systemd-boot menu before autoboot
+      # 0 = systemd-boot's TIMEOUT_MENU_HIDDEN: no menu, immediate default boot.
+      # The menu is not gone — systemd-boot polls the console for ~100 ms at
+      # startup, so a key held from firmware POST opens it (a digit key boots
+      # that entry directly); "menu-disabled" would be the variant that locks
+      # the menu out entirely. Firmware POST is ~11 s on this board, so the
+      # hand-off window is easy to hit; recovery stays reachable from the
+      # firmware menu without systemd-boot at all.
+      timeout = lib.mkDefault 0; # 0 hides the menu; a keypress at launch shows it
     };
     # Boot-specific options only; no activation scripts touching /boot
     initrd = lib.mkMerge [
