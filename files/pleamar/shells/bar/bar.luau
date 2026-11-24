@@ -912,6 +912,10 @@ end
 -- The drawer is asked for only when nothing is open. The scene answers `none`
 -- from the load and nothing at all while it is not running (on demand), so both
 -- cases take the `open_drawer` path; a scene with another drawer up keeps it.
+-- The plate is for a player the reader is not already looking at. When the aurora
+-- window is on screen (`special:aurora` shown) or holds the keyboard, the album
+-- that changed is already in front of them and the card would cover it, so the
+-- compositor is asked first and the drawer is left alone (the owner's ask).
 -- The last cover is kept by a closure, not by a chunk-level local: the logic is
 -- at LuaJIT's 200-local ceiling for a chunk's main function, and this watcher is
 -- not allowed to push it over.
@@ -922,12 +926,33 @@ sys.watch("media", (function()
         local changed = lastCover ~= nil and m.art ~= lastCover
         lastCover = m.art
         if not changed or m.playing ~= true then return end
-        run("dash", {
-            "-c",
-            "cur=$(\'" .. PLEAMAR .. "\' --say panels \'get drawer\' 2>/dev/null || true); "
-                .. "if [ -z \"$cur\" ] || [ \"$cur\" = none ]; then exit 0; fi; exit 1",
-        }, function(_, code)
-            if code == 0 then open_drawer("media") end
+        -- The drawer is asked for only when nothing is open (the `dash` below); the
+        -- compositor question comes first because it needs no `panels` scene and is
+        -- the one that keeps the plate off a player already on screen.
+        local function open_card()
+            run("dash", {
+                "-c",
+                "cur=$(\'" .. PLEAMAR .. "\' --say panels \'get drawer\' 2>/dev/null || true); "
+                    .. "if [ -z \"$cur\" ] || [ \"$cur\" = none ]; then exit 0; fi; exit 1",
+            }, function(_, code)
+                if code == 0 then open_drawer("media") end
+            end)
+        end
+        run("hyprctl", { "-j", "monitors" }, function(out, code)
+            local ok, monitors = false, nil
+            if code == 0 then ok, monitors = pcall(json.decode, out) end
+            if ok and type(monitors) == "table" then
+                for _, mon in ipairs(monitors) do
+                    local special = mon.specialWorkspace
+                    if type(special) == "table" and special.name == "special:aurora" then return end
+                end
+            end
+            run("hyprctl", { "-j", "activewindow" }, function(win, win_code)
+                local seen, active = false, nil
+                if win_code == 0 then seen, active = pcall(json.decode, win) end
+                if seen and type(active) == "table" and active.class == "player" then return end
+                open_card()
+            end)
         end)
     end
 end)())
