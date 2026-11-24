@@ -22,11 +22,6 @@
     # version strings — one warning per entry per boot.
     "^/boot/loader/entries/.*is[[:space:]]not[[:space:]]a[[:space:]]valid[[:space:]]version"
   ];
-  systemd.services.accounts-daemon.serviceConfig.LogFilterPatterns = [
-    # systemd-homed is not enabled; accounts-daemon still probes the userdb
-    # endpoint and logs one NameHasNoOwner warning per query round.
-    "^couldn't[[:space:]]list[[:space:]]homed[[:space:]]users"
-  ];
   systemd.services.systemd-tmpfiles-setup.serviceConfig.LogFilterPatterns = [
     # /zero is owned by neg while the /zero/ai and /zero/sync ZFS datasets are
     # root-owned; tmpfiles flags the ownership transition on every boot. The

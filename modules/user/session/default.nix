@@ -13,7 +13,6 @@
   };
 
   services = {
-    accounts-daemon.enable = true;
     dbus.implementation = "broker";
     libinput.enable = true;
     ratbagd.enable = true;
