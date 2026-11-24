@@ -328,7 +328,8 @@ in
   # ── Text gates from `just lint`, promoted into the flake ────────────
   # Same scripts the lint recipe runs; wired here so `nix flake check`
   # (the CI entry point) covers them too instead of relying on just.
-  # Both cd into the root they are given and only need grep.
+  # Each cd into the root they are given and only need grep (the palette
+  # gate also runs the dircolors file through the real parsers).
 
   "package-annotations-guard" = mkScriptCheck "package-annotations" [ pkgs.gnugrep ] ''
     mkdir -p "$TMPDIR/repo"
@@ -340,6 +341,22 @@ in
     mkdir -p "$TMPDIR/repo/files/gui"
     cp -r ${../files/gui/hypr} "$TMPDIR/repo/files/gui/hypr"
     bash ${../scripts/dev}/check-hyprland-vars.sh "$TMPDIR/repo"
+  '';
+
+  # The shell palette gate feeds the dircolors file to the real parsers as well
+  # as comparing the two colour tables. A line they reject — a bare `bashrc` or
+  # `@.service` — leaves LS_COLORS empty in every fresh shell: uutils aborts the
+  # whole file, GNU silently drops the line, and the guard's own awk parser
+  # skipped both, so nothing failed until a new terminal window came up
+  # colourless. Both binaries are passed in *and required*, so the gate cannot
+  # degrade to a no-op if an attribute moves.
+  "shell-palette" = mkScriptCheck "shell-palette" [ pkgs.gnugrep pkgs.gawk ] ''
+    mkdir -p "$TMPDIR/repo/files/shell/dircolors"
+    cp ${../files/shell/dircolors/dircolors} "$TMPDIR/repo/files/shell/dircolors/dircolors"
+    cp -r ${../files/shell/zsh-native-syntax} "$TMPDIR/repo/files/shell/zsh-native-syntax"
+    DIRCOLORS_PARSERS="${pkgs.coreutils}/bin/dircolors:${pkgs.uutils-coreutils-noprefix}/bin/dircolors" \
+      DIRCOLORS_PARSERS_REQUIRED=1 \
+      bash ${../scripts/dev}/check-shell-palette.sh "$TMPDIR/repo"
   '';
 
   # ── NixOS test config checks ───────────────────────────────────────
