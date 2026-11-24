@@ -1,5 +1,10 @@
 # Repository development helpers for NixOS workflows
 set shell := ["bash", "-cu"]
+# Shebang recipes are written to a temp dir first. The default ($XDG_RUNTIME_DIR/just)
+# is not writable from a sandboxed runner (dsh workspace-write), where it fails with
+# "Permission denied ... /run/user/<uid>/just/just-XXXX" and takes `just lint` —
+# and with it the git hooks — down with it. /tmp is writable in and out of a sandbox.
+set tempdir := "/tmp"
 
 # Repository root for the repo-wide recipes. Every recipe run evaluates this
 # backtick, so it falls back to the invocation dir when not in a git repo.
