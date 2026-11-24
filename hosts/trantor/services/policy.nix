@@ -275,18 +275,6 @@ lib.mkMerge [
         type = "sftp-ssh";
         port = 22;
       }
-      {
-        name = "airplay";
-        type = "airplay";
-        port = 7000;
-        txtRecords = [ "device=shairport-sync" ];
-      }
-      {
-        name = "raop";
-        type = "raop";
-        port = 5000;
-        txtRecords = [ "device=shairport-sync" ];
-      }
     ];
 
     services = lib.mkMerge [
@@ -356,15 +344,6 @@ lib.mkMerge [
         power-profiles-daemon.enable = true;
         # Do not expose AdGuard Home Prometheus metrics on this host
         adguardhome.settings.prometheus.enabled = false;
-
-        "shairport-sync" = {
-          enable = true;
-          openFirewall = true;
-          settings.general = {
-            name = "Trantor AirPlay";
-            output_backend = "pipewire";
-          };
-        };
 
         smartd.enable = false;
 

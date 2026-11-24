@@ -31,11 +31,9 @@ let
     # Service users
     "adguardhome"
     "avahi"
-    "flatpak"
     "fwupd-refresh"
     "greeter"
     "messagebus"
-    "shairport"
     "sing-box"
     "vnstatd"
   ];
