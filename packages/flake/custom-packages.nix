@@ -25,7 +25,6 @@
   irori = pkgs.irori; # game launcher (on-demand root, modules/user/games/irori.nix)
   neru = pkgs.neg.neru; # Desktop keyboard navigation: hints, grids, vim-style modes (upstream main)
 
-  brrtfetch = pkgs.neg.brrtfetch;
   tint = pkgs.neg.tint; # colouriser for CLI output (scanners + per-tool rulesets)
   llm-proxy = pkgs.neg.llm-proxy; # OpenAI-compatible guard in front of llama-swap (context budget + tool protocol)
 

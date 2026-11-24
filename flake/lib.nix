@@ -66,9 +66,6 @@ let
           in
           {
             neg = (prev.neg or { }) // {
-              # neg-pkgs still ships brrtfetch without -trimpath, so the Go
-              # toolchain stays in the runtime closure; re-assert our copy.
-              brrtfetch = _final.callPackage ../packages/brrtfetch { };
               pretty_printer = prettyPrinter;
               "pretty-printer" = prettyPrinter;
             };

@@ -41,7 +41,6 @@ in
   # `(prev.neg or {})` accumulation here (prev is the unmodified base).
   neg = rec {
     albumdetails = callPkg (pkg "albumdetails") { }; # Music album metadata CLI (used by music-rename script)
-    brrtfetch = callPkg (pkg "brrtfetch") { }; # Animated ASCII art GIF renderer alongside sysinfo output
     dnsglobe = callPkg (pkg "dnsglobe") { }; # Global DNS propagation checker TUI — record answers on a world map
     duf = callPkg (pkg "duf") { }; # duf fork with --style plain, --no-header, --no-bars flags
     hwctl = callPkg (pkg "hwctl") { }; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
