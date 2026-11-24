@@ -59,9 +59,11 @@ in
         # the 239.99 Hz mode is 240 and kmscon matches that integer exactly.
         mode = "[DP-2]3840x2160@240";
 
-        # Family name of the Iosevka nerd build from modules/fonts. The module
-        # asserts fontconfig is enabled whenever font-name is set.
-        font-name = "Iosevka";
+        # The kitty face is Iosevka Medium; the nerd build exposes that family
+        # too (fc-match "Iosevka Medium" -> Iosevka-Medium.ttf), so the console
+        # matches the terminal's weight. The module asserts fontconfig is
+        # enabled whenever font-name is set.
+        font-name = "Iosevka Medium";
         # 32 px matches the kitty setup (Iosevka at 12 pt on the scale-2 4K
         # monitor). The auto size was 54 px at 3840x2160 and looked too large;
         # Ctrl+=/- still zoom at runtime.
