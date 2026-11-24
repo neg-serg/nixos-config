@@ -18,12 +18,23 @@
 #   3. no 256-colour index survives (38;5;N / 48;5;N in dircolors, a bare
 #      number as a colour in the INI): an index is whatever the terminal says
 #      it is, which is exactly what the 24-bit rewrite removed.
+#   4. the dircolors file still parses in the real implementations. Only
+#      `*pattern`, `.ext` and keywords (TERM/COLOR/EIGHTBIT/OPTIONS, the type
+#      names) are valid first tokens; a bare `bashrc` or `@.service` is not.
+#      GNU's parser drops such a line silently, but uutils' — the `dircolors`
+#      on PATH since coreutils moved to uutils — aborts the whole file with
+#      "unrecognized keyword" and prints nothing, so `eval $(dircolors …)`
+#      leaves LS_COLORS empty and every fresh shell (a new kitty window) falls
+#      back to the built-in colours. This is the failure this guard missed when
+#      it re-implemented the parser in awk.
 #
 # The palette is neg.nvim's (lua/neg/palette.lua) plus the two CIELAB-derived
 # stops and the two 25% tints the theme needs. Extend the list together with
 # the theme, so the guard records the decision.
 #
 # Usage: check-shell-palette.sh [repo-root]
+#   DIRCOLORS_PARSERS  colon-separated parsers to run (default: `dircolors`
+#                      from PATH). The flake check passes both GNU and uutils.
 set -euo pipefail
 export LC_ALL=C
 
@@ -146,6 +157,43 @@ else
   echo "Shell palette: colour indexes left in $THEME" >&2
   fail=1
 fi
+
+# 4. the file still parses in the real dircolors implementations
+#    (DIRCOLORS_PARSERS, colon-separated; default: `dircolors` from PATH). A
+#    parser that is absent is a skip locally and a failure when the caller says
+#    the parser is required (the flake check passes both and requires them), so
+#    the gate cannot quietly degrade to nothing.
+IFS=: read -r -a parsers <<< "${DIRCOLORS_PARSERS:-dircolors}"
+for parser in "${parsers[@]}"; do
+  bin="$(command -v "$parser" 2> /dev/null || true)"
+  if [ -z "$bin" ]; then
+    if [ "${DIRCOLORS_PARSERS_REQUIRED:-0}" = 1 ]; then
+      echo "Shell palette: required dircolors parser missing: $parser" >&2
+      fail=1
+    else
+      echo "Shell palette: dircolors parser not found, skipping: $parser"
+    fi
+    continue
+  fi
+  if ! TERM=xterm-kitty "$bin" "$DIRCOLORS" > "$tmp/parsed" 2> "$tmp/parsed.err"; then
+    echo "Shell palette: $bin rejects $DIRCOLORS:" >&2
+    sed 's/^/  /' "$tmp/parsed.err" >&2
+    # uutils names the offending token but not the line, so point at the lines
+    # whose first token is neither a pattern (./*) nor a keyword (ALL_CAPS).
+    awk '
+      /^[[:space:]]*(#|$)/ { next }
+      $1 ~ /^[*.]/ || $1 ~ /^[A-Z][A-Z_]*$/ { next }
+      n < 10 { printf "  %d: %s\n", FNR, $0; n++ }
+    ' "$DIRCOLORS" >&2
+    fail=1
+    continue
+  fi
+  value="$(sed -n "s/^LS_COLORS='\(.*\)';$/\1/p" "$tmp/parsed")"
+  if [ "${#value}" -lt 100 ]; then
+    echo "Shell palette: $bin parsed $DIRCOLORS into an empty LS_COLORS" >&2
+    fail=1
+  fi
+done
 
 if [ "$fail" -ne 0 ]; then
   echo "Shell palette guard: FAILED" >&2
