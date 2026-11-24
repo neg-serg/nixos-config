@@ -123,7 +123,6 @@ let
     # pkgs.ocenaudio # lightweight waveform editor — commented: fails to build
     pkgs.dexed # DX7-compatible FM synth
     surgeXt # open-source wavetable/VA hybrid synth (VST3/CLAP/LV2) — MPE-capable, built on first use
-    pkgs.odyssey # open-source ARP Odyssey-style VA synth (VST3/LV2)
     renoise # Renoise tracker + Surge XT on LV2/VST3/CLAP paths, both built on first use
     (pkgs.makeDesktopItem {
       name = "renoise";
