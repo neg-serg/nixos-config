@@ -1,6 +1,6 @@
 diff -ruN a/src/uu/sort/src/chunks.rs b/src/uu/sort/src/chunks.rs
---- a/src/uu/sort/src/chunks.rs	2026-11-24 23:14:26.238696219 +0300
-+++ b/src/uu/sort/src/chunks.rs	2026-11-24 23:14:26.240696221 +0300
+--- a/src/uu/sort/src/chunks.rs	2026-11-24 23:30:23.925484375 +0300
++++ b/src/uu/sort/src/chunks.rs	2026-11-24 23:30:23.926484369 +0300
 @@ -16,8 +16,12 @@
  };
  
@@ -14,7 +14,7 @@ diff -ruN a/src/uu/sort/src/chunks.rs b/src/uu/sort/src/chunks.rs
  use uucore::translate;
  
  use crate::{GeneralBigDecimalParseResult, GlobalSettings, Line, numeric_str_cmp::NumInfo};
-@@ -313,6 +317,62 @@
+@@ -313,6 +317,88 @@
      if settings.precomputed.whole_line_numeric {
          line_data.line_num_floats.reserve(estimated);
      }
@@ -32,45 +32,71 @@ diff -ruN a/src/uu/sort/src/chunks.rs b/src/uu/sort/src/chunks.rs
 +        && settings.precomputed.floats_per_line == 0
 +        && !settings.precomputed.whole_line_numeric
 +    {
-+        let mut bounds: Vec<Range<usize>> = Vec::with_capacity(estimated);
-+        let mut line_start = 0usize;
-+        for sep_idx in memchr_iter(separator, read) {
-+            bounds.push(line_start..sep_idx);
-+            line_start = sep_idx + 1;
-+        }
-+        bounds.push(line_start..read.len());
++        // Line ranges are produced window by window instead of materialising a
++        // Vec<Range> for the whole chunk: at 10M lines that vector alone is
++        // ~160 MiB, which is exactly the overhead this path must not add.
++        let line_count = memchr_iter(separator, read).count() + 1;
 +
-+        if bounds.len() >= 1024 {
++        if line_count >= 1024 {
 +            const BLOCK_LINES: usize = 256;
-+            let blocks: Vec<(Vec<u8>, Vec<usize>)> = bounds
-+                .par_chunks(BLOCK_LINES)
-+                .map(|block| {
-+                    let mut keys = Vec::with_capacity(block.len() * 16);
-+                    let mut ends = Vec::with_capacity(block.len());
-+                    for range in block {
-+                        compute_sort_key_utf8(&read[range.clone()], &mut keys);
-+                        ends.push(keys.len());
++            // 256 blocks (64k lines) per window: large enough that the rayon
++            // scheduling is noise, small enough that the window's keys are a few
++            // MiB instead of the whole chunk's.
++            const WINDOW_LINES: usize = BLOCK_LINES * 256;
++            let mut index = 0usize;
++            let mut pos = 0usize;
++            while pos < read.len() {
++                let mut ranges: Vec<Range<usize>> = Vec::with_capacity(WINDOW_LINES);
++                let mut line_start = pos;
++                let mut cursor = pos;
++                for sep_idx in memchr_iter(separator, &read[pos..]) {
++                    ranges.push(line_start..pos + sep_idx);
++                    line_start = pos + sep_idx + 1;
++                    cursor = line_start;
++                    if ranges.len() == WINDOW_LINES {
++                        break;
 +                    }
-+                    (keys, ends)
-+                })
-+                .collect();
-+            line_data
-+                .collation_key_buffer
-+                .reserve(blocks.iter().map(|(keys, _)| keys.len()).sum());
-+            for (keys, ends) in blocks {
-+                let base = line_data.collation_key_buffer.len();
-+                line_data.collation_key_buffer.extend_from_slice(&keys);
-+                line_data
-+                    .collation_key_ends
-+                    .extend(ends.iter().map(|end| base + end));
++                }
++                if ranges.len() < WINDOW_LINES {
++                    // The separator iterator ran out: the rest is the last,
++                    // unterminated line of the chunk.
++                    ranges.push(line_start..read.len());
++                    cursor = read.len();
++                }
++                pos = cursor;
++
++                let blocks: Vec<(Vec<u8>, Vec<usize>)> = ranges
++                    .chunks(BLOCK_LINES)
++                    .collect::<Vec<_>>()
++                    .par_iter()
++                    .map(|block| {
++                        let mut keys = Vec::with_capacity(block.len() * 16);
++                        let mut ends = Vec::with_capacity(block.len());
++                        for range in block.iter() {
++                            compute_sort_key_utf8(&read[range.clone()], &mut keys);
++                            ends.push(keys.len());
++                        }
++                        (keys, ends)
++                    })
++                    .collect();
++                for (keys, ends) in blocks {
++                    let base = line_data.collation_key_buffer.len();
++                    line_data.collation_key_buffer.extend_from_slice(&keys);
++                    line_data
++                        .collation_key_ends
++                        .extend(ends.iter().map(|end| base + end));
++                }
++                lines.extend(
++                    ranges
++                        .iter()
++                        .map(|range| {
++                            let line = Line::bare(&read[range.clone()], index);
++                            index += 1;
++                            line
++                        }),
++                );
 +            }
-+            lines.extend(
-+                bounds
-+                    .iter()
-+                    .enumerate()
-+                    .map(|(index, range)| Line::bare(&read[range.clone()], index)),
-+            );
-+            *line_count_hint = exact_line_count.unwrap_or(bounds.len());
++            *line_count_hint = exact_line_count.unwrap_or(line_count);
 +            return;
 +        }
 +    }
@@ -78,8 +104,8 @@ diff -ruN a/src/uu/sort/src/chunks.rs b/src/uu/sort/src/chunks.rs
      let mut index = 0usize;
      for sep_idx in memchr_iter(separator, read) {
 diff -ruN a/src/uu/sort/src/sort.rs b/src/uu/sort/src/sort.rs
---- a/src/uu/sort/src/sort.rs	2026-11-24 23:14:26.244696226 +0300
-+++ b/src/uu/sort/src/sort.rs	2026-11-24 23:14:26.246696228 +0300
+--- a/src/uu/sort/src/sort.rs	2026-11-24 23:30:23.928484358 +0300
++++ b/src/uu/sort/src/sort.rs	2026-11-24 23:30:23.929484352 +0300
 @@ -668,6 +668,15 @@
  }
  
