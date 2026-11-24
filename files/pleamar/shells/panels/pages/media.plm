@@ -7,11 +7,15 @@
 // keeps the title"). There is no close button either: the reference closes on
 // Escape and on an outside press, and the drawer family does both.
 //
-// Layout, from the reference's own tokens — `musicPopupWidth` 420
-// (Settings.json), `sidePanel.albumArtSize` 200 (Theme/sidePanel.jsonc), padding
-// 12 — and the card is no taller than what it holds: 12 + 200 of cover, 12 of
-// air, the 76 of timeline (62 of picture over a 14 ruler), and the 3 px seek
-// rail flush on the bottom edge (303).
+// Width: the reference's `musicPopupWidth` 420 (Settings.json) is the interior
+// design — the cover at 12 with its 200, the rows at 216 — but the plate itself
+// runs from the left edge of the media capsule that opened it to 5 px from the
+// screen's right edge (`card.w` 571 at ui 1). Ending on the capsule's *right*
+// edge left the plate floating in the middle of the bar's right cluster, with a
+// 131 px band of wallpaper to its right.
+// Height: no taller than what it holds — 12 + 200 of cover, 12 of air, the 76
+// of timeline (62 of picture over a 14 ruler), and the 3 px seek rail flush on
+// the bottom edge (303).
 //
 //     +--------------------------------------------------+
 //     | [cover 200]  rows: icon + value, 18 apart        |
@@ -44,8 +48,11 @@
 // the drawer is asked for.
 
 part NowPlaying {
+    // The plate's width, the one number both the component and its placement
+    // read: the media capsule's left edge to 5 px from the screen's right edge.
+    let card.w = 571
     component NowPlayingDrawer(scale: number = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom) {
-        size: 420 * scale, 303 * scale
+        size: card.w * scale, 303 * scale
 
         // The identity block's top: its middle sits on the cover's own
         // (12 + 200 / 2), so the rows are centred on the art however many the
@@ -63,7 +70,7 @@ part NowPlaying {
                 body {
                     color: live.coal
                     opacity: 75%
-                        box { from: 0, 0; size: 420, 303; corner: 0; opacity: 0% }
+                        box { from: 0, 0; size: card.w, 303; corner: 0; opacity: 0% }
                 }
 
                 // ----***--------------------- album art
@@ -103,31 +110,31 @@ part NowPlaying {
                     // The picture is `ffmpeg`'s own grey levels, not `tint:`ed: an image tint in
                     // this language paints the picture one flat colour, so the hue comes from a
                     // wash over it instead, and the levels stay readable through it.
-                    image spectre { at: 0, 224; size: 420, 62; fit: fill }
-                    box { from: 0, 224; size: 420, 62; color: cover_accent; opacity: 28% }
+                    image spectre { at: 0, 224; size: card.w, 62; fit: fill }
+                    box { from: 0, 224; size: card.w, 62; color: cover_accent; opacity: 28% }
                     // The played part: the ground's own colour over the picture at a weight that
                     // leaves its structure visible but reads as "behind us" at a glance.
-                    box { from: 0, 224; size: 420 * share, 62; color: live.coal; opacity: 70% }
+                    box { from: 0, 224; size: card.w * share, 62; color: live.coal; opacity: 70% }
                     // A grid line through the picture at every labelled step: the ruler says when
                     // a mark is, the grid puts that mark next to the music it names.
                     for t in ticks {
-                        box { from: 420 * t.x, 224; size: 1, 62; color: live.ink; opacity: 12% }
+                        box { from: card.w * t.x, 224; size: 1, 62; color: live.ink; opacity: 12% }
                     }
                     // The playhead: the frame's ink, not the accent — the picture is painted in
                     // the accent, and an accent line on a loud band is invisible.
-                    box { from: clamp(420 * share - 1, 0, 418), 224; size: 2, 62
+                    box { from: clamp(card.w * share - 1, 0, card.w - 2), 224; size: 2, 62
                         color: live.ink; opacity: 55% }
                 }
                 // The ruler: a hairline whose played part is the accent, the tick under each label,
                 // and the times. Drawn with or without the picture, so the first frame of a track
                 // already reads as a timeline.
-                box { from: 0, 286; size: 420, 1; color: live.ink; opacity: 22%
+                box { from: 0, 286; size: card.w, 1; color: live.ink; opacity: 22%
                       show: media.length > 0 }
-                box { from: 0, 286; size: 420 * share, 1; color: cover_accent
+                box { from: 0, 286; size: card.w * share, 1; color: cover_accent
                       show: media.length > 0 }
                 for t in ticks {
-                    box { from: 420 * t.x, 286; size: 1, 4; color: live.ink; opacity: 55% }
-                    text t.label { at: clamp(420 * t.x, 26, 394), 290; anchor: center top
+                    box { from: card.w * t.x, 286; size: 1, 4; color: live.ink; opacity: 55% }
+                    text t.label { at: clamp(card.w * t.x, 26, card.w - 26), 290; anchor: center top
                         family: "Iosevka"; size: 8; color: live.ink.dim }
                 }
 
@@ -137,24 +144,24 @@ part NowPlaying {
                 // above it carrying that column's clock) on the card's own bottom edge.
                 // The fill keeps a hairline's width even at the track's very start, the way
                 // aurora's `max(track * share, progress_h)` does: a track a second in has begun.
-                box { from: 0, 300; size: 420, 3; corner: 1.5; color: live.ink; opacity: 22%
+                box { from: 0, 300; size: card.w, 3; corner: 1.5; color: live.ink; opacity: 22%
                       show: media.length > 0 }
-                box { from: 0, 300; size: max(420 * share, 3), 3; corner: 1.5; color: cover_accent
+                box { from: 0, 300; size: max(card.w * share, 3), 3; corner: 1.5; color: cover_accent
                       show: media.length > 0 }
                 // The head marks the hand, not the playhead: the rail already says what is playing,
                 // and a rule can read `pointer.x` only while the mouse is doing something, so a
                 // hover head would freeze where it last was. It waits for a press — which is also
                 // the only moment the plate above it has a second to show.
-                box { from: clamp(420 * seek_frac - 3, 0, 414), 296; size: 6, 7; corner: 3
+                box { from: clamp(card.w * seek_frac - 3, 0, card.w - 6), 296; size: 6, 7; corner: 3
                       color: cover_accent
                       show: media.can_seek and media.length > 0 and scrub.pressed > 0.05 }
                 // The hand's column through the picture, and the clock it names. `panels.luau`
                 // writes both values — the hand's share and the second — because a clock is
                 // arithmetic a text cannot do, and it has the length when the press arrives.
                 group { show: media.can_seek and media.length > 0 and scrub.pressed > 0.05
-                    box { from: clamp(420 * seek_frac - 0.5, 0, 419), 224; size: 1, 62
+                    box { from: clamp(card.w * seek_frac - 0.5, 0, card.w - 1), 224; size: 1, 62
                           color: live.ink; opacity: 90% }
-                    let tip.x = clamp(420 * seek_frac - 24, 4, 372)
+                    let tip.x = clamp(card.w * seek_frac - 24, 4, card.w - 48)
                     body { color: live.coal; opacity: 96%; border: 1, cover_accent
                         box { from: tip.x, 260; size: 48, 18; corner: 4; opacity: 0% }
                     }
@@ -164,15 +171,15 @@ part NowPlaying {
 
                 // ----***----------------- the seek band
                 // The rail is the hit box: the hand lands anywhere on the card's last 22 px, and
-                // its x over the card's 420 is the share. A press seeks at once and `drag` keeps
+                // its x over `card.w` is the share. A press seeks at once and `drag` keeps
                 // seeking while the button is held, as `Music.qml`'s `seekFromX` does. The cursor
                 // already says `default` when the player cannot seek, and the press is gated too,
                 // so the band does not do what the pointer promised it would not.
-                zone box scrub { from: 0, 281; size: 420, 22; cursor: pick(media.can_seek, not_allowed, pointer)
+                zone box scrub { from: 0, 281; size: card.w, 22; cursor: pick(media.can_seek, not_allowed, pointer)
                                  label: pick(media.can_seek, "Seek (this player cannot seek)", "Seek")
                                  role: slider; value: "{media.pos, 0} s" }
-                on press scrub while media.can_seek { emit seek(clamp(local.x / 420, 0, 1)) }
-                on drag scrub { emit seek(clamp(local.x / 420, 0, 1)) }
+                on press scrub while media.can_seek { emit seek(clamp(local.x / card.w, 0, 1)) }
+                on drag scrub { emit seek(clamp(local.x / card.w, 0, 1)) }
 
                 // ----***---------------- nothing playing
                 group { show: media_rows.total == 0
@@ -186,9 +193,12 @@ part NowPlaying {
     }
 
     // The surface is the monitor (see `panels.plm`), so the card is placed against
-    // its screen corner here: the `let` below is the component's own fit, times the user's zoom.
+    // the screen's right edge here — 5 px from it, the same margin volume/theme
+    // keep, and wide enough (`card.w`) that the left edge lands on the media
+    // capsule that opened it. The `let` below is the component's own fit, times
+    // the user's zoom.
     let media.s = ui * clamp(min(screen.width / design.width, screen.height / fit.height), fit.min, fit.max) * zoom
-    group { move: screen.width - 420 * media.s - 131, screen.height - 303 * media.s
+    group { move: screen.width - card.w * media.s - 5, screen.height - 303 * media.s
         NowPlayingDrawer(scale: media.s) { show: drawer == media }
     }
 }

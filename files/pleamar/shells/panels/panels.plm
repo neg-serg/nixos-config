@@ -172,7 +172,9 @@ scene panels {
     // (`media` and `build` were already equal; the rest now are.)
     //
     // What each popup anchors with — top, right, bottom, left:
-    //   media    420 x 303   right 4 (sidePanelPopupOuterMargin), bottom 1
+    //   media    571 x 303   left on the media capsule's own x, right 5, bottom 0
+    //                        (the reference's musicPopupWidth 420 is the card's
+    //                        interior: cover at 12, rows at 216)
     //   network  470 x 338   left 4 (max with the capsule's x), bottom 36
     //   volume   340 x 320   no popup in the reference; aligned with media
     //   weather  300 x 196   centred across the monitor, bottom 40
