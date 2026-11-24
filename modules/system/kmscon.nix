@@ -22,6 +22,19 @@
 # fails to start costs the maintenance path itself, while a console at 4K that
 # copies a framebuffer is merely not accelerated. Turn hwaccel on only after
 # seeing the software console work.
+#
+# Console hotkeys (kmscon grabs; session-control is enabled below):
+# - Shift+PgUp/PgDn page the scrollback, Shift+Up/Down scroll one line;
+# - Ctrl+= / Ctrl+- (and the keypad +/-) zoom the font;
+# - Ctrl+Super+Left/Right switch kmscon sessions, Ctrl+Super+Enter opens one,
+#   Ctrl+Super+Backspace closes the current one (session-control);
+# - Ctrl+Alt+F1..F12 switch VTs (kmscon's VT backend);
+# - Alt+Shift and Super+Space toggle the us/ru layout.
+#
+# Video mode: the VT defaults to the last DRM_MODE_TYPE_PREFERRED mode on the
+# connector. DP-2 advertises both 4K240 and 4K60 as preferred, so the console
+# stayed at 60 Hz; the config forces 4K240. The kernel reports the panel's
+# 239.99 Hz mode as vrefresh=240, and kmscon matches that integer exactly.
 { config, lib, ... }:
 let
   inherit (lib) mkForce mkIf;
@@ -34,16 +47,42 @@ in
 
       config = {
         hwaccel = false; # software blit; see the header for the tradeoff
+
+        # kmscon's default picks the last DRM_MODE_TYPE_PREFERRED mode, and this
+        # panel advertises both 4K240 and 4K60 as preferred, so the VT stayed at
+        # 60 Hz. Force the mode the compositor runs; the kernel's vrefresh for
+        # the 239.99 Hz mode is 240 and kmscon matches that integer exactly.
+        mode = "[DP-2]3840x2160@240";
+
         # Family name of the Iosevka nerd build from modules/fonts. The module
         # asserts fontconfig is enabled whenever font-name is set. font-size
         # stays at its default 0, which makes kmscon pick a size from the
         # monitor resolution.
         font-name = "Iosevka";
         # Same layout pair as the compositor (files/gui/hypr/hyprland.lua,
-        # kb_layout = "us,ru"). Alt+Shift instead of Super+S because the
-        # console has no compositor keybinds.
+        # kb_layout = "us,ru"). The compositor switches with a Hyprland bind;
+        # the console gets these two XKB toggles instead.
         xkb-layout = "us,ru";
-        xkb-options = "grp:alt_shift_toggle";
+        xkb-options = "grp:alt_shift_toggle,grp:win_space_toggle";
+        # 50 ms (20 cps) is sluggish for a terminal; match the compositor's
+        # kb_repeat_delay/kb_repeat_rate (250 ms / 28 ms).
+        xkb-repeat-delay = 250;
+        xkb-repeat-rate = 30;
+
+        # kmscon's own TERM name is unknown to remote hosts; xterm-256color is
+        # understood everywhere and keeps 256 colours.
+        term = "xterm-256color";
+        # 1000 lines is barely one screen; 10k is cheap at the 4K auto font.
+        sb-size = 10000;
+
+        # Without this flag kmscon leaves the Ctrl+Super session grabs dead.
+        session-control = true;
+
+        # The default zoom-in grab is <Ctrl>Plus, but the grab matcher compares
+        # the modifier set exactly: on a US layout plus requires Shift, so
+        # Ctrl+Shift+= never matches. Use the unshifted equal and the keypad plus.
+        grab-zoom-in = "<Ctrl>equal,<Ctrl>KP_Add";
+        grab-zoom-out = "<Ctrl>minus,<Ctrl>KP_Subtract";
       };
     };
 
