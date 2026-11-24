@@ -212,6 +212,10 @@ Builds: substitution through the proxy
   `modules/nix/settings.nix`: Determinate's installer re-adds `install.determinate.systems` from
   `/etc/nix/nix.conf` after the NixOS-generated config, and that cache's broken auth makes a
   narinfo lookup hang for the stalled-download-timeout instead of 404ing.
+  Root's own builds bypass the daemon — root opens the local store directly, the daemon log has no
+  `user root` connections — so they read `/etc/nix/nix.conf` itself; the same module therefore also
+  pins `substituters` in `/root/.config/nix/nix.conf` (tmpfiles-managed), which is what keeps a
+  bare `sudo nixos-rebuild switch` off the dead cache.
 - Pass `--option substitute false` for one-off debugging/comparison builds, and whenever
   `sing-box-proxy` is down (then every substitute lookup stalls instead of falling back):
   `nix build .#nixosConfigurations.trantor.config.system.build.toplevel --dry-run --option substitute false`

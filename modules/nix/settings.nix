@@ -14,6 +14,20 @@ let
   # here and a narinfo lookup stalls for `stalled-download-timeout` instead of
   # failing, which turns every missing path into minutes of waiting.
   binaryCaches = [ "https://cache.nixos.org/" ];
+
+  # Root's nix never talks to the daemon: root opens the local store directly
+  # (the daemon log shows no `user root` connections), so the NIX_CONFIG pin on
+  # nix-daemon below does not reach `sudo nixos-rebuild`. Root's user config is
+  # read after /etc/nix/nix.conf, and a plain `substituters` assignment there
+  # replaces the accumulated list — the same replacement NIX_CONFIG performs,
+  # but for the client-side local-store builds.
+  rootNixConf = pkgs.writeText "root-nix.conf" ''
+    # Managed by NixOS — modules/nix/settings.nix. Determinate's installer keeps
+    # `extra-substituters = https://install.determinate.systems/` after the
+    # NixOS include in /etc/nix/nix.conf; this assignment is parsed later and
+    # replaces the list, so root's builds never query that dead cache.
+    substituters = ${lib.concatStringsSep " " binaryCaches}
+  '';
 in
 {
   sops.age = {
@@ -218,6 +232,14 @@ in
     {
       NIX_CONFIG = "substituters = ${lib.concatStringsSep " " binaryCaches}";
     }
+  ];
+
+  # See rootNixConf: root's builds bypass nix-daemon, so the pin above has to be
+  # repeated where root's own nix reads its config. tmpfiles links the store file
+  # in place (`L+` replaces a stale copy on every activation).
+  systemd.tmpfiles.rules = [
+    "d /root/.config/nix 0700 root root -"
+    "L+ /root/.config/nix/nix.conf - - - - ${rootNixConf}"
   ];
 
   # Determinate Nix overrides netrc-file in /etc/nix/nix.conf after including
