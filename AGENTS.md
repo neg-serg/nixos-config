@@ -165,7 +165,7 @@ Goal completion audit (ported from omp)
 Golden tool set (agent habits) — hard rules
 - Always prefer the fast modern replacements over legacy coreutils when working on this host.
   They are installed system-wide; prefer them by default.
-  - `rg` (ripgrep) or `ugrep` instead of `grep -r`; `rg --pcre2` covers PCRE-only patterns
+  - `rg` (ripgrep) instead of `grep -r`; `rg --pcre2` covers PCRE-only patterns
   - `fd` instead of `find`
   - `bat` instead of `cat` for terminal peeks (the `read` tool stays primary for files)
   - `jq` instead of `sed`/`awk` for JSON

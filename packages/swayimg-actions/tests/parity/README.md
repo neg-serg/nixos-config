@@ -52,10 +52,8 @@ Normalization is intentionally limited to shell bookkeeping that has no Rust equ
 - `/etc/zsh/zshenv` (NixOS) sources `set-environment`, which rewrites PATH and the XDG/locale
   variables for the zsh run; the harness sets `__NIXOS_SET_ENVIRONMENT_DONE=1` so both runs see the
   sandbox environment.
-- The host's `ug` wrapper is currently broken (ugrep ≥ 7.8 rejects the root-owned
-  `--config=/etc/ugrep.conf` for non-root users), which makes the shell's `_list_images` return
-  nothing. The harness shadows `ug` with a `grep`-backed fake so the comparison targets the script's
-  listing logic; the Rust port does the listing natively and is not affected by that host bug.
+- The harness shadows `ug` with a `grep`-backed fake so the shell's `_list_images` takes the same
+  listing path regardless of the host PATH; the Rust port does the listing natively.
 - Wallpaper-list scenarios create `$XDG_DATA_HOME/wl`, the directory the append target lives in.
   Without it the shell's redirection fails and zsh prints its own
   `wall:<line>: no such file or directory:` diagnostic before the script's `|| true`; the port

@@ -54,10 +54,6 @@ vim.g.LustyExplorerOneLine = 0
 vim.api.nvim_create_autocmd('User', {
   pattern = 'VeryLazy', once = true,
   callback = function()
-    if vim.fn.executable('ugrep') == 1 then
-      vim.o.grepprg = 'ugrep -RInk -j -u --tabs=1 --ignore-files'
-      vim.o.grepformat = '%f:%l:%c:%m,%f+%l+%c+%m,%-G%f\\|%l\\|%c\\|%m'
-    end
     if vim.fn.executable('nvr') == 1 then
       vim.env.GIT_EDITOR = "nvr -cc split +'setl bh=delete' --remote-wait"
       vim.env.EDITOR = 'nvr -l --remote'

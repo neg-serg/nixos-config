@@ -18,7 +18,6 @@ let
     hasNmap
     hasCurl
     hasJq
-    hasUg
     hasErd
     hasDuf
     hasDust
@@ -266,12 +265,6 @@ let
     (mkAliasIf hasMpc "unlove" "mpc sendmessage mpdas unlove")
     (mkAliasIf hasHandlr "e" "handlr open")
     (mkAliasIf hasErd "tree" "erd")
-    (mkAliasIf hasUg "grep" "ug -G")
-    (mkAliasIf hasUg "egrep" "ug -E")
-    (mkAliasIf hasUg "epgrep" "ug -P")
-    (mkAliasIf hasUg "fgrep" "ug -F")
-    (mkAliasIf hasUg "xgrep" "ug -W")
-    (mkAliasIf hasUg "zgrep" "ug -zG")
   ];
 
   content = lib.concatStrings [

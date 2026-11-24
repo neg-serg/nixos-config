@@ -5,7 +5,6 @@
   hasNmap = pkgs ? nmap;
   hasCurl = pkgs ? curl;
   hasJq = pkgs ? jq;
-  hasUg = pkgs ? ugrep;
   hasErd = pkgs ? erdtree;
   hasDuf = pkgs ? duf;
   hasDust = pkgs ? dust;

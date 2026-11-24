@@ -5,28 +5,6 @@
   ...
 }:
 let
-  # Wrap ugrep/ug to load the system-wide /etc/ugrep.conf.
-  # ugrep 7.5 ignores the UGREP_CONFIG_FILE env var entirely (config is only
-  # read via --config or the default .ugrep), so pass --config explicitly.
-  # NOTE: when nixpkgs bumps ugrep to >= 7.8, --config is rejected for
-  # root-owned files when running as non-root — switch back to
-  # wrapProgram ... --set UGREP_CONFIG_FILE /etc/ugrep.conf then.
-  ugrepWithConfig = pkgs.ugrep.overrideAttrs (old: {
-    # Ultra fast grep with interactive query UI
-    postInstall = (old.postInstall or "") + ''
-      for exe in ugrep ug; do
-        real="$out/bin/.$exe-wrapped"
-        if [ ! -e "$real" ]; then
-          mv "$out/bin/$exe" "$real"
-        fi
-        cat > "$out/bin/$exe" <<EOF
-      #!${pkgs.stdenv.shell}
-      exec -a "\$0" "$real" --config=/etc/ugrep.conf "\$@"
-      EOF
-        chmod +x "$out/bin/$exe"
-      done
-    '';
-  });
   hishtoryPkg = pkgs.hishtory or null; # Your shell history: synced, queryable, and in context
   onDemand = config.lib.neg.onDemand pkgs;
 in
@@ -37,7 +15,6 @@ in
 
   environment.systemPackages = [
     pkgs.ripgrep # better grep
-    ugrepWithConfig # better grep, rg alternative (wrapped with global config)
     # Diff tools
     pkgs.delta # better diff tool
     (onDemand {

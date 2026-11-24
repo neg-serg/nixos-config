@@ -8,9 +8,9 @@
 //! seconds+nanoseconds (GNU sort's numeric comparison, with the full-line
 //! last-resort comparison reproduced as a descending byte comparison of the
 //! path for exactly equal ctimes), and the extension filter is case-insensitive
-//! on the file name. The `ug`/`grep` choice disappears; on this host the system
-//! `ug` wrapper is currently broken (readable config, but ugrep >= 7.8 rejects
-//! `--config` for non-root), which the shell could not work around.
+//! on the file name. The `ug`/`grep` choice disappears; at port time the host's
+//! `ug` wrapper was broken (root-owned config rejected for non-root), which the
+//! shell could not work around.
 //!
 //! `_range_files` declared `c_line` but never assigned it, so the shell's
 //! `sed -n "<a_line>,p"` expression was invalid and the range actions acted on
