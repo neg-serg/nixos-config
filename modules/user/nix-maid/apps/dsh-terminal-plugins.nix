@@ -18,19 +18,35 @@
 # dsh-find-plugin rides the same pnpm path but needs no row override: the
 # package's own bundle patch mounts its row, so the caretaker only keeps it
 # installed (registry `latest`, like the TUI bundle).
-# Every plugin directory must be `git add`ed before the switch: the flake
-# source is a git snapshot, so an untracked directory never reaches the store
-# and the caretaker reports it missing while the row is already in the patch
-# layer — a state that breaks the next terminal start.
-{ lib, homeDir }:
+# Every plugin directory that still lives here must be `git add`ed before the
+# switch: the flake source is a git snapshot, so an untracked directory never
+# reaches the store and the caretaker reports it missing while the row is
+# already in the patch layer — a state that breaks the next terminal start. That
+# now applies only to the two local forks below; the rest come from the
+# `dsh-plugins` flake input, where the same rule holds for its own checkout.
+{
+  lib,
+  homeDir,
+  dshPlugins,
+}:
 let
   # The roster is an explicit allow-list (`{ name; path; }`, one directory per
   # plugin): do NOT derive it with `builtins.readDir` — that would change which
-  # plugins mount. Interpolating the name keeps `path` a path literal (not
-  # toString), so each directory stays in the store closure — see `seeds` below.
+  # plugins mount.
+  #
+  # Two entries are forks of truelove-dreamer's packages rather than code we
+  # own, so they stay in this tree and resolve to a source directory; the other
+  # plugins come from the `dsh-plugins` input. Both shapes end up as a store
+  # path — interpolation of a path literal copies the directory into the
+  # closure, and a derivation is built — see `seeds` below.
+  localPlugins = [
+    "dsh-plugin-recall"
+    "dsh-plugin-vetting"
+  ];
+  pathFor = name: if builtins.elem name localPlugins then ./${name} else dshPlugins.${name};
   mkPlugin = name: {
     inherit name;
-    path = ./${name};
+    path = pathFor name;
   };
 in
 rec {

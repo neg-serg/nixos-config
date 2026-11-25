@@ -167,6 +167,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # dsh-plugins — the DeepSeek Harness plugins that used to live in
+    # modules/user/nix-maid/apps/. The flake owns the manifests, the lib trees
+    # and the functional suites; the host keeps the roster, the loader rows and
+    # the profile caretaker. Consumed as a live git checkout for now: `git+file:`
+    # pins the committed tree by revision, and a `path:` would hash `.git` and
+    # invalidate the lock on every git command. Switches to
+    # `github:neg-serg/dsh-plugins` once the repository is pushed.
+    dsh-plugins = {
+      url = "git+file:///home/neg/src/nix/dsh-plugins";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     wl = {
       url = "github:neg-serg/wl";
       flake = false;

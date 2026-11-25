@@ -58,6 +58,11 @@ Project Structure
   they reach the build after a commit plus `just pleamar-sync` (or `just deploy`, which runs
   it). A `path:` input is deliberately not used: it hashes `.git` too, so any git command in
   the checkout would invalidate the lock.
+- The dsh plugins are their own flake too: `github:neg-serg/dsh-plugins` (live checkout
+  `~/src/nix/dsh-plugins`, consumed as `git+file:` for now). It owns the 30 plugin packages that
+  were `modules/user/nix-maid/apps/dsh-*`; the host keeps the roster, the loader rows and the
+  profile caretaker. The two third-party forks (`dsh-plugin-recall`, `dsh-plugin-vetting`) stay in
+  this tree.
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
 - `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild,
   theming); knowledge that belongs to a single module lives in that module's header

@@ -181,6 +181,26 @@
         "url": "https://install.determinate.systems/determinate-nixd/tag/v3.23.3/x86_64-linux"
       }
     },
+    "dsh-plugins": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795623479,
+        "narHash": "sha256-Sb7as85e8SQLeTWUZTGDGvERFMAMWwzlR29TWVbUmXs=",
+        "ref": "refs/heads/main",
+        "rev": "732e73d9f1b5adcf6c7e6732fbc54fb202b2b8da",
+        "revCount": 2,
+        "type": "git",
+        "url": "file:///home/neg/src/nix/dsh-plugins"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/neg/src/nix/dsh-plugins"
+      }
+    },
     "exo": {
       "flake": false,
       "locked": {
@@ -1446,6 +1466,7 @@
         "aurora-src": "aurora-src",
         "bootvine": "bootvine",
         "determinate": "determinate",
+        "dsh-plugins": "dsh-plugins",
         "flake-parts": "flake-parts_2",
         "genlc": "genlc",
         "hypr-win-list": "hypr-win-list",

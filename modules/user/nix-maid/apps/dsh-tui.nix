@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }:
 let
@@ -29,7 +30,10 @@ let
   # The plugin roster, its loader rows, the seed list and the search rows live
   # in dsh-terminal-plugins.nix; the agent-preset declarations (0.2.0 registry
   # rows: .agent-presets directories are dead) live in dsh-presets.nix.
-  roster = import ./dsh-terminal-plugins.nix { inherit lib homeDir; };
+  # The plugin source lives in its own flake (the `dsh-plugins` input): its
+  # packages are the store paths the roster seeds and pins as `file:` deps.
+  dshPlugins = inputs.dsh-plugins.packages.${pkgs.stdenv.hostPlatform.system};
+  roster = import ./dsh-terminal-plugins.nix { inherit lib homeDir dshPlugins; };
   presets = import ./dsh-presets.nix { inherit pkgs; };
 
   # The profile ships `cordis.patch.yml` as an empty list; rows must replace
@@ -47,9 +51,9 @@ let
   # The agent-plane plugins the neg preset declares by name (rows live in
   # dsh-presets.nix). Seeded like the roster ones, so they need the same
   # dependency ownership below.
-  advisorDir = pkgs.copyPathToStore ./dsh-advisor;
-  categoryDir = pkgs.copyPathToStore ./dsh-category-skill-reminder;
-  ttsrDir = pkgs.copyPathToStore ./dsh-ttsr;
+  advisorDir = dshPlugins.dsh-advisor;
+  categoryDir = dshPlugins.dsh-category-skill-reminder;
+  ttsrDir = dshPlugins.dsh-ttsr;
 
   # Profile dependencies for every store-seeded plugin (`file:` from the store).
   #
