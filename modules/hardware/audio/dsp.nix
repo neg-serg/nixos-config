@@ -239,10 +239,20 @@ in
       hardware.audio.dsp.headphones.enable = lib.mkDefault true;
 
       environment.systemPackages = [
-        pkgs.brutefir # digital convolution engine for audio processing
         pkgs.camilladsp # flexible audio DSP engine for HTTP control
-        pkgs.camillagui # web GUI for CamillaDSP (backend + prebuilt React frontend)
+        # CamillaDSP carries the room-correction convolution itself (`filters:`
+        # in the config, FIR coefficients in ~/.config/camilladsp/coeffs), so
+        # brutefir sat in the closure with nothing starting it.
         pwout # pwout: choose the default output (monitors/headphones), list the DAC sinks
+        # The upstream web GUI is kept for now, but no unit and no keybind starts
+        # it: it is a manual `camillagui` on the loopback port. As an on-demand
+        # launcher the command stays one step away while its 669 MiB python
+        # closure (pycamilladsp, pycamilladsp-plot, aiohttp) leaves every switch.
+        # Refresh the root with `nix-apps update camillagui`.
+        (onDemand {
+          name = "camillagui";
+          attr = "camillagui";
+        })
         # lsp-plugins moved to the Renoise launcher (it prefixes LV2/VST/VST3/
         # CLAP paths with a GC-rooted copy); yabridgectl is an on-demand
         # launcher — its wrapper pins yabridge and the bridge wine, so the
