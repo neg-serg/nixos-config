@@ -108,8 +108,8 @@ CI: one workflow evaluates every `packages.nix` entry and runs `nix flake check`
   wired as the top-level `ttf-code2000 … ttf-code20x3` in `packages.nix` and
   `overlays/migrated.nix`; the host's overlay entries and `packages/ttf-code/` are gone, and the
   toplevel `drvPath` stayed `374pd45z…` because the recipe and its sources did not change.
-- **The host's `lib/mkCraftApp.nix` is deleted, and the builder is re-exported from the input.**
-  The three craft apps in `nixos-pkgs` call `neg.functions.mkCraftApp`, and the overlay whose
+- **The host's `lib/mkCraftApp.nix` is deleted, and the builder is re-exported from the input.** The
+  three craft apps in `nixos-pkgs` call `neg.functions.mkCraftApp`, and the overlay whose
   `functions` the host package set ends up with is this tree's — so removing the copy without a
   re-export broke `pkgs.figcraft` (caught by `just check`, after the toplevel eval had passed
   because the apps are on-demand). `packages/overlays/functions.nix` now builds the builder from

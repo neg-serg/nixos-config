@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795634257,
-        "narHash": "sha256-0Y/+NUPh4CJRDtrYFGdpW15fiQUD1bZm6n00Sg9eW7A=",
+        "lastModified": 1795636403,
+        "narHash": "sha256-lD2pmN/vX3PaWm2sQlvDA/6UlYEZN1gSj+bwlcg9iOE=",
         "ref": "refs/heads/main",
-        "rev": "1990d855e6b3a2aab184aaa3a45b7bdc1cf592fe",
-        "revCount": 1567,
+        "rev": "304020ac2f88efe0e3f7728f471079147f85173f",
+        "revCount": 1572,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -998,11 +998,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795636108,
-        "narHash": "sha256-YuIXBQBM5GSN2LhlzP44pryLk5KpbAmX+nQaaQetrZ0=",
+        "lastModified": 1795636792,
+        "narHash": "sha256-LpGhXPwWDgABRvH5XLFPY1uanIjPS4Yp2asfh3IkrpA=",
         "owner": "neg-serg",
         "repo": "music-ai-libs",
-        "rev": "a97ffc675e26fb5c75156d8389835df942d44348",
+        "rev": "6a82f77d88408124a336fb93159354c81cf14fb8",
         "type": "github"
       },
       "original": {
