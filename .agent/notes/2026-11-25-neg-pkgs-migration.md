@@ -4,7 +4,7 @@ Status: extracted, published, wired and verified. Every moved attribute produces
 the same `drvPath` it produced before the move, so nothing rebuilt.
 
 Repository: <https://github.com/neg-serg/nixos-pkgs> (public, branch `main`, head
-`ef731a5`). Live checkout: `/home/neg/src/nix/nixos-pkgs`.
+`bd7f708`). Live checkout: `/home/neg/src/nix/nixos-pkgs`.
 
 ## What moved out of this tree
 
@@ -67,7 +67,7 @@ a build of every package) is gone. It is green on `main`.
 
 - `flake.nix`: `inputs.neg-pkgs.inputs.rust-pkgs.follows = "rust-pkgs"` — one
   Rust package set, not two.
-- `flake.lock`: `neg-pkgs` locked at `ef731a5`, `neg-pkgs/rust-pkgs` following.
+- `flake.lock`: `neg-pkgs` locked at `bd7f708`, `neg-pkgs/rust-pkgs` following.
 - `packages/overlays/*.nix`: the entries are gone; the attributes come from the
   input's overlay, which is applied after the local one.
 
