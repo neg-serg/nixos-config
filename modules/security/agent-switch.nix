@@ -80,6 +80,11 @@ let
       pkgs.git # rev-parse/status, so the journal records what was activated
       pkgs.util-linux # setpriv: run the build with the repo owner's uid
       pkgs.systemd # systemd-run: detach the activation into its own scope
+      # A build that has to fetch a git+ssh flake input runs the user's
+      # `ProxyCommand nc -X 5 -x …` from ~/.ssh/config; without it here the
+      # fetch died with "exec: nc: not found" and a verified toplevel stayed
+      # unactivated (2026-11-25).
+      pkgs.netcat # ssh ProxyCommand for git+ssh flake inputs (nc via ~/.ssh/config)
     ];
     text = ''
       # The service only *launches* the rollout and returns at once, because
@@ -99,6 +104,7 @@ let
         systemd-run --quiet --collect --no-block \
           --unit=nixos-agent-rollout-work \
           --setenv=NIXOS_AGENT_SWITCH_WORKER=1 \
+          --setenv=PATH=/run/current-system/sw/bin \
           "$0" "$@"
         exit 0
       fi
