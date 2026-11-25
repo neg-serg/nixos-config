@@ -234,7 +234,7 @@ slimChunks
                 ignoreCollisions = true;
               });
           local-bin-system = final.callPackage ./local-bin-system { }; # Rust ports of the system-level local-bin/bin helpers
-          tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the Python tgchat after a fresh login)
+          tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the retired Telethon tgchat)
           wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
           renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)
           scratchpad-geometry = final.callPackage ./scratchpad-geometry { }; # persist Hyprland scratchpad rects across show/hide

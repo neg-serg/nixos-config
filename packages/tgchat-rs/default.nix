@@ -1,12 +1,12 @@
 ##
 # Package: tgchat-rs
 # Purpose: Telegram chat access for the agent and the user as a Rust CLI, on a
-#   grammers MTProto user session. Replaces the Python/Telethon `tgchat` once a
-#   fresh login has proved the session works: a Telethon session file cannot be
-#   read by another library, so the first run is `tgchat-rs login` (phone code,
-#   plus the 2FA password when the account has one).
+#   grammers MTProto user session. Replaces the retired Python/Telethon
+#   `tgchat`: a Telethon session file cannot be read by another library, so the
+#   first run is `tgchat-rs login` (phone code, plus the 2FA password when the
+#   account has one).
 #
-# Commands mirror tgchat: login, whoami, dialogs, tail, search, export, send.
+# Commands: login, whoami, dialogs, tail, search, export, send.
 # Credentials come from gopass (`api/telegram-telethon-id` / `-hash`), the
 # session lives in ~/.local/state/telegram-chat/session.sqlite, and Telegram is
 # reached through the sing-box socks5 proxy by default (`features.net`), because

@@ -51,8 +51,8 @@
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
 - 🎨 **Beautiful Hyprland** - 18 workspaces, 8 scratchpads, custom pleamar shell
-- 📦 **148 Custom Packages** - Tailored tools for productivity and performance
-- 🧩 **Modular Architecture** - 25 domain modules with feature flags, 605 Nix files
+- 📦 **147 Custom Packages** - Tailored tools for productivity and performance
+- 🧩 **Modular Architecture** - 25 domain modules with feature flags, 603 Nix files
 - 🔄 **Local Gates** - pre-commit hook (`just lint`) plus `nix flake check -L`; no CI service runs this repo
 
 ---
@@ -85,8 +85,8 @@ sudo nixos-rebuild switch --flake .#trantor
 | 📁 Category | 🔢 Count | 📊 Progress |
 |-------------|----------|-------------|
 | **Module Domains** | 25 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Nix Files** | 604 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Custom Packages** | 148 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 603 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Custom Packages** | 147 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Module Files** | 361 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
 | **Total Commits** | 5200+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |

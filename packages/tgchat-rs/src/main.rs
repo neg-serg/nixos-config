@@ -1,14 +1,14 @@
 //! Telegram chat access for the agent and the user (grammers user session).
 //!
-//! Rust replacement for `packages/tgchat/tg.py` (Telethon). Credentials come
+//! Rust replacement for the retired Python/Telethon `tgchat`. Credentials come
 //! from gopass (`api/telegram-telethon-id` / `api/telegram-telethon-hash`) or
 //! from TELEGRAM_API_ID / TELEGRAM_API_HASH; the authorized session lives in
 //! ~/.local/state/telegram-chat/session.sqlite. Telegram is reached through the
 //! local sing-box socks proxy by default; override with TELEGRAM_PROXY, disable
 //! with TELEGRAM_PROXY=off.
 //!
-//! The Telethon session file cannot be reused by another library: the first
-//! run needs `tgchat-rs login` (phone code, plus the 2FA password if enabled).
+//! The old Telethon session file could not be reused by another library, so the
+//! first run needs `tgchat-rs login` (phone code, plus the 2FA password if enabled).
 
 use std::error::Error;
 use std::io::Write;
