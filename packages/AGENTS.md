@@ -19,12 +19,13 @@ Guidelines
 - Put small helper scripts intended for `$PATH` in `packages/local-bin` with clear names and minimal
   dependencies.
 - Rust crates are no longer packaged here: they live in `github:neg-serg/rust-pkgs` (live checkout
-  `~/src/rust-pkgs`), which owns their manifests, lockfiles and `package.nix` files. This tree calls
-  `final.callPackage (inputs.rust-pkgs + "/<crate>/package.nix") { }` against its own package set
-  and keeps the `pkgs.neg.<crate>` names (see `packages/overlay.nix`); do not copy a crate back in.
+  `~/src/nix/rust-pkgs`), which owns their manifests, lockfiles and `package.nix` files. This tree
+  calls `final.callPackage (inputs.rust-pkgs + "/<crate>/package.nix") { }` against its own package
+  set and keeps the `pkgs.neg.<crate>` names (see `packages/overlay.nix`); do not copy a crate back
+  in.
 - The SuperCollider live-coding stack is no longer packaged here either: UGen plugins, sclang
   quarks, Dirt-Samples, VST hosting and their shared `mkScQuark`/`mkScPlugin` builders live in
-  `github:neg-serg/nixos-music` (live checkout `~/src/nixos-music`) and arrive as the
+  `github:neg-serg/nixos-music` (live checkout `~/src/nix/nixos-music`) and arrive as the
   `nixos-music` flake input, reachable as `pkgs.music.<name>`. Do not add an SC package back into
   this tree.
 - For a project that still carries a manifest in this tree, do not repeat its version in

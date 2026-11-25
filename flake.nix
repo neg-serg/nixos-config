@@ -118,7 +118,7 @@
     # `.git`, so every commit and every index write invalidates the lock.)
     # Switches to `github:neg-serg/nixos-music` once the repository is pushed.
     nixos-music = {
-      url = "git+file:///home/neg/src/nixos-music";
+      url = "git+file:///home/neg/src/nix/nixos-music";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -214,7 +214,7 @@
       # nix-maid module and the greetd login layer. A `path:` input on the live
       # checkout keeps the deployed links writable (the module's `liveRoot`
       # points at the same directory).
-      url = "path:/home/neg/src/pleamar-config";
+      url = "path:/home/neg/src/nix/pleamar-config";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {

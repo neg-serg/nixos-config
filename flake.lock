@@ -1182,11 +1182,11 @@
         "rev": "d27dbc1f1645d455d23d0ea167dcaffd52e533e7",
         "revCount": 1,
         "type": "git",
-        "url": "file:///home/neg/src/nixos-music"
+        "url": "file:///home/neg/src/nix/nixos-music"
       },
       "original": {
         "type": "git",
-        "url": "file:///home/neg/src/nixos-music"
+        "url": "file:///home/neg/src/nix/nixos-music"
       }
     },
     "nixpkgs": {
@@ -1366,12 +1366,12 @@
         "pleamar-wm": "pleamar-wm"
       },
       "locked": {
-        "narHash": "sha256-MzDjuzHbhiw4v7eTlm2j0wCJ93BD1xGTIXe/wk4yR/c=",
-        "path": "/home/neg/src/pleamar-config",
+        "narHash": "sha256-wbRelwpMLb82jP76zJIaH4Gt9lGDOa5v1wqOVnQouzI=",
+        "path": "/home/neg/src/nix/pleamar-config",
         "type": "path"
       },
       "original": {
-        "path": "/home/neg/src/pleamar-config",
+        "path": "/home/neg/src/nix/pleamar-config",
         "type": "path"
       }
     },

@@ -53,7 +53,7 @@ Project Structure
 - `files/` — config files (Hyprland, kitty, scripts)
 - The pleamar shell (scenes, worker crates, nix-maid module, login layer) is its own
   repository: `github:neg-serg/pleamar-config`, consumed as a `path:` flake input on the
-  live checkout (`~/src/pleamar-config`). The deployed scene links are live; a rebuild
+  live checkout (`~/src/nix/pleamar-config`). The deployed scene links are live; a rebuild
   after editing the checkout needs `just pleamar-sync` first (or just `just deploy`,
   which runs it), because Nix pins the input by narHash.
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)

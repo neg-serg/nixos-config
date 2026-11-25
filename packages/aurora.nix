@@ -2,7 +2,7 @@
 # GUI toolkit). Two binaries: aurora (the player) and aurora-probe (the
 # start-up measurement the project grew out of).
 #
-# The source is neg-serg/aurora (private; checkout ~/src/aurora), which lives
+# The source is neg-serg/aurora (private; checkout ~/src/nix/aurora), which lives
 # outside this flake. It arrives as the aurora-src git input, so the package
 # builds the *committed* tree: installing what was committed is the point, and
 # untracked files (target/) stay out of the store.
@@ -116,7 +116,7 @@ let
       StartupWMClass=aurora
       DESKTOP
           # The window's class is `player`, not `aurora`: the crate names its Wayland surface
-          # itself (`with_name("player", "player")` in ~/src/aurora, `src/bin/aurora.rs`) and the
+          # itself (`with_name("player", "player")` in ~/src/nix/aurora, `src/bin/aurora.rs`) and the
           # compositor's rules match that name (modules/media/audio/aurora.nix). A launcher, a
           # taskbar or a window switcher ties an icon to a window by matching the class to a
           # desktop entry's file name, so the package installs a second entry under the class's
