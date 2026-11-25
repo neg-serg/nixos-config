@@ -188,11 +188,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795625091,
-        "narHash": "sha256-sfNJMkasXGOudROKngKzKK7tzzglBx+BGBstCsvk9tQ=",
+        "lastModified": 1795626974,
+        "narHash": "sha256-EG9MIyma9HAy708w3bvvAGJoCApVxE6bizYzfQWG7hE=",
         "owner": "neg-serg",
         "repo": "dsh-plugins",
-        "rev": "c7a758d152d1226d3821a43833cf56bf12ed1a07",
+        "rev": "636a8482164ffcf5b7b071cbad13474081592a83",
         "type": "github"
       },
       "original": {

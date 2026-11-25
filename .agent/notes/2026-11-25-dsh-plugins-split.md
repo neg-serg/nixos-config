@@ -3,7 +3,7 @@
 Status: extracted, published, wired, activated and verified. All thirteen suites are green. The gaps
 at the bottom are deliberate and each names how to close it.
 
-Repository: <https://github.com/neg-serg/dsh-plugins> (public, branch `main`, head `c7a758d`). Live
+Repository: <https://github.com/neg-serg/dsh-plugins> (public, branch `main`, head `636a848`). Live
 checkout: `/home/neg/src/nix/dsh-plugins`.
 
 ## What moved out of this tree
@@ -47,7 +47,7 @@ shipped tree differ from the one the tests run against.
   be `copyPathToStore` calls.
 - `dsh-terminal-plugins.nix`: takes `dshPlugins`, and `pathFor` returns `./${name}` for the two
   local forks and `dshPlugins.${name}` otherwise. The 29-row roster and its order are unchanged.
-- `flake.lock`: the input is locked at `github:neg-serg/dsh-plugins/c7a758d`.
+- `flake.lock`: the input is locked at `github:neg-serg/dsh-plugins/636a848`.
 
 The built caretaker script carries 29 `seed_pkg` lines — 27 store paths from the input, the two
 forks as `copyPathToStore` paths — plus the three `seed` lines for the preset plugins, all pointing
@@ -75,9 +75,11 @@ agent switch.
    `dsh-worktree` the old Russian confirmation string. The expectations now match the code, and the
    two strings the pass half-translated (the worktree timeout message and the
    category-skill-reminder hint) are English. `scripts/test.sh` gates all suites again.
+
 1. **The peers no longer need a manual symlink.** `scripts/peers.sh` reads the `exec` line of the
    installed `dsh` wrapper to find the real package (a plain `readlink` lands on the wrapper, which
    has only `bin/`) and links its nested `@deepseek-ai` tree; `scripts/test.sh` calls it on demand.
+
 1. **The live profile carried a dead `link:` to the old aurora checkout.** `@local/dsh-gpu-sandbox`
    pointed at `/home/neg/src/aurora/tools/dsh-gpu-sandbox`, which moved to `~/src/nix/aurora` with
    the grouped-flake refactor. The first caretaker run after the extraction re-pinned the
@@ -85,6 +87,12 @@ agent switch.
    and the bundle could no longer be resolved. Unrelated to the extraction but exposed by it: the
    entry was repointed to the current path by hand (the profile manifest is a user file, no module
    owns that dependency).
+
+1. **The desktop doctor reported an installed `wtype` as missing.** Its probe treated any non-zero
+   exit as "absent", and `wtype` has no working help flag: `wtype -h` answers "Missing argument to
+   -h" and exits 1. The probe now distinguishes ENOENT (absent) from a binary that started, and the
+   suite asserts the probe contract instead of the runner's package list — the old assertion
+   demanded `hyprctl` and failed on CI, which is how the bug surfaced.
 
 ## Gaps to fix later
 
@@ -98,6 +106,7 @@ agent switch.
 
 ## Commits
 
-- New repository: `474112f` (import), `732e73d` (nixpkgs pin), `c7a758d` (stale tests + peers).
+- New repository: `474112f` (import), `732e73d` (nixpkgs pin), `c7a758d` (stale tests + peers),
+  `636a848` (desktop probe). CI on `main` is green.
 - This tree: the extraction commit (input, roster wiring, 77 files removed, this note) and the
   follow-up that switches the input to `github:` and records the fixes above.
