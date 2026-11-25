@@ -83,6 +83,10 @@ in
     # Extracted to github:neg-serg/sing-box-proxy, which owns the build. The host
     # keeps the user unit, the secrets and the feature flag.
     sing-box-proxy = inputs.sing-box-proxy.packages.${prev.stdenv.hostPlatform.system}.default; # sing-box SOCKS proxy controller (on/off/status/refresh/gen/run)
+    # Extracted to github:neg-serg/shtoy, which owns the crate, its packaging
+    # and the CLI check. The host keeps the shader collection under
+    # files/gui/shtoy and the local-bin symlink.
+    shtoy = inputs.shtoy.packages.${prev.stdenv.hostPlatform.system}.default; # Run Shadertoy shaders fullscreen in esshader
     tuigram = callPkg (pkg "tuigram") { }; # Terminal UI Telegram client (npm package, Node 26 + node:ffi)
     topowall = callPkg (pkg "topowall") { }; # Topographic contour wallpapers from real elevation data (GPU render)
     terrascope = callPkg (pkg "terrascope") { }; # Interactive world map for the terminal (braille; live weather/aircraft/earthquakes)

@@ -280,7 +280,7 @@
 
         # Rust port of the former shell helper (packages/local-bin-tools).
         ".local/bin/dsh-worktree".source = lib.getExe' pkgs.neg.local-bin-tools "dsh-worktree";
-        # Rust port of the former shell helper (packages/shtoy).
+        # Rust port of the former shell helper (github:neg-serg/shtoy).
         ".local/bin/shtoy".source = lib.getExe' pkgs.neg.shtoy "shtoy";
         # Rust port of the former shell helper (github:neg-serg/sing-box-proxy).
         ".local/bin/proxy".source = lib.getExe' pkgs.neg.sing-box-proxy "proxy";

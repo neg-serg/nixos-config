@@ -72,7 +72,6 @@ let
     "questyle-ctl"
     "renoise-osc"
     "scratchpad-geometry"
-    "shtoy"
     "sing-box-proxy"
     "swayimg-actions"
     "telegram-notify"
@@ -233,7 +232,6 @@ slimChunks
           vivaldi-prefs = final.callPackage ./vivaldi-prefs { }; # re-assert managed Vivaldi preferences
           wallpaper-palettes = final.callPackage ./wallpaper-palettes { }; # matugen schemes per wallpaper (picker cards)
           local-bin-tools = final.callPackage ./local-bin-tools { }; # small $PATH helpers (fetch-covers, gen-unbound-hosts, menu-search, ren, …)
-          shtoy = final.callPackage ./shtoy { }; # run Shadertoy shaders in esshader (Rust port of the local-bin helper)
           swayimg-actions = final.callPackage ./swayimg-actions { }; # rotate/move/copy/wallpaper/range actions for swayimg (Rust port of the local-bin helper)
         };
     in
