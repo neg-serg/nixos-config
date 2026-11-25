@@ -13,5 +13,5 @@ use crate::{exec_failure, invocation_name, raw_args};
 
 pub fn entry() {
     let error = Command::new("renoise").args(raw_args()).exec();
-    exec_failure(&invocation_name(), 7, "renoise", &error);
+    exec_failure(&invocation_name(), 7, b"renoise", &error);
 }

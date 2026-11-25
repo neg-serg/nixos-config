@@ -18,11 +18,11 @@
 
 #![forbid(unsafe_code)]
 
-pub mod env;
-pub mod helptext;
-pub mod json;
-pub mod proc;
-pub mod text;
+pub use local_bin_core::env;
+pub use local_bin_core::helptext;
+pub use local_bin_core::json;
+pub use local_bin_core::proc;
+pub use local_bin_core::text;
 
 // The commands are modules of this crate; `src/main.rs` dispatches on argv[0].
 // They live in `src/bin/` because that is where the per-command sources have

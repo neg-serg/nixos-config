@@ -17,7 +17,7 @@ use crate::proc::Cmd;
 pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
 
     // `help_from_header 2 2 "$@"`: only `-h`/`--help` as the first argument.
     if let Some(first) = arguments.next() {

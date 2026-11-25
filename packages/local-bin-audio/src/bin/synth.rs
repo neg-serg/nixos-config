@@ -16,7 +16,7 @@ use crate::text;
 pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let name = match arguments.next() {
         Some(value) if !env::os_bytes(&value).is_empty() => env::os_bytes(&value).to_vec(),
         _ => env::parameter_error(&program, 13, b"1", b"usage: synth <name>"),
@@ -143,8 +143,8 @@ fn raise_window(program: &[u8], class: &[u8], title: &[u8]) -> bool {
         .diag(program, 21)
         .run();
     let address = match json::parse(&clients.stdout) {
-        Some(value) => first_matching_address(&value, class, title),
-        None => None,
+        Ok(value) => first_matching_address(&value, class, title),
+        Err(_) => None,
     };
     let Some(address) = address else {
         return false;
@@ -169,24 +169,27 @@ fn raise_window(program: &[u8], class: &[u8], title: &[u8]) -> bool {
 /// forms the script passes: `^PREFIX` class tests and a literal title substring.
 fn first_matching_address(value: &json::Value, class: &[u8], title: &[u8]) -> Option<Vec<u8>> {
     for entry in value.as_array()? {
-        let Some(entry_class) = entry.get(b"class").and_then(|value| value.as_bytes()) else {
+        let Some(entry_class) = entry.get("class").and_then(|value| value.as_str()) else {
             continue;
         };
+        let entry_class = entry_class.as_bytes();
         if !class_matches(class, entry_class) {
             continue;
         }
         if !title.is_empty() {
             let entry_title = entry
-                .get(b"title")
-                .and_then(|value| value.as_bytes())
+                .get("title")
+                .and_then(|value| value.as_str())
+                .map(str::as_bytes)
                 .unwrap_or_default();
             if !text::contains(entry_title, title) {
                 continue;
             }
         }
-        let Some(address) = entry.get(b"address").and_then(|value| value.as_bytes()) else {
+        let Some(address) = entry.get("address").and_then(|value| value.as_str()) else {
             continue;
         };
+        let address = address.as_bytes();
         return Some(address.to_vec());
     }
     None

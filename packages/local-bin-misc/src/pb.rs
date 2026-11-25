@@ -14,7 +14,7 @@ use std::process::{Command, Stdio};
 
 use crate::{
     err_line, invocation_name, need, out_str, prog_name, raw_args, redirect_failure, spawn_failure,
-    status_code, var_nonempty,
+    status_code, var_nonempty_os,
 };
 
 const DEFAULT_UA: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36";
@@ -108,7 +108,7 @@ pub fn entry() {
         Some(value) if !value.is_empty() => value.clone(),
         _ => OsString::from("/dev/stdin"),
     };
-    let user_agent = var_nonempty("UA").unwrap_or_else(|| OsString::from(DEFAULT_UA));
+    let user_agent = var_nonempty_os("UA").unwrap_or_else(|| OsString::from(DEFAULT_UA));
 
     // Accept '-' as stdin: the original skips the existence warning for it,
     // but still lets the shell open a file literally named '-' below.

@@ -142,13 +142,13 @@ fn busctl(args: &[&str], json_out: bool) -> Result<String, String> {
 
 fn busctl_json(args: &[&str]) -> Result<json::Value, String> {
     let text = busctl(args, true)?;
-    json::parse(&text).ok_or_else(|| "busctl returned invalid JSON".to_string())
+    json::parse(text.as_bytes()).map_err(|_| "busctl returned invalid JSON".to_string())
 }
 
 /// The `data` payload of a busctl get-property/call answer.
 fn property_data(value: &json::Value) -> Option<json::Value> {
     match value {
-        json::Value::Object(_) => value.get("data").cloned(),
+        json::Value::Obj(_) => value.get("data").cloned(),
         _ => Some(value.clone()),
     }
 }
@@ -167,7 +167,7 @@ fn tray_items() -> Vec<(String, String)> {
         "RegisteredStatusNotifierItems",
     )
     .unwrap_or(json::Value::Null);
-    let Some(json::Value::Array(items)) = Some(registered) else {
+    let Some(json::Value::Arr(items)) = Some(registered) else {
         return Vec::new();
     };
     items
@@ -259,7 +259,7 @@ pub fn walk(children: &[json::Value], prefix: &[String], out: &mut Vec<Entry>) {
             Some(inner) => inner.clone(),
             None => child.clone(),
         };
-        let json::Value::Array(parts) = entry else {
+        let json::Value::Arr(parts) = entry else {
             continue;
         };
         if parts.len() != 3 {
@@ -267,11 +267,11 @@ pub fn walk(children: &[json::Value], prefix: &[String], out: &mut Vec<Entry>) {
         }
         let item_id = parts[0].clone();
         let props = match &parts[1] {
-            json::Value::Object(_) => parts[1].clone(),
-            _ => json::Value::Object(Vec::new()),
+            json::Value::Obj(_) => parts[1].clone(),
+            _ => json::Value::Obj(Vec::new()),
         };
         let sub = match &parts[2] {
-            json::Value::Array(items) => items.clone(),
+            json::Value::Arr(items) => items.clone(),
             _ => Vec::new(),
         };
         let kind_of = |name: &str| {
@@ -313,7 +313,7 @@ pub fn walk(children: &[json::Value], prefix: &[String], out: &mut Vec<Entry>) {
             ("label", json::Value::Str(label)),
             (
                 "path",
-                json::Value::Array(
+                json::Value::Arr(
                     prefix
                         .iter()
                         .map(|item| json::Value::Str(item.clone()))
@@ -347,15 +347,15 @@ fn collect(service: &str, path: &str) -> Vec<Entry> {
     let children = layout
         .get("data")
         .and_then(|data| match data {
-            json::Value::Array(items) => items.get(1),
+            json::Value::Arr(items) => items.get(1),
             _ => None,
         })
         .and_then(|item| match item {
-            json::Value::Array(items) => items.get(2),
+            json::Value::Arr(items) => items.get(2),
             _ => None,
         })
         .and_then(|children| match children {
-            json::Value::Array(items) => Some(items.clone()),
+            json::Value::Arr(items) => Some(items.clone()),
             _ => None,
         })
         .unwrap_or_default();
@@ -378,7 +378,8 @@ fn trigger(entry: &Entry, dry_run: bool) -> bool {
         .map(|delta| delta.as_secs())
         .unwrap_or(0);
     let id = match entry.get("id") {
-        Some(json::Value::Number(number)) => format!("{}", *number as i64),
+        Some(json::Value::Int(number)) => format!("{number}"),
+        Some(json::Value::Num(number)) => format!("{}", *number as i64),
         Some(json::Value::Str(text)) => text.clone(),
         _ => String::new(),
     };
@@ -513,7 +514,7 @@ fn action_entries() -> Vec<Entry> {
                 ("kind", json::Value::Str("action".to_string())),
                 ("id", json::Value::Str(name.to_string())),
                 ("label", json::Value::Str(name.to_string())),
-                ("path", json::Value::Array(Vec::new())),
+                ("path", json::Value::Arr(Vec::new())),
                 ("app", json::Value::Str("Actions".to_string())),
                 ("action", json::Value::Str(name.to_string())),
                 ("enabled", json::Value::Bool(true)),
@@ -562,7 +563,7 @@ pub fn entry_line(entry: &Entry) -> String {
         return line.to_string();
     }
     let mut parts: Vec<String> = vec![entry.text("app")];
-    if let Some(json::Value::Array(path)) = entry.get("path") {
+    if let Some(json::Value::Arr(path)) = entry.get("path") {
         parts.extend(
             path.iter()
                 .filter_map(|item| item.as_str().map(str::to_string)),
@@ -587,7 +588,7 @@ pub fn load_cache(path: &Path) -> Vec<Entry> {
         );
         let id = match entry_id.trim_start_matches('-').parse::<i64>() {
             Ok(number) if entry_id.chars().all(|ch| ch.is_ascii_digit() || ch == '-') => {
-                json::Value::Number(number as f64)
+                json::Value::Int(number as i128)
             }
             _ => json::Value::Str(entry_id.to_string()),
         };
@@ -612,7 +613,8 @@ pub fn save_cache(path: &Path, entries: &[Entry]) -> std::io::Result<()> {
     let mut body = String::new();
     for entry in entries {
         let id = match entry.get("id") {
-            Some(json::Value::Number(number)) => format!("{}", *number as i64),
+            Some(json::Value::Int(number)) => format!("{number}"),
+            Some(json::Value::Num(number)) => format!("{}", *number as i64),
             Some(json::Value::Str(text)) => text.clone(),
             _ => String::new(),
         };
@@ -713,10 +715,10 @@ pub fn entry() -> std::process::ExitCode {
             .map(|entry| {
                 let mut fields = entry.fields.clone();
                 fields.push(("line".to_string(), json::Value::Str(entry_line(entry))));
-                json::Value::Object(fields)
+                json::Value::Obj(fields)
             })
             .collect();
-        println!("{}", json::Value::Array(rendered).dump(Some(1)));
+        println!("{}", json::Value::Arr(rendered).dump(Some(1)));
         return std::process::ExitCode::SUCCESS;
     }
 

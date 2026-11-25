@@ -16,7 +16,7 @@ use crate::text;
 pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let verb = arguments
         .next()
         .map(|value| value.as_bytes().to_vec())
@@ -33,7 +33,7 @@ pub fn entry() {
         .run();
     let current: Vec<u8> = match Json::parse(&option.stdout) {
         Ok(value) => match value.get("bool") {
-            Some(flag) => flag.raw(),
+            Some(flag) => flag.raw().into_bytes(),
             None => b"null".to_vec(),
         },
         Err(_) => Vec::new(),

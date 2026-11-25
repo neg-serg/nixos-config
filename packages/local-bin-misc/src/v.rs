@@ -21,14 +21,16 @@ use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use crate::{exec_failure, invocation_name, out_str, raw_args, report_spawn_failure, var_nonempty};
+use crate::{
+    exec_failure, invocation_name, out_str, raw_args, report_spawn_failure, var_nonempty_os,
+};
 
 const DEFAULT_SOCKET: &str = "/tmp/nvim.sock";
 const SOCKET_ENV: &str = "LOCAL_BIN_MISC_V_SOCKET";
 const ATTACHED: &str = "\u{2197}  nvim (attached)\n";
 
 fn socket_path() -> PathBuf {
-    PathBuf::from(var_nonempty(SOCKET_ENV).unwrap_or_else(|| DEFAULT_SOCKET.into()))
+    PathBuf::from(var_nonempty_os(SOCKET_ENV).unwrap_or_else(|| DEFAULT_SOCKET.into()))
 }
 
 /// `[ -S "$SOCKET" ] && nc -zU "$SOCKET" >/dev/null 2>&1`.
@@ -84,7 +86,7 @@ fn start(socket: &Path, arguments: &[OsString]) {
         .arg(socket)
         .args(arguments)
         .exec();
-    exec_failure(&invocation, 23, "nvim", &error);
+    exec_failure(&invocation, 23, b"nvim", &error);
 }
 
 pub fn entry() {

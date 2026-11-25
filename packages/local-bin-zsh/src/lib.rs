@@ -744,3 +744,6 @@ pub mod music_rename;
 pub mod music_tui;
 pub mod pl;
 pub mod read_documents;
+
+/// The shared JSON reader/writer (the TUI's metadata values are JSON).
+pub use local_bin_core::json;

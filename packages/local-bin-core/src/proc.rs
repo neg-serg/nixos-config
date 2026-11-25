@@ -10,7 +10,7 @@
 use std::ffi::OsString;
 use std::io::Write;
 use std::os::unix::ffi::OsStrExt;
-use std::process::{Command, ExitStatus, Stdio};
+use std::process::{Child, Command, ExitStatus, Stdio};
 
 use crate::env;
 
@@ -60,16 +60,7 @@ pub struct Outcome {
 
 impl<'a> Cmd<'a> {
     pub fn new(tool: &'a str) -> Self {
-        Self {
-            tool: tool.as_bytes(),
-            args: Vec::new(),
-            stdin: Input::Inherit,
-            stdout: Sink::Inherit,
-            stderr: Sink::Inherit,
-            diag: None,
-            envs: Vec::new(),
-            directory: None,
-        }
+        Self::from_bytes(tool.as_bytes())
     }
 
     /// A tool named by bytes (paths that came from argv or the environment).
@@ -128,6 +119,7 @@ impl<'a> Cmd<'a> {
         self
     }
 
+    /// Working directory for the child (the shell's `cd DIR && tool`).
     /// Apply a batch of `(name, value)` overrides, as the shell `export`s them.
     pub fn envs_from(mut self, overrides: &[(Vec<u8>, Vec<u8>)]) -> Self {
         for (name, value) in overrides {
@@ -138,6 +130,7 @@ impl<'a> Cmd<'a> {
     }
 
     /// Working directory for the child (the shell's `cd DIR && tool`).
+
     pub fn current_dir(mut self, directory: impl Into<OsString>) -> Self {
         self.directory = Some(directory.into());
         self
@@ -148,8 +141,8 @@ impl<'a> Cmd<'a> {
         self
     }
 
-    /// Spawn, feed stdin, wait, and collect whatever was captured.
-    pub fn run(self) -> Outcome {
+    /// Build the `Command` without spawning (pipelines need the raw handle).
+    pub fn build(&self) -> Command {
         let mut command = Command::new(std::ffi::OsStr::from_bytes(self.tool));
         command.args(&self.args);
         for (name, value) in &self.envs {
@@ -158,33 +151,18 @@ impl<'a> Cmd<'a> {
         if let Some(directory) = &self.directory {
             command.current_dir(directory);
         }
-        match self.stdin {
-            Input::Inherit => {
-                command.stdin(Stdio::inherit());
-            }
-            Input::Null => {
-                command.stdin(Stdio::null());
-            }
-            Input::Bytes(_) => {
-                command.stdin(Stdio::piped());
-            }
-        }
-        match self.stdout {
-            Sink::Inherit => command.stdout(Stdio::inherit()),
-            Sink::Null => command.stdout(Stdio::null()),
-            Sink::Capture => command.stdout(Stdio::piped()),
-        };
-        match self.stderr {
-            Sink::Inherit => command.stderr(Stdio::inherit()),
-            Sink::Null => command.stderr(Stdio::null()),
-            Sink::Capture => command.stderr(Stdio::piped()),
-        };
-        let child = match command.spawn() {
+        configure(&mut command, self.stdin, self.stdout, self.stderr);
+        command
+    }
+
+    /// Spawn, feed stdin, wait, and collect whatever was captured.
+    pub fn run(self) -> Outcome {
+        let stdin = self.stdin;
+        let mut child = match self.spawn_child() {
             Ok(child) => child,
-            Err(error) => return self.spawn_failure(error),
+            Err(outcome) => return outcome,
         };
-        let mut child = child;
-        if let Input::Bytes(bytes) = self.stdin {
+        if let Input::Bytes(bytes) = stdin {
             if let Some(mut pipe) = child.stdin.take() {
                 // A closed pipe is the shell's SIGPIPE on the producer side.
                 let _ = pipe.write_all(bytes);
@@ -206,31 +184,95 @@ impl<'a> Cmd<'a> {
         }
     }
 
-    fn spawn_failure(self, error: std::io::Error) -> Outcome {
-        let code = spawn_error_code(&error);
-        let mut captured = Vec::new();
-        if let Some(diag) = self.diag {
-            let message = if self.tool.contains(&b'/') {
-                env::path_failure_message(diag.program, diag.line, self.tool, &error)
-            } else {
-                env::not_found_message(diag.program, diag.line, self.tool)
-            };
-            match self.stderr {
-                Sink::Inherit => env::err(&message),
-                Sink::Null => {}
-                Sink::Capture => captured.extend_from_slice(&message),
+    /// Spawn without waiting (the shell's `tool ... &`). A spawn failure is
+    /// reported where the shell would report it; the caller only learns whether
+    /// a child exists.
+    pub fn spawn_async(self) -> Option<Child> {
+        let stdin = self.stdin;
+        match self.spawn_child() {
+            Ok(child) => {
+                if let Input::Bytes(bytes) = stdin {
+                    let mut child = child;
+                    if let Some(mut pipe) = child.stdin.take() {
+                        let _ = pipe.write_all(bytes);
+                    }
+                    return Some(child);
+                }
+                Some(child)
             }
+            Err(_) => None,
         }
-        Outcome {
-            code,
-            stdout: Vec::new(),
-            stderr: captured,
-            found: false,
+    }
+
+    fn spawn_child(self) -> Result<Child, Outcome> {
+        let mut command = self.build();
+        match command.spawn() {
+            Ok(child) => Ok(child),
+            Err(error) => Err(report_spawn_failure(
+                &error,
+                self.tool,
+                self.diag,
+                self.stderr,
+            )),
         }
     }
 }
 
-fn spawn_error_code(error: &std::io::Error) -> i32 {
+/// Apply the shell's stdio destinations to a command.
+pub fn configure(command: &mut Command, stdin: Input<'_>, stdout: Sink, stderr: Sink) {
+    match stdin {
+        Input::Inherit => {
+            command.stdin(Stdio::inherit());
+        }
+        Input::Null => {
+            command.stdin(Stdio::null());
+        }
+        Input::Bytes(_) => {
+            command.stdin(Stdio::piped());
+        }
+    }
+    match stdout {
+        Sink::Inherit => command.stdout(Stdio::inherit()),
+        Sink::Null => command.stdout(Stdio::null()),
+        Sink::Capture => command.stdout(Stdio::piped()),
+    };
+    match stderr {
+        Sink::Inherit => command.stderr(Stdio::inherit()),
+        Sink::Null => command.stderr(Stdio::null()),
+        Sink::Capture => command.stderr(Stdio::piped()),
+    };
+}
+
+/// Emit the bash diagnostic for a failed exec and return the shell status.
+pub fn report_spawn_failure(
+    error: &std::io::Error,
+    tool: &[u8],
+    diag: Option<Diag<'_>>,
+    stderr: Sink,
+) -> Outcome {
+    let code = spawn_error_code(error);
+    let mut captured = Vec::new();
+    if let Some(diag) = diag {
+        let message = if tool.contains(&b'/') {
+            env::path_failure_message(diag.program, diag.line, tool, error)
+        } else {
+            env::not_found_message(diag.program, diag.line, tool)
+        };
+        match stderr {
+            Sink::Inherit => env::err(&message),
+            Sink::Null => {}
+            Sink::Capture => captured.extend_from_slice(&message),
+        }
+    }
+    Outcome {
+        code,
+        stdout: Vec::new(),
+        stderr: captured,
+        found: false,
+    }
+}
+
+pub fn spawn_error_code(error: &std::io::Error) -> i32 {
     match error.raw_os_error() {
         Some(2) => 127,
         Some(13) => 126,
@@ -244,9 +286,7 @@ fn spawn_error_code(error: &std::io::Error) -> i32 {
     }
 }
 
-/// Run a tool, capture stdout, drop stderr, and strip trailing newlines the way
-/// `$(tool ...)` does. Returns the code as well: callers that follow `set -e`
-/// need it.
+/// `$(tool ...)`: capture stdout, drop stderr, strip trailing newlines.
 pub fn capture_lines(cmd: Cmd<'_>) -> (Vec<u8>, i32) {
     let outcome = cmd.stdout(Sink::Capture).stderr(Sink::Null).run();
     (
@@ -255,13 +295,13 @@ pub fn capture_lines(cmd: Cmd<'_>) -> (Vec<u8>, i32) {
     )
 }
 
+/// Exit status of a finished child, kept for callers that compare it.
+pub fn status_code(status: ExitStatus) -> i32 {
+    env::status_code(status)
+}
+
 /// `cmd || true` with both streams inherited: used for best-effort side
 /// effects whose exit status the shell discards.
 pub fn inherit_ignored(cmd: Cmd<'_>) -> i32 {
     cmd.run().code
-}
-
-/// Exit status of a finished child, kept for callers that compare it.
-pub fn status_code(status: ExitStatus) -> i32 {
-    env::status_code(status)
 }

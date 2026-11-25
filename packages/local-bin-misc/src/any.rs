@@ -89,5 +89,5 @@ pub fn entry() {
         .arg("-p")
         .arg(paste_lines(pids))
         .exec();
-    exec_failure(&invocation_name(), 28, "ps", &error);
+    exec_failure(&invocation_name(), 28, b"ps", &error);
 }

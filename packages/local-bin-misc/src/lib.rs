@@ -14,9 +14,7 @@
 
 #![forbid(unsafe_code)]
 
-pub mod env;
-
-pub use env::*;
+pub use local_bin_core::env::*;
 
 // The commands are modules of this crate; `src/main.rs` dispatches on argv[0].
 pub mod any;

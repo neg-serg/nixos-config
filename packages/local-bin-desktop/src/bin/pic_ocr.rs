@@ -29,7 +29,7 @@ pub fn entry() -> ExitCode {
 fn run() -> i32 {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let args: Vec<Vec<u8>> = arguments.map(|value| value.as_bytes().to_vec()).collect();
 
     let mut engine: Vec<u8> = b"nn".to_vec();
@@ -218,7 +218,7 @@ fn ocr_neural(image: &[u8], program: &[u8]) -> Vec<u8> {
         .and_then(|choice| choice.get("message"))
         .and_then(|message| message.get("content"));
     match content {
-        Some(content) => text::strip_trailing_newlines(&content.raw_or_empty()).to_vec(),
+        Some(content) => text::strip_trailing_newlines(content.raw_or_empty().as_bytes()).to_vec(),
         None => Vec::new(),
     }
 }
@@ -228,27 +228,37 @@ fn payload(model: &[u8], image_url: &[u8], prompt: &[u8]) -> Vec<u8> {
     use crate::json::Json;
     let content = Json::Arr(vec![
         Json::Obj(vec![
-            (b"type".to_vec(), Json::Str(b"image_url".to_vec())),
+            ("type".to_string(), Json::Str("image_url".to_string())),
             (
-                b"image_url".to_vec(),
-                Json::Obj(vec![(b"url".to_vec(), Json::Str(image_url.to_vec()))]),
+                "image_url".to_string(),
+                Json::Obj(vec![(
+                    "url".to_string(),
+                    Json::Str(String::from_utf8_lossy(image_url).into_owned()),
+                )]),
             ),
         ]),
         Json::Obj(vec![
-            (b"type".to_vec(), Json::Str(b"text".to_vec())),
-            (b"text".to_vec(), Json::Str(prompt.to_vec())),
+            ("type".to_string(), Json::Str("text".to_string())),
+            (
+                "text".to_string(),
+                Json::Str(String::from_utf8_lossy(prompt).into_owned()),
+            ),
         ]),
     ]);
     let message = Json::Obj(vec![
-        (b"role".to_vec(), Json::Str(b"user".to_vec())),
-        (b"content".to_vec(), content),
+        ("role".to_string(), Json::Str("user".to_string())),
+        ("content".to_string(), content),
     ]);
     Json::Obj(vec![
-        (b"model".to_vec(), Json::Str(model.to_vec())),
-        (b"messages".to_vec(), Json::Arr(vec![message])),
-        (b"stream".to_vec(), Json::Bool(false)),
+        (
+            "model".to_string(),
+            Json::Str(String::from_utf8_lossy(model).into_owned()),
+        ),
+        ("messages".to_string(), Json::Arr(vec![message])),
+        ("stream".to_string(), Json::Bool(false)),
     ])
     .pretty()
+    .into_bytes()
 }
 
 /// `base64 -w0`: standard alphabet, padded, no line wrapping.

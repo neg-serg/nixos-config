@@ -17,7 +17,14 @@ rustPlatform.buildRustPackage {
   pname = "local-bin-zsh";
   version = (lib.importTOML ./Cargo.toml).package.version;
 
-  src = lib.cleanSource ./.;
+  # `local-bin-core` is a path dependency, so the build source must contain both
+  # directories; the tarball root then holds them side by side.
+  src = lib.fileset.toSource {
+    root = ./..;
+    # allow-relative: the path dependency lives next to this package directory
+    fileset = lib.fileset.union ./../local-bin-core ./.;
+  };
+  sourceRoot = "source/local-bin-zsh";
 
   cargoLock.lockFile = ./Cargo.lock;
 

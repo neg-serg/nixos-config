@@ -96,7 +96,7 @@ fn keys_command(root: &Path, directory: &str, extension: &str, any: bool) -> i32
         return 1;
     }
     let text = String::from_utf8_lossy(&output.stdout);
-    let Some(json::Value::Array(leaves)) = json::parse(&text) else {
+    let Ok(json::Value::Arr(leaves)) = json::parse(text.as_bytes()) else {
         eprintln!("paths: nix eval returned unexpected JSON");
         return 1;
     };
@@ -108,7 +108,7 @@ fn keys_command(root: &Path, directory: &str, extension: &str, any: bool) -> i32
         .iter()
         .filter_map(|leaf| {
             let keys: Vec<String> = match leaf.get("key") {
-                Some(json::Value::Array(items)) => items
+                Some(json::Value::Arr(items)) => items
                     .iter()
                     .filter_map(|item| item.as_str().map(str::to_string))
                     .collect(),

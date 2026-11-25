@@ -19,7 +19,7 @@ use crate::text;
 pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let percentage = match arguments.next() {
         Some(value) if !value.as_bytes().is_empty() => value.as_bytes().to_vec(),
         _ => env::parameter_error(
@@ -163,7 +163,7 @@ fn raw_member(value: &Option<Json>, path: &[&str]) -> Vec<u8> {
             None => return b"null".to_vec(),
         }
     }
-    current.raw()
+    current.raw().into_bytes()
 }
 
 /// `jq -r '.width / .scale | floor'`; jq prints nothing when the division is
@@ -178,7 +178,7 @@ fn floor_division(width: Option<&Json>, scale: Option<&Json>) -> Vec<u8> {
     if scale == 0.0 {
         return Vec::new();
     }
-    json::number_text((width / scale).floor())
+    json::number_text((width / scale).floor()).into_bytes()
 }
 
 /// Evaluate one or two arithmetic operands with bash's diagnostics. Each

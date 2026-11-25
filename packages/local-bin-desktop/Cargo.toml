@@ -13,6 +13,7 @@ name = "local-bin-desktop"
 path = "src/main.rs"
 
 [dependencies]
+local-bin-core = { path = "../local-bin-core" }
 # Delivering SIGINT to wf-recorder and probing its liveness (screenrec) needs a
 # safe signal API; std can only SIGKILL a Child it still owns.
 nix = { version = "0.30", default-features = false, features = [

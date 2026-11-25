@@ -30,7 +30,7 @@ struct Options {
 pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let raw: Vec<Vec<u8>> = arguments
         .map(|value| env::os_bytes(&value).to_vec())
         .collect();

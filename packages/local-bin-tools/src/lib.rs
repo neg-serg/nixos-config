@@ -8,7 +8,7 @@
 //! run lock with `flock(2)` through libc, so the unsafe call lives in one
 //! audited place instead of an allow-attribute on the whole crate.
 
-pub mod json;
+pub use local_bin_core::json;
 
 // The commands are modules of this crate; `src/main.rs` dispatches on argv[0].
 pub mod dsh_worktree;

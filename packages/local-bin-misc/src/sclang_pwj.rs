@@ -34,5 +34,5 @@ pub fn entry() {
         .args(raw_args())
         .env("LD_LIBRARY_PATH", library_path())
         .exec();
-    exec_failure(&invocation_name(), 8, "pw-jack", &error);
+    exec_failure(&invocation_name(), 8, b"pw-jack", &error);
 }

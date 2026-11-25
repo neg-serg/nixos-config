@@ -26,8 +26,7 @@ use crate::{
     which_str, Captured, Site, Stderr, Stdin, Stdout,
 };
 
-#[path = "json.rs"]
-mod json;
+use crate::json;
 
 const USAGE: &str = include_str!("music_tui_usage.txt");
 
@@ -323,7 +322,7 @@ fn meta_value(path: &Path, key: &str) -> String {
         Ok(text) => text,
         Err(_) => return String::new(),
     };
-    match json::parse(&text) {
+    match json::parse(text.as_bytes()) {
         Ok(value) => match value.get(key) {
             Some(found) => found.python_repr(),
             None => "?".to_string(),
@@ -341,15 +340,15 @@ fn artist_count(path: &Path) -> String {
     };
     let mut artists: HashSet<String> = HashSet::new();
     for line in text.lines() {
-        let value = match json::parse(line) {
+        let value = match json::parse(line.as_bytes()) {
             Ok(value) => value,
             Err(_) => return "?".to_string(),
         };
-        if !matches!(value, json::Value::Object(_)) {
+        if !matches!(value, json::Value::Obj(_)) {
             return "?".to_string();
         }
         let path_value = match value.get("path") {
-            Some(json::Value::String(path)) => path.clone(),
+            Some(json::Value::Str(path)) => path.clone(),
             Some(_) => return "?".to_string(),
             None => String::new(),
         };

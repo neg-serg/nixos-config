@@ -19,7 +19,7 @@ use crate::proc::{Cmd, Sink};
 pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let first = arguments
         .next()
         .map(|value| env::os_bytes(&value).to_vec())

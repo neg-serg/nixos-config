@@ -13,8 +13,8 @@
 #   argv (`pw-link`, `wpctl`, `amixer`, `pw-record`, `aconnect`, `systemctl`,
 #   `pgrep`, `sox`, `mpv`, `hyprctl`, `git`, ...). Shell logic (option parsing,
 #   text filters, the renoise Config.xml rewrite that used to be a `python3`
-#   heredoc, state files) is native. The crate has no dependencies and forbids
-#   `unsafe`.
+#   heredoc, state files) is native. The crate's only dependency is the shared
+#   `local-bin-core` helper crate, and it forbids `unsafe`.
 {
   lib,
   rustPlatform,
@@ -24,7 +24,14 @@ rustPlatform.buildRustPackage {
   pname = "local-bin-audio";
   version = (lib.importTOML ./Cargo.toml).package.version;
 
-  src = lib.cleanSource ./.;
+  # `local-bin-core` is a path dependency, so the build source must contain both
+  # directories; the tarball root then holds them side by side.
+  src = lib.fileset.toSource {
+    root = ./..;
+    # allow-relative: the path dependency lives next to this package directory
+    fileset = lib.fileset.union ./../local-bin-core ./.;
+  };
+  sourceRoot = "source/local-bin-audio";
 
   cargoLock.lockFile = ./Cargo.lock;
 

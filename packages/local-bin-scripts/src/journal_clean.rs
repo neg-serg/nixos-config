@@ -19,7 +19,7 @@ pub fn entry() {
     let argv0 = argv
         .next()
         .unwrap_or_else(|| OsString::from("journal-clean"));
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let mut args = argv;
     let keep_window = args
         .next()

@@ -17,7 +17,7 @@ use crate::env;
 pub fn entry() {
     let mut argv = std::env::args_os();
     let argv0 = argv.next().unwrap_or_else(|| OsString::from("punzip"));
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let args: Vec<OsString> = argv.collect();
 
     let mut index = 0usize;

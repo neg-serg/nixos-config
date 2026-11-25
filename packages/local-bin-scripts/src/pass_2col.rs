@@ -151,7 +151,7 @@ fn pass_quiet(args: &[&std::ffi::OsStr]) -> bool {
 pub fn entry() {
     let mut argv = std::env::args_os();
     let argv0 = argv.next().unwrap_or_else(|| OsString::from("pass-2col"));
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
 
     let store: Vec<u8> = match env::var_nonempty("PASSWORD_STORE_DIR") {
         Some(value) => value,

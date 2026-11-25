@@ -35,7 +35,7 @@ const RETRY_PAUSE: &str = "0.3";
 pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let _ = arguments;
 
     // The daemon must be owned by systemd; the unit start is best effort.
@@ -155,7 +155,7 @@ fn read_wallpaper_path(state_file: &[u8]) -> Vec<u8> {
         return Vec::new();
     };
     match first.get("wallpaper_path") {
-        Some(path) => path.raw_or_empty(),
+        Some(path) => path.raw_or_empty().into_bytes(),
         None => Vec::new(),
     }
 }

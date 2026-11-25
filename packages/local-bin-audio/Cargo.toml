@@ -18,3 +18,6 @@ path = "src/main.rs"
 # lib target has nothing to run as a doctest.
 [lib]
 doctest = false
+
+[dependencies]
+local-bin-core = { path = "../local-bin-core" }

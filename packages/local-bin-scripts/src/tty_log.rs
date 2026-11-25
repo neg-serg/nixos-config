@@ -19,7 +19,7 @@ use crate::text;
 pub fn entry() {
     let mut argv = std::env::args_os();
     let argv0 = argv.next().unwrap_or_else(|| OsString::from("tty-log"));
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let mut args: Vec<OsString> = argv.collect();
 
     if args.is_empty() || args[0].is_empty() {

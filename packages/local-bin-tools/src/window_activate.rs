@@ -124,7 +124,7 @@ fn text_field(value: &json::Value, key: &str) -> String {
 
 pub fn windows() -> Result<Vec<Window>, String> {
     let out = hyprctl(&["clients", "-j"])?;
-    let Some(json::Value::Array(items)) = json::parse(&out) else {
+    let Ok(json::Value::Arr(items)) = json::parse(out.as_bytes()) else {
         // An empty client list makes some hyprland versions print nothing at all.
         return Ok(Vec::new());
     };
@@ -136,7 +136,8 @@ pub fn windows() -> Result<Vec<Window>, String> {
                     let name = text_field(workspace, "name");
                     if name.is_empty() {
                         match workspace.get("id") {
-                            Some(json::Value::Number(number)) => format!("{}", *number as i64),
+                            Some(json::Value::Int(number)) => format!("{number}"),
+                            Some(json::Value::Num(number)) => format!("{}", *number as i64),
                             Some(json::Value::Str(text)) => text.clone(),
                             _ => "?".to_string(),
                         }
@@ -152,7 +153,8 @@ pub fn windows() -> Result<Vec<Window>, String> {
                 title: text_field(item, "title"),
                 workspace,
                 focus_history: match item.get("focusHistoryID") {
-                    Some(json::Value::Number(number)) => *number as i64,
+                    Some(json::Value::Int(number)) => *number as i64,
+                    Some(json::Value::Num(number)) => *number as i64,
                     _ => 10_000,
                 },
             }

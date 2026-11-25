@@ -463,3 +463,226 @@ fn dump_string(text: &str, out: &mut String) {
     }
     out.push('"');
 }
+
+/// The name several ports gave this type (`json::Value::…`); it is the same
+/// enum, so command modules keep reading naturally.
+pub type Value = Json;
+
+impl Json {
+    /// Parse a JSON document. The ports feed it raw process output, hence
+    /// `&[u8]` rather than `&str`.
+    pub fn parse(bytes: &[u8]) -> Result<Json, ParseError> {
+        parse(bytes)
+    }
+
+    /// jq-style layout, separate from [`dump`]: `indent = Some(width)`
+    /// pretty-prints, `None` keeps the newlines jq adds between items.
+    /// `menu-search --json` depends on the exact `Some(1)` bytes.
+    pub fn dump(&self, indent: Option<usize>) -> String {
+        let mut out = String::new();
+        pretty_into(self, &mut out, indent, 0);
+        out
+    }
+}
+
+fn pretty_into(value: &Json, out: &mut String, indent: Option<usize>, level: usize) {
+    match value {
+        Json::Null => out.push_str("null"),
+        Json::Bool(true) => out.push_str("true"),
+        Json::Bool(false) => out.push_str("false"),
+        Json::Int(number) => out.push_str(&number.to_string()),
+        Json::Num(number) => {
+            if number.fract() == 0.0 && number.abs() < 1e15 {
+                out.push_str(&format!("{}", *number as i64));
+            } else {
+                out.push_str(&format!("{number}"));
+            }
+        }
+        Json::Str(text) => pretty_string(text, out),
+        Json::Arr(items) => {
+            if items.is_empty() {
+                out.push_str("[]");
+                return;
+            }
+            out.push('[');
+            for (index, item) in items.iter().enumerate() {
+                if index > 0 {
+                    out.push(',');
+                }
+                pretty_newline(out, indent, level + 1);
+                pretty_into(item, out, indent, level + 1);
+            }
+            pretty_close(out, indent, level);
+            out.push(']');
+        }
+        Json::Obj(entries) => {
+            if entries.is_empty() {
+                out.push_str("{}");
+                return;
+            }
+            out.push('{');
+            for (index, (key, item)) in entries.iter().enumerate() {
+                if index > 0 {
+                    out.push(',');
+                }
+                pretty_newline(out, indent, level + 1);
+                pretty_string(key, out);
+                out.push_str(": ");
+                pretty_into(item, out, indent, level + 1);
+            }
+            pretty_close(out, indent, level);
+            out.push('}');
+        }
+    }
+}
+
+fn pretty_newline(out: &mut String, indent: Option<usize>, level: usize) {
+    out.push('\n');
+    if let Some(width) = indent {
+        for _ in 0..width * level {
+            out.push(' ');
+        }
+    }
+}
+
+fn pretty_close(out: &mut String, indent: Option<usize>, level: usize) {
+    if indent.is_some() {
+        pretty_newline(out, indent, level);
+    }
+}
+
+fn pretty_string(text: &str, out: &mut String) {
+    out.push('"');
+    for character in text.chars() {
+        match character {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            character if (character as u32) < 0x20 => {
+                out.push_str(&format!("\\u{:04x}", character as u32));
+            }
+            character => out.push(character),
+        }
+    }
+    out.push('"');
+}
+
+impl Json {
+    /// Element of an array (the `.[0]` of a jq filter).
+    pub fn index(&self, index: usize) -> Option<&Json> {
+        match self {
+            Json::Arr(items) => items.get(index),
+            _ => None,
+        }
+    }
+
+    /// The numeric value, whether the document spelled it as an integer or a
+    /// float.
+    pub fn as_number(&self) -> Option<f64> {
+        match self {
+            Json::Int(value) => Some(*value as f64),
+            Json::Num(value) => Some(*value),
+            _ => None,
+        }
+    }
+
+    /// jq truthiness: false and null are false, everything else is true.
+    pub fn truthy(&self) -> bool {
+        !matches!(self, Json::Null | Json::Bool(false))
+    }
+
+    /// `jq -r` output for this value.
+    pub fn raw(&self) -> String {
+        match self {
+            Json::Str(text) => text.clone(),
+            Json::Int(number) => number.to_string(),
+            Json::Arr(_) | Json::Obj(_) => self.pretty(),
+            other => dump(other),
+        }
+    }
+
+    /// `jq -r '.path // empty'`: no output for null/false.
+    pub fn raw_or_empty(&self) -> String {
+        if self.truthy() {
+            self.raw()
+        } else {
+            String::new()
+        }
+    }
+
+    /// jq's default layout (2-space indent, one member per line, no trailing
+    /// newline because the callers capture the value with `$(...)`).
+    pub fn pretty(&self) -> String {
+        let mut out = String::new();
+        pretty_into(self, &mut out, Some(2), 0);
+        out
+    }
+}
+
+/// `jq -r` number spelling: integers lose the fractional part.
+pub fn number_text(value: f64) -> String {
+    if value.is_finite() && value.fract() == 0.0 && value.abs() < 9.007_199_254_740_992e15 {
+        return format!("{}", value as i64);
+    }
+    format!("{value}")
+}
+
+impl Json {
+    /// The elements of an array.
+    pub fn as_array(&self) -> Option<&[Json]> {
+        match self {
+            Json::Arr(items) => Some(items),
+            _ => None,
+        }
+    }
+
+    /// Python's `repr` of the same value, which is what the TUI originals
+    /// printed for metadata that came from JSON.
+    pub fn python_repr(&self) -> String {
+        match self {
+            Json::Null => "None".to_string(),
+            Json::Bool(true) => "True".to_string(),
+            Json::Bool(false) => "False".to_string(),
+            Json::Int(number) => number.to_string(),
+            Json::Num(number) => crate::pyfmt::orjson_float(*number),
+            Json::Str(text) => text.clone(),
+            Json::Arr(items) => {
+                let rendered: Vec<String> = items.iter().map(Json::json_repr).collect();
+                format!("[{}]", rendered.join(", "))
+            }
+            Json::Obj(members) => {
+                let rendered: Vec<String> = members
+                    .iter()
+                    .map(|(key, value)| format!("{}: {}", quote(key), value.json_repr()))
+                    .collect();
+                format!("{{{}}}", rendered.join(", "))
+            }
+        }
+    }
+
+    fn json_repr(&self) -> String {
+        match self {
+            Json::Str(text) => quote(text),
+            other => other.python_repr(),
+        }
+    }
+}
+
+/// Python's `repr` for a JSON string.
+fn quote(text: &str) -> String {
+    let mut out = String::from("'");
+    for character in text.chars() {
+        match character {
+            '\\' => out.push_str("\\\\"),
+            '\'' => out.push_str("\\'"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            character => out.push(character),
+        }
+    }
+    out.push('\'');
+    out
+}

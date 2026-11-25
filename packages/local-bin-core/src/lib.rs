@@ -3,8 +3,7 @@
 //! Every helper crate used to carry its own copy of these modules, and the
 //! copies drifted apart: `env.rs` alone existed in five variants with slightly
 //! different function sets. The commands only ever needed one behaviour per
-//! function, so the helpers live here once and the crate keeps growing as the
-//! remaining ports are migrated onto it.
+//! function, so the helpers live here once and every local-bin port uses them.
 //!
 //! The crate deliberately has no dependencies. Python and shell compatibility
 //! (argparse help layout, `json`/`orjson` float formatting, `Path`
@@ -14,6 +13,8 @@
 #![forbid(unsafe_code)]
 
 pub mod env;
+pub mod helptext;
 pub mod json;
+pub mod proc;
 pub mod pyfmt;
 pub mod text;

@@ -50,7 +50,7 @@ use crate::text;
 pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
-    let program = env::invocation_name(&argv0);
+    let program = env::invocation_name_of(&argv0);
     let mode = arguments
         .next()
         .map(|value| value.as_bytes().to_vec())
@@ -118,11 +118,11 @@ fn now_seconds() -> u64 {
 fn read_state() -> Option<State> {
     let bytes = std::fs::read(OsStr::from_bytes(&statefile())).ok()?;
     let json = Json::parse(&bytes).ok()?;
-    let video = json.get("video")?.as_str()?.to_vec();
+    let video = json.get("video")?.as_str()?.as_bytes().to_vec();
     let audio = json
         .get("audio")
         .and_then(Json::as_str)
-        .map(|value| value.to_vec())
+        .map(|value| value.as_bytes().to_vec())
         .unwrap_or_default();
     let started = json.get("started").and_then(Json::as_number).unwrap_or(0.0);
     let audio_pid = json
@@ -678,7 +678,7 @@ fn focused_output() -> Vec<u8> {
                     // `jq -r .name`: a missing member prints `null`.
                     name = item
                         .get("name")
-                        .map(|value| text::first_line(&value.raw()).to_vec())
+                        .map(|value| text::first_line(value.raw().as_bytes()).to_vec())
                         .unwrap_or_else(|| b"null".to_vec());
                     break;
                 }
@@ -745,7 +745,7 @@ fn focused_output_rect() -> Option<Vec<u8>> {
                 rect.push(b' ');
             }
             match item.get(key) {
-                Some(value) => rect.extend_from_slice(&value.raw()),
+                Some(value) => rect.extend_from_slice(value.raw().as_bytes()),
                 None => rect.extend_from_slice(b"null"),
             }
         }
