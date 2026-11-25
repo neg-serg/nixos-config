@@ -7,24 +7,16 @@ let
   pkg = functions.pkg;
 in
 {
-  swayimg = call (pkg "swayimg") { };
-  hdspeconf = call (pkg "hdspeconf") { };
   pwroute = call (inputs.rust-pkgs + "/pwroute/package.nix") { };
-  pw-audioshare = call (pkg "pw-audioshare") { };
   # MPD client for large libraries: Node backend + React UI, served on loopback.
-  sola-mpd = call (pkg "sola-mpd") { };
   # CamillaDSP's browser equalizer (Svelte client + Fastify server): the upstream
   # reference UI on loopback; the headphone catalogue serves aurora's own /eq page.
-  camillaeq = call (pkg "camillaeq") { };
   # ggml-based runtime for local audio models (prebuilt Vulkan build); it runs
   # Audio Flamingo Next GGUF on the GPU when the ROCm torch path cannot.
-  audio-cpp = call (pkg "audio-cpp") { };
   # Kernel module (RME HDSPe ALSA driver) — takes `kernel`; the default kernel
   # set is a placeholder, the host overrides it with the actual boot kernel.
   snd-hdspe = call (pkg "snd-hdspe") { kernel = prev.linuxPackages.kernel; };
   # Python libs for the CamillaGUI backend (camilladsp / camilladsp_plot modules)
-  pycamilladsp = call (pkg "pycamilladsp") { };
-  pycamilladsp-plot = call (pkg "pycamilladsp-plot") { };
   # CamillaDSP itself, built with the native PipeWire backend (`pipewire-backend`):
   # the insert is two filter nodes in the graph instead of the ALSA `pipewire`
   # PCM plugin, which hands out reads of the graph quantum and cannot take a
@@ -45,6 +37,5 @@ in
   # -- metering / delivery --
   # Prebuilt upstream bundles: the Flutter meter canvas (with the VST3 that
   # feeds it from a DAW) and `oaa`, the same engine for one file at a time.
-  open-audio-analyzer = call (pkg "open-audio-analyzer") { };
   oaa = call (pkg "oaa-cli") { }; # oaa master.wav --target streaming-14 -> exit code
 }

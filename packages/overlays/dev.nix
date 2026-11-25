@@ -1,9 +1,4 @@
-inputs: final: prev:
-let
-  call = final.neg.functions.callPkg;
-  pkg = final.neg.functions.pkg;
-in
-{
+inputs: final: prev: {
   # bpftrace 0.25+ works with LLVM 22; use same version as the rest of the config
   bpftrace = prev.bpftrace.override { llvmPackages = prev.llvmPackages_22; };
   # Security: avoid insecure Mbed TLS 2 by aliasing to v3
@@ -40,7 +35,6 @@ in
   # a second binary beside the stable `llama-cpp-vulkan`, used by the Inkling
   # tier only. The header of packages/llama-cpp-inkling/default.nix carries the
   # why and the removal condition.
-  llama-cpp-inkling = call (pkg "llama-cpp-inkling") { };
 
   # Reserved for development/toolchain overlays
 

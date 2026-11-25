@@ -1011,6 +1011,9 @@
         "rsmetrx": [
           "rsmetrx"
         ],
+        "rust-pkgs": [
+          "rust-pkgs"
+        ],
         "skwd": "skwd",
         "skwd-daemon": "skwd-daemon",
         "sqlit": "sqlit",
@@ -1020,11 +1023,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786750420,
-        "narHash": "sha256-WAGRqozzKUEhZUygIifEckkRStIumk3b9W2hAvIPZxI=",
+        "lastModified": 1795630128,
+        "narHash": "sha256-082LKEuhwPKJ/L64eXZ3OZzXGTiPAznYSlDN6U6K+wg=",
         "owner": "neg-serg",
         "repo": "nixos-pkgs",
-        "rev": "95f4764dbc7cc82be0c6152e1279fbd43e20ca51",
+        "rev": "751831deb43219ddc982f8da0eb5f6bf11fd48b4",
         "type": "github"
       },
       "original": {

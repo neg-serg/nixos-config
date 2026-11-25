@@ -219,6 +219,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.wl.follows = "wl";
       inputs.rsmetrx.follows = "rsmetrx";
+      # The Rust packages moved to neg-pkgs keep the host's slim wrapper.
+      inputs.rust-pkgs.follows = "rust-pkgs";
     };
     aurora-src = {
       url = "git+ssh://git@github.com/neg-serg/aurora";

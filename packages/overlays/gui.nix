@@ -34,32 +34,24 @@ in
   # (~200 MB of ELF). Exposed here so the flake carries `.#rustgis` and the
   # system only installs an on-demand launcher
   # (modules/user/nix-maid/apps/gui-apps.nix).
-  rustgis = callPkg (pkg "rustgis") { };
   # Patched Vivaldi build (wayland flags, bundled libffmpeg RUNPATH); the system
   # only carries a launcher.
   vivaldi-fixed = callPkg (pkg "vivaldi") { };
   # hypr-kdeconnect-fix — RemoteDesktop portal backend bridging KDE Connect /
   # Deskflow input to the wlroots virtual-input protocols Hyprland exposes.
-  hypr-kdeconnect-fix = callPkg (pkg "hypr-kdeconnect-fix") { };
   # hyprqt6engine — not in the pinned nixpkgs yet, pinned locally (see
   # packages/hyprqt6engine). Qt6 platform theme + widget style for Hyprland;
   # the session selects it via QT_QPA_PLATFORMTHEME=hyprqt6engine and feeds it
   # ~/.config/hypr/hyprqt6engine.conf (modules/user/nix-maid/gui/qt.nix).
-  hyprqt6engine = callPkg (pkg "hyprqt6engine") { };
-  matugen-themes = callPkg (pkg "matugen-themes") { };
   wl = callPkg (pkg "wl") { };
   wl-switcher = callPkg (pkg "wl-switcher") { inherit mkVicinaeExtension; };
   wallhaven = callPkg (pkg "wallhaven") { inherit mkVicinaeExtension; };
   hyprwhspr = callPkg (pkg "hyprwhspr") { inherit mkVicinaeExtension; };
   aura = callPkg (pkg "aura") { inherit mkVicinaeExtension; }; # the emotion/CBT diary: record a note from the launcher
-  camillagui = callPkg (pkg "camillagui") { }; # web GUI for CamillaDSP
-  atrium = callPkg (pkg "atrium") { }; # Wayland multiseat display manager
   sonda = callPkg (pkg "sonda") { }; # file manager for pleamar-wm that searches files by what they hold
-  craft-anything = callPkg (pkg "craft-anything") { }; # reverse-engineering workbench + rebuild assistant (desktop app, CLI, MCP server)
   # Irori — game launcher repacked from the upstream release tarball. The
   # WebKitGTK sign-in helper makes the closure heavy, so the system installs the
   # on-demand launcher (modules/user/games/irori.nix) instead of the package.
-  irori = callPkg (pkg "irori") { };
 
   # ArtCraft suite: the apps are on-demand roots
   # (modules/user/nix-maid/apps/craft-apps.nix) built on first launch, so the
@@ -68,8 +60,6 @@ in
   # bundle come from nixpkgs now — its recipes are newer than the local copies
   # used to be (the 2026-11-21 nixpkgs bump inverted the gap). FigCraft,
   # SolidCraft and Craft Anything are still built here: nixpkgs has no recipe.
-  figcraft = callPkg (pkg "figcraft") { }; # interface design and prototyping
-  solidcraft = callPkg (pkg "solidcraft") { }; # parametric 3D CAD + headless CLI/MCP
 
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.

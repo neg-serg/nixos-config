@@ -2,7 +2,6 @@
 final: prev:
 let
   callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
-  pkg = final.neg.functions.pkg; # name → packages/<name>, no `../` counting
 in
 {
   # mprime (Prime95): the source zip on download.mersenne.ca / mersenne.org is
@@ -44,11 +43,8 @@ in
     # here: neg-pkgs (applied after this overlay) provides them under the same
     # names, so the local recipes were dead. Deleting them left every drvPath
     # unchanged.
-    dnsglobe = callPkg (pkg "dnsglobe") { }; # Global DNS propagation checker TUI — record answers on a world map
     hwctl = callPkg (inputs.rust-pkgs + "/hwctl/package.nix") { }; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
-    oryx = callPkg (pkg "oryx") { }; # TUI for sniffing network traffic using eBPF (needs root + BTF kernel)
     hypr-focus = callPkg (inputs.rust-pkgs + "/hypr-focus/package.nix") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
-    niri-screen-time = callPkg (pkg "niri-screen-time") { }; # Screen time tracker by window class/title (niri + Hyprland daemon and report CLI)
     tidalctl = callPkg (inputs.rust-pkgs + "/tidalctl/package.nix") { }; # TidalCycles session controller — engine start/stop, editor, recording
     # The stale python-era copy in neg-serg/nixos-pkgs has no `vid-info`, so
     # this one keeps the explicit path into the rust-pkgs input.
@@ -56,9 +52,6 @@ in
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
     # Extracted to github:neg-serg/tint, which owns the build and its tests.
     tint = inputs.tint.packages.${prev.stdenv.hostPlatform.system}.default; # Colouriser for CLI output — scanners + per-tool rulesets
-    flow = callPkg (pkg "flow") { }; # Terminal dashboard for real-time network throughput
-    lsfg-vk = callPkg (pkg "lsfg-vk") { }; # Vulkan frame-gen layer (LSFG on Linux; needs Lossless Scaling on Steam)
-    nixard = callPkg (pkg "nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
     nixbuild-status = callPkg (inputs.rust-pkgs + "/nixbuild-status/package.nix") { }; # One-line NixOS build status for status bars (waybar/i3bar/polybar)
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/main/@projects/lusty
     # Extracted to github:neg-serg/tgchat-rs, which owns the build and its tests.
@@ -88,11 +81,5 @@ in
     # and the CLI check. The host keeps the shader collection under
     # files/gui/shtoy and the local-bin symlink.
     shtoy = inputs.shtoy.packages.${prev.stdenv.hostPlatform.system}.default; # Run Shadertoy shaders fullscreen in esshader
-    tuigram = callPkg (pkg "tuigram") { }; # Terminal UI Telegram client (npm package, Node 26 + node:ffi)
-    topowall = callPkg (pkg "topowall") { }; # Topographic contour wallpapers from real elevation data (GPU render)
-    terrascope = callPkg (pkg "terrascope") { }; # Interactive world map for the terminal (braille; live weather/aircraft/earthquakes)
-    geekbench-ai = callPkg (pkg "geekbench-ai") { }; # Geekbench AI — on-device inference benchmark (proprietary binary)
-    neru = callPkg (pkg "neru") { }; # Desktop keyboard navigation — hints, grids, vim-style modes (upstream main)
-    uutils-sort = callPkg (pkg "uutils-sort") { }; # uu_sort patched to compute ICU collation keys in parallel
   };
 }

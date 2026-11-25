@@ -139,7 +139,6 @@ slimChunks
   });
 
   # Host firmware subset for trantor; replaces the full linux-firmware bundle.
-  linux-firmware-minimal = final.callPackage ./linux-firmware-minimal { };
 
   # GHCi with the TidalCycles library preloaded — used by the nvim tidal
   # ftplugin (tidal-edit / tidalctl demo/code) to boot a tidal> REPL.
@@ -243,7 +242,6 @@ slimChunks
 
   # tmd-top: real-time per-IP network traffic monitor (TUI) — pinned textual 1.0.0
   # stack on python312, see packages/tmd-top/default.nix
-  tmd-top = final.callPackage ./tmd-top { };
 
   # lazytail: terminal log viewer (ratatui) with live filtering, follow mode and
   # an MCP server — see packages/lazytail/default.nix
@@ -255,7 +253,6 @@ slimChunks
 
   # tewi: TUI client for Transmission/qBittorrent/Deluge daemons
   # (python app, deps from nixpkgs + local geoip2fast, see packages/tewi/default.nix)
-  tewi = final.callPackage ./tewi { };
 
   # Code200x Unicode font family by James Kass — Code2000 (BMP), Code2001
   # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H).
