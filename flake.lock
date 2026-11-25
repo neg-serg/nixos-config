@@ -1266,7 +1266,7 @@
         "pleamar-wm": "pleamar-wm"
       },
       "locked": {
-        "narHash": "sha256-8efxn8Ti8XiYieIplun3Yq/zywDrX7ARyfkXjAdGPNM=",
+        "narHash": "sha256-tdFDXawfXkOCkR1ReshrmSqrSJULnp7k+f35LCqDaSY=",
         "path": "/home/neg/src/pleamar-config",
         "type": "path"
       },

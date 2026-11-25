@@ -34,7 +34,7 @@ seed host="trantor":
 # modules/tools), so the rebuild scratchpad gets the dependency tree instead of
 # raw nix output; `--` separates rom's own flags from the ones passed to nix.
 # Usage: just deploy [host]
-deploy host="trantor": check-eval hooks-ensure
+deploy host="trantor": pleamar-sync check-eval hooks-ensure
     # Build system closure with network tuning
     rom build .#nixosConfigurations.{{ host }}.config.system.build.toplevel \
       -- --out-link result \
@@ -50,6 +50,14 @@ deploy host="trantor": check-eval hooks-ensure
 # Deploy with maximum verbosity (logs + verbose)
 deploy-debug host="trantor": check-eval hooks-ensure
     sudo nixos-rebuild switch --flake .#{{ host }} -L -v < /dev/null
+
+# Refresh the path: flake input of the shell after editing its checkout.
+#
+# The deployed scene links point at the checkout (live), but Nix pins the flake
+# input by narHash: after an edit a rebuild refuses with "NAR hash mismatch"
+# until the lock is refreshed. This is local and cheap; `deploy` runs it first.
+pleamar-sync:
+    nix flake lock --update-input pleamar-config
 
 # Alias for deploy
 switch host="trantor":
