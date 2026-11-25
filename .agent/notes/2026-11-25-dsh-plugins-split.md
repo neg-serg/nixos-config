@@ -78,6 +78,13 @@ toplevel build, and a grep of the built `dsh-tui-ensure` script for the store pa
    packages). A harness bump must touch both.
 1. **The two forks stay here**; if they are ever republished, they move out and the `localPlugins`
    list in the roster empties.
+1. **The live profile carried a dead `link:` to the old aurora checkout.** `@local/dsh-gpu-sandbox`
+   pointed at `/home/neg/src/aurora/tools/dsh-gpu-sandbox`, which moved to `~/src/nix/aurora` with
+   the grouped-flake refactor. Any change to the profile's dependency set makes the caretaker run
+   `dsh plugin install`, and that run died in `reconcile` because pnpm had dropped the dead link and
+   the bundle could no longer be resolved. It is unrelated to the extraction but was exposed by it:
+   the entry was repointed to the current path by hand (the profile manifest is a user file, no
+   module owns that dependency). A future move of that checkout hits the same wall.
 
 ## Commits
 
