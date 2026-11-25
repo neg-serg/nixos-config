@@ -570,11 +570,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795610626,
-        "narHash": "sha256-09JaaJaMSzuxBv5CwMIzjh6U7AsGaImDhQXswFSk4Fs=",
+        "lastModified": 1795611038,
+        "narHash": "sha256-5cB2j9tLSQQ+CCe78Nn0eXIxIcVsSGGGE3VALPIC7hg=",
         "owner": "neg-serg",
         "repo": "genlc",
-        "rev": "007be096a072bcda616ba57a03609efb2442ab2b",
+        "rev": "db61e5cab19aa8ab33ac5a00dc1e84860259fea6",
         "type": "github"
       },
       "original": {
@@ -927,11 +927,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795607922,
-        "narHash": "sha256-GkaahiR0FsJ9uJCPoBVXcvoB2GKNGp1Xf2Z3jAr4Foc=",
+        "lastModified": 1795608511,
+        "narHash": "sha256-rHJkA6orJST61mwNsKmlYpO10raN+VcqsJXWfjzmL80=",
         "owner": "neg-serg",
         "repo": "music-index-tools",
-        "rev": "1a2047762e643bb76f1290ec47c06324361663d3",
+        "rev": "09102f5d68ceaf98a2964063923dd522a8c7d5ae",
         "type": "github"
       },
       "original": {
