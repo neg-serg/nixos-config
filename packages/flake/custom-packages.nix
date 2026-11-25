@@ -4,7 +4,7 @@
   # by the vital-standalone unit, `flucoma` is materialised by
   # modules/media/audio/assets.nix for the SuperCollider plugin path.
   vital = pkgs.vital; # spectral wavetable synth (957 MiB closure)
-  flucoma = pkgs.flucoma; # FluCoMa corpus-manipulation UGens for SuperCollider
+  flucoma = pkgs.music.flucoma; # FluCoMa corpus-manipulation UGens for SuperCollider
   # Kept out of the system profile: yt-dlp drags a 692 MiB python closure.
   # The on-demand launcher (modules/user/nix-maid/web/yt-dlp.nix) builds this
   # attr on first use and GC-roots it under ~/.local/state/nix-apps.
@@ -193,8 +193,8 @@
 
   # Audio content materialised once per user by modules/media/audio/assets.nix
   # into GC roots; the home-file symlinks point at $HOME, not at these paths.
-  dirt-samples = pkgs.neg.dirt-samples;
-  sc-faust = pkgs.sc-faust;
+  dirt-samples = pkgs.music.dirt-samples;
+  sc-faust = pkgs.music.sc-faust;
   renoise-redux = pkgs.neg.renoise-redux;
 
   # The full alsa-tools set (GTK/gst GUI utilities) — the system keeps only the

@@ -53,14 +53,9 @@ in
       # .pkg).
       inherit paths pkg;
 
-      # mkScQuark: shared builder for the pure-sclang SuperCollider quark
-      # packages (no build step) — see packages/lib/mkScQuark.nix.
-      mkScQuark = prev.callPackage (paths.path "packages/lib/mkScQuark.nix") { };
-
-      # mkScPlugin: shared builder for the SuperCollider UGen plugin packages
-      # (cmake against sc-plugin-farm + the plugin/extension install layout) —
-      # see packages/lib/mkScPlugin.nix.
-      mkScPlugin = prev.callPackage (paths.path "packages/lib/mkScPlugin.nix") { };
+      # mkScQuark / mkScPlugin and the SuperCollider packages themselves moved
+      # to github:neg-serg/nixos-music (inputs.nixos-music); they are reached
+      # as pkgs.music.* there, not through pkgs.neg.
 
       # mkVicinaeExtension: shared builder for the local Vicinae extensions
       # (install-as-is node bundles) — see packages/lib/mkVicinaeExtension.nix.

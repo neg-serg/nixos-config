@@ -47,8 +47,12 @@ counts levels:
 
 ```nix
 swayimg = callPkg (pkg "swayimg") { };
-flucoma = callPkg (pkg "flucoma") { inherit scPluginFarm; };
+hdspeconf = callPkg (pkg "hdspeconf") { };
 ```
 
 A missing directory is an eval error listing the names that do exist. Patch files that live beside
 the packages use `paths.path "packages/<file>"`.
+
+The SuperCollider live-coding stack (UGen plugins, sclang quarks, Dirt-Samples, VST hosting) is not
+packaged here any more: it lives in `github:neg-serg/nixos-music` and arrives as the `nixos-music`
+flake input, reachable as `pkgs.music.<name>`.

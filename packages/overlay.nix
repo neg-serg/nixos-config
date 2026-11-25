@@ -160,13 +160,6 @@ slimChunks
         // {
           game = final.callPackage (inputs.rust-pkgs + "/game/package.nix") { }; # Unified game launcher
           joern = final.callPackage ./joern { }; # Open-source code analysis platform
-          superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
-          superdirt-mixer = final.callPackage ./superdirt-mixer { }; # graphical mixer UI quark for SuperDirt orbits (gain/pan/reverb/EQ/compressor)
-          equi = final.callPackage ./equi { inherit (final.neg.functions) mkScQuark; }; # EQui SC quark (parametric EQ) — SuperDirtMixer dependency
-          jsonlib = final.callPackage ./jsonlib { inherit (final.neg.functions) mkScQuark; }; # JSONlib SC quark (JSON en/decoder) — SuperDirtMixer dependency
-          dwg-reverb = final.callPackage ./dwg-reverb { }; # compiled SC UGen plugin: virtual room reverb (early reflections + FDN late reverb)
-          dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
-          vowel = final.callPackage ./vowel { inherit (final.neg.functions) mkScQuark; }; # Vowel SC quark (formant tables) used by SuperDirt
           dsh-patch = final.callPackage (inputs.rust-pkgs + "/dsh-patch/package.nix") { }; # count-asserted patcher for dsh bundles and profiles
           dsh = final.callPackage ./dsh { inherit (final.neg) dsh-patch; }; # DeepSeek Harness agent CLI (dsh)
           llm-proxy = final.callPackage ./llm-proxy { }; # context budget + tool-protocol guard in front of llama-swap
@@ -185,9 +178,6 @@ slimChunks
           renoise-redux = final.callPackage ./renoise-redux {
             renoiseSrc = inputs.renoise-src;
           }; # Renoise Redux VST3 plugin (licensed build)
-          protoplug = final.callPackage ./protoplug { }; # Lua live-coding VST2 plugins (Fx + Gen, MIT)
-          midi-transcribe = final.callPackage ./midi-transcribe { }; # audio->MIDI transcription via Sony hFT-Transformer (CPU)
-          virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
           questyle-ctl = final.callPackage (inputs.rust-pkgs + "/questyle-ctl/package.nix") { }; # USB/ALSA/PipeWire + vendor HID channel of the Questyle QCC dongle
           pleamar-sysmon = final.callPackage ./pleamar-sysmon { }; # pleamar system monitor worker (procfs/sysfs, JSON lines)
           pleamar-weather = final.callPackage ./pleamar-weather { }; # pleamar weather worker (Open-Meteo/MET Norway/wttr.in, JSON lines)

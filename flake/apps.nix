@@ -23,7 +23,7 @@ in
     # `nix run .#<name>` or from their devshell.
     midi-transcribe = {
       type = "app";
-      program = "${pkgs.neg.midi-transcribe}/bin/midi-transcribe";
+      program = "${pkgs.music.midi-transcribe}/bin/midi-transcribe";
     };
     docling = {
       type = "app";

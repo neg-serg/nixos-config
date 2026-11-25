@@ -1169,6 +1169,26 @@
         "type": "github"
       }
     },
+    "nixos-music": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795616401,
+        "narHash": "sha256-Q+R13wqf5bNFWDaxpMGxp/iefXen0Zo5XEBYChYIELI=",
+        "ref": "refs/heads/main",
+        "rev": "d27dbc1f1645d455d23d0ea167dcaffd52e533e7",
+        "revCount": 1,
+        "type": "git",
+        "url": "file:///home/neg/src/nixos-music"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/neg/src/nixos-music"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1788194298,
@@ -1438,6 +1458,7 @@
         "nix-cachyos-kernel": "nix-cachyos-kernel",
         "nix-maid": "nix-maid",
         "nix-src": "nix-src",
+        "nixos-music": "nixos-music",
         "nixpkgs": "nixpkgs_2",
         "pleamar-config": "pleamar-config",
         "raise": "raise",

@@ -54,19 +54,19 @@ let
   # Used both by sessionVariables and the supercollider-engine unit env.
   scPluginPath = lib.concatStringsSep ":" [
     "${pkgs.supercolliderPlugins.sc3-plugins}/lib/SuperCollider/plugins"
-    "${pkgs.f0plugins}/lib/SuperCollider/plugins"
-    "${pkgs.steroids-ugens}/lib/SuperCollider/plugins"
-    "${pkgs.super-bufrd}/lib/SuperCollider/plugins"
-    "${pkgs.xplaybuf}/lib/SuperCollider/plugins"
-    "${pkgs.mi-ugens}/lib/SuperCollider/plugins"
-    "${pkgs.guttersynth-sc}/lib/SuperCollider/plugins"
-    "${pkgs.my-ugens}/lib/SuperCollider/plugins"
-    "${pkgs.softcut-sc}/lib/SuperCollider/plugins"
-    "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin/plugins"
+    "${pkgs.music.f0plugins}/lib/SuperCollider/plugins"
+    "${pkgs.music.steroids-ugens}/lib/SuperCollider/plugins"
+    "${pkgs.music.super-bufrd}/lib/SuperCollider/plugins"
+    "${pkgs.music.xplaybuf}/lib/SuperCollider/plugins"
+    "${pkgs.music.mi-ugens}/lib/SuperCollider/plugins"
+    "${pkgs.music.guttersynth-sc}/lib/SuperCollider/plugins"
+    "${pkgs.music.my-ugens}/lib/SuperCollider/plugins"
+    "${pkgs.music.softcut-sc}/lib/SuperCollider/plugins"
+    "${pkgs.music.vstplugin}/share/SuperCollider/Extensions/VSTPlugin/plugins"
     "${assetsRoot}/flucoma/lib/SuperCollider/plugins" # FluCoMa: corpus manipulation UGens (GC root from assets.nix)
-    "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
-    "${pkgs.mdugens}/lib/SuperCollider/plugins" # MDUGens: TPTFilter/SOSBank UGens (PlateReverb etc.)
-    "${pkgs.portedplugins}/lib/SuperCollider/plugins" # portedplugins: VA filters, Fverb reverb
+    "${pkgs.music.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
+    "${pkgs.music.mdugens}/lib/SuperCollider/plugins" # MDUGens: TPTFilter/SOSBank UGens (PlateReverb etc.)
+    "${pkgs.music.portedplugins}/lib/SuperCollider/plugins" # portedplugins: VA filters, Fverb reverb
     "${assetsRoot}/sc-faust/lib/SuperCollider/plugins" # sc_faust: Faust JIT compiler UGen
   ];
 
@@ -112,7 +112,7 @@ in
     # source newer — store mtime is epoch, so user edits are never clobbered).
     systemd.user.tmpfiles.rules = [
       "d %h/.local/share/SuperCollider/Extensions/SuperDirtMixer/presets 0755 - - -"
-      "C %h/.local/share/SuperCollider/Extensions/SuperDirtMixer/presets/Default.json 0644 - - - ${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/presets/Default.json"
+      "C %h/.local/share/SuperCollider/Extensions/SuperDirtMixer/presets/Default.json 0644 - - - ${pkgs.music.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/presets/Default.json"
     ];
     environment.etc = {
       "skel/.config/SuperCollider/boot_noop.scd".text = bootNoop;
@@ -121,15 +121,15 @@ in
       ".config/SuperCollider/boot_noop.scd".text = bootNoop;
       ".config/SuperCollider/sclang_conf.yaml".text = sclangConf;
       # SuperDirt classes from the nix package (replaces manual quark install)
-      "${ext}/SuperDirt".source = scExt pkgs.neg.superdirt "SuperDirt";
+      "${ext}/SuperDirt".source = scExt pkgs.music.superdirt "SuperDirt";
       # Vowel formant tables from the nix package (SuperDirt initVowels needs it)
-      "${ext}/Vowel".source = scExt pkgs.neg.vowel "Vowel";
+      "${ext}/Vowel".source = scExt pkgs.music.vowel "Vowel";
       # SC3-Plugins classes (DynKlank, SwitchDelay, …) — needed by SuperDirt default-synths
       "${ext}/SC3plugins".source = scExtUpper pkgs.supercolliderPlugins.sc3-plugins "SC3plugins";
       # EQui — parametric EQ quark used by SuperDirtMixer (read-only code)
-      "${ext}/EQui".source = scExt pkgs.neg.equi "EQui";
+      "${ext}/EQui".source = scExt pkgs.music.equi "EQui";
       # JSONlib — JSON en/decoder quark used by SuperDirtMixer (read-only code)
-      "${ext}/JSONlib".source = scExt pkgs.neg.jsonlib "JSONlib";
+      "${ext}/JSONlib".source = scExt pkgs.music.jsonlib "JSONlib";
       # SuperDirtMixer — graphical mixer UI for SuperDirt orbits. Subdirs are
       # symlinked individually (NOT the whole quark) so that relative paths
       # ("../../presets/", resolved by SC against the compiled class file
@@ -137,63 +137,63 @@ in
       # the code itself is read-only in the store. The presets dir and its
       # Default.json seed come from the systemd.user.tmpfiles.rules below.
       ".local/share/SuperCollider/Extensions/SuperDirtMixer/classes".source =
-        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/classes";
+        "${pkgs.music.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/classes";
       ".local/share/SuperCollider/Extensions/SuperDirtMixer/synths".source =
-        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/synths";
+        "${pkgs.music.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/synths";
       ".local/share/SuperCollider/Extensions/SuperDirtMixer/HelpSource".source =
-        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/HelpSource";
+        "${pkgs.music.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/HelpSource";
       ".local/share/SuperCollider/Extensions/SuperDirtMixer/assets".source =
-        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/assets";
+        "${pkgs.music.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/assets";
       ".local/share/SuperCollider/Extensions/SuperDirtMixer/tidal".source =
-        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/tidal";
+        "${pkgs.music.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/tidal";
       ".local/share/SuperCollider/Extensions/SuperDirtMixer/SuperDirtMixer.quark".source =
-        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/SuperDirtMixer.quark";
+        "${pkgs.music.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/SuperDirtMixer.quark";
       # Dirt-Samples at a stable path — the notes startup script (which cannot
       # interpolate nix store paths) loads samples from here.
       ".local/share/SuperCollider/Dirt-Samples".source = "${assetsRoot}/dirt-samples/share/Dirt-Samples";
       # Ported third-party UGen plugin classes (.sc files; the .so plugins are
       # found via SC_PLUGIN_PATH above). Each package installs its own quark
       # layout under share/SuperCollider/extensions/<QuarkName>/.
-      "${ext}/f0plugins".source = scExt pkgs.f0plugins "f0plugins";
-      "${ext}/Steroids".source = scExt pkgs.steroids-ugens "Steroids";
-      "${ext}/SuperBufRd".source = scExt pkgs.super-bufrd "SuperBufRd";
-      "${ext}/XPlayBuf".source = scExt pkgs.xplaybuf "XPlayBuf";
-      "${ext}/mi-UGens".source = scExt pkgs.mi-ugens "mi-UGens";
-      "${ext}/DWGReverb".source = scExt pkgs.neg.dwg-reverb "DWGReverb";
-      "${ext}/mdugens".source = scExt pkgs.mdugens "mdugens";
-      "${ext}/portedplugins".source = scExt pkgs.portedplugins "portedplugins";
+      "${ext}/f0plugins".source = scExt pkgs.music.f0plugins "f0plugins";
+      "${ext}/Steroids".source = scExt pkgs.music.steroids-ugens "Steroids";
+      "${ext}/SuperBufRd".source = scExt pkgs.music.super-bufrd "SuperBufRd";
+      "${ext}/XPlayBuf".source = scExt pkgs.music.xplaybuf "XPlayBuf";
+      "${ext}/mi-UGens".source = scExt pkgs.music.mi-ugens "mi-UGens";
+      "${ext}/DWGReverb".source = scExt pkgs.music.dwg-reverb "DWGReverb";
+      "${ext}/mdugens".source = scExt pkgs.music.mdugens "mdugens";
+      "${ext}/portedplugins".source = scExt pkgs.music.portedplugins "portedplugins";
       "${ext}/sc_faust".source = "${assetsRoot}/sc-faust/share/SuperCollider/extensions/sc_faust";
-      "${ext}/GutterSynth".source = scExt pkgs.guttersynth-sc "GutterSynth";
+      "${ext}/GutterSynth".source = scExt pkgs.music.guttersynth-sc "GutterSynth";
       # MyUGens installs its classes under a shared Myplugins/ parent dir
-      "${ext}/Myplugins".source = scExtUpper pkgs.my-ugens "Myplugins";
-      "${ext}/TimeStretch".source = scExt pkgs.timestretch "TimeStretch";
-      "${ext}/PitchShiftPA".source = scExt pkgs.pitchshiftpa "PitchShiftPA";
-      "${ext}/Softcut".source = scExt pkgs.softcut-sc "Softcut";
-      "${ext}/SignalBox".source = scExt pkgs.signalbox "SignalBox";
-      "${ext}/crucial-library".source = scExt pkgs.crucial-library "crucial-library";
+      "${ext}/Myplugins".source = scExtUpper pkgs.music.my-ugens "Myplugins";
+      "${ext}/TimeStretch".source = scExt pkgs.music.timestretch "TimeStretch";
+      "${ext}/PitchShiftPA".source = scExt pkgs.music.pitchshiftpa "PitchShiftPA";
+      "${ext}/Softcut".source = scExt pkgs.music.softcut-sc "Softcut";
+      "${ext}/SignalBox".source = scExt pkgs.music.signalbox "SignalBox";
+      "${ext}/crucial-library".source = scExt pkgs.music.crucial-library "crucial-library";
       # analysis / spatial / VST
-      "${ext}/SCMIRExtensions".source = scExt pkgs.scmir "SCMIRExtensions";
-      "${ext}/atk-sc3".source = scExt pkgs.atk-sc3 "atk-sc3";
-      "${ext}/VSTPlugin".source = scExtUpper pkgs.vstplugin "VSTPlugin";
+      "${ext}/SCMIRExtensions".source = scExt pkgs.music.scmir "SCMIRExtensions";
+      "${ext}/atk-sc3".source = scExt pkgs.music.atk-sc3 "atk-sc3";
+      "${ext}/VSTPlugin".source = scExtUpper pkgs.music.vstplugin "VSTPlugin";
       # Renoise Redux VST3 at the standard user VST3 path (hosts scan ~/.vst3)
       ".vst3/renoise_redux.vst3".source = "${assetsRoot}/renoise-redux/lib/vst3/renoise_redux.vst3";
       # Protoplug VST2 (Lua live-coding plugins; VST2 hosts scan ~/.vst).
       # Dest names must be space-free: nix-maid's tmpfiles renderer writes
       # L+ lines without quoting, and systemd-tmpfiles splits on whitespace
       # (source store paths may contain spaces - last field is safe).
-      ".vst/Lua_Protoplug_Fx.so".source = "${pkgs.neg.protoplug}/lib/vst/Lua Protoplug Fx.so";
-      ".vst/Lua_Protoplug_Gen.so".source = "${pkgs.neg.protoplug}/lib/vst/Lua Protoplug Gen.so";
+      ".vst/Lua_Protoplug_Fx.so".source = "${pkgs.music.protoplug}/lib/vst/Lua Protoplug Fx.so";
+      ".vst/Lua_Protoplug_Gen.so".source = "${pkgs.music.protoplug}/lib/vst/Lua Protoplug Gen.so";
       # ATK dependency quarks
-      "${ext}/Hilbert".source = scExt pkgs.hilbert "Hilbert";
-      "${ext}/PointView".source = scExt pkgs.pointview "PointView";
-      "${ext}/SphericalDesign".source = scExt pkgs.sphericaldesign "SphericalDesign";
-      "${ext}/FileLog".source = scExt pkgs.filelog "FileLog";
-      "${ext}/MathLib".source = scExt pkgs.mathlib "MathLib";
+      "${ext}/Hilbert".source = scExt pkgs.music.hilbert "Hilbert";
+      "${ext}/PointView".source = scExt pkgs.music.pointview "PointView";
+      "${ext}/SphericalDesign".source = scExt pkgs.music.sphericaldesign "SphericalDesign";
+      "${ext}/FileLog".source = scExt pkgs.music.filelog "FileLog";
+      "${ext}/MathLib".source = scExt pkgs.music.mathlib "MathLib";
       # live coding quarks
-      "${ext}/SafetyNet".source = scExt pkgs.safetynet "SafetyNet";
-      "${ext}/ddwPlug".source = scExt pkgs.ddwplug "ddwPlug";
-      "${ext}/miSCellaneous_lib".source = scExt pkgs.miscellaneous-lib "miSCellaneous_lib";
-      "${ext}/ixiQuarks".source = scExt pkgs.ixiquarks "ixiQuarks";
+      "${ext}/SafetyNet".source = scExt pkgs.music.safetynet "SafetyNet";
+      "${ext}/ddwPlug".source = scExt pkgs.music.ddwplug "ddwPlug";
+      "${ext}/miSCellaneous_lib".source = scExt pkgs.music.miscellaneous-lib "miSCellaneous_lib";
+      "${ext}/ixiQuarks".source = scExt pkgs.music.ixiquarks "ixiQuarks";
       "${ext}/FluCoMa".source = "${assetsRoot}/flucoma/share/SuperCollider/extensions/FluCoMa";
     };
   };

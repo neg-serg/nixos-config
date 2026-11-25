@@ -62,24 +62,24 @@ let
     # -- Live Coding --
     pkgs.supercollider # SuperCollider IDE and audio engine
     pkgs.supercolliderPlugins.sc3-plugins # extra SuperCollider plugins (UGens)
-    pkgs.f0plugins # redFrik SC plugins: sound chips, euclidean rhythms, wavesets (UGens)
-    pkgs.steroids-ugens # SC Steroids UGens (SSinOscFB, TDemand)
-    pkgs.super-bufrd # subsample-accurate buffer-reading UGens (SuperBufRd & co)
-    pkgs.xplaybuf # granular playback UGen with crossfade
-    pkgs.mi-ugens # Mutable Instruments eurorack modules as UGens (Clouds, Rings, …)
-    pkgs.guttersynth-sc # GutterSynth UGen — coupled duffing oscillators through modal synthesis
-    pkgs.my-ugens # sonoro1234 MyUGens — DWG instruments, Karplus, pitch tracking, plucked strings
-    pkgs.timestretch # TimeStretch SC quark — Ness Stretch extreme time stretch
-    pkgs.pitchshiftpa # PitchShiftPA SC quark — phase-aligned pitch/formant shifter
-    pkgs.softcut-sc # monome Softcut multi-voice looper as SC UGen
-    pkgs.signalbox # SignalBox SC quark — time/frequency-domain analysis tools
-    pkgs.crucial-library # crucial-library SC quark — AbstractPlayer live-coding system
-    pkgs.scmir # SCMIR — music IR analysis library (onsets, pitch, chroma) + CLI tools
-    pkgs.atk-sc3 # Ambisonic Toolkit — First Order Ambisonics soundfield tools (SC quark)
-    pkgs.vstplugin # host VST2/VST3 plugins inside scsynth
-    pkgs.safetynet # SafetyNet SC quark — protect against dangerous audio signals
-    pkgs.ddwplug # ddwPlug SC quark — dynamic per-note synth patching
-    pkgs.miscellaneous-lib # miSCellaneous_lib SC quark — patterns, granulation, live coding
+    pkgs.music.f0plugins # redFrik SC plugins: sound chips, euclidean rhythms, wavesets (UGens)
+    pkgs.music.steroids-ugens # SC Steroids UGens (SSinOscFB, TDemand)
+    pkgs.music.super-bufrd # subsample-accurate buffer-reading UGens (SuperBufRd & co)
+    pkgs.music.xplaybuf # granular playback UGen with crossfade
+    pkgs.music.mi-ugens # Mutable Instruments eurorack modules as UGens (Clouds, Rings, …)
+    pkgs.music.guttersynth-sc # GutterSynth UGen — coupled duffing oscillators through modal synthesis
+    pkgs.music.my-ugens # sonoro1234 MyUGens — DWG instruments, Karplus, pitch tracking, plucked strings
+    pkgs.music.timestretch # TimeStretch SC quark — Ness Stretch extreme time stretch
+    pkgs.music.pitchshiftpa # PitchShiftPA SC quark — phase-aligned pitch/formant shifter
+    pkgs.music.softcut-sc # monome Softcut multi-voice looper as SC UGen
+    pkgs.music.signalbox # SignalBox SC quark — time/frequency-domain analysis tools
+    pkgs.music.crucial-library # crucial-library SC quark — AbstractPlayer live-coding system
+    pkgs.music.scmir # SCMIR — music IR analysis library (onsets, pitch, chroma) + CLI tools
+    pkgs.music.atk-sc3 # Ambisonic Toolkit — First Order Ambisonics soundfield tools (SC quark)
+    pkgs.music.vstplugin # host VST2/VST3 plugins inside scsynth
+    pkgs.music.safetynet # SafetyNet SC quark — protect against dangerous audio signals
+    pkgs.music.ddwplug # ddwPlug SC quark — dynamic per-note synth patching
+    pkgs.music.miscellaneous-lib # miSCellaneous_lib SC quark — patterns, granulation, live coding
     # faust2sc (2 GiB with the Faust compiler) moved to the `pro-audio`
     # devshell and `nix run .#faust2sc`: compile Faust DSP into SC UGens on
     # demand instead of carrying the compiler in every system activation.
@@ -95,7 +95,7 @@ let
       exec ${config.nix.package}/bin/nix develop "path:/etc/nixos#haskell" -c tidal-ghci "$@"
     '')
     pkgs.neg.tidalctl # TidalCycles session controller — engine start/stop/status, editor, recording
-    pkgs.neg.superdirt # SuperDirt — sample-based SuperCollider audio engine (TidalCycles / raw SC live coding)
+    pkgs.music.superdirt # SuperDirt — sample-based SuperCollider audio engine (TidalCycles / raw SC live coding)
     # Dirt-Samples moved out of the closure: modules/media/audio/assets.nix
     # materialises it into ~/.local/state/nix-apps and supercollider.nix points
     # the SC extension symlink there (535 MiB off every switch together with
@@ -185,7 +185,7 @@ in
       description = "Virtual ALSA sequencer MIDI ports (synth routing slots)";
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${pkgs.neg.virtual-midi}/bin/virtual-midi 4";
+        ExecStart = "${pkgs.music.virtual-midi}/bin/virtual-midi 4";
         RestartSec = 3;
       };
     };

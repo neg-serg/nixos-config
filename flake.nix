@@ -103,6 +103,25 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # nixos-music — the SuperCollider live-coding and audio-creation stack:
+    # the fake SC source root, the mkScQuark/mkScPlugin builders, fourteen UGen
+    # plugins, nineteen sclang quarks, Dirt-Samples, VST hosting (VSTPlugin,
+    # Protoplug) and the three standalone tools (midi-transcribe, virtual-midi).
+    # The flake owns the derivations and the `pkgs.music.*` namespace; the host
+    # keeps everything machine-specific — PipeWire/JACK routing, the RME HDSPe
+    # and CamillaDSP graphs, the music-AI venvs, and renoise-redux (it needs the
+    # licensed Renoise installers, which arrive as a local path input).
+    #
+    # Consumed as a live git checkout for now: `git+file:` pins the committed
+    # tree by revision, so an edit takes effect after a commit, with no
+    # `flake.lock` churn. (`path:` would hash the whole directory including
+    # `.git`, so every commit and every index write invalidates the lock.)
+    # Switches to `github:neg-serg/nixos-music` once the repository is pushed.
+    nixos-music = {
+      url = "git+file:///home/neg/src/nixos-music";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # mpd-voice — voice control for MPD over local speech recognition, extracted
     # to github:neg-serg/mpd-voice, which owns the crate, its packaging, the
     # README and the flake checks; this flake only consumes the package.

@@ -48,6 +48,12 @@ let
         # 1.4.1 it carries the event-loop busy-spin fix (upstream #417 "core:
         # fix loop hangup detection"). The former flake pin (rev 08d99f72 =
         # 1.4.0) silently downgraded the nixpkgs package and burned ~160% CPU.
+        # The SuperCollider live-coding stack (github:neg-serg/nixos-music).
+        # Applied before the local packages overlay so `packages/` overlays and
+        # host modules can address every derivation as `pkgs.music.<name>`;
+        # it also owns the `supercollider` build (no QtWebEngine help browser),
+        # which the UGen plugins compile against.
+        inputs.nixos-music.overlays.default
         # Local overlay first (for packages not yet migrated)
         ((import ../packages/overlay.nix) inputs)
         # The pleamar shell's own flake: engine + patched worker crates
