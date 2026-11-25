@@ -1359,6 +1359,7 @@
         "raise": "raise",
         "renoise-src": "renoise-src",
         "rsmetrx": "rsmetrx",
+        "sing-box-proxy": "sing-box-proxy",
         "sops-nix": "sops-nix",
         "steam-config-nix": "steam-config-nix",
         "tailray": "tailray",
@@ -1470,6 +1471,26 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "sing-box-proxy": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795607579,
+        "narHash": "sha256-+MTAwL24f1QBu/dQ0wiB1QFP3GGIGeeGYLO8SLMB8Fc=",
+        "owner": "neg-serg",
+        "repo": "sing-box-proxy",
+        "rev": "3c3829f7418b799940f337eb5bd28633aeb6e1cf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "sing-box-proxy",
         "type": "github"
       }
     },

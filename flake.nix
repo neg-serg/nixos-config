@@ -85,6 +85,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # sing-box-proxy — the sing-box SOCKS proxy controller, extracted to
+    # github:neg-serg/sing-box-proxy. The crate owns its packaging; the host
+    # keeps the user unit, the secrets and the network feature flags.
+    sing-box-proxy = {
+      url = "github:neg-serg/sing-box-proxy";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     wl = {
       url = "github:neg-serg/wl";
       flake = false;

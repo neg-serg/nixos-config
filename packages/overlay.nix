@@ -240,7 +240,6 @@ slimChunks
           wallpaper-palettes = final.callPackage ./wallpaper-palettes { }; # matugen schemes per wallpaper (picker cards)
           local-bin-tools = final.callPackage ./local-bin-tools { }; # small $PATH helpers (fetch-covers, gen-unbound-hosts, menu-search, ren, …)
           shtoy = final.callPackage ./shtoy { }; # run Shadertoy shaders in esshader (Rust port of the local-bin helper)
-          sing-box-proxy = final.callPackage ./sing-box-proxy { }; # sing-box proxy controller (Rust port of local-bin/bin/proxy)
           swayimg-actions = final.callPackage ./swayimg-actions { }; # rotate/move/copy/wallpaper/range actions for swayimg (Rust port of the local-bin helper)
         };
     in
