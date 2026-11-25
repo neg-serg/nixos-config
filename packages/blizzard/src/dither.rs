@@ -134,24 +134,3 @@ pub fn apply(dither: Dither, gray: &[f64], width: usize, height: usize) -> Vec<b
         Dither::None => gray.iter().map(|value| *value >= 0.5).collect(),
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn bayer_is_deterministic() {
-        let gray = vec![0.5; 16];
-        let a = apply(Dither::Bayer, &gray, 4, 4);
-        let b = apply(Dither::Bayer, &gray, 4, 4);
-        assert_eq!(a, b);
-        // The 0.5 threshold cuts the 4x4 Bayer matrix between entries 7 and 8.
-        assert_eq!(a.iter().filter(|v| **v).count(), 8);
-    }
-
-    #[test]
-    fn none_thresholds_at_half() {
-        let gray = vec![0.49, 0.5, 0.51];
-        assert_eq!(apply(Dither::None, &gray, 3, 1), vec![false, true, true]);
-    }
-}

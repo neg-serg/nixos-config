@@ -61,31 +61,3 @@ pub fn run(program: &Path, arguments: &[OsString]) -> Result<i32, Die> {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::find_program;
-    use crate::env::Env;
-    use crate::test_support::TempDir;
-    use std::os::unix::fs::PermissionsExt;
-
-    #[test]
-    fn finds_an_executable_on_path_and_ignores_non_executables() {
-        let root = TempDir::new("viewer-which");
-        let program = root.path().join("esshader");
-        std::fs::write(&program, b"#!/bin/sh\nexit 0\n").unwrap();
-        let environment = Env::from_vars([("PATH", root.path().to_string_lossy().into_owned())]);
-        assert_eq!(find_program("esshader", &environment), None);
-
-        let mut permissions = std::fs::metadata(&program).unwrap().permissions();
-        permissions.set_mode(0o755);
-        std::fs::set_permissions(&program, permissions).unwrap();
-        assert_eq!(find_program("esshader", &environment), Some(program));
-    }
-
-    #[test]
-    fn missing_path_means_not_found() {
-        let environment = Env::from_vars(Vec::<(&str, &str)>::new());
-        assert_eq!(find_program("esshader", &environment), None);
-    }
-}

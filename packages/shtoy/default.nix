@@ -4,11 +4,7 @@
 #   of the former packages/local-bin/bin/shtoy shell helper. It keeps the CLI,
 #   cache layout, diagnostics and viewer invocation of the shell version; the
 #   network modes (`--import` through the Shadertoy API, `--mirror` through
-#   Sourcegraph) are behind an HTTP trait so the test suite uses fixtures only.
-#
-#   `cargo test` covers id parsing, --list ordering/shadowing, the byte-exact
-#   shader rewrite, texture2D legacy detection, Sourcegraph ranking from a fixture
-#   NDJSON stream, API JSON extraction, and CLI parity for all local paths.
+#   Sourcegraph) are behind an HTTP trait.
 {
   lib,
   rustPlatform,

@@ -40,9 +40,6 @@
 //!   CGI/HTTPoxy guard); curl still honours them there. The worker is never
 //!   spawned by CGI, so this cannot trigger in pleamar.
 //! - proxy failures name the target host rather than the proxy host.
-//!
-//! `tests/proxy.rs` proves the environment path against local HTTP and SOCKS5
-//! stand-ins, so this is verified behaviour, not a reading of the docs.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};

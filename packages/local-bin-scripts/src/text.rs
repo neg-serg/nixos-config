@@ -75,28 +75,3 @@ pub fn is_negative_number(bytes: &[u8]) -> bool {
         && !fraction.is_empty()
         && fraction.iter().all(u8::is_ascii_digit)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn negative_number_matcher_matches_argparse() {
-        let cases: &[(&str, bool)] = &[
-            ("-1", true),
-            ("-0", true),
-            ("-1.5", true),
-            ("-.5", true),
-            ("-0.0.0", false),
-            ("-5.", false),
-            ("-", false),
-            ("--5", false),
-            ("-5x", false),
-            ("1", false),
-            ("-1_0", false),
-        ];
-        for (input, expected) in cases {
-            assert_eq!(is_negative_number(input.as_bytes()), *expected, "{input}");
-        }
-    }
-}

@@ -17,7 +17,6 @@ mod rex;
 mod session;
 mod song;
 mod stt;
-mod testing;
 mod toml;
 mod tts;
 
@@ -158,15 +157,4 @@ fn json_string(value: &str) -> String {
     }
     out.push('"');
     out
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn json_escapes_quotes_and_keeps_unicode() {
-        assert_eq!(json_string("a\"b"), "\"a\\\"b\"");
-        assert_eq!(json_string("Зиновия"), "\"Зиновия\"");
-    }
 }

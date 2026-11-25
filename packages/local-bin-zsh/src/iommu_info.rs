@@ -5,8 +5,8 @@
 //! exposes a `reset` attribute. The original only reads sysfs; this port does
 //! the same and never writes a reset file.
 //!
-//! `LOCAL_BIN_ZSH_IOMMU_ROOT` overrides the sysfs root so the test suite can
-//! enumerate a fixture tree instead of the host's groups. It defaults to
+//! `LOCAL_BIN_ZSH_IOMMU_ROOT` overrides the sysfs root so a caller can inspect
+//! another tree instead of the host's groups. It defaults to
 //! `/sys/kernel/iommu_groups`; the diagnostic text keeps naming the real path,
 //! exactly like the shell original.
 

@@ -27,7 +27,7 @@ $ mpd-voice phrases              # every supported phrase, both languages
 $ mpd-voice doctor               # MPD, capture, STT, TTS: what works here
 ```
 
-What is Rust (`nix build .#mpd-voice` runs the unit tests):
+What is Rust:
 
 | Module          | Ports                          | Notes                                                                                                                                                  |
 | --------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -44,11 +44,6 @@ The speech gate is diffed against the Python one over synthetic signals (silence
 bursts, a blip shorter than the minimum, a loud/quiet switch, a noise ramp, a partial trailing frame
 — 24 signal/silence combinations), comparing the event sequence, the utterance length and a checksum
 of the kept bytes: all identical.
-
-The controller has its own in-crate fake MPD (`src/testing.rs`, the shape of the Python suite's
-`fake_mpd.py`): 24 tests drive phrases through `Controller` and assert on the daemon state — queue,
-transport, volume/mute, modes, seek, playlists, mood selection from a tag file, the `similar` and
-`describe` helpers, offline handling and "an unknown phrase leaves MPD alone".
 
 `once`/`listen --once` with `--input-wav` and an HTTP STT stub end in the same MPD state and print
 the same reply as the Python client, including the wake-word gate (a transcript without the keyword
@@ -69,7 +64,7 @@ exit codes; the engine itself was diffed against Python's `re` over 8946 pattern
 ## Checks
 
 ```console
-$ nix build .#mpd-voice-rs            # builds the binary and runs `cargo test`
+$ nix build .#mpd-voice-rs            # builds the binary
 $ nix run .#mpd-voice-rs -- status    # same env vars as mpd-voice: MPD_HOST, MPD_PORT
 ```
 

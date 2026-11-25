@@ -32,8 +32,6 @@ pub mod paths;
 pub mod prepare;
 pub mod source;
 pub mod tempfile;
-#[cfg(test)]
-mod test_support;
 pub mod viewer;
 
 use std::ffi::OsString;

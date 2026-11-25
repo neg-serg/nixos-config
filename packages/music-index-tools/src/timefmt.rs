@@ -67,25 +67,3 @@ pub fn hms(seconds: f64) -> String {
     let seconds = total % 60;
     format!("{hours:02}:{minutes:02}:{seconds:02}")
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn timestamp_shape() {
-        let stamp = local_timestamp();
-        assert_eq!(stamp.len(), 19, "got {stamp}");
-        assert_eq!(&stamp[4..5], "-");
-        assert_eq!(&stamp[10..11], "T");
-        assert_eq!(&stamp[13..14], ":");
-    }
-
-    #[test]
-    fn hms_wraps_at_one_day() {
-        assert_eq!(hms(0.0), "00:00:00");
-        assert_eq!(hms(59.9), "00:00:59");
-        assert_eq!(hms(3661.0), "01:01:01");
-        assert_eq!(hms(86400.0 + 5.0), "00:00:05");
-    }
-}

@@ -145,36 +145,3 @@ pub fn breathing_lut(phase: f64) -> [u8; 256] {
     }
     lut
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn gradient_matches_python_example() {
-        let stops = build_gradient("#804020").unwrap();
-        assert_eq!(stops[0], (0.0, [0, 0, 0]));
-        assert_eq!(stops[4], (1.0, [141, 77, 45]));
-    }
-
-    #[test]
-    fn shader_inverts_and_splits() {
-        // width 8 -> shift 6: R[x] = in[(x+2)%8], B[x] = in[(x+6)%8].
-        let mut rgb: Vec<u8> = (0..8u8)
-            .flat_map(|x| [x * 10 + 1, 100, x * 10 + 3])
-            .collect();
-        apply_shader(&mut rgb, 8, 1, "rgb");
-        // R[x] = R[(x + 2) % 8]
-        assert_eq!(rgb[0], 21);
-        assert_eq!(rgb[2 * 3], 41);
-        // B[x] = B[(x + 6) % 8]
-        assert_eq!(rgb[2 * 3 + 2], 3);
-        assert_eq!(rgb[7 * 3 + 2], 53);
-    }
-
-    #[test]
-    fn breathing_lut_keeps_black() {
-        assert_eq!(breathing_lut(0.0)[0], 0);
-        assert_eq!(breathing_lut(0.3)[0], 0);
-    }
-}

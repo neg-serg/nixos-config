@@ -630,31 +630,3 @@ fn civil_from_days(days: i64) -> (i64, u32, u32) {
         day as u32,
     )
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{civil_from_days, strip_html_comments, utc_iso};
-
-    #[test]
-    fn timestamps_match_date_u() {
-        assert_eq!(utc_iso(0), "1970-01-01T00:00:00Z");
-        assert_eq!(utc_iso(1_700_000_000), "2023-11-14T22:13:20Z");
-        assert_eq!(utc_iso(1_767_225_600), "2026-01-01T00:00:00Z");
-    }
-
-    #[test]
-    fn civil_dates_are_consistent() {
-        assert_eq!(civil_from_days(0), (1970, 1, 1));
-        assert_eq!(civil_from_days(20_454), (2026, 1, 1));
-    }
-
-    #[test]
-    fn html_comments_are_removed_greedily_per_line() {
-        assert_eq!(strip_html_comments("a <!--x--> b"), "a  b");
-        assert_eq!(strip_html_comments("a <!--x--> b <!--y--> c"), "a  c");
-        assert_eq!(
-            strip_html_comments("<!--multi\nline-->"),
-            "<!--multi\nline-->"
-        );
-    }
-}

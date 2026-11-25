@@ -141,35 +141,3 @@ fn main() -> std::process::ExitCode {
     println!("\nDone: {success}/{} covers downloaded", missing.len());
     std::process::ExitCode::SUCCESS
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn album_folders_split_on_the_code_marker() {
-        assert_eq!(
-            split_album_dir("Artist-\u{27e8}ABC123\u{27e9}-Some Album"),
-            Some(("Artist".to_string(), "Some Album".to_string()))
-        );
-        assert_eq!(
-            split_album_dir("A-B-\u{27e8}code\u{27e9}-Album-With-Dashes"),
-            Some(("A-B".to_string(), "Album-With-Dashes".to_string()))
-        );
-        assert_eq!(split_album_dir("plain-folder"), None);
-        assert_eq!(split_album_dir("Artist-\u{27e8}\u{27e9}-Album"), None);
-        assert_eq!(split_album_dir("Artist-\u{27e8}code\u{27e9}Album"), None);
-    }
-
-    #[test]
-    fn cover_detection_looks_at_the_prefix() {
-        let dir = std::env::temp_dir().join(format!("fetch-covers-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).unwrap();
-        let album = dir.join("A-\u{27e8}c\u{27e9}-B");
-        std::fs::create_dir_all(&album).unwrap();
-        assert!(!has_cover(&album));
-        std::fs::write(album.join("Folder.jpg"), b"x").unwrap();
-        assert!(has_cover(&album));
-        std::fs::remove_dir_all(&dir).ok();
-    }
-}

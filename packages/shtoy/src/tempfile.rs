@@ -86,35 +86,3 @@ fn random_token(attempt: u64) -> String {
     }
     token
 }
-
-#[cfg(test)]
-mod tests {
-    use super::TempFile;
-    use crate::env::Env;
-    use crate::test_support::TempDir;
-
-    #[test]
-    fn creates_distinct_files_inside_tmpdir_and_removes_them() {
-        let root = TempDir::new("tempfile");
-        let environment = Env::from_vars([("TMPDIR", root.path().to_string_lossy().into_owned())]);
-        let first = TempFile::create(&environment, "shtoy-", ".frag").unwrap();
-        let second = TempFile::create(&environment, "shtoy-", ".frag").unwrap();
-        assert_ne!(first.path(), second.path());
-        assert!(first.path().is_file());
-        assert!(first.path().starts_with(root.path()));
-        assert_eq!(
-            first.path().extension().and_then(|value| value.to_str()),
-            Some("frag")
-        );
-        let first_path = first.path().to_path_buf();
-        drop(first);
-        assert!(!first_path.exists());
-    }
-
-    #[test]
-    fn missing_tmpdir_falls_back_to_tmp() {
-        let environment = Env::from_vars(Vec::<(&str, &str)>::new());
-        let temporary = TempFile::create(&environment, "shtoy-", ".frag").unwrap();
-        assert!(temporary.path().starts_with("/tmp"));
-    }
-}

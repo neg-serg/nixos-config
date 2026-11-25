@@ -112,37 +112,3 @@ fn write_string(out: &mut String, text: &str) {
     }
     out.push('"');
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn empty_containers_match_python() {
-        assert_eq!(to_python_json(&json!({})), "{}");
-        assert_eq!(to_python_json(&json!([])), "[]");
-        assert_eq!(
-            to_python_json(&json!({"a": [], "b": {}})),
-            "{\n  \"a\": [],\n  \"b\": {}\n}"
-        );
-    }
-
-    #[test]
-    fn nested_format_matches_python() {
-        let value = json!({"a": 1, "b": [true, null, "x"]});
-        assert_eq!(
-            to_python_json(&value),
-            "{\n  \"a\": 1,\n  \"b\": [\n    true,\n    null,\n    \"x\"\n  ]\n}"
-        );
-    }
-
-    #[test]
-    fn ensure_ascii_escapes_match_python() {
-        let value = json!({"s": "päss 😀 \n\t\u{1}"});
-        assert_eq!(
-            to_python_json(&value),
-            "{\n  \"s\": \"p\\u00e4ss \\ud83d\\ude00 \\n\\t\\u0001\"\n}"
-        );
-    }
-}

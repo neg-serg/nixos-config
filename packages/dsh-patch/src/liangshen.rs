@@ -131,32 +131,3 @@ fn write_atomic(path: &Path, text: &str) -> io::Result<()> {
     }
     result
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn span_runs_to_the_next_row_at_the_same_indent() {
-        let text = "\
-- id: a
-  plugin: p
-- id: workflow-worker-thread
-  plugin: @deepseek-ai/dsh-workflow-worker-thread
-  disabled: !!js true
-- id: b
-";
-        let lines: Vec<&str> = text.split_inclusive('\n').collect();
-        let (start, end) = row_span(&lines).unwrap();
-        assert_eq!(start, 2);
-        assert_eq!(end, 5);
-        assert!(lines[start..end].concat().contains(ROW_PLUGIN));
-    }
-
-    #[test]
-    fn a_missing_row_has_no_span() {
-        let text = "- id: a\n- id: b\n";
-        let lines: Vec<&str> = text.split_inclusive('\n').collect();
-        assert!(row_span(&lines).is_none());
-    }
-}

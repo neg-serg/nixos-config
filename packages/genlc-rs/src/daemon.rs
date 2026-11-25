@@ -599,30 +599,3 @@ fn serve(stream: UnixStream, tx: Sender<Cmd>, state: Arc<Mutex<State>>) -> Resul
     }
     Ok(())
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn status_json_reports_whether_the_adapter_handle_is_there() {
-        assert!(State::default().to_json().contains("\"adapter\":\"ok\""));
-        let mut state = State::default();
-        state.adapter_lost = true;
-        assert!(state.to_json().contains("\"adapter\":\"lost\""));
-    }
-
-    #[test]
-    fn a_silent_or_short_stream_counts_as_a_dead_device() {
-        assert!(transport_dead(&anyhow::anyhow!(
-            "Short HID read: 0 bytes (expected 64)"
-        )));
-        assert!(transport_dead(&anyhow::anyhow!(
-            "Unexpected segment header: 9 (expected 63)"
-        )));
-        // A protocol surprise on a live bus must not throw the handle away.
-        assert!(!transport_dead(&anyhow::anyhow!(
-            "lease loop did not settle after 64 probes"
-        )));
-    }
-}

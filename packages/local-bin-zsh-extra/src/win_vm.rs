@@ -16,9 +16,9 @@
 //! the port does the same. On a TTY the port writes the same prompt to stderr
 //! and reads a line (a terminal line discipline is required without unsafe
 //! termios code, so Enter is needed where zsh read one character). The
-//! LOCAL_BIN_ZSH_EXTRA_ASK_FILE hook lets the hermetic tests answer the prompt;
-//! LOCAL_BIN_ZSH_EXTRA_LOOKING_GLASS points the Looking Glass existence checks
-//! at a fixture instead of /dev/shm/looking-glass.
+//! LOCAL_BIN_ZSH_EXTRA_ASK_FILE hook answers the prompt from a file instead of
+//! the terminal; LOCAL_BIN_ZSH_EXTRA_LOOKING_GLASS points the Looking Glass
+//! existence checks at another path instead of /dev/shm/looking-glass.
 
 #![forbid(unsafe_code)]
 

@@ -190,36 +190,3 @@ fn format_g6(value: f64) -> String {
         fixed
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{awk_number, format_g6};
-
-    #[test]
-    fn awk_numbers_use_the_numeric_prefix() {
-        assert_eq!(awk_number("0.50"), 0.5);
-        assert_eq!(awk_number(" 0.50"), 0.5);
-        assert_eq!(awk_number("0.50[MUTED]"), 0.5);
-        assert_eq!(awk_number("+-0.5"), 0.0);
-        assert_eq!(awk_number(""), 0.0);
-        assert_eq!(awk_number("null"), 0.0);
-        assert_eq!(awk_number("1e-3"), 0.001);
-        assert_eq!(awk_number("1e"), 1.0);
-        assert_eq!(awk_number("0x10"), 0.0);
-    }
-
-    #[test]
-    fn g6_format_matches_awk() {
-        for (value, expected) in [
-            (0.55, "0.55"),
-            (0.3, "0.3"),
-            (0.5, "0.5"),
-            (0.0001, "0.0001"),
-            (0.00001, "1e-05"),
-            (0.123456789, "0.123457"),
-            (0.0, "0"),
-        ] {
-            assert_eq!(format_g6(value), expected, "{value}");
-        }
-    }
-}

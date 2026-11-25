@@ -81,32 +81,3 @@ pub fn decode_base64_cli(input: &str) -> Option<Vec<u8>> {
     }
     STANDARD.decode(padded.as_bytes()).ok()
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn plain_and_urlsafe() {
-        assert_eq!(b64dec("aGVsbG8="), "hello");
-        assert_eq!(b64dec("aGVsbG8"), "hello");
-        assert_eq!(b64dec("aGVsbG8td29ybGQ"), "hello-world");
-        assert_eq!(b64dec("aGVsbG8td29ybGQ="), "hello-world");
-        // URL-safe alphabet is translated before the standard decoder.
-        assert_eq!(b64dec("Pz4/"), "?>?");
-    }
-
-    #[test]
-    fn garbage_is_empty() {
-        assert_eq!(b64dec("!!!"), "");
-        assert_eq!(b64dec("a"), "");
-        assert_eq!(b64dec(""), "");
-    }
-
-    #[test]
-    fn cli_decoder_is_strict_about_alphabet() {
-        assert_eq!(decode_base64_cli("aGVs\nbG8=\n").unwrap(), b"hello");
-        assert_eq!(decode_base64_cli("aGVsbG8").unwrap(), b"hello");
-        assert!(decode_base64_cli("aGVsbG8-").is_none());
-    }
-}

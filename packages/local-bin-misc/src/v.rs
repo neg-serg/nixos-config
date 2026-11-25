@@ -9,9 +9,9 @@
 //! - `. /etc/profile` is not evaluated. A compiled binary cannot source shell
 //!   state, and in a normal user session the profile has already run in the
 //!   parent shell (the nixos `set-environment` guard makes the source a no-op).
-//! - `LOCAL_BIN_MISC_V_SOCKET` overrides the hard-coded `/tmp/nvim.sock`. It is
-//!   a test seam so the tests never create or remove a socket at the host's
-//!   live path; unset behaviour is identical to the original.
+//! - `LOCAL_BIN_MISC_V_SOCKET` overrides the hard-coded `/tmp/nvim.sock`, so a
+//!   caller can point it elsewhere; unset behaviour is identical to the
+//!   original.
 
 #![forbid(unsafe_code)]
 

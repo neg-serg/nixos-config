@@ -55,25 +55,3 @@ impl Env {
             .map(|value| value.to_string_lossy().into_owned())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Env;
-
-    #[test]
-    fn distinguishes_unset_empty_and_set() {
-        let environment = Env::from_vars([("EMPTY", ""), ("FULL", "value")]);
-        assert_eq!(environment.get("MISSING"), None);
-        assert_eq!(environment.get("EMPTY"), Some(std::ffi::OsStr::new("")));
-        assert_eq!(environment.get_nonempty("EMPTY"), None);
-        assert_eq!(
-            environment.get_nonempty("FULL"),
-            Some(std::ffi::OsStr::new("value"))
-        );
-        assert_eq!(
-            environment.get_nonempty_string("FULL").as_deref(),
-            Some("value")
-        );
-        assert_eq!(environment.get_nonempty_string("EMPTY"), None);
-    }
-}

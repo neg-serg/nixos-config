@@ -15,12 +15,6 @@
 #     output-formatting quirks are gone);
 #   - find/sort/awk/sed path listings -> byte-wise directory walks and a sort by
 #     ctime, so the result no longer depends on the ambient locale.
-#
-#   `cargo test` is offline and hermetic: a temp HOME/XDG tree, fake tools on
-#   PATH, fixture images with controlled ctimes and a real UnixListener socket
-#   for the IPC bytes. `tests/parity/` is the one-off migration harness that
-#   compares this binary with the zsh script while the script still exists;
-#   cargo does not run it.
 { lib, rustPlatform }:
 
 rustPlatform.buildRustPackage {

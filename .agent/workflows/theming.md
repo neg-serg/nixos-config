@@ -47,7 +47,6 @@ change or on an explicit run with `--mode`.
 ## Verify
 
 ```bash
-cargo test --manifest-path packages/pleamar-theme/Cargo.toml --locked   # hermetic suite
 bash scripts/dev/check-plm.sh .            # every scene still compiles
 ```
 

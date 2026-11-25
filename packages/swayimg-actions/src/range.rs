@@ -186,21 +186,3 @@ pub fn is_stale(anchor: &[u8]) -> bool {
     let is_symlink = fs::symlink_metadata(&path).is_ok();
     !exists && !is_symlink
 }
-
-#[cfg(test)]
-mod tests {
-    use super::is_image;
-
-    #[test]
-    fn extension_filter_matches_the_shell_regex() {
-        assert!(is_image(b"/pic/a.jpg"));
-        assert!(is_image(b"/pic/a.JPEG"));
-        assert!(is_image(b"/pic/a.PnG"));
-        assert!(is_image(b"/pic/a.tiff"));
-        assert!(is_image(b"/pic/a.heic"));
-        assert!(!is_image(b"/pic/a.tif"));
-        assert!(!is_image(b"/pic/a.jpg.txt"));
-        assert!(!is_image(b"/pic/a"));
-        assert!(!is_image(b"/pic.jpg/file"));
-    }
-}

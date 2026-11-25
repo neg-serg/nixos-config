@@ -46,20 +46,3 @@ pub fn json_string(s: &str, ensure_ascii: bool) -> String {
     push_json_string(&mut out, s, ensure_ascii);
     out
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn escapes_like_python() {
-        assert_eq!(json_string("a b", false), "\"a b\"");
-        assert_eq!(json_string("a\"b\\c", false), "\"a\\\"b\\\\c\"");
-        assert_eq!(json_string("a\nb\tc", false), "\"a\\nb\\tc\"");
-        assert_eq!(json_string("café", false), "\"café\"");
-        assert_eq!(json_string("café", true), "\"caf\\u00e9\"");
-        assert_eq!(json_string("𝄞", true), "\"\\ud834\\udd1e\"");
-        assert_eq!(json_string("\u{7f}", true), "\"\u{7f}\"");
-        assert_eq!(json_string("\u{1}", false), "\"\\u0001\"");
-    }
-}

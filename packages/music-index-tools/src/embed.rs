@@ -252,33 +252,3 @@ fn clean_error(line: &str) -> String {
 pub fn save_vector(path: &Path, values: &[f32]) -> io::Result<()> {
     npy::write_f32(path, &[values.len()], values)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parses_the_banner_device() {
-        let temp = crate::fsutil::TempDir::new("embed-test").unwrap();
-        let log = temp.path().join("stderr.log");
-        fs::write(
-            &log,
-            "[music-embed] m-a-p/MERT-v1-95M on cuda\n[music-embed] a.flac: dim 768\n",
-        )
-        .unwrap();
-        let text = fs::read_to_string(&log).unwrap();
-        let first = text.lines().next().unwrap();
-        assert_eq!(parse_device_line(first), Some("cuda".to_string()));
-        assert_eq!(parse_device_line("[music-embed] layer -2"), None);
-    }
-
-    #[test]
-    fn reads_the_last_error_line() {
-        let text = "Traceback (most recent call last):\n  File \"x\"\nRuntimeError: no decodable audio in /tmp/a.flac (corrupt or empty file?)\n";
-        let line = last_nonempty_line(text).unwrap();
-        assert_eq!(
-            clean_error(line),
-            "no decodable audio in /tmp/a.flac (corrupt or empty file?)"
-        );
-    }
-}

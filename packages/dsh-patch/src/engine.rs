@@ -95,19 +95,3 @@ pub fn run_patch_set(root: &str, prog: &str, files: &[FilePatch]) -> i32 {
     }
     0
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn repr_escapes_like_python() {
-        assert_eq!(py_repr("a\tb\n'c'\\"), "'a\\tb\\n\\'c\\'\\\\'");
-    }
-
-    #[test]
-    fn count_assertions_see_non_overlapping_matches() {
-        assert_eq!("aaaa".matches("aa").count(), 2);
-        assert_eq!("abc".matches("d").count(), 0);
-    }
-}

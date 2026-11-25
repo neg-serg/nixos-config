@@ -9,8 +9,8 @@
 //! status handling stay identical.
 //!
 //! `v` has one addition: `LOCAL_BIN_MISC_V_SOCKET` overrides the hard-coded
-//! `/tmp/nvim.sock` path. It exists so tests never create or remove a socket
-//! at the host's live path; production behaviour is unchanged when unset.
+//! `/tmp/nvim.sock` path, so a caller can point it elsewhere; production
+//! behaviour is unchanged when unset.
 
 #![forbid(unsafe_code)]
 

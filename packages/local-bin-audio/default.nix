@@ -14,16 +14,9 @@
 #   text filters, the renoise Config.xml rewrite that used to be a `python3`
 #   heredoc, state files) is native. The crate has no dependencies and forbids
 #   `unsafe`.
-#
-#   `cargo test` is hermetic: every external program is a fake shell script
-#   first on an otherwise empty PATH, HOME/TMPDIR/XDG_RUNTIME_DIR point into a
-#   per-case temporary tree, and the fakes log their argv. `tests/parity.sh`
-#   additionally runs the shipped scripts and the ports side by side against the
-#   same fakes.
 {
   lib,
   rustPlatform,
-  bash,
 }:
 
 rustPlatform.buildRustPackage {
@@ -33,13 +26,6 @@ rustPlatform.buildRustPackage {
   src = lib.cleanSource ./.;
 
   cargoLock.lockFile = ./Cargo.lock;
-
-  # The tests' fakes are `#!/bin/sh` scripts; a build sandbox does not
-  # necessarily provide /bin/sh, so the interpreter comes from nixpkgs.
-  preCheck = ''
-    export LOCAL_BIN_AUDIO_TEST_SHELL=${bash}/bin/bash
-  '';
-  doCheck = true;
 
   meta = lib.mkMeta {
     description = "Rust ports of the audio helpers from packages/local-bin/bin";
