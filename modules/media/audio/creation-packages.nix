@@ -101,8 +101,6 @@ let
     # the SC extension symlink there (535 MiB off every switch together with
     # sc-faust and Renoise Redux).
     pkgs.pipewire.jack # PipeWire JACK compatibility (libjack.so, pw-jack) — needed by SuperCollider
-    # -- Session Management --
-    pkgs.new-session-manager # NSM — session manager for audio apps (JACK/PipeWire)
 
     # -- Patchbays & Plugin Hosts --
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
