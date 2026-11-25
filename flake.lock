@@ -1339,6 +1339,7 @@
         "sops-nix": "sops-nix",
         "steam-config-nix": "steam-config-nix",
         "tailray": "tailray",
+        "tint": "tint",
         "waylandar": "waylandar",
         "wl": "wl"
       }
@@ -1702,6 +1703,26 @@
       "original": {
         "owner": "lmacan1",
         "repo": "talktype",
+        "type": "github"
+      }
+    },
+    "tint": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795600962,
+        "narHash": "sha256-Ovd0XdQ5y4asxcuhuGLpeiKkSMFUt9YOfZDYxg2i9gA=",
+        "owner": "neg-serg",
+        "repo": "tint",
+        "rev": "c555f05030e2930778dd0e649c8961d5611e8d6a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "tint",
         "type": "github"
       }
     },

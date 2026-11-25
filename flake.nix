@@ -63,6 +63,14 @@
       # raise. Its naersk build works against the system nixpkgs.
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # tint — colouriser for CLI output, extracted to its own project
+    # (github:neg-serg/tint). It owns its packaging and tests; this flake only
+    # consumes the package, so the two copies cannot drift.
+    tint = {
+      url = "github:neg-serg/tint";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     wl = {
       url = "github:neg-serg/wl";
       flake = false;

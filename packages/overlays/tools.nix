@@ -53,7 +53,8 @@ in
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
     termeverything = callPkg (pkg "termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
     zsh-native-syntax = callPkg (pkg "zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
-    tint = callPkg (pkg "tint") { }; # Colouriser for CLI output — token scanners + per-tool rulesets, no dependencies
+    # Extracted to github:neg-serg/tint, which owns the build and its tests.
+    tint = inputs.tint.packages.${prev.stdenv.hostPlatform.system}.default; # Colouriser for CLI output — scanners + per-tool rulesets
     flow = callPkg (pkg "flow") { }; # Terminal dashboard for real-time network throughput
     lsfg-vk = callPkg (pkg "lsfg-vk") { }; # Vulkan frame-gen layer (LSFG on Linux; needs Lossless Scaling on Steam)
     nixard = callPkg (pkg "nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
