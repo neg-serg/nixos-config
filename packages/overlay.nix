@@ -162,7 +162,9 @@ slimChunks
           joern = final.callPackage ./joern { }; # Open-source code analysis platform
           dsh-patch = final.callPackage (inputs.rust-pkgs + "/dsh-patch/package.nix") { }; # count-asserted patcher for dsh bundles and profiles
           dsh = final.callPackage ./dsh { inherit (final.neg) dsh-patch; }; # DeepSeek Harness agent CLI (dsh)
-          llm-proxy = final.callPackage ./llm-proxy { }; # context budget + tool-protocol guard in front of llama-swap
+          # Context budget + tool-protocol guard in front of llama-swap; owned by
+          # github:neg-serg/llm-proxy, built against this package set.
+          llm-proxy = final.callPackage (inputs.llm-proxy + "/package.nix") { };
           aurora = final.callPackage ./aurora.nix {
             src = inputs.aurora-src;
           }; # aurora: local MPD player with a Vulkan UI

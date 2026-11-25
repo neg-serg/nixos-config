@@ -192,6 +192,15 @@
       inputs.nix-src.follows = "nix-src";
     };
 
+    # llm-proxy — the context guard and tool-protocol normalizer in front of
+    # llama-swap, extracted to github:neg-serg/llm-proxy (live checkout
+    # ~/src/nix/llm-proxy). It owns the script, its stdlib test suite and the
+    # package; the host keeps the service, the generated config and the unit.
+    llm-proxy = {
+      url = "github:neg-serg/llm-proxy";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     wl = {
       url = "github:neg-serg/wl";
       flake = false;

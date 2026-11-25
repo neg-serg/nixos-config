@@ -23,6 +23,11 @@ Guidelines
   calls `final.callPackage (inputs.rust-pkgs + "/<crate>/package.nix") { }` against its own package
   set and keeps the `pkgs.neg.<crate>` names (see `packages/overlay.nix`); do not copy a crate back
   in.
+- `llm-proxy` (the context guard in front of llama-swap) is no longer packaged here either: it lives
+  in `github:neg-serg/llm-proxy` with its stdlib test suite, and `packages/overlay.nix` calls
+  `final.callPackage (inputs.llm-proxy + "/package.nix")` to keep the `pkgs.neg.llm-proxy` name.
+  `llmctl` deliberately stays in the tree: it is this host's fleet controller (unit inspection, the
+  `/etc/nixos` commit helper, the measured model catalog), not a portable tool.
 - The Nix builds are no longer packaged here either: `nix-eval-patched` (upstream Nix plus the
   evaluation-speedup patch stack) and `nix-det-pgo` (Determinate Nix rebuilt with PGO) live in
   `github:neg-serg/nix-optimized` (live checkout `~/src/nix/nix-optimized`).

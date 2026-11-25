@@ -857,6 +857,26 @@
         "type": "github"
       }
     },
+    "llm-proxy": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795628943,
+        "narHash": "sha256-U0sLpnEsPIqTCf/KxRFf9LRL5BRLKMiXBm8lBImn8ns=",
+        "owner": "neg-serg",
+        "repo": "llm-proxy",
+        "rev": "33ced1c4e0f0b5e372e2e95954dd0d84e092a819",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "llm-proxy",
+        "type": "github"
+      }
+    },
     "lusty": {
       "inputs": {
         "nixpkgs": [
@@ -1496,6 +1516,7 @@
         "hyprscratch": "hyprscratch",
         "import-tree": "import-tree_2",
         "iosevka-neg": "iosevka-neg",
+        "llm-proxy": "llm-proxy",
         "lusty": "lusty",
         "mpd-voice": "mpd-voice",
         "multiverse": "multiverse",
