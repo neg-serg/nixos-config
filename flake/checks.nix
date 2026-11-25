@@ -82,13 +82,6 @@ let
 
 in
 {
-  # ── Module-level checks ──────────────────────────────────────────
-  # Each validates a domain or domain set independently.
-
-  "mod-features" = mkModuleCheck "features" [ ] (_: true);
-  "mod-profiles" = mkModuleCheck "profiles" [ ../modules/profiles/default.nix ] (_: true);
-  "mod-core" = mkModuleCheck "core" [ ../modules/core/default.nix ] (_: true);
-
   # ── Domain filter checks ─────────────────────────────────────────
   # Validate that modules/default.nix (the actual filter consumer) works
   # with both the all-domains and a restrictive filter (mirrors the

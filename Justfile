@@ -379,8 +379,7 @@ flag flag-path="features.cli.yazi.enable":
 #                         `--json` returns {label, drvPath, toplevel, name, system}
 #                         from that one evaluation; `--field NAME` picks one, and
 #                         `--print-key` prints the key a state hashes to.
-# A hit is the stored output of a live eval of exactly that state, never a guess;
-# scripts/dev/nixos-eval-gate.test.sh proves it against `nix eval` per state.
+# A hit is the stored output of a live eval of exactly that state, never a guess.
 # Anything unhashable (unreadable input, unknown file type, unwritable cache dir)
 # falls through to a real eval with a notice. Entries live in
 # $XDG_CACHE_HOME/nixos-eval-gate/<key>, or in the repo-local .agent/tmp-nix-cache

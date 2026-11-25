@@ -38,7 +38,7 @@ flags, `SHELLCHECK_OPTS` and the rc files, so a hit is the verdict a fresh run w
 `source` line that could resolve outside that set — a literal absolute path, a non-`.sh` target, an
 unusual `source-path=` — turns the cache off for that run rather than risk a stale pass. Entries are
 content-addressed under `${XDG_CACHE_HOME:-~/.cache}/just-lint/`, so an obsolete one is never looked
-up again; `scripts/dev/lint-cache.test.sh` pins all of this down.
+up again.
 
 A failure is reported per gate and does not cancel the others; the summary names the failed gates
 and the exit status is 1. To reproduce one gate in isolation or force a serial run:
