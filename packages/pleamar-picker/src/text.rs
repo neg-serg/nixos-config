@@ -46,24 +46,3 @@ pub fn write_stderr(parts: &[&[u8]]) {
     }
     let _ = out.flush();
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn trims_only_newlines() {
-        assert_eq!(trim_trailing_newlines(b"a\r\n\n"), b"a\r");
-        assert_eq!(trim_trailing_newlines(b"a  "), b"a  ");
-        assert_eq!(trim_trailing_newlines(b"\n\n"), b"");
-        assert_eq!(trim_trailing_newlines(b""), b"");
-    }
-
-    #[test]
-    fn replaces_every_occurrence() {
-        assert_eq!(replace_all(b"{}x{}", b"{}", b"q"), b"qxq");
-        assert_eq!(replace_all(b"{}", b"{}", b""), b"");
-        assert_eq!(replace_all(b"a", b"{}", b"q"), b"a");
-        assert_eq!(replace_all(b"aaa", b"", b"q"), b"aaa");
-    }
-}

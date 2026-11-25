@@ -36,9 +36,6 @@ mod protocol;
 mod worker;
 mod wttr;
 
-#[cfg(test)]
-mod testutil;
-
 use std::io::{self, BufRead, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};

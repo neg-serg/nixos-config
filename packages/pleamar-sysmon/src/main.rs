@@ -12,8 +12,6 @@ mod command;
 mod llm;
 mod sample;
 mod state;
-#[cfg(test)]
-mod testutil;
 
 use std::io::{self, BufRead, Write};
 use std::path::Path;

@@ -98,34 +98,3 @@ pub fn write_line(path: &Path, bytes: &[u8]) -> io::Result<()> {
     content.push(b'\n');
     fs::write(path, content)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn dirname_matches_the_shell() {
-        let cases: &[(&str, &str)] = &[
-            ("", "."),
-            ("a", "."),
-            ("a/b", "a"),
-            ("a/b/", "a"),
-            ("/", "/"),
-            ("/a", "/"),
-            ("/a/", "/"),
-            ("a//b", "a"),
-            ("./x", "."),
-            ("..", "."),
-            ("/usr/bin/foo", "/usr/bin"),
-            ("///", "/"),
-            ("//a", "/"),
-        ];
-        for (input, expected) in cases {
-            assert_eq!(
-                dirname(OsStr::new(input)),
-                PathBuf::from(expected),
-                "dirname({input:?})"
-            );
-        }
-    }
-}

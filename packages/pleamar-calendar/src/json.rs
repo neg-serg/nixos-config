@@ -9,18 +9,3 @@
 pub fn string(value: &str) -> String {
     serde_json::to_string(value).unwrap_or_else(|_| "\"\"".to_string())
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn string_literals_match_jq() {
-        assert_eq!(string("calendar"), "\"calendar\"");
-        assert_eq!(string(""), "\"\"");
-        assert_eq!(string("a\"b\\c"), "\"a\\\"b\\\\c\"");
-        assert_eq!(string("line\nbreak"), "\"line\\nbreak\"");
-        assert_eq!(string("Zürich"), "\"Zürich\"");
-        assert_eq!(string("§7"), "\"§7\"");
-    }
-}

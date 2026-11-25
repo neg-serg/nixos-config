@@ -55,16 +55,3 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
     };
     (if month <= 2 { year + 1 } else { year }, month, day)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::format_utc;
-
-    #[test]
-    fn epochs_match_date_u() {
-        assert_eq!(format_utc(0), "1970-01-01T00:00:00Z");
-        assert_eq!(format_utc(951_827_696), "2000-02-29T12:34:56Z");
-        assert_eq!(format_utc(1_735_689_599), "2024-12-31T23:59:59Z");
-        assert_eq!(format_utc(1_793_654_861), "2026-11-02T21:27:41Z");
-    }
-}

@@ -50,8 +50,7 @@ host (pleamar 0.7.7). They are here so a scene does not rediscover them.
 
 - Per-scene settings live under `~/.local/share/pleamar/<scene>/`, never in this repository.
   Defaults and clamps belong in scene code, the user file is read/written at runtime.
-- The repo holds scenes and libraries. Expected test artifacts live under `files/pleamar/tests/` and
-  are written by the harness, not hand-edited.
+- The repo holds scenes and libraries: no generated or expected artifacts are committed.
 
 ## The reference the port was made from
 

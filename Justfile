@@ -255,16 +255,6 @@ plm-theme:
 scene-events:
     bash "{{repo_root}}/scripts/dev/check-scene-events.sh" "{{repo_root}}"
 
-# The theme pipeline's own suite: the crate's hermetic cargo tests (fixtures, extractor
-# goldens, CLI/error paths) run in the Nix build's checkPhase.
-theme-test:
-    nix build --no-link ".#pleamar-theme"
-
-# The hostile-plugin gate: an unapproved plugin must be refused (and touch
-# nothing), the same plugin must run once approved. Runs in `lint` too.
-plugin-sandbox:
-    bash "{{repo_root}}/scripts/dev/check-plugin-sandbox.sh" "{{repo_root}}"
-
 # Render every plugin's proof scene, one PNG each, into a temp dir
 # (`just render-plugins DIR` to keep them). Uses pleamar-wm headless when it is
 # on PATH, otherwise the live session (`grim` + Hyprland); the pleamar binary

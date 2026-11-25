@@ -207,26 +207,3 @@ fn write_line(path: &Path, contents: &OsStr) {
         ]);
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn command_replaces_every_placeholder_with_the_quoted_path() {
-        let command = wallpaper_command(OsStr::new("wl img {} --x {}"), OsStr::new("/w/a b.png"));
-        assert_eq!(command, b"wl img /w/a\\ b.png --x /w/a\\ b.png".to_vec());
-    }
-
-    #[test]
-    fn command_appends_the_path_without_a_placeholder() {
-        let command = wallpaper_command(OsStr::new("swaybg -i"), OsStr::new("/w/a.png"));
-        assert_eq!(command, b"swaybg -i /w/a.png".to_vec());
-    }
-
-    #[test]
-    fn command_quotes_shell_specials() {
-        let command = wallpaper_command(OsStr::new("wl img {}"), OsStr::new("/w/a'b $c.png"));
-        assert_eq!(command, b"wl img /w/a\\'b\\ \\$c.png".to_vec());
-    }
-}

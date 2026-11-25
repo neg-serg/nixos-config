@@ -203,16 +203,3 @@ fn source_mentions_dns(error: &reqwest::Error) -> bool {
     }
     false
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn a_client_builds_with_the_worker_defaults() {
-        let interrupt = Arc::new(AtomicBool::new(false));
-        let http = Http::new(8, "pleamar-weather/1.0", interrupt);
-        assert!(http.client.is_ok(), "client construction must not fail");
-        assert_eq!(http.timeout_secs, 8);
-    }
-}

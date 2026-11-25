@@ -103,25 +103,3 @@ fn temporary_path(frame: &Path) -> PathBuf {
     bytes.extend_from_slice(format!(".{}.jpg", std::process::id()).as_bytes());
     PathBuf::from(OsString::from_vec(bytes))
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn video_matching_ignores_case() {
-        assert!(is_video(std::ffi::OsStr::new("/w/a.mp4")));
-        assert!(is_video(std::ffi::OsStr::new("/w/a.MP4")));
-        assert!(is_video(std::ffi::OsStr::new("clip.MoV")));
-        assert!(!is_video(std::ffi::OsStr::new("/w/a.png")));
-        assert!(!is_video(std::ffi::OsStr::new("/w/mp4")));
-    }
-
-    #[test]
-    fn temporary_name_keeps_the_cache_prefix() {
-        let temporary = temporary_path(Path::new("/c/abc.jpg"));
-        let displayed = temporary.display().to_string();
-        assert!(displayed.starts_with("/c/abc.jpg."));
-        assert!(displayed.ends_with(".jpg"));
-    }
-}

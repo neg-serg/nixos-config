@@ -1201,9 +1201,9 @@ surface default is yes.
   spring, `capsule_use.plm` every capsule parameter).
 - Per scene, before a task is done: a render reviewed and a `describe` read. The harness that used
   to do this (`pleamar-smoke`, `pleamar-describe-snap`) needs `pleamar-wm`, which is not installed
-  here: the committed `tests/*.describe.txt` predate the current bar and are **not** a gate — do not
-  hand-edit them, and do not treat their numbers as truth. For the live bar use
-  `just pleamar-geometry` (§3.6), which asserts the invariants rather than a snapshot of widths.
+  here, and no describe snapshots are committed: do not treat a saved snapshot as truth. For the
+  live bar use `just pleamar-geometry` (§3.6), which asserts the invariants rather than a snapshot
+  of widths.
 - The behavior of a runtime change is not proven by `--check`; it is proven by a headless run plus a
   `describe` snapshot. Say which was run.
 
@@ -1502,22 +1502,7 @@ One plugin per commit, each with its `.check.plm` and its row here:
    **Upstream ask: add `url` (the `xesam:url` MPRIS field) to the `media` service** — then the
    plugin drops its `playerctl` call and the boundary does not change.
 
-### 10.6 The two gates of PH3-P
-
-**The hostile-plugin test.** `scripts/dev/check-plugin-sandbox.sh` (in `just lint`, and on its own
-as `just plugin-sandbox`) opens the fixture scene `files/pleamar/tests/plugins/hostile/` twice, both
-times with a temp `HOME` and temp XDG dirs:
-
-1. unapproved — the plugin asks for `run: "sh"` (an interpreter, "asking for everything"), the log
-   must carry `NOT APPROVED` / `wants to run 'sh', but nobody has approved its permissions`, and the
-   marker file its logic writes must **not** exist;
-1. approved (`pleamar --approve --yes`) — the same scene must create the marker.
-
-The fixture is not a shell plugin: it lives under `tests/`, nothing links it, no scene imports it.
-The test prefers `pleamar-wm headless` (nothing appears on the desktop) and falls back to the
-ambient session; if the environment has neither, it skips with a notice, like the other gates do for
-a missing tool. The renderer is never part of the verdict — the logic runs on its own thread, and a
-GPU-less sandbox can panic after the refusal — only the log line and the marker are asserted.
+### 10.6 The render gate of PH3-P
 
 **The render pass.** `scripts/dev/check-plugin-render.sh` (`just render-plugins [DIR]`) opens every
 `lib/plugins/*/*.check.plm`, captures one PNG per plugin (temp directory by default, so the tree
@@ -1543,6 +1528,6 @@ a scene cannot), so an environment without one skips every scene with that reaso
 failing. Run it in a real session to get the frames and compare them against `files/quickshell`'s
 look.
 
-Both gates pass in this tree where the environment allows; the sandbox this was written in reports
+The gate passes in this tree where the environment allows; the sandbox this was written in reports
 `skip ... (no graphics adapter that can make a Wayland surface)` for all six render scenes, which is
 the honest state of the render half until it is run on the host.

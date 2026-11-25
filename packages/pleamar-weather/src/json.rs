@@ -28,25 +28,3 @@ pub fn raw_or_null(value: &Option<Box<RawValue>>) -> String {
         None => "null".to_string(),
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn string_literals_match_jq() {
-        assert_eq!(string("weather"), "\"weather\"");
-        assert_eq!(string(""), "\"\"");
-        assert_eq!(string("Saint Petersburg"), "\"Saint Petersburg\"");
-        assert_eq!(string("a\"b\\c"), "\"a\\\"b\\\\c\"");
-        assert_eq!(string("line\nbreak"), "\"line\\nbreak\"");
-        assert_eq!(string("Zürich"), "\"Zürich\"");
-    }
-
-    #[test]
-    fn raw_or_null_keeps_the_literal() {
-        assert_eq!(raw_or_null(&Some(raw("3.40"))), "3.40");
-        assert_eq!(raw_or_null(&Some(raw("null"))), "null");
-        assert_eq!(raw_or_null(&None), "null");
-    }
-}

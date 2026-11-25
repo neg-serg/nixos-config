@@ -16,8 +16,7 @@ Files in this directory:
 | `README.md`         | this file                                                                         |
 
 The generator and both samplers (accent mean + Oklab k-means) are the Rust crate
-`packages/pleamar-theme` (binary `pleamar-theme`); its cargo tests in `tests/` are the hermetic
-proof that used to be `test.sh`.
+`packages/pleamar-theme` (binary `pleamar-theme`).
 
 ## The contract
 

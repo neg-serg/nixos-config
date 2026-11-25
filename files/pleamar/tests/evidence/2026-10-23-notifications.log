@@ -1,9 +1,0 @@
-report · measuring notifications for 8 s. Use the desktop as usual meanwhile —
-         move windows, switch workspaces, open and close things— above all what feels slow.
-           7 s left            6 s left            5 s left            4 s left            3 s left            2 s left            1 s left            0 s left          done.          
-
-  notifications: smooth · 60 fps against 60 Hz
-
-report · written to /etc/nixos/files/pleamar/tests/evidence/2026-10-23-notifications.md
-         Send it to us: attach it to an issue at https://github.com/k4ditano/pleamar/issues
-         or drop it in the Discord. It holds no personal data: numbers, the card and the monitors.

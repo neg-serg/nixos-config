@@ -100,8 +100,8 @@
 #
 # ## Open state (2026-10-17)
 #
-# Notifications still miss their budget (1.0 % of a core against the 0.5 % target) and
-# `tests/evidence/` is missing, so the G3/SC2 gates are unproven. The plugin phase (PH3-P) has
+# Notifications still miss their budget (1.0 % of a core against the 0.5 % target) and no budget
+# evidence was kept, so the G3/SC2 gates are unproven. The plugin phase (PH3-P) has
 # landed six plugins. The analyser in the media card is the one unverified path: `spectrum.luau`
 # only heard about `media` through its watch, and a track that was already playing when the scene
 # started produces no change event — it now asks once at load and polls every two seconds while

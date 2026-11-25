@@ -119,7 +119,7 @@
   # Pleamar shell (features.gui.pleamar): this is the session's shell — bar,
   # panels, notifications, toast and launcher run as their own units, all
   # 18 scene files compile, and the panels' frame cost is inside the screen's
-  # own period (tests/evidence/). It is the only shell in the tree: the
+  # own period. It is the only shell in the tree: the
   # Quickshell reference panel and its `quickshell.service` are gone, so
   # nothing else competes for the bottom edge.
   features.gui.pleamar.enable = true;

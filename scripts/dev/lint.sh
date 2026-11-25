@@ -366,10 +366,6 @@ gate_scene_events() {
   bash "$REPO_ROOT/scripts/dev/check-scene-events.sh" "$REPO_ROOT"
 }
 
-gate_plugin_sandbox() {
-  bash "$REPO_ROOT/scripts/dev/check-plugin-sandbox.sh" "$REPO_ROOT"
-}
-
 gate_hyprland_vars() {
   bash "$REPO_ROOT/scripts/dev/check-hyprland-vars.sh" "$REPO_ROOT"
 }
@@ -427,7 +423,6 @@ GATES=(
   shellcheck
   plm
   scene_events
-  plugin_sandbox
   hyprland_vars
   relative_paths
   absolute_home

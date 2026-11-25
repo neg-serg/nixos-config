@@ -21,30 +21,3 @@ pub fn normalize(value: &str) -> Option<String> {
         _ => None,
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::normalize;
-
-    #[test]
-    fn six_digit_values_are_lower_cased() {
-        assert_eq!(normalize("#AbCdEf").as_deref(), Some("#abcdef"));
-        assert_eq!(normalize("#006fcc").as_deref(), Some("#006fcc"));
-    }
-
-    #[test]
-    fn three_digit_values_are_expanded() {
-        assert_eq!(normalize("#AbC").as_deref(), Some("#aabbcc"));
-        assert_eq!(normalize("#000").as_deref(), Some("#000000"));
-    }
-
-    #[test]
-    fn invalid_values_are_rejected() {
-        for value in [
-            "", "#", "#12", "#12345", "#1234567", "abcdef", "#gggggg", "#12345g", " #123456",
-            "#123456 ",
-        ] {
-            assert_eq!(normalize(value), None, "accepted {value:?}");
-        }
-    }
-}

@@ -20,7 +20,7 @@
 # (`vol.w`, `mic.w`, `ws.w`, `weather.w`, the sysmon pair count), so they change
 # with the audio route, the reading and the workspace. The invariants are what
 # must survive those changes; a hard-coded width table would be stale within a
-# day, which is how `tests/bar.describe.txt` went wrong.
+# day, which is how a snapshot of the bar went wrong.
 #
 # The session is a precondition, like the pleamar binary in check-plm.sh: with
 # no bar running there is nothing to measure, so that is a skip with a notice

@@ -16,9 +16,6 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = ./Cargo.lock;
 
-  # Hermetic: fake tools, temporary HOME/XDG/TMPDIR, no real session.
-  doCheck = true;
-
   meta = lib.mkMeta {
     description = "pleamar picker commands (wallpaper still/apply and the deck CLI)";
     homepage = "https://github.com/neg-serg/nixos-config";

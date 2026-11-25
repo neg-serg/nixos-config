@@ -21,8 +21,8 @@
 # `wgpu::Backends::PRIMARY`); where the environment has none — a sandbox with
 # /dev/dri closed — every scene is skipped with that reason, never failed.
 #
-# Artifacts go to a temp directory by default (`--out DIR` keeps them): committed
-# shots belong under `files/pleamar/tests/`, written deliberately, not by a gate.
+# Artifacts go to a temp directory by default (`--out DIR` keeps them); committed
+# shots are written deliberately, never by a gate.
 #
 # Usage: check-plugin-render.sh [REPO_ROOT] [--out DIR] [--seconds N] [--probe]
 #        --probe prints what the gate found (binary, session, capture tools) and

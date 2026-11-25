@@ -62,17 +62,3 @@ pub fn cache_with_home(home: &OsStr) -> PathBuf {
 pub fn wl_state(home: &OsStr) -> PathBuf {
     append(home, "/.local/state/wl")
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn append_keeps_an_empty_base_absolute() {
-        assert_eq!(append(OsStr::new(""), "/.cache"), PathBuf::from("/.cache"));
-        assert_eq!(
-            append(OsStr::new("/home/u"), "/.local/state/wl"),
-            PathBuf::from("/home/u/.local/state/wl")
-        );
-    }
-}

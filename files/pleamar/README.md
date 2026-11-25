@@ -18,9 +18,8 @@ scene, and treat it as the contract the bar, panels, notifications and lock scen
   behaviour.
 - `shells/<scene>/<scene>.plm` (+ optional `<scene>.luau`) — one directory per scene; directory
   name, scene name and IPC name are the same string.
-- `scripts/` — headless smoke render matrix, agent-tree snapshots, and budget measurement wrappers.
-- `tests/` — committed expected artifacts: `*.describe.txt` snapshots, golden screenshots, budget
-  tables.
+- `scripts/` — the theme pipeline's seed palette (`theme/theme.default.plm`) and the helper workers'
+  notes.
 
 ## Run one scene by hand
 

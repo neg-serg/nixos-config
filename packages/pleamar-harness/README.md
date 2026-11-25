@@ -17,8 +17,8 @@ keep the `*.sh` names for byte parity with `--help`; the binary names are the th
 ## Repository root (the one structural deviation)
 
 The scripts derived `PROJECT_DIR` from `BASH_SOURCE`. A binary in the Nix store has no such path, so
-`src/repo.rs` resolves the pleamar tree (`files/pleamar`, the directory holding `shells/` and
-`tests/`) in this order:
+`src/repo.rs` resolves the pleamar tree (`files/pleamar`, the directory holding `shells/`) in this
+order:
 
 1. `PLEAMAR_ROOT`, when set. It may point either at the pleamar tree itself
    (`/etc/nixos/files/pleamar`) or at the repository root containing `files/pleamar`.
@@ -39,9 +39,8 @@ Same variables as the scripts:
 - `PLEAMAR_HEADLESS_INPUT` passes through to `pleamar-wm` untouched;
 - `VK_ICD_FILENAMES` is honoured when already set; `--soft` never overrides it.
 
-One test seam is added and documented here: `PLEAMAR_CGROUP_ROOT` (default `/sys/fs/cgroup`) lets
-the hermetic tests point `measure --unit` at a fixture cgroup. It is unset in every normal run,
-where the path is the script's hardcoded one.
+`PLEAMAR_CGROUP_ROOT` (default `/sys/fs/cgroup`) is a seam that points `measure --unit` at another
+cgroup tree. It is unset in every normal run, where the path is the script's hardcoded one.
 
 ## Artifacts
 
@@ -93,23 +92,3 @@ no compositor to ask.
 - The renderer's resolved path is used for `grim` (the shell used `$GRIM`), and the resolved `jq` is
   used for the drift key walk. The scripts already did this with their variables; the port had to
   keep the resolved path rather than re-invoking the bare name.
-
-## Tests
-
-```sh
-cargo test --locked
-```
-
-- `tests/measure.rs`, `tests/describe_snap.rs`, `tests/smoke.rs`, `tests/rig.rs` — end-to-end runs
-  with fake external tools (argv logged), temp repos, a zombie scene pid, temp XDG sandbox and no
-  real session/network/cgroup. They cover every flag, failure path, output format, cgroup columns
-  (via the test seam), PNG verification, renderer fallbacks and the snapshot update/diff paths.
-- `tests/parity.rs` — runs the unmodified originals in `tests/parity/original/` (see that
-  directory's README) against the same fake tools and compares exit code, stdout, stderr, every
-  artifact byte and the sorted argv multisets of the contract commands. It needs `bash`, `jq`,
-  `diff`, `sort`, `perl` and coreutils on `PATH`; the Nix check provides them.
-- Unit tests in `src/text.rs` pin the masking, `head`/`tail` and diff-summary primitives.
-
-`tests/support/mod.rs` is the shared fixture: it symlinks the standard host tools into a private
-directory, so the host's real `pleamar`, `grim`, `sway` or `systemctl` cannot leak into a test
-through `PATH`.

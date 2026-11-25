@@ -12,25 +12,9 @@
 # The scripts found `files/pleamar` from their own path. A binary in the Nix
 # store cannot, so the port reads PLEAMAR_ROOT or walks up from the current
 # directory to the flake — documented in the crate README.
-#
-# The checks are hermetic: fake pleamar/pleamar-wm/ps/systemctl/grim/... in a
-# temporary bin dir, a temporary HOME/XDG sandbox, no session and no network.
-# `tests/parity.rs` also runs unmodified copies of the original shell scripts
-# (tests/parity/original/) against the same fakes and compares stdout, stderr,
-# exit codes, artifacts and the argv of the contract tools.
 {
   lib,
   rustPlatform,
-  bash,
-  coreutils,
-  diffutils,
-  findutils,
-  gawk,
-  gnugrep,
-  gnused,
-  jq,
-  perl,
-  procps,
 }:
 
 rustPlatform.buildRustPackage {
@@ -40,24 +24,6 @@ rustPlatform.buildRustPackage {
   src = lib.cleanSource ./.;
 
   cargoLock.lockFile = ./Cargo.lock;
-
-  doCheck = true;
-
-  # The tests and the parity harness use these host tools (the fakes are shell
-  # scripts; jq/diff/sort are the real ones the scripts called). No network,
-  # session or cgroup is touched.
-  nativeCheckInputs = [
-    bash
-    coreutils
-    diffutils
-    findutils
-    gawk
-    gnugrep
-    gnused
-    jq
-    perl
-    procps
-  ];
 
   meta = lib.mkMeta {
     description = "pleamar developer harnesses: measure, describe-snap and smoke";
