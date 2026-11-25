@@ -68,6 +68,14 @@ in
     # Extracted to github:neg-serg/mpd-voice, which owns the crate, its packaging
     # and the flake checks; the host only consumes the package.
     mpd-voice = inputs.mpd-voice.packages.${prev.stdenv.hostPlatform.system}.default; # Voice control for MPD: microphone -> local STT -> player commands
+    # Extracted to github:neg-serg/hypr-win-list, which owns the crate, its
+    # packaging and the picker fixture check. Its wrapper prepends the binaries
+    # the picker shells out to, so it must carry the host's patched vicinae and
+    # its hyprland: the input's own nixpkgs copies would add a second launcher
+    # and compositor to the closure.
+    hypr-win-list = inputs.hypr-win-list.packages.${prev.stdenv.hostPlatform.system}.default.override {
+      inherit (final) hyprland vicinae;
+    }; # Hyprland window picker for vicinae dmenu
     # Extracted to github:neg-serg/telegram-notify, which owns the build and its tests.
     telegram-notify = inputs.telegram-notify.packages.${prev.stdenv.hostPlatform.system}.default; # Rust Telegram notification binaries (calendar, pill, bot, alert scanner/bridge, zfs watch)
     # Extracted to github:neg-serg/sing-box-proxy, which owns the build. The host

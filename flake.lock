@@ -726,6 +726,26 @@
         "url": "https://github.com/caniko/harbor-rs.git"
       }
     },
+    "hypr-win-list": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795609625,
+        "narHash": "sha256-GfPeoDwElHZCWAkOHKnZ1GxstSfQLxmUWr3dneqPP04=",
+        "owner": "neg-serg",
+        "repo": "hypr-win-list",
+        "rev": "ff8731f810eca22f4f66f43187ab586a88f4fed6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "hypr-win-list",
+        "type": "github"
+      }
+    },
     "hyprscratch": {
       "inputs": {
         "nixpkgs": [
@@ -1383,6 +1403,7 @@
         "bootvine": "bootvine",
         "determinate": "determinate",
         "flake-parts": "flake-parts_2",
+        "hypr-win-list": "hypr-win-list",
         "hyprscratch": "hyprscratch",
         "import-tree": "import-tree_2",
         "iosevka-neg": "iosevka-neg",

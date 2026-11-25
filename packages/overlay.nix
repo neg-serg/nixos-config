@@ -57,7 +57,6 @@ let
     "hwctl"
     "hypr-focus"
     "hypr-rearrange"
-    "hypr-win-list"
     "lazytail"
     "local-bin-audio"
     "local-bin-desktop"
@@ -228,7 +227,6 @@ slimChunks
           renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)
           scratchpad-geometry = final.callPackage ./scratchpad-geometry { }; # persist Hyprland scratchpad rects across show/hide
           hypr-rearrange = final.callPackage ./hypr-rearrange { }; # move windows to the workspaces the config routes them to
-          hypr-win-list = final.callPackage ./hypr-win-list { }; # Hyprland window picker for vicinae dmenu
           minibbs = final.callPackage ./minibbs { }; # tiny BBS-style message board (SQLite + HTTP)
           zalgo = final.callPackage ./zalgo { }; # cursed-text generator (combining marks on stdin)
           blizzard = final.callPackage ./blizzard { }; # animated black-metal blizzard WebP generator (fastfetch logos)

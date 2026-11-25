@@ -111,6 +111,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # hypr-win-list — the Hyprland window picker, extracted to
+    # github:neg-serg/hypr-win-list, which owns the crate, its packaging, the
+    # README and the fixture check; this flake only consumes the package.
+    hypr-win-list = {
+      url = "github:neg-serg/hypr-win-list";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     wl = {
       url = "github:neg-serg/wl";
       flake = false;
