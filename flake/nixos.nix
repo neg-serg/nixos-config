@@ -84,39 +84,14 @@ let
       modules = commonModules ++ [ (import ((builtins.toString hostsDir) + "/" + name)) ];
     };
 
-  # A/B test configurations: same base host but WITH ONLY THE TEST PROFILE ACTIVE.
-  # This replaces the base profiles entirely (via mkForce) so the comparison is clean:
-  # base config vs single-profile test config, no priority conflicts.
-  #
-  # NEVER evaluated during normal `nixos-rebuild switch --flake .#trantor`.
-  # Evaluated by flake/checks.nix (test-trantor-*) via the exported mkTestHost.
-  mkTestHost =
-    baseName: testProfile:
-    lib.nixosSystem {
-      inherit pkgs;
-      # Same domain filter as mkHost: a test host must evaluate the configuration
-      # the real host runs, not the all-domains superset (trantor excludes
-      # appimage/apps, so importing them here hid real eval breakage).
-      specialArgs = mkSpecialArgs // {
-        domainFilter = mkDomainFilter (if baseName == "trantor" then trantorDomains else allDomains);
-      };
-      modules =
-        commonModules
-        ++ [ (import ((builtins.toString hostsDir) + "/" + baseName)) ]
-        ++ [
-          # mkForce: replace host profiles entirely so the test profile is the sole active one
-          { features.profiles = lib.mkForce [ testProfile ]; }
-        ];
-    };
-
 in
 {
   # Explicit contract: `configurations` is the pure machine set (flake-schemas
-  # friendly), `mkTestHost` is the A/B test builder consumed by flake/checks.nix.
+  # friendly); test-only configurations are not exported.
   configurations = {
     trantor = mkHost "trantor";
   };
   # `mkSpecialArgs` is exported so flake/checks.nix builds its evalModules stub
   # from the same arguments the real hosts use (it used to keep a drifting copy).
-  inherit mkSpecialArgs mkTestHost;
+  inherit mkSpecialArgs;
 }

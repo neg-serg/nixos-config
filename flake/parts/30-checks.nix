@@ -11,7 +11,7 @@
       checks = import ../checks.nix {
         inherit self;
         inherit (inputs) nixpkgs;
-        inherit (config.neg.nixosOut) mkTestHost mkSpecialArgs;
+        inherit (config.neg.nixosOut) mkSpecialArgs;
       } pkgs;
     };
 }

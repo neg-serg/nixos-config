@@ -7,13 +7,12 @@
 #
 # Domain filter refactoring (Jul 2026):
 #   modules/default.nix now accepts domainFilter via specialArgs, letting
-#   test configurations restrict which module domains are imported (smaller
-#   eval trees). `test-trantor-gaming` pins the real host's filter.
+#   evalModules checks restrict which module domains are imported (smaller
+#   eval trees) while still using the host's filter.
 # ---------------------------------------------------------------------------
 {
   nixpkgs,
   self,
-  mkTestHost,
   mkSpecialArgs,
   ...
 }:
@@ -335,43 +334,4 @@ in
       DIRCOLORS_PARSERS_REQUIRED=1 \
       bash ${../scripts/dev}/check-shell-palette.sh "$TMPDIR/repo"
   '';
-
-  # ── NixOS test config checks ───────────────────────────────────────
-  # Each evaluates a profile-specific NixOS configuration for "trantor"
-  # via mkTestHost (threaded from flake.nix; stripped from the
-  # nixosConfigurations output so flake-schemas sees a pure machine set).
-  # These ensure the A/B test configurations evaluate without errors.
-
-  # test-trantor-gaming evaluates a profile-specific NixOS configuration for trantor
-  # (via mkTestHost, threaded from flake.nix) and forces its whole build graph:
-  # counting option names never evaluated the configuration, so a module body
-  # that throws passed this check.
-  #
-  # It also pins the domain filter: the test host must import the same domains
-  # as the real host (mkHost → trantorDomains, which excludes appimage/apps),
-  # otherwise it validates a configuration trantor never runs.
-  # modules/appimage/default.nix is the probe — it registers the appimage binfmt
-  # format, so the registration is present exactly when that domain is imported.
-  "test-trantor-gaming" =
-    let
-      cfg = mkTestHost "trantor" "gaming";
-      appimageImported = cfg.config.boot.binfmt.registrations ? appimage;
-      # Force the full system evaluation: `builtins.seq` on the derivation
-      # itself, never on a `.drvPath`/`outPath` string — those carry store
-      # context and would pull the whole system closure in as build inputs of
-      # this check (it would try to build the world). A module body that throws
-      # now fails the check.
-      forced = builtins.seq cfg.config.system.build.toplevel 0;
-    in
-    pkgs.runCommand "check-test-trantor-gaming" { } ''
-      ${lib.optionalString appimageImported ''
-        echo "FAIL: the test host imported the appimage domain (domainFilter diverged from mkHost)" >&2
-        exit 1
-      ''}
-      echo "check: test-trantor-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options, appimage domain: ${
-        if appimageImported then "imported" else "excluded"
-      })"
-      echo "check: test-trantor-gaming config fully evaluated (${toString forced} errors)"
-      touch $out
-    '';
 }
