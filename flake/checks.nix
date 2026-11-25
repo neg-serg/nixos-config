@@ -209,6 +209,18 @@ in
         ''
       );
 
+  # ── lib.sh self-test ───────────────────────────────────────────────
+  # scripts/dev/lib.sh is sourced by every lint gate and by the checks below, and
+  # scripts/dev/lib.test.sh pins its helpers (11 assertions: repo_root, pmap,
+  # platform detection). Nothing ran the test, so the gate is the fix: a broken
+  # helper now fails `just check` instead of surfacing as a mysterious lint
+  # failure later.
+
+  "lib-self-test" = mkScriptCheck "lib-self-test" [ ] ''
+    # Splice the whole scripts/dev dir so the test finds lib.sh next to itself.
+    bash ${../scripts/dev}/lib.test.sh
+  '';
+
   # ── dsh-worktree guard ─────────────────────────────────────────────
   # rust-pkgs/local-bin-tools' dsh-worktree creates real git worktrees outside
   # the repository so parallel dsh sessions never fight over the working copy. The
