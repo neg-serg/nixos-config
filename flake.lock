@@ -848,7 +848,7 @@
         "narHash": "sha256-Q2VH+0FLhIay5hE5wVydlYKYXsBaIavcTFpeh4kzqKQ=",
         "owner": "neg-serg",
         "repo": "lusty",
-        "rev": "631b8ff83af28ceb5815c642da293a739aed11a8",
+        "rev": "e7dcfc7355a9720f60446c1f456747beca5a222d",
         "type": "github"
       },
       "original": {
@@ -2048,11 +2048,11 @@
     "wl": {
       "flake": false,
       "locked": {
-        "lastModified": 1794071447,
-        "narHash": "sha256-8Sm6JWbEPT4OImPjCefGdz54NYcwiHdXcu5cVq04Q28=",
+        "lastModified": 1793813872,
+        "narHash": "sha256-muF1KWgWbk8ZkSkm2jf3AmFHB2jzjsTioOEYxINKHm0=",
         "owner": "neg-serg",
         "repo": "wl",
-        "rev": "460b17b10cebaaa064529a59f3d3164c4567abf2",
+        "rev": "4bd64cf2059463d2d97c3f779beba2f4d537d068",
         "type": "github"
       },
       "original": {
