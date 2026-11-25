@@ -316,6 +316,12 @@ music-moss-venv *ARGS:
 music-moss-models *ARGS:
     bash "{{repo_root}}/scripts/dev/moss-music-setup.sh" --only models {{ARGS}}
 
+# Recover the RME HDSPe from a stuck playback DMA: stop the graph, PCIe reset,
+# hardware mixer init, start the graph, verify with a test tone. Sudo prompts
+# inside; the module header explains the failure this undoes.
+hdspe-reset:
+    bash "{{repo_root}}/modules/hardware/audio/hdspe/reset-dma.sh"
+
 # Install chordotomy (beat-aligned chords, key changes, Roman numerals from a
 # recording) as a uv tool plus its Beat This! weights; --check/--dry-run are
 # read-only. It lives in ~/.local, so no rebuild is needed to use it.

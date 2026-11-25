@@ -15,27 +15,19 @@
 # still dead, so the monitors are silent.
 #
 # Reloading snd_hdspe does NOT clear it: the driver comes back, the PCM starts,
-# and the DMA engine never runs. Only a PCIe reset does (verified on trantor,
-# where the card is 0000:05:00.0; find the slot with `lspci -d 1d18:`):
-#
-#   systemctl --user stop camilladsp.service pipewire.socket pipewire-pulse.socket \
-#     pipewire.service pipewire-pulse.service wireplumber.service
-#   sudo sh -c 'echo 0000:05:00.0 > /sys/bus/pci/drivers/snd_hdspe/unbind
-#               sleep 1
-#               echo 1 > /sys/bus/pci/devices/0000:05:00.0/reset
-#               sleep 1
-#               echo 0000:05:00.0 > /sys/bus/pci/drivers/snd_hdspe/bind'
-#   sudo systemctl restart hdspe-init-mixer.service
-#   systemctl --user start pipewire.socket pipewire-pulse.socket wireplumber.service \
-#     pipewire.service pipewire-pulse.service
-#   systemctl --user start camilladsp.service
+# and the DMA engine never runs. Only a PCIe reset does, and that sequence
+# lives next to this file: `just hdspe-reset` (hdspe/reset-dma.sh) stops the
+# graph, unbinds/resets/rebinds the function (it finds the slot itself; on
+# trantor it is 0000:05:00.0, `lspci -d 1d18:`), re-inits the hardware mixer,
+# starts the graph and proves the result with a test tone. The order is not
+# decorative: no client may hold the device across the reset, and the mixer
+# init must follow it, because the driver zeroes the mixer on load.
 #
 # Recovery signs: the card's IRQ fires again and
 # /proc/asound/card0/pcm0p/sub0/status shows hw_ptr advancing at ~48000
-# frames/s. The reset must precede the mixer init — the driver zeroes the mixer
-# on load, so a rebind alone leaves the monitors silent. A full power cycle also
-# works; a warm reboot may not, since it re-runs the same driver init that
-# already failed.
+# frames/s. A full power cycle also works; a warm reboot may not, since it
+# re-runs the same driver init that already failed.
+
 {
   lib,
   pkgs,
