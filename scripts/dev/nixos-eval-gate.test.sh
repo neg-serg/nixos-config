@@ -11,7 +11,7 @@
 #   2. tier A warm: hit, identical value, under 2 s;
 #   3. tier B cold: miss, value equals `nix eval` of the drvPath;
 #   4. tier B warm: hit, identical value, under 2 s;
-#   5. edit files/pleamar/shells/bar/bar.plm (not an eval input):
+#   5. edit README.md (not an eval input):
 #      tier A HIT with the same label (a live eval confirms it), tier B MISS with
 #      a different drvPath (a live eval confirms the new one) — the evidence that
 #      tier B may not be keyed on the input set;

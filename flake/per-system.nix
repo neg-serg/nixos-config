@@ -14,9 +14,8 @@ in
 {
   packages = (mkCustomPkgs pkgs) // {
     default = pkgs.zsh; # default shell for flake environment
-    # The headless compositor the developer harnesses run scenes in. The scripts
-    # find it as `nix build <repo>#pleamar-wm` (`resolve_pleamar_tool`), which is
-    # why it is exported rather than only installed.
+    # The headless compositor the developer harnesses run scenes in; exported as
+    # `nix build <repo>#pleamar-wm` for the pleamar-config flake's tools.
     pleamar-wm = pkgs.pleamar-wm;
   };
 
