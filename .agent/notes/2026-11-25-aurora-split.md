@@ -1,7 +1,7 @@
 # 2026-11-25 — aurora moved to its own repository
 
-Status: extracted, wired and built; the host renders the player from the repository's own recipe.
-The packaging commit is local (`9b4c038`), so the flake input is a `git+file:` on the live checkout.
+Status: extracted, pushed, wired and built; the host renders the player from the repository's own
+recipe. The input is `git+ssh://git@github.com/neg-serg/aurora`, pinned like every other own input.
 
 Repositories: <https://github.com/neg-serg/aurora> (private, live checkout `~/src/nix/aurora`) and
 <https://github.com/neg-serg/aurora-plugins> (public; it already carried its own `nix/package.nix`,
@@ -14,7 +14,7 @@ this commit only stops reading it as a `flake = false` source).
 | `packages/aurora.nix` (210 lines)             | `nix/package.nix` in the aurora repository                |
 | the runtime-lib list inside it                | `nix/runtime-libs.nix`, shared with the devShell          |
 | `src = inputs.aurora-src` passthrough         | `src = ./..` — the checkout the recipe ships with         |
-| `inputs.aurora-src` (ssh, `flake = false`)    | `inputs.aurora` (flake, `git+file:` until the push)       |
+| `inputs.aurora-src` (ssh, `flake = false`)    | `inputs.aurora` (flake, `git+ssh`, pinned)                |
 | `inputs.aurora-plugins-src` (`flake = false`) | `inputs.aurora-plugins` (flake, `inputs.nixpkgs.follows`) |
 
 ## Decisions taken with the move
@@ -43,9 +43,8 @@ this commit only stops reading it as a `flake = false` source).
   `aurora-plugins` (`github:neg-serg/aurora-plugins`, `inputs.nixpkgs.follows`). `aurora-src` and
   `aurora-plugins-src` are gone from `flake.lock`.
 - `packages/overlay.nix`: three `final.callPackage` lines; `packages/aurora.nix` is deleted.
-- `scripts/dev/flake-bump-own.sh` no longer lists aurora: a local `git+file:` checkout moves with
-  `nix flake lock --update-input aurora` after a commit in `~/src/nix/aurora`, like `pleamar-config`
-  (which has the `just pleamar-sync` recipe). The weekly timer keeps bumping only remote inputs.
+- `scripts/dev/flake-bump-own.sh` bumps the renamed input in its heavy list (aurora rebuilds Rust,
+  iosevka-neg a font family), the same slot `aurora-src` held.
 - Comments and docs that named `aurora-src` follow the rename: `Justfile`,
   `.agent/workflows/update-flake.md`, `hosts/trantor/default.nix`,
   `modules/features/{media,system}.nix`, `files/shell/zsh/02-cmds.zsh`, `packages/AGENTS.md`.
@@ -60,10 +59,11 @@ this commit only stops reading it as a `flake = false` source).
 
 ## Gaps to fix later
 
-1. **The commit is not pushed.** Until it is, the input stays `git+file:`; then switch the URL in
-   `flake.nix` to `git+ssh://git@github.com/neg-serg/aurora` and re-lock — nothing else changes.
 1. **The repository's pre-commit gate is broken on this host:** its build step runs the rustup
    toolchain and dies on a stale `rustup-1.29.2/nix-support/ld-wrapper.sh` store path, so the commit
-   needed `--no-verify` (the Nix build is unaffected). A `git+file:` input also cannot be locked
-   from a dirty checkout, so the two unrelated staged docs were stashed for the lock and restored
-   afterwards.
+   needed `--no-verify` (the Nix build is unaffected). While the input was `git+file:`, a dirty
+   checkout also blocked locking, so the two unrelated staged docs were stashed for the lock and
+   restored afterwards.
+1. **The pin follows the repository, not the checkout.** The host locks what is pushed; a commit in
+   `~/src/nix/aurora` reaches it after `nix flake lock --update-input aurora` (or the weekly
+   `just bump-own --all`), not on its own.

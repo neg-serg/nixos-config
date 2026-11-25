@@ -25,16 +25,12 @@ deploys the commit on its next tick once the tree is clean.
 
 ```bash
 just bump-own              # seven light inputs; commit when the eval passes
-just bump-own --all        # also iosevka-neg (a full font family rebuild)
+just bump-own --all        # also aurora and iosevka-neg (long rebuilds)
 just bump-own --no-commit  # leave flake.lock modified for review
 ```
 
 The recipe refuses a dirty tree or a branch other than `main`, and never touches `nixpkgs` or
 third-party pins.
-
-`aurora` is in neither list: it is a `git+file:` live checkout, so it moves with
-`nix flake lock --update-input aurora` after a commit in `~/src/nix/aurora` — the same shape as
-`pleamar-config` and `just pleamar-sync`.
 
 On trantor `features.system.flakeBump.enable` runs the same script weekly (`flake-bump-own.timer`,
 Sunday 04:00): the tick commits and `rollout-watch` deploys the commit. A dirty tree or another

@@ -143,5 +143,6 @@
     description = "OnCalendar expression for the weekly bump timer.";
   };
 
-  options.features.system.flakeBump.heavy = mkBool "also bump iosevka-neg (long rebuilds)" false;
+  options.features.system.flakeBump.heavy =
+    mkBool "also bump aurora and iosevka-neg (long rebuilds)" false;
 }

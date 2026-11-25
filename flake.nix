@@ -227,17 +227,10 @@
     # entry and the icon) lives with the code in github:neg-serg/aurora; the
     # host only calls it through `final.callPackage`, so the derivation keeps
     # building against this flake's package set and `pkgs.neg.aurora` is
-    # unchanged.
-    #
-    # `git+file:` on the live checkout, like pleamar-config: the input pins the
-    # *committed* tree by revision, so a local commit reaches the build after
-    # `nix flake lock --update-input aurora` with no push, while untracked files
-    # (target/) stay out of the store. It is deliberately absent from the weekly
-    # `just bump-own` list: a live checkout is moved by hand, not on a timer.
-    # Switch it to `git+ssh://git@github.com/neg-serg/aurora` once the packaging
-    # commit is pushed.
+    # unchanged. The repository owns the recipe, its `packages.default` and its
+    # `checks.build`; the host pins one revision like any other input.
     aurora = {
-      url = "git+file:///home/neg/src/nix/aurora";
+      url = "git+ssh://git@github.com/neg-serg/aurora";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # The plugins are the repository's own programs and its flake already

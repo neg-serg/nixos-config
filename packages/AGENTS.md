@@ -42,10 +42,10 @@ Guidelines
 - `aurora`, `aurora-headphones` and `aurora-plugins` are no longer packaged here either: the
   player's recipe (`nix/package.nix`, with its desktop entry, icon and the `runtime-libs.nix` list
   the devShell shares) lives in `github:neg-serg/aurora` (live checkout `~/src/nix/aurora`, consumed
-  as a `git+file:` input until the packaging commit is pushed), the plugins' recipe in
-  `github:neg-serg/aurora-plugins`. `packages/overlay.nix` calls both through
-  `final.callPackage (inputs.<repo> + "/nix/package.nix")` against this flake's package set, which
-  keeps the `pkgs.neg.aurora*` names. Do not add the player or a plugin package back into this tree.
+  over `git+ssh`), the plugins' recipe in `github:neg-serg/aurora-plugins`. `packages/overlay.nix`
+  calls both through `final.callPackage (inputs.<repo> + "/nix/package.nix")` against this flake's
+  package set, which keeps the `pkgs.neg.aurora*` names. Do not add the player or a plugin package
+  back into this tree.
 - For a project that still carries a manifest in this tree, do not repeat its version in
   `default.nix`; read the manifest instead:
   `version = (lib.importTOML ./Cargo.toml).package.version;`. The `manifest-version` lint guard

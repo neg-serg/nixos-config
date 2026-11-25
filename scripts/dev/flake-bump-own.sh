@@ -5,11 +5,8 @@
 # Why a separate recipe: `nix flake update` moves every pin at once, nixpkgs
 # included, and one bad pin hides the rest. Own inputs are the ones neg can
 # move to a branch head without a decision; heavy inputs are opt-in because
-# their rebuild (iosevka-neg: a whole font family) is long and the pin is
-# part of the package's release choice. `aurora` is in neither list: it is a
-# `git+file:` live checkout like `pleamar-config`, so it moves with
-# `nix flake lock --update-input aurora` after a commit in that repository, not
-# on a timer.
+# their rebuild (aurora: Rust/Vulkan, iosevka-neg: a whole font family) is long
+# and the pin is part of the package's release choice.
 #
 # Guards: git work tree, branch main, clean tree (untracked files ignored — the
 # same rule rollout-watch uses), nix and jq on PATH. Each input keeps its bump
@@ -23,7 +20,7 @@
 # passes: a dirty tree or another branch is then a quiet skip, not a failure.
 #
 # Usage: flake-bump-own.sh [--all] [--no-commit] [--allow-skip]
-#   --all         also bump iosevka-neg
+#   --all         also bump aurora and iosevka-neg
 #   --no-commit   leave the updated flake.lock in the working tree for review
 #   --allow-skip  exit 0 instead of 1 when the tree is dirty or not on main
 #   -h, --help    print this help
@@ -97,7 +94,7 @@ lock_rev() {
 # Inputs that are neg's own repositories and cheap enough to rebuild weekly.
 inputs=(raise wl lusty neg-pkgs hyprscratch rsmetrx nix-cache-pin)
 if [ "$include_heavy" -eq 1 ]; then
-  inputs+=(iosevka-neg)
+  inputs+=(aurora iosevka-neg)
 fi
 
 moved=()

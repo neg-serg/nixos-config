@@ -105,8 +105,7 @@
   };
   # Weekly bump of the inputs that point at neg's own repositories: the user
   # timer commits flake.lock locally and rollout-watch deploys it. Heavy inputs
-  # (iosevka-neg) stay manual via `just bump-own --all`; aurora is a local
-  # git+file checkout and moves with `nix flake lock --update-input aurora`.
+  # (aurora, iosevka-neg) stay manual via `just bump-own --all`.
   features.system.flakeBump.enable = true;
   # Declarative Wine apps — features.wine.apps.<id>; managed via the `wineapps`
   # CLI (list/install/uninstall/run). Workflow: see the wine-apps DSH skill.
