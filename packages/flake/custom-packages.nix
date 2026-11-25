@@ -128,10 +128,10 @@
   pleamar = pkgs.pleamar;
 
   # Theme pipeline (cargo tests run in the package checkPhase).
-  pleamar-theme = pkgs.neg.pleamar-theme;
+  pleamar-theme = pkgs.pleamar-theme;
 
   # Developer harnesses (measure, describe-snap, smoke).
-  pleamar-harness = pkgs.neg.pleamar-harness;
+  pleamar-harness = pkgs.pleamar-harness;
 
   dsh = pkgs.neg.dsh;
 

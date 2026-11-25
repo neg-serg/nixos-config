@@ -50,6 +50,8 @@ let
         # 1.4.0) silently downgraded the nixpkgs package and burned ~160% CPU.
         # Local overlay first (for packages not yet migrated)
         ((import ../packages/overlay.nix) inputs)
+        # The pleamar shell's own flake: engine + patched worker crates
+        inputs.pleamar-config.overlays.default
         # External package flake (github:neg-serg/nixos-pkgs)
         inputs.neg-pkgs.overlays.default
         # Last overlay wins: neg-pkgs defines python3-lto from prev.python3

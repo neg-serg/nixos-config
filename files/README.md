@@ -28,5 +28,6 @@ config.lib.neg.mkHomeFiles {
 
 ## See Also
 
-- `files/pleamar/README.md` — the shell's scenes, libraries and port documentation
+- The pleamar shell tree moved to `github:neg-serg/pleamar-config`; there is no `files/pleamar/`
+  here any more.
 - `modules/user/nix-maid/` — nix-maid modules

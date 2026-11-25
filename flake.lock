@@ -820,10 +820,12 @@
     "marea": {
       "inputs": {
         "nixpkgs": [
+          "pleamar-config",
           "pleamar-wm",
           "nixpkgs"
         ],
         "pleamar": [
+          "pleamar-config",
           "pleamar-wm",
           "pleamar"
         ]
@@ -1236,6 +1238,7 @@
     "pleamar": {
       "inputs": {
         "nixpkgs": [
+          "pleamar-config",
           "nixpkgs"
         ]
       },
@@ -1254,13 +1257,33 @@
         "type": "github"
       }
     },
+    "pleamar-config": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "pleamar": "pleamar",
+        "pleamar-wm": "pleamar-wm"
+      },
+      "locked": {
+        "narHash": "sha256-8efxn8Ti8XiYieIplun3Yq/zywDrX7ARyfkXjAdGPNM=",
+        "path": "/home/neg/src/pleamar-config",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/neg/src/pleamar-config",
+        "type": "path"
+      }
+    },
     "pleamar-wm": {
       "inputs": {
         "marea": "marea",
         "nixpkgs": [
+          "pleamar-config",
           "nixpkgs"
         ],
         "pleamar": [
+          "pleamar-config",
           "pleamar"
         ]
       },
@@ -1275,6 +1298,7 @@
       "original": {
         "owner": "k4ditano",
         "repo": "pleamar-wm",
+        "rev": "5d8771bab7968a7134825a93c6cfbd811a75cdab",
         "type": "github"
       }
     },
@@ -1331,8 +1355,7 @@
         "nix-maid": "nix-maid",
         "nix-src": "nix-src",
         "nixpkgs": "nixpkgs_2",
-        "pleamar": "pleamar",
-        "pleamar-wm": "pleamar-wm",
+        "pleamar-config": "pleamar-config",
         "raise": "raise",
         "renoise-src": "renoise-src",
         "rsmetrx": "rsmetrx",

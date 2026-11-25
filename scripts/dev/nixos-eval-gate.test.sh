@@ -71,7 +71,7 @@ SRC_REPO="$(repo_root)"
 GATE="$SRC_REPO/scripts/dev/nixos-eval-gate.sh"
 LABEL_ATTR="nixosConfigurations.trantor.config.system.nixos.label"
 DRV_ATTR="nixosConfigurations.trantor.config.system.build.toplevel.drvPath"
-ASSET="files/pleamar/shells/bar/bar.plm"
+ASSET="README.md"
 NIXFILE="modules/security/default.nix"
 
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/nixos-eval-gate-test.XXXXXXXX")"

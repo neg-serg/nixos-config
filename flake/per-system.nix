@@ -17,7 +17,7 @@ in
     # The headless compositor the developer harnesses run scenes in. The scripts
     # find it as `nix build <repo>#pleamar-wm` (`resolve_pleamar_tool`), which is
     # why it is exported rather than only installed.
-    pleamar-wm = inputs.pleamar-wm.packages.${system}.pleamar-wm;
+    pleamar-wm = pkgs.pleamar-wm;
   };
 
   formatter = pkgs.writeShellApplication {

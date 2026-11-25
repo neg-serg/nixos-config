@@ -25,7 +25,7 @@ Scope
 - This AGENTS.md applies to the entire `/etc/nixos` tree.
 - Prefer existing module structure (`modules/`, `hosts/`, `modules/user/nix-maid/`, etc.) and follow surrounding style.
 - Nested AGENTS.md files exist for subtrees (`modules/`, `packages/`,
-  `scripts/`, `secrets/`, `hosts/`, `files/pleamar/`). Read the nearest
+  `scripts/`, `secrets/`, `hosts/`). Read the nearest
   applicable one before touching that subtree; nested rules take precedence
   where they conflict with this file.
 
@@ -50,7 +50,9 @@ Project Structure
 - `packages/` — custom overlays and packages
 - `lib/` — shared Nix helpers (opts.nix, neg-helpers.nix, package-checks.nix, ...)
 - `secrets/` — SOPS-encrypted secrets
-- `files/` — config files (Hyprland, pleamar shell, scripts)
+- `files/` — config files (Hyprland, kitty, scripts)
+- The pleamar shell (scenes, worker crates, nix-maid module, login layer) is its own
+  repository: `github:neg-serg/pleamar-config`, consumed as a `path:` flake input.
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
 - `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild,
   theming); knowledge that belongs to a single module lives in that module's header

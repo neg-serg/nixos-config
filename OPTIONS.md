@@ -72,7 +72,8 @@ never implemented. Dev tooling is gated where it is installed instead — `featu
 - **Pleamar shell** (`features.gui.pleamar.enable`, default off): per-scene systemd user units
   (`pleamar-<scene>.service`) run `pkgs.pleamar` on `~/.config/pleamar/shells/<scene>/<scene>.plm`
   with memory/CPU caps, a `pleamar-health` hang watchdog, and nix-maid links of
-  `files/pleamar/{shells,lib}` plus a generated `~/.config/pleamar/autostart`. The flag is what
+  the scene tree of `github:neg-serg/pleamar-config` (`shells/`, `lib/`) plus a generated
+  `~/.config/pleamar/autostart`. The flag is what
   makes pleamar the session's shell; the theme pipeline that feeds its palette is
   `packages/pleamar-theme`.
 

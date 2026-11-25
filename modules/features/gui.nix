@@ -16,13 +16,13 @@
       enable = mkBool "enable the looped video wallpaper window (mpv + hyprwinwrap)" false;
     };
     # Swatch-deck wallpaper picker: the pleamar scene `picker`
-    # (files/pleamar/shells/picker/picker.plm) — a grid of the wallpaper folder's
+    # (pleamar-config shells/picker/picker.plm) — a grid of the wallpaper folder's
     # cards, each with the colours matugen would dress the desktop in, opened on
     # M4+C+w. It is an on-demand unit, never a session scene: nothing runs until
     # the bind asks for the deck. wl-daemon keeps painting the background and the
     # deck hands it the chosen picture (`wl img {}`); everything else a new
     # wallpaper sets — the caches the theme pipeline and the login screen read,
-    # matugen — is `pleamar-wallpaper-apply` (files/pleamar/scripts/helpers).
+    # matugen — is `pleamar-wallpaper-apply` (pleamar-config scripts/helpers).
     wallpaperPicker = {
       enable = mkBool "enable the wallpaper picker deck (pleamar scene `picker`)" false;
     };

@@ -88,7 +88,7 @@ in
         # Wallpaper picker: full GUI plus its own flag, never implied by another
         # one. It is the pleamar scene `picker` and its unit is on demand, but the
         # scene still reads a folder and hands the chosen picture to wl-daemon
-        # (modules/user/nix-maid/gui/pleamar.nix, files/pleamar/shells/picker).
+        # (pleamar-config: modules/shell.nix, shells/picker).
         wallpaperPickerEnabled = enabled "gui" && enabled "gui.wallpaperPicker";
 
         # Repo-root resolver (`path`, `pathExists`, `readFile`, `tree`, `find`) is

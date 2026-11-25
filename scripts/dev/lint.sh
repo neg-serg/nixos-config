@@ -358,14 +358,6 @@ gate_shellcheck() {
   return "$rc"
 }
 
-gate_plm() {
-  bash "$REPO_ROOT/scripts/dev/check-plm.sh" "$REPO_ROOT"
-}
-
-gate_scene_events() {
-  bash "$REPO_ROOT/scripts/dev/check-scene-events.sh" "$REPO_ROOT"
-}
-
 gate_hyprland_vars() {
   bash "$REPO_ROOT/scripts/dev/check-hyprland-vars.sh" "$REPO_ROOT"
 }
@@ -421,8 +413,6 @@ GATES=(
   lua
   music
   shellcheck
-  plm
-  scene_events
   hyprland_vars
   relative_paths
   absolute_home

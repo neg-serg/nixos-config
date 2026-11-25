@@ -11,9 +11,9 @@ tree — see "Superseded" at the end.
 
 ## What owns colour
 
-- `files/pleamar/lib/palette.plm` — the frozen palette every scene may use: `coal`, `surface`,
-  `ink`, `ink.dim`, `accent`. A change here re-themes everything that does not opt into the skin,
-  and it needs a commit.
+- `~/src/pleamar-config/lib/palette.plm` — the frozen palette every scene may use: `coal`,
+  `surface`, `ink`, `ink.dim`, `accent`. A change here re-themes everything that does not opt into
+  the skin, and it needs a commit.
 - `~/.config/pleamar/theme.plm` — **generated**: one `library Skin strict { … }` of `skin.*` values
   sampled from the current wallpaper. Never edited by hand and never managed by Nix; a module that
   makes it read-only is a bug.
@@ -21,7 +21,7 @@ tree — see "Superseded" at the end.
   wallpaper's mean luminance.
 
 The contract behind those files (the names, the two samplers, the atomic write, the tests) is
-`files/pleamar/scripts/theme/README.md`.
+`~/src/pleamar-config/scripts/theme/README.md`.
 
 ## Re-theme from the wallpaper
 
@@ -47,7 +47,7 @@ change or on an explicit run with `--mode`.
 ## Verify
 
 ```bash
-bash scripts/dev/check-plm.sh .            # every scene still compiles
+(cd ~/src/pleamar-config && just check)   # every scene still compiles
 ```
 
 ## Superseded

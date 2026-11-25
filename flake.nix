@@ -127,22 +127,13 @@
       url = "github:neg-serg/hyprscratch";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    pleamar = {
-      # Upstream `main` (2026-11-05, runtime 0.7.17, scene language 0.9): moved up from
-      # 0.7.7 for the slow-frame telltale (upstream c59f9ee, first shipped in v0.7.13)
-      # and the rest of the ten releases. The scene language did not move (still 0.9),
-      # and every local patch in `packages/overlays/gui.nix` was re-based on this
-      # source and applies in order (`git apply --check` over the twelve). All scenes
-      # still compile on it (`pleamar --check` over shells/*/*.plm).
-      # Update with: edit the rev below to the new `main` commit, then
-      #   nix flake lock --update-input pleamar
-      url = "github:k4ditano/pleamar/eebd61adf88b25b6f3fb607d632b84a359237f7c";
+    pleamar-config = {
+      # The pleamar shell as its own flake: scene tree, worker crates, the
+      # nix-maid module and the greetd login layer. A `path:` input on the live
+      # checkout keeps the deployed links writable (the module's `liveRoot`
+      # points at the same directory).
+      url = "path:/home/neg/src/pleamar-config";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-    pleamar-wm = {
-      url = "github:k4ditano/pleamar-wm";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.pleamar.follows = "pleamar";
     };
     rsmetrx = {
       url = "github:neg-serg/rsmetrx";

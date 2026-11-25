@@ -18,6 +18,7 @@ let
     ../init.nix
     inputs.determinate.nixosModules.default
     inputs.sops-nix.nixosModules.sops
+    inputs.pleamar-config.nixosModules.default
     ../modules/system/disabled-modules.nix
   ];
 

@@ -464,7 +464,7 @@ hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty-glass --class t
 -- mod4+ctrl+u: the reference CamillaEQ app (its own server, its own config
 -- library). Same idea, a different UI: its Connect page names the daemon.
 hl.bind(M4 .. "+" .. C .. "+u", hl.dsp.exec_cmd("camillaeq-ui"), { locked = true })
--- Wallpaper deck: the pleamar scene `picker` (files/pleamar/shells/picker/picker.plm) opens over
+-- Wallpaper deck: the pleamar scene `picker` (pleamar-config shells/picker/picker.plm) opens over
 -- the current wallpaper and sets the card Enter lands on. `pleamar-picker` is the scene's command
 -- line: it starts the on-demand unit when the session has no deck running and then talks to it
 -- over IPC, so the key works from a cold session and a second press closes the deck.
@@ -1488,7 +1488,7 @@ end
 -- Autostart (autostart.conf / env.conf) -- NixOS-appropriate
 -- =====================================================================
 -- The login layer is a session-lock surface inside this compositor
--- (files/pleamar/shells/lock/lock.plm), so the login screen is painted by the
+-- (pleamar-config shells/lock/lock.plm), so the login screen is painted by the
 -- same compositor that will run the session: no greeter process exits, no second
 -- Hyprland, no DRM mode re-set on login. The layer process itself is
 -- `pleamar-login-layer` (modules/user/session/greetd/login-layer.sh).
