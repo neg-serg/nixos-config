@@ -21,11 +21,6 @@ in
   # CamillaDSP's browser equalizer (Svelte client + Fastify server): the upstream
   # reference UI on loopback; the headphone catalogue serves aurora's own /eq page.
   camillaeq = call (pkg "camillaeq") { };
-  # Voice control for MPD: microphone -> local speech recognition -> player
-  # commands. Rust with no crates (MPD protocol client, capture argv, HTTP
-  # speech clients, intent parser), so the closure is the binary plus whatever
-  # speech stack the host enables separately.
-  mpd-voice = call (pkg "mpd-voice") { };
   # ggml-based runtime for local audio models (prebuilt Vulkan build); it runs
   # Audio Flamingo Next GGUF on the GPU when the ROCm torch path cannot.
   audio-cpp = call (pkg "audio-cpp") { };

@@ -65,6 +65,9 @@ in
     # Extracted to github:neg-serg/music-index-tools, which owns the crate, its
     # packaging and the self-check; the host only consumes the package.
     music-index-tools = inputs.music-index-tools.packages.${prev.stdenv.hostPlatform.system}.default; # Build/query the MERT similarity index (music-index, music-similar; embeddings via music-embed)
+    # Extracted to github:neg-serg/mpd-voice, which owns the crate, its packaging
+    # and the flake checks; the host only consumes the package.
+    mpd-voice = inputs.mpd-voice.packages.${prev.stdenv.hostPlatform.system}.default; # Voice control for MPD: microphone -> local STT -> player commands
     # Extracted to github:neg-serg/telegram-notify, which owns the build and its tests.
     telegram-notify = inputs.telegram-notify.packages.${prev.stdenv.hostPlatform.system}.default; # Rust Telegram notification binaries (calendar, pill, bot, alert scanner/bridge, zfs watch)
     # Extracted to github:neg-serg/sing-box-proxy, which owns the build. The host

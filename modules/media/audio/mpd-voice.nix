@@ -2,8 +2,9 @@
 # Module: media/audio/mpd-voice
 # Purpose: install the MPD voice client (mpd-voice) and its system-wide config.
 # Key options: features.media.audio.mpdVoice.{enable,language,wakeWord,stt,tts}
-# Dependencies: pkgs.mpd-voice (overlay), speech recognition from
-#               features.media.audio.speech (STT :8002); no TTS on this host.
+# Dependencies: pkgs.neg.mpd-voice (github:neg-serg/mpd-voice), speech
+#               recognition from features.media.audio.speech (STT :8002); no
+#               TTS on this host.
 {
   lib,
   config,
@@ -33,7 +34,7 @@ in
 {
   config = lib.mkIf enabled {
     environment.systemPackages = [
-      pkgs.mpd-voice # voice control for MPD: local STT -> player commands
+      pkgs.neg.mpd-voice # voice control for MPD: local STT -> player commands
     ];
 
     # XDG default; the user file (~/.config/mpd-voice/config.toml) wins. The

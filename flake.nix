@@ -103,6 +103,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # mpd-voice — voice control for MPD over local speech recognition, extracted
+    # to github:neg-serg/mpd-voice, which owns the crate, its packaging, the
+    # README and the flake checks; this flake only consumes the package.
+    mpd-voice = {
+      url = "github:neg-serg/mpd-voice";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     wl = {
       url = "github:neg-serg/wl";
       flake = false;

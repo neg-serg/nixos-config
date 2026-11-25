@@ -844,6 +844,26 @@
         "type": "github"
       }
     },
+    "mpd-voice": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795609010,
+        "narHash": "sha256-7o9bTdUIjuLDCLVw4dNiS29hF6dTgHflSP5/F13jfA0=",
+        "owner": "neg-serg",
+        "repo": "mpd-voice",
+        "rev": "2835c88b25cbf1fd5baf662627dc7664724d3601",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "mpd-voice",
+        "type": "github"
+      }
+    },
     "multiverse": {
       "locked": {
         "lastModified": 1788216404,
@@ -1367,6 +1387,7 @@
         "import-tree": "import-tree_2",
         "iosevka-neg": "iosevka-neg",
         "lusty": "lusty",
+        "mpd-voice": "mpd-voice",
         "multiverse": "multiverse",
         "music-index-tools": "music-index-tools",
         "neg-pkgs": "neg-pkgs",

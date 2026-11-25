@@ -35,7 +35,7 @@
   aurora-plugins = pkgs.neg.aurora-plugins; # the player's external plugins: autodj, lyrics, mpris, musicbrainz, notify, remaining, scrobble and spectroscope
   camillaeq = pkgs.camillaeq; # CamillaDSP browser equalizer (Svelte UI + Fastify server)
 
-  mpd-voice = pkgs.mpd-voice; # voice control for MPD: local STT -> player commands (Rust)
+  mpd-voice = pkgs.neg.mpd-voice; # voice control for MPD: local STT -> player commands (Rust)
   audio-cpp = pkgs.audio-cpp; # ggml audio runtime (Audio Flamingo Next, TTS, ASR) — prebuilt Vulkan build
   open-audio-analyzer = pkgs.open-audio-analyzer; # loudness/spectrum meter canvas + VST3 (upstream bundle)
   oaa = pkgs.oaa; # its offline CLI: report + delivery verdict, exit code and all

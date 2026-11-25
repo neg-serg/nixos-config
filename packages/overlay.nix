@@ -89,7 +89,6 @@ let
     "craft-anything"
     "figcraft"
     "genlc"
-    "mpd-voice"
     "pw-audioshare"
     "pwroute"
     "solidcraft"
