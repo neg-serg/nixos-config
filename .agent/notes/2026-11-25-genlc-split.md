@@ -3,7 +3,7 @@
 Status: extracted, published, wired and verified. The gaps at the bottom are deliberate and each
 names how to close it.
 
-Repository: <https://github.com/neg-serg/genlc> (public, branch `master`, commit `007be09`). Live
+Repository: <https://github.com/neg-serg/genlc> (public, branch `master`, head `db61e5c`). Live
 checkout: `/home/neg/src/genlc`.
 
 The repository already existed and was **archived**: it held the Python genlc (Mark Bergsma's GPLv3
@@ -53,6 +53,11 @@ keybindings in `files/gui/hypr/hyprland.lua` and the system package list.
   GLM bus.
 - CI runs `cargo fmt --check`, `cargo clippy --all-targets`, `cargo build --release`, `nix build`
   and `nix flake check`; the clippy step does not deny warnings (see the gaps).
+- **The license stays MIT.** The comment in `protocol.rs` claiming the transport "matched Python
+  genlc's `USBTransport`" was wrong: the framing comes from the on-wire GNet protocol and the public
+  qlm notes, not from translating the GPLv3 Python source. Those comments were corrected in commit
+  `db61e5c`; the GPLv3 in the history applies to the Python tree, not to this code. Revisit only if a
+  real translation of that source ever lands.
 
 ## Verification done that day
 
@@ -61,16 +66,14 @@ In the new repository: `nix build .#default` produced `genlc-0.2.0` (`--version`
 `cargo clippy` warns on 8 lints. `git push` went to `master` after the unarchive.
 
 Here: `nix build .#nixosConfigurations.trantor.pkgs.neg.genlc` builds through the new input
-(`/nix/store/kiqygi649lglf1q00dnlk65p06rag7gr-genlc-0.2.0`), `just fmt`, `just lint`, then the
-toplevel build and the agent switch.
+(`/nix/store/q48r3zich3x7l47iby3b1m8fmc3s6y0p-genlc-0.2.0`, after the comment fix and a re-lock to
+`db61e5c`), `just fmt`, `just lint` (18/18 in an isolated worktree whose content is exactly this
+commit), and a full toplevel build (`/nix/store/ncqzc28369gqwm5k27885mavv8lzvf3b-…`) whose
+`sw/bin/genlc` and unit `ExecStart` both point at that package. The activation was left to the
+deploy that follows the parallel shtoy extraction; the committed tree carries the change.
 
 ## Gaps to fix later
 
-1. **License provenance.** The repository's Python tree was GPLv3 and the Rust crate kept `MIT` in
-   its in-tree `meta`. `protocol.rs` says its transport "matches Python genlc USB transport"
-   (`USBTransport.send()`), so if that code is a translation of the GPLv3 source rather than a
-   reimplementation from the public qlm notes, `MIT` is wrong and the LICENSE plus `meta.license`
-   have to go back to `gpl3Plus`. Decide and make the two agree; the split note cannot settle it.
 1. **Eight clippy warnings** (`collapsible_if` in `daemon.rs`/`protocol.rs`/`main.rs`, a redundant
    `println!` reference, `manual_is_multiple_of`). CI runs clippy without `-D warnings` because the
    extraction was not a lint pass; fixing them is a small follow-up in the project, after which the
@@ -94,5 +97,8 @@ toplevel build and the agent switch.
 ## Commits
 
 - `007be09` — the Rust tree replaces the Python one (crate, packaging, docs, CI, CLI check).
-- This tree: the extraction commit (input, overlay entry, consumer paths, package removal, README
-  statistic).
+- `db61e5c` — the transport's provenance comments: the "matches Python `USBTransport`" claims were
+  wrong and were replaced with what the code does; license unchanged.
+- This tree `6bab66e33` — the extraction commit (input, overlay entry, consumer paths, package
+  removal, README statistic).
+- This tree, follow-up — re-lock the input to `db61e5c` and record the license decision here.
