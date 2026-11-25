@@ -74,6 +74,18 @@ overrides and the `pkgs.neg.pleamar-*` attributes are gone from this repo.
 5. **The dev scripts are copies.** `dev/check-plm.sh` lost the host's `pmap`
    fan-out (plain loop now), and this repo's `scripts/dev/lib.sh` no longer has
    `resolve_pleamar_tool`.
+6. **Plugin approvals are keyed by the plugin's own path.** `~/.config/pleamar/`
+   `permissions.json` stores a fingerprint per absolute `.luau` path, and the move
+   from `files/pleamar/lib/plugins` to `~/.config/pleamar/lib/plugins` (a symlink to
+   the checkout) left all eight entries pointing at the dead `/etc/nixos` paths. The
+   engine therefore loaded every plugin (Cover, Mpd, Genelec, Voice, Build, Pill,
+   Spectrum, Meta) **unapproved** — no `media` service, no `mpc`, no `genlc`, no
+   `cava` — and the bar lost the album art and the MPD flags while the now-playing
+   card drew its empty plate. Re-approve once per scene after such a move:
+   `pleamar --approve ~/.config/pleamar/shells/bar/bar.plm --yes` and the same for
+   `panels/panels.plm`; the new keys name `/home/neg/src/pleamar-config/lib/plugins/…`.
+   Editing a plugin's logic or its declared permissions re-opens the same gate by
+   design, so this is a manual step, not something a rebuild can do.
 
 ## Commits
 
