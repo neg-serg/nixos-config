@@ -1,5 +1,0 @@
-pl: fuzzy-pick and play videos (fzf/vicinae dmenu -> mpv + vid-info)
-Usage:
-  pl [vicinae|dmenu|video|1st_level] [DIR]
-  pl cmd <playerctl-args>
-  pl vol {mute|unmute}

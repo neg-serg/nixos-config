@@ -65,7 +65,7 @@ fi
 # workflow / ralph tools so their persisted tool/result meta carries a
 # structured descriptor, and Session.append() accepts { ignorable: true }
 # for plugin events (bash_live) so they stop killing sessions (dsh-patch
-# `widgets`, packages/dsh-patch/src/patches.rs).
+# `widgets`, rust-pkgs/dsh-patch/src/patches.rs).
 @DSHPATCH@ widgets "$search_pkg"
 
 # Session history: released v0 (0.1.1) wrote an obsolete `origin` member in

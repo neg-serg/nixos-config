@@ -18,8 +18,11 @@ Guidelines
     instead of inventing one.
 - Put small helper scripts intended for `$PATH` in `packages/local-bin` with clear names and minimal
   dependencies.
-- Do not repeat a Rust project's version in `default.nix`; read the manifest instead:
-  `version = (lib.importTOML ./Cargo.toml).package.version;`. The store path, the package attr and
-  the binary (`CARGO_PKG_VERSION`) then share one source, and a bump is the manifest plus its
-  lockfile(s) — `just bump <package> [<version>]` does both. The `manifest-version` lint guard
+- Rust crates are no longer packaged here: they live in `github:neg-serg/rust-pkgs` (live checkout
+  `~/src/rust-pkgs`), which owns their manifests, lockfiles and `package.nix` files. This tree calls
+  `final.callPackage (inputs.rust-pkgs + "/<crate>/package.nix") { }` against its own package set
+  and keeps the `pkgs.neg.<crate>` names (see `packages/overlay.nix`); do not copy a crate back in.
+- For a project that still carries a manifest in this tree, do not repeat its version in
+  `default.nix`; read the manifest instead:
+  `version = (lib.importTOML ./Cargo.toml).package.version;`. The `manifest-version` lint guard
   rejects a literal next to a `Cargo.toml`.

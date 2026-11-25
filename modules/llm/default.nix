@@ -160,7 +160,7 @@
 #
 # ### pic-ocr (screenshot → text, engine choice)
 #
-# - Script: `packages/local-bin-desktop` (pic-ocr) (installed to `~/.local/bin`).
+# - Script: `rust-pkgs/local-bin-desktop` (pic-ocr) (installed to `~/.local/bin`).
 # - Single engine: local **neural** OCR via Ollama's `qwen3-vl-abliterated:8b` (override with
 #   `PIC_OCR_NN_MODEL`). Images never leave the machine. Tesseract was removed on 2026-11-08: on the
 #   scan benchmark it lost 7 of 14 key fields and produced garbage on formulas, while this model

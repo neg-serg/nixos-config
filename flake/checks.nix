@@ -210,7 +210,7 @@ in
       );
 
   # ── dsh-worktree guard ─────────────────────────────────────────────
-  # packages/local-bin-tools' dsh-worktree creates real git worktrees outside
+  # rust-pkgs/local-bin-tools' dsh-worktree creates real git worktrees outside
   # the repository so parallel dsh sessions never fight over the working copy. The
   # guard pins the contract: trees stay out of the main checkout's `git status`,
   # each carries its own branch, and a dirty tree is not removed without
@@ -224,7 +224,7 @@ in
   '';
 
   # ── dsh-statusline guard ───────────────────────────────────────────
-  # packages/local-bin-system (dsh-statusline) is the content half of the status
+  # rust-pkgs/local-bin-system (dsh-statusline) is the content half of the status
   # line: session JSON on stdin, one line on stdout. The guard pins the protocol
   # subset (branch, dirty counts, context from ratio or tokens/max, turn), the
   # worktree naming, DSH_STATUSLINE_PARTS, and that a missing field degrades

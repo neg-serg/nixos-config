@@ -43,13 +43,14 @@ in
     albumdetails = callPkg (pkg "albumdetails") { }; # Music album metadata CLI (used by music-rename script)
     dnsglobe = callPkg (pkg "dnsglobe") { }; # Global DNS propagation checker TUI — record answers on a world map
     duf = callPkg (pkg "duf") { }; # duf fork with --style plain, --no-header, --no-bars flags
-    hwctl = callPkg (pkg "hwctl") { }; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
+    hwctl = callPkg (inputs.rust-pkgs + "/hwctl/package.nix") { }; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
     oryx = callPkg (pkg "oryx") { }; # TUI for sniffing network traffic using eBPF (needs root + BTF kernel)
-    hypr-focus = callPkg (pkg "hypr-focus") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
+    hypr-focus = callPkg (inputs.rust-pkgs + "/hypr-focus/package.nix") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
     niri-screen-time = callPkg (pkg "niri-screen-time") { }; # Screen time tracker by window class/title (niri + Hyprland daemon and report CLI)
-    tidalctl = callPkg (pkg "tidalctl") { }; # TidalCycles session controller — engine start/stop, editor, recording
-    # Explicit path: `pkg` resolved this dir to a stale python-era copy.
-    pretty_printer = callPkg (paths.path "packages/pretty-printer") { }; # coloured ppinfo + vid-info
+    tidalctl = callPkg (inputs.rust-pkgs + "/tidalctl/package.nix") { }; # TidalCycles session controller — engine start/stop, editor, recording
+    # The stale python-era copy in neg-serg/nixos-pkgs has no `vid-info`, so
+    # this one keeps the explicit path into the rust-pkgs input.
+    pretty_printer = callPkg (inputs.rust-pkgs + "/pretty-printer/package.nix") { }; # coloured ppinfo + vid-info
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
     termeverything = callPkg (pkg "termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
     zsh-native-syntax = callPkg (pkg "zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
@@ -58,7 +59,7 @@ in
     flow = callPkg (pkg "flow") { }; # Terminal dashboard for real-time network throughput
     lsfg-vk = callPkg (pkg "lsfg-vk") { }; # Vulkan frame-gen layer (LSFG on Linux; needs Lossless Scaling on Steam)
     nixard = callPkg (pkg "nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
-    nixbuild-status = callPkg (pkg "nixbuild-status") { }; # One-line NixOS build status for status bars (waybar/i3bar/polybar)
+    nixbuild-status = callPkg (inputs.rust-pkgs + "/nixbuild-status/package.nix") { }; # One-line NixOS build status for status bars (waybar/i3bar/polybar)
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/main/@projects/lusty
     # Extracted to github:neg-serg/tgchat-rs, which owns the build and its tests.
     tgchat-rs = inputs.tgchat-rs.packages.${prev.stdenv.hostPlatform.system}.default; # Telegram chat access on a grammers user session (replaces the retired Telethon tgchat)

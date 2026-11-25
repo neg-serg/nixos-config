@@ -1,6 +1,6 @@
 #!/bin/bash
 # regenerate blizzard-*.webp variants (dither x palette) into XDG_DATA_HOME/fastfetch/logos
-# The Rust `blizzard` binary (packages/blizzard) is installed beside this
+# The Rust `blizzard` binary (rust-pkgs/blizzard) is installed beside this
 # script by modules/user/nix-maid/cli/fastfetch.nix.
 set -e
 cd "$(dirname "$0")"

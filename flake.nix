@@ -127,6 +127,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # rust-pkgs — the Rust crates that used to live in packages/: the
+    # local-bin-* $PATH helpers, hwctl, game, tidalctl, questyle-ctl, wineapps
+    # and the rest. The repository owns their manifests, lockfiles, the shared
+    # meta builder and the slimming wrapper; this flake calls
+    # `final.callPackage (inputs.rust-pkgs + "/<crate>/package.nix") { }` so the
+    # binaries keep building against this flake's package set (hyprland, wine,
+    # sqlite) and the pkgs.neg.* attribute names stay unchanged.
+    rust-pkgs = {
+      url = "github:neg-serg/rust-pkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # genlc — Genelec SAM monitor control over the GLM USB adapter, extracted
     # to github:neg-serg/genlc, which owns the crate, its packaging and the CLI
     # check; this flake only consumes the package. The host keeps the adapter's

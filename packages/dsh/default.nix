@@ -65,7 +65,7 @@ buildNpmPackage {
 
   # The HMR plugin requires node --expose-internals, which the default wrapper
   # omits. Rewrap the launcher the same way the dsh systemd service does.
-  # The post-install patches run as `dsh-patch <set> <dir>` (packages/dsh-patch,
+  # The post-install patches run as `dsh-patch <set> <dir>` (rust-pkgs/dsh-patch,
   # a Rust port of the former patch-*.py scripts): exact-string replacements
   # with count assertions, so a dsh upgrade that drifts an anchor fails the
   # build instead of shipping a half-patched tree.

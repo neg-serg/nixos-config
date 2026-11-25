@@ -267,13 +267,6 @@ update:
 bump-own *ARGS:
     bash "{{repo_root}}/scripts/dev/flake-bump-own.sh" {{ARGS}}
 
-# Bump an in-tree Rust project's version in one place: the manifest and its
-# lockfile(s). The derivations read `version` from the manifest and the binary
-# reports CARGO_PKG_VERSION from the same file, so nothing else needs editing.
-# Usage: just bump <package> [<version>]
-bump pkg *ARGS:
-    bash "{{repo_root}}/scripts/dev/bump-version.sh" "{{pkg}}" {{ARGS}}
-
 # Search a nix-cache-pin pin for binary-cache hits without touching the tree.
 # The CLI edits ./flake.nix of the flake it runs in, so run this from the repo
 # root. Pins live in flake/cache-pin.nix; pass extra CLI flags (--plan,
@@ -531,7 +524,7 @@ bench-eval runs="5":
 
 # --- TidalCycles Live Coding --------------------------------------------------
 # Engine, editor, recording and monitoring are handled by the `tidalctl` CLI
-# (packages/tidalctl); recipes below are thin wrappers over it plus the Renoise
+# (rust-pkgs/tidalctl); recipes below are thin wrappers over it plus the Renoise
 # launcher, so a daily live-coding session is `just tidal-start` + `just renoise`.
 
 # Start the SuperDirt engine (sclang + scsynth) in the background

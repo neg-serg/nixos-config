@@ -59,12 +59,12 @@ let
         # fix here (upstream tag was re-pushed → hash mismatch otherwise).
         # It also still ships its python-era pretty-printer there, and that one
         # has no `vid-info`, so the nix-maid link in cli/local-bin.nix dangles.
-        # Re-assert the local Rust port from packages/ — the overlay above loses
-        # to this one for the whole `neg` attribute set.
+        # Re-assert the Rust pretty-printer from the rust-pkgs input — the
+        # overlay above loses to this one for the whole `neg` attribute set.
         (
           _final: prev:
           let
-            prettyPrinter = _final.callPackage ../packages/pretty-printer { };
+            prettyPrinter = _final.callPackage (inputs.rust-pkgs + "/pretty-printer/package.nix") { };
           in
           {
             neg = (prev.neg or { }) // {

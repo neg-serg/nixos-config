@@ -5,7 +5,7 @@
   ...
 }:
 lib.mkIf (config.lib.neg.enabled "web") {
-  # The hooks server is a Rust binary now (packages/local-bin-tools): it needs no
+  # The hooks server is a Rust binary now (rust-pkgs/local-bin-tools): it needs no
   # interpreter and prints one log line per request instead of five.
   systemd.user.services.surfingkeys-server = config.lib.neg.systemdUser.mkUserService {
     presets = [

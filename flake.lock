@@ -1443,6 +1443,7 @@
         "raise": "raise",
         "renoise-src": "renoise-src",
         "rsmetrx": "rsmetrx",
+        "rust-pkgs": "rust-pkgs",
         "shtoy": "shtoy",
         "sing-box-proxy": "sing-box-proxy",
         "sops-nix": "sops-nix",
@@ -1556,6 +1557,26 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-pkgs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795614894,
+        "narHash": "sha256-COvrUKzEPnRQ41VHAIGFXyWR8GaslBEinsmApuoV+OQ=",
+        "owner": "neg-serg",
+        "repo": "rust-pkgs",
+        "rev": "0897820472bd680974e7ec26b992ac02fd2ee048",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "rust-pkgs",
         "type": "github"
       }
     },

@@ -52,7 +52,7 @@
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
 - 🎨 **Beautiful Hyprland** - 18 workspaces, 8 scratchpads, custom pleamar shell
 - 📦 **147 Custom Packages** - Tailored tools for productivity and performance
-- 🧩 **Modular Architecture** - 25 domain modules with feature flags, 603 Nix files
+- 🧩 **Modular Architecture** - 25 domain modules with feature flags, 558 Nix files
 - 🔄 **Local Gates** - pre-commit hook (`just lint`) plus `nix flake check -L`; no CI service runs this repo
 
 ---
@@ -85,7 +85,7 @@ sudo nixos-rebuild switch --flake .#trantor
 | 📁 Category | 🔢 Count | 📊 Progress |
 |-------------|----------|-------------|
 | **Module Domains** | 25 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Nix Files** | 586 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 558 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Custom Packages** | 147 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Module Files** | 360 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
@@ -568,7 +568,7 @@ Quick-access overlays for common applications:
 **148 Custom Packages** exposed by the flake — selected highlights:
 
 ### 🎮 Game
-Rust launcher wrapper in `packages/game/`:
+Rust launcher wrapper in `rust-pkgs/game/`:
 - `game-run` - CPU isolation wrapper with gamescope presets
 ### 🎵 Media
 - `rustmission` - Transmission TUI

@@ -188,23 +188,23 @@
       autoEntries
       // scriptEntries
       // {
-        # Rust port (packages/local-bin-tools): no interpreter, no PYTHONPATH.
+        # Rust port (rust-pkgs/local-bin-tools): no interpreter, no PYTHONPATH.
         ".local/bin/ren".source = lib.getExe' pkgs.neg.local-bin-tools "ren";
-        # Rust port (packages/pretty-printer): no interpreter, no PYTHONPATH.
+        # Rust port (rust-pkgs/pretty-printer): no interpreter, no PYTHONPATH.
         ".local/bin/vid-info".source = lib.getExe' pkgs.neg.pretty_printer "vid-info";
-        # Rust ports of two former scripts (packages/local-bin-tools).
+        # Rust ports of two former scripts (rust-pkgs/local-bin-tools).
         ".local/bin/menu-search".source = lib.getExe' pkgs.neg.local-bin-tools "menu-search";
         ".local/bin/paths".source = lib.getExe' pkgs.neg.local-bin-tools "paths";
         ".local/bin/window-activate".source = lib.getExe' pkgs.neg.local-bin-tools "window-activate";
         ".local/bin/surfingkeys-server".source = lib.getExe' pkgs.neg.local-bin-tools "surfingkeys-server";
         ".local/bin/fetch-covers".source = lib.getExe' pkgs.neg.local-bin-tools "fetch-covers";
-        # Rust ports of the remaining scripts/ helpers (packages/local-bin-scripts).
+        # Rust ports of the remaining scripts/ helpers (rust-pkgs/local-bin-scripts).
         ".local/bin/pass-2col".source = lib.getExe' pkgs.neg.local-bin-scripts "pass-2col";
         ".local/bin/punzip".source = lib.getExe' pkgs.neg.local-bin-scripts "punzip";
         ".local/bin/tty-log".source = lib.getExe' pkgs.neg.local-bin-scripts "tty-log";
         ".local/bin/journal-clean.sh".source = lib.getExe' pkgs.neg.local-bin-scripts "journal-clean";
         ".local/bin/music-highlevel".source = lib.getExe' pkgs.neg.local-bin-scripts "music-highlevel";
-        # Rust ports of the system-level helpers (packages/local-bin-system).
+        # Rust ports of the system-level helpers (rust-pkgs/local-bin-system).
         ".local/bin/steam-cloud-fix".source = lib.getExe' pkgs.neg.local-bin-system "steam-cloud-fix";
         ".local/bin/dsh-statusline".source = lib.getExe' pkgs.neg.local-bin-system "dsh-statusline";
         ".local/bin/sw".source = lib.getExe' pkgs.neg.local-bin-system "sw";
@@ -216,7 +216,7 @@
         ".local/bin/qr".source = lib.getExe' pkgs.neg.local-bin-system "qr";
         ".local/bin/pdf2md".source = lib.getExe' pkgs.neg.local-bin-system "pdf2md";
         ".local/bin/upstream-radar".source = lib.getExe' pkgs.neg.local-bin-system "upstream-radar";
-        # The helper shells out to curl and 7zz (packages/local-bin-system/src/
+        # The helper shells out to curl and 7zz (rust-pkgs/local-bin-system/src/
         # vsmlrt_models.rs). Neither is in the system package set on purpose, so
         # pin both here instead of relying on PATH.
         ".local/bin/vsmlrt-models".source = pkgs.writeShellScript "vsmlrt-models" ''
@@ -229,7 +229,7 @@
           exec ${lib.getExe' pkgs.neg.local-bin-system "vsmlrt-models"} "$@"
         '';
         ".local/bin/nix-updates".source = lib.getExe' pkgs.neg.local-bin-system "nix-updates";
-        # Rust ports of the audio helpers (packages/local-bin-audio).
+        # Rust ports of the audio helpers (rust-pkgs/local-bin-audio).
         ".local/bin/audio-diag".source = lib.getExe' pkgs.neg.local-bin-audio "audio-diag";
         ".local/bin/jam".source = lib.getExe' pkgs.neg.local-bin-audio "jam";
         ".local/bin/shabda".source = lib.getExe' pkgs.neg.local-bin-audio "shabda";
@@ -242,19 +242,19 @@
         ".local/bin/mp".source = lib.getExe' pkgs.neg.local-bin-audio "mp";
         ".local/bin/nb".source = lib.getExe' pkgs.neg.local-bin-audio "nb";
         ".local/bin/qe".source = lib.getExe' pkgs.neg.local-bin-audio "qe";
-        # Rust ports of the last local-bin helpers (packages/local-bin-misc).
+        # Rust ports of the last local-bin helpers (rust-pkgs/local-bin-misc).
         ".local/bin/pb".source = lib.getExe' pkgs.neg.local-bin-misc "pb";
         ".local/bin/any".source = lib.getExe' pkgs.neg.local-bin-misc "any";
         ".local/bin/v".source = lib.getExe' pkgs.neg.local-bin-misc "v";
         ".local/bin/sclang-pwj".source = lib.getExe' pkgs.neg.local-bin-misc "sclang-pwj";
         ".local/bin/renoise-pwj".source = lib.getExe' pkgs.neg.local-bin-misc "renoise-pwj";
-        # Rust ports of the last zsh helpers (packages/local-bin-zsh).
+        # Rust ports of the last zsh helpers (rust-pkgs/local-bin-zsh).
         ".local/bin/iommu-info".source = lib.getExe' pkgs.neg.local-bin-zsh "iommu-info";
         ".local/bin/music-rename".source = lib.getExe' pkgs.neg.local-bin-zsh "music-rename";
         ".local/bin/read_documents".source = lib.getExe' pkgs.neg.local-bin-zsh "read_documents";
         ".local/bin/pl".source = lib.getExe' pkgs.neg.local-bin-zsh "pl";
         ".local/bin/music-tui".source = lib.getExe' pkgs.neg.local-bin-zsh "music-tui";
-        # Rust ports of the remaining zsh helpers (packages/local-bin-zsh-extra).
+        # Rust ports of the remaining zsh helpers (rust-pkgs/local-bin-zsh-extra).
         ".local/bin/gh-issues-export".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "gh-issues-export";
         ".local/bin/mpd_del_album".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "mpd_del_album";
         ".local/bin/sx".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "sx";
@@ -262,7 +262,7 @@
         ".local/bin/vol".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "vol";
         ".local/bin/win-vm".source = lib.getExe' pkgs.neg.local-bin-zsh-extra "win-vm";
 
-        # Rust ports of the desktop/media helpers (packages/local-bin-desktop).
+        # Rust ports of the desktop/media helpers (rust-pkgs/local-bin-desktop).
         ".local/bin/pic-notify".source = lib.getExe' pkgs.neg.local-bin-desktop "pic-notify";
         ".local/bin/screenrec".source = lib.getExe' pkgs.neg.local-bin-desktop "screenrec";
         ".local/bin/clip".source = lib.getExe' pkgs.neg.local-bin-desktop "clip";
@@ -278,13 +278,13 @@
         ".local/bin/hypr-resize-proportional".source =
           lib.getExe' pkgs.neg.local-bin-desktop "hypr-resize-proportional";
 
-        # Rust port of the former shell helper (packages/local-bin-tools).
+        # Rust port of the former shell helper (rust-pkgs/local-bin-tools).
         ".local/bin/dsh-worktree".source = lib.getExe' pkgs.neg.local-bin-tools "dsh-worktree";
         # Rust port of the former shell helper (github:neg-serg/shtoy).
         ".local/bin/shtoy".source = lib.getExe' pkgs.neg.shtoy "shtoy";
         # Rust port of the former shell helper (github:neg-serg/sing-box-proxy).
         ".local/bin/proxy".source = lib.getExe' pkgs.neg.sing-box-proxy "proxy";
-        # Rust port of the former shell helper (packages/swayimg-actions).
+        # Rust port of the former shell helper (rust-pkgs/swayimg-actions).
         # The .sh name is kept: files/gui/swayimg/init.lua execs that path.
         ".local/bin/swayimg-actions.sh".source = lib.getExe' pkgs.neg.swayimg-actions "swayimg-actions";
         ".local/bin/gen-unbound-hosts".source = lib.getExe' pkgs.neg.local-bin-tools "gen-unbound-hosts";

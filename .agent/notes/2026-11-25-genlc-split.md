@@ -56,8 +56,8 @@ keybindings in `files/gui/hypr/hyprland.lua` and the system package list.
 - **The license stays MIT.** The comment in `protocol.rs` claiming the transport "matched Python
   genlc's `USBTransport`" was wrong: the framing comes from the on-wire GNet protocol and the public
   qlm notes, not from translating the GPLv3 Python source. Those comments were corrected in commit
-  `db61e5c`; the GPLv3 in the history applies to the Python tree, not to this code. Revisit only if a
-  real translation of that source ever lands.
+  `db61e5c`; the GPLv3 in the history applies to the Python tree, not to this code. Revisit only if
+  a real translation of that source ever lands.
 
 ## Verification done that day
 

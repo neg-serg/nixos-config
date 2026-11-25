@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regression gate for packages/local-bin-system (dsh-statusline).
+# Regression gate for rust-pkgs/local-bin-system (dsh-statusline).
 #
 # The script is the content half of the status line: a host pipes session JSON to
 # its stdin and renders the first stdout line. What this pins:

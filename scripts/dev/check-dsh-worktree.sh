@@ -16,7 +16,7 @@
 #
 # Usage: check-dsh-worktree.sh <dsh-worktree-binary-or-script>
 #
-# The helper is a Rust binary now (packages/local-bin-tools); the argument may
+# The helper is a Rust binary now (rust-pkgs/local-bin-tools); the argument may
 # still be the old shell script, in which case it is run through `sh`.
 #
 # NOTE: no `set -e`. A failing assertion must be reported and the run must

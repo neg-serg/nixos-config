@@ -6,7 +6,7 @@
 # proprietary HID channel (usage page 0xFF00, 62-byte output reports) that the
 # vendor app speaks; there is no public protocol description.
 #
-# questyle-ctl (packages/questyle-ctl; a Rust port of the former Python script)
+# questyle-ctl (rust-pkgs/questyle-ctl; a Rust port of the former Python script)
 # keeps that channel reachable from Linux: `info` (state of USB / ALSA /
 # PipeWire), `watch` (record the reports the dongle sends - read-only, used to
 # decode the protocol), `raw`/`feature` (manual frames).

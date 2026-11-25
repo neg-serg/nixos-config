@@ -1,4 +1,4 @@
-_inputs: final: prev:
+inputs: final: prev:
 let
   # Name-based package lookup: `pkg "swayimg"` is packages/swayimg/default.nix
   # (neg.functions.pkg walks the tree), so no call site counts `../` levels.
@@ -13,7 +13,7 @@ in
 {
   swayimg = call (pkg "swayimg") { };
   hdspeconf = call (pkg "hdspeconf") { };
-  pwroute = call (pkg "pwroute") { };
+  pwroute = call (inputs.rust-pkgs + "/pwroute/package.nix") { };
   pw-audioshare = call (pkg "pw-audioshare") { };
   # MPD client for large libraries: Node backend + React UI, served on loopback.
   sola-mpd = call (pkg "sola-mpd") { };

@@ -11,7 +11,7 @@
 # closure: its python env is ~3.9 GiB. The `docling` launcher below builds the
 # flake attr `docling-env` on first use and GC-roots it under $HOME; `nix run
 # .#docling -- file.pdf` and the `ai` devshell reach the same env; pdf2md
-# (packages/local-bin-system) resolves `docling` from PATH.
+# (rust-pkgs/local-bin-system) resolves `docling` from PATH.
 #
 # The first conversion downloads ~500 MiB of layout/table models into
 # ~/.cache/huggingface; later runs are offline.

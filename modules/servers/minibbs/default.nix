@@ -4,7 +4,7 @@
 #          threads hold posts; bots write through the bearer-token JSON API and
 #          humans read the read-only web UI (HTML, or `?fmt=txt` for a plain
 #          text view). Storage is one SQLite file; the app itself is the Rust
-#          package `packages/minibbs` (libsqlite3 through FFI, HTTP server in
+#          package `rust-pkgs/minibbs` (libsqlite3 through FFI, HTTP server in
 #          std), so the service needs no interpreter.
 # Key options: cfg = config.servicesProfiles.minibbs
 # Secret: none in the repo or the store — the bearer token is generated at

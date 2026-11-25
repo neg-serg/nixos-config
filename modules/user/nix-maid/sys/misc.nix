@@ -20,7 +20,7 @@ in
     # was a leftover that kept the 1.7 GiB Wine closure there. It now comes from
     # the on-demand launchers in modules/system/wine-apps.nix when needed.
     (lib.mkIf (cfg.fun.enable or false) {
-      # Cursed-text generator: a Rust package now (packages/zalgo), so the
+      # Cursed-text generator: a Rust package now (rust-pkgs/zalgo), so the
       # executable comes from the overlay instead of a script in hack-art.
       users.users.neg.packages = [ pkgs.neg.zalgo ];
     })

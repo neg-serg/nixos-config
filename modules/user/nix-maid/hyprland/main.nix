@@ -220,7 +220,7 @@
 #   with HyprShade's interface (`v_texcoord` / `tex` / `fragColor`) plus the plugin's per-frame
 #   uniforms (`is_active`, `surface_size`, `time`, `window_box`, …). Editing a shader takes effect on
 #   the next frame — no reload, no config change.
-# - **Command**: `shade` (`packages/local-bin-system` (shade), i.e. `~/.local/bin/shade`) drives the plugin
+# - **Command**: `shade` (`rust-pkgs/local-bin-system` (shade), i.e. `~/.local/bin/shade`) drives the plugin
 #   from the shell — `shade list`, `shade on [NAME]` (focused window; without NAME an fzf picker over
 #   the shader directory), `shade off`, `shade class CLASS [NAME]`, `shade layer NS [NAME]`,
 #   `shade reload`. It calls the plugin through `hyprctl eval` and swallows the spurious "expected a
@@ -379,7 +379,7 @@
 #   of the plugin's own notification and result thumbnail. Recording status notifications stay
 #   on — the record binds use `screenrec`, not HyprCapture, so the thumbnail loss is theirs too.
 # - **Screenshot toast**: the `screenshot-toast.path` unit (`main.nix`) watches the shots directory
-#   and runs `screenshot-toast` (`packages/local-bin-desktop (screenshot-toast)`), which forwards the newest
+#   and runs `screenshot-toast` (`rust-pkgs/local-bin-desktop (screenshot-toast)`), which forwards the newest
 #   file to `pic-info` → `pic-notify` → the shell's toast (pleamar's `toast` scene, which polls
 #   `$XDG_CACHE_HOME/pleamar/screenshot-event.json`; `pic-notify` also keeps writing the legacy
 #   `~/.cache/quickshell` pair, and falls back to `notify-send` only when neither shell answers its
@@ -464,7 +464,7 @@
 #   `main: true` device, shows the current submap as an accent pictogram before the keyboard glyph and
 #   layout (e.g., `★ ⌨ en`), and uses `hyprctl switchxkblayout current next` on click. (It came from
 #   the Quickshell bar this one replaced; the behaviour is the same.)
-# - Swayimg is launched via `sx` (`packages/local-bin-zsh-extra` (sx)): gallery mode, images sorted by ctime
+# - Swayimg is launched via `sx` (`rust-pkgs/local-bin-zsh-extra` (sx)): gallery mode, images sorted by ctime
 #   (newest first). Its window is tuned via Hyprland window rules (`pic-pseudo-fullscreen`).
 #
 # ## Source pins and updates

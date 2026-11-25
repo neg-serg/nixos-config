@@ -84,9 +84,14 @@ rustPlatform.buildRustPackage {
 }
 ```
 
-`just bump <package> [<version>]` bumps the manifest and its lockfile(s); the derivation and the
-binary (`CARGO_PKG_VERSION`) follow without an edit here. The `manifest-version` lint guard rejects
-a literal next to a `Cargo.toml`.
+`just bump <package> [<version>]` used to bump such a project's manifest and lockfile(s); it is gone
+with the Rust crates: they were extracted to `github:neg-serg/rust-pkgs` (live checkout
+`~/src/rust-pkgs`), which owns their manifests, lockfiles and packaging. The host consumes them as
+`final.callPackage (inputs.rust-pkgs + "/<crate>/package.nix") { }` while keeping the
+`pkgs.neg.<crate>` attribute names, so a bump happens there —
+`~/src/rust-pkgs/scripts/bump-version.sh <crate> [<version>]` — and the derivation and the binary
+(`CARGO_PKG_VERSION`) follow without an edit here. The `manifest-version` lint guard still rejects a
+literal `version` next to a `Cargo.toml` in this tree.
 
 ## Get Hash
 
