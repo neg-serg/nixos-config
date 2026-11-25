@@ -36,7 +36,7 @@ modules/
 | `profiles`      | Host profiles — feature presets (desktop, gaming, dev) + system toggles (debug, performance, security, vm, work, services) — auto-import |
 | `secrets`       | sops-nix secrets — pass, pkgs                                                                                                            |
 | `security`      | Hardening — AppArmor, sudo, PAM limits, polkit                                                                                           |
-| `servers`       | Services — AdGuard Home, Avahi, Geoclue, MPD, OpenSSH, Samba, Unbound                                                                    |
+| `servers`       | Services — AdGuard Home, Avahi, Geoclue, MPD, OpenSSH, Unbound                                                                           |
 | `shell`         | Shell — Zsh with plugins, Oh My Posh, aliases, env vars                                                                                  |
 | `system`        | Core system — boot (systemd-boot), kernel, networking, systemd, users, virtualisation                                                    |
 | `text`          | Text processing — editors, PDF tools, converters                                                                                         |

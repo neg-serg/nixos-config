@@ -313,12 +313,13 @@
 #   qwen3-vl-abliterated 8b, qwen3-embedding)
 # - `/zero/ai/llama` — llama.cpp GGUFs: Qwen3.8-27B IQ3_S, the two Inkling
 #   quants with their projector (`inkling-2-mini/`), the Lean prover
-#   (oprover), the OCR tiers and the small specialists. The `mxfp4/` pair
-#   (gpt-oss-20b Q4_K_M,
-#   Swift-1.5 27B MXFP4 + mmproj) is hardlinked into
-#   `gyro-coder/mxfp4` — the share keeps that directory name — for the
-#   24 GB box. The Gyro-Coder 125B tier left the fleet on 2026-11-16 and its
-#   71 GB TQ2_0 file was deleted; only the `mxfp4/` hardlinks remain there.
+#   (oprover), the OCR tiers and the small specialists. `gyro-coder/` under it
+#   carries the Inkling-2-Mini tree (35 GB) that the 24 GB box read over SMB,
+#   plus the `mxfp4/` hardlinks to `/zero/ai/llama/mxfp4` that used to be the
+#   Swift-1.5 pair and the remote gpt-oss-20b. Gyro-Coder 125B left the fleet
+#   on 2026-11-16 (its 71 GB TQ2_0 file was deleted); samba and the two MXFP4
+#   remote tiers followed on 2026-11-25, so the Inkling weights are to be
+#   copied to that box's /srv/models.
 #   DeepSeek-Prover-V2 and Devstral left the fleet
 #   on 2026-11-11 (16.7 GB); ArduinoLLM's weights were already gone from disk,
 #   so its slot was dead and went with them. 34 GB of dead

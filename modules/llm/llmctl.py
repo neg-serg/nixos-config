@@ -87,17 +87,6 @@ CATALOG = {
         "lean": "4/7",
         "fp": "6.0/6",
     },
-    # Native MXFP4 tier (4-bit float with shared scales) and a 26B-A4B MoE;
-    # both fit the 24 GB card with room for their drafters/projectors.
-    "gpt-oss-20b-mxfp4": {
-        "aliases": ["gptoss-mxfp4", "gpt-oss-mxfp4"],
-        "role": "20B MoE native MXFP4 + eagle3 (7900 XTX box, remote)",
-        "ctx": "128k",
-        "size": "12.1 GB remote",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
-    },
     # The same Qwen3.8-27B weights as the local quality tier, quantized to
     # MXFP4 IQ4_XS and served on the 24 GB card with the 27B projector.
     "qwen3.8-27b-mxfp4": {
@@ -250,17 +239,6 @@ CATALOG = {
         "role": "GUI 2B UI-TARS (fast)",
         "ctx": "16k",
         "size": "2.4 GB",
-        "chem": "-",
-        "lean": "-",
-        "fp": "-",
-    },
-    # Same box; the weights and projector ride the gyro-coder SMB share under
-    # mxfp4/, so a cold load streams them over the LAN (minutes).
-    "swift-1.5-27b-mxfp4": {
-        "aliases": ["swift27b", "swift"],
-        "role": "27B dense MXFP4 (7900 XTX box, remote)",
-        "ctx": "64k",
-        "size": "15.8 GB remote",
         "chem": "-",
         "lean": "-",
         "fp": "-",

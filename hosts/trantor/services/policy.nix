@@ -96,35 +96,16 @@ lib.mkMerge [
       adguardhome.rewrites = adguardLists.rewrites;
       # Enable curated AdGuardHome filter lists
       adguardhome.filterLists = adguardLists.filterLists;
-      # Enable Avahi (mDNS) so iOS/macOS can resolve *.local and discover SMB shares
+      # Enable Avahi (mDNS) so iOS/macOS can resolve *.local
       avahi.enable = true;
-      # Samba profile: the guest share under /zero/sync/smb stays off, but smbd
-      # publishes the llama weights read-only to the 7900 XTX box
-      # (192.168.0.144, "debian-I"): the Swift MXFP4 pair under mxfp4/. The
-      # share keeps its historical `gyro-coder` name (the remote fstab and the
-      # start scripts mount it by that name). That box keeps no copies; NFS was
-      # the first choice but this kernel has no nfsd/rpc_pipefs modules at all.
-      samba = {
-        enable = true;
-        interfaces = [
-          "lo"
-          "net1"
-        ];
-        extraShares."gyro-coder" = {
-          path = "/zero/ai/llama/gyro-coder";
-          browseable = "yes";
-          "read only" = "yes";
-          "guest ok" = "yes";
-          "force user" = "nobody";
-          "hosts allow" = "192.168.0.144";
-        };
-      };
     };
 
-    # smbd is not started at boot by the samba module (it drags in
-    # network-online.target); the model server on the other host needs the
-    # share, so this host opts back in.
-    systemd.services.samba-smbd.wantedBy = lib.mkForce [ "multi-user.target" ];
+    # Samba published `/zero/ai/llama/gyro-coder` read-only to the 7900 XTX box
+    # (192.168.0.144, "debian-I") under the `gyro-coder` name. Removed on
+    # 2026-11-25 along with the Swift MXFP4 tier that was one of its two
+    # consumers. Inkling-2-Mini still keeps no copy on that box, so its start
+    # script mounts nothing until the 35 GB of weights move to /srv/models
+    # there (see the `inkling-2-mini-q4` slot).
 
     # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
 
@@ -194,7 +175,6 @@ lib.mkMerge [
           8090 # flohmarkt small-ads board (servicesProfiles.flohmarkt above)
           8091 # minibbs board (servicesProfiles.minibbs above)
           11434 # ollama (no auth — LAN only)
-          445 # samba: read-only llama-weights share for the 7900 XTX box
           27015 # Steam
           27036 # Steam Remote Play
           27037 # Steam Remote Play
@@ -245,27 +225,6 @@ lib.mkMerge [
     );
     servicesProfiles.avahi.services = [
       {
-        name = "smb";
-        type = "smb";
-        port = 445;
-        txtRecords = [
-          "path=/zero/sync/smb"
-          "share=shared"
-        ];
-      }
-      {
-        name = "afp";
-        type = "afpovertcp";
-        port = 548;
-        txtRecords = [ "path=/zero/sync/smb" ];
-      }
-      {
-        name = "nfs";
-        type = "nfs";
-        port = 2049;
-        txtRecords = [ "path=/zero/sync/smb" ];
-      }
-      {
         name = "ssh";
         type = "ssh";
         port = 22;
@@ -285,12 +244,6 @@ lib.mkMerge [
         # image and shows the one-time setup wizard (see modules/llm/vane.nix).
         vane.enable = true;
 
-        # `bind interfaces only = yes` (from servicesProfiles.samba's
-        # interfaces list) resolved net1 before it had an address at boot and
-        # left smbd on loopback, so the 7900 XTX box could not mount the share.
-        # Bind everything; the firewall still scopes 445 to net1.
-        samba.settings.global."bind interfaces only" = lib.mkForce "no";
-
         # llama-swap swaps one model at a time by default, and a local load
         # aborts a *starting* remote tier (its ~4 min cold load is the longest in
         # the fleet). The remote tier runs on the other machine's card, so nothing
@@ -302,22 +255,16 @@ lib.mkMerge [
           local = {
             swap = true;
             exclusive = false;
-            members = lib.filter (
-              m:
-              m != "swift-1.5-27b-mxfp4"
-              && m != "ornith-1.5-35b-a3b"
-              && m != "gpt-oss-20b-mxfp4"
-              && m != "qwen3.8-27b-mxfp4"
-            ) (lib.attrNames config.services.llama-swap.settings.models);
+            members = lib.filter (m: m != "ornith-1.5-35b-a3b" && m != "qwen3.8-27b-mxfp4") (
+              lib.attrNames config.services.llama-swap.settings.models
+            );
           };
           remote = {
             swap = true;
             exclusive = false;
             persistent = true;
             members = [
-              "swift-1.5-27b-mxfp4"
               "ornith-1.5-35b-a3b"
-              "gpt-oss-20b-mxfp4"
               "qwen3.8-27b-mxfp4"
             ];
           };

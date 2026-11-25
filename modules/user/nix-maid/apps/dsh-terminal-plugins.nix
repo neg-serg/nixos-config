@@ -341,11 +341,6 @@ rec {
                 input:
                   - text
                   - image
-              # MXFP4 tiers on the same box: gpt-oss-20b is natively MXFP4
-              # (with an eagle3 drafter), Gemma 4 is a 26B MoE with vision.
-              - id: gpt-oss-20b-mxfp4
-                name: GPT-OSS 20B MXFP4 + eagle3 (7900 XTX)
-                contextWindow: 131072
               # The local quality tier requantized to MXFP4 for the 24 GB card.
               - id: qwen3.8-27b-mxfp4
                 name: Qwen3.8 27B MXFP4 IQ4_XS (7900 XTX, vision)
@@ -360,15 +355,6 @@ rec {
               - id: inkling-2-mini-q4
                 name: Inkling-2-Mini 26B MoE Q4_K_XL + DSpark (7900 XTX, vision)
                 contextWindow: 32768
-                input:
-                  - text
-                  - image
-              # Swift 1.5 27B MXFP4 on the same 7900 XTX box; cold start
-              # ~3 min over SMB, 70 tok/s with MTP, 64k. A user timer on the
-              # remote box stops it while a game runs.
-              - id: swift-1.5-27b-mxfp4
-                name: Swift 1.5 27B MXFP4 (7900 XTX, ~3 min cold)
-                contextWindow: 65536
                 input:
                   - text
                   - image

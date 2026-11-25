@@ -447,22 +447,6 @@ let
     '';
   };
 
-  # Swift-1.5 27B MXFP4 on the same 7900 XTX box. The 15.8 GB of weights and
-  # the projector ride in the gyro-coder SMB share under mxfp4/ (hardlinks to
-  # /zero/ai/llama/mxfp4, so no second copy): the remote disk has only ~19 GB
-  # free and no other share is automounted there. Stock ROCm image, MTP
-  # self-speculation, 64k of the model's 131k window. A cold load streams the
-  # weights over SMB (minutes), hence the 15 min TTL in the slot below.
-  # allow-absolute-home: the path is on the remote host, which has no root
-  swift27b = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/swift27b-start
-  '';
-
-  # allow-absolute-home: the path is on the remote host, which has no root
-  swift27bStop = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/swift27b-stop
-  '';
-
   # Ornith-1.5-35B-A3B (MIT, 35B MoE with 3B active, 262k native): the coding
   # agent tier that replaced Gyro-Coder. Its weights live on the box's own
   # /srv/models (220 GB SSD), so a cold load is a local mmap instead of an SMB
@@ -475,18 +459,6 @@ let
   # allow-absolute-home: the path is on the remote host, which has no root
   ornithStop = ''
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/ornith-stop
-  '';
-
-  # gpt-oss-20b in its native MXFP4 format (11.28 GiB) with the eagle3
-  # drafter: the MXFP4 reference tier on the box. Weights local on its SSD.
-  # allow-absolute-home: the path is on the remote host, which has no root
-  gptoss = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/gptoss-start
-  '';
-
-  # allow-absolute-home: the path is on the remote host, which has no root
-  gptossStop = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/gptoss-stop
   '';
 
   # Qwen3.8-27B in MagicQuant MXFP4 (IQ4_XS, 13.95 GiB) with the stock 27B
@@ -513,12 +485,17 @@ let
   # bundled ROCm libs — from a local `inkling-llama:local` image (debian:13-slim
   # plus the unpacked tarball in /opt/llama), and the DSpark drafter gives it
   # speculative decode. Box side: /home/user/bin/inkling-start|stop and the name
-  # in llm-game-guard; weights ride in the gyro-coder share under
-  # inkling-2-mini/root/ so the box keeps no copy. Measured 2026-11-21:
+  # in llm-game-guard. Measured 2026-11-21:
   # 595-708 t/s prefill on a 7.5k prompt, 46-58 t/s decode with the drafter (the
   # spread is prompt length and cache warmth), ~4.6 min cold load streaming
   # 16.4 GiB over SMB — 2.6x the local IQ3 tier's prefill and 2.1x its decode
   # on the same probe, at Q4.
+  #
+  # BLOCKED until the weights move: they still sit under
+  # /zero/ai/llama/gyro-coder/inkling-2-mini/ on trantor, and the SMB share that
+  # carried them was removed with samba on 2026-11-25. Copy the 35 GB to
+  # /srv/models on the box and point inkling-start there; until then this slot
+  # cannot start.
   # allow-absolute-home: the path is on the remote host, which has no root
   inklingRemote = ''
     /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/inkling-start
@@ -731,24 +708,6 @@ in
         # router disappears, so a crash or reboot here cannot strand 21 GiB of
         # VRAM on a machine nobody can reach.
 
-        # Swift-1.5 27B MXFP4: 15.8 GB weights plus the projector over the
-        # gyro-coder SMB share, MTP self-speculation, 64k. The quality tier of
-        # the 24 GB box; a cold load streams the weights over SMB (minutes),
-        # hence the 15 min TTL. A user timer on that box (llm-game-guard.timer,
-        # every 5 s) stops the tier when a game appears, and the start script
-        # refuses while one already runs.
-        "swift-1.5-27b-mxfp4" = {
-          cmd = swift27b;
-          cmdStop = swift27bStop;
-          proxy = "http://192.168.0.144:8095";
-          checkEndpoint = "/health";
-          ttl = 900;
-          aliases = [
-            "swift27b"
-            "swift"
-          ];
-        };
-
         # Ornith-1.5-35B-A3B IQ4_XS: 18.8 GiB of weights + projector on the
         # box's own SSD, 32k by default. Replaces Gyro-Coder as the coding
         # agent tier; 3B active tokens make it much faster than the 27B dense
@@ -762,20 +721,6 @@ in
           aliases = [
             "ornith"
             "ornith35b"
-          ];
-        };
-
-        # gpt-oss-20b MXFP4 (native 4-bit) + eagle3 drafter: 11.3 GiB of
-        # weights leave room for a 64k window on the 24 GB card.
-        "gpt-oss-20b-mxfp4" = {
-          cmd = gptoss;
-          cmdStop = gptossStop;
-          proxy = "http://192.168.0.144:8092";
-          checkEndpoint = "/health";
-          ttl = 900;
-          aliases = [
-            "gptoss-mxfp4"
-            "gpt-oss-mxfp4"
           ];
         };
 
