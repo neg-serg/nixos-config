@@ -1023,11 +1023,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795630128,
-        "narHash": "sha256-082LKEuhwPKJ/L64eXZ3OZzXGTiPAznYSlDN6U6K+wg=",
+        "lastModified": 1795630501,
+        "narHash": "sha256-kH/1RwhZOF55XF8gDc4PrfG1jlbVyvXZpxvnEhFXLGg=",
         "owner": "neg-serg",
         "repo": "nixos-pkgs",
-        "rev": "751831deb43219ddc982f8da0eb5f6bf11fd48b4",
+        "rev": "8975df806adb76f912e9378d1db43f87d08c7c25",
         "type": "github"
       },
       "original": {

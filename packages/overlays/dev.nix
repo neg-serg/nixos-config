@@ -1,4 +1,4 @@
-inputs: final: prev: {
+inputs: _final: prev: {
   # bpftrace 0.25+ works with LLVM 22; use same version as the rest of the config
   bpftrace = prev.bpftrace.override { llvmPackages = prev.llvmPackages_22; };
   # Security: avoid insecure Mbed TLS 2 by aliasing to v3

@@ -40,7 +40,7 @@ a top-level attribute.
 
 - `flake.nix`: `inputs.neg-pkgs.inputs.rust-pkgs.follows = "rust-pkgs"` — one Rust package set, not
   two.
-- `flake.lock`: `neg-pkgs` locked at `c1df688`, `neg-pkgs/rust-pkgs` following.
+- `flake.lock`: `neg-pkgs` locked at `8975df8`, `neg-pkgs/rust-pkgs` following.
 - `packages/overlays/*.nix`: the 35 entries are gone; the attributes now come from the input's
   overlay, which is applied after the local one.
 
