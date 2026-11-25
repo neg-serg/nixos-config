@@ -927,11 +927,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795607922,
-        "narHash": "sha256-GkaahiR0FsJ9uJCPoBVXcvoB2GKNGp1Xf2Z3jAr4Foc=",
+        "lastModified": 1795608511,
+        "narHash": "sha256-rHJkA6orJST61mwNsKmlYpO10raN+VcqsJXWfjzmL80=",
         "owner": "neg-serg",
         "repo": "music-index-tools",
-        "rev": "1a2047762e643bb76f1290ec47c06324361663d3",
+        "rev": "09102f5d68ceaf98a2964063923dd522a8c7d5ae",
         "type": "github"
       },
       "original": {
