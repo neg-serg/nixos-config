@@ -167,6 +167,10 @@ slimChunks
           # Context budget + tool-protocol guard in front of llama-swap; owned by
           # github:neg-serg/llm-proxy, built against this package set.
           llm-proxy = final.callPackage (inputs.llm-proxy + "/package.nix") { };
+          # Unattended GPU jobs (VRAM preflight, systemd runner, report), owned by
+          # github:neg-serg/nightjob; the wrapper PATH is the repository's, so the
+          # session's hyprctl/llmctl stay behind it.
+          nightjob = final.callPackage (inputs.nightjob + "/package.nix") { }; # nightjob: overnight GPU jobs with a VRAM budget and a report
           # The player and its catalogue CLI are the aurora repository's own recipe
           # (`nix/package.nix`), built against this package set — the same
           # `callPackage` line as llm-proxy above and rust-pkgs below.

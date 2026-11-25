@@ -53,6 +53,10 @@ Guidelines
   calls `final.callPackage (inputs.dsh-app + "/package.nix") { inherit (final.neg) dsh-patch; }`, so
   `pkgs.neg.dsh` keeps its name and still runs this tree's `dsh-patch`. Do not add the harness or
   its profile data back into this tree.
+- `nightjob` (the unattended GPU job runner) lives in `github:neg-serg/nightjob` (live checkout
+  `~/src/nix/nightjob`) with its wrapper PATH and its stdlib test suite; `packages/overlay.nix`
+  calls `final.callPackage (inputs.nightjob + "/package.nix")` for `pkgs.neg.nightjob`, and
+  `modules/dev/rocm.nix` only installs it. Do not add the script back under `modules/dev/`.
 - For a project that still carries a manifest in this tree, do not repeat its version in
   `default.nix`; read the manifest instead:
   `version = (lib.importTOML ./Cargo.toml).package.version;`. The `manifest-version` lint guard

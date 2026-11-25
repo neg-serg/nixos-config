@@ -1107,6 +1107,26 @@
         "type": "github"
       }
     },
+    "nightjob": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795635916,
+        "narHash": "sha256-QtNaeusXt51NMBeVZGPJWX/oPt4XY8W0TPuJ2A9e1aU=",
+        "owner": "neg-serg",
+        "repo": "nightjob",
+        "rev": "130cde5453fc567af178c9924afea70c821acb42",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "nightjob",
+        "type": "github"
+      }
+    },
     "nix-bundle": {
       "inputs": {
         "nixpkgs": [
@@ -1558,6 +1578,7 @@
         "music-index-tools": "music-index-tools",
         "neg-pkgs": "neg-pkgs",
         "neovim-nightly": "neovim-nightly",
+        "nightjob": "nightjob",
         "nix-cache-pin": "nix-cache-pin",
         "nix-cachyos-kernel": "nix-cachyos-kernel",
         "nix-maid": "nix-maid",

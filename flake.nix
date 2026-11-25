@@ -191,6 +191,15 @@
       inputs.rust-pkgs.follows = "rust-pkgs";
     };
 
+    # nightjob — the unattended GPU job runner (VRAM preflight, transient
+    # systemd unit with a deadline, ROCm sampler, morning report). Its wrapper
+    # PATH and its stdlib test suite moved with it; the host keeps the
+    # `features.dev.ai.rocm` flag and installs `pkgs.neg.nightjob`.
+    nightjob = {
+      url = "github:neg-serg/nightjob";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # nix-optimized — the evaluation-speedup work for the Nix this host runs:
     # the patched upstream build and the PGO build of Determinate Nix. The
     # packages were developed in packages/ and moved to their own repository so
