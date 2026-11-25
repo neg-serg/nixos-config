@@ -11,9 +11,9 @@ Communication language (hard rule)
   English docs into Russian. When in doubt about chat language, use Russian;
   when in doubt about docs, use English.
 - Code comments (in .hs/.scd/.tidal/.rs/nix/… source files) are written in
-  English. Commit subjects are English imperative (see Commit style below);
-  commit bodies may be Russian. (User requirement — musical code lives in
-  the private ~/notes repo.)
+  English. Commit messages are English only: an English imperative subject
+  (see Commit style below) and an English body. Never write commit messages
+  in Russian, whatever the chat language was.
 - Note: upstream dsh bundles (the TUI package, plugin data) may contain Chinese
   strings we did not write. Do not copy them into replies for the user.
 - Before committing, check that files you wrote contain no stray Chinese
