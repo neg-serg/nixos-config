@@ -1074,11 +1074,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795631042,
-        "narHash": "sha256-rj3sQJLlW0WkWvRnYFDKvC8SG0CaxswiClYew4eSXcI=",
+        "lastModified": 1795636321,
+        "narHash": "sha256-gA1EZ+loQ+rY/EE06QUvEgYkkHJ0o4t2RLfFcRC+MA4=",
         "owner": "neg-serg",
         "repo": "nixos-pkgs",
-        "rev": "bd7f7084b99c71a0486f5de78e3df9c49c505e29",
+        "rev": "ba8fd8fff7d7116219f114c712d632e01ca25230",
         "type": "github"
       },
       "original": {
@@ -1134,11 +1134,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795635916,
-        "narHash": "sha256-QtNaeusXt51NMBeVZGPJWX/oPt4XY8W0TPuJ2A9e1aU=",
+        "lastModified": 1795636293,
+        "narHash": "sha256-exGEh1DNLpoBTSSHCtlHDD0VbXI1ISd24kzAy1rHgAE=",
         "owner": "neg-serg",
         "repo": "nightjob",
-        "rev": "130cde5453fc567af178c9924afea70c821acb42",
+        "rev": "a94de51a843486d31fd1e30ca1b2e1cccdf28f37",
         "type": "github"
       },
       "original": {

@@ -101,3 +101,16 @@ CI: one workflow evaluates every `packages.nix` entry and runs `nix flake check`
   slimming, and the dead-entry cleanup.
 - This tree: the first batch, the input pin to the fixed list, and the second batch (with the unused
   `paths` argument the move made dead).
+
+## Follow-up (same day, later)
+
+- **`ttf-code` moved too.** The four Code200x variants are `packages/ttf-code/` in `nixos-pkgs` now,
+  wired as the top-level `ttf-code2000 … ttf-code20x3` in `packages.nix` and
+  `overlays/migrated.nix`; the host's overlay entries and `packages/ttf-code/` are gone, and the
+  toplevel `drvPath` stayed `374pd45z…` because the recipe and its sources did not change.
+- **The host's `lib/mkCraftApp.nix` is deleted, and the builder is re-exported from the input.**
+  The three craft apps in `nixos-pkgs` call `neg.functions.mkCraftApp`, and the overlay whose
+  `functions` the host package set ends up with is this tree's — so removing the copy without a
+  re-export broke `pkgs.figcraft` (caught by `just check`, after the toplevel eval had passed
+  because the apps are on-demand). `packages/overlays/functions.nix` now builds the builder from
+  `inputs.neg-pkgs + "/lib/mkCraftApp.nix"`, byte-identical to the deleted file.

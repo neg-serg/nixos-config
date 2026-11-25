@@ -47,8 +47,8 @@ Repository: <https://github.com/neg-serg/nightjob> (public). Live checkout: `~/s
 
 ## Gaps to fix later
 
-1. **No `LICENSE` file in the repository.** The package meta carries no `license` field rather than
-   inventing one; add the file and the field together.
+1. **`LICENSE` was added the same day** (`a94de51`): MIT, with the same copyright line as the other
+   neg-serg repositories, and the package meta now declares `license = lib.licenses.mit`.
 1. **The device paths are still untested.** `preflight`, `collect_apps`, the supervisor and the
    report need a ROCm card and a live systemd user manager, so the suite covers their inputs and
    formatting, not the run itself.

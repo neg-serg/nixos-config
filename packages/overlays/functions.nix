@@ -63,10 +63,13 @@ in
         inherit paths;
       };
 
-      # mkCraftApp: shared builder for the ArtCraft desktop apps (VectorCraft,
-      # FigCraft, SoundCraft, DeckCraft, GridCraft, SolidCraft) — one egui/wgpu
-      # workspace shape each, see packages/lib/mkCraftApp.nix.
-      mkCraftApp = prev.callPackage (paths.path "packages/lib/mkCraftApp.nix") { };
+      # mkCraftApp: the builder for the three ArtCraft apps that nixpkgs has no
+      # recipe for (figcraft, solidcraft, craft-anything — they live in
+      # github:neg-serg/nixos-pkgs and call `neg.functions.mkCraftApp`). This
+      # overlay's `functions` is the one the host's package set ends up with, so
+      # the builder is re-exported from the input's lib instead of a second copy
+      # in packages/lib/.
+      mkCraftApp = prev.callPackage (inputs.neg-pkgs + "/lib/mkCraftApp.nix") { };
 
       inherit mkMeta;
     };
