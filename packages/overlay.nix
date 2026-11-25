@@ -69,7 +69,6 @@ let
     "local-bin-zsh-extra"
     "minibbs"
     "music-apply-tags"
-    "music-index-tools"
     "nixbuild-status"
     "questyle-ctl"
     "renoise-osc"
@@ -235,7 +234,6 @@ slimChunks
           zalgo = final.callPackage ./zalgo { }; # cursed-text generator (combining marks on stdin)
           blizzard = final.callPackage ./blizzard { }; # animated black-metal blizzard WebP generator (fastfetch logos)
           music-apply-tags = final.callPackage ./music-apply-tags { }; # write ML mood/style into audio tags (was scripts/dev/music-apply-tags.py)
-          music-index-tools = final.callPackage ./music-index-tools { }; # build/query the MERT similarity index (Rust; embeddings via music-embed)
           vivaldi-prefs = final.callPackage ./vivaldi-prefs { }; # re-assert managed Vivaldi preferences
           wallpaper-palettes = final.callPackage ./wallpaper-palettes { }; # matugen schemes per wallpaper (picker cards)
           local-bin-tools = final.callPackage ./local-bin-tools { }; # small $PATH helpers (fetch-covers, gen-unbound-hosts, menu-search, ren, …)

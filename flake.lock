@@ -860,6 +860,22 @@
         "type": "github"
       }
     },
+    "music-index-tools": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "narHash": "sha256-8c5hvLIfwZQICCGRtowIVLxK59x8DIfnKV6AVteQ+gA=",
+        "path": "/home/neg/src/music-index-tools",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/neg/src/music-index-tools",
+        "type": "path"
+      }
+    },
     "naersk-package": {
       "inputs": {
         "fenix": "fenix",
@@ -1348,6 +1364,7 @@
         "iosevka-neg": "iosevka-neg",
         "lusty": "lusty",
         "multiverse": "multiverse",
+        "music-index-tools": "music-index-tools",
         "neg-pkgs": "neg-pkgs",
         "neovim-nightly": "neovim-nightly",
         "nix-cache-pin": "nix-cache-pin",

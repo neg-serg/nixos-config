@@ -24,9 +24,10 @@ let
   # Per-user unit constructor (lib/systemd-user.nix, see modules/AGENTS.md).
   systemdUser = config.lib.neg.systemdUser;
 
-  # music-index is a Rust binary from packages/music-index-tools (it shells out
-  # to the `music-embed` wrapper for embeddings), so the unit can address the
-  # store path directly; the deployed ~/.local/bin copy is gone.
+  # music-index is the Rust binary from its own project
+  # (~/src/music-index-tools, wired up as `pkgs.neg.music-index-tools`). It
+  # shells out to the `music-embed` wrapper for embeddings, so the unit can
+  # address the store path directly; the deployed ~/.local/bin copy is gone.
   #
   # --quiet keeps one progress line per 25 tracks out of the journal; the run
   # summary and failures still land there. --threads 4 trades ~1.8x per-clip
