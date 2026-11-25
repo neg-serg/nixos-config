@@ -15,6 +15,7 @@
 pub mod env;
 pub mod helptext;
 pub mod json;
+pub mod multicall;
 pub mod proc;
 pub mod pyfmt;
 pub mod text;

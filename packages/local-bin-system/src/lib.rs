@@ -42,41 +42,8 @@ pub fn prog(fallback: &str) -> String {
     }
 }
 
-fn write_stream(mut stream: impl Write, bytes: &[u8]) {
-    match stream.write_all(bytes) {
-        Ok(()) => {}
-        // A closed pipe is a SIGPIPE for a shell program; Rust ignores the
-        // signal, so the port reproduces the shell's status.
-        Err(error) if error.kind() == io::ErrorKind::BrokenPipe => std::process::exit(141),
-        Err(_) => std::process::exit(1),
-    }
-}
-
-pub fn out(bytes: &[u8]) {
-    write_stream(io::stdout(), bytes);
-}
-
-pub fn out_str(text: &str) {
-    out(text.as_bytes());
-}
-
-pub fn out_line(bytes: &[u8]) {
-    let mut line = Vec::with_capacity(bytes.len() + 1);
-    line.extend_from_slice(bytes);
-    line.push(b'\n');
-    out(&line);
-}
-
 pub fn out_str_line(text: &str) {
     out_line(text.as_bytes());
-}
-
-pub fn err(bytes: &[u8]) {
-    write_stream(io::stderr(), bytes);
-}
-
-pub fn err_str(text: &str) {
-    err(text.as_bytes());
 }
 
 pub fn err_line(message: &str) {
@@ -505,3 +472,6 @@ pub mod surfingkeys_extension_patch;
 pub mod sw;
 pub mod upstream_radar;
 pub mod vsmlrt_models;
+
+// Shared stream/status helpers (one implementation for every port).
+pub use local_bin_core::env::{err, err_str, out, out_line, out_str};

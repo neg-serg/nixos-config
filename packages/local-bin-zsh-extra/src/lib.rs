@@ -30,11 +30,6 @@ pub fn argv0() -> OsString {
     std::env::args_os().next().unwrap_or_default()
 }
 
-/// `"$@"`, byte-preserving so non-UTF-8 paths reach the external tools intact.
-pub fn raw_args() -> Vec<OsString> {
-    std::env::args_os().skip(1).collect()
-}
-
 /// The basename of argv[0], which is what `basename "$0"` prints.
 pub fn prog() -> Vec<u8> {
     let argv0 = argv0();
@@ -78,50 +73,12 @@ pub fn which_str(tool: &str) -> Option<PathBuf> {
     which(OsStr::new(tool))
 }
 
-fn write_stream(mut stream: impl Write, bytes: &[u8]) {
-    match stream.write_all(bytes) {
-        Ok(()) => {}
-        // A closed pipe is SIGPIPE for a shell program; Rust ignores the
-        // signal, so the port reproduces the shell's status.
-        Err(error) if error.kind() == io::ErrorKind::BrokenPipe => std::process::exit(141),
-        Err(_) => std::process::exit(1),
-    }
-    let _ = stream.flush();
-}
-
-pub fn out(bytes: &[u8]) {
-    write_stream(io::stdout(), bytes);
-}
-
-pub fn out_str(text: &str) {
-    out(text.as_bytes());
-}
-
 pub fn out_line(text: &str) {
     out(format!("{text}\n").as_bytes());
 }
 
-pub fn err(bytes: &[u8]) {
-    write_stream(io::stderr(), bytes);
-}
-
-pub fn err_str(text: &str) {
-    err(text.as_bytes());
-}
-
 pub fn err_line(text: &str) {
     err(format!("{text}\n").as_bytes());
-}
-
-/// The shell's status for a child (128 + signal for signal deaths).
-pub fn status_code(status: ExitStatus) -> i32 {
-    if let Some(code) = status.code() {
-        code
-    } else if let Some(signal) = status.signal() {
-        128 + signal
-    } else {
-        1
-    }
 }
 
 /// Command substitution: all trailing newlines disappear.
@@ -259,3 +216,6 @@ pub mod sx;
 pub mod sys_relief;
 pub mod vol;
 pub mod win_vm;
+
+// Shared stream/status helpers (one implementation for every port).
+pub use local_bin_core::env::{err, err_str, out, out_str, raw_args, status_code};

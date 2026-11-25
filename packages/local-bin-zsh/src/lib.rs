@@ -32,11 +32,6 @@ use std::os::unix::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, ExitStatus, Stdio};
 
-/// `"$@"`, byte-preserving so non-UTF-8 paths reach the external tools intact.
-pub fn raw_args() -> Vec<OsString> {
-    std::env::args_os().skip(1).collect()
-}
-
 fn argv0() -> OsString {
     std::env::args_os().next().unwrap_or_default()
 }
@@ -77,33 +72,6 @@ pub fn home() -> OsString {
     var("HOME")
 }
 
-pub fn is_executable(path: &Path) -> bool {
-    match fs::metadata(path) {
-        Ok(meta) => meta.is_file() && meta.permissions().mode() & 0o111 != 0,
-        Err(_) => false,
-    }
-}
-
-fn search_path(tool: &OsStr, require_executable: bool) -> Option<PathBuf> {
-    let search = std::env::var_os("PATH").unwrap_or_default();
-    std::env::split_paths(&search)
-        .map(|directory| {
-            if directory.as_os_str().is_empty() {
-                PathBuf::from(".")
-            } else {
-                directory
-            }
-        })
-        .map(|directory| directory.join(tool))
-        .find(|candidate| {
-            if require_executable {
-                is_executable(candidate)
-            } else {
-                fs::metadata(candidate).is_ok()
-            }
-        })
-}
-
 /// `command -v`: an executable file on `PATH`, or an explicit path.
 pub fn which(tool: &OsStr) -> Option<PathBuf> {
     let path = Path::new(tool);
@@ -140,43 +108,6 @@ pub fn die(message: &[u8]) -> ! {
 
 pub fn die_str(message: &str) -> ! {
     die(message.as_bytes())
-}
-
-fn write_stream(mut stream: impl Write, bytes: &[u8]) {
-    match stream.write_all(bytes) {
-        Ok(()) => {}
-        // A closed pipe is a SIGPIPE for a shell program; Rust ignores the
-        // signal, so the port reproduces the shell's status.
-        Err(error) if error.kind() == io::ErrorKind::BrokenPipe => std::process::exit(141),
-        Err(_) => std::process::exit(1),
-    }
-    // Rust's stdout handle is line buffered; a child that inherits fd 1 must
-    // not overtake a prefix that has no newline yet (`iommu-info` writes the
-    // group prefix before spawning lspci).
-    let _ = stream.flush();
-}
-
-pub fn out(bytes: &[u8]) {
-    write_stream(io::stdout(), bytes);
-}
-
-pub fn out_str(text: &str) {
-    out(text.as_bytes());
-}
-
-pub fn out_line(bytes: &[u8]) {
-    let mut line = Vec::with_capacity(bytes.len() + 1);
-    line.extend_from_slice(bytes);
-    line.push(b'\n');
-    out(&line);
-}
-
-pub fn err(bytes: &[u8]) {
-    write_stream(io::stderr(), bytes);
-}
-
-pub fn err_str(text: &str) {
-    err(text.as_bytes());
 }
 
 pub fn err_line(text: &str) {
@@ -519,17 +450,6 @@ pub fn spawn_stdin_bytes(
     }
 }
 
-/// The shell's status for a child (128 + signal for signal deaths).
-pub fn status_code(status: ExitStatus) -> i32 {
-    if let Some(code) = status.code() {
-        code
-    } else if let Some(signal) = status.signal() {
-        128 + signal
-    } else {
-        1
-    }
-}
-
 /// Command substitution: all trailing newlines disappear.
 pub fn strip_trailing_newlines(mut bytes: Vec<u8>) -> Vec<u8> {
     while bytes.last() == Some(&b'\n') {
@@ -721,15 +641,6 @@ pub fn path_bytes(path: &Path) -> Vec<u8> {
     path.as_os_str().as_bytes().to_vec()
 }
 
-/// `strerror` text without Rust's "(os error N)" suffix.
-pub fn os_error_text(error: &io::Error) -> String {
-    let text = error.to_string();
-    match text.find(" (os error ") {
-        Some(position) => text[..position].to_string(),
-        None => text,
-    }
-}
-
 fn lowercase(text: &str) -> String {
     let mut characters = text.chars();
     match characters.next() {
@@ -747,3 +658,9 @@ pub mod read_documents;
 
 /// The shared JSON reader/writer (the TUI's metadata values are JSON).
 pub use local_bin_core::json;
+
+// Shared stream/status helpers (one implementation for every port).
+pub use local_bin_core::env::{
+    err, err_str, is_executable, os_error_text, out, out_line, out_str, raw_args, search_path,
+    status_code,
+};

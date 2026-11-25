@@ -11,6 +11,7 @@ name = "local-bin-system"
 path = "src/main.rs"
 
 [dependencies]
+local-bin-core = { path = "../local-bin-core" }
 serde_json = "1"
 
 [workspace]

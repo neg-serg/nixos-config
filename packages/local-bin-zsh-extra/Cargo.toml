@@ -11,6 +11,7 @@ name = "local-bin-zsh-extra"
 path = "src/main.rs"
 
 [dependencies]
+local-bin-core = { path = "../local-bin-core" }
 # gh-issues-export parses the paginated `gh api` stream and renders the YAML
 # frontmatter that used to be shaped by jq; serde_json is the only dependency.
 serde_json = "1"

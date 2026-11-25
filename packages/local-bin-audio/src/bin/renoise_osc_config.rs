@@ -78,7 +78,7 @@ pub fn entry() {
             let mut message = b"renoise-osc-config: cannot read ".to_vec();
             message.extend_from_slice(&cfg);
             message.extend_from_slice(b": ");
-            message.extend_from_slice(env::error_text(&error).as_bytes());
+            message.extend_from_slice(env::os_error_text(&error).as_bytes());
             message.push(b'\n');
             env::err(&message);
             std::process::exit(1);
@@ -121,7 +121,7 @@ pub fn entry() {
         let mut message = b"renoise-osc-config: cannot write ".to_vec();
         message.extend_from_slice(&cfg);
         message.extend_from_slice(b": ");
-        message.extend_from_slice(env::error_text(&error).as_bytes());
+        message.extend_from_slice(env::os_error_text(&error).as_bytes());
         message.push(b'\n');
         env::err(&message);
         std::process::exit(1);

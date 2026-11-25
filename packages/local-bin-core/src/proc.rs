@@ -219,7 +219,7 @@ impl<'a> Cmd<'a> {
 }
 
 /// Apply the shell's stdio destinations to a command.
-pub fn configure(command: &mut Command, stdin: Input<'_>, stdout: Sink, stderr: Sink) {
+fn configure(command: &mut Command, stdin: Input<'_>, stdout: Sink, stderr: Sink) {
     match stdin {
         Input::Inherit => {
             command.stdin(Stdio::inherit());
@@ -286,22 +286,7 @@ pub fn spawn_error_code(error: &std::io::Error) -> i32 {
     }
 }
 
-/// `$(tool ...)`: capture stdout, drop stderr, strip trailing newlines.
-pub fn capture_lines(cmd: Cmd<'_>) -> (Vec<u8>, i32) {
-    let outcome = cmd.stdout(Sink::Capture).stderr(Sink::Null).run();
-    (
-        crate::text::strip_trailing_newlines(&outcome.stdout).to_vec(),
-        outcome.code,
-    )
-}
-
 /// Exit status of a finished child, kept for callers that compare it.
 pub fn status_code(status: ExitStatus) -> i32 {
     env::status_code(status)
-}
-
-/// `cmd || true` with both streams inherited: used for best-effort side
-/// effects whose exit status the shell discards.
-pub fn inherit_ignored(cmd: Cmd<'_>) -> i32 {
-    cmd.run().code
 }

@@ -29,16 +29,20 @@ use std::process::ExitStatus;
 pub fn os_bytes(value: &OsStr) -> &[u8] {
     value.as_bytes()
 }
+
 pub fn os_string(bytes: &[u8]) -> OsString {
     OsString::from_vec(bytes.to_vec())
 }
+
 pub fn var_os(name: &str) -> Option<OsString> {
     std::env::var_os(name)
 }
+
 /// Value of an environment variable as bytes (unset and non-UTF-8 both work).
 pub fn var_bytes(name: &str) -> Option<Vec<u8>> {
     std::env::var_os(name).map(|value| value.as_bytes().to_vec())
 }
+
 /// `${NAME:-default}`: unset and empty both select the default.
 pub fn var_nonempty(name: &str) -> Option<Vec<u8>> {
     var_bytes(name).filter(|value| !value.is_empty())
@@ -48,20 +52,24 @@ pub fn var_nonempty(name: &str) -> Option<Vec<u8>> {
 pub fn var_nonempty_os(name: &str) -> Option<OsString> {
     std::env::var_os(name).filter(|value| !value.is_empty())
 }
+
 /// `${NAME:-default}` with the default always applied, as bytes.
 pub fn var_or(name: &str, default: &[u8]) -> Vec<u8> {
     var_nonempty(name).unwrap_or_else(|| default.to_vec())
 }
+
 /// `$NAME` without a default; an unset variable expands to nothing.
 pub fn var_or_empty(name: &str) -> Vec<u8> {
     var_bytes(name).unwrap_or_default()
 }
+
 pub fn is_executable(path: &Path) -> bool {
     match fs::metadata(path) {
         Ok(meta) => meta.is_file() && meta.permissions().mode() & 0o111 != 0,
         Err(_) => false,
     }
 }
+
 /// `command -v <tool>`: PATH lookup for a bare name, direct check for a path.
 pub fn find_in_path(tool: &[u8]) -> Option<PathBuf> {
     let tool_path = Path::new(OsStr::from_bytes(tool));
@@ -82,20 +90,25 @@ pub fn find_in_path(tool: &[u8]) -> Option<PathBuf> {
     }
     None
 }
+
 /// `command -v <tool> >/dev/null 2>&1` in a boolean form.
 pub fn which(tool: &[u8]) -> bool {
     find_in_path(tool).is_some()
 }
-pub fn which_path(tool: &str) -> Option<PathBuf> {
+
+fn which_path(tool: &str) -> Option<PathBuf> {
     find_in_path(tool.as_bytes())
 }
+
 fn argv0() -> OsString {
     std::env::args_os().next().unwrap_or_default()
 }
+
 /// `"$@"` with Unix byte fidelity.
 pub fn raw_args() -> Vec<OsString> {
     std::env::args_os().skip(1).collect()
 }
+
 /// `PROG=${LOCALBIN_PATH##*/}` — the basename `_localbin.sh` uses.
 pub fn prog_name() -> Vec<u8> {
     let program = argv0();
@@ -104,6 +117,7 @@ pub fn prog_name() -> Vec<u8> {
         None => program.as_bytes().to_vec(),
     }
 }
+
 /// The name bash uses in `line N:` diagnostics: `$0`, with a bare command
 /// resolved through PATH the way the invoking shell resolved it.
 pub fn invocation_name() -> Vec<u8> {
@@ -115,6 +129,7 @@ pub fn invocation_name() -> Vec<u8> {
         .map(|path| path.as_os_str().as_bytes().to_vec())
         .unwrap_or_else(|| raw.as_bytes().to_vec())
 }
+
 /// The name bash would put in a script diagnostic: the path used to exec the
 /// script. Rust binaries get argv[0] (possibly just `tty-log` from PATH), so a
 /// bare name is resolved through PATH to match the shebang invocation.
@@ -127,6 +142,7 @@ pub fn invocation_name_of(argv0: &OsStr) -> Vec<u8> {
         .map(|path| path.as_os_str().as_bytes().to_vec())
         .unwrap_or_else(|| raw.to_vec())
 }
+
 /// Exit code for a finished child: the code itself, or 128 + signal.
 pub fn status_code(status: ExitStatus) -> i32 {
     if let Some(code) = status.code() {
@@ -137,6 +153,7 @@ pub fn status_code(status: ExitStatus) -> i32 {
         1
     }
 }
+
 fn write_stream(mut stream: impl Write, bytes: &[u8]) {
     match stream.write_all(bytes) {
         Ok(()) => {}
@@ -144,31 +161,42 @@ fn write_stream(mut stream: impl Write, bytes: &[u8]) {
         Err(error) if error.kind() == io::ErrorKind::BrokenPipe => std::process::exit(141),
         Err(_) => std::process::exit(1),
     }
+    // Rust's stdout is line buffered; a child that inherits fd 1 must not
+    // overtake a prefix that has no newline yet (`iommu-info` prints the group
+    // prefix before spawning lspci).
+    let _ = stream.flush();
 }
+
 pub fn out(bytes: &[u8]) {
     write_stream(io::stdout(), bytes);
 }
+
 pub fn out_str(text: &str) {
     out(text.as_bytes());
 }
+
 pub fn out_line(bytes: &[u8]) {
     let mut line = Vec::with_capacity(bytes.len() + 1);
     line.extend_from_slice(bytes);
     line.push(b'\n');
     out(&line);
 }
+
 pub fn err(bytes: &[u8]) {
     write_stream(io::stderr(), bytes);
 }
+
 pub fn err_str(text: &str) {
     err(text.as_bytes());
 }
+
 pub fn err_line(bytes: &[u8]) {
     let mut line = Vec::with_capacity(bytes.len() + 1);
     line.extend_from_slice(bytes);
     line.push(b'\n');
     err(&line);
 }
+
 /// `strerror` text without Rust's "(os error N)" suffix, for the shell-style
 /// redirection diagnostics the originals let bash print.
 pub fn os_error_text(error: &io::Error) -> String {
@@ -178,9 +206,7 @@ pub fn os_error_text(error: &io::Error) -> String {
         None => text,
     }
 }
-pub fn error_text(error: &io::Error) -> String {
-    os_error_text(error)
-}
+
 /// bash: `<program>: line N: <tool>: command not found`.
 pub fn not_found_message(program: &[u8], line: u32, tool: &[u8]) -> Vec<u8> {
     let mut message = Vec::new();
@@ -190,6 +216,7 @@ pub fn not_found_message(program: &[u8], line: u32, tool: &[u8]) -> Vec<u8> {
     message.extend_from_slice(b": command not found\n");
     message
 }
+
 /// Message bash prints for a simple command that cannot be found. The port
 /// keeps the original line number so log-scraping callers see the same text.
 pub fn command_not_found(program: &[u8], line: u32, tool: &[u8]) {
@@ -200,6 +227,7 @@ pub fn command_not_found(program: &[u8], line: u32, tool: &[u8]) {
     message.extend_from_slice(b": command not found\n");
     err(&message);
 }
+
 /// bash: `<program>: line N: <path>: No such file or directory` (a command that
 /// contains a slash is executed directly, so the diagnostic names the path).
 pub fn path_failure_message(program: &[u8], line: u32, path: &[u8], error: &io::Error) -> Vec<u8> {
@@ -208,10 +236,11 @@ pub fn path_failure_message(program: &[u8], line: u32, path: &[u8], error: &io::
     message.extend_from_slice(format!(": line {line}: ").as_bytes());
     message.extend_from_slice(path);
     message.extend_from_slice(b": ");
-    message.extend_from_slice(error_text(error).as_bytes());
+    message.extend_from_slice(os_error_text(error).as_bytes());
     message.push(b'\n');
     message
 }
+
 /// `cd` diagnostic: `<program>: line N: cd: <path>: No such file or directory`.
 pub fn cd_message(program: &[u8], line: u32, path: &[u8]) -> Vec<u8> {
     let mut message = Vec::new();
@@ -221,6 +250,7 @@ pub fn cd_message(program: &[u8], line: u32, path: &[u8]) -> Vec<u8> {
     message.extend_from_slice(b": No such file or directory\n");
     message
 }
+
 /// A redirection that could not be opened: bash names the target path.
 /// `<program>: line N: <path>: Permission denied`.
 pub fn redirect_failure_message(
@@ -234,10 +264,11 @@ pub fn redirect_failure_message(
     message.extend_from_slice(format!(": line {line}: ").as_bytes());
     message.extend_from_slice(path);
     message.extend_from_slice(b": ");
-    message.extend_from_slice(error_text(error).as_bytes());
+    message.extend_from_slice(os_error_text(error).as_bytes());
     message.push(b'\n');
     message
 }
+
 /// `${1:?MESSAGE}` diagnostic, exit status 1. bash spells the parameter name
 /// in the message: `<program>: line N: 1: <message>`.
 pub fn parameter_error(program: &[u8], line: u32, name: &[u8], message: &[u8]) -> ! {
@@ -251,6 +282,7 @@ pub fn parameter_error(program: &[u8], line: u32, name: &[u8], message: &[u8]) -
     err(&text);
     std::process::exit(1);
 }
+
 fn diagnostic_prefix(prog: &[u8], line: u32) -> Vec<u8> {
     let mut message = prog.to_vec();
     message.extend_from_slice(b": line ");
@@ -258,6 +290,7 @@ fn diagnostic_prefix(prog: &[u8], line: u32) -> Vec<u8> {
     message.extend_from_slice(b": ");
     message
 }
+
 /// The resolved path of a command that exists but may not be executable; used
 /// for the `Permission denied` diagnostics bash prints with the full path.
 fn resolved_tool(tool: &str) -> Vec<u8> {
@@ -265,6 +298,7 @@ fn resolved_tool(tool: &str) -> Vec<u8> {
         .map(|path| path.as_os_str().as_bytes().to_vec())
         .unwrap_or_else(|| tool.as_bytes().to_vec())
 }
+
 fn failure_status(error: &io::Error) -> i32 {
     if error.kind() == io::ErrorKind::NotFound {
         127
@@ -272,6 +306,7 @@ fn failure_status(error: &io::Error) -> i32 {
         126
     }
 }
+
 /// Report a failed `Command::status()`/`Command::output()` without exiting;
 /// `v` keeps going after its optional helpers fail.
 pub fn report_spawn_failure(prog: &[u8], line: u32, tool: &str, error: &io::Error) {
@@ -296,12 +331,14 @@ pub fn report_spawn_failure(prog: &[u8], line: u32, tool: &str, error: &io::Erro
         }
     }
 }
+
 /// A non-`exec` command that could not be started: bash's `command not found`
 /// (127) or `Permission denied` (126) diagnostic.
 pub fn spawn_failure(prog: &[u8], line: u32, tool: &str, error: &io::Error) -> ! {
     report_spawn_failure(prog, line, tool, error);
     std::process::exit(failure_status(error));
 }
+
 /// `exec` diagnostic, exit 127 (missing) or 126 (not executable).
 pub fn exec_failure(program: &[u8], line: u32, tool: &[u8], error: &io::Error) -> ! {
     let mut message = Vec::new();
@@ -317,13 +354,14 @@ pub fn exec_failure(program: &[u8], line: u32, tool: &[u8], error: &io::Error) -
         Some(13) => message.extend_from_slice(b": cannot execute: Permission denied\n"),
         _ => {
             message.extend_from_slice(b": ");
-            message.extend_from_slice(error_text(error).as_bytes());
+            message.extend_from_slice(os_error_text(error).as_bytes());
             message.push(b'\n');
         }
     }
     err(&message);
     std::process::exit(code);
 }
+
 /// A failed shell input redirection: `<"$ARG"` printed by bash, status 1.
 pub fn redirect_failure(prog: &[u8], line: u32, path: &OsStr, error: &io::Error) -> ! {
     let mut message = diagnostic_prefix(prog, line);
@@ -334,6 +372,7 @@ pub fn redirect_failure(prog: &[u8], line: u32, path: &OsStr, error: &io::Error)
     err(&message);
     std::process::exit(1);
 }
+
 /// A failing bash arithmetic expansion or `(( ))` command.
 pub struct ArithmeticError {
     /// The operand bash named in the diagnostic (the expanded value).
@@ -341,6 +380,7 @@ pub struct ArithmeticError {
     /// The suffix from the first invalid character on.
     pub token: Vec<u8>,
 }
+
 /// Evaluate one operand the way bash arithmetic does.
 ///
 /// bash parses an integer with an optional sign, `0x` hexadecimal, a leading
@@ -398,6 +438,7 @@ pub fn bash_int(value: &[u8]) -> Result<i64, ArithmeticError> {
         }),
     }
 }
+
 fn trim_ascii(value: &[u8]) -> &[u8] {
     let mut start = 0;
     let mut end = value.len();
@@ -409,6 +450,7 @@ fn trim_ascii(value: &[u8]) -> &[u8] {
     }
     &value[start..end]
 }
+
 fn is_bare_word(value: &[u8]) -> bool {
     if value.is_empty() {
         return false;
@@ -420,6 +462,7 @@ fn is_bare_word(value: &[u8]) -> bool {
         .iter()
         .all(|byte| byte.is_ascii_alphanumeric() || *byte == b'_')
 }
+
 /// bash's arithmetic diagnostic. `conditional` selects the `(( ))` spelling.
 pub fn arithmetic_message(
     program: &[u8],
@@ -441,6 +484,7 @@ pub fn arithmetic_message(
     message.extend_from_slice(b"\")\n");
     message
 }
+
 /// `need CMD` from `_localbin.sh`: warn on stderr and continue.
 pub fn need(prog: &[u8], tool: &str) {
     if which_path(tool).is_none() {
@@ -451,7 +495,8 @@ pub fn need(prog: &[u8], tool: &str) {
         err(&message);
     }
 }
-fn search_path(tool: &OsStr, require_executable: bool) -> Option<PathBuf> {
+
+pub fn search_path(tool: &OsStr, require_executable: bool) -> Option<PathBuf> {
     let search = std::env::var_os("PATH").unwrap_or_default();
     std::env::split_paths(&search)
         .map(|directory| {
