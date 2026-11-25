@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Differential harness for the `derivationStrict` memo, the one patch in
-# `packages/nix-eval-patched` that can silently change a `drvPath`: it answers a
+# github:neg-serg/nix-optimized's `nix-eval-patched`, which can silently change a `drvPath`: it answers a
 # repeated derivation from a hash-keyed memo and, on a hit, returns the cached
 # store path *without* re-writing the derivation. Everything else in that stack
 # is a cache in front of the store; this one decides what a `drvPath` is.

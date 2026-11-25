@@ -1,9 +1,9 @@
 ##
 # Module: nix/pgo-nix
-# Purpose: put packages/nix-det-pgo — Determinate Nix 3.23.3 rebuilt with PGO and
+# Purpose: put github:neg-serg/nix-optimized's nix-det-pgo — Determinate Nix 3.23.3 rebuilt with PGO and
 # the five evaluation-speedup patches their tree accepts — into `nix.package`.
 # That is the whole point of the package: the toplevel eval of this flake drops
-# ~15 % (measured A/B, header of packages/nix-det-pgo/default.nix) without
+# ~15 % (measured A/B, the package's header) without
 # losing lazy-trees, because the source is still Determinate's own tree, so the
 # setting table the running system relies on (lazy-trees, eval-cache,
 # parallel-eval) is byte-for-byte the same one.
@@ -15,7 +15,7 @@
 # that trade-off; this module only wires it.
 #
 # Key options: features.nix.pgoNix.enable (default false).
-# Dependencies: packages/nix-det-pgo/ (built locally, ~12 min per nix-src
+# Dependencies: github:neg-serg/nix-optimized (built locally, ~12 min per nix-src
 # bump); the `nix-src` and `bdwgc` flake inputs it builds from.
 {
   lib,

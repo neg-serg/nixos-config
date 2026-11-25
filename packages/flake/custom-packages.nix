@@ -260,7 +260,7 @@
   ttf-code20x3 = pkgs.ttf-code20x3; # Code20X3 freeware font: Plane 3 CJK Ext G/H
 
   # Candidate Nix (2.35 + eval-speedup patches) — `nix build .#nix-eval-patched`.
-  # Not `nix.package`: see the header comment of packages/nix-eval-patched.
+  # Not `nix.package`: see the header comment of the nix-optimized package.
   nix-eval-patched = pkgs.nix-eval-patched;
 
   # Determinate Nix 3.23.3 with PGO + eval-speedup patches —

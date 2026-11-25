@@ -1159,6 +1159,29 @@
         "url": "https://github.com/caniko/nix-opencode-lsp.git"
       }
     },
+    "nix-optimized": {
+      "inputs": {
+        "nix-src": [
+          "nix-src"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795628750,
+        "narHash": "sha256-v7utXQC6Tq7sMyqsIKJ4zZxn7hMGyI0QphPA2DGujRQ=",
+        "owner": "neg-serg",
+        "repo": "nix-optimized",
+        "rev": "e3a30b59b8362a2053139fb67eddba45c80168f1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "nix-optimized",
+        "type": "github"
+      }
+    },
     "nix-src": {
       "inputs": {
         "bdwgc": "bdwgc",
@@ -1482,6 +1505,7 @@
         "nix-cache-pin": "nix-cache-pin",
         "nix-cachyos-kernel": "nix-cachyos-kernel",
         "nix-maid": "nix-maid",
+        "nix-optimized": "nix-optimized",
         "nix-src": "nix-src",
         "nixos-music": "nixos-music",
         "nixpkgs": "nixpkgs_2",

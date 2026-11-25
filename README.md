@@ -85,7 +85,7 @@ sudo nixos-rebuild switch --flake .#trantor
 | 📁 Category | 🔢 Count | 📊 Progress |
 |-------------|----------|-------------|
 | **Module Domains** | 25 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Nix Files** | 517 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 514 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Custom Packages** | 147 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 | **Module Files** | 360 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
@@ -565,7 +565,7 @@ Quick-access overlays for common applications:
 
 ## 🛠️ Custom Packages
 
-**148 Custom Packages** exposed by the flake — selected highlights:
+**147 Custom Packages** exposed by the flake — selected highlights:
 
 ### 🎮 Game
 Rust launcher wrapper in `rust-pkgs/game/`:

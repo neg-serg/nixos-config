@@ -61,7 +61,7 @@
   services.bootvine.enable = true;
 
   # Host-specific overrides (above profile defaults)
-  # PGO build of Determinate Nix (packages/nix-det-pgo): -18 % on the toplevel eval,
+  # PGO build of Determinate Nix (github:neg-serg/nix-optimized): -18 % on the toplevel eval,
   # lazy-trees intact, same drvPath. The rebuild restarts nix-daemon; if it ever breaks,
   # the way back is `nixos-rebuild switch --rollback` from a TTY.
   features.nix.pgoNix.enable = true;

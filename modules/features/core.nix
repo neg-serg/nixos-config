@@ -12,7 +12,7 @@
     # exists yet; the module header records what was already ruled out.
     nix.remoteBuilder.enable = mkBool "send builds to a remote x86_64 builder over SSH" false;
 
-    # PGO build of Determinate Nix (packages/nix-det-pgo/): the same 3.23.3
+    # PGO build of Determinate Nix (github:neg-serg/nix-optimized): the same 3.23.3
     # source the host already runs, rebuilt with a profile trained on this
     # repo's own evaluation plus the five eval-speedup patches it accepts.
     # Measured -15 % on the toplevel drvPath eval (this tree, -18 % on the
@@ -22,7 +22,7 @@
       default = false;
       description = ''
         Swap `nix.package` for the PGO + eval-speedup-patched build of
-        Determinate Nix 3.23.3 (packages/nix-det-pgo), which evaluates this
+        Determinate Nix 3.23.3 (github:neg-serg/nix-optimized), which evaluates this
         flake ~15 % faster than the stock Determinate build while keeping
         lazy-trees.
 

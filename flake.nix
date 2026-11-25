@@ -178,6 +178,20 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # nix-optimized — the evaluation-speedup work for the Nix this host runs:
+    # the patched upstream build and the PGO build of Determinate Nix. The
+    # packages were developed in packages/ and moved to their own repository so
+    # the patch stacks and their measurements live with the code; this flake
+    # keeps the `pkgs.neg.nix-eval-patched` / `pkgs.neg.nix-det-pgo` names and
+    # builds them against its own package set (overlays/dev.nix). `nix-src`
+    # follows the host's input: the PGO build must use the same Determinate tree
+    # the system ships.
+    nix-optimized = {
+      url = "github:neg-serg/nix-optimized";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-src.follows = "nix-src";
+    };
+
     wl = {
       url = "github:neg-serg/wl";
       flake = false;

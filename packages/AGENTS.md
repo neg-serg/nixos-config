@@ -23,6 +23,12 @@ Guidelines
   calls `final.callPackage (inputs.rust-pkgs + "/<crate>/package.nix") { }` against its own package
   set and keeps the `pkgs.neg.<crate>` names (see `packages/overlay.nix`); do not copy a crate back
   in.
+- The Nix builds are no longer packaged here either: `nix-eval-patched` (upstream Nix plus the
+  evaluation-speedup patch stack) and `nix-det-pgo` (Determinate Nix rebuilt with PGO) live in
+  `github:neg-serg/nix-optimized` (live checkout `~/src/nix/nix-optimized`).
+  `packages/overlays/dev.nix` calls
+  `prev.callPackage (inputs.nix-optimized + "/<package>/package.nix")` and keeps the `pkgs.neg.*`
+  attribute names. Do not add a Nix patch stack back into this tree.
 - The SuperCollider live-coding stack is no longer packaged here either: UGen plugins, sclang
   quarks, Dirt-Samples, VST hosting and their shared `mkScQuark`/`mkScPlugin` builders live in
   `github:neg-serg/nixos-music` (live checkout `~/src/nix/nixos-music`) and arrive as the
