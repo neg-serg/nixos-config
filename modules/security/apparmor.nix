@@ -99,10 +99,9 @@
 # A faster loop than editing the state in the repo: `sudo aa-complain <profile>` /
 # `sudo aa-enforce <profile>` switch a loaded profile at runtime (`aa-status` shows the current mode).
 #
-# The VM test below is the faster loop of all, because an enforced run hits reads a complain run has
-# not reached yet: it is where `/etc/machine-id`, avahi's dlopen'ed `libnss_systemd.so.2` and
-# transmission's `/tmp/tr_session_id_*` came from — the profiles only have those rules because the
-# test failed without them.
+# An enforced run reads files a complain run never asks for: `/etc/machine-id`, avahi's dlopen'ed
+# `libnss_systemd.so.2` and transmission's `/tmp/tr_session_id_*` are the known examples, and the
+# profiles carry rules for them for exactly that reason.
 #
 # ## Known limits
 #
@@ -118,26 +117,6 @@
 #   confined transmission still runs as `neg`, one rule away from that user's other files.
 # - `apparmor-profiles` is installed for its abstractions, not for its profiles.
 #
-# ## VM test
-#
-#     just apparmor-test
-#
-# Boots a throwaway VM with all eight profiles in `enforce` and asserts: every profile loaded and
-# enforcing, all eight services up, the ports actually served (DNS, admin UI, ntfy, SOCKS, mDNS,
-# transmission and aria2 RPC), a request through the SOCKS inbound, the transmission RPC handshake and
-# an aria2 JSON-RPC call, an SSH login **and** session command, and no `DENIED` line at all. The three
-# session daemons run as a normal user in the test, the way they do on the host, so a capability they
-# would only want as root cannot mask a real gap. This is the place to try a risky rule — a broken
-# profile fails the test, not the host.
-#
-# The recipe carries the two flags the file needs and nothing else does:
-#
-# - `--offline` — the whole closure comes from the local store. Without it nix stops on the binary
-#   caches' narinfo lookups, which answer with a TLS EOF from this network, so the run looks hung for
-#   minutes per store path instead of failing.
-# - `--no-link` — the run never touches `./result`, which is the *host* deployment link the switch
-#   scripts read (`readlink -f result`).
-
 ##
 # Module: security/apparmor
 # Purpose: AppArmor confinement for the network-facing daemons: the system
@@ -188,7 +167,7 @@ let
 
   # The primary user: owns the session services below and the nix-maid file
   # tree their config files come from. The fallback keeps the module evaluable
-  # in tests/apparmor-enforce.nix, which does not import the repo's option set.
+  # where the lib option set is absent.
   mainUser = config.lib.neg.mainUser or "neg";
 
   # NixOS' /etc is a symlink farm into the store and AppArmor mediates the

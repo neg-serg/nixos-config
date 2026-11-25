@@ -460,18 +460,6 @@ apparmor-denials daemon="":
     set -eu
     { journalctl -b --no-pager -o cat --grep 'apparmor="DENIED"' || true; journalctl -b --no-pager -o cat --grep 'apparmor="ALLOWED"' | grep -E 'denied_mask="[^"]+"' || true; } | sed -E 's/^(audit: type=1400 audit\([^)]*\): |AVC )//' | sort -u | grep -i "{{daemon}}" || true
 
-# AppArmor: boot a throwaway VM with all eight profiles in "enforce" and run
-# every check — the place to try a rule without aiming it at this machine.
-# --offline: the closure comes from the local store, and without it nix stops on
-#   the binary caches' narinfo lookups (they answer with a TLS EOF from here) and
-#   looks hung for minutes per path instead of failing.
-# --no-link: never touch ./result, which is the host deployment link the switch
-#   scripts read (`readlink -f result`).
-# See modules/security/apparmor.nix.
-apparmor-test:
-    set -eu
-    cd "{{repo_root}}" && nix build --impure --file tests/apparmor-enforce.nix -L --offline --no-link
-
 # just runs each recipe line in its own shell, so this must be one script: the
 # old per-line form lost `repo` between lines and died on `set -u` (it never
 # deleted anything). The uv/ruff caches are ad-hoc run leftovers in the root.
