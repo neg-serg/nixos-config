@@ -1,6 +1,5 @@
 {
   self,
-  inputs,
   nixpkgs,
   flakeLib,
   pkgs,
