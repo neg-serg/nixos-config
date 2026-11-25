@@ -46,8 +46,8 @@
       apps.enable = mkBool "enable audio apps (players, tools)" true;
       creation.enable = mkBool "enable audio creation stack (DAW, synths)" true;
       mpd.enable = mkBool "enable MPD stack (mpd, clients, mpd-mpris)" true;
-      # aurora: the Vulkan MPD player (workspace ~/src/nix/aurora, packaged here
-      # from the aurora-src git input — the private neg-serg/aurora repo).
+      # aurora: the Vulkan MPD player (workspace ~/src/nix/aurora; its packaging
+      # lives there and arrives as the `aurora` flake input).
       aurora.enable = mkBool "enable aurora (local MPD player, Vulkan UI)" true;
       # listenbrainz-mpd: MPD -> ListenBrainz scrobbler (the Last.fm-free path;
       # mpdas stays Last.fm-only). The package, config.toml and the systemd user

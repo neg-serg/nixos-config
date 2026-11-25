@@ -1,7 +1,31 @@
 {
   "nodes": {
-    "aurora-plugins-src": {
-      "flake": false,
+    "aurora": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795633915,
+        "narHash": "sha256-bWc+icsm68YKIqItPFKqDfX8ovlc+zgMnieI4TtYaoQ=",
+        "ref": "refs/heads/main",
+        "rev": "9b4c038bc1665fa024afa6e9f5659994a552a1f9",
+        "revCount": 1565,
+        "type": "git",
+        "url": "file:///home/neg/src/nix/aurora"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/neg/src/nix/aurora"
+      }
+    },
+    "aurora-plugins": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
       "locked": {
         "lastModified": 1795179558,
         "narHash": "sha256-PpgthwqZ4ChnwMM9ESrD8kb7UkB3K3/VendKL5j7nFw=",
@@ -14,22 +38,6 @@
         "owner": "neg-serg",
         "repo": "aurora-plugins",
         "type": "github"
-      }
-    },
-    "aurora-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1795601584,
-        "narHash": "sha256-Otsm/z+bx7Rh6CiFlkwUZet3WIZNDMNrXvjh5Fa8BPo=",
-        "ref": "refs/heads/main",
-        "rev": "e51bf37c417043c46203cc8494863128a02714d3",
-        "revCount": 1564,
-        "type": "git",
-        "url": "ssh://git@github.com/neg-serg/aurora"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/neg-serg/aurora"
       }
     },
     "bdwgc": {
@@ -1508,8 +1516,8 @@
     },
     "root": {
       "inputs": {
-        "aurora-plugins-src": "aurora-plugins-src",
-        "aurora-src": "aurora-src",
+        "aurora": "aurora",
+        "aurora-plugins": "aurora-plugins",
         "bootvine": "bootvine",
         "determinate": "determinate",
         "dsh-plugins": "dsh-plugins",

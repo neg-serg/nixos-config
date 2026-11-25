@@ -163,18 +163,18 @@ slimChunks
           # Context budget + tool-protocol guard in front of llama-swap; owned by
           # github:neg-serg/llm-proxy, built against this package set.
           llm-proxy = final.callPackage (inputs.llm-proxy + "/package.nix") { };
-          aurora = final.callPackage ./aurora.nix {
-            src = inputs.aurora-src;
-          }; # aurora: local MPD player with a Vulkan UI
-          aurora-headphones = final.callPackage ./aurora.nix {
-            src = inputs.aurora-src;
+          # The player and its catalogue CLI are the aurora repository's own recipe
+          # (`nix/package.nix`), built against this package set — the same
+          # `callPackage` line as llm-proxy above and rust-pkgs below.
+          aurora = final.callPackage (inputs.aurora + "/nix/package.nix") { }; # aurora: local MPD player with a Vulkan UI
+          aurora-headphones = final.callPackage (inputs.aurora + "/nix/package.nix") {
             toolsOnly = true;
           }; # aurora-headphones: the headphone model catalogue CLI, without the player's Vulkan closure
           # The eight plugins that talk to the rest of the machine, as programs the player spawns
           # (a JSON line each way, no shared library). The derivation is the plugins repository's
           # own `nix/package.nix`, so the layout of a plugin directory is decided where the
-          # programs live; this line only pins the source it builds from.
-          aurora-plugins = final.callPackage "${inputs.aurora-plugins-src}/nix/package.nix" { }; # aurora-plugins: autodj, lyrics, mpris, musicbrainz, notify, remaining, scrobble and spectroscope as programs
+          # programs live; this line only pins the revision it builds from.
+          aurora-plugins = final.callPackage (inputs.aurora-plugins + "/nix/package.nix") { }; # aurora-plugins: autodj, lyrics, mpris, musicbrainz, notify, remaining, scrobble and spectroscope as programs
           renoise-redux = final.callPackage ./renoise-redux {
             renoiseSrc = inputs.renoise-src;
           }; # Renoise Redux VST3 plugin (licensed build)

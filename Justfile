@@ -261,9 +261,10 @@ update:
 # Bump only the inputs that point at neg's own repositories (raise, wl, lusty,
 # neg-pkgs, hyprscratch, rsmetrx, nix-cache-pin), keep each bump only when the
 # toplevel still evaluates, and commit flake.lock without pushing. Heavy inputs
-# (aurora-src, iosevka-neg) are opt-in; rollout-watch deploys the commit on its
-# next tick. The trantor timer (features.system.flakeBump) runs this script
-# weekly with --allow-skip.
+# (iosevka-neg) are opt-in; aurora is a local git+file input, bumped by hand
+# with `nix flake lock --update-input aurora`. rollout-watch deploys the commit
+# on its next tick. The trantor timer (features.system.flakeBump) runs this
+# script weekly with --allow-skip.
 # Usage: just bump-own [--all] [--no-commit] [--allow-skip]
 bump-own *ARGS:
     bash "{{repo_root}}/scripts/dev/flake-bump-own.sh" {{ARGS}}

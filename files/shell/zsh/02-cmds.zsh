@@ -70,7 +70,7 @@ if [[ -e /etc/NIXOS ]]; then
     }
     foobar(){nix run github:emmanuelrosa/erosanix#foobar2000}
     flake-checker(){nix run github:DeterminateSystems/flake-checker}
-    # Root-side /etc/nixos work over the git+ssh flake inputs (aurora-src, wl):
+    # Root-side /etc/nixos work over a git+ssh flake input (aurora is git+file today):
     # sudo scrubs the environment, so nix would clone them with root's own ssh
     # setup and stop at "Permission denied (publickey)". Hand the caller's key
     # over explicitly. Extra arguments are appended, so an override such as

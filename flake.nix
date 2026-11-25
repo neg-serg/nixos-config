@@ -222,13 +222,31 @@
       # The Rust packages moved to neg-pkgs keep the host's slim wrapper.
       inputs.rust-pkgs.follows = "rust-pkgs";
     };
-    aurora-src = {
-      url = "git+ssh://git@github.com/neg-serg/aurora";
-      flake = false;
+    # aurora — the player, its headphone-catalogue CLI and its plugins. The
+    # packaging (`nix/package.nix`, the shared runtime-lib list, the desktop
+    # entry and the icon) lives with the code in github:neg-serg/aurora; the
+    # host only calls it through `final.callPackage`, so the derivation keeps
+    # building against this flake's package set and `pkgs.neg.aurora` is
+    # unchanged.
+    #
+    # `git+file:` on the live checkout, like pleamar-config: the input pins the
+    # *committed* tree by revision, so a local commit reaches the build after
+    # `nix flake lock --update-input aurora` with no push, while untracked files
+    # (target/) stay out of the store. It is deliberately absent from the weekly
+    # `just bump-own` list: a live checkout is moved by hand, not on a timer.
+    # Switch it to `git+ssh://git@github.com/neg-serg/aurora` once the packaging
+    # commit is pushed.
+    aurora = {
+      url = "git+file:///home/neg/src/nix/aurora";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
-    aurora-plugins-src = {
+    # The plugins are the repository's own programs and its flake already
+    # exposes them as `packages.default`; the host still calls its
+    # `nix/package.nix` directly, the way it calls aurora's, so both builds
+    # follow this flake's package set.
+    aurora-plugins = {
       url = "github:neg-serg/aurora-plugins";
-      flake = false;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     # Vendored Renoise/Redux installers (licensed builds, >100 MB). They cannot
     # live in this repo — GitHub rejects files >100 MB — and moving them inside
