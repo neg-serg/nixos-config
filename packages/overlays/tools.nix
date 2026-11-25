@@ -62,8 +62,8 @@ in
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/main/@projects/lusty
     # Extracted to github:neg-serg/tgchat-rs, which owns the build and its tests.
     tgchat-rs = inputs.tgchat-rs.packages.${prev.stdenv.hostPlatform.system}.default; # Telegram chat access on a grammers user session (replaces the retired Telethon tgchat)
-    # Extracted to its own repository (~/src/music-index-tools), which owns the
-    # crate, its packaging and the self-check; consumed as a `path:` flake input.
+    # Extracted to github:neg-serg/music-index-tools, which owns the crate, its
+    # packaging and the self-check; the host only consumes the package.
     music-index-tools = inputs.music-index-tools.packages.${prev.stdenv.hostPlatform.system}.default; # Build/query the MERT similarity index (music-index, music-similar; embeddings via music-embed)
     # Extracted to github:neg-serg/telegram-notify, which owns the build and its tests.
     telegram-notify = inputs.telegram-notify.packages.${prev.stdenv.hostPlatform.system}.default; # Rust Telegram notification binaries (calendar, pill, bot, alert scanner/bridge, zfs watch)

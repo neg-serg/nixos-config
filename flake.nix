@@ -93,14 +93,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # music-index-tools — build/query the MERT similarity index, extracted to its
-    # own repository (~/src/music-index-tools), which now owns the crate, its
-    # packaging, the README and the self-check. Consumed from the live checkout as
-    # a `path:` input (same pattern as pleamar-config), so Nix pins the source by
-    # narHash: after editing the project, re-lock it here with
-    #   nix flake lock --update-input music-index-tools
+    # music-index-tools — build/query the MERT similarity index, extracted to
+    # github:neg-serg/music-index-tools, which owns the crate, its packaging,
+    # the README and the self-check; this flake only consumes the package, so
+    # the two copies cannot drift.
+
     music-index-tools = {
-      url = "path:/home/neg/src/music-index-tools";
+      url = "github:neg-serg/music-index-tools";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

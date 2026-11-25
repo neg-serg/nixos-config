@@ -867,13 +867,17 @@
         ]
       },
       "locked": {
-        "narHash": "sha256-8c5hvLIfwZQICCGRtowIVLxK59x8DIfnKV6AVteQ+gA=",
-        "path": "/home/neg/src/music-index-tools",
-        "type": "path"
+        "lastModified": 1795607922,
+        "narHash": "sha256-GkaahiR0FsJ9uJCPoBVXcvoB2GKNGp1Xf2Z3jAr4Foc=",
+        "owner": "neg-serg",
+        "repo": "music-index-tools",
+        "rev": "1a2047762e643bb76f1290ec47c06324361663d3",
+        "type": "github"
       },
       "original": {
-        "path": "/home/neg/src/music-index-tools",
-        "type": "path"
+        "owner": "neg-serg",
+        "repo": "music-index-tools",
+        "type": "github"
       }
     },
     "naersk-package": {
