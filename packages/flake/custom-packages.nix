@@ -239,6 +239,9 @@
 
   # MERT similarity index tooling (Rust; embeddings come from music-embed).
   music-index-tools = pkgs.neg.music-index-tools;
+  # Music-AI payloads (embedding, CLAP tagging, MTG heads, captioning): the
+  # launchers render `@MUSIC_AI_LIB@` from this package's `lib/`.
+  music-ai-libs = pkgs.neg.music-ai-libs;
 
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)
   atrium = pkgs.atrium; # Wayland multiseat display manager

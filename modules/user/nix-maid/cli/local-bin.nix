@@ -47,14 +47,14 @@
           # that has to know where the tree sits.
           "@MUSIC_AI_BASE@" = "/zero/ai/music-ai";
           # Music tagging/embedding wrappers (music-embed, music-tags,
-          # audio-analysis): a nix python is the
-          # interpreter, the venv contributes site-packages over PYTHONPATH,
-          # and the payloads are a store copy of packages/local-bin/lib. Both
-          # store paths ride in the system closure, so nix-collect-garbage
-          # cannot break these tools the way it broke the venvs' own
-          # bin/python symlinks (2026-10-10, see scripts/dev/fix-music-venvs.sh).
+          # audio-analysis): a nix python is the interpreter, the venv
+          # contributes site-packages over PYTHONPATH, and the payloads come
+          # from github:neg-serg/music-ai-libs (`pkgs.neg.music-ai-libs`) —
+          # a store path in the system closure, so nix-collect-garbage cannot
+          # break these tools the way it broke the venvs' own bin/python
+          # symlinks (2026-10-10, see scripts/dev/fix-music-venvs.sh).
           "@MUSIC_AI_PY@" = "${pkgs.python312}/bin/python3.12";
-          "@MUSIC_AI_LIB@" = "${config.lib.neg.path "packages/local-bin/lib"}";
+          "@MUSIC_AI_LIB@" = "${pkgs.neg.music-ai-libs}/lib";
           "@MUSIC_AI_HF_HOME@" = config.features.media.audio.musicTagging.hfHome;
           "@MUSIC_EMBED_MODEL@" = config.features.media.audio.musicTagging.embedModel;
           # Trained MTG tagger (music-mtg-tags): its own venv, because

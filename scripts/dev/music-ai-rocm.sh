@@ -258,7 +258,7 @@ install_wheel() {
 print_instructions() {
   local ld lib_dir
   ld=$(compute_ld "$SP")
-  lib_dir="$REPO_ROOT/packages/local-bin/lib"
+  lib_dir="$(nix build --no-link --print-out-paths "$REPO_ROOT#music-ai-libs")/lib"
   info ""
   info "== use the GPU"
   info "  music-embed --device cuda TRACK.flac"

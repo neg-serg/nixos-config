@@ -45,6 +45,9 @@ in
     # Extracted to github:neg-serg/music-index-tools, which owns the crate, its
     # packaging and the self-check; the host only consumes the package.
     music-index-tools = inputs.music-index-tools.packages.${prev.stdenv.hostPlatform.system}.default; # Build/query the MERT similarity index (music-index, music-similar; embeddings via music-embed)
+    # Extracted to github:neg-serg/music-ai-libs, which owns the payloads and
+    # their stdlib suite; the launchers render `@MUSIC_AI_LIB@` from this.
+    music-ai-libs = callPkg (inputs.music-ai-libs + "/package.nix") { }; # Music-AI payloads (embeddings, CLAP tagging, MTG heads, captioning)
     # Extracted to github:neg-serg/mpd-voice, which owns the crate, its packaging
     # and the flake checks; the host only consumes the package.
     mpd-voice = inputs.mpd-voice.packages.${prev.stdenv.hostPlatform.system}.default; # Voice control for MPD: microphone -> local STT -> player commands

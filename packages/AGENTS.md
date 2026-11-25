@@ -57,6 +57,12 @@ Guidelines
   `~/src/nix/nightjob`) with its wrapper PATH and its stdlib test suite; `packages/overlay.nix`
   calls `final.callPackage (inputs.nightjob + "/package.nix")` for `pkgs.neg.nightjob`, and
   `modules/dev/rocm.nix` only installs it. Do not add the script back under `modules/dev/`.
+- The music-AI payload libraries (`music_embed`, `music_tags`, `music_mtg`, `music_describe`,
+  `moss_music`) live in `github:neg-serg/music-ai-libs` (live checkout `~/src/nix/music-ai-libs`)
+  with their stdlib suite. The launchers, the venv paths, the model directories and the rendered
+  `_music_ai_env.sh` stay here: `modules/user/nix-maid/cli/local-bin.nix` renders `@MUSIC_AI_LIB@`
+  from `pkgs.neg.music-ai-libs`, and `just music-selftest` / `scripts/dev/music-ai-rocm.sh` build
+  the same package. Do not add `music_*.py` payloads back under `packages/local-bin/lib/`.
 - For a project that still carries a manifest in this tree, do not repeat its version in
   `default.nix`; read the manifest instead:
   `version = (lib.importTOML ./Cargo.toml).package.version;`. The `manifest-version` lint guard

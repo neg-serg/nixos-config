@@ -223,11 +223,17 @@ music-selftest:
     fi
     # music-describe still runs torch; prefer an interpreter that can import numpy.
     venv_sp=/zero/ai/music-ai/venv-analysis/lib/python3.12/site-packages
+    # The payloads come from github:neg-serg/music-ai-libs; build the package so
+    # this works without a checkout of it.
+    if ! lib="$(nix build --no-link --print-out-paths ".#music-ai-libs" 2>/dev/null)"; then
+      echo "music-describe selftest skipped (nix build .#music-ai-libs failed)"
+      exit 0
+    fi
     for py in "${MUSIC_AI_SELFTEST_PY:-}" "$HOME/.local/bin/python3.12" python3; do
       [ -n "$py" ] || continue
       command -v "$py" >/dev/null 2>&1 || continue
       if PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" -c 'import numpy' >/dev/null 2>&1; then
-        PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "{{repo_root}}/packages/local-bin/lib/music_describe.py" --selftest
+        PYTHONPATH="$venv_sp:${PYTHONPATH:-}" "$py" "$lib/lib/music_describe.py" --selftest
         exit 0
       fi
     done

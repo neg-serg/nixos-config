@@ -991,6 +991,26 @@
         "type": "github"
       }
     },
+    "music-ai-libs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795636108,
+        "narHash": "sha256-YuIXBQBM5GSN2LhlzP44pryLk5KpbAmX+nQaaQetrZ0=",
+        "owner": "neg-serg",
+        "repo": "music-ai-libs",
+        "rev": "a97ffc675e26fb5c75156d8389835df942d44348",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "music-ai-libs",
+        "type": "github"
+      }
+    },
     "music-index-tools": {
       "inputs": {
         "nixpkgs": [
@@ -1575,6 +1595,7 @@
         "lusty": "lusty",
         "mpd-voice": "mpd-voice",
         "multiverse": "multiverse",
+        "music-ai-libs": "music-ai-libs",
         "music-index-tools": "music-index-tools",
         "neg-pkgs": "neg-pkgs",
         "neovim-nightly": "neovim-nightly",

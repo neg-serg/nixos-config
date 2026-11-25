@@ -103,6 +103,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # music-ai-libs — the Python payloads behind the music-AI launchers
+    # (embeddings, CLAP tagging, MTG heads, audio-flamingo-next, MOSS). The
+    # launchers, the venv paths, the model directories and the rendered
+    # `_music_ai_env.sh` stay here; the repository owns `lib/` and its stdlib
+    # suite, and the host only points `@MUSIC_AI_LIB@` at the package.
+    music-ai-libs = {
+      url = "github:neg-serg/music-ai-libs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # nixos-music — the SuperCollider live-coding and audio-creation stack:
     # the fake SC source root, the mkScQuark/mkScPlugin builders, fourteen UGen
     # plugins, nineteen sclang quarks, Dirt-Samples, VST hosting (VSTPlugin,
