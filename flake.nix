@@ -119,6 +119,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # genlc — Genelec SAM monitor control over the GLM USB adapter, extracted
+    # to github:neg-serg/genlc, which owns the crate, its packaging and the CLI
+    # check; this flake only consumes the package. The host keeps the adapter's
+    # udev rule and the `genlc daemon` user unit.
+    genlc = {
+      url = "github:neg-serg/genlc";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     wl = {
       url = "github:neg-serg/wl";
       flake = false;

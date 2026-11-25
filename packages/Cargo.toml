@@ -4,7 +4,6 @@ members = [
   "hypr-focus",
   "pwroute",
   "hwctl",
-  "genlc-rs",
   "tidalctl",
   "nixbuild-status",
   "tint",

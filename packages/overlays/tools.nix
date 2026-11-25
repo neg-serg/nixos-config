@@ -68,6 +68,8 @@ in
     # Extracted to github:neg-serg/mpd-voice, which owns the crate, its packaging
     # and the flake checks; the host only consumes the package.
     mpd-voice = inputs.mpd-voice.packages.${prev.stdenv.hostPlatform.system}.default; # Voice control for MPD: microphone -> local STT -> player commands
+    # Extracted to github:neg-serg/genlc, which owns the crate and its packaging.
+    genlc = inputs.genlc.packages.${prev.stdenv.hostPlatform.system}.default; # Genelec SAM monitor control over the GLM USB adapter
     # Extracted to github:neg-serg/hypr-win-list, which owns the crate, its
     # packaging and the picker fixture check. Its wrapper prepends the binaries
     # the picker shells out to, so it must carry the host's patched vicinae and

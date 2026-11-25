@@ -26,7 +26,7 @@ lib.mkIf (cfg.enable or false) {
     ];
     description = "Genelec SAM daemon: adapter owner, lease cycle, Unix-socket control";
     serviceConfig = {
-      ExecStart = "${lib.getExe pkgs.genlc} daemon";
+      ExecStart = "${lib.getExe pkgs.neg.genlc} daemon";
       RestartSec = 3;
     };
   };

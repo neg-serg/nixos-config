@@ -42,7 +42,7 @@ in
 {
   environment.systemPackages = lib.mkAfter [
     # -- Volume control --
-    pkgs.genlc # Genelec SAM monitor volume control via GLM USB adapter
+    pkgs.neg.genlc # Genelec SAM monitor volume control via GLM USB adapter
     glmUsbmonPriv # root helper (NOPASSWD) for usbmon captures of the GLM adapter
 
     # -- RME HDSPe --

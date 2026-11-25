@@ -87,7 +87,6 @@ let
   rustTopNames = [
     "craft-anything"
     "figcraft"
-    "genlc"
     "pw-audioshare"
     "pwroute"
     "solidcraft"

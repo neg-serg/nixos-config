@@ -15,7 +15,6 @@ in
   hdspeconf = call (pkg "hdspeconf") { };
   pwroute = call (pkg "pwroute") { };
   pw-audioshare = call (pkg "pw-audioshare") { };
-  genlc = call (pkg "genlc-rs") { };
   # MPD client for large libraries: Node backend + React UI, served on loopback.
   sola-mpd = call (pkg "sola-mpd") { };
   # CamillaDSP's browser equalizer (Svelte client + Fastify server): the upstream
