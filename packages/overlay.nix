@@ -159,7 +159,11 @@ slimChunks
         // {
           game = final.callPackage (inputs.rust-pkgs + "/game/package.nix") { }; # Unified game launcher
           dsh-patch = final.callPackage (inputs.rust-pkgs + "/dsh-patch/package.nix") { }; # count-asserted patcher for dsh bundles and profiles
-          dsh = final.callPackage ./dsh { inherit (final.neg) dsh-patch; }; # DeepSeek Harness agent CLI (dsh)
+          # The harness is the dsh-app repository's recipe
+          # (github:neg-serg/dsh-app), built against this package set; the
+          # patcher it runs lives in rust-pkgs and is passed in, so the
+          # repository needs no second copy of it.
+          dsh = final.callPackage (inputs.dsh-app + "/package.nix") { inherit (final.neg) dsh-patch; }; # DeepSeek Harness agent CLI (dsh)
           # Context budget + tool-protocol guard in front of llama-swap; owned by
           # github:neg-serg/llm-proxy, built against this package set.
           llm-proxy = final.callPackage (inputs.llm-proxy + "/package.nix") { };

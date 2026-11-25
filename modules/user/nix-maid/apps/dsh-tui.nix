@@ -14,7 +14,11 @@ let
   # discovers user themes as ~/.dsh-tui/themes/<name>.json (the file name is the
   # theme name) and persists the choice in ~/.dsh-tui/theme.json; the caretaker
   # below copies this file and seeds that preference.
-  themeJson = ./dsh-tui-assets/themes/neg.json;
+  # The packaging and the profile data both live in `github:neg-serg/dsh-app`
+  # (`package.nix`, `tui/`); this module is the host side — the units, the
+  # activation and the two third-party plugin forks the roster receives.
+  dshApp = inputs.dsh-app;
+  themeJson = dshApp + "/tui/themes/neg.json";
 
   # The tui profile's caretaker. It keeps the profile on the installed harness:
   # installs/upgrades the dsh-TUI plugin, keeps dsh-free-search and
@@ -28,13 +32,21 @@ let
   # language. The profile itself is created by hand once (see the
   # `[ -d "$PROFILE_DIR" ] || exit 0` guard).
   # The plugin roster, its loader rows, the seed list and the search rows live
-  # in dsh-terminal-plugins.nix; the agent-preset declarations (0.2.0 registry
-  # rows: .agent-presets directories are dead) live in dsh-presets.nix.
+  # in `tui/roster.nix`; the agent-preset declarations (0.2.0 registry rows:
+  # .agent-presets directories are dead) live in `tui/presets.nix`.
   # The plugin source lives in its own flake (the `dsh-plugins` input): its
   # packages are the store paths the roster seeds and pins as `file:` deps.
   dshPlugins = inputs.dsh-plugins.packages.${pkgs.stdenv.hostPlatform.system};
-  roster = import ./dsh-terminal-plugins.nix { inherit lib homeDir dshPlugins; };
-  presets = import ./dsh-presets.nix { inherit pkgs; };
+  roster = import (dshApp + "/tui/roster.nix") {
+    inherit lib homeDir dshPlugins;
+    # The two forks of truelove-dreamer's packages stay in this tree (they are
+    # not ours to republish); everything else comes from `dsh-plugins`.
+    localForks = {
+      dsh-plugin-recall = ./dsh-plugin-recall;
+      dsh-plugin-vetting = ./dsh-plugin-vetting;
+    };
+  };
+  presets = import (dshApp + "/tui/presets.nix") { inherit pkgs; };
 
   # The profile ships `cordis.patch.yml` as an empty list; rows must replace
   # that `[]` (a second YAML root node is a parse error). The caretaker rewrites
@@ -46,10 +58,12 @@ let
 
   # One-time XDG relocation of ~/.dsh / ~/.dsh-tui (idempotent; the caretaker
   # calls it on every run and leaves compatibility symlinks behind).
-  xdgMigrate = pkgs.writeShellScript "dsh-xdg-migrate" (builtins.readFile ./dsh-xdg-migrate.sh);
+  xdgMigrate = pkgs.writeShellScript "dsh-xdg-migrate" (
+    builtins.readFile (dshApp + "/tui/xdg-migrate.sh")
+  );
 
   # The agent-plane plugins the neg preset declares by name (rows live in
-  # dsh-presets.nix). Seeded like the roster ones, so they need the same
+  # `tui/presets.nix`). Seeded like the roster ones, so they need the same
   # dependency ownership below.
   advisorDir = dshPlugins.dsh-advisor;
   categoryDir = dshPlugins.dsh-category-skill-reminder;
@@ -71,7 +85,7 @@ let
   # store root loses that fallback (14 plugins importing `dsh-llm`/`dsh-tools`
   # died with `failed to import` in the link: experiment).
   # The spec pins a store path, which moves with every rebuild, so the caretaker
-  # re-checks it on each run (see `PLUGIN_DEPS` in dsh-tui-ensure.sh).
+  # re-checks it on each run (see `PLUGIN_DEPS` in `tui/ensure.sh`).
   seededDeps = builtins.toJSON (
     map (p: {
       name = p.name;
@@ -95,7 +109,7 @@ let
 
   ensureTui = pkgs.writeShellScript "dsh-tui-ensure" (
     builtins.readFile (
-      pkgs.replaceVars ./dsh-tui-ensure.sh {
+      pkgs.replaceVars (dshApp + "/tui/ensure.sh") {
         advisor = advisorDir;
         categoryPlugin = categoryDir;
         ttsr = ttsrDir;

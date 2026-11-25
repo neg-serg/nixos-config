@@ -10,7 +10,7 @@ let
   # secret was wired (a shell only sources .zshenv at startup).
   #
   # The wrapper also arms the free-tier fallbacks declared in llmRows
-  # (dsh-terminal-plugins.nix) and smoke-tested by `free-llm-check`:
+  # (the roster in `github:neg-serg/dsh-app`) and smoke-tested by `free-llm-check`:
   #   * ~/.config/dsh/free-llm.env carries GEMINI_API_KEY
   #     (KEY=VALUE, mode 0600, outside the repo). The check script creates the
   #     template on first run.
@@ -34,7 +34,7 @@ let
     export HTTPS_PROXY="''${HTTPS_PROXY:-http://127.0.0.1:10812}"
     export NO_PROXY="''${NO_PROXY:-127.0.0.1,localhost,::1,api.deepseek.com}"
     export POLLINATIONS_API_KEY="''${POLLINATIONS_API_KEY:-anonymous}"
-    # XDG home (see dsh-xdg-migrate.sh). Until the one-time migration has moved
+    # XDG home (see `tui/xdg-migrate.sh` in dsh-app). Until the one-time migration has moved
     # ~/.dsh, DSH_HOME stays unset and dsh keeps its own default; afterwards the
     # wrapper pins the XDG location explicitly.
     dsh_home="''${XDG_DATA_HOME:-$HOME/.local/share}/dsh"

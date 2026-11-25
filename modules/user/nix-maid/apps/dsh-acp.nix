@@ -23,7 +23,7 @@ let
   # inventory reads the owning manifest of the modules a profile mounts by a
   # *relative* path, and a name without a version fails every request
   # (REQUEST_EXTENSION) instead of the one plugin. Same guard as the tui
-  # profile's caretaker (dsh-tui-ensure.sh).
+  # profile's caretaker (`tui/ensure.sh` in dsh-app).
   packageJson = pkgs.writeText "dsh-acp-package.json" ''
     {
       "name": "dsh-profile-acp",

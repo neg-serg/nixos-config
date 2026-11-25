@@ -189,6 +189,29 @@
         "url": "https://install.determinate.systems/determinate-nixd/tag/v3.23.3/x86_64-linux"
       }
     },
+    "dsh-app": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-pkgs": [
+          "rust-pkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795635171,
+        "narHash": "sha256-6n6kLooniNQiwOl+muD57+FkhyCbJ22TaOJM2rRC0gQ=",
+        "owner": "neg-serg",
+        "repo": "dsh-app",
+        "rev": "4c4eeba20593d1111e9e1fa946491b4b9932693e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "dsh-app",
+        "type": "github"
+      }
+    },
     "dsh-plugins": {
       "inputs": {
         "nixpkgs": [
@@ -1520,6 +1543,7 @@
         "aurora-plugins": "aurora-plugins",
         "bootvine": "bootvine",
         "determinate": "determinate",
+        "dsh-app": "dsh-app",
         "dsh-plugins": "dsh-plugins",
         "flake-parts": "flake-parts_2",
         "genlc": "genlc",

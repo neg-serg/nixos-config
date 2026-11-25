@@ -46,6 +46,13 @@ Guidelines
   calls both through `final.callPackage (inputs.<repo> + "/nix/package.nix")` against this flake's
   package set, which keeps the `pkgs.neg.aurora*` names. Do not add the player or a plugin package
   back into this tree.
+- The DeepSeek Harness packaging is no longer here either: `package.nix`, the official Node build,
+  the lockfile and the terminal-profile data (roster, agent presets, caretaker, XDG migration, neg
+  theme) live in `github:neg-serg/dsh-app` (live checkout `~/src/nix/dsh-app`), and the host keeps
+  the units, the sops-backed wrapper and the two third-party plugin forks. `packages/overlay.nix`
+  calls `final.callPackage (inputs.dsh-app + "/package.nix") { inherit (final.neg) dsh-patch; }`, so
+  `pkgs.neg.dsh` keeps its name and still runs this tree's `dsh-patch`. Do not add the harness or
+  its profile data back into this tree.
 - For a project that still carries a manifest in this tree, do not repeat its version in
   `default.nix`; read the manifest instead:
   `version = (lib.importTOML ./Cargo.toml).package.version;`. The `manifest-version` lint guard

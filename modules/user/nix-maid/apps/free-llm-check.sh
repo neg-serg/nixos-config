@@ -1,6 +1,6 @@
 # free-llm-check — prove the free LLM routes actually answer as agents.
 #
-# The routes are declared in dsh-terminal-plugins.nix (llmRows) and are
+# The routes are declared by the roster (`tui/roster.nix`, llmRows, in dsh-app) and are
 # key-gated at request time: pollinations answers anonymously, the rest need
 # a free key. Keys live in ~/.config/dsh/free-llm.env
 # (KEY=VALUE lines, mode 0600); the dsh wrapper sources the same file.

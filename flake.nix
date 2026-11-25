@@ -178,6 +178,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # dsh-app — the DeepSeek Harness packaging and the terminal-profile data
+    # that used to live here (`packages/dsh`, `tui/roster.nix`,
+    # `tui/presets.nix`, the caretaker and the neg theme). The recipe is called
+    # through `final.callPackage`, so `pkgs.neg.dsh` keeps its name and builds
+    # against this flake's package set; the host keeps the units, the activation
+    # and the two third-party plugin forks. `rust-pkgs` follows this pin for the
+    # repository's own `nix build`, not for the host.
+    dsh-app = {
+      url = "github:neg-serg/dsh-app";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-pkgs.follows = "rust-pkgs";
+    };
+
     # nix-optimized — the evaluation-speedup work for the Nix this host runs:
     # the patched upstream build and the PGO build of Determinate Nix. The
     # packages were developed in packages/ and moved to their own repository so
