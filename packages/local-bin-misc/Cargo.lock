@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
+name = "local-bin-core"
+version = "0.1.0"
+
+[[package]]
 name = "local-bin-misc"
 version = "0.1.0"
+dependencies = [
+ "local-bin-core",
+]

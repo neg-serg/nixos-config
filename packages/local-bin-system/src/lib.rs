@@ -491,3 +491,17 @@ pub fn delete_lines_starting_with(content: &str, prefix: &str) -> String {
     }
     result
 }
+
+// The commands are modules of this crate; `src/main.rs` dispatches on argv[0].
+pub mod dsh_statusline;
+pub mod dsh_url;
+pub mod main_menu;
+pub mod nix_updates;
+pub mod pdf2md;
+pub mod qr;
+pub mod shade;
+pub mod steam_cloud_fix;
+pub mod surfingkeys_extension_patch;
+pub mod sw;
+pub mod upstream_radar;
+pub mod vsmlrt_models;

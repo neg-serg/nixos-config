@@ -10,7 +10,7 @@
 use std::io::{Read, Write};
 use std::process::{Command, Stdio};
 
-use local_bin_system as sh;
+use crate as sh;
 
 const MENU: [&str; 8] = [
     "title_copy",
@@ -243,7 +243,7 @@ fn dmenu_mode() {
     }
 }
 
-fn main() {
+pub fn entry() {
     let arguments = sh::args();
     let first = arguments.first().map(String::as_str).unwrap_or("");
     match first {

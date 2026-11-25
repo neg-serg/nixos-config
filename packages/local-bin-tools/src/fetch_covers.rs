@@ -63,7 +63,7 @@ fn sacad() -> String {
     }
 }
 
-fn main() -> std::process::ExitCode {
+pub fn entry() -> std::process::ExitCode {
     let dry_run = std::env::args().any(|arg| arg == "--dry-run");
     let music = music_dir();
     let mut names: Vec<String> = match std::fs::read_dir(&music) {

@@ -1,0 +1,8 @@
+[package]
+name = "local-bin-core"
+version = "0.1.0"
+edition = "2021"
+description = "Shared helpers for the Rust ports of the local-bin helpers (env, json, text, proc)"
+license = "MIT"
+
+[workspace]

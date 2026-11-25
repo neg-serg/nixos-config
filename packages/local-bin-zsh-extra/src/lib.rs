@@ -251,3 +251,11 @@ pub fn run_ignored(site: &str, tool: &str, args: &[OsString], stderr: StdioMode)
         Err(error) => report_spawn_failure(site, tool, &error, stderr),
     }
 }
+
+// The commands are modules of this crate; `src/main.rs` dispatches on argv[0].
+pub mod gh_issues_export;
+pub mod mpd_del_album;
+pub mod sx;
+pub mod sys_relief;
+pub mod vol;
+pub mod win_vm;

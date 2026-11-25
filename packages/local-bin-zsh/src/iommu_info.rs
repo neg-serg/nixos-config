@@ -17,7 +17,7 @@ use std::fs;
 use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 
-use local_bin_zsh::{
+use crate::{
     err_str, out, out_str, raw_args, run, var_nonempty, which_str, Site, Stderr, Stdin, Stdout,
 };
 
@@ -118,7 +118,7 @@ fn reset_groups(root: &Path) -> i32 {
     status
 }
 
-fn main() {
+pub fn entry() {
     let arguments = raw_args();
     if let Some(first) = arguments.first() {
         if matches!(first.as_bytes(), b"-h" | b"--help") {

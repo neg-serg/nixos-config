@@ -30,11 +30,12 @@ use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use local_bin_zsh_extra::{
+use crate::{
     capture_checked, err_line, err_str, out_line, out_str, raw_args, report_spawn_failure, run,
     run_ignored, split_shell_words, strip_trailing_newlines, which_str, Captured, StdioMode,
 };
 
+#[path = "win_vm_config.rs"]
 mod win_vm_config;
 
 const USAGE: &str = include_str!("win_vm_usage.txt");
@@ -43,7 +44,7 @@ const DEFAULT_LOOKING_GLASS: &str = "/dev/shm/looking-glass";
 const ASK_HOOK: &str = "LOCAL_BIN_ZSH_EXTRA_ASK_FILE";
 const LOOKING_GLASS_HOOK: &str = "LOCAL_BIN_ZSH_EXTRA_LOOKING_GLASS";
 
-fn main() {
+pub fn entry() {
     let mut arguments = raw_args();
     let no_arguments = arguments.is_empty();
     let command = arguments

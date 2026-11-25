@@ -14,12 +14,12 @@ use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 use std::time::SystemTime;
 
-use local_bin_desktop::env;
-use local_bin_desktop::helptext::PIC_NOTIFY_USAGE;
-use local_bin_desktop::proc::{Cmd, Sink};
-use local_bin_desktop::text;
+use crate::env;
+use crate::helptext::PIC_NOTIFY_USAGE;
+use crate::proc::{Cmd, Sink};
+use crate::text;
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);
@@ -39,7 +39,7 @@ fn main() {
     let mut clipboard = bmp_to_png(&img);
     clipboard.push(b'\n');
     let _ = Cmd::new("wl-copy")
-        .stdin(local_bin_desktop::proc::Input::Bytes(&clipboard))
+        .stdin(crate::proc::Input::Bytes(&clipboard))
         .diag(&program, 18)
         .run();
 

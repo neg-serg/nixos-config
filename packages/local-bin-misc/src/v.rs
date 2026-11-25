@@ -21,9 +21,7 @@ use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use local_bin_misc::{
-    exec_failure, invocation_name, out_str, raw_args, report_spawn_failure, var_nonempty,
-};
+use crate::{exec_failure, invocation_name, out_str, raw_args, report_spawn_failure, var_nonempty};
 
 const DEFAULT_SOCKET: &str = "/tmp/nvim.sock";
 const SOCKET_ENV: &str = "LOCAL_BIN_MISC_V_SOCKET";
@@ -89,7 +87,7 @@ fn start(socket: &Path, arguments: &[OsString]) {
     exec_failure(&invocation, 23, "nvim", &error);
 }
 
-fn main() {
+pub fn entry() {
     // `export NVIM_APPNAME=` — an empty value, not an unset variable.
     std::env::set_var("NVIM_APPNAME", "");
 

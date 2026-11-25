@@ -320,7 +320,7 @@ fn handle(mut stream: TcpStream, root: &Path) {
     }
 }
 
-fn main() -> std::process::ExitCode {
+pub fn entry() -> std::process::ExitCode {
     let port = port();
     let root = std::fs::canonicalize(serve_dir()).unwrap_or_else(|_| serve_dir());
     // Loopback only (the Python predecessor bound every interface): the served

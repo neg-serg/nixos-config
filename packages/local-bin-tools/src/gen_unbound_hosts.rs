@@ -108,7 +108,7 @@ pub fn render(root: &Path) -> Result<(String, usize), String> {
     Ok((rendered, entries.len()))
 }
 
-fn main() -> std::process::ExitCode {
+pub fn entry() -> std::process::ExitCode {
     let argument = std::env::args().nth(1);
     let root = match repo_root(argument.as_deref()) {
         Ok(root) => root,

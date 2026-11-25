@@ -3,15 +3,23 @@
 //! Diagnostics reproduce the text bash prints for the originals, including the
 //! original source line. The five scripts are small; matching the interpreter
 //! diagnostics keeps logs and the parity harness byte-comparable.
+//!
+//! The stream, exit-status and `strerror` helpers are identical to the ones in
+//! `local-bin-core` and are re-exported from there. What stays here is the part
+//! whose *text* is specific to these five ports: bash's `line N:` prefix and the
+//! `exec:`/`command not found` wording.
 
 use std::ffi::{OsStr, OsString};
 use std::fs;
-use std::io::{self, Write};
+use std::io;
 use std::os::unix::ffi::OsStrExt;
-use std::os::unix::fs::PermissionsExt;
-use std::os::unix::process::ExitStatusExt;
+
 use std::path::{Path, PathBuf};
-use std::process::ExitStatus;
+
+// Byte-identical helpers: one implementation, used by every local-bin port.
+pub use local_bin_core::env::{
+    err, err_line, err_str, is_executable, os_error_text, out, out_str, status_code,
+};
 
 /// `"$@"` with Unix byte fidelity.
 pub fn raw_args() -> Vec<OsString> {
@@ -46,13 +54,6 @@ pub fn invocation_name() -> Vec<u8> {
 /// `${NAME:-default}`: unset and empty both select the default.
 pub fn var_nonempty(name: &str) -> Option<OsString> {
     std::env::var_os(name).filter(|value| !value.is_empty())
-}
-
-pub fn is_executable(path: &Path) -> bool {
-    match fs::metadata(path) {
-        Ok(meta) => meta.is_file() && meta.permissions().mode() & 0o111 != 0,
-        Err(_) => false,
-    }
 }
 
 fn search_path(tool: &OsStr, require_executable: bool) -> Option<PathBuf> {
@@ -104,50 +105,6 @@ pub fn need(prog: &[u8], tool: &str) {
         message.extend_from_slice(tool.as_bytes());
         message.push(b'\n');
         err(&message);
-    }
-}
-
-fn write_stream(mut stream: impl Write, bytes: &[u8]) {
-    match stream.write_all(bytes) {
-        Ok(()) => {}
-        // A closed pipe is a SIGPIPE for a shell program; Rust ignores the
-        // signal, so the port reproduces the shell's status.
-        Err(error) if error.kind() == io::ErrorKind::BrokenPipe => std::process::exit(141),
-        Err(_) => std::process::exit(1),
-    }
-}
-
-pub fn out(bytes: &[u8]) {
-    write_stream(io::stdout(), bytes);
-}
-
-pub fn out_str(text: &str) {
-    out(text.as_bytes());
-}
-
-pub fn err(bytes: &[u8]) {
-    write_stream(io::stderr(), bytes);
-}
-
-pub fn err_str(text: &str) {
-    err(text.as_bytes());
-}
-
-pub fn err_line(message: &[u8]) {
-    let mut line = Vec::with_capacity(message.len() + 1);
-    line.extend_from_slice(message);
-    line.push(b'\n');
-    err(&line);
-}
-
-/// Exit code of a child the way a shell reports it (128 + signal).
-pub fn status_code(status: ExitStatus) -> i32 {
-    if let Some(code) = status.code() {
-        code
-    } else if let Some(signal) = status.signal() {
-        128 + signal
-    } else {
-        1
     }
 }
 
@@ -236,13 +193,4 @@ pub fn redirect_failure(prog: &[u8], line: u32, path: &OsStr, error: &io::Error)
     message.push(b'\n');
     err(&message);
     std::process::exit(1);
-}
-
-/// `strerror` text without Rust's "(os error N)" suffix.
-pub fn os_error_text(error: &io::Error) -> String {
-    let text = error.to_string();
-    match text.find(" (os error ") {
-        Some(position) => text[..position].to_string(),
-        None => text,
-    }
 }

@@ -8,13 +8,13 @@
 
 use std::process::Command;
 
-use local_bin_system as sh;
+use crate as sh;
 
 const USAGE: &str = "nix-updates: show diffs between booted/current system profiles
 Usage: nix-updates
 ";
 
-fn main() {
+pub fn entry() {
     let arguments = sh::args();
     if arguments
         .first()

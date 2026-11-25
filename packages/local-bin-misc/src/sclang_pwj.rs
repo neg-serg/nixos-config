@@ -11,7 +11,7 @@ use std::ffi::OsString;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
 
-use local_bin_misc::{exec_failure, invocation_name, raw_args};
+use crate::{exec_failure, invocation_name, raw_args};
 
 const SYSTEM_LIB: &str = "/run/current-system/sw/lib";
 
@@ -28,7 +28,7 @@ fn library_path() -> OsString {
     value
 }
 
-fn main() {
+pub fn entry() {
     let error = Command::new("pw-jack")
         .arg("sclang")
         .args(raw_args())

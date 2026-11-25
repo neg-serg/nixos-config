@@ -13,10 +13,10 @@ use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::os::unix::process::CommandExt;
 use std::process::{Command, Stdio};
 
-use local_bin_scripts::env;
-use local_bin_scripts::text;
+use crate::env;
+use crate::text;
 
-fn main() {
+pub fn entry() {
     let mut argv = std::env::args_os();
     let argv0 = argv.next().unwrap_or_else(|| OsString::from("tty-log"));
     let program = env::invocation_name(&argv0);

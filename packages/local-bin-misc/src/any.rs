@@ -11,7 +11,7 @@ use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::os::unix::process::CommandExt;
 use std::process::{Command, Stdio};
 
-use local_bin_misc::{err_line, exec_failure, invocation_name, need, prog_name, raw_args};
+use crate::{err_line, exec_failure, invocation_name, need, prog_name, raw_args};
 
 fn is_help(argument: Option<&OsString>) -> bool {
     match argument {
@@ -46,7 +46,7 @@ fn paste_lines(pids: &[u8]) -> OsString {
     OsString::from_vec(list)
 }
 
-fn main() {
+pub fn entry() {
     let arguments = raw_args();
     if is_help(arguments.first()) {
         usage();

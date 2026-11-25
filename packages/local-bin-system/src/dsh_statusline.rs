@@ -12,7 +12,7 @@
 
 use std::path::Path;
 
-use local_bin_system as sh;
+use crate as sh;
 use serde_json::Value;
 
 const SEP: &str = " · ";
@@ -315,7 +315,7 @@ fn demo() {
     protocol(payload);
 }
 
-fn main() {
+pub fn entry() {
     let arguments = sh::args();
     let first = arguments.first().map(String::as_str).unwrap_or("");
     match first {

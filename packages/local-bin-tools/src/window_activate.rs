@@ -20,7 +20,7 @@
 //! and `WINDOW_ACTIVATE_HINTS` override the binary and the tray→class table
 //! (tests).
 
-mod json;
+use crate::json;
 
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -317,7 +317,7 @@ fn parse_args() -> Result<Options, String> {
     Ok(options)
 }
 
-fn main() -> std::process::ExitCode {
+pub fn entry() -> std::process::ExitCode {
     let options = match parse_args() {
         Ok(options) => options,
         Err(message) => {

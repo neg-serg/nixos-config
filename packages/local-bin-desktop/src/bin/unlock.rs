@@ -7,10 +7,10 @@
 
 #![forbid(unsafe_code)]
 
-use local_bin_desktop::env;
-use local_bin_desktop::proc::{Cmd, Sink};
+use crate::env;
+use crate::proc::{Cmd, Sink};
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);
@@ -78,7 +78,7 @@ fn main() {
     script.extend_from_slice(b"    expect eof\n");
 
     let outcome = Cmd::new("expect")
-        .stdin(local_bin_desktop::proc::Input::Bytes(&script))
+        .stdin(crate::proc::Input::Bytes(&script))
         .diag(&program, 21)
         .envs_from(&overrides)
         .run();
@@ -88,7 +88,7 @@ fn main() {
 /// `NAME=VALUE; export NAME;` from ssh-agent's `-s` output.
 fn parse_assignment(line: &[u8]) -> Option<(Vec<u8>, Vec<u8>)> {
     let export = b"; export ";
-    let position = local_bin_desktop::text::find(line, export)?;
+    let position = crate::text::find(line, export)?;
     let assignment = &line[..position];
     let equals = assignment.iter().position(|byte| *byte == b'=')?;
     let name = &assignment[..equals];
@@ -109,5 +109,5 @@ fn parse_echo(line: &[u8]) -> Option<Vec<u8>> {
 }
 
 fn strip(bytes: &[u8]) -> Vec<u8> {
-    local_bin_desktop::text::strip_trailing_newlines(bytes).to_vec()
+    crate::text::strip_trailing_newlines(bytes).to_vec()
 }

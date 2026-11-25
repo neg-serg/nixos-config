@@ -11,12 +11,12 @@
 use std::ffi::OsString;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 
-use local_bin_zsh::{capture, err_str, home, out_str, raw_args, run, Site, Stderr, Stdin, Stdout};
+use crate::{capture, err_str, home, out_str, raw_args, run, Site, Stderr, Stdin, Stdout};
 
 const USAGE: &str = include_str!("read_documents_usage.txt");
 const PROMPT: &str = "⟬doc⟭ ❯>";
 
-fn main() {
+pub fn entry() {
     let arguments = raw_args();
     if let Some(first) = arguments.first() {
         if matches!(first.as_bytes(), b"-h" | b"--help") {
@@ -25,13 +25,13 @@ fn main() {
         }
     }
 
-    if local_bin_zsh::which_str("fd").is_none() {
+    if crate::which_str("fd").is_none() {
         err_str("read_documents: fd not found\n");
     }
-    if local_bin_zsh::which_str("vicinae").is_none() {
+    if crate::which_str("vicinae").is_none() {
         err_str("read_documents: vicinae not found\n");
     }
-    if local_bin_zsh::which_str("zathura").is_none() {
+    if crate::which_str("zathura").is_none() {
         err_str("read_documents: zathura not found\n");
     }
 

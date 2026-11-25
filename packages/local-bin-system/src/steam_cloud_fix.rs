@@ -18,7 +18,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use local_bin_system as sh;
+use crate as sh;
 
 const USAGE: &str = "Reset Steam Cloud bookkeeping for one app and (re)start the Steam client.
 
@@ -489,7 +489,7 @@ fn run(options: &Options) {
     );
 }
 
-fn main() {
+pub fn entry() {
     let arguments = sh::args();
     let options = parse(&arguments);
     run(&options);

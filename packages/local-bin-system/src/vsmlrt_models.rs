@@ -12,7 +12,7 @@ use std::io::Read;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use local_bin_system as sh;
+use crate as sh;
 
 fn temp_directory() -> String {
     let directory = sh::env_or("TMPDIR", "/tmp");
@@ -39,7 +39,7 @@ fn temp_directory() -> String {
     format!("{directory}/tmp.XXXXXXXXXX")
 }
 
-fn main() {
+pub fn entry() {
     let arguments = sh::args();
     let version = arguments
         .first()

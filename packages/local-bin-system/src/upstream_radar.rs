@@ -13,7 +13,7 @@
 use std::fs;
 use std::process::{Command, Stdio};
 
-use local_bin_system as sh;
+use crate as sh;
 
 const VERSION: &str = "0.45.0";
 
@@ -35,7 +35,7 @@ The static commands read package and repository evidence only: they never
 install dependencies, run lifecycle scripts or execute plugin code.
 ";
 
-fn main() {
+pub fn entry() {
     let arguments = sh::args();
     if arguments.first().map(String::as_str) == Some("-h")
         || arguments.first().map(String::as_str) == Some("--help")

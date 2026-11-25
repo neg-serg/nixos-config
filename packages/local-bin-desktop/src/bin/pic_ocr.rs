@@ -15,13 +15,13 @@ use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 use std::process::ExitCode;
 
-use local_bin_desktop::env;
-use local_bin_desktop::helptext::PIC_OCR_HELP;
-use local_bin_desktop::json::Json;
-use local_bin_desktop::proc::{Cmd, Input, Sink};
-use local_bin_desktop::text;
+use crate::env;
+use crate::helptext::PIC_OCR_HELP;
+use crate::json::Json;
+use crate::proc::{Cmd, Input, Sink};
+use crate::text;
 
-fn main() -> ExitCode {
+pub fn entry() -> ExitCode {
     let code = run();
     ExitCode::from((code & 0xff) as u8)
 }
@@ -225,7 +225,7 @@ fn ocr_neural(image: &[u8], program: &[u8]) -> Vec<u8> {
 
 /// The `jq -n` payload, byte for byte (jq's 2-space layout).
 fn payload(model: &[u8], image_url: &[u8], prompt: &[u8]) -> Vec<u8> {
-    use local_bin_desktop::json::Json;
+    use crate::json::Json;
     let content = Json::Arr(vec![
         Json::Obj(vec![
             (b"type".to_vec(), Json::Str(b"image_url".to_vec())),

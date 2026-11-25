@@ -17,3 +17,10 @@
 pub mod env;
 
 pub use env::*;
+
+// The commands are modules of this crate; `src/main.rs` dispatches on argv[0].
+pub mod any;
+pub mod pb;
+pub mod renoise_pwj;
+pub mod sclang_pwj;
+pub mod v;

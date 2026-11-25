@@ -37,11 +37,11 @@ use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use local_bin_scripts::env;
-use local_bin_scripts::json::{self, Json};
-use local_bin_scripts::pyfmt;
-use local_bin_scripts::pypath::PyPath;
-use local_bin_scripts::text;
+use crate::env;
+use crate::json::{self, Json};
+use crate::pyfmt;
+use crate::pypath::PyPath;
+use crate::text;
 
 const PROGRAM: &str = "music-highlevel";
 const DESCRIPTION: &str = "Inspect Essentia highlevel classifiers for audio files";
@@ -1480,7 +1480,7 @@ fn terminal_columns() -> usize {
     80
 }
 
-fn main() {
+pub fn entry() {
     let mut raw_args = std::env::args_os();
     let argv0: OsString = raw_args.next().unwrap_or_else(|| OsString::from(PROGRAM));
     let prog = basename(argv0.as_bytes());

@@ -17,7 +17,7 @@ use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 
-use local_bin_zsh::{
+use crate::{
     capture, dirname, err_str, first_fields, out_str, raw_args, replace_all, replace_byte, run,
     strip_trailing_newlines, trim, var, var_nonempty, which_str, Site, Stderr, Stdin, Stdout,
 };
@@ -157,7 +157,7 @@ fn rename(data: &[u8], source: Option<&OsStr>) -> i32 {
     name.extend_from_slice(RHS);
     name.extend_from_slice(&album);
     let dotted = replace_byte(&name, b' ', MIDDLE_DOT);
-    let base = local_bin_zsh::basename(&dotted);
+    let base = crate::basename(&dotted);
 
     let mut result = music_dir.as_bytes().to_vec();
     result.push(b'/');
@@ -293,7 +293,7 @@ fn current_mode() -> i32 {
     rename_dir(OsStr::from_bytes(&directory))
 }
 
-fn main() {
+pub fn entry() {
     let arguments = raw_args();
     if let Some(first) = arguments.first() {
         if matches!(first.as_bytes(), b"-h" | b"--help") {

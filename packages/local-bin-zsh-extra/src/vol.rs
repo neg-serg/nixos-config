@@ -15,7 +15,7 @@
 
 use std::ffi::OsString;
 
-use local_bin_zsh_extra::{err_line, out_str, raw_args, report_spawn_failure, run, StdioMode};
+use crate::{err_line, out_str, raw_args, report_spawn_failure, run, StdioMode};
 
 const USAGE: &str = "\
 vol: adjust PipeWire default sink volume via wpctl
@@ -23,7 +23,7 @@ Usage: vol [+DELTA|-DELTA]
   Example: vol +0.05 (increase), vol -0.05 (decrease)
 ";
 
-fn main() {
+pub fn entry() {
     let args = raw_args();
     let first = args
         .first()
@@ -34,7 +34,7 @@ fn main() {
         return;
     }
 
-    if local_bin_zsh_extra::which_str("wpctl").is_none() {
+    if crate::which_str("wpctl").is_none() {
         err_line("vol: wpctl not found");
     }
 
@@ -75,7 +75,7 @@ fn main() {
 
 /// `$(wpctl get-volume @DEFAULT_SINK@ | cut -d: -f2 | tr -d '[:space:]')`.
 fn read_volume() -> String {
-    let output = match local_bin_zsh_extra::capture(
+    let output = match crate::capture(
         "wpctl",
         &[
             OsString::from("get-volume"),

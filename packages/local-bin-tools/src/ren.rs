@@ -171,7 +171,7 @@ pub fn fancy_name(filename: &str, file: bool) -> String {
     }
 }
 
-fn main() -> std::process::ExitCode {
+pub fn entry() -> std::process::ExitCode {
     let mut rename = false;
     let mut files: Vec<String> = Vec::new();
     for argument in std::env::args().skip(1) {

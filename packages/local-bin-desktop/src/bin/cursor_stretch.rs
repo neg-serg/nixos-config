@@ -8,12 +8,12 @@
 
 use std::os::unix::ffi::OsStrExt;
 
-use local_bin_desktop::env;
-use local_bin_desktop::json::Json;
-use local_bin_desktop::proc::{Cmd, Sink};
-use local_bin_desktop::text;
+use crate::env;
+use crate::json::Json;
+use crate::proc::{Cmd, Sink};
+use crate::text;
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);

@@ -15,7 +15,7 @@ use std::io::{Read, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use local_bin_system as sh;
+use crate as sh;
 
 const USAGE: &str = "shade — HyprWindowShade: fragment shaders on windows and layers.
 
@@ -292,7 +292,7 @@ fn command_reload() {
     sh::out_str_line("shade: shader cache dropped, .glsl files re-read");
 }
 
-fn main() {
+pub fn entry() {
     sh::require(&prog(), "hyprctl");
     let arguments = sh::args();
     let command = arguments

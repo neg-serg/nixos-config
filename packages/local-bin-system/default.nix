@@ -25,6 +25,13 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = ./Cargo.lock;
 
+  # One multicall binary; each command is an argv[0] name pointing at it.
+  postInstall = ''
+    for name in steam-cloud-fix dsh-statusline sw shade main-menu surfingkeys-extension-patch dsh-url qr pdf2md upstream-radar vsmlrt-models nix-updates; do
+      ln -s local-bin-system "$out/bin/$name"
+    done
+  '';
+
   meta = lib.mkMeta {
     description = "Rust ports of the system-level packages/local-bin helpers (steam-cloud-fix, dsh-statusline, shade, main-menu, …)";
     homepage = "https://github.com/neg-serg/nixos-config";

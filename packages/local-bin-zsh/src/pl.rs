@@ -17,7 +17,7 @@ use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::Path;
 use std::process::Stdio;
 
-use local_bin_zsh::{
+use crate::{
     capture, expand_tilde, home, is_executable, join_bytes, need, out_str, raw_args,
     redirection_failure, run, spawn_stdin_bytes, spawn_stdin_from, spawn_stdout_piped,
     var_nonempty, which_str, Captured, Site, Stderr, Stdin, Stdout,
@@ -465,7 +465,7 @@ fn volume(arguments: &[OsString]) -> i32 {
     }
 }
 
-fn main() {
+pub fn entry() {
     let arguments = raw_args();
     if let Some(first) = arguments.first() {
         if matches!(first.as_bytes(), b"-h" | b"--help") {

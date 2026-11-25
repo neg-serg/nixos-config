@@ -15,7 +15,7 @@
 //!
 //! Port of `packages/local-bin/bin/paths`.
 
-mod json;
+use crate::json;
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -170,7 +170,7 @@ fn grep(root: &Path, query: &str, all_files: bool) -> Vec<String> {
     }
 }
 
-fn main() -> std::process::ExitCode {
+pub fn entry() -> std::process::ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut root_arg: Option<String> = None;
     let mut rest: Vec<String> = Vec::new();

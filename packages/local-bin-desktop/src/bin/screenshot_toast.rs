@@ -15,14 +15,14 @@ use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
 
-use local_bin_desktop::env;
-use local_bin_desktop::proc::{Cmd, Sink};
-use local_bin_desktop::text;
+use crate::env;
+use crate::proc::{Cmd, Sink};
+use crate::text;
 
 /// 40 x 150 ms bounds the wait at 6 s (the original's comment).
 const SETTLE_STEPS: usize = 40;
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);

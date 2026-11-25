@@ -13,9 +13,9 @@ use std::io::Write;
 use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
-use local_bin_audio::env;
-use local_bin_audio::proc::{Cmd, Input, Sink};
-use local_bin_audio::text;
+use crate::env;
+use crate::proc::{Cmd, Input, Sink};
+use crate::text;
 
 const BASE: &[u8] = b"https://shabda.ndre.gr";
 const LICENSES: &[u8] = b"by,cc0,by-nc";
@@ -27,7 +27,7 @@ struct Options {
     operands: Vec<Vec<u8>>,
 }
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);

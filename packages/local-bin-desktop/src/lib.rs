@@ -23,3 +23,33 @@ pub mod helptext;
 pub mod json;
 pub mod proc;
 pub mod text;
+
+// The commands are modules of this crate; `src/main.rs` dispatches on argv[0].
+// They live in `src/bin/` because that is where the per-command sources have
+// always been, so each module needs an explicit path.
+#[path = "bin/clip.rs"]
+pub mod clip;
+#[path = "bin/cursor_stretch.rs"]
+pub mod cursor_stretch;
+#[path = "bin/hypr_resize_proportional.rs"]
+pub mod hypr_resize_proportional;
+#[path = "bin/kitty_font_zoom.rs"]
+pub mod kitty_font_zoom;
+#[path = "bin/pic_dirs_list.rs"]
+pub mod pic_dirs_list;
+#[path = "bin/pic_info.rs"]
+pub mod pic_info;
+#[path = "bin/pic_notify.rs"]
+pub mod pic_notify;
+#[path = "bin/pic_ocr.rs"]
+pub mod pic_ocr;
+#[path = "bin/pngoptim.rs"]
+pub mod pngoptim;
+#[path = "bin/screenrec.rs"]
+pub mod screenrec;
+#[path = "bin/screenshot_toast.rs"]
+pub mod screenshot_toast;
+#[path = "bin/unlock.rs"]
+pub mod unlock;
+#[path = "bin/wl_restore.rs"]
+pub mod wl_restore;

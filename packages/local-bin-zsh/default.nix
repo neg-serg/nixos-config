@@ -5,9 +5,9 @@
 #   directory of music files through MPD/albumdetails), read_documents
 #   (vicinae pick of ~/dw documents -> zathura), pl (fzf/vicinae pick ->
 #   mpv + vid-info) and music-tui (fzf TUI over the MERT similarity index).
-#   One binary per former script, installed under the script's own name, so
-#   `~/.local/bin` can point at the store paths instead of rendering the zsh
-#   files (and the shared `_localbin.sh` helper retires with them).
+#   One multicall binary answers to all five names, so `~/.local/bin` points at
+#   the store symlinks instead of rendering the zsh files (and the shared
+#   `_localbin.sh` helper retires with them).
 {
   lib,
   rustPlatform,
@@ -21,8 +21,15 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = ./Cargo.lock;
 
+  # One multicall binary; each command is an argv[0] name pointing at it.
+  postInstall = ''
+    for name in iommu-info music-rename read_documents pl music-tui; do
+      ln -s local-bin-zsh "$out/bin/$name"
+    done
+  '';
+
   meta = lib.mkMeta {
-    description = "Rust ports of the last zsh packages/local-bin/bin helpers (iommu-info, music-rename, read_documents, pl, music-tui)";
+    description = "Rust ports of the last zsh packages/local-bin/bin helpers (iommu-info, music-rename, read_documents, pl, music-tui), shipped as one multicall binary";
     homepage = "https://github.com/neg-serg/nixos-config";
     license = lib.licenses.mit;
     mainProgram = "iommu-info";

@@ -12,7 +12,7 @@ use std::fs::File;
 use std::os::unix::ffi::OsStrExt;
 use std::process::{Command, Stdio};
 
-use local_bin_misc::{
+use crate::{
     err_line, invocation_name, need, out_str, prog_name, raw_args, redirect_failure, spawn_failure,
     status_code, var_nonempty,
 };
@@ -92,7 +92,7 @@ fn curl_argv(service: Service, user_agent: &OsStr) -> Vec<OsString> {
     argv
 }
 
-fn main() {
+pub fn entry() {
     let arguments = raw_args();
     if is_help(arguments.first()) {
         out_str(USAGE);

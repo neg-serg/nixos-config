@@ -11,12 +11,12 @@
 use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
-use local_bin_desktop::env;
-use local_bin_desktop::helptext::PIC_INFO_USAGE;
-use local_bin_desktop::proc::Cmd;
-use local_bin_desktop::text;
+use crate::env;
+use crate::helptext::PIC_INFO_USAGE;
+use crate::proc::Cmd;
+use crate::text;
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);
@@ -78,9 +78,11 @@ fn main() {
 
 /// `expand_path` as the shell spells it:
 ///
-///     case "$1" in
-///       "~")   printf '%s\n' "$HOME" ;;
-///       "~/"*) printf '%s/%s\n' "$HOME" "${1#~/}" ;;
+/// ```sh
+/// case "$1" in
+///   "~")   printf '%s\n' "$HOME" ;;
+///   "~/"*) printf '%s/%s\n' "$HOME" "${1#~/}" ;;
+/// ```
 ///
 /// The `"~/"*` pattern is quoted, so it matches the literal two characters, but
 /// the `#` pattern is *not* quoted: bash tilde-expands it to `$HOME/` before

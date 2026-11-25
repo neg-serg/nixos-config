@@ -8,7 +8,7 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-use local_bin_system as sh;
+use crate as sh;
 
 const USAGE: &str = "dsh-url: print the URL the dsh web UI is serving right now.
 Usage: dsh-url [--lan|--open|--copy]
@@ -102,7 +102,7 @@ fn copy_to_clipboard(url: &str) -> i32 {
     }
 }
 
-fn main() {
+pub fn entry() {
     if let Some(first) = sh::args().first() {
         if first == "-h" || first == "--help" {
             sh::out_str(USAGE);

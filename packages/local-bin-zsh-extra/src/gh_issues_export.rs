@@ -22,7 +22,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::Value;
 
-use local_bin_zsh_extra::{
+use crate::{
     capture_checked, err_line, err_str, out_line, out_str, raw_args, report_spawn_failure, run,
     which_str, Captured, StdioMode,
 };
@@ -36,7 +36,7 @@ struct Options {
     repository: String,
 }
 
-fn main() {
+pub fn entry() {
     let options = parse_args();
     let slug = normalize_repo(options.repository);
     check_deps();

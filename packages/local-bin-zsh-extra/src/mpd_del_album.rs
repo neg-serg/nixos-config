@@ -15,13 +15,11 @@ use std::ffi::OsString;
 use std::io::BufRead;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 
-use local_bin_zsh_extra::{
-    capture, err, first_line, out, prog, raw_args, report_spawn_failure, run, StdioMode,
-};
+use crate::{capture, err, first_line, out, prog, raw_args, report_spawn_failure, run, StdioMode};
 
 const BASE: &str = "/one/music";
 
-fn main() {
+pub fn entry() {
     let args = raw_args();
     if let Some(first) = args.first() {
         if first == "-h" || first == "--help" {

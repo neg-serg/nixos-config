@@ -47,3 +47,31 @@ pub mod helptext;
 pub mod json;
 pub mod proc;
 pub mod text;
+
+// The commands are modules of this crate; `src/main.rs` dispatches on argv[0].
+// They live in `src/bin/` because that is where the per-command sources have
+// always been, so each module needs an explicit path.
+#[path = "bin/audio_diag.rs"]
+pub mod audio_diag;
+#[path = "bin/flacspec.rs"]
+pub mod flacspec;
+#[path = "bin/jam.rs"]
+pub mod jam;
+#[path = "bin/midi_bridge.rs"]
+pub mod midi_bridge;
+#[path = "bin/mp.rs"]
+pub mod mp;
+#[path = "bin/nb.rs"]
+pub mod nb;
+#[path = "bin/qe.rs"]
+pub mod qe;
+#[path = "bin/renoise_osc_config.rs"]
+pub mod renoise_osc_config;
+#[path = "bin/sc_live.rs"]
+pub mod sc_live;
+#[path = "bin/sc_record.rs"]
+pub mod sc_record;
+#[path = "bin/shabda.rs"]
+pub mod shabda;
+#[path = "bin/synth.rs"]
+pub mod synth;

@@ -13,11 +13,11 @@ use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use local_bin_audio::env;
-use local_bin_audio::helptext::MP_USAGE;
-use local_bin_audio::proc::{spawn_error_code, Cmd};
+use crate::env;
+use crate::helptext::MP_USAGE;
+use crate::proc::{spawn_error_code, Cmd};
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);
@@ -93,8 +93,10 @@ fn spawn_directory_info(program: &[u8], directory: &[u8]) {
     }
 }
 
-/// `{ for arg in "$@"; do [ -f "$arg" ] && printf '%s\0' "$arg"; done \
-///      | xargs -0 -n10 -P 10 ~/.local/bin/vid-info; } &`
+/// ```text
+/// { for arg in "$@"; do [ -f "$arg" ] && printf '%s\0' "$arg"; done \
+///      | xargs -0 -n10 -P 10 ~/.local/bin/vid-info; } &
+/// ```
 fn spawn_file_info(program: &[u8], args: &[Vec<u8>], vid_info: &[u8]) {
     let mut payload = Vec::new();
     for argument in args {

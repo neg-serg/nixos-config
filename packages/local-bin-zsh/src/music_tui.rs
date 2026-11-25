@@ -20,12 +20,13 @@ use std::fs;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::Path;
 
-use local_bin_zsh::{
+use crate::{
     basename, before_first_dot, capture, command_not_found, count_newlines, die, err, first_field,
     first_fields, home, join_bytes, last_line, out, out_str, raw_args, run, var_nonempty,
     which_str, Captured, Site, Stderr, Stdin, Stdout,
 };
 
+#[path = "json.rs"]
 mod json;
 
 const USAGE: &str = include_str!("music_tui_usage.txt");
@@ -673,7 +674,7 @@ fn menu() -> i32 {
     }
 }
 
-fn main() {
+pub fn entry() {
     let arguments = raw_args();
     if let Some(first) = arguments.first() {
         if matches!(first.as_bytes(), b"-h" | b"--help") {

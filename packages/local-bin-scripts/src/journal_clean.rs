@@ -12,9 +12,9 @@ use std::fs::OpenOptions;
 use std::os::unix::ffi::OsStrExt;
 use std::process::{Command, Stdio};
 
-use local_bin_scripts::env;
+use crate::env;
 
-fn main() {
+pub fn entry() {
     let mut argv = std::env::args_os();
     let argv0 = argv
         .next()

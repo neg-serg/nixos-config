@@ -13,12 +13,12 @@ use std::ffi::OsStr;
 use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
-use local_bin_desktop::env;
-use local_bin_desktop::helptext::CLIP_HELP;
-use local_bin_desktop::proc::{Cmd, Input, Sink};
-use local_bin_desktop::text;
+use crate::env;
+use crate::helptext::CLIP_HELP;
+use crate::proc::{Cmd, Input, Sink};
+use crate::text;
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);

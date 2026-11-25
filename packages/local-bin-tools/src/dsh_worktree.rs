@@ -503,7 +503,7 @@ fn cmd_prune() -> ExitCode {
     }
 }
 
-fn main() -> ExitCode {
+pub fn entry() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
     if args.is_empty() {
         usage();

@@ -7,11 +7,11 @@
 //! `pgrep`, `aconnect`, `systemctl` and `sleep` stay subprocesses with the
 //! original argv.
 
-use local_bin_audio::env;
-use local_bin_audio::proc::{Cmd, Input, Sink};
-use local_bin_audio::text;
+use crate::env;
+use crate::proc::{Cmd, Input, Sink};
+use crate::text;
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);

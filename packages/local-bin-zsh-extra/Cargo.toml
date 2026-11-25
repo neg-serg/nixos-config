@@ -5,30 +5,10 @@ edition = "2021"
 description = "Rust ports of the remaining zsh helpers in packages/local-bin/bin (gh-issues-export, mpd_del_album, sx, sys-relief, vol, win-vm)"
 license = "MIT"
 
-# One binary per former zsh script, installed under the script's own name.
+# One multicall binary: the commands are selected by argv[0] (see src/main.rs).
 [[bin]]
-name = "gh-issues-export"
-path = "src/gh_issues_export.rs"
-
-[[bin]]
-name = "mpd_del_album"
-path = "src/mpd_del_album.rs"
-
-[[bin]]
-name = "sx"
-path = "src/sx.rs"
-
-[[bin]]
-name = "sys-relief"
-path = "src/sys_relief.rs"
-
-[[bin]]
-name = "vol"
-path = "src/vol.rs"
-
-[[bin]]
-name = "win-vm"
-path = "src/win_vm.rs"
+name = "local-bin-zsh-extra"
+path = "src/main.rs"
 
 [dependencies]
 # gh-issues-export parses the paginated `gh api` stream and renders the YAML
@@ -36,3 +16,8 @@ path = "src/win_vm.rs"
 serde_json = "1"
 
 [workspace]
+
+# The doc comments are the shell originals' snippets, not Rust examples, so the
+# lib target has nothing to run as a doctest.
+[lib]
+doctest = false

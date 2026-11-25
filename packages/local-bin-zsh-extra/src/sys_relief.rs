@@ -16,11 +16,11 @@
 use std::ffi::OsString;
 use std::process::{Command, Stdio};
 
-use local_bin_zsh_extra::{report_spawn_failure, run, run_ignored, StdioMode};
+use crate::{report_spawn_failure, run, run_ignored, StdioMode};
 
 const RESTORE_MARKER: &str = "LOCAL_BIN_ZSH_EXTRA_RESTORE";
 
-fn main() {
+pub fn entry() {
     if std::env::var_os(RESTORE_MARKER).is_some() {
         restore();
         return;

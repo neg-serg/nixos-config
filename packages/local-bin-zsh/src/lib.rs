@@ -737,3 +737,10 @@ fn lowercase(text: &str) -> String {
         None => String::new(),
     }
 }
+
+// The commands are modules of this crate; `src/main.rs` dispatches on argv[0].
+pub mod iommu_info;
+pub mod music_rename;
+pub mod music_tui;
+pub mod pl;
+pub mod read_documents;

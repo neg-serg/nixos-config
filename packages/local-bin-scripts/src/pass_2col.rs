@@ -15,8 +15,8 @@ use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use local_bin_scripts::env;
-use local_bin_scripts::text;
+use crate::env;
+use crate::text;
 
 fn store_entries(store: &Path) -> Vec<Vec<u8>> {
     let mut paths: Vec<Vec<u8>> = Vec::new();
@@ -148,7 +148,7 @@ fn pass_quiet(args: &[&std::ffi::OsStr]) -> bool {
         .unwrap_or(false)
 }
 
-fn main() {
+pub fn entry() {
     let mut argv = std::env::args_os();
     let argv0 = argv.next().unwrap_or_else(|| OsString::from("pass-2col"));
     let program = env::invocation_name(&argv0);

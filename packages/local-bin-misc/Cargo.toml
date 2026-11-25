@@ -5,25 +5,17 @@ edition = "2021"
 description = "Rust ports of the last shell helpers in packages/local-bin/bin (pb, any, v, sclang-pwj, renoise-pwj)"
 license = "MIT"
 
-# One binary per former shell helper, installed under the script's own name.
-[[bin]]
-name = "pb"
-path = "src/pb.rs"
+[dependencies]
+local-bin-core = { path = "../local-bin-core" }
 
+# One multicall binary: the commands are selected by argv[0] (see src/main.rs).
 [[bin]]
-name = "any"
-path = "src/any.rs"
-
-[[bin]]
-name = "v"
-path = "src/v.rs"
-
-[[bin]]
-name = "sclang-pwj"
-path = "src/sclang_pwj.rs"
-
-[[bin]]
-name = "renoise-pwj"
-path = "src/renoise_pwj.rs"
+name = "local-bin-misc"
+path = "src/main.rs"
 
 [workspace]
+
+# The doc comments are the shell originals' snippets, not Rust examples, so the
+# lib target has nothing to run as a doctest.
+[lib]
+doctest = false

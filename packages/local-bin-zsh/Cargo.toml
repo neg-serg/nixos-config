@@ -5,25 +5,14 @@ edition = "2021"
 description = "Rust ports of the last zsh helpers in packages/local-bin/bin (iommu-info, music-rename, read_documents, pl, music-tui)"
 license = "MIT"
 
-# One binary per former zsh script, installed under the script's own name.
+# One multicall binary: the commands are selected by argv[0] (see src/main.rs).
 [[bin]]
-name = "iommu-info"
-path = "src/iommu_info.rs"
-
-[[bin]]
-name = "music-rename"
-path = "src/music_rename.rs"
-
-[[bin]]
-name = "read_documents"
-path = "src/read_documents.rs"
-
-[[bin]]
-name = "pl"
-path = "src/pl.rs"
-
-[[bin]]
-name = "music-tui"
-path = "src/music_tui.rs"
+name = "local-bin-zsh"
+path = "src/main.rs"
 
 [workspace]
+
+# The doc comments are the shell originals' snippets, not Rust examples, so the
+# lib target has nothing to run as a doctest.
+[lib]
+doctest = false

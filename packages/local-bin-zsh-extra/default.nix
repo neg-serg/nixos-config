@@ -6,9 +6,8 @@
 #   ~/trash/music), sx (swayimg gallery launcher), sys-relief (drop caches and
 #   lower IO/swap pressure, timed restore), vol (wpctl default-sink volume) and
 #   win-vm (libvirt/QEMU Windows VM lifecycle manager).
-#   One binary per former script, installed under the script's own name, so
-#   `~/.local/bin` can point at the store paths instead of rendering the zsh
-#   files.
+#   One multicall binary answers to all six names, so `~/.local/bin` points at
+#   the store symlinks instead of rendering the zsh files.
 {
   lib,
   rustPlatform,
@@ -22,8 +21,15 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = ./Cargo.lock;
 
+  # One multicall binary; each command is an argv[0] name pointing at it.
+  postInstall = ''
+    for name in gh-issues-export mpd_del_album sx sys-relief vol win-vm; do
+      ln -s local-bin-zsh-extra "$out/bin/$name"
+    done
+  '';
+
   meta = lib.mkMeta {
-    description = "Rust ports of the remaining zsh packages/local-bin/bin helpers (gh-issues-export, mpd_del_album, sx, sys-relief, vol, win-vm)";
+    description = "Rust ports of the remaining zsh packages/local-bin/bin helpers (gh-issues-export, mpd_del_album, sx, sys-relief, vol, win-vm), shipped as one multicall binary";
     homepage = "https://github.com/neg-serg/nixos-config";
     license = lib.licenses.mit;
     mainProgram = "win-vm";

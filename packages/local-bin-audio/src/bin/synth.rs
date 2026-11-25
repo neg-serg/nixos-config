@@ -5,15 +5,15 @@
 //! subprocesses with the original argv. The `sed` name normalisation is native,
 //! and so is the `hyprctl clients -j | jq ... | head -1` address selection: the
 //! script only ever calls it with anchored class prefixes (`^Surge`,
-//! `^Renoise`) plus an optional title substring, which `local_bin_audio::json` reads
+//! `^Renoise`) plus an optional title substring, which `crate::json` reads
 //! directly instead of spawning `jq`.
 
-use local_bin_audio::env;
-use local_bin_audio::json;
-use local_bin_audio::proc::{Cmd, Input, Sink};
-use local_bin_audio::text;
+use crate::env;
+use crate::json;
+use crate::proc::{Cmd, Input, Sink};
+use crate::text;
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);

@@ -7,10 +7,10 @@
 //! `set -e` means a `timeout` exit (124 when the recording window elapses) ends
 //! the script before the final message; the port keeps that.
 
-use local_bin_audio::env;
-use local_bin_audio::proc::{Cmd, Sink};
+use crate::env;
+use crate::proc::{Cmd, Sink};
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let argv0 = arguments.next().unwrap_or_default();
     let program = env::invocation_name(&argv0);

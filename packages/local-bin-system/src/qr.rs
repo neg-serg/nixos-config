@@ -11,7 +11,7 @@ use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::process::{Command, Stdio};
 
-use local_bin_system as sh;
+use crate as sh;
 
 const USAGE: &str = "qr: quick QR and screenshot helper
 Usage:
@@ -166,7 +166,7 @@ fn command_scan() {
     let _ = fs::remove_file(&temporary);
 }
 
-fn main() {
+pub fn entry() {
     sh::need(&prog(), "grim");
     sh::need(&prog(), "slurp");
     sh::need(&prog(), "wl-copy");

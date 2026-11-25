@@ -15,7 +15,7 @@ use std::fs;
 use std::path::Path;
 use std::process::Stdio;
 
-use local_bin_system as sh;
+use crate as sh;
 use serde_json::Value;
 
 const HELP: &str = r#"sw: unified wallpaper downloader
@@ -319,7 +319,7 @@ fn download_unsplash(options: &Options) -> ! {
     std::process::exit(0);
 }
 
-fn main() {
+pub fn entry() {
     sh::require(&prog(), "curl");
     // The port no longer runs jq, but the original refuses to start without
     // it; keeping the gate preserves the missing-dependency contract.

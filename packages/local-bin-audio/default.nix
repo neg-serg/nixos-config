@@ -7,9 +7,10 @@
 #   `renoise-osc-config` (pin the OSC server in Config.xml), `sc-live`,
 #   `sc-record`, `flacspec`, `mp`, `nb` and `qe`.
 #
-#   Every binary keeps the shell original's CLI/usage text, stdout/stderr split,
-#   exit codes, environment defaults, file formats and external command argv
-#   (`pw-link`, `wpctl`, `amixer`, `pw-record`, `aconnect`, `systemctl`,
+#   One multicall binary; every installed command name is an argv[0] symlink to
+#   it. Every command keeps the shell original's CLI/usage text, stdout/stderr
+#   split, exit codes, environment defaults, file formats and external command
+#   argv (`pw-link`, `wpctl`, `amixer`, `pw-record`, `aconnect`, `systemctl`,
 #   `pgrep`, `sox`, `mpv`, `hyprctl`, `git`, ...). Shell logic (option parsing,
 #   text filters, the renoise Config.xml rewrite that used to be a `python3`
 #   heredoc, state files) is native. The crate has no dependencies and forbids
@@ -27,8 +28,16 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = ./Cargo.lock;
 
+  # One multicall binary; each command is an argv[0] name pointing at it.
+  postInstall = ''
+    for name in audio-diag jam shabda synth midi-bridge renoise-osc-config \
+      sc-live sc-record flacspec mp nb qe; do
+      ln -s local-bin-audio "$out/bin/$name"
+    done
+  '';
+
   meta = lib.mkMeta {
-    description = "Rust ports of the audio helpers from packages/local-bin/bin";
+    description = "Rust ports of the audio helpers from packages/local-bin/bin (audio-diag, jam, shabda, synth, midi-bridge, renoise-osc-config, sc-live, sc-record, flacspec, mp, nb, qe), shipped as one multicall binary";
     homepage = "https://github.com/neg-serg/nixos-config";
     license = lib.licenses.mit;
     mainProgram = "audio-diag";

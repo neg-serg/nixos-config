@@ -27,7 +27,7 @@ use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use local_bin_zsh_extra::{
+use crate::{
     err_line, is_executable, raw_args, report_spawn_failure, status_code, which_str, StdioMode,
 };
 
@@ -42,7 +42,7 @@ struct Entry {
     path: Vec<u8>,
 }
 
-fn main() {
+pub fn entry() {
     let args = raw_args();
     if let Some(first) = args.first() {
         if first == "-h" || first == "--help" {

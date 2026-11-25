@@ -15,9 +15,9 @@ use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 
-use local_bin_audio::env;
+use crate::env;
 
-fn main() {
+pub fn entry() {
     let mut arguments = std::env::args_os();
     let _argv0 = arguments.next();
     let start = match arguments.next() {

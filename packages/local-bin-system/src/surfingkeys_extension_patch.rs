@@ -17,7 +17,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use local_bin_system as sh;
+use crate as sh;
 
 const URL: &str = "http://localhost:18888/surfingkeys.js";
 const EXTENSION: &str = "gfbliohnnapiefjpjlpjnehglfpaknnc";
@@ -108,7 +108,7 @@ fn newest_version(base: &str) -> Option<String> {
     versions.pop()
 }
 
-fn main() {
+pub fn entry() {
     let base = format!(
         "{}/.config/vivaldi/Default/Extensions/{EXTENSION}",
         sh::home()

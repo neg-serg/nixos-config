@@ -12,9 +12,9 @@ use std::os::unix::ffi::OsStrExt;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
 
-use local_bin_scripts::env;
+use crate::env;
 
-fn main() {
+pub fn entry() {
     let mut argv = std::env::args_os();
     let argv0 = argv.next().unwrap_or_else(|| OsString::from("punzip"));
     let program = env::invocation_name(&argv0);

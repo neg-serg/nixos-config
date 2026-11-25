@@ -12,7 +12,7 @@
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use local_bin_system as sh;
+use crate as sh;
 
 const USAGE: &str = "pdf2md: PDF/DOCX/HTML/images → Markdown through docling, entirely from the
 nix store (pkgs.python3Packages.docling, wired in modules/cli/ocr.nix).
@@ -56,7 +56,7 @@ fn run(arguments: &[String]) -> ! {
     }
 }
 
-fn main() {
+pub fn entry() {
     let arguments = sh::args();
     if arguments.is_empty() || arguments[0] == "-h" || arguments[0] == "--help" {
         sh::out_str(USAGE);

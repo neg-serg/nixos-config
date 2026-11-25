@@ -18,7 +18,7 @@
 //!
 //! Port of `packages/local-bin/bin/menu-search`.
 
-mod json;
+use crate::json;
 
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -664,7 +664,7 @@ fn refresh_cache(program: &Path) -> i32 {
     0
 }
 
-fn main() -> std::process::ExitCode {
+pub fn entry() -> std::process::ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let has = |flag: &str| args.iter().any(|arg| arg == flag);
     let value_of = |flag: &str| -> Option<String> {

@@ -9,9 +9,9 @@
 use std::os::unix::process::CommandExt;
 use std::process::Command;
 
-use local_bin_misc::{exec_failure, invocation_name, raw_args};
+use crate::{exec_failure, invocation_name, raw_args};
 
-fn main() {
+pub fn entry() {
     let error = Command::new("renoise").args(raw_args()).exec();
     exec_failure(&invocation_name(), 7, "renoise", &error);
 }
