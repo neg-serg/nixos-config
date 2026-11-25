@@ -8,6 +8,12 @@
 let
   systemdUser = neg.systemdUser lib;
 
+  # The notification binaries are their own project now
+  # (github:neg-serg/telegram-notify, consumed as the `telegram-notify` flake
+  # input, `packages/overlays/tools.nix`). These units only supply the paths,
+  # chat ids and secret files through the environment — the contract the
+  # binaries were written to — so a change in `src/` there needs no edit here.
+
   # Alertmanager Telegram webhook bridge: an HTTP server on 127.0.0.1:9094 that
   # forwards every Alertmanager webhook notification to the Telegram chat, one
   # emoji-prefixed line per alert. Rust (pkgs.neg.telegram-notify); the two
@@ -60,7 +66,7 @@ let
   # index is refreshed by hand with `rag-search index`).
   ragUserBin = "${config.lib.neg.homeDir}/.local/bin/rag-search";
 
-  # Herdr farm control (packages/telegram-notify/src/herdr.rs): the bot shells
+  # Herdr farm control (telegram-notify `src/herdr.rs`): the bot shells
   # out to the user's herdr CLI and drops to that user with runuser, so the
   # socket path and the owner are explicit. Gated by the flag that installs
   # Herdr; without it the bot reports the feature as off instead of calling a
@@ -104,7 +110,7 @@ let
   # The same poll loop answers text messages: /status is a deterministic
   # monitoring snapshot, and every other text goes to the local llama-swap
   # model as a general question (monitoring is context, not the topic ceiling;
-  # packages/telegram-notify/src/ask.rs). The endpoint is loopback-only, so the
+  # telegram-notify `src/ask.rs`). The endpoint is loopback-only, so the
   # snapshot never leaves the host.
   # It also serves the notes commands (/note, /notes, /nb) and the model's
   # notes tools: those write to the zk notebook as the desktop user, and `nb`

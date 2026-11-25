@@ -60,7 +60,10 @@ in
     nixard = callPkg (pkg "nixard") { }; # TUI for exploring NixOS package closures / generating Nix declarations
     nixbuild-status = callPkg (pkg "nixbuild-status") { }; # One-line NixOS build status for status bars (waybar/i3bar/polybar)
     lusty = callPkg (inputs.lusty.outPath) { }; # Native file/buffer picker for Neovim — external repo ~/src/main/@projects/lusty
-    telegram-notify = callPkg (pkg "telegram-notify") { }; # Rust Telegram notification binaries (calendar, pill, bot, alert scanner/bridge, zfs watch)
+    # Extracted to github:neg-serg/tgchat-rs, which owns the build and its tests.
+    tgchat-rs = inputs.tgchat-rs.packages.${prev.stdenv.hostPlatform.system}.default; # Telegram chat access on a grammers user session (replaces the retired Telethon tgchat)
+    # Extracted to github:neg-serg/telegram-notify, which owns the build and its tests.
+    telegram-notify = inputs.telegram-notify.packages.${prev.stdenv.hostPlatform.system}.default; # Rust Telegram notification binaries (calendar, pill, bot, alert scanner/bridge, zfs watch)
     tuigram = callPkg (pkg "tuigram") { }; # Terminal UI Telegram client (npm package, Node 26 + node:ffi)
     topowall = callPkg (pkg "topowall") { }; # Topographic contour wallpapers from real elevation data (GPU render)
     terrascope = callPkg (pkg "terrascope") { }; # Interactive world map for the terminal (braille; live weather/aircraft/earthquakes)

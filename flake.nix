@@ -70,6 +70,20 @@
       url = "github:neg-serg/tint";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # tgchat-rs — Telegram chat access over a grammers user session, extracted
+    # to github:neg-serg/tgchat-rs, which owns its packaging, tests and CI.
+    tgchat-rs = {
+      url = "github:neg-serg/tgchat-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # telegram-notify — the host's Telegram notification binaries and the
+    # assistant bot, extracted to github:neg-serg/telegram-notify. Only the
+    # source and the packaging moved: every path, chat id and secret location
+    # stays environment-driven, so the systemd units keep their contract.
+    telegram-notify = {
+      url = "github:neg-serg/telegram-notify";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     wl = {
       url = "github:neg-serg/wl";

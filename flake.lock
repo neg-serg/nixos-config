@@ -1339,6 +1339,8 @@
         "sops-nix": "sops-nix",
         "steam-config-nix": "steam-config-nix",
         "tailray": "tailray",
+        "telegram-notify": "telegram-notify",
+        "tgchat-rs": "tgchat-rs",
         "tint": "tint",
         "waylandar": "waylandar",
         "wl": "wl"
@@ -1703,6 +1705,46 @@
       "original": {
         "owner": "lmacan1",
         "repo": "talktype",
+        "type": "github"
+      }
+    },
+    "telegram-notify": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795602579,
+        "narHash": "sha256-XkyEGKLHr9lJuNEiYPIQXd5qiaBqPrG5fasJxYmaGlc=",
+        "owner": "neg-serg",
+        "repo": "telegram-notify",
+        "rev": "2e49ed76a94821d76bb387f01c914e869c3bd13f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "telegram-notify",
+        "type": "github"
+      }
+    },
+    "tgchat-rs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795602579,
+        "narHash": "sha256-s1DaQ1KBGxz6fyMySCAuPm86B+FeK+9XI4Ejtri/HRs=",
+        "owner": "neg-serg",
+        "repo": "tgchat-rs",
+        "rev": "733ad3d0af226b14c7727a9ea29d7eb90ab01e01",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "tgchat-rs",
         "type": "github"
       }
     },

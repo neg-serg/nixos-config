@@ -234,14 +234,12 @@ slimChunks
                 ignoreCollisions = true;
               });
           local-bin-system = final.callPackage ./local-bin-system { }; # Rust ports of the system-level local-bin/bin helpers
-          tgchat-rs = final.callPackage ./tgchat-rs { }; # Telegram chat access on a grammers user session (replaces the retired Telethon tgchat)
           wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
           renoise-osc = final.callPackage ./renoise-osc { }; # OSC client for Renoise (remote Lua eval, device/transport control)
           scratchpad-geometry = final.callPackage ./scratchpad-geometry { }; # persist Hyprland scratchpad rects across show/hide
           hypr-rearrange = final.callPackage ./hypr-rearrange { }; # move windows to the workspaces the config routes them to
           hypr-win-list = final.callPackage ./hypr-win-list { }; # Hyprland window picker for vicinae dmenu
           minibbs = final.callPackage ./minibbs { }; # tiny BBS-style message board (SQLite + HTTP)
-          telegram-notify = final.callPackage ./telegram-notify { }; # Telegram notifications: calendar digest, pill reminder, crash-loop alerts
           zalgo = final.callPackage ./zalgo { }; # cursed-text generator (combining marks on stdin)
           blizzard = final.callPackage ./blizzard { }; # animated black-metal blizzard WebP generator (fastfetch logos)
           music-apply-tags = final.callPackage ./music-apply-tags { }; # write ML mood/style into audio tags (was scripts/dev/music-apply-tags.py)
