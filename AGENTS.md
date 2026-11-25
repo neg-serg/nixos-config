@@ -63,6 +63,11 @@ Project Structure
   profile caretaker. The two third-party forks (`dsh-plugin-recall`, `dsh-plugin-vetting`) stay in
   this tree.
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
+- The Neovim configuration is its own repository, `github:neg-serg/nvim-config`, checked out at
+  `~/src/nix/nvim-config`. `modules/user/neovim.nix` links its top-level entries into
+  `~/.config/nvim` as live symlinks, so a Lua edit applies without a rebuild. It is deliberately
+  not a flake input: the entry list in that module is static because pure evaluation cannot read
+  the checkout.
 - `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild,
   theming); knowledge that belongs to a single module lives in that module's header
 - `.githooks/` — git hooks (enable with `just hooks-enable`)

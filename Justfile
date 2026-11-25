@@ -141,11 +141,12 @@ diff:
 pending host="trantor":
     bash "{{repo_root}}/scripts/dev/pending-version.sh" "{{repo_root}}" "{{ host }}"
 
-# Copy the live lazy.nvim lockfile (~/.local/state) into the repo snapshot.
-# Run after :Lazy sync in nvim; shows the diff, then commit manually.
+# Copy the live lazy.nvim lockfile (~/.local/state) into the committed snapshot
+# of the nvim-config checkout. Run after :Lazy sync in nvim; shows the diff,
+# then commit it in ~/src/nix/nvim-config.
 nvim-lock-sync:
-    cp "$HOME/.local/state/nvim/lazy-lock.json" files/nvim/lazy-lock.json
-    git diff --stat -- files/nvim/lazy-lock.json
+    cp "$HOME/.local/state/nvim/lazy-lock.json" "$HOME/src/nix/nvim-config/lazy-lock.json"
+    git -C "$HOME/src/nix/nvim-config" diff --stat -- lazy-lock.json
 
 # --- Repo-wide workflows ---------------------------------------------------------
 fmt:

@@ -102,7 +102,8 @@ in
     };
     # No separate engine unit: the live-coding flow runs the engine inside the
     # scnvim sclang session (nvim + scnvim REPL boots scsynth itself under
-    # pw-jack, see files/nvim/lua/plugins/supercollider.lua). This keeps code
+    # pw-jack, see lua/plugins/supercollider.lua in the nvim-config checkout).
+    # This keeps code
     # and engine in one process so edits take effect immediately — the raw
     # SuperCollider equivalent of Tidal's hot reload, without TidalCycles.
     # SuperDirtMixer keeps its presets in the quark's own presets/ folder

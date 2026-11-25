@@ -20,8 +20,8 @@
         RIPGREP_CONFIG_PATH = "${config.users.users.neg.home}/.config/ripgrep/ripgreprc";
 
         FZF_DEFAULT_COMMAND = "${lib.getExe pkgs.fd} --type=f --hidden --exclude=.git";
-        # The lusty pickers mirror this profile (files/nvim/lua/lusty/theme.toml:
-        # prompt/pointer/marker glyphs and the fg/fg+/hl/hl+/border roles).
+        # The lusty pickers mirror this profile (lua/lusty/theme.toml in
+        # ~/src/nix/nvim-config: prompt/pointer/marker glyphs and the fg/fg+/hl/hl+/border roles).
         # Change both together, or the two pickers drift apart.
         FZF_DEFAULT_OPTS = neg.guardFzfOpts "FZF_DEFAULT_OPTS" (
           builtins.concatStringsSep " " (
@@ -128,10 +128,9 @@
         --glob=!_build/
         --glob=!tags
         --glob=!.pub-cache
-        # NB: no --glob=!package-lock.json / !lazy-lock.json — those lock files
-        # are tracked in this repo (the vicinae extension,
-        # files/nvim/lazy-lock.json) and a basename glob hides them from rg and
-        # fd despite being committed (audit 2026-09-15).
+        # NB: no --glob=!package-lock.json — the vicinae extension's lock file
+        # is tracked in this repo, and a basename glob hides it from rg and fd
+        # despite being committed (audit 2026-09-15).
         # 16C/32T Ryzen: ripgrep defaults to 12 worker threads — use all 32.
         --threads=32
       '';

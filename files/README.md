@@ -8,10 +8,10 @@ Static configuration files linked to user home via nix-maid.
 Terminal tools (inputrc, kanata, tig) | | `config/` | Misc app configs (amfora, rustmission) | |
 `fastfetch/` | Fastfetch config assets (skull) | | `git/` | Git config and ignore | | `gui/` |
 Hyprland, swayimg, vicinae configs | | `kitty/` | Kitty terminal | | `media/` | PipeWire /
-WirePlumber configs | | `mpv/` | MPV player configs | | `nvim/` | Neovim configuration | |
-`patches/` | Patch files used by packages | | `pleamar/` | Shell scenes, libraries and the theme
-pipeline | | `shell/` | Zsh, bash, environment | | `transmission/` | Transmission daemon configs | |
-`vale/` | Vale prose linter styles | | `vivaldi/` | Vivaldi browser configs
+WirePlumber configs | | `mpv/` | MPV player configs | | `patches/` | Patch files used by packages |
+| `pleamar/` | Shell scenes, libraries and the theme pipeline | | `shell/` | Zsh, bash, environment
+| | `transmission/` | Transmission daemon configs | | `vale/` | Vale prose linter styles | |
+`vivaldi/` | Vivaldi browser configs
 
 Plus top-level `surfingkeys.js` (hand-written Surfingkeys config, wired via
 `packages/overlays/gui.nix`).

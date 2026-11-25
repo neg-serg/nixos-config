@@ -103,8 +103,9 @@ let
   mkRuKeys = keys: builtins.filter (k: k != null) (map toRu keys);
 
   # vim/neovim langmap: "ru;latin" pairs, ru side first (typing ru chars acts
-  # as latin keys). Order and escaping match files/nvim/lua/00-settings.lua,
-  # which langmapper.nvim generates — the generator must reproduce it exactly.
+  # as latin keys). Order and escaping match lua/00-settings.lua in the
+  # nvim-config checkout (~/src/nix/nvim-config), which langmapper.nvim
+  # generates — the generator must reproduce it exactly.
   langmapEn = [
     "`"
     "q"

@@ -10,19 +10,30 @@ let
   devEnabled = config.lib.neg.enabled "dev";
 
   # Neovim nightly (0.13.0-dev) instead of stable 0.12.6: guh.nvim needs
-  # `vim.async` (files/nvim/lua/plugins/integration/guh.lua), which only exists
-  # after 0.12.6. The flake input pins the exact neovim master rev; the module
-  # expects the *unwrapped* build here and applies its own wrapper for the
-  # python3/node providers.
+  # `vim.async` (~/src/nix/nvim-config/lua/plugins/integration/guh.lua), which
+  # only exists after 0.12.6. The flake input pins the exact neovim master rev;
+  # the module expects the *unwrapped* build here and applies its own wrapper
+  # for the python3/node providers.
   neovimUnwrapped = inputs.neovim-nightly.packages.${pkgs.stdenv.hostPlatform.system}.neovim;
-  nvimConf = config.lib.neg.path "files/nvim";
-  # Deploy each top-level entry as its own symlink (quickshell pattern) instead
-  # of one dir symlink, so the config dir itself stays writable at runtime.
-  # lazy-lock.json is excluded: it is linked to the tracked repo file below so
-  # `:Lazy sync` updates the committed lockfile directly (lua/01-plugins.lua).
-  nvimSrcEntries = builtins.readDir nvimConf;
-  nvimSrcNames = builtins.filter (name: name != "lazy-lock.json") (builtins.attrNames nvimSrcEntries);
-  nvimHomeFiles = neg.mkDirLinks ".config/nvim" nvimConf nvimSrcNames;
+
+  # The config is its own repository (github:neg-serg/nvim-config) checked out
+  # with the other extracted flakes. Every top-level entry is deployed as a
+  # *live* symlink: ~/.config/nvim/<name> points into the working tree, so an
+  # edit applies on the next Neovim start instead of a system rebuild (the
+  # previous store-copy deployment required one).
+  nvimConf = "${config.lib.neg.homeDir}/src/nix/nvim-config";
+  # The entry list is static on purpose: flake evaluation is pure, so reading the
+  # checkout here (readDir/pathExists on an absolute path) is forbidden. A new
+  # top-level entry in the config repository has to be added to this list.
+  nvimEntries = [
+    ".luarc.json"
+    "ftplugin"
+    "init.lua"
+    "lazy-lock.json"
+    "lua"
+    "luasnippets"
+  ];
+  nvimHomeFiles = neg.mkDirLinks ".config/nvim" nvimConf nvimEntries;
 
   # texlab: a 63 MiB LSP needed only when a LaTeX buffer attaches, so Neovim
   # resolves it from an on-demand launcher instead of the system image.
@@ -168,7 +179,8 @@ lib.mkIf devEnabled (
     ))
     {
       # Remove old nvim config symlinks before nix-maid activation deploys the
-      # per-entry symlink tree (the whole-dir symlink becomes a real dir).
+      # per-entry symlink tree (the whole-dir symlink becomes a real dir, and the
+      # entry sources moved from the store to the nvim-config checkout).
       systemd.user.services.nvim-cleanup-symlink = {
         description = "Remove old nvim config symlinks before nix-maid activation";
         before = [ "maid-activation.service" ];
@@ -183,25 +195,11 @@ lib.mkIf devEnabled (
               find "$nvim_dir" -maxdepth 1 -type l -delete 2>/dev/null || true
             fi
             rm -rf "$HOME/.local/state/nix-maid/static/.config/nvim" 2>/dev/null || true
-          '';
-        };
-      };
-      # lazy-lock.json must stay writable at runtime: link it to the tracked
-      # repo file so `:Lazy sync` writes the committed lockfile in place.
-      systemd.user.services.nvim-lockfile-link = {
-        description = "Link writable lazy-lock.json into nvim config";
-        after = [ "maid-activation.service" ];
-        wantedBy = [ "maid-activation.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = pkgs.writeShellScript "nvim-lockfile-link" ''
-            lock="$HOME/.config/nvim/lazy-lock.json"
-            target="/etc/nixos/files/nvim/lazy-lock.json" # repo path = config.lib.neg.path "files/nvim/lazy-lock.json"
-            if [ -L "$lock" ] && [ "$(readlink "$lock")" = "$target" ]; then
-              exit 0
+            # Pure flake evaluation cannot see the checkout, so a missing one
+            # would only surface as dangling links: say it here instead.
+            if [ ! -d ${lib.escapeShellArg nvimConf} ]; then
+              echo "nvim config checkout missing at ${nvimConf}: clone github:neg-serg/nvim-config" >&2
             fi
-            rm -f "$lock" 2>/dev/null || true
-            ln -s "$target" "$lock"
           '';
         };
       };
