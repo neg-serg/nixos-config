@@ -40,9 +40,11 @@ in
   # neg sub-attributes are merged once in packages/overlay.nix — no
   # `(prev.neg or {})` accumulation here (prev is the unmodified base).
   neg = rec {
-    albumdetails = callPkg (pkg "albumdetails") { }; # Music album metadata CLI (used by music-rename script)
+    # albumdetails, duf, termeverything and zsh-native-syntax are not defined
+    # here: neg-pkgs (applied after this overlay) provides them under the same
+    # names, so the local recipes were dead. Deleting them left every drvPath
+    # unchanged.
     dnsglobe = callPkg (pkg "dnsglobe") { }; # Global DNS propagation checker TUI — record answers on a world map
-    duf = callPkg (pkg "duf") { }; # duf fork with --style plain, --no-header, --no-bars flags
     hwctl = callPkg (inputs.rust-pkgs + "/hwctl/package.nix") { }; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
     oryx = callPkg (pkg "oryx") { }; # TUI for sniffing network traffic using eBPF (needs root + BTF kernel)
     hypr-focus = callPkg (inputs.rust-pkgs + "/hypr-focus/package.nix") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
@@ -52,8 +54,6 @@ in
     # this one keeps the explicit path into the rust-pkgs input.
     pretty_printer = callPkg (inputs.rust-pkgs + "/pretty-printer/package.nix") { }; # coloured ppinfo + vid-info
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
-    termeverything = callPkg (pkg "termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
-    zsh-native-syntax = callPkg (pkg "zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
     # Extracted to github:neg-serg/tint, which owns the build and its tests.
     tint = inputs.tint.packages.${prev.stdenv.hostPlatform.system}.default; # Colouriser for CLI output — scanners + per-tool rulesets
     flow = callPkg (pkg "flow") { }; # Terminal dashboard for real-time network throughput
