@@ -35,6 +35,23 @@ _: _: finalPrev: {
     doCheck = false;
   });
 
+  # sdl3 3.4.18's testrwlock starves its writer and hangs until the ctest
+  # timeout (300s here, the nixpkgs patch already raised it from 20): the six
+  # reader threads keep re-acquiring the lock while the writer waits. That is
+  # the pathological scheduling documented upstream in
+  # https://github.com/libsdl-org/SDL/issues/15346; the redesign that makes the
+  # readers back off is 6ad4404, after 3.4.18. Keep the other 24 tests and drop
+  # this one by replacing the generated `test` target with a direct ctest run.
+  # The binary itself is unaffected: only the check phase changes. Drop the
+  # override once the nixpkgs pin carries 6ad4404 or a newer redesign.
+  sdl3 = finalPrev.sdl3.overrideAttrs (_old: {
+    checkPhase = ''
+      runHook preCheck
+      ctest --output-on-failure -E '^testrwlock$'
+      runHook postCheck
+    '';
+  });
+
   # Disable flaky lua-language-server tests
   lua-language-server = finalPrev.lua-language-server.overrideAttrs (_old: {
     doCheck = false;
