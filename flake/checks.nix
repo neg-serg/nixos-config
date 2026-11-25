@@ -8,7 +8,7 @@
 # Domain filter refactoring (Jul 2026):
 #   modules/default.nix now accepts domainFilter via specialArgs, letting
 #   test configurations restrict which module domains are imported (smaller
-#   eval trees). These module checks validate that the filter mechanism works.
+#   eval trees). `test-trantor-gaming` pins the real host's filter.
 # ---------------------------------------------------------------------------
 {
   nixpkgs,
@@ -32,23 +32,6 @@ let
     // {
       inherit domainFilter pkgs;
     };
-
-  mkModuleCheck =
-    name: extraModules: domainFilter:
-    let
-      result = lib.evalModules {
-        specialArgs = mkStubArgs domainFilter;
-        modules = [
-          { _module.check = false; }
-          ../modules/features
-        ]
-        ++ extraModules;
-      };
-    in
-    pkgs.runCommand "check-${name}" { } ''
-      echo "check: ${name} OK (${toString (builtins.length (builtins.attrNames result.options))} options)"
-      touch $out
-    '';
 
   # Eval-only unit checks (lib/*-tests.nix) return { failures, checks, report }.
   # A clean run becomes a trivial runCommand; a failure aborts evaluation.
@@ -82,17 +65,6 @@ let
 
 in
 {
-  # ── Domain filter checks ─────────────────────────────────────────
-  # Validate that modules/default.nix (the actual filter consumer) works
-  # with both the all-domains and a restrictive filter (mirrors the
-  # trantorDomains path in flake/nixos.nix).
-
-  "dom-all" = mkModuleCheck "dom-all" [ ../modules/default.nix ] (_: true);
-
-  "dom-restrictive" = mkModuleCheck "dom-restrictive" [ ../modules/default.nix ] (
-    name: name != "user" && name != "games"
-  );
-
   # ── Unit checks (pure nix, eval-only) ──────────────────────────────
   # lib/ru-keys.nix is the single source of truth for ЙЦУКЕН hotkey
   # duplicates; these assertions pin the table and every generator.

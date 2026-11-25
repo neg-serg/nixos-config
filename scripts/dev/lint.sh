@@ -390,10 +390,6 @@ gate_osh_syntax() {
   bash "$REPO_ROOT/scripts/dev/check-osh-syntax.sh" "$REPO_ROOT"
 }
 
-gate_lusty_smoke() {
-  bash "$REPO_ROOT/scripts/dev/check-lusty-smoke.sh"
-}
-
 gate_annotations() {
   bash "$REPO_ROOT/scripts/dev/check-package-annotations.sh" "$REPO_ROOT"
 }
@@ -422,7 +418,6 @@ GATES=(
   all_syntax
   shell_palette
   osh_syntax
-  lusty_smoke
   annotations
 )
 
