@@ -1,4 +1,4 @@
-{ inputs, paths }:
+{ inputs, ... }:
 final: prev:
 let
   callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
@@ -21,20 +21,6 @@ in
   });
 
   # Herdr: tab appearance knobs (per-state colours and font style, title
-  # templates, accent marker) are not in upstream 0.9.3 — packages/herdr/patches
-  # carries the series that adds them (see its `series` file; applied in order).
-  # The keys are inert in files/herdr/config.toml until a server built with the
-  # series runs: the stock parser keeps the file loadable but reports each key
-  # as unknown (`config check` -> "issues found", `server reload-config` ->
-  # `partial`). A long-lived server keeps the parser it booted with, so the
-  # patched build needs `herdr server live-handoff` to take effect.
-  herdr = prev.herdr.overrideAttrs (old: {
-    patches = (old.patches or [ ]) ++ [
-      (paths.path "packages/herdr/patches/0001-ui-per-state-tab-colours-and-font-styles.patch")
-      (paths.path "packages/herdr/patches/0002-ui-tab-title-templates-and-the-active-marker.patch")
-      (paths.path "packages/herdr/patches/0003-docs-document-the-tab-appearance-keys.patch")
-    ];
-  });
 
   # neg sub-attributes are merged once in packages/overlay.nix — no
   # `(prev.neg or {})` accumulation here (prev is the unmodified base).

@@ -158,7 +158,6 @@ slimChunks
         // (gui.neg or { })
         // {
           game = final.callPackage (inputs.rust-pkgs + "/game/package.nix") { }; # Unified game launcher
-          joern = final.callPackage ./joern { }; # Open-source code analysis platform
           dsh-patch = final.callPackage (inputs.rust-pkgs + "/dsh-patch/package.nix") { }; # count-asserted patcher for dsh bundles and profiles
           dsh = final.callPackage ./dsh { inherit (final.neg) dsh-patch; }; # DeepSeek Harness agent CLI (dsh)
           # Context budget + tool-protocol guard in front of llama-swap; owned by

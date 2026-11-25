@@ -15,7 +15,6 @@ in
   # Audio Flamingo Next GGUF on the GPU when the ROCm torch path cannot.
   # Kernel module (RME HDSPe ALSA driver) — takes `kernel`; the default kernel
   # set is a placeholder, the host overrides it with the actual boot kernel.
-  snd-hdspe = call (pkg "snd-hdspe") { kernel = prev.linuxPackages.kernel; };
   # Python libs for the CamillaGUI backend (camilladsp / camilladsp_plot modules)
   # CamillaDSP itself, built with the native PipeWire backend (`pipewire-backend`):
   # the insert is two filter nodes in the graph instead of the ALSA `pipewire`
@@ -33,7 +32,6 @@ in
     patches = (old.patches or [ ]) ++ [ ./camilladsp-eagain-wait.patch ];
   });
   # VapourSynth NCNN (Vulkan) plugin: AI upscale/interp/denoise in VS (GPL-3)
-  vsncnn = call (pkg "vsncnn") { };
   # -- metering / delivery --
   # Prebuilt upstream bundles: the Flutter meter canvas (with the VST3 that
   # feeds it from a DAW) and `oaa`, the same engine for one file at a time.

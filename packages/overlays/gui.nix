@@ -36,7 +36,6 @@ in
   # (modules/user/nix-maid/apps/gui-apps.nix).
   # Patched Vivaldi build (wayland flags, bundled libffmpeg RUNPATH); the system
   # only carries a launcher.
-  vivaldi-fixed = callPkg (pkg "vivaldi") { };
   # hypr-kdeconnect-fix — RemoteDesktop portal backend bridging KDE Connect /
   # Deskflow input to the wlroots virtual-input protocols Hyprland exposes.
   # hyprqt6engine — not in the pinned nixpkgs yet, pinned locally (see
@@ -48,7 +47,6 @@ in
   wallhaven = callPkg (pkg "wallhaven") { inherit mkVicinaeExtension; };
   hyprwhspr = callPkg (pkg "hyprwhspr") { inherit mkVicinaeExtension; };
   aura = callPkg (pkg "aura") { inherit mkVicinaeExtension; }; # the emotion/CBT diary: record a note from the launcher
-  sonda = callPkg (pkg "sonda") { }; # file manager for pleamar-wm that searches files by what they hold
   # Irori — game launcher repacked from the upstream release tarball. The
   # WebKitGTK sign-in helper makes the closure heavy, so the system installs the
   # on-demand launcher (modules/user/games/irori.nix) instead of the package.
