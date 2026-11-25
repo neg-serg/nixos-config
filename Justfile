@@ -51,11 +51,12 @@ deploy host="trantor": pleamar-sync check-eval hooks-ensure
 deploy-debug host="trantor": check-eval hooks-ensure
     sudo nixos-rebuild switch --flake .#{{ host }} -L -v < /dev/null
 
-# Refresh the path: flake input of the shell after editing its checkout.
+# Refresh the git+file: flake input of the shell after committing in its checkout.
 #
-# The deployed scene links point at the checkout (live), but Nix pins the flake
-# input by narHash: after an edit a rebuild refuses with "NAR hash mismatch"
-# until the lock is refreshed. This is local and cheap; `deploy` runs it first.
+# The deployed scene links point at the checkout (live), so a scene edit needs
+# nothing here. The module and worker sources come from the pinned revision
+# instead, and a new commit is invisible to the build until the lock follows it.
+# This is local and cheap; `deploy` runs it first.
 pleamar-sync:
     nix flake lock --update-input pleamar-config
 

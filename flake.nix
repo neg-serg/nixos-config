@@ -199,7 +199,8 @@
     # the tree does not help: the flake source contains tracked files only,
     # while absolute paths are forbidden in pure evaluation. Keep them under
     # $XDG_DATA_HOME (/home/neg/.local/share/nixos-src/renoise on trantor);
-    # they arrive as a path input.
+    # they arrive as a `path:` input — the one local input that cannot be a git
+    # ref: it is a data directory with two tarballs, not a checkout.
     renoise-src = {
       url = "path:/home/neg/.local/share/nixos-src/renoise";
       flake = false;
@@ -211,10 +212,17 @@
     };
     pleamar-config = {
       # The pleamar shell as its own flake: scene tree, worker crates, the
-      # nix-maid module and the greetd login layer. A `path:` input on the live
-      # checkout keeps the deployed links writable (the module's `liveRoot`
-      # points at the same directory).
-      url = "path:/home/neg/src/nix/pleamar-config";
+      # nix-maid module and the greetd login layer. The input is a `git+file:`
+      # on the live checkout, NOT a `path:`: `path:` hashes the directory
+      # including `.git`, so any git command there (even a `git status` that
+      # refreshes the index) invalidated the narHash and broke evaluation. A git
+      # input pins the committed tree by revision; a new commit is picked up
+      # with `just pleamar-sync`.
+      #
+      # The deployed scene links stay live regardless: `liveRoot` (modules/user/
+      # nix-maid/gui/pleamar-config.nix) points at the checkout, so a scene edit
+      # applies without a rebuild and without touching the lock.
+      url = "git+file:///home/neg/src/nix/pleamar-config";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {

@@ -1366,13 +1366,17 @@
         "pleamar-wm": "pleamar-wm"
       },
       "locked": {
-        "narHash": "sha256-BL5wfBLGtNDzXCvWCzynt5CH54YArBzuOaH0RYbvM68=",
-        "path": "/home/neg/src/nix/pleamar-config",
-        "type": "path"
+        "lastModified": 1795618056,
+        "narHash": "sha256-hmUkssEGn4NZIitUdsAx6JHgtQN2vxIkCCig463sRFM=",
+        "ref": "refs/heads/main",
+        "rev": "84b11c4bd52f3be5cdb0811dc33495f3a353b0f8",
+        "revCount": 3,
+        "type": "git",
+        "url": "file:///home/neg/src/nix/pleamar-config"
       },
       "original": {
-        "path": "/home/neg/src/nix/pleamar-config",
-        "type": "path"
+        "type": "git",
+        "url": "file:///home/neg/src/nix/pleamar-config"
       }
     },
     "pleamar-wm": {

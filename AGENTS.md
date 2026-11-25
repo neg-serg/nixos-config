@@ -52,10 +52,12 @@ Project Structure
 - `secrets/` — SOPS-encrypted secrets
 - `files/` — config files (Hyprland, kitty, scripts)
 - The pleamar shell (scenes, worker crates, nix-maid module, login layer) is its own
-  repository: `github:neg-serg/pleamar-config`, consumed as a `path:` flake input on the
-  live checkout (`~/src/nix/pleamar-config`). The deployed scene links are live; a rebuild
-  after editing the checkout needs `just pleamar-sync` first (or just `just deploy`,
-  which runs it), because Nix pins the input by narHash.
+  repository: `github:neg-serg/pleamar-config`, consumed as a `git+file:` flake input on the
+  live checkout (`~/src/nix/pleamar-config`). The deployed scene links are live, so a scene
+  edit applies without a rebuild. Module and worker sources come from the pinned revision:
+  they reach the build after a commit plus `just pleamar-sync` (or `just deploy`, which runs
+  it). A `path:` input is deliberately not used: it hashes `.git` too, so any git command in
+  the checkout would invalidate the lock.
 - `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
 - `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild,
   theming); knowledge that belongs to a single module lives in that module's header
