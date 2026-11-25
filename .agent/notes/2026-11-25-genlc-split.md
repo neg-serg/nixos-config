@@ -1,7 +1,7 @@
 # 2026-11-25 — genlc moved to its own project
 
-Status: extracted, published, wired and verified. The gaps at the bottom are deliberate and each
-names how to close it.
+Status: extracted, published, wired, activated and verified. The gaps at the bottom are deliberate
+and each names how to close it.
 
 Repository: <https://github.com/neg-serg/genlc> (public, branch `master`, head `db61e5c`). Live
 checkout: `/home/neg/src/genlc`.
@@ -67,10 +67,13 @@ In the new repository: `nix build .#default` produced `genlc-0.2.0` (`--version`
 
 Here: `nix build .#nixosConfigurations.trantor.pkgs.neg.genlc` builds through the new input
 (`/nix/store/q48r3zich3x7l47iby3b1m8fmc3s6y0p-genlc-0.2.0`, after the comment fix and a re-lock to
-`db61e5c`), `just fmt`, `just lint` (18/18 in an isolated worktree whose content is exactly this
-commit), and a full toplevel build (`/nix/store/ncqzc28369gqwm5k27885mavv8lzvf3b-…`) whose
-`sw/bin/genlc` and unit `ExecStart` both point at that package. The activation was left to the
-deploy that follows the parallel shtoy extraction; the committed tree carries the change.
+`db61e5c`), `just fmt`, `just lint` (18/18 here and in an isolated worktree that held exactly this
+content while the parallel shtoy extraction was still uncommitted), and the toplevel
+`/nix/store/jkm9pl0cibh39491w46mcjj1bljgh4pp-nixos-system-trantor-26.11.20261121.2786a2a` was
+activated with `just agent-switch`. After it `/run/current-system` matches that path, `sw/bin/genlc`
+and the unit's `ExecStart` both point at `q48r3zi…`, `genlc.service` is active, `genlc status`
+answers `adapter ok` with three leased monitors on sessions 03/04/05, and `genlc --version` prints
+`0.2.0`.
 
 ## Gaps to fix later
 
@@ -101,4 +104,15 @@ deploy that follows the parallel shtoy extraction; the committed tree carries th
   wrong and were replaced with what the code does; license unchanged.
 - This tree `6bab66e33` — the extraction commit (input, overlay entry, consumer paths, package
   removal, README statistic).
-- This tree, follow-up — re-lock the input to `db61e5c` and record the license decision here.
+- This tree `fe481cec5` — re-lock the input to `db61e5c` and record the license decision here.
+- This tree `b3edd33b5` — restore the `music-index-tools` pin that `fe481cec5` reverted.
+
+## Worktree coordination
+
+This extraction shared `/etc/nixos` with a parallel shtoy extraction (committed as `2e738094f`). Two
+commits here were therefore built in isolated worktrees and staged by blob (`git hash-object` plus
+`update-index`), so the other session's uncommitted work was neither swept into them nor disturbed.
+One collision did land: `fe481cec5` carried a `flake.lock` regenerated in a worktree that predated
+the flake-bump commit `4194dd6f6`, so that commit's `music-index-tools` bump was reverted;
+`b3edd33b5` puts the pin back. Check `git log` between a long-lived worktree and `main` before
+copying a lock out of it.
