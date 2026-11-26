@@ -267,7 +267,18 @@ let
         "  ${daemon.package}/bin/${daemon.exe} mr,"
         "  include \"${pkgs.apparmorRulesFromClosure { name = "neg-${name}"; } [ daemon.package ]}\""
       ];
-      ruleLines = lib.splitString "\n" (lib.removeSuffix "\n" (indent (lib.trim daemon.rules)));
+      # Every profile ends with the same network grants (ntfy listens on IPv4
+      # only, so it opts out of the IPv6 pair).
+      netRules = [
+        "  network inet stream,"
+        "  network inet dgram,"
+      ]
+      ++ lib.optionals (daemon.inet6 or true) [
+        "  network inet6 stream,"
+        "  network inet6 dgram,"
+      ];
+      ruleLines =
+        lib.splitString "\n" (lib.removeSuffix "\n" (indent (lib.trim daemon.rules))) ++ netRules;
     in
     lib.concatStringsSep "\n" (
       header
@@ -294,12 +305,9 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    security.apparmor.policies = lib.mapAttrs' (name: daemon: {
-      inherit name;
-      value = {
-        state = cfg.${name};
-        profile = mkProfile name daemon;
-      };
+    security.apparmor.policies = lib.mapAttrs (name: daemon: {
+      state = cfg.${name};
+      profile = mkProfile name daemon;
     }) enabledDaemons;
   };
 }

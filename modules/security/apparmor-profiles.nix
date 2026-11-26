@@ -33,10 +33,10 @@ let
       } r,";
 in
 {
-  # What the closure rules cannot know, per daemon: /etc, /run and /var state,
-  # capabilities, network families. The closure rules already grant read on
-  # every store path of the package (libraries, share/, etc/), plus the binary
-  # itself (added in mkProfile).
+  # What the closure rules cannot know, per daemon: /etc, /run and /var state and
+  # capabilities. The closure rules already grant read on every store path of the
+  # package (libraries, share/, etc/), plus the binary itself (added in mkProfile);
+  # the IPv4/IPv6 stream+dgram grants are appended by mkProfile to every profile.
   sshd = {
     package = config.services.openssh.package;
     exe = "sshd";
@@ -137,10 +137,6 @@ in
       capability setuid,
       capability sys_chroot,
       capability sys_resource,
-      network inet stream,
-      network inet dgram,
-      network inet6 stream,
-      network inet6 dgram,
     '';
   };
 
@@ -163,10 +159,6 @@ in
       capability net_raw,
       capability setgid,
       capability setuid,
-      network inet stream,
-      network inet dgram,
-      network inet6 stream,
-      network inet6 dgram,
     '';
   };
 
@@ -205,10 +197,6 @@ in
       /etc/resolv.conf r,
       # DNS on 127.0.0.1:53 and the admin UI on 127.0.0.1:3000.
       capability net_bind_service,
-      network inet stream,
-      network inet dgram,
-      network inet6 stream,
-      network inet6 dgram,
     '';
   };
 
@@ -220,6 +208,8 @@ in
     etcFiles = [ "os-release" ];
     # server.yml is rendered into the store and passed as `-c <path>`.
     extraPaths = execStartPath "ntfy-sh" "-c";
+    # No IPv6 listener (mkProfile adds the IPv4 grants; the IPv6 pair is opt-out).
+    inet6 = false;
     rules = ''
       # DynamicUser: /var/lib/ntfy-sh is a bind mount of
       # /var/lib/private/ntfy-sh (both spellings appear to the kernel
@@ -240,8 +230,6 @@ in
       /run/systemd/notify w,
       # listen-http = ":2586" needs the ambient CAP_NET_BIND_SERVICE.
       capability net_bind_service,
-      network inet stream,
-      network inet dgram,
     '';
   };
 
@@ -272,10 +260,6 @@ in
       # without a TUN device and the routes it created.
       capability net_raw,
       network netlink raw,
-      network inet stream,
-      network inet dgram,
-      network inet6 stream,
-      network inet6 dgram,
     '';
   };
 
@@ -310,10 +294,6 @@ in
       # host's complain log did not show yet).
       /tmp/ r,
       /tmp/tr_session_id_* rwk,
-      network inet stream,
-      network inet dgram,
-      network inet6 stream,
-      network inet6 dgram,
     '';
   };
 
@@ -342,10 +322,6 @@ in
       # aria2 looks for ~/.netrc for HTTP credentials.
       /home/*/.netrc r,
       # RPC on 127.0.0.1:6800, download sockets are ephemeral.
-      network inet stream,
-      network inet dgram,
-      network inet6 stream,
-      network inet6 dgram,
     '';
   };
 
@@ -394,10 +370,6 @@ in
       # socket is dgram, the address dump one is raw).
       network netlink dgram,
       network netlink raw,
-      network inet stream,
-      network inet dgram,
-      network inet6 stream,
-      network inet6 dgram,
     '';
   };
 }
