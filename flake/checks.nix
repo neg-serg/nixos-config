@@ -135,20 +135,17 @@ in
   "fzf-opts" =
     let
       vars = self.nixosConfigurations.trantor.config.environment.variables;
-      fzfOpts = [
-        {
-          name = "FZF_DEFAULT_OPTS";
-          value = vars.FZF_DEFAULT_OPTS;
-        }
-        {
-          name = "FZF_CTRL_R_OPTS";
-          value = vars.FZF_CTRL_R_OPTS;
-        }
-        {
-          name = "FZF_CTRL_T_OPTS";
-          value = vars.FZF_CTRL_T_OPTS;
-        }
-      ];
+      fzfOpts =
+        map
+          (name: {
+            inherit name;
+            value = vars.${name};
+          })
+          [
+            "FZF_DEFAULT_OPTS"
+            "FZF_CTRL_R_OPTS"
+            "FZF_CTRL_T_OPTS"
+          ];
     in
     pkgs.runCommand "check-fzf-opts"
       {
