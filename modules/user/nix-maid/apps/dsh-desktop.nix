@@ -68,15 +68,21 @@ in
     serviceConfig = {
       Type = "dbus";
       BusName = "org.a11y.Bus";
-      # --a11y=1 sets org.a11y.Status.IsEnabled=true on the bus at
-      # startup: without it GTK/Qt apps do not export accessibility trees
-      # and CUL list_apps returns an empty accessible_apps list.
+      # No arguments. at-spi2-core 2.62 removed `--a11y=1`: its usage line still
+      # advertises it, but `main()` accepts `--launch-immediately` and nothing else
+      # and answers any other argument with `g_error` → abort (`status=6/ABRT`,
+      # `bus/at-spi-bus-launcher.c`). With the flag the unit restart-looped into
+      # `start-limit-hit` and the accessibility bus never came up (2026-11-26,
+      # at-spi2-core 2.62.0). What the flag used to do is the bus's own business
+      # now: `org.a11y.Status.IsEnabled` follows the event listeners registered on
+      # it, and the launcher mirrors that into
+      # `org.gnome.desktop.interface toolkit-accessibility`.
       # The empty first entry resets the packaged unit's ExecStart: since
       # services.gnome.at-spi2-core ships the same unit, this definition is
       # merged as a drop-in, and Type=dbus refuses two ExecStart lines.
       ExecStart = [
         ""
-        "${pkgs.at-spi2-core}/libexec/at-spi-bus-launcher --a11y=1"
+        "${pkgs.at-spi2-core}/libexec/at-spi-bus-launcher"
       ];
       Slice = "session.slice";
       TimeoutStopSec = 5;
