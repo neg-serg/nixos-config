@@ -9,9 +9,8 @@
   config = lib.mkIf (config.lib.neg.enabled "gui") (
     neg.mkHomeFiles (
       let
-        # Path to the source directories
+        # Path to the script sources
         binDir = config.lib.neg.path "packages/local-bin/bin";
-        scriptsDir = config.lib.neg.path "packages/local-bin/scripts";
         # Data files of the local-bin tools (the window-class table of
         # menu-search, see raise_window_for there) — these are configuration,
         # not scripts, so they live under files/ and are rendered verbatim.
@@ -79,106 +78,15 @@
           else
             { };
 
-        # Scripts to skip automatic generation for (handled specially below)
-        autoSkip = [
-          "kitty-scrollback-nvim"
-          "surfingkeys-server"
-          "window-activate"
-          "paths"
-          "menu-search"
-          "dsh-worktree"
-          "shtoy"
-          "proxy"
-          "swayimg-actions.sh"
-          "steam-cloud-fix"
-          "dsh-statusline"
-          "sw"
-          "shade"
-          "main-menu"
-          "surfingkeys-extension-patch"
-          "dsh-url"
-          "qr"
-          "pdf2md"
-          "upstream-radar"
-          "vsmlrt-models"
-          "nix-updates"
-          "audio-diag"
-          "jam"
-          "shabda"
-          "synth"
-          "midi-bridge"
-          "renoise-osc-config"
-          "sc-live"
-          "sc-record"
-          "flacspec"
-          "mp"
-          "nb"
-          "qe"
-          "pb"
-          "any"
-          "v"
-          "sclang-pwj"
-          "renoise-pwj"
-          "iommu-info"
-          "music-rename"
-          "read_documents"
-          "pl"
-          "music-tui"
-          "gh-issues-export"
-          "mpd_del_album"
-          "sx"
-          "sys-relief"
-          "vol"
-          "win-vm"
-          "pic-notify"
-          "screenrec"
-          "clip"
-          "screenshot-toast"
-          "pic-info"
-          "pic-ocr"
-          "pic-dirs-list"
-          "wl-restore"
-          "unlock"
-          "kitty-font-zoom"
-          "cursor-stretch"
-          "pngoptim"
-          "hypr-resize-proportional"
-        ];
+        # Every script under bin/ becomes ~/.local/bin/<name> unless the
+        # special-case table below provides the name itself (the `//` merge
+        # discards those auto entries; their values are never forced).
+        autoEntries = neg.mkDirEntries ".local/bin" (builtins.attrNames binFiles) (name: {
+          executable = true;
+          text = subst (builtins.readFile (binDir + "/${name}"));
+        });
 
-        autoEntries =
-          neg.mkDirEntries ".local/bin"
-            (builtins.attrNames binFiles |> lib.filter (n: !(lib.elem n autoSkip)))
-            (name: {
-              executable = true;
-              text = subst (builtins.readFile (binDir + "/${name}"));
-            });
-
-        # 2. Scripts from packages/local-bin/scripts
-        scriptFiles =
-          if builtins.pathExists scriptsDir then
-            builtins.readDir scriptsDir |> lib.filterAttrs (_: v: v == "regular")
-          else
-            { };
-
-        scriptSkip = [
-          "ren"
-          "vid-info.py"
-          "pass-2col"
-          "punzip"
-          "tty-log"
-          "journal-clean.sh"
-          "music-highlevel"
-        ]; # substitution or Rust ports
-
-        scriptEntries =
-          neg.mkDirEntries ".local/bin"
-            (builtins.attrNames scriptFiles |> lib.filter (n: !(lib.elem n scriptSkip)))
-            (name: {
-              executable = true;
-              text = subst (builtins.readFile (scriptsDir + "/${name}"));
-            });
-
-        # 3. Special cases (Substitutions)
+        # 2. Special cases (Substitutions)
 
         # kitty-scrollback-nvim substitution
         nixKsbPath = "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py";
@@ -186,7 +94,6 @@
         ksbText = lib.replaceStrings [ "@NIX_KSB_PATH@" ] [ nixKsbPath ] ksbTpl;
       in
       autoEntries
-      // scriptEntries
       // {
         # Rust port (rust-pkgs/local-bin-tools): no interpreter, no PYTHONPATH.
         ".local/bin/ren".source = lib.getExe' pkgs.neg.local-bin-tools "ren";
