@@ -32,51 +32,36 @@
 let
   cfg = config.services.llm-proxy;
 
-  # One guard profile. Every key is optional and null means "not set here":
-  # `defaults` and each `profiles` entry are stripped of nulls before they
-  # reach the JSON, so an unset key never shadows a value from `defaults` or
-  # from the proxy's own base set.
+  # One option of a guard profile: every key is optional and null means "not set
+  # here". `defaults` and each `profiles` entry are stripped of nulls before they
+  # reach the JSON, so an unset key never shadows a value from `defaults` or from
+  # the proxy's own base set.
+  mkOpt =
+    type: default: description:
+    lib.mkOption { inherit type default description; };
   guardModule = {
     options = {
-      ctx = lib.mkOption {
-        type = lib.types.nullOr lib.types.ints.positive;
-        default = null;
-        description = "Context window of the slot, in tokens.";
-      };
-      reserve = lib.mkOption {
-        type = lib.types.nullOr lib.types.ints.unsigned;
-        default = null;
-        description = "Completion headroom kept out of the trimmed prompt.";
-      };
-      keep_tool_results = lib.mkOption {
-        type = lib.types.nullOr lib.types.ints.unsigned;
-        default = null;
-        description = "Tool-result groups kept when trimming.";
-      };
-      keep_last_messages = lib.mkOption {
-        type = lib.types.nullOr lib.types.ints.unsigned;
-        default = null;
-        description = "Trailing turns kept when trimming.";
-      };
-      single_tool = lib.mkOption {
-        type = lib.types.nullOr lib.types.bool;
-        default = null;
-        description = ''
-          Inject the one-tool-per-turn rule when tools are present. Off in
-          the base set, and skipped anyway when the client's own system
-          prompt already asks for one action per turn.
-        '';
-      };
-      thinking = lib.mkOption {
-        type = lib.types.nullOr lib.types.bool;
-        default = null;
-        description = "Pin chat_template_kwargs.enable_thinking (null leaves it alone).";
-      };
-      target = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = null;
-        description = "Model name to send upstream, for aliases.";
-      };
+      ctx =
+        mkOpt (lib.types.nullOr lib.types.ints.positive) null
+          "Context window of the slot, in tokens.";
+      reserve =
+        mkOpt (lib.types.nullOr lib.types.ints.unsigned) null
+          "Completion headroom kept out of the trimmed prompt.";
+      keep_tool_results =
+        mkOpt (lib.types.nullOr lib.types.ints.unsigned) null
+          "Tool-result groups kept when trimming.";
+      keep_last_messages =
+        mkOpt (lib.types.nullOr lib.types.ints.unsigned) null
+          "Trailing turns kept when trimming.";
+      single_tool = mkOpt (lib.types.nullOr lib.types.bool) null ''
+        Inject the one-tool-per-turn rule when tools are present. Off in
+        the base set, and skipped anyway when the client's own system
+        prompt already asks for one action per turn.
+      '';
+      thinking =
+        mkOpt (lib.types.nullOr lib.types.bool) null
+          "Pin chat_template_kwargs.enable_thinking (null leaves it alone).";
+      target = mkOpt (lib.types.nullOr lib.types.str) null "Model name to send upstream, for aliases.";
     };
   };
 
@@ -98,89 +83,71 @@ let
   };
   stripNulls = lib.filterAttrs (_: v: v != null);
 
-  # Built-in guards. The `profiles` option holds only the user's side, so
-  # these merge key by key: a host that overrides one field would otherwise
-  # replace the whole profile (NixOS picks a single definition per key when
-  # priorities differ, and ctx/target would silently disappear).
-  builtinProfiles = {
+  # Built-in guards. The `profiles` option holds only the user's side, so these
+  # merge key by key: a host that overrides one field would otherwise replace the
+  # whole profile (NixOS picks a single definition per key when priorities
+  # differ, and ctx/target would silently disappear).
+  #
+  # Most names share one shape: a context window, optionally an upstream target
+  # (aliases) and the opt-in single-tool rule.
+  guardGroup =
+    ctx: extra: names:
+    lib.genAttrs names (_: { inherit ctx; } // extra);
+  builtinProfiles = lib.foldl' (a: b: a // b) { } [
     # Chat tiers: real windows from llama-swap.nix, so trimming only fires
     # when the slot itself would reject the request.
-    "qwen3.8-27b-abliterated".ctx = 32768;
-    "qwen3.8-27b-vision".ctx = 16384;
-    "qwen3.8" = {
-      target = "qwen3.8-27b-abliterated";
-      ctx = 32768;
-    };
-    "ru" = {
-      target = "qwen3.8-27b-abliterated";
-      ctx = 32768;
-    };
-    "qwen3.8-27b-bartowski".ctx = 16384;
-    "bart27b" = {
-      target = "qwen3.8-27b-bartowski";
-      ctx = 16384;
-    };
-    "qwen3.8-27b-unsloth".ctx = 32768;
-    "ud" = {
-      target = "qwen3.8-27b-unsloth";
-      ctx = 32768;
-    };
+    (guardGroup 32768 { } [
+      "qwen3.8-27b-abliterated"
+      "qwen3.8-27b-unsloth"
+      "inkling-2-mini"
+      "inkling-2-mini-q4"
+    ])
+    (guardGroup 16384 { } [
+      "qwen3.8-27b-vision"
+      "qwen3.8-27b-bartowski"
+      "inkling-2-mini-q3"
+      "qwen3.8-4b"
+    ])
+    (guardGroup 32768 { target = "qwen3.8-27b-abliterated"; } [
+      "qwen3.8"
+      "ru"
+      "commit"
+    ])
+    (guardGroup 16384 { target = "qwen3.8-27b-bartowski"; } [ "bart27b" ])
+    (guardGroup 32768 { target = "qwen3.8-27b-unsloth"; } [ "ud" ])
     # Small tiers: `mini` is the 32k entry point the fleet uses for them, and
     # since 2026-11-21 that is the Inkling IQ3 tier. The `vision` alias moved
     # to the 27B on 2026-11-11 (its slot carries the mmproj); `vision-fast`
     # points at ornith-1.5-9b now that the 8B is gone.
-    "inkling-2-mini".ctx = 32768;
-    "inkling-mini" = {
-      target = "inkling-2-mini";
-      ctx = 32768;
-    };
-    "inkling-2-mini-q3".ctx = 16384;
-    "inkling-q3" = {
-      target = "inkling-2-mini-q3";
-      ctx = 16384;
-    };
-    "inkling-2-mini-q4".ctx = 32768;
-    "vision-fast" = {
+    (guardGroup 32768 { target = "inkling-2-mini"; } [
+      "inkling-mini"
+      "mini"
+    ])
+    (guardGroup 16384 { target = "inkling-2-mini-q3"; } [ "inkling-q3" ])
+    (guardGroup 32768 {
       target = "ornith-1.5-9b";
-      ctx = 32768;
       single_tool = false;
-    };
-    "vision" = {
-      target = "qwen3.8-27b-vision";
-      ctx = 16384;
-      single_tool = false;
-    };
-    "vision-27b" = {
-      target = "qwen3.8-27b-vision";
-      ctx = 16384;
-      single_tool = false;
-    };
-    "mini" = {
-      target = "inkling-2-mini";
-      ctx = 32768;
-    };
-    "falcon-h1-3b" = {
-      ctx = 65536;
-      single_tool = false;
-    };
-    "falcon" = {
+    } [ "vision-fast" ])
+    (guardGroup 16384
+      {
+        target = "qwen3.8-27b-vision";
+        single_tool = false;
+      }
+      [
+        "vision"
+        "vision-27b"
+      ]
+    )
+    (guardGroup 65536 { single_tool = false; } [ "falcon-h1-3b" ])
+    (guardGroup 65536 {
       target = "falcon-h1-3b";
-      ctx = 65536;
       single_tool = false;
-    };
+    } [ "falcon" ])
     # The commit writers: the slots' real windows, so the guard trims only
     # requests the slot itself would reject. `commit` is the default writer's
     # alias (the 27B, `COMMIT_DEFAULT_MODEL`); `commit-4b` is the fast tier.
-    "qwen3.8-4b".ctx = 16384;
-    "commit-4b" = {
-      target = "qwen3.8-4b";
-      ctx = 16384;
-    };
-    "commit" = {
-      target = "qwen3.8-27b-abliterated";
-      ctx = 32768;
-    };
-  };
+    (guardGroup 16384 { target = "qwen3.8-4b"; } [ "commit-4b" ])
+  ];
 
   wireProfiles = lib.mapAttrs (
     name: override: (builtinProfiles.${name} or { }) // stripNulls override
@@ -212,21 +179,9 @@ in
         llmctl and the bench fall back to llama-swap when it is down.
       '';
     };
-    host = lib.mkOption {
-      type = lib.types.str;
-      default = "127.0.0.1";
-      description = "Bind address.";
-    };
-    port = lib.mkOption {
-      type = lib.types.port;
-      default = 9300;
-      description = "Listen port.";
-    };
-    upstream = lib.mkOption {
-      type = lib.types.str;
-      default = "http://127.0.0.1:9292";
-      description = "llama-swap base URL.";
-    };
+    host = mkOpt lib.types.str "127.0.0.1" "Bind address.";
+    port = mkOpt lib.types.port 9300 "Listen port.";
+    upstream = mkOpt lib.types.str "http://127.0.0.1:9292" "llama-swap base URL.";
     defaults = lib.mkOption {
       type = lib.types.submodule guardModule;
       default = { };
