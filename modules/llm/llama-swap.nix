@@ -393,6 +393,30 @@ let
       --reasoning-effort low
   '';
 
+  # Slot rows for `settings.models`. A local tier is just its command (plus an
+  # optional ttl); a remote tier adds the ssh stop command and the proxy
+  # endpoint, so the 21 entries stay one line each. `ttl = null` must emit no
+  # key at all: a `ttl: null` in the YAML would be a different config.
+  localSlot = name: cmd: ttl: aliases: {
+    inherit name;
+    value = {
+      inherit cmd;
+    }
+    // lib.optionalAttrs (ttl != null) { inherit ttl; }
+    // {
+      aliases = lib.splitString " " aliases;
+    };
+  };
+  remoteSlot = name: cmd: cmdStop: port: ttl: aliases: {
+    inherit name;
+    value = {
+      inherit cmd cmdStop ttl;
+      proxy = "http://192.168.0.144:${toString port}";
+      checkEndpoint = "/health";
+      aliases = lib.splitString " " aliases;
+    };
+  };
+
   systemdUser = config.lib.neg.systemdUser;
   swapEnabled = enabled && config.services.llama-swap.enable;
 
@@ -447,32 +471,27 @@ let
     '';
   };
 
+  # The remote tiers are one ssh line to the box; the start variants add the
+  # keepalive, so the difference is the `opts` argument.
+  # allow-absolute-home: the path is on the remote host, which has no root
+  remoteCtl = opts: name: ''
+    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 ${opts}user@192.168.0.144 /home/user/bin/${name}
+  '';
+  remoteStart = remoteCtl "-o ServerAliveInterval=15 ";
+  remoteStop = remoteCtl "";
+
   # Ornith-1.5-35B-A3B (MIT, 35B MoE with 3B active, 262k native): the coding
   # agent tier that replaced Gyro-Coder. Its weights live on the box's own
   # /srv/models (220 GB SSD), so a cold load is a local mmap instead of an SMB
   # stream; the 15 min TTL only releases the card between sessions.
-  # allow-absolute-home: the path is on the remote host, which has no root
-  ornith = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/ornith-start
-  '';
-
-  # allow-absolute-home: the path is on the remote host, which has no root
-  ornithStop = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/ornith-stop
-  '';
+  ornith = remoteStart "ornith-start";
+  ornithStop = remoteStop "ornith-stop";
 
   # Qwen3.8-27B in MagicQuant MXFP4 (IQ4_XS, 13.95 GiB) with the stock 27B
   # bf16 projector, on the box's SSD: the MXFP4 quant of the local quality
   # tier, for a like-for-like comparison against IQ3_S on the 24 GB card.
-  # allow-absolute-home: the path is on the remote host, which has no root
-  qwen27 = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/qwen27-start
-  '';
-
-  # allow-absolute-home: the path is on the remote host, which has no root
-  qwen27Stop = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/qwen27-stop
-  '';
+  qwen27 = remoteStart "qwen27-start";
+  qwen27Stop = remoteStop "qwen27-stop";
 
   # Inkling-2-Mini on the 24 GB card: Q4_K_XL (16.4 GiB) plus the f16 projector
   # and the DSpark drafter, on port 8097 (8090-8096 are the other tiers). The
@@ -496,15 +515,8 @@ let
   # carried them was removed with samba on 2026-11-25. Copy the 35 GB to
   # /srv/models on the box and point inkling-start there; until then this slot
   # cannot start.
-  # allow-absolute-home: the path is on the remote host, which has no root
-  inklingRemote = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 user@192.168.0.144 /home/user/bin/inkling-start
-  '';
-
-  # allow-absolute-home: the path is on the remote host, which has no root
-  inklingRemoteStop = ''
-    /run/current-system/sw/bin/ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 user@192.168.0.144 /home/user/bin/inkling-stop
-  '';
+  inklingRemote = remoteStart "inkling-start";
+  inklingRemoteStop = remoteStop "inkling-stop";
 in
 {
   services.llama-swap = lib.mkIf enabled {
@@ -519,241 +531,70 @@ in
       # sit on it unused. A cold load costs 8-20 s, so a minute is still long
       # enough not to reload between messages.
       globalTTL = 60;
-      models = {
+
+      # One row per slot: this host's tiers run a local `cmd`, the remote ones
+      # add the ssh stop command and the proxy endpoint (see the `localSlot` and
+      # `remoteSlot` helpers above). The per-tier rationale sits above its row.
+      models = builtins.listToAttrs [
         # Ornith-1.5-9B: fast agent/vision tier on the 16 GB card (MIT).
-        "ornith-1.5-9b" = {
-          cmd = ornith9b;
-          ttl = 300;
-          aliases = [
-            "ornith9b"
-            "ornith-small"
-            # The fast vision name the retired 8B used to hold; the 9B reads
-            # screenshots at roughly the same speed on a third of the weights.
-            "vision-fast"
-          ];
-        };
+        (localSlot "ornith-1.5-9b" ornith9b 300 "ornith9b ornith-small vision-fast")
         # Inkling-2-Mini on the 16 GB card: see the `inkling` command for what
         # fits and what it costs. 15 min TTL because a cold load of 10.9 GiB
         # from /zero is ~20-30 s and the card is tight enough that the tier
         # should not sit on it once the conversation stops.
-        "inkling-2-mini" = {
-          cmd = inkling;
-          ttl = 900;
-          aliases = [
-            "inkling"
-            "inkling-mini"
-          ];
-        };
+        (localSlot "inkling-2-mini" inkling 900 "inkling inkling-mini")
         # The quality variant: same model at Q3_K_XL, 61 t/s prefill. Kept for
         # the cases where the extra bits matter and the prompt is short; a
         # browser tab beside it can spill the model into RAM, so it is not the
         # default.
-        "inkling-2-mini-q3" = {
-          cmd = inklingQ3;
-          ttl = 900;
-          aliases = [
-            "inkling-q3"
-            "inkling-quality"
-          ];
-        };
-        "oprover-8b" = {
-          cmd = oprover;
-          ttl = 600;
-          aliases = [
-            "oprover"
-            "prover"
-          ];
-        };
-        "qwen3.8-27b-abliterated" = {
-          cmd = qwen38;
-          aliases = [
-            "qwen3.8"
-            "ru"
-            "commit"
-          ];
-        };
+        (localSlot "inkling-2-mini-q3" inklingQ3 900 "inkling-q3 inkling-quality")
+        (localSlot "oprover-8b" oprover 600 "oprover prover")
+        (localSlot "qwen3.8-27b-abliterated" qwen38 null "qwen3.8 ru commit")
         # Same weights, projector + 16k window: the `vision` tier.
-        "qwen3.8-27b-vision" = {
-          cmd = qwen38vision;
-          # One-shot read tier: 30 s after the last request is long enough for
-          # a follow-up and short enough that 15.3 GiB does not sit on the card
-          # while the browser wants the memory. A warm reload is ~3.6 s.
-          # `llmctl unload` frees it immediately, without waiting for the TTL.
-          ttl = 30;
-          aliases = [
-            "vision"
-            "vision-27b"
-          ];
-        };
-        "qwen3.8-27b-bartowski" = {
-          cmd = qwen38bart;
-          aliases = [
-            "bart27b"
-            "bartowski"
-          ];
-        };
-        "qwen3.8-27b-unsloth" = {
-          cmd = qwen38unsloth;
-          aliases = [
-            "unsloth27b"
-            "ud"
-          ];
-        };
-
+        (localSlot "qwen3.8-27b-vision" qwen38vision 30 "vision vision-27b")
+        (localSlot "qwen3.8-27b-bartowski" qwen38bart null "bart27b bartowski")
+        (localSlot "qwen3.8-27b-unsloth" qwen38unsloth null "unsloth27b ud")
         # The fast commit writer: one message costs a couple of seconds and the
         # 60 s global TTL already covers a second commit in the same session,
         # so the slot sets no TTL of its own — holding ~4 GiB longer would only
         # starve the chat tiers. The default writer is the 27B (`commit`
         # alias); this tier answers `--model commit-4b`.
-        "qwen3.8-4b" = {
-          cmd = qwen38small;
-          aliases = [
-            "commit-4b"
-            "q4b"
-          ];
-        };
-
+        (localSlot "qwen3.8-4b" qwen38small null "commit-4b q4b")
         # Base OpenAI gpt-oss-20b, MXFP4 experts. Fast MoE tier for the 16 GB
         # card; it does not replace the 27B on quality.
-        "gpt-oss-20b" = {
-          cmd = gptOss20b;
-          ttl = 600;
-          aliases = [
-            "gpt-oss"
-            "oss20b"
-          ];
-        };
-
-        "falcon-h1-3b" = {
-          cmd = falcon3b;
-          # A general fast tier, not a specialist: ten minutes like the other
-          # daily drivers, so a chat turn does not pay for a reload.
-          ttl = 600;
-          aliases = [
-            "falcon-3b"
-            "falcon3b"
-            "falcon"
-          ];
-        };
-
-        "falcon-h1r-7b" = {
-          cmd = falconH1r;
-          # A reasoner is not a warm path: a cold load costs a few seconds and
-          # an answer a minute of thinking, so keep it for ten minutes like
-          # the other daily tiers.
-          ttl = 600;
-          aliases = [
-            "falcon-h1r"
-            "h1r"
-            "reasoner"
-          ];
-        };
-
+        (localSlot "gpt-oss-20b" gptOss20b 600 "gpt-oss oss20b")
+        (localSlot "falcon-h1-3b" falcon3b 600 "falcon-3b falcon3b falcon")
+        (localSlot "falcon-h1r-7b" falconH1r 600 "falcon-h1r h1r reasoner")
         # Specialized small models: loaded on a request, unloaded after the
         # TTL. The editor's FIM backend is a separate service (modules/llm/fim.nix).
-        "k8s-qwen2.5-0.5b" = {
-          cmd = k8s05;
-          # Specialist, not a daily driver: a longer TTL only wastes the card.
-          ttl = 600;
-          aliases = [
-            "k8s"
-            "kubectl"
-          ];
-        };
-        "magos-k8s-0.6b" = {
-          cmd = magos;
-          ttl = 600;
-          aliases = [
-            "magos"
-            "k8s-diag"
-          ];
-        };
-        "ocr" = {
-          cmd = ocr;
-          ttl = 600;
-          aliases = [
-            "paddleocr"
-            "document"
-          ];
-        };
+        (localSlot "k8s-qwen2.5-0.5b" k8s05 600 "k8s kubectl")
+        (localSlot "magos-k8s-0.6b" magos 600 "magos k8s-diag")
+        (localSlot "ocr" ocr 600 "paddleocr document")
         # The high-quality document tiers (see the cmds' comment for the
         # benchmark). Slow enough that the 10 min TTL matters: a page costs
         # ~30 s (olm) or ~13 s (dots), so repeated pages should stay warm.
-        "ocr-olm" = {
-          cmd = ocrOlm;
-          ttl = 600;
-          aliases = [
-            "olmocr"
-            "doc-hq"
-          ];
-        };
-        "ocr-dots" = {
-          cmd = ocrDots;
-          ttl = 600;
-          aliases = [
-            "dotsocr"
-            "doc-fast"
-          ];
-        };
-        "embed" = {
-          cmd = embed;
-          ttl = 600;
-          aliases = [ "embeddings" ];
-        };
-
+        (localSlot "ocr-olm" ocrOlm 600 "olmocr doc-hq")
+        (localSlot "ocr-dots" ocrDots 600 "dotsocr doc-fast")
+        (localSlot "embed" embed 600 "embeddings")
         # Remote tiers on the 7900 XTX box: started and stopped over ssh,
         # requests go straight to them through `proxy`. 15 min TTL because a
         # cold load is minutes; `llmctl unload` still frees the card at once.
         # On the remote side a 1-minute watchdog stops the container if this
         # router disappears, so a crash or reboot here cannot strand 21 GiB of
         # VRAM on a machine nobody can reach.
-
         # Ornith-1.5-35B-A3B IQ4_XS: 18.8 GiB of weights + projector on the
         # box's own SSD, 32k by default. Replaces Gyro-Coder as the coding
         # agent tier; 3B active tokens make it much faster than the 27B dense
         # tiers on the same card. The freed 8090 port is reused.
-        "ornith-1.5-35b-a3b" = {
-          cmd = ornith;
-          cmdStop = ornithStop;
-          proxy = "http://192.168.0.144:8090";
-          checkEndpoint = "/health";
-          ttl = 900;
-          aliases = [
-            "ornith"
-            "ornith35b"
-          ];
-        };
-
+        (remoteSlot "ornith-1.5-35b-a3b" ornith ornithStop 8090 900 "ornith ornith35b")
         # Qwen3.8-27B MagicQuant MXFP4 IQ4_XS + the 27B projector: the same
         # weights as the local quality tier, at MXFP4 on the 24 GB card.
-        "qwen3.8-27b-mxfp4" = {
-          cmd = qwen27;
-          cmdStop = qwen27Stop;
-          proxy = "http://192.168.0.144:8096";
-          checkEndpoint = "/health";
-          ttl = 900;
-          aliases = [
-            "qwen27-mxfp4"
-            "qwen3.8-mxfp4"
-          ];
-        };
-
+        (remoteSlot "qwen3.8-27b-mxfp4" qwen27 qwen27Stop 8096 900 "qwen27-mxfp4 qwen3.8-mxfp4")
         # Inkling-2-Mini at Q4_K_XL on the 24 GB card — the same model as the
         # local tier one quant up, served by Unsloth's prebuilt ROCm build with
         # the DSpark drafter (see `inklingRemote` above for why that build).
-        "inkling-2-mini-q4" = {
-          cmd = inklingRemote;
-          cmdStop = inklingRemoteStop;
-          proxy = "http://192.168.0.144:8097";
-          checkEndpoint = "/health";
-          ttl = 900;
-          aliases = [
-            "inkling-q4"
-            "inkling-24g"
-          ];
-        };
-      };
-
+        (remoteSlot "inkling-2-mini-q4" inklingRemote inklingRemoteStop 8097 900 "inkling-q4 inkling-24g")
+      ];
     };
   };
 
