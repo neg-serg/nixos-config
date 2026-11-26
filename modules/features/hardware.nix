@@ -1,6 +1,7 @@
 {
   lib,
   mkBool,
+  mkOpt,
   ...
 }:
 {
@@ -45,11 +46,9 @@
           '';
         };
 
-        usLayoutIndex = lib.mkOption {
-          type = lib.types.int;
-          default = 0;
-          description = "XKB group index of the us layout (kb_layout = us,ru invariant).";
-        };
+        usLayoutIndex =
+          mkOpt lib.types.int 0
+            "XKB group index of the us layout (kb_layout = us,ru invariant).";
 
       };
     };

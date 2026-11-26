@@ -1,4 +1,9 @@
-{ lib, mkBool, ... }:
+{
+  lib,
+  mkBool,
+  mkOpt,
+  ...
+}:
 {
   options.features = {
     # NOTE: `features.profile` (singular) removed — was dead code.
@@ -17,34 +22,30 @@
     # repo's own evaluation plus the five eval-speedup patches it accepts.
     # Measured -15 % on the toplevel drvPath eval (this tree, -18 % on the
     # prototype's nixpkgs pin), same drvPath out.
-    nix.pgoNix.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = ''
-        Swap `nix.package` for the PGO + eval-speedup-patched build of
-        Determinate Nix 3.23.3 (github:neg-serg/nix-optimized), which evaluates this
-        flake ~15 % faster than the stock Determinate build while keeping
-        lazy-trees.
+    nix.pgoNix.enable = mkOpt lib.types.bool false ''
+      Swap `nix.package` for the PGO + eval-speedup-patched build of
+      Determinate Nix 3.23.3 (github:neg-serg/nix-optimized), which evaluates this
+      flake ~15 % faster than the stock Determinate build while keeping
+      lazy-trees.
 
-        Off by default, and the trade-off is not free:
+      Off by default, and the trade-off is not free:
 
-        - `nix.package` feeds both the `nix` client on PATH and the
-          `nix-daemon` unit, so the rebuild+switch that activates this flag
-          restarts the daemon; in-flight builds are killed, not drained.
-        - `nix.package` is also the Nix that `nixos-rebuild` itself runs. If the
-          swapped binary is broken, the next switch cannot build or activate
-          anything — recovery means fixing the flag from a TTY (edit the file,
-          or `nixos-rebuild switch --rollback` with the system's own Nix).
-        - the build costs ~12 min per Determinate version the first time it is
-          substituted-from-nowhere (PGO: two instrumented builds, two training
-          runs, one profile-use build), and it is a local package, so no cache
-          serves it: every `nix-src` bump rebuilds it.
-        - it must be re-proven on a bump — the five patches are cut against
-          upstream 2.35 and Determinate's own commits sit on top.
+      - `nix.package` feeds both the `nix` client on PATH and the
+        `nix-daemon` unit, so the rebuild+switch that activates this flag
+        restarts the daemon; in-flight builds are killed, not drained.
+      - `nix.package` is also the Nix that `nixos-rebuild` itself runs. If the
+        swapped binary is broken, the next switch cannot build or activate
+        anything — recovery means fixing the flag from a TTY (edit the file,
+        or `nixos-rebuild switch --rollback` with the system's own Nix).
+      - the build costs ~12 min per Determinate version the first time it is
+        substituted-from-nowhere (PGO: two instrumented builds, two training
+        runs, one profile-use build), and it is a local package, so no cache
+        serves it: every `nix-src` bump rebuilds it.
+      - it must be re-proven on a bump — the five patches are cut against
+        upstream 2.35 and Determinate's own commits sit on top.
 
-        Rollback is one line: set this back to false and switch; the definition
-        in modules/nix/settings.nix (Determinate's own build) takes over again.
-      '';
-    };
+      Rollback is one line: set this back to false and switch; the definition
+      in modules/nix/settings.nix (Determinate's own build) takes over again.
+    '';
   };
 }

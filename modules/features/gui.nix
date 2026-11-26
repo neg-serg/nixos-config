@@ -1,4 +1,9 @@
-{ lib, mkBool, ... }:
+{
+  lib,
+  mkBool,
+  mkOpt,
+  ...
+}:
 {
   options.features.gui = {
     enable = mkBool "enable GUI stack (wayland/hyprland, qt, etc.)" true;
@@ -42,20 +47,12 @@
     sonda = {
       enable = mkBool "enable sonda (file manager searching files by content)" false;
     };
-    iconTheme = lib.mkOption {
-      type = lib.types.str;
-      default = "kora-pgrey";
-      description = "Icon theme to apply system-wide (GTK + Qt).";
-    };
-    gtkTheme = lib.mkOption {
-      type = lib.types.enum [
-        "neg-gtk"
-        "Flight-Dark-GTK"
-        "Andromeda"
-        "Flat-Remix-GTK-Blue-Darkest"
-      ];
-      default = "neg-gtk";
-      description = "GTK theme to apply system-wide.";
-    };
+    iconTheme = mkOpt lib.types.str "kora-pgrey" "Icon theme to apply system-wide (GTK + Qt).";
+    gtkTheme = mkOpt (lib.types.enum [
+      "neg-gtk"
+      "Flight-Dark-GTK"
+      "Andromeda"
+      "Flat-Remix-GTK-Blue-Darkest"
+    ]) "neg-gtk" "GTK theme to apply system-wide.";
   };
 }

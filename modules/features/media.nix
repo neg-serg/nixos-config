@@ -35,7 +35,12 @@
 #   automatically when the flag is enabled.
 # - Both services are unauthenticated — only enable on a trusted LAN.
 
-{ lib, mkBool, ... }:
+{
+  lib,
+  mkBool,
+  mkOpt,
+  ...
+}:
 {
   options.features.media = {
     aiUpscale = {
@@ -56,16 +61,12 @@
       # modules/user/nix-maid/sys/media.nix and sys/user-services/listenbrainz.nix.
       listenbrainzMpd = {
         enable = mkBool "enable listenbrainz-mpd (MPD -> ListenBrainz scrobbler)" true;
-        apiUrl = lib.mkOption {
-          type = lib.types.str;
-          default = "https://api.listenbrainz.org";
-          description = ''
-            ListenBrainz-compatible submission API base URL. Point this at the
-            local Koito hub (http://127.0.0.1:4110, servicesProfiles.koito) to
-            scrobble locally first and relay onwards; the token then has to be
-            the Koito API key, not a ListenBrainz one.
-          '';
-        };
+        apiUrl = mkOpt lib.types.str "https://api.listenbrainz.org" ''
+          ListenBrainz-compatible submission API base URL. Point this at the
+          local Koito hub (http://127.0.0.1:4110, servicesProfiles.koito) to
+          scrobble locally first and relay onwards; the token then has to be
+          the Koito API key, not a ListenBrainz one.
+        '';
       };
       # Sola MPD: browser MPD client (Node backend + React UI on loopback) aimed
       # at large libraries — flexible browsing, search and queue editing.
@@ -82,36 +83,26 @@
       # reference app, pointed at whichever daemon the Connect page names.
       camillaEq = {
         enable = mkBool "enable upstream CamillaEQ (browser EQ for CamillaDSP) on loopback" true;
-        port = lib.mkOption {
-          type = lib.types.port;
-          default = 8788;
-          description = "Loopback port the CamillaEQ server listens on.";
-        };
+        port = mkOpt lib.types.port 8788 "Loopback port the CamillaEQ server listens on.";
       };
       # LAN audio access: MPD binds to all interfaces, PipeWire exposes a
       # Pulse-compatible TCP server (port 4713) and an RTP multicast sink.
       lanAccess = {
         enable = mkBool "LAN audio access (MPD on all interfaces, PipeWire Pulse TCP 4713, RTP sink)" false;
         rtp = {
-          interface = lib.mkOption {
-            type = lib.types.str;
-            default = "net1";
-            description = "Network interface used by the PipeWire RTP sink for multicast output.";
-          };
+          interface =
+            mkOpt lib.types.str "net1"
+              "Network interface used by the PipeWire RTP sink for multicast output.";
         };
       };
       cider.enable = mkBool "enable Cider (Apple Music client)" false;
       spicetify.enable = mkBool "enable Spicetify (Spotify customization)" false;
       beets = {
         enable = mkBool "enable Beets music library manager" true;
-        mode = lib.mkOption {
-          type = lib.types.enum [
-            "native"
-            "distrobox"
-          ];
-          default = "distrobox";
-          description = "Beets runtime mode: native (Nixpkgs) or distrobox (CachyOS container)";
-        };
+        mode = mkOpt (lib.types.enum [
+          "native"
+          "distrobox"
+        ]) "distrobox" "Beets runtime mode: native (Nixpkgs) or distrobox (CachyOS container)";
       };
       speech.enable = mkBool "enable local speech stack (whisper.cpp STT :8002)" false;
       # Music tagging and embeddings on the local music-AI venv:
@@ -122,135 +113,107 @@
       # venv's site-packages on PYTHONPATH.
       musicTagging = {
         enable = mkBool "enable music tagging/embedding wrappers (music-embed, music-tags, music-index)" true;
-        embedModel = lib.mkOption {
-          type = lib.types.str;
-          default = "m-a-p/MERT-v1-95M";
-          description = ''
-            HuggingFace music embedding model. Measured on a same-track probe
-            (10 albums): MERT-v1-95M rank1 0.50 / +0.025 margin at 1.5 s per
-            track and 1.4 GiB; MERT-v2-30s rank1 0.65 / +0.046 at 2.0 s and
-            3.2 GiB. The pooled layer is resolved per model (v1 -> -2,
-            v2 -> -1) and recorded in the index signature.
-          '';
-        };
-        hfHome = lib.mkOption {
-          type = lib.types.str;
-          default = "/zero/ai/music-ai/hf";
-          description = "HuggingFace cache directory for the tagging/embedding models.";
-        };
-        describeModel = lib.mkOption {
-          type = lib.types.str;
-          default = "nvidia/music-flamingo-2601-hf";
-          description = ''
-            Audio-language model behind music-describe (Music Flamingo, 8B).
-            It answers free-form questions about a track (genre, tempo, key,
-            instrumentation, production, lyrics, cultural context) over up to
-            20 minutes of audio in 30 s windows and needs 15.4 GiB in bf16,
-            fetched into `hfHome` on first use. Measured on trantor/CPU (16
-            threads): 1.5-2.3 tokens/s, so 1.5-2.5 min for a 200-250 token
-            answer, plus ~5 s to map the weights. The weights are under the
-            NVIDIA OneWay Noncommercial License (research use only); a local
-            directory works as well as a HuggingFace id.
-          '';
-        };
-        describeEngine = lib.mkOption {
-          type = lib.types.enum [
+        embedModel = mkOpt lib.types.str "m-a-p/MERT-v1-95M" ''
+          HuggingFace music embedding model. Measured on a same-track probe
+          (10 albums): MERT-v1-95M rank1 0.50 / +0.025 margin at 1.5 s per
+          track and 1.4 GiB; MERT-v2-30s rank1 0.65 / +0.046 at 2.0 s and
+          3.2 GiB. The pooled layer is resolved per model (v1 -> -2,
+          v2 -> -1) and recorded in the index signature.
+        '';
+        hfHome =
+          mkOpt lib.types.str "/zero/ai/music-ai/hf"
+            "HuggingFace cache directory for the tagging/embedding models.";
+        describeModel = mkOpt lib.types.str "nvidia/music-flamingo-2601-hf" ''
+          Audio-language model behind music-describe (Music Flamingo, 8B).
+          It answers free-form questions about a track (genre, tempo, key,
+          instrumentation, production, lyrics, cultural context) over up to
+          20 minutes of audio in 30 s windows and needs 15.4 GiB in bf16,
+          fetched into `hfHome` on first use. Measured on trantor/CPU (16
+          threads): 1.5-2.3 tokens/s, so 1.5-2.5 min for a 200-250 token
+          answer, plus ~5 s to map the weights. The weights are under the
+          NVIDIA OneWay Noncommercial License (research use only); a local
+          directory works as well as a HuggingFace id.
+        '';
+        describeEngine =
+          mkOpt
+            (lib.types.enum [
+              "mf"
+              "afnext"
+              "auto"
+            ])
             "mf"
-            "afnext"
-            "auto"
-          ];
-          default = "mf";
-          description = ''
-            Which model answers music-describe by default.
+            ''
+              Which model answers music-describe by default.
 
-            `mf` is Music Flamingo through transformers on the CPU: 1.5-2.5
-            minutes per cold answer, 15.4 GiB of RAM, 20 minutes of audio.
-            `auto` tries `afnext` first and falls back to `mf` when the GPU is
-            busy (a resident ollama model is the usual reason), so an
-            unattended timer and the voice client keep working either way.
-            `afnext` is Audio Flamingo Next through audio.cpp on the GPU: a
-            120-token answer took 4.4 s (rtf 0.037) on the RX 9070 XT over
-            Vulkan with an 8.7 GiB q8_0 GGUF — but it needs free VRAM, and
-            ollama's loaded models (10 GB for an 8B) will starve it into
-            `ErrorDeviceLost`. `--engine`/`--gpu` on the command line override
-            this per run; the two engines keep separate cache entries.
-          '';
-        };
-        describeGpuModel = lib.mkOption {
-          type = lib.types.str;
-          default = "/zero/ai/music-ai/audio-cpp/audio-flamingo-next-q8_0.gguf";
-          description = ''
-            GGUF weights for the `afnext` engine, fetched by
-            scripts/dev/audio-cpp-models.sh (`just audio-cpp-models`), which
-            pins the size and sha256. The runtime itself is pkgs.audio-cpp.
-          '';
-        };
-        describeDevice = lib.mkOption {
-          type = lib.types.enum [
-            "auto"
+              `mf` is Music Flamingo through transformers on the CPU: 1.5-2.5
+              minutes per cold answer, 15.4 GiB of RAM, 20 minutes of audio.
+              `auto` tries `afnext` first and falls back to `mf` when the GPU is
+              busy (a resident ollama model is the usual reason), so an
+              unattended timer and the voice client keep working either way.
+              `afnext` is Audio Flamingo Next through audio.cpp on the GPU: a
+              120-token answer took 4.4 s (rtf 0.037) on the RX 9070 XT over
+              Vulkan with an 8.7 GiB q8_0 GGUF — but it needs free VRAM, and
+              ollama's loaded models (10 GB for an 8B) will starve it into
+              `ErrorDeviceLost`. `--engine`/`--gpu` on the command line override
+              this per run; the two engines keep separate cache entries.
+            '';
+        describeGpuModel =
+          mkOpt lib.types.str "/zero/ai/music-ai/audio-cpp/audio-flamingo-next-q8_0.gguf"
+            ''
+              GGUF weights for the `afnext` engine, fetched by
+              scripts/dev/audio-cpp-models.sh (`just audio-cpp-models`), which
+              pins the size and sha256. The runtime itself is pkgs.audio-cpp.
+            '';
+        describeDevice =
+          mkOpt
+            (lib.types.enum [
+              "auto"
+              "cpu"
+              "cuda"
+            ])
             "cpu"
-            "cuda"
-          ];
-          default = "cpu";
-          description = ''
-            Device for music-describe. CPU is the default on purpose. The
-            ROCm path crashed this host once (2026-10-12, memory access
-            fault), and a retest on 2026-10-20 went differently but no
-            better: torch sees the card and the bf16 weights do land in VRAM
-            (16.6 of 17.1 GB used), yet the model's device move never
-            finished — 6+ minutes at ~100% CPU with no forward pass. An 8B
-            model does not fit this card with room for activations anyway, so
-            the GPU stays opt-in via this option or `--device`, and 4-bit
-            weights would be the way to make it usable.
-          '';
-        };
-        mtgVenv = lib.mkOption {
-          type = lib.types.str;
-          default = "/zero/ai/music-ai/venv-mtg";
-          description = ''
-            venv with essentia-tensorflow for the trained MTG tagger
-            (music-mtg-tags: Discogs-400 styles, Jamendo mood/theme and
-            instrument heads). Filled by scripts/dev/music-mtg-setup.sh; the
-            shared venv-analysis keeps its plain essentia build untouched.
-          '';
-        };
-        mtgModels = lib.mkOption {
-          type = lib.types.str;
-          default = "/zero/ai/music-ai/mtg-models";
-          description = ''
-            EffNet-Discogs backbone and head models for music-mtg-tags, fetched
-            by scripts/dev/music-mtg-models.sh (~25 MB, sha256-pinned mirrors).
-          '';
-        };
+            ''
+              Device for music-describe. CPU is the default on purpose. The
+              ROCm path crashed this host once (2026-10-12, memory access
+              fault), and a retest on 2026-10-20 went differently but no
+              better: torch sees the card and the bf16 weights do land in VRAM
+              (16.6 of 17.1 GB used), yet the model's device move never
+              finished — 6+ minutes at ~100% CPU with no forward pass. An 8B
+              model does not fit this card with room for activations anyway, so
+              the GPU stays opt-in via this option or `--device`, and 4-bit
+              weights would be the way to make it usable.
+            '';
+        mtgVenv = mkOpt lib.types.str "/zero/ai/music-ai/venv-mtg" ''
+          venv with essentia-tensorflow for the trained MTG tagger
+          (music-mtg-tags: Discogs-400 styles, Jamendo mood/theme and
+          instrument heads). Filled by scripts/dev/music-mtg-setup.sh; the
+          shared venv-analysis keeps its plain essentia build untouched.
+        '';
+        mtgModels = mkOpt lib.types.str "/zero/ai/music-ai/mtg-models" ''
+          EffNet-Discogs backbone and head models for music-mtg-tags, fetched
+          by scripts/dev/music-mtg-models.sh (~25 MB, sha256-pinned mirrors).
+        '';
         # Opt-in background refresh: a systemd user timer re-runs the
         # incremental indexer so new albums get embedded without a manual
         # hours-long pass. Off by default; a host flips autoIndex.enable.
         autoIndex = {
           enable = mkBool "weekly background refresh of the music similarity index (systemd user timer)" false;
-          onCalendar = lib.mkOption {
-            type = lib.types.str;
-            default = "Sun 04:00";
-            description = "systemd calendar expression for the automatic music-index refresh.";
-          };
-          limit = lib.mkOption {
-            type = lib.types.int;
-            default = 0;
-            description = "Embed at most the first N tracks per run (0 = no limit); passed to music-index as --limit.";
-          };
+          onCalendar =
+            mkOpt lib.types.str "Sun 04:00"
+              "systemd calendar expression for the automatic music-index refresh.";
+          limit =
+            mkOpt lib.types.int 0
+              "Embed at most the first N tracks per run (0 = no limit); passed to music-index as --limit.";
           tagsAndPlaylists = mkBool "also refresh MTG tags and the mood/genre playlists in the same run" false;
-          describeLimit = lib.mkOption {
-            type = lib.types.int;
-            default = 0;
-            description = ''
-              Describe up to N tracks per refresh with music-describe and
-              write MTG-shaped tag rows (0 = off). The batch takes the most
-              recently modified undescribed files first, so a fresh album is
-              described before the back catalogue. Each cold track costs 1.5-2.5
-              minutes of CPU, so this is a trickle — a handful per night, not
-              the library — and the rows are what `music-refresh.sh` turns into
-              the `mf` mood playlists under the playlist directory.
-            '';
-          };
+          describeLimit = mkOpt lib.types.int 0 ''
+            Describe up to N tracks per refresh with music-describe and
+            write MTG-shaped tag rows (0 = off). The batch takes the most
+            recently modified undescribed files first, so a fresh album is
+            described before the back catalogue. Each cold track costs 1.5-2.5
+            minutes of CPU, so this is a trickle — a handful per night, not
+            the library — and the rows are what `music-refresh.sh` turns into
+            the `mf` mood playlists under the playlist directory.
+          '';
           extraArgs = lib.mkOption {
             type = lib.types.listOf lib.types.str;
             default = [ ];
@@ -275,59 +238,47 @@
       # key), and it also has a text mode that needs no audio at all.
       mpdVoice = {
         enable = mkBool "enable MPD voice client (mpd-voice CLI + its config file)" true;
-        language = lib.mkOption {
-          type = lib.types.enum [
-            "ru"
-            "en"
-          ];
-          default = "ru";
-          description = "Reply language and default speech recognition language.";
-        };
-        wakeWord = lib.mkOption {
-          type = lib.types.str;
-          default = "";
-          description = ''
-            Keyword required by `mpd-voice listen` (empty = every utterance is
-            executed, which is what push-to-talk wants).
-          '';
-        };
-        stt = lib.mkOption {
-          type = lib.types.enum [
+        language = mkOpt (lib.types.enum [
+          "ru"
+          "en"
+        ]) "ru" "Reply language and default speech recognition language.";
+        wakeWord = mkOpt lib.types.str "" ''
+          Keyword required by `mpd-voice listen` (empty = every utterance is
+          executed, which is what push-to-talk wants).
+        '';
+        stt =
+          mkOpt
+            (lib.types.enum [
+              "auto"
+              "http"
+              "cli"
+              "cmd"
+              "none"
+            ])
             "auto"
-            "http"
-            "cli"
-            "cmd"
-            "none"
-          ];
-          default = "auto";
-          description = ''
-            Speech recognition backend: auto probes the HTTP server below,
-            then falls back to whisper-cli.
-          '';
-        };
-        sttUrl = lib.mkOption {
-          type = lib.types.str;
-          default = "http://127.0.0.1:8002";
-          description = "Base URL of an OpenAI-compatible STT server (/v1/audio/transcriptions).";
-        };
-        tts = lib.mkOption {
-          type = lib.types.enum [
+            ''
+              Speech recognition backend: auto probes the HTTP server below,
+              then falls back to whisper-cli.
+            '';
+        sttUrl =
+          mkOpt lib.types.str "http://127.0.0.1:8002"
+            "Base URL of an OpenAI-compatible STT server (/v1/audio/transcriptions).";
+        tts =
+          mkOpt
+            (lib.types.enum [
+              "auto"
+              "http"
+              "cmd"
+              "none"
+            ])
             "auto"
-            "http"
-            "cmd"
-            "none"
-          ];
-          default = "auto";
-          description = ''
-            Speech synthesis backend: auto probes the HTTP server below, then
-            falls back to spd-say / espeak-ng.
-          '';
-        };
-        ttsUrl = lib.mkOption {
-          type = lib.types.str;
-          default = "http://127.0.0.1:8001";
-          description = "Base URL of an OpenAI-compatible TTS server (/v1/audio/speech).";
-        };
+            ''
+              Speech synthesis backend: auto probes the HTTP server below, then
+              falls back to spd-say / espeak-ng.
+            '';
+        ttsUrl =
+          mkOpt lib.types.str "http://127.0.0.1:8001"
+            "Base URL of an OpenAI-compatible TTS server (/v1/audio/speech).";
       };
     };
     photo.enable = mkBool "enable photography workflow (darktable, rawtherapee, testdisk)" false;

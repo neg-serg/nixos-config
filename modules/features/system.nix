@@ -1,4 +1,10 @@
-{ lib, mkBool, ... }: {
+{
+  lib,
+  mkBool,
+  mkOpt,
+  ...
+}:
+{
   options.features.system.logTtys = {
     enable = mkBool "Per-TTY log classification (journalctl viewers on tty8,tty10-tty11,tty13-tty17)" true;
     crit.enable = mkBool "CRIT log viewer on tty8 (emerg..crit)" true;
@@ -9,15 +15,11 @@
     systemd.enable = mkBool "SYSTEMD log viewer on tty14 (systemd messages)" true;
     network.enable = mkBool "NETWORK log viewer on tty15 (network daemons)" true;
     full.enable = mkBool "FULL log viewer on tty16 (all messages)" true;
-    networkUnits = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [
-        "NetworkManager.service"
-        "sshd.service"
-        "nftables.service"
-      ];
-      description = "Systemd units to monitor on tty15 (network TTY). Override per-host.";
-    };
+    networkUnits = mkOpt (lib.types.listOf lib.types.str) [
+      "NetworkManager.service"
+      "sshd.service"
+      "nftables.service"
+    ] "Systemd units to monitor on tty15 (network TTY). Override per-host.";
   };
 
   # Userspace console on the login VTs: kmscon takes over the autovt VTs
@@ -46,11 +48,9 @@
   options.features.system.recovery.enable =
     mkBool "recovery UKI on the ESP, bootable from systemd-boot or the firmware menu" true;
 
-  options.features.system.recovery.pool = lib.mkOption {
-    type = lib.types.str;
-    default = "tank";
-    description = "ZFS pool the recovery-enter helper imports under /mnt.";
-  };
+  options.features.system.recovery.pool =
+    mkOpt lib.types.str "tank"
+      "ZFS pool the recovery-enter helper imports under /mnt.";
 
   # Daily cap on the number of system generations (each one pins its whole
   # closure in the store until nix.gc runs).
@@ -65,58 +65,45 @@
   options.features.system.rolloutWatch.enable =
     mkBool "auto-deploy committed repo changes through nixos-agent-rollout" false;
 
-  options.features.system.rolloutWatch.repo = lib.mkOption {
-    type = lib.types.str;
-    default = "/etc/nixos";
-    description = ''
-      Live git checkout the watcher deploys from. Not `repoRoot` from
-      specialArgs: during a flake evaluation that is the store copy of the
-      source, and the watcher must read the real checkout and its .git.
-    '';
-  };
+  options.features.system.rolloutWatch.repo = mkOpt lib.types.str "/etc/nixos" ''
+    Live git checkout the watcher deploys from. Not `repoRoot` from
+    specialArgs: during a flake evaluation that is the store copy of the
+    source, and the watcher must read the real checkout and its .git.
+  '';
 
-  options.features.system.rolloutWatch.branch = lib.mkOption {
-    type = lib.types.str;
-    default = "main";
-    description = "Branch whose tip the watcher deploys; another branch or a detached HEAD is left alone.";
-  };
+  options.features.system.rolloutWatch.branch =
+    mkOpt lib.types.str "main"
+      "Branch whose tip the watcher deploys; another branch or a detached HEAD is left alone.";
 
-  options.features.system.rolloutWatch.interval = lib.mkOption {
-    type = lib.types.str;
-    default = "*-*-* *:0/2:00";
-    description = "OnCalendar expression for the watcher timer.";
-  };
+  options.features.system.rolloutWatch.interval =
+    mkOpt lib.types.str "*-*-* *:0/2:00"
+      "OnCalendar expression for the watcher timer.";
 
-  options.features.system.rolloutWatch.riskyPaths = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
-    default = [
-      "secrets/"
-      "modules/system/net/vpn/"
-      "modules/security/"
-      "modules/user/nix-maid/sys/user-services/rollout-watch.nix"
-    ];
-    description = ''
-      Repo paths (regex prefixes) whose change makes the watcher stop and ask for
-      a manual switch instead of deploying: a wrong secret, VPN or security-module
-      change can lock the host out, and the watcher is itself part of the
-      deployment mechanism.
-    '';
-  };
+  options.features.system.rolloutWatch.riskyPaths =
+    mkOpt (lib.types.listOf lib.types.str)
+      [
+        "secrets/"
+        "modules/system/net/vpn/"
+        "modules/security/"
+        "modules/user/nix-maid/sys/user-services/rollout-watch.nix"
+      ]
+      ''
+        Repo paths (regex prefixes) whose change makes the watcher stop and ask for
+        a manual switch instead of deploying: a wrong secret, VPN or security-module
+        change can lock the host out, and the watcher is itself part of the
+        deployment mechanism.
+      '';
 
-  options.features.system.rolloutWatch.ntfyUrl = lib.mkOption {
-    type = lib.types.nullOr lib.types.str;
-    default = null;
-    description = "ntfy topic URL for rollout reports (e.g. http://127.0.0.1:2586/system); null disables ntfy.";
-  };
+  options.features.system.rolloutWatch.ntfyUrl =
+    mkOpt (lib.types.nullOr lib.types.str) null
+      "ntfy topic URL for rollout reports (e.g. http://127.0.0.1:2586/system); null disables ntfy.";
 
   options.features.system.rolloutWatch.desktopNotify =
     mkBool "post rollout reports as desktop notifications" true;
 
-  options.features.system.rolloutWatch.telegramSender = lib.mkOption {
-    type = lib.types.nullOr lib.types.package;
-    default = null;
-    description = "telegram-send wrapper for rollout reports (config.trantor.telegram.sender); null disables Telegram.";
-  };
+  options.features.system.rolloutWatch.telegramSender =
+    mkOpt (lib.types.nullOr lib.types.package) null
+      "telegram-send wrapper for rollout reports (config.trantor.telegram.sender); null disables Telegram.";
 
   # Weekly bump of the flake inputs that point at neg's own repositories. The
   # user timer (modules/user/nix-maid/sys/user-services/flake-bump.nix) runs
@@ -127,21 +114,15 @@
   options.features.system.flakeBump.enable =
     mkBool "bump neg's own flake inputs weekly and commit the lock" false;
 
-  options.features.system.flakeBump.repo = lib.mkOption {
-    type = lib.types.str;
-    default = "/etc/nixos";
-    description = ''
-      Live git checkout the bump operates on. Not `repoRoot` from specialArgs:
-      during a flake evaluation that is the store copy of the source, and the
-      script commits into the checkout that has the .git directory.
-    '';
-  };
+  options.features.system.flakeBump.repo = mkOpt lib.types.str "/etc/nixos" ''
+    Live git checkout the bump operates on. Not `repoRoot` from specialArgs:
+    during a flake evaluation that is the store copy of the source, and the
+    script commits into the checkout that has the .git directory.
+  '';
 
-  options.features.system.flakeBump.calendar = lib.mkOption {
-    type = lib.types.str;
-    default = "Sun *-*-* 04:00:00";
-    description = "OnCalendar expression for the weekly bump timer.";
-  };
+  options.features.system.flakeBump.calendar =
+    mkOpt lib.types.str "Sun *-*-* 04:00:00"
+      "OnCalendar expression for the weekly bump timer.";
 
   options.features.system.flakeBump.heavy =
     mkBool "also bump aurora and iosevka-neg (long rebuilds)" false;
