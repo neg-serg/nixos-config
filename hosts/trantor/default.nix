@@ -219,25 +219,13 @@
   # nixpkgs 26.05: service users need explicit isSystemUser + group.
   # Defined at host level because server modules gate behind mkIf cfg.enable,
   # which may be false while the NixOS service module still defines the user.
-  users.users = {
-    sshd = {
-      isSystemUser = true;
-      group = "sshd";
-    };
-    adguardhome = {
-      isSystemUser = true;
-      group = "adguardhome";
-    };
-    unbound = {
-      isSystemUser = true;
-      group = "unbound";
-    };
-  };
-  users.groups = {
-    sshd = { };
-    adguardhome = { };
-    unbound = { };
-  };
+  # The three services share one user shape: a system user in a group of the
+  # same name.
+  users.users = lib.genAttrs [ "sshd" "adguardhome" "unbound" ] (name: {
+    isSystemUser = true;
+    group = name;
+  });
+  users.groups = lib.genAttrs [ "sshd" "adguardhome" "unbound" ] (_: { });
 
   environment.systemPackages = [
     pkgs.nodejs # Node.js — required by npx, MCP servers, git hooks
