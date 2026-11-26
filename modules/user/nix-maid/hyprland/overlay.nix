@@ -75,6 +75,21 @@
 
         hyprlandPlugins =
           let
+            # Shared by the two Lua-linked plugins (gloview, hyprwinwrap): lua5_5
+            # is the interpreter Hyprland itself links, and glib must be an input
+            # because CMake's pangocairo lookup pulls it in and its `.pc` names
+            # private deps that resolve only through the wrapper's path. The path
+            # is appended: an assignment here would *replace* the search path the
+            # pkg-config wrapper builds from `buildInputs`.
+            luaGlib = {
+              buildInputs = [
+                final.lua5_5
+                final.glib
+              ];
+              preConfigure = ''
+                export PKG_CONFIG_PATH="${final.hyprland.dev}/share/pkgconfig:''${PKG_CONFIG_PATH:-}"
+              '';
+            };
             defined = prev.hyprlandPlugins // {
               # hy3: nixpkgs' own 0.56.0.1 build (upstream tag hl0.56.0.1, built by
               # mkHyprlandPlugin against the same Hyprland 0.56.2 commit as the session
@@ -170,42 +185,28 @@
               # interpreter Hyprland itself runs.
               # The .so is dlopen'd by the generated gloview-setup helper at session
               # start (see main.nix).
-              gloview = prev.hyprlandPlugins.mkHyprlandPlugin {
-                pluginName = "gloview";
-                version = "0-unstable-2026-10-31";
+              gloview = prev.hyprlandPlugins.mkHyprlandPlugin (
+                {
+                  pluginName = "gloview";
+                  version = "0-unstable-2026-10-31";
 
-                src = final.fetchFromGitHub {
-                  owner = "fedsfarm";
-                  repo = "gloview";
-                  rev = "67857e6f8b715d6d100068ef89ba554c8fecb918";
-                  hash = "sha256-M6LBP59p9v241hQ5vSmk6gjhKQavTrImNOGy+HpWwSo=";
-                };
+                  src = final.fetchFromGitHub {
+                    owner = "fedsfarm";
+                    repo = "gloview";
+                    rev = "67857e6f8b715d6d100068ef89ba554c8fecb918";
+                    hash = "sha256-M6LBP59p9v241hQ5vSmk6gjhKQavTrImNOGy+HpWwSo=";
+                  };
 
-                nativeBuildInputs = [ final.cmake ];
-                # glib: CMake asks pkg-config for pangocairo, which pulls glib, whose
-                # `.pc` names its own private deps (`sysprof-capture-4`, `libpcre2-8`,
-                # …). Those resolve through the wrapper's path only when glib itself is
-                # an input, so it is named here instead of chasing each dep by hand.
-                buildInputs = [
-                  final.lua5_5
-                  final.glib
-                ];
-                # Appended, not assigned: an assignment here *replaces* the search path
-                # the pkg-config wrapper builds from `buildInputs`, which is what made
-                # glib's dependencies unfindable on the 2026-10-30 nixpkgs. Hyprland
-                # keeps its `.pc` in `share/pkgconfig`, which is why the path is needed
-                # at all.
-                preConfigure = ''
-                  export PKG_CONFIG_PATH="${final.hyprland.dev}/share/pkgconfig:''${PKG_CONFIG_PATH:-}"
-                '';
-
-                meta = {
-                  homepage = "https://github.com/fedsfarm/gloview";
-                  description = "macOS Mission Control-style window overview for Hyprland";
-                  license = final.lib.licenses.gpl3Plus;
-                  platforms = final.lib.platforms.linux;
-                };
-              };
+                  nativeBuildInputs = [ final.cmake ];
+                  meta = {
+                    homepage = "https://github.com/fedsfarm/gloview";
+                    description = "macOS Mission Control-style window overview for Hyprland";
+                    license = final.lib.licenses.gpl3Plus;
+                    platforms = final.lib.platforms.linux;
+                  };
+                }
+                // luaGlib
+              );
 
               # Hymission: Mission-Control-style overview — live compositor-side
               # previews of every window, workspace strip, Stage mode, trackpad
@@ -379,53 +380,39 @@
               #     that render.stage hands to its listeners, and commitWindow() grew
               #     an initialCommit bool (so the hardcoded hook symbol changed too:
               #     a stale mangled name would throw out of PLUGIN_INIT at load).
-              hyprwinwrap = prev.hyprlandPlugins.mkHyprlandPlugin {
-                pluginName = "hyprwinwrap";
-                version = "0-unstable-2026-09-10";
+              hyprwinwrap = prev.hyprlandPlugins.mkHyprlandPlugin (
+                {
+                  pluginName = "hyprwinwrap";
+                  version = "0-unstable-2026-09-10";
 
-                src = final.fetchFromGitHub {
-                  owner = "gen3vra";
-                  repo = "hyprwinwrap";
-                  rev = "3b6e337b9ee934ee23179d1445cb8cacfc38af28";
-                  hash = "sha256-J3dFF2ibY+SjYoSm2JnBrBu9riVbycQ1q39xnYlNUjM=";
-                };
+                  src = final.fetchFromGitHub {
+                    owner = "gen3vra";
+                    repo = "hyprwinwrap";
+                    rev = "3b6e337b9ee934ee23179d1445cb8cacfc38af28";
+                    hash = "sha256-J3dFF2ibY+SjYoSm2JnBrBu9riVbycQ1q39xnYlNUjM=";
+                  };
 
-                patches = [
-                  ./hyprwinwrap-lua-window-merge.patch
-                  ./hyprwinwrap-hyprland-057.patch
-                ];
+                  patches = [
+                    ./hyprwinwrap-lua-window-merge.patch
+                    ./hyprwinwrap-hyprland-057.patch
+                  ];
 
-                nativeBuildInputs = [ final.cmake ];
-                # The CMakeLists asks pkg-config for hyprland, libdrm, libinput,
-                # libudev, pangocairo, pixman-1, wayland-server and xkbcommon; all of
-                # those (and their .pc files) arrive through mkHyprlandPlugin's
-                # hyprland.buildInputs. Only the Lua headers need an explicit input:
-                # lua5_5 is the interpreter Hyprland itself links, and its lua55.pc
-                # is what the plugin's pkg_search_module(lua55 …) matches.
-                # glib: CMake asks pkg-config for pangocairo, which pulls glib, whose
-                # `.pc` names its own private deps (`sysprof-capture-4`, `libpcre2-8`,
-                # …). Those resolve through the wrapper's path only when glib itself is
-                # an input, so it is named here instead of chasing each dep by hand.
-                buildInputs = [
-                  final.lua5_5
-                  final.glib
-                ];
-                # Appended, not assigned: an assignment here *replaces* the search path
-                # the pkg-config wrapper builds from `buildInputs`, which is what made
-                # glib's dependencies unfindable on the 2026-10-30 nixpkgs. Hyprland
-                # keeps its `.pc` in `share/pkgconfig`, which is why the path is needed
-                # at all.
-                preConfigure = ''
-                  export PKG_CONFIG_PATH="${final.hyprland.dev}/share/pkgconfig:''${PKG_CONFIG_PATH:-}"
-                '';
-
-                meta = {
-                  homepage = "https://github.com/gen3vra/hyprwinwrap";
-                  description = "Display any window as a background wallpaper in Hyprland";
-                  license = final.lib.licenses.bsd3;
-                  platforms = final.lib.platforms.linux;
-                };
-              };
+                  nativeBuildInputs = [ final.cmake ];
+                  # The CMakeLists asks pkg-config for hyprland, libdrm, libinput,
+                  # libudev, pangocairo, pixman-1, wayland-server and xkbcommon; all of
+                  # those (and their .pc files) arrive through mkHyprlandPlugin's
+                  # hyprland.buildInputs. Only the Lua headers need an explicit input:
+                  # lua5_5 is the interpreter Hyprland itself links, and its lua55.pc
+                  # is what the plugin's pkg_search_module(lua55 …) matches.
+                  meta = {
+                    homepage = "https://github.com/gen3vra/hyprwinwrap";
+                    description = "Display any window as a background wallpaper in Hyprland";
+                    license = final.lib.licenses.bsd3;
+                    platforms = final.lib.platforms.linux;
+                  };
+                }
+                // luaGlib
+              );
 
               # HyprDynamicCursors: stretch/tilt/rotate cursor effects plus shake
               # to find. nixpkgs pins 0-unstable-2026-07-21, which predates
