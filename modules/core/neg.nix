@@ -38,6 +38,12 @@ in
   config = {
     _module.args.mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
 
+    # An option that is nothing but a type, a default and a description — the
+    # shape of most non-boolean feature options (mkBool covers the flags).
+    _module.args.mkOpt =
+      type: default: description:
+      lib.mkOption { inherit type default description; };
+
     # Expose helpers under config.lib.neg: the pure neg-helpers from
     # specialArgs (mkHomeFiles, importDir, ...) extended with helpers that
     # close over config.
