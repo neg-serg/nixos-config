@@ -46,7 +46,7 @@ branch makes the tick skip quietly (`--allow-skip`); a failed eval leaves the un
 ## Rebuild After Update
 
 ```bash
-sudo nixos-rebuild switch --flake .#trantor
+just switch-sudo
 ```
 
 ## Rollback

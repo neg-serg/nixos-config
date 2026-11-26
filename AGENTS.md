@@ -34,7 +34,9 @@ Quick Commands
   `nixos-agent-switch.service` activates the toplevel you already built and verified
   (`modules/security/agent-switch.nix`); details under "Builds: substitution through the proxy" below.
 - Human fallback (mechanism off, not yet activated, or the change *is* the mechanism):
-  `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
+  `just switch-sudo` — builds as the user, root only updates the profile and activates. Do not use
+  `sudo nixos-rebuild switch` here: root cannot fetch the private `aurora` `git+ssh` input, so the
+  build dies with `Failed to fetch git repository` (see the recipe's comment).
 - Build only: `rom build .#nixosConfigurations.trantor.config.system.build.toplevel -- --out-link result`
 - Format all: `just fmt`
 - Full check: `just check` (runs `nix flake check -L --option substitute false`)
@@ -261,12 +263,14 @@ Builds: substitution through the proxy
   adding `--option substitute false` only when the proxy is down) → verify what the build actually contains (grep the store paths
   `result` points at) → `just agent-switch "$(readlink -f result)"`. Hand the switch over to the human
   only when the mechanism is off or not activated yet, or when the change *is* the mechanism:
-  `sudo nixos-rebuild switch --flake .#trantor --option substitute false < /dev/null`
-  (the stdin redirect matters when the caller's stdin is a socket — `systemd-run --pipe` refuses it,
-  the build succeeds and nothing is applied; see `.agent/workflows/rebuild.md`).
-- A bare `nixos-rebuild switch` is not interchangeable with the `sudo` form: the activation step
-  writes the root-owned `/nix/var/nix/profiles` (`drwxr-xr-x root root`, not writable by `neg`), and
-  nixos-rebuild does not escalate by itself — it would build the whole system and only then fail.
+  `just switch-sudo`, which builds as the user and gives root only the profile update and the
+  activation. `sudo nixos-rebuild switch` is not an option any more: its build runs as root, root
+  cannot fetch the private `aurora` `git+ssh` input, and the evaluation stops at `error: Failed to
+  fetch git repository 'ssh://git@github.com/neg-serg/aurora'` (2026-11-26; see
+  `.agent/workflows/rebuild.md`).
+- The activation still needs root even in that recipe: `/nix/var/nix/profiles` is `drwxr-xr-x root
+  root`, so `switch-sudo` escalates exactly the profile update and `switch-to-configuration`.
+  `nixos-rebuild` does not escalate by itself, so a bare run would build everything and then fail.
 - Passwordless `sudo` exists only for the narrow entries in `modules/security/default.nix`
   (`systemctl start/stop xray` — with sudo's `""` exact-arguments marker —, `reboot`,
   `poweroff`, `suspend`, `dmesg`, `ryzenadj`, `gpu-oc`); everything else,

@@ -47,9 +47,14 @@ deploy host="trantor": pleamar-sync check-eval hooks-ensure
     # Switch to new configuration
     sudo ./result/bin/switch-to-configuration switch
 
-# Deploy with maximum verbosity (logs + verbose)
+# Deploy with maximum verbosity (logs + verbose). Same split as `deploy` and
+# `switch-sudo` — Nix's own logs on the terminal, root only for the profile
+# and the activation — so it does not hit the root-side fetch described above.
 deploy-debug host="trantor": check-eval hooks-ensure
-    sudo nixos-rebuild switch --flake .#{{ host }} -L -v < /dev/null
+    rom build .#nixosConfigurations.{{ host }}.config.system.build.toplevel \
+      -- --out-link result -L -v
+    sudo nix-env -p /nix/var/nix/profiles/system --set $(readlink -f result)
+    sudo env NIXOS_INSTALL_BOOTLOADER=1 ./result/bin/switch-to-configuration switch
 
 # Refresh the git+file: flake input of the shell after committing in its checkout.
 #
@@ -64,15 +69,43 @@ pleamar-sync:
 switch host="trantor":
     just deploy {{ host }}
 
-# Plain root switch: `nixos-rebuild` itself.
-# This is the fallback when the agent rollout is off and when the change *is*
-# the mechanism.
-# The stdin redirect is not decoration: when the caller's stdin is a socket
-# (systemd-run --pipe, some agent runners) nixos-rebuild refuses it, builds the
-# whole system and applies nothing.
+# Manual switch: build as the invoking user, hand the profile and the activation
+# to root.
+#
+# This is the fallback when the agent rollout is off, not activated yet, or the
+# change *is* the mechanism. It used to be `sudo nixos-rebuild switch`, which
+# cannot work on this host any more. `aurora` is a private `git+ssh` flake input,
+# and the build under `sudo` runs as root, which has no way into that
+# repository. The fetcher also clones a git input on every evaluation — root's
+# per-user fetcher cache stays empty even after the user built the same tree, so
+# a user-side prefetch does not help it — and the run died with
+#
+#   error: Failed to fetch git repository 'ssh://git@github.com/neg-serg/aurora'
+#
+# (journal 2026-11-26 17:15:48, twelve seconds in; the same failure hit the
+# agent unit on 2026-11-25 before its script carried `netcat`). Keeping the
+# build with the user is also the split `nixos-rebuild` makes internally and the
+# one modules/security/agent-switch.nix keeps: root never evaluates the
+# user-writable flake.
+#
+# `NIXOS_INSTALL_BOOTLOADER=1` is what `nixos-rebuild` exports; without it
+# switch-to-configuration skips the bootloader, so a kernel change would never
+# reach the boot menu.
 # Usage: just switch-sudo [host]
 switch-sudo host="trantor": check-eval hooks-ensure
-    sudo nixos-rebuild switch --flake .#{{ host }} < /dev/null
+    # Build as the user: the private input is fetched with this user's key and
+    # ssh config, and substitution stays on like in every deploy target.
+    rom build .#nixosConfigurations.{{ host }}.config.system.build.toplevel \
+      -- --out-link result \
+      --option connect-timeout 60 \
+      --option download-attempts 2 \
+      --option stalled-download-timeout 600
+
+    # Only these two steps are root's: the profile directory is root-owned and
+    # the activation is what needs the privileges. The closure above is the
+    # verified one.
+    sudo nix-env -p /nix/var/nix/profiles/system --set $(readlink -f result)
+    sudo env NIXOS_INSTALL_BOOTLOADER=1 ./result/bin/switch-to-configuration switch
 
 # Cache-status preflight for a rebuild: per host, how much of the *whole closure*
 # still has to be built from source and how much can be substituted. Matters here

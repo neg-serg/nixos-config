@@ -64,11 +64,9 @@
 git clone https://github.com/neg-serg/nixos-config /etc/nixos
 cd /etc/nixos
 
-# 2️⃣ Build and switch (with flakes)
-sudo nixos-rebuild switch --flake .#trantor
-
-# 3️⃣ Or use the helper (if zcli is enabled)
-sudo nixos-rebuild switch --flake .#trantor
+# 2️⃣ Build and switch: the build runs as you (the flake's aurora input is
+# private), root only updates the profile and activates it
+just switch-sudo trantor
 ```
 
 > [!NOTE]

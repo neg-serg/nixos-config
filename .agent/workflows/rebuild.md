@@ -68,7 +68,9 @@ whole fix:
 sudo nixos-rebuild switch --flake .#trantor < /dev/null
 ```
 
-Keep the redirect in any scripted rollout.
+That applies to `nixos-rebuild` itself. `just switch-sudo` below never calls it (it cannot: the
+build has to run as the user, not as root), so the redirect is irrelevant to it — keep it in any
+scripted `nixos-rebuild` invocation.
 
 ## Who runs it
 
@@ -102,8 +104,16 @@ Two paths, preferred one first:
    the mechanism:
 
    ```bash
-   sudo nixos-rebuild switch --flake .#trantor < /dev/null
+   just switch-sudo
    ```
+
+   The recipe builds with the invoking user's credentials and gives root only `nix-env --set` on
+   `/nix/var/nix/profiles/system` plus `switch-to-configuration`. A root-side build is not possible
+   here: `aurora` is a private `git+ssh` flake input and root has no access to it, while the fetcher
+   clones a git input on every evaluation (root's per-user fetcher cache stays empty even after the
+   user built the same tree). `sudo nixos-rebuild switch` therefore stops at stops at
+   `error: Failed to fetch git repository 'ssh://git@github.com/neg-serg/aurora'` — measured
+   2026-11-26 17:15:48, twelve seconds in, and the same failure hit the agent unit on 2026-11-25.
 
 `sudo` stays password-gated for everything else: the `nixos-rebuild` and `env *` NOPASSWD entries
 were removed on purpose (`modules/security/default.nix` — passwordless arbitrary root, since the

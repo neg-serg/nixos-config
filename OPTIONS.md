@@ -90,7 +90,7 @@ These are passed from `flake/nixos.nix` (`mkSpecialArgs`) into modules for conve
 
 Switch examples:
 
-- `sudo nixos-rebuild switch --flake .#trantor`
+- `just switch-sudo` (builds as the user; `sudo nixos-rebuild` cannot fetch the private aurora input)
 
 ## Developer Notes
 
