@@ -5,23 +5,24 @@ let
   #   - service:    serviceConfig keys (Restart/RestartSec/Type/…), merged
   #                 left to right, the caller's own serviceConfig wins last.
   # Keep every list key present (empty when unused) — the other kind is `or [ ]`-safe.
+  # Every preset carries the same four scheduling keys (empty when unused), so
+  # this base is shared and each preset only overrides what it sets.
+  presetBase = {
+    after = [ ];
+    wants = [ ];
+    wantedBy = [ ];
+    partOf = [ ];
+  };
   presets = {
     # Autostart in the user manager's default target — the common case.
-    defaultWanted = {
-      after = [ ];
-      wants = [ ];
+    defaultWanted = presetBase // {
       wantedBy = [ "default.target" ];
-      partOf = [ ];
     };
     # Long-running unit policy: the repo-wide "restart unless it exited cleanly".
     # Deliberately NO RestartSec: the delay varies per unit (1…30 s), so a unit
     # that wants one passes it in its own serviceConfig (the call site keeps the
     # number, the preset keeps the policy).
-    restartOnFailure = {
-      after = [ ];
-      wants = [ ];
-      wantedBy = [ ];
-      partOf = [ ];
+    restartOnFailure = presetBase // {
       service = {
         Restart = "on-failure";
       };
@@ -33,22 +34,14 @@ let
     # unit down for the rest of the session (wl-daemon, 2026-11-02: alive on a
     # dead connection after the first crash, then not started again after the
     # second). Same note on RestartSec as above: the delay stays at the call site.
-    restartAlways = {
-      after = [ ];
-      wants = [ ];
-      wantedBy = [ ];
-      partOf = [ ];
+    restartAlways = presetBase // {
       service = {
         Restart = "always";
       };
     };
     # Short-lived helper: no restart policy of its own and no target — the
     # caller says whether it is wanted by default.target, a timer, or nothing.
-    oneshot = {
-      after = [ ];
-      wants = [ ];
-      wantedBy = [ ];
-      partOf = [ ];
+    oneshot = presetBase // {
       service = {
         Type = "oneshot";
       };
@@ -56,17 +49,12 @@ let
     # Resident in the graphical session (bar/portal/theme helpers).
     # PartOf: the unit follows the session down. Use `graphicalWanted` when the
     # unit only needs to be pulled in by the session, not stopped with it.
-    graphicalSession = {
-      after = [ ];
-      wants = [ ];
+    graphicalSession = presetBase // {
       wantedBy = [ "graphical-session.target" ];
       partOf = [ "graphical-session.target" ];
     };
-    graphicalWanted = {
-      after = [ ];
-      wants = [ ];
+    graphicalWanted = presetBase // {
       wantedBy = [ "graphical-session.target" ];
-      partOf = [ ];
     };
     # Client of the running PipeWire graph (JACK apps, pw-link watchers).
     # pipewire-jack hands the app a JACK client and WirePlumber ignores those
@@ -74,14 +62,11 @@ let
     # and the session manager must be up before it starts. Both are user units,
     # hence `after` (plus `wants` for the pull-in) rather than a system-level
     # dependency.
-    audioGraph = {
+    audioGraph = presetBase // {
       after = [
         "pipewire.service"
         "wireplumber.service"
       ];
-      wants = [ ];
-      wantedBy = [ ];
-      partOf = [ ];
     };
   };
 
