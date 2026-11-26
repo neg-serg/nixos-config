@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795703401,
-        "narHash": "sha256-J9IKDFjoQwNc/awGza2DxcsvlhggryRozln35rOXkW8=",
+        "lastModified": 1795720421,
+        "narHash": "sha256-lg/EB9KViSlBCOqZb5MPhg0oWuG8OHWICrIB/paGR+Q=",
         "ref": "refs/heads/main",
-        "rev": "9e8d7ff3913e8e603413974f87fd85b9c89eb42d",
-        "revCount": 1589,
+        "rev": "e22a92b655e949bb428b388aedcb439885486258",
+        "revCount": 1598,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/aurora"
       },
@@ -1503,11 +1503,11 @@
         "pleamar-wm": "pleamar-wm"
       },
       "locked": {
-        "lastModified": 1795709865,
-        "narHash": "sha256-HpWbZYwnOAvHaV49lURkjnm9oXdkUULxmwhvHOQdaHo=",
+        "lastModified": 1795710921,
+        "narHash": "sha256-WDuhOwnJjiuhF4ck/QdxFk8BW8ZXv3do+f40IjSWfZQ=",
         "ref": "refs/heads/main",
-        "rev": "ebe1ca608cb7ebf1700284b4978b6ec7565346b8",
-        "revCount": 5,
+        "rev": "39784b53eed03ebdd10b384477ccf2c94fe55542",
+        "revCount": 6,
         "type": "git",
         "url": "file:///home/neg/src/nix/pleamar-config"
       },
