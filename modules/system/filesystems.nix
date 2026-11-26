@@ -10,6 +10,57 @@ let
   # config.lib.neg.homeDir (which dereferences users.users.<name>.home) recurses.
   homeDir = "/home/${mainUser}";
   isTrantor = config.networking.hostName == "trantor";
+
+  # The gamez data directories are bind-mounted into the home tree with one
+  # shared option set; only the dataset subdirectory differs.
+  gamezBind = dataset: {
+    device = "/gamez/main/${dataset}";
+    fsType = "none";
+    options = [
+      "bind"
+      "nofail"
+      "x-systemd.automount"
+      # Wait for the real gamez/main mount before binding; otherwise the
+      # bind pins the empty dir on tank/nixos and Steam loses its library.
+      "x-systemd.requires-mounts-for=/gamez/main"
+      "x-systemd.after=zfs-import-gamez.service"
+    ];
+  };
+
+  # Boot-time ZFS property tuning: run once, stay "on" for the rest of the boot.
+  mkPropsUnit = description: script: {
+    inherit description script;
+    wantedBy = [ "zfs.target" ];
+    after = [ "zfs.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    path = [ pkgs.zfs ]; # ZFS filesystem utilities
+  };
+
+  # Pool import before zfs-mount, shared by the pools boot.zfs does not carry.
+  # DefaultDependencies = false stays a per-unit decision (see zfs-import-gamez).
+  mkImportUnit = pool: devices: {
+    description = "Import ZFS pool ${pool}";
+    unitConfig.DefaultDependencies = false;
+    wantedBy = [ "zfs.target" ];
+    after = devices;
+    bindsTo = devices;
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    path = [ pkgs.zfs ]; # ZFS filesystem utilities
+    # Import before the stock zfs-mount service so it mounts our datasets;
+    # a redundant `zfs mount -a` here races with zfs-mount and fails (busy).
+    before = [ "zfs-mount.service" ];
+    script = ''
+      if ! zpool list ${pool} >/dev/null 2>&1; then
+        zpool import -N ${pool}
+      fi
+    '';
+  };
 in
 {
   boot.supportedFilesystems = [
@@ -57,52 +108,10 @@ in
       ];
     };
 
-    "${homeDir}/.local/share/Steam/userdata" = {
-      device = "/gamez/main/userdata_steam";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-        # Wait for the real gamez/main mount before binding; otherwise the
-        # bind pins the empty dir on tank/nixos and Steam loses its library.
-        "x-systemd.requires-mounts-for=/gamez/main"
-        "x-systemd.after=zfs-import-gamez.service"
-      ];
-    };
-    "${homeDir}/.local/share/wineprefixes" = {
-      device = "/gamez/main/wineprefixes";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-        "x-systemd.requires-mounts-for=/gamez/main"
-        "x-systemd.after=zfs-import-gamez.service"
-      ];
-    };
-    "${homeDir}/.cache/winetricks" = {
-      device = "/gamez/main/winetricks_cache";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-        "x-systemd.requires-mounts-for=/gamez/main"
-        "x-systemd.after=zfs-import-gamez.service"
-      ];
-    };
-    "${homeDir}/.local/share/Steam/steamapps" = {
-      device = "/gamez/main/steamapps";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-        "x-systemd.requires-mounts-for=/gamez/main"
-        "x-systemd.after=zfs-import-gamez.service"
-      ];
-    };
+    "${homeDir}/.local/share/Steam/userdata" = gamezBind "userdata_steam";
+    "${homeDir}/.local/share/wineprefixes" = gamezBind "wineprefixes";
+    "${homeDir}/.cache/winetricks" = gamezBind "winetricks_cache";
+    "${homeDir}/.local/share/Steam/steamapps" = gamezBind "steamapps";
   };
 
   # A dataset of its own for the compiler caches. They grow on their own schedule
@@ -161,93 +170,39 @@ in
 
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
   # and repeated builds read the same store paths.
-  systemd.services.zfs-store-props = {
-    description = "Set optimal ZFS properties on tank/store";
-    wantedBy = [ "zfs.target" ];
-    after = [ "zfs.target" ];
-    serviceConfig.Type = "oneshot";
-    serviceConfig.RemainAfterExit = true;
-    path = [ pkgs.zfs ]; # ZFS filesystem utilities
-    script = ''
-      if zfs list tank/store >/dev/null 2>&1; then
-        zfs set compression=lz4 tank/store
-        zfs set recordsize=128K tank/store
-        zfs set atime=off tank/store
-        zfs set xattr=sa tank/store
-        zfs set primarycache=all tank/store
-        zfs set redundant_metadata=all tank/store
-        zfs set dnodesize=auto tank/store
-        zfs set logbias=latency tank/store
-        zfs set sync=disabled tank/store
-        zfs set snapshot_limit=1000 tank/store
-        zpool set autotrim=on tank
-      fi
-    '';
-  };
+  systemd.services.zfs-store-props = mkPropsUnit "Set optimal ZFS properties on tank/store" ''
+    if zfs list tank/store >/dev/null 2>&1; then
+      zfs set compression=lz4 tank/store
+      zfs set recordsize=128K tank/store
+      zfs set atime=off tank/store
+      zfs set xattr=sa tank/store
+      zfs set primarycache=all tank/store
+      zfs set redundant_metadata=all tank/store
+      zfs set dnodesize=auto tank/store
+      zfs set logbias=latency tank/store
+      zfs set sync=disabled tank/store
+      zfs set snapshot_limit=1000 tank/store
+      zpool set autotrim=on tank
+    fi
+  '';
 
   # Tune tank/nixos (root) for OS workloads and Nix xattr compatibility.
-  systemd.services.zfs-nixos-props = {
-    description = "Set optimal ZFS properties on tank/nixos";
-    wantedBy = [ "zfs.target" ];
-    after = [ "zfs.target" ];
-    serviceConfig.Type = "oneshot";
-    serviceConfig.RemainAfterExit = true;
-    path = [ pkgs.zfs ]; # ZFS filesystem utilities
-    script = ''
-      if zfs list tank/nixos >/dev/null 2>&1; then
-        zfs set dnodesize=auto tank/nixos
-        zfs set snapshot_limit=50 tank/nixos
-      fi
-    '';
-  };
+  systemd.services.zfs-nixos-props = mkPropsUnit "Set optimal ZFS properties on tank/nixos" ''
+    if zfs list tank/nixos >/dev/null 2>&1; then
+      zfs set dnodesize=auto tank/nixos
+      zfs set snapshot_limit=50 tank/nixos
+    fi
+  '';
 
-  systemd.services."zfs-import-gamez" = {
-    description = "Import ZFS pool gamez";
-    # gamez is a mirror on nvme1n1 + nvme3n1 (nvme0n1/nvme2n1 are tank/zero).
-    # No default deps: implicit After=basic.target closed the boot cycle
-    # import → zfs-mount → local-fs.target → bootctl.socket → sockets → basic.target.
-    unitConfig.DefaultDependencies = false;
-    wantedBy = [ "zfs.target" ];
-    after = [
-      "dev-nvme1n1.device"
-      "dev-nvme3n1.device"
-    ];
-    bindsTo = [
-      "dev-nvme1n1.device"
-      "dev-nvme3n1.device"
-    ];
-    serviceConfig.Type = "oneshot";
-    serviceConfig.RemainAfterExit = true;
-    path = [ pkgs.zfs ]; # ZFS filesystem utilities
-    # Import before the stock zfs-mount service so it mounts our datasets;
-    # a redundant `zfs mount -a` here races with zfs-mount and fails (busy).
-    before = [ "zfs-mount.service" ];
-    script = ''
-      if ! zpool list gamez >/dev/null 2>&1; then
-        zpool import -N gamez
-      fi
-    '';
-  };
-  systemd.services."zfs-import-zero" = {
-    description = "Import ZFS pool zero";
-    # zero lives on nvme2n1.
-    unitConfig.DefaultDependencies = false; # see zfs-import-gamez: breaks the boot ordering cycle
-    wantedBy = [ "zfs.target" ];
-    after = [
-      "dev-nvme2n1.device"
-    ];
-    bindsTo = [ "dev-nvme2n1.device" ];
-    serviceConfig.Type = "oneshot";
-    serviceConfig.RemainAfterExit = true;
-    path = [ pkgs.zfs ]; # ZFS filesystem utilities
-    # Import before zfs-mount so it mounts our datasets (see zfs-import-gamez).
-    before = [ "zfs-mount.service" ];
-    script = ''
-      if ! zpool list zero >/dev/null 2>&1; then
-        zpool import -N zero
-      fi
-    '';
-  };
+  # gamez is a mirror on nvme1n1 + nvme3n1 (nvme0n1/nvme2n1 are tank/zero).
+  # No default deps: implicit After=basic.target closed the boot cycle
+  # import → zfs-mount → local-fs.target → bootctl.socket → sockets → basic.target.
+  systemd.services."zfs-import-gamez" = mkImportUnit "gamez" [
+    "dev-nvme1n1.device"
+    "dev-nvme3n1.device"
+  ];
+  # zero lives on nvme2n1.
+  systemd.services."zfs-import-zero" = mkImportUnit "zero" [ "dev-nvme2n1.device" ];
 
   services.zfs.autoScrub.enable = true;
   services.zfs.trim.enable = true;
