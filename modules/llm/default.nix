@@ -410,7 +410,6 @@ in
     lib.mkMerge [
       {
         services.ollama = {
-          enable = lib.mkDefault true;
           package = ollamaLauncher; # CLI on PATH, built on first use
           # RX 9070 XT (Navi 48, gfx1201) — native ROCm support, no override
           user = "ollama";
@@ -473,13 +472,11 @@ in
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/video/wangp
         '';
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
-      }
-      (lib.mkIf cfg.enable {
         # nixpkgs sets DynamicUser=true unconditionally even with a static
         # user; force it off so the process runs as the real ollama user and
         # keeps stable ownership of /zero/ai/ollama.
-        systemd.services.ollama.serviceConfig.DynamicUser = lib.mkForce false;
-      })
+        systemd.services.ollama.serviceConfig.DynamicUser = lib.mkIf cfg.enable (lib.mkForce false);
+      }
     ]
   );
 }
