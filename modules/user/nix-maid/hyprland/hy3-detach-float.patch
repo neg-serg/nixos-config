@@ -272,6 +272,23 @@ index c4df9ac..86d8a97 100644
  	PHLWINDOW window;
  
  	switch (option) {
+@@ -1464,7 +1464,14 @@
+ 
+ static Hy3Node* findNodeFromTargetRecursive(Hy3Node* node, SP<Layout::ITarget> target) {
+ 	if (!node) return nullptr;
+-	if (node->is_target() && node->as_target() == target) {
++	// A node whose target is gone can stay in the tree: the detach patch keeps the node
++	// while its window floats, and a window torn down from there outlives the target it
++	// was detached from. `is_target()` is a dynamic_cast and says nothing about the
++	// target still being alive, while `as_target()` throws on an expired one -- at this
++	// point that exception crosses a Hyprland callback and aborts the compositor (core of
++	// 2026-11-26: `newTarget` <- `CWindow::mapWindow`). A dead node is not the target
++	// anybody asked for, and `pruneDetachedNodes` takes it out on the next relayout.
++	if (node->is_target() && node->valid() && node->as_target() == target) {
+ 		return node;
+ 	}
+ 	if (node->is_group()) {
+
 diff --git a/src/Hy3Layout.hpp b/src/Hy3Layout.hpp
 index a25a5ae..306d2cb 100644
 --- a/src/Hy3Layout.hpp
