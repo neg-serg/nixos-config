@@ -20,12 +20,6 @@
     exclude = [ "unbound-hosts.nix" ];
   };
   system.preserveFlake = false;
-  # Rollout benchmark trigger: scripts/dev/rollout-bench.sh rewrites this label
-  # for every measured round, so a round performs a real (tiny) rollout instead
-  # of a fully warm no-op. It repeats nixpkgs' own default (label = version), so
-  # the tree builds exactly as it would without the line — keep that property if
-  # the value ever changes.
-  system.nixos.label = lib.mkDefault config.system.nixos.version;
 
   # Composable profiles: order matters, last wins on conflicts
   features.profiles = [

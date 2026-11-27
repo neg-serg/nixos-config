@@ -26,8 +26,8 @@ maintainer picks streaming vs a configurable cap), `06-large-file-streaming` and
 `fix` was packaged here (patched master + vendored zig dependencies, feature flag
 `features.cli.fix`) and removed again in commmits `66ea322d0` (`[cli/fix] Drop the fix evaluator`)
 and `5e1f87fe1` (`[cli/fix] Drop the fix flag, overlay and flake exports`). The reason was measured,
-not assumed — `scripts/dev/rollout-bench.sh` (`just bench-rollout`) times one real, minimal rollout
-per engine on this host:
+not assumed — `scripts/dev/rollout-bench.sh` (`just bench-rollout`, itself dropped from the tree
+once `fix` was gone) times one real, minimal rollout per engine on this host:
 
 | engine      | 5-round medians (warm store) |
 | ----------- | ---------------------------- |

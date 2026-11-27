@@ -532,19 +532,6 @@ subtree-pull-packages:
 
 # --- Profiling / Benchmarking -------------------------------------------------
 
-# Generate perf+Inferno flamegraph SVG for nix eval
-flamegraph-eval host="trantor":
-    bash scripts/dev/nix-flamegraph.sh {{ host }}
-
-# Generate perf+Inferno flamegraph SVG for nix eval
-profile-eval: flamegraph-eval
-
-# Rollout benchmark: eval+instantiate+realize timings for `fix` and `nix` on a
-# one-line change (the `system.nixos.label` trigger in hosts/trantor/default.nix)
-# Usage: just bench-rollout [runs] [engines]
-bench-rollout runs="3" engines="fix,nix":
-    scripts/dev/rollout-bench.sh --runs {{ runs }} --engines {{ engines }}
-
 # Eval-time regression guard: median of N plain drvPath evals vs the committed
 # baseline; fails above +15%. Run before/after closure-minimization or
 # dendritic/import-tree experiments.
