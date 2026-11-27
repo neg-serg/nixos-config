@@ -6,7 +6,6 @@
       oss.enable = mkBool "enable OSS Games (SuperTux, Wesnoth, etc.)" false;
       steamProxy.enable = mkBool "route Steam traffic through local SOCKS5 proxy (proxychains LD_PRELOAD)" false;
       openmw.enable = mkBool "enable OpenMW (Morrowind Engine)" false;
-      irori.enable = mkBool "enable Irori game launcher (Epic, GOG, Amazon, ZOOM, itch.io, Steam)" true;
     };
 
     emulators = {

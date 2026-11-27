@@ -47,9 +47,6 @@ in
   wallhaven = callPkg (pkg "wallhaven") { inherit mkVicinaeExtension; };
   hyprwhspr = callPkg (pkg "hyprwhspr") { inherit mkVicinaeExtension; };
   aura = callPkg (pkg "aura") { inherit mkVicinaeExtension; }; # the emotion/CBT diary: record a note from the launcher
-  # Irori — game launcher repacked from the upstream release tarball. The
-  # WebKitGTK sign-in helper makes the closure heavy, so the system installs the
-  # on-demand launcher (modules/user/games/irori.nix) instead of the package.
 
   # ArtCraft suite: the apps are on-demand roots
   # (modules/user/nix-maid/apps/craft-apps.nix) built on first launch, so the
