@@ -22,8 +22,6 @@
     # Shell
     pkgs.shellcheck # shell linter
     pkgs.oils-for-unix # osh/ysh: bash-compatible shell for the osh -n syntax guard
-    # Rust
-    pkgs.rustfmt # rust formatting check
     # TOML
     pkgs.taplo # TOML formatter/linter
   ];

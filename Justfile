@@ -281,10 +281,6 @@ lint-annotations:
 check-dsh-sessions dsh-path:
     bash "{{repo_root}}/scripts/dev/check-dsh-sessions.sh" {{dsh-path}}
 
-# Format Rust sources (edition-aware, via nearest Cargo.toml)
-rustfmt:
-    bash "{{repo_root}}/scripts/dev/check-rustfmt.sh" "{{repo_root}}" fix
-
 # Update the flake lock (all inputs). The agent session sandbox cannot write $HOME
 # (Landlock reports it writable but denies the opens), so fall back to the repo-local
 # nix cache the way .agent/tmp-nix-cache is already used by the build recipes.

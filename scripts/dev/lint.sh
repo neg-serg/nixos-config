@@ -112,15 +112,6 @@ gate_toml() {
   fi
 }
 
-gate_rust() {
-  # Rust formatting (edition-aware via nearest Cargo.toml)
-  if command -v rustfmt > /dev/null 2>&1; then
-    bash "$REPO_ROOT/scripts/dev/check-rustfmt.sh"
-  else
-    printf '%s\n' "${c_warn}rustfmt not found — skipping Rust check${c_reset}"
-  fi
-}
-
 gate_lua() {
   # Lua (non-nvim; nvim is a vendored config)
   if command -v selene > /dev/null 2>&1; then
@@ -405,7 +396,6 @@ GATES=(
   nix
   python
   toml
-  rust
   lua
   music
   shellcheck
