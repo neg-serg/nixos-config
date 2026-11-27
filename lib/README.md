@@ -135,9 +135,10 @@ imports = neg.importDir { dir = ./.; includeDirs = true; nameFilter = domainFilt
 references whose target is data rather than a path string.
 
 From the shell, `paths` (a `~/.local/bin` tool, wrapped as `just paths`) answers the same questions:
-`paths keys files` prints what to write for `files/…`, `paths keys modules --any` does the same for
-the module tree, `paths refs systemd-user` shows every reference to a name, `paths find wl-monitor`
-picks a file with fzf and lists who uses it, and
+`paths keys files --any` prints what to write for `files/…` (the keys tool defaults to `.nix`, and
+`files/` is data), `paths keys modules --any` does the same for the module tree,
+`paths refs systemd-user` shows every reference to a name, `paths find wl-monitor` picks a file with
+fzf and lists who uses it, and
 `paths resolve ../../../lib/x.nix --from hosts/trantor/services/y.nix` resolves a relative reference
 (and warns when it leaves the repo).
 

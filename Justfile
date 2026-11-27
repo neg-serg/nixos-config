@@ -231,13 +231,13 @@ lint:
     bash "{{repo_root}}/scripts/dev/lint.sh" "{{repo_root}}"
 
 # Resolve repo paths by name (see lib/README.md → Which resolver, where):
-#   just paths keys files        what to write in Nix for files/…
+#   just paths keys files --any  what to write in Nix for files/…
 #   just paths keys modules --any
 #   just paths refs systemd-user who references it
 #   just paths find wl-monitor   fuzzy-pick a file and list its references
 #   just paths resolve ../../../lib/x.nix --from hosts/trantor/services/y.nix
 paths *ARGS:
-    "{{repo_root}}/packages/local-bin/bin/paths" --root "{{repo_root}}" {{ARGS}}
+    paths --root "{{repo_root}}" {{ARGS}}
 
 # Offline self-checks for the music tooling. Index/similar are Rust binaries
 # (stub embedder, no torch/model/venv); the describe payload is still Python and
