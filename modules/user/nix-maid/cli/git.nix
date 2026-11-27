@@ -143,11 +143,5 @@ in
     ".config/git/ignore" = {
       source = config.lib.neg.live "files/git/ignore";
     };
-    ".config/git/hooks/pre-commit" = {
-      source = config.lib.neg.live "files/git/hooks/pre-commit.sh";
-    };
-    ".config/git/hooks/commit-msg" = {
-      source = config.lib.neg.live "files/git/hooks/commit-msg.sh";
-    };
   };
 }
