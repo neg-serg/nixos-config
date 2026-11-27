@@ -41,6 +41,9 @@ fail=0
 # `\b` (a non-word character, or end of line, must follow `sh`).
 shells=()
 while IFS= read -r -d '' file; do
+  # A file deleted in the working tree but not yet staged is still in the
+  # index; reading it prints a bogus "No such file" before the gate passes.
+  [ -e "$file" ] || continue
   first=""
   IFS= read -r first < "$file" || true
   if [[ $first =~ ^#![[:space:]]*/(usr/)?bin/(env[[:space:]]+)?(ba)?sh([^A-Za-z0-9_]|$) ]]; then
