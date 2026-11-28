@@ -62,7 +62,7 @@ arithmetic. The concrete directions, if this host ever justifies the work:
 - reduce allocation churn in `BumpMemoryResource` / move AST nodes out of the hot allocator;
 - a persistent AST cache needs a serialiser that does not exist (21 `Expr` node types plus
   SymbolTable, StaticEnv, PosTable, DocComment map) — measured floor ~0.62 s of saving, ~7x cheaper
-  deserialisation than parsing, i.e. a real project for 5.7 %.
+  deserialization than parsing, i.e. a real project for 5.7 %.
 
 **Why not done**: weeks of C++ in the hottest code of the tool that runs `nixos-rebuild`, with a
 silent-wrong-result failure mode. The validation harness for exactly that class already exists

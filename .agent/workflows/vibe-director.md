@@ -31,7 +31,7 @@ worker is spawned once, kept alive across turns, and addressed by a stable id.
 
 ## Notes
 
-- Workers are not replacable mid-flight: if one fails, re-spawn a fresh worker rather than piling
+- Workers are not replaceable mid-flight: if one fails, re-spawn a fresh worker rather than piling
   more work onto a confused one.
 - Keep worker prompts self-contained — they do not see this conversation.
 - This is the DSH-native version of omp's vibe mode (persistent, addressable worker sessions); no

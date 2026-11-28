@@ -205,7 +205,7 @@ flake (`builtins.getFlake "/etc/nixos"` uses the *path* fetcher, copies the tree
 cache — that is also what trips over stray sockets). Standardise on `.#…` refs in every recipe,
 `Justfile` and script.
 
-**T5 — `neg.importDir` and module count.** *Deprioritised by the probes*: the whole module system is
+**T5 — `neg.importDir` and module count.** *Deprioritized by the probes*: the whole module system is
 1.29 s, so `importDir` and `trantorDomains` filtering together are a fraction of that. Only revisit
 if probe 1 grows past ~2 s on its own.
 
@@ -220,11 +220,11 @@ The speedups that remain are in the evaluator's own structures, and there the fa
 **silently different `drvPath`**: the build succeeds and the artifact is not what the config says.
 So the question is not "is it faster" but "can a wrong answer get through".
 
-### Patch 0006 (`derivationStrict` memoised by a masked-derivation hash) — reviewed line by line
+### Patch 0006 (`derivationStrict` memoized by a masked-derivation hash) — reviewed line by line
 
 The key hashes `name`, `platform`, `builder`, `args` (with count and lengths), `env` (count, keys,
 values), output *names* plus count, `inputSrcs`, `inputDrvs` (path, count, output names) and
-`structuredAttrs` (`unparse()` JSON). It returns `nullopt` — i.e. no memoisation — for fixed-output
+`structuredAttrs` (`unparse()` JSON). It returns `nullopt` — i.e. no memoization — for fixed-output
 derivations and for any `inputDrvs` entry with a non-empty `childMap`, and the memo is only
 consulted when `repair == NoRepair`.
 
@@ -335,7 +335,7 @@ someone later wants both, the options are, in order of cost:
 1. **Backport `devirtualize` to upstream** — ~250–300 lines across 12 files — then apply all nine
    patches verbatim. Medium risk, and it buys only the copy saving.
 1. **Rebase `0002/0006/0007` onto Determinate's APIs** — the honest estimate is 2–3 days of C++,
-   with the worst failure mode being a silently wrong `drvPath`, because `0006` memoises the hot
+   with the worst failure mode being a silently wrong `drvPath`, because `0006` memoizes the hot
    path. This is the only route that gets both features *and* the patches, and it is why the
    differential harness in `scripts/dev/nix-memo-diff.sh` and the `eval-memo` switch exist: they
    make that rebase verifiable rather than hopeful.
@@ -361,7 +361,7 @@ round-trips through it, and the toplevel `drvPath` equals the stock binary's.
 `nix-*-tests-run` inputs and one of them (IPv6 zone-id URL parsing) fails on their tree regardless
 of our patches. Acceptance is by behaviour instead — identical `drvPath`, plus a six-case
 differential battery (any/all, structuredAttrs drvPath, `nix hash path`, fromJSON, path
-canonicalisation, flake metadata) that compares this build against stock byte for byte.
+canonicalization, flake metadata) that compares this build against stock byte for byte.
 
 The four patches still missing are `0002`, `0006`, `0007` (and `0008`, which cannot help: it targets
 a `writeDerivation` path Determinate bypasses via `AsyncPathWriter`). Getting them means rebasing
@@ -378,7 +378,7 @@ every store path escaping without devirtualising becomes a bug class.
 | **BOLT** on the evaluator                             | **< 1 %**, do not ship                                                                                                                                             | Sampling worked (`perf_event_paranoid = 2`, user-space allowed, 10.7 M LBR entries with `-j any`), relocations worked (`NIX_LDFLAGS="--emit-relocs"`; `-Wl,-q` kills meson's sanity check), all 8 objects were BOLT-ed (`bin/nix` is ~0 % of samples; `libnixexpr.so` is 51.6 %). A/B n=10: +0.7 % wall, `instructions:u` **+0.07 %**, branch-misses −3.6 %, cycles flat. The eval is not front-end bound — allocation, GC and pointer chasing dominate — and `-split-functions` adds ~0.2 % instructions |
 | `-O3 -march=znver5 -mtune=znver5` (Zen 5 host)        | **no change** (10951 vs 10927 ms)                                                                                                                                  | same reason: not arithmetic bound, so wider vectors buy nothing                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | AST cache / parallel parse                            | parse is **745 ms** = 7–10 % of eval; parallel parse 745 → 267 ms @4 threads; a persistent AST cache needs a serialiser that does not exist and would save ~0.62 s | under the 5 % bar; the parallel variant is a small patch and is being tried separately                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Removing packages from `environment.systemPackages`   | **no safe removals**                                                                                                                                               | 839 entries cost 4.66 s of 8.87 s = 0.34 ms/derivation, and they are all working software. Duplicates (42x `shadow`, 4x `zsh`/`curl`) cost **0 derivations** because Nix memoises the derivation. The only hollow cost is `tmd-top` instantiating `nativeCheckInputs` with `doCheck = false`: 77 derivations, 0.026 s                                                                                                                                                                                     |
+| Removing packages from `environment.systemPackages`   | **no safe removals**                                                                                                                                               | 839 entries cost 4.66 s of 8.87 s = 0.34 ms/derivation, and they are all working software. Duplicates (42x `shadow`, 4x `zsh`/`curl`) cost **0 derivations** because Nix memoizes the derivation. The only hollow cost is `tmd-top` instantiating `nativeCheckInputs` with `doCheck = false`: 77 derivations, 0.026 s                                                                                                                                                                                     |
 | Patches `0002/0006/0007/0008` beyond the four shipped | neutral or inapplicable                                                                                                                                            | `0007` is implemented one layer lower (`AsyncPathWriterImpl::addPath`), `0008` targets a `writeDerivation` the evaluator never calls, `0006`'s memo is timing-neutral on a warm store, `0002` measured inside the noise                                                                                                                                                                                                                                                                                   |
 
 **What is left**: the evaluator's own core (GC, allocator, pointer chasing — `mi_theap_alloc_new`

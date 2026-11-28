@@ -279,7 +279,7 @@ claims in that report as unverified until re-checked.
 ## Pass 2026-10-28 — SC plugin builder, PipeWire/JACK units, test harness
 
 Owner-requested pass over the three duplication clusters this survey left open. All three are
-*centralisations*: the per-site boilerplate disappears, the shared builder stays, so the volume
+*centralizations*: the per-site boilerplate disappears, the shared builder stays, so the volume
 delta is small or positive while the cost of the next instance drops.
 
 | Change                                                                                                                                                                                                               | Δ at the call sites            | Builder cost                                   | Net  | Per-new-instance cost |
