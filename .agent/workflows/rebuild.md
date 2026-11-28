@@ -14,6 +14,9 @@ just deploy
 `/nix/var/nix/profiles/system` and runs `switch-to-configuration switch` — the same steps as
 `nixos-rebuild switch`, with the build rendered as a graph.
 
+On trantor the watcher may already deploy a clean committed `main`; the manual paths below are for
+uncommitted work, risky paths and failures.
+
 ## Steps
 
 1. **Check configuration**:
@@ -52,25 +55,27 @@ just check     # Run all checks
 
 ## Non-interactive runs (agents, CI)
 
-`nixos-rebuild switch` re-execs itself through `systemd-run --pipe`, which forwards its own stdin
-into the transient unit. When the caller's stdin is a **socket** (an agent's tool shell, some CI
-runners) systemd refuses it:
+On this host do not call `sudo nixos-rebuild switch`: the build runs as root, which cannot fetch the
+private `aurora` `git+ssh` input (see "Human switch" below). The non-interactive paths are
+`just switch-sudo` and `just agent-switch`; both build as the invoking user and never call
+`nixos-rebuild`.
+
+The stdin caveat still matters where `nixos-rebuild` is usable at all. It re-execs itself through
+`systemd-run --pipe`, which forwards its own stdin into the transient unit. When the caller's stdin
+is a **socket** (an agent's tool shell, some CI runners) systemd refuses it:
 
 ```
 Failed to start transient service unit: StandardInputFileDescriptor passed is of
 incompatible type: Protocol wrong type for socket
 ```
 
-The build succeeds and nothing is applied, so retrying with stdin redirected from `/dev/null` is the
-whole fix:
+The build succeeds and nothing is applied, so redirect stdin from `/dev/null`:
 
 ```bash
 sudo nixos-rebuild switch --flake .#trantor < /dev/null
 ```
 
-That applies to `nixos-rebuild` itself. `just switch-sudo` below never calls it (it cannot: the
-build has to run as the user, not as root), so the redirect is irrelevant to it — keep it in any
-scripted `nixos-rebuild` invocation.
+That redirect does not help on trantor: the private input fails first. Use the recipes.
 
 ## Who runs it
 
@@ -111,7 +116,7 @@ Two paths, preferred one first:
    `/nix/var/nix/profiles/system` plus `switch-to-configuration`. A root-side build is not possible
    here: `aurora` is a private `git+ssh` flake input and root has no access to it, while the fetcher
    clones a git input on every evaluation (root's per-user fetcher cache stays empty even after the
-   user built the same tree). `sudo nixos-rebuild switch` therefore stops at stops at
+   user built the same tree). `sudo nixos-rebuild switch` therefore stops at
    `error: Failed to fetch git repository 'ssh://git@github.com/neg-serg/aurora'` — measured
    2026-11-26 17:15:48, twelve seconds in, and the same failure hit the agent unit on 2026-11-25.
 

@@ -348,11 +348,12 @@ nix develop
 # 🎨 Format all code (nixfmt/treefmt)
 just fmt
 
-# 🔍 Run all checks (format + lint + build)
+# 🔍 Lint, then run the flake checks
+just lint
 just check
 
-# 🏗️ Build without switching
-nixos-rebuild build --flake .#trantor
+# 🏗️ Build without switching (builds as you; root cannot fetch the private aurora input)
+rom build .#nixosConfigurations.trantor.config.system.build.toplevel -- --out-link result
 
 # 🚀 Rebuild and switch
 just deploy
@@ -554,7 +555,7 @@ Quick-access overlays for common applications:
 | ⬇️ **torrment** | Rustmission | `Super+T` | 98% × 40% (top-left) |
 | 📊 **teardown** | btop, plus the live dmesg log in a lazytail tab | `Super+D` | 98% × 50% (top-left) |
 | 🔒 **vpn** | tunnel status | `Super+U` | 50% × 30% (centered) |
-| 🔁 **rebuild** | `nixos-rebuild switch` | `Super+Shift+N` | 98% × 50% (top-left) |
+| 🔁 **rebuild** | `just deploy` | `Super+Shift+N` | 98% × 50% (top-left) |
 
 `Super+Shift+H` hides all scratchpads. Every row mirrors the class match, bind and window rule in
 `files/gui/hypr/hyprland.lua`; there is no Discord/Vesktop scratchpad.
