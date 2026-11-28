@@ -62,8 +62,6 @@ done
   exit 2
 }
 
-is_image() { case "$1" in *.png | *.jpg | *.jpeg | *.webp | *.bmp | *.tif | *.tiff) return 0 ;; *) return 1 ;; esac }
-
 upscale_file() {
   local in out stem dir
   in="$(readlink -f "$1")"
