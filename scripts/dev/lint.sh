@@ -384,7 +384,15 @@ gate_prose() {
   cfg=$(mktemp "${TMPDIR:-/tmp}/vale.XXXXXXXX.ini")
   sed "s#^StylesPath = .*#StylesPath = $REPO_ROOT/files/vale/styles#" \
     "$REPO_ROOT/files/vale/.vale.ini" > "$cfg"
+  # `git ls-files` can list a markdown that is gone from the worktree — a
+  # deleted file still in the index, or a pathspec commit whose temporary index
+  # keeps the rest of HEAD. Vale fails on a missing argument, so feed it only
+  # paths that still exist (same guard as the osh gate).
   git ls-files -z -- '*.md' \
+    | while IFS= read -r -d '' file; do
+      [ -e "$file" ] || continue
+      printf '%s\0' "$file"
+    done \
     | xargs -0 -r vale --no-global --config "$cfg" --minAlertLevel=error \
       --output=line \
     || rc=$?
