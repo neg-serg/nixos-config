@@ -1,300 +1,190 @@
 # AGENTS usage for this repo
 
 Communication language (hard rule)
-- The user (neg) cannot read Chinese at all. NEVER write anything to them in
-  Chinese — not in chat replies, not in dsh-ui components, not in commit
-  messages, not in any file they will read. Treat this as a hard rule.
-- The user's language is Russian. Chat replies and UI copy are Russian;
-  documentation and code comments are English only. This is a hard rule:
-  do NOT create or edit any *.ru.md / *.ru.mdown / *.ru.markdown file, do
-  NOT write documentation prose in Russian in any file, and do NOT translate
-  English docs into Russian. When in doubt about chat language, use Russian;
-  when in doubt about docs, use English.
-- Code comments (in .hs/.scd/.tidal/.rs/nix/… source files) are written in
-  English. Commit messages are English only: an English imperative subject
-  (see Commit style below) and an English body. Never write commit messages
-  in Russian, whatever the chat language was.
-- Note: upstream dsh bundles (the TUI package, plugin data) may contain Chinese
-  strings we did not write. Do not copy them into replies for the user.
-- Before committing, check that files you wrote contain no stray Chinese
-  or Cyrillic characters in docs: `just lint` runs
-  scripts/dev/check-markdown-language.sh, which must pass clean for all *.md
-  (no CJK, no Cyrillic). Review other text files manually.
+
+- The user (neg) cannot read Chinese at all. NEVER write Chinese in chat replies, commit
+  messages, UI copy, or any file they read. Upstream dsh bundles may contain Chinese strings we
+  did not write; do not copy them into replies.
+- The user's language is Russian. Chat replies are Russian; documentation and code comments are
+  English only. Do NOT create `*.ru.md` / `*.ru.mdown` / `*.ru.markdown` files, do NOT write
+  documentation prose in Russian in any file, and do NOT translate English docs into Russian. When
+  in doubt: Russian for chat, English for docs.
+- Code comments (Nix, Lua, Bash, Rust, ...) and commit messages are English only: an English
+  imperative subject and an English body.
+- `just lint` runs `scripts/dev/check-markdown-language.sh` over git-visible `*.md` and rejects CJK
+  and Cyrillic; three glyph-example files are allowlisted. Keep docs English.
 
 Scope
-- This AGENTS.md applies to the entire `/etc/nixos` tree.
-- Prefer existing module structure (`modules/`, `hosts/`, `modules/user/nix-maid/`, etc.) and follow surrounding style.
-- Nested AGENTS.md files exist for subtrees (`modules/`, `packages/`,
-  `scripts/`, `secrets/`, `hosts/`). Read the nearest
-  applicable one before touching that subtree; nested rules take precedence
+
+- Applies to the entire `/etc/nixos` tree. Prefer the existing structure (`modules/`, `hosts/`,
+  `modules/user/nix-maid/`) and the surrounding style.
+- Nested `AGENTS.md` files exist under `modules/`, `packages/`, `scripts/`, `secrets/`,
+  `secrets/home/`, `hosts/`. Read the nearest one before touching that subtree; nested rules win
   where they conflict with this file.
 
 Quick Commands
-- Agent rollout (no password): `just agent-switch "$(readlink -f result)"` — the root-owned
-  `nixos-agent-switch.service` activates the toplevel you already built and verified
-  (`modules/security/agent-switch.nix`); details under "Builds: substitution through the proxy" below.
-- Human fallback (mechanism off, not yet activated, or the change *is* the mechanism):
-  `just switch-sudo` — builds as the user, root only updates the profile and activates. Do not use
-  `sudo nixos-rebuild switch` here: root cannot fetch the private `aurora` `git+ssh` input, so the
-  build dies with `Failed to fetch git repository` (see the recipe's comment).
-- Build only: `rom build .#nixosConfigurations.trantor.config.system.build.toplevel -- --out-link result`
-- Format all: `just fmt`
-- Full check: `just check` (runs `nix flake check -L --option substitute false`)
-- Update flake: `just update`
-- GC: `sudo nix-collect-garbage -d && nix-collect-garbage -d`
+
+- Format: `just fmt`. Lint: `just lint` (shell, Markdown and syntax gates). Flake checks:
+  `just check` (`nix flake check -L --option substitute false`).
+- Build only:
+  `rom build .#nixosConfigurations.trantor.config.system.build.toplevel -- --out-link result`
+  (substitution on; use `--option substitute false` only for a one-off debug build or while
+  `sing-box-proxy` is down).
+- Update inputs: `just update`; own repositories: `just bump-own` (the weekly timer does this on
+  trantor).
+- Seed a blocked fixed-output source: `just seed`.
+- GC: `sudo nix-collect-garbage -d && nix-collect-garbage -d` — destructive, ask first.
+- Never `sudo nixos-rebuild switch`: its build runs as root, which cannot fetch the private
+  `aurora` `git+ssh` input (`error: Failed to fetch git repository ...`). Use the rollout paths
+  below.
+
+Automatic rollout (hard fact)
+
+- `features.system.rolloutWatch` is enabled on trantor (`hosts/trantor/default.nix`): every two
+  minutes `nixos-rollout-watch.timer` takes a clean `main`, runs `just check`, builds the
+  toplevel and starts `nixos-agent-rollout.service` with the verified store path. A commit on
+  `main` is a deploy request.
+- Changes under `secrets/`, `modules/system/net/vpn/`, `modules/security/` and the watcher itself
+  are only reported, never auto-deployed; those need `just switch-sudo`.
+- `flake-bump-own.timer` commits `flake.lock` weekly (Sunday 04:00) and the watcher deploys it.
+- Details, journal commands and the pause switch: `.agent/workflows/rebuild.md`.
+
+Rollout
+
+- Agent (no password): `just agent-switch "$(readlink -f result)"`. It writes the verified
+  toplevel to `.agent/switch-request` and starts the root-owned `nixos-agent-rollout.service`
+  (the old `nixos-agent-switch.service` name is a one-generation bootstrap alias). The unit
+  re-builds the flake as the main user, refuses when the tree now builds a different toplevel,
+  activates only the verified path as root, and logs HEAD, the dirty-file list and the artifact to
+  the journal (`journalctl -u nixos-agent-rollout`; the work unit is
+  `nixos-agent-rollout-work`).
+- Human: `just switch-sudo` builds with the invoking user's credentials and gives root only
+  `nix-env --set` plus `switch-to-configuration`. `just deploy` adds `pleamar-sync`,
+  `check-eval` and `hooks-ensure`; it is what the `rebuild` scratchpad (`Super+Shift+N`) runs.
+- Agent order: clean/intentional `git status` (the tree is what gets activated) → `just fmt` →
+  `just lint` → build the closure → verify what `result` contains →
+  `just agent-switch "$(readlink -f result)"`.
+- The mechanism is deliberate: the removed `nixos-rebuild` NOPASSWD entry was passwordless
+  arbitrary root whose target lives in the user-writable `/etc/nixos`. The polkit rule allows only
+  `start` of that one unit. The tradeoff is known: whoever can write the flake can request a
+  switch. Never ask for the password.
+- `features.security.tpmSudo` is off (the flag is commented in `hosts/trantor/default.nix`);
+  `/dev/tpmrm0` now exists, so enabling it is a real option.
 
 Project Structure
-- `flake.nix` — entry point (NixOS + the nix-maid user layer)
-- `flake/` — flake helpers (`nixos.nix` with `trantorDomains`, `checks.nix`, ...)
-- `modules/` — system modules (features/, cli/, dev/, servers/, ...)
-- `hosts/trantor/` — host-specific config (services.nix, hardware.nix, networking.nix...)
-- `packages/` — custom overlays and packages
-- `lib/` — shared Nix helpers (opts.nix, neg-helpers.nix, package-checks.nix, ...)
-- `secrets/` — SOPS-encrypted secrets
-- `files/` — config files (Hyprland, kitty, scripts)
-- The pleamar shell (scenes, worker crates, nix-maid module, login layer) is its own
-  repository: `github:neg-serg/pleamar-config`, consumed as a `git+file:` flake input on the
-  live checkout (`~/src/nix/pleamar-config`). The deployed scene links are live, so a scene
-  edit applies without a rebuild. Module and worker sources come from the pinned revision:
-  they reach the build after a commit plus `just pleamar-sync` (or `just deploy`, which runs
-  it). A `path:` input is deliberately not used: it hashes `.git` too, so any git command in
-  the checkout would invalidate the lock.
-- The dsh plugins are their own flake too: `github:neg-serg/dsh-plugins` (live checkout
-  `~/src/nix/dsh-plugins`, consumed as a `github:` input). It owns the 30 plugin packages that
-  were `modules/user/nix-maid/apps/dsh-*`; the host keeps the roster, the loader rows and the
-  profile caretaker. The two third-party forks (`dsh-plugin-recall`, `dsh-plugin-vetting`) stay in
-  this tree.
-- `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
-- The Neovim configuration is its own repository, `github:neg-serg/nvim-config`, checked out at
-  `~/src/nix/nvim-config`. `modules/user/neovim.nix` links its top-level entries into
-  `~/.config/nvim` as live symlinks, so a Lua edit applies without a rebuild. It is deliberately
-  not a flake input: the entry list in that module is static because pure evaluation cannot read
-  the checkout.
-- `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild,
-  theming); knowledge that belongs to a single module lives in that module's header
-- `.githooks/` — git hooks (enable with `just hooks-enable`)
-- Note: `result` is a gitignored symlink to the last build; `nix/` and `viz/`
-  are gitignored local/generated dirs — never commit any of them.
+
+- `flake.nix` — entry point (NixOS + the nix-maid user layer); `flake/` — helpers (`nixos.nix`
+  with `trantorDomains`, `checks.nix`).
+- `modules/` — system modules by domain; feature flags in `modules/features/<domain>.nix`.
+- `hosts/trantor/` — host glue: `hardware.nix`, `networking.nix`, `services/`, the
+  notify/telegram units and `unbound-hosts.nix`.
+- `packages/` — overlays and local packages (`local-bin/`); `lib/` — shared helpers (`opts.nix`,
+  `neg-helpers.nix`, `systemd-user.nix`, ...); `secrets/` — SOPS; `files/` — config files.
+- `scripts/dev/` — utility scripts; `.agent/workflows/` — step-by-step procedures (no overviews
+  or generated maps); `.githooks/` — hooks (`just hooks-enable`, currently enabled).
+- `result`, `nix/` and `viz/` are gitignored build/local outputs — never commit them.
+- The pleamar shell is its own repo, consumed as a `git+file:` input on
+  `~/src/nix/pleamar-config`: scene links are live, module/worker code needs a commit plus
+  `just pleamar-sync` (`just deploy` runs it).
+- The dsh plugins live in `github:neg-serg/dsh-plugins` (30 packages); the host keeps the roster
+  and the two third-party forks (`dsh-plugin-recall`, `dsh-plugin-vetting`).
+- Neovim config is `github:neg-serg/nvim-config` at `~/src/nix/nvim-config`, linked live into
+  `~/.config/nvim`; deliberately not a flake input.
+- More packages live outside this tree (rust-pkgs, nix-optimized, llm-proxy, aurora*, nixos-music,
+  dsh-app, nightjob, music-ai-libs): see `packages/AGENTS.md`; do not copy them back.
 
 Feature Flags
-- Most components are controlled via feature flags in `modules/features/`:
-  ```nix
-  features.dev.ai.rocm.enable = true;
-  features.cli.yazi.enable = true;
-  ```
-- Check a flag's current value: `just flag <flag-path>`, e.g.
-  `just flag features.cli.yazi.enable` (or `nix eval .#nixosConfigurations.trantor.config.<flag-path>`).
-- trantor uses a restricted domain set (`trantorDomains` in `flake/nixos.nix`); changes in excluded
-  domains (`appimage`, `apps`) do not take effect on trantor — warn the user before touching them.
-  (`llm` IS active on trantor.)
+
+- Declare flags in `modules/features/<domain>.nix`; read one with
+  `just flag features.cli.yazi.enable`.
+- trantor uses `trantorDomains` (`flake/nixos.nix`). The only excluded domain is `appimage`;
+  `llm` is active. Warn the user before touching `appimage`.
 
 Nix style: `pkgs.*` lists
-- When adding items like `pkgs.<name>` to `environment.systemPackages` or other package lists, add a short comment after each entry describing what the package is/does, whenever it is not completely obvious.
-  - Example: `pkgs.supercollider # SuperCollider IDE and audio engine`
-  - Example: `pkgs.supercollider # SuperCollider live-coding engine (raw SC, scnvim REPL)`
-- Keep comments concise and focused on purpose/role in the system, not marketing copy.
+
+- Every non-obvious `pkgs.<name>` in a package list gets a short comment about its role, not
+  marketing copy:
+  - `pkgs.supercollider # SuperCollider IDE and audio engine`
+- Keep changes minimal and focused; avoid drive-by refactors and mention unrelated issues
+  separately.
 
 General guidance
-- Keep changes minimal and focused on the feature you are touching.
-- Avoid drive-by refactors; mention unrelated issues separately instead of fixing them silently.
+
 - Document behavior where it lives: module header comments, `mkOption` descriptions, and comments
-  next to non-obvious code (the *why*, invariants, gotchas) — in English. `.agent/workflows/` holds
-  step-by-step procedures only; do not add overviews or generated maps, and fold single-module
-  knowledge into the code instead.
-- For WireGuard/VPN host vs user-level setup patterns, see `git log` and the module comments in
+  next to non-obvious code (the why, invariants, gotchas) in English. `.agent/workflows/` holds
+  procedures only; fold single-module knowledge into the code.
+- Before committing: `just fmt`, `just lint`, `just check`; never commit unformatted or failing
+  changes. The `commit-msg` hook enforces an ASCII subject with a `[scope] ` prefix.
+- For WireGuard/VPN host-vs-user patterns, see `git log` and the comments in
   `modules/system/net/vpn/`.
-- For verified step-by-step change workflows (add module/flag/package/host/script/secret, commit
-  rules), see `.agent/workflows/`.
-- Before committing: run `just fmt` then `just check`; never commit unformatted
-  or failing changes.
-- Lookup discipline: start from the error or output that names the failure; consult reference docs
-  only when it does not, and then with a targeted query (`… | rg -A3 '<key>'`) instead of dumping a
-  whole grammar/docs stream. A full dump stays in the prompt and is re-billed on every later step,
-  so it costs far more than the fix it was meant to make safe.
+- Lookup discipline: start from the error or output that names the failure, then query narrowly
+  (`... | rg -A3 '<key>'`); a full docs dump costs more than the fix it was meant to make safe.
+- AGENTS.md is the contract. README and `.agent/workflows/` must not contradict it; when a command
+  or path changes, update all three. Installed skills are pointers, not overrides: if one
+  contradicts this file, this file wins.
 
-Debugging: Iron Law (ported from hermes-agent systematic-debugging)
-- NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST: reproduce the exact symptom and build a tight
-  red/green loop (fast, deterministic, specific command) BEFORE reading code or proposing fixes.
-- User instructions/transcript are never "fixed up" by paraphrasing into summaries; keep the source
-  of intent verbatim (micro-compaction principle).
-- See workflow: .agent/workflows/debugging.md.
+Debugging and answers
 
-Agent reasoning (evidence-first, ported from omp)
-- Every sentence is a fact, a decision, or a risk: no ceremony, hedging, summaries, filler, or marketing.
-- Assume a technical reader; don't narrate obvious steps or over-explain basics.
-- Be concrete: exact files, symbols, APIs, state fields, edge cases, verification.
-- When a reply involves a change or a judgment call, use this format:
-  Problem — what's wrong. Decision — action & why. Check — breakage & verification. Next — concrete action.
-- State uncertainty at the claim; name the tradeoff; choose the boring/safe option.
-- Escalation: push back on risk-hidden plans or wrong claims — name the risk, show evidence,
-  propose an alternative. If overruled, execute the user's call; don't relitigate.
+- No fixes without a root cause: reproduce the exact symptom and build a tight red/green command
+  before reading code or proposing a fix. See `.agent/workflows/debugging.md`; verify by
+  execution, never by inspection.
+- Every sentence is a fact, a decision, or a risk; assume a technical reader and state uncertainty
+  and tradeoffs. For a change or judgment call use: Problem — what is wrong; Decision — action and
+  why; Check — what can break and how it is verified; Next — concrete action.
+- Default to action and resolve ambiguity from repo conventions. Ask only for materially different
+  tradeoffs. Always ask before touching `secrets/`, destructive/irreversible operations (GC,
+  deleting generations, removing modules/packages), and network/VPN/WireGuard changes.
 
-Asking the user (default to action, ported from omp)
-- Default to action: resolve ambiguity via repo conventions, existing patterns, and reasonable
-  defaults; exhaust code, configs, docs, and history before asking.
-- Ask only when options have materially different tradeoffs the user must decide; if multiple
-  choices are acceptable, pick the most conservative/standard one, proceed, and state the choice.
-- When asking: 2-5 concise, distinct options with short labels; tradeoffs go in the descriptions;
-  batch related questions into one turn, not one at a time.
-- Always ask before: touching `secrets/`, destructive/irreversible ops
-  (`nix-collect-garbage`, deleting generations, removing modules/packages),
-  and network/VPN/WireGuard config changes.
+Research and secrets
 
-Web search etiquette (ported from omp)
-- Prefer primary sources: papers, official docs, upstream repos; corroborate key claims with multiple
-  independent sources before asserting.
-- MUST link cited sources in the final answer; never present search-derived claims without references.
-- NEVER use web search for content reachable directly (known GitHub repos/issues, arXiv pages, official
-  docs): read the URL instead — search is for discovery, read is for content.
+- Prefer primary sources and cite the URL where the claim is used; do not search for content you
+  can read directly (known repos, official docs, arXiv pages).
+- Never print tokens, keys, passwords or decrypted SOPS values; mask them (`sk-***abcd`). Plaintext
+  never enters the repo or chat. Read `secrets/AGENTS.md` before touching that subtree.
 
-Secrets hygiene (ported from omp)
-- NEVER print tokens, API keys, passwords, or SOPS secrets in full — mask them (e.g. `sk-***abcd`).
-- If output contains a 43-char key-like placeholder, treat it as a secret and redact it.
-- SOPS-encrypted secrets live in `secrets/`; never write plaintext secrets to
-  the repo or into chat output. Access them via `<secret>.path` in Nix and keep
-  file modes 0400/0600. Follow `secrets/AGENTS.md` before touching that subtree.
+Tooling
 
-Context switching (ported from omp tan)
-- When switching between projects/workspaces, state the switch explicitly and re-read the target
-  project's AGENTS.md before continuing; never carry the previous project's assumptions.
+- Prefer `rg`, `fd`, `bat`, `jq`, `eza`, `delta`, `sd`, `hyperfine` over legacy coreutils; use the
+  DSH-native `read`/`rg`/`glob` tools before shelling out. Details: skill `golden-tools`.
 
-Todos (ported from omp)
-- Task strings are verbatim content, never auto-generated IDs ("task-1"/"task-N").
-- User gives a multi-step plan, a numbered/bulleted checklist, or "N bugs/items": MUST track
-  every item as its own task before working; never summarize into fewer tasks or track the
-  rest from memory.
-- Mark tasks done immediately after finishing; keep task strings stable.
-- A multi-round request stays one list: sync it in every round that starts or finishes an item. A
-  status that lags the work is a silent lie; a follow-up turn ("continue", "keep going") is the
-  same tracked work, not a new list.
-- Never make a todo call the turn's only tool call — batch it with real work (init with first
-  reads/edits; each done/start with the next action).
+Desktop automation (hard rules)
 
-Goal completion audit (ported from omp)
-- Before declaring a goal/task complete, audit the current repo state — never rely on
-  earlier-session memory: the repo may have changed.
-- Map the objective to concrete deliverables (files, behaviors, tests, gates, artifacts); then
-  for each deliverable collect authoritative evidence: file contents, command output, test pass status.
-- Verification scope = claim scope: a narrow check does not prove a broad claim.
-- Uncertainty = not achieved: indirect evidence, partial coverage, missing artifacts, or
-  uninspected "looks right" → keep working or gather stronger evidence.
-- Budget exhaustion ≠ completion: never mark done merely because tokens/time are nearly out.
-
-Golden tool set (agent habits) — hard rules
-- Always prefer the fast modern replacements over legacy coreutils when working on this host.
-  They are installed system-wide; prefer them by default.
-  - `rg` (ripgrep) instead of `grep -r`; `rg --pcre2` covers PCRE-only patterns
-  - `fd` instead of `find`
-  - `bat` instead of `cat` for terminal peeks (the `read` tool stays primary for files)
-  - `jq` instead of `sed`/`awk` for JSON
-  - `eza` instead of `ls`, `dust` instead of `du`, `duf` instead of `df`, `btop`
-    instead of `top`, `procs` instead of `ps`, `delta` instead of `diff` (git pager already wired)
-  - `sd` for simple search-and-replace, `zoxide` for `cd`, `fzf` for interactive selection,
-    `hyperfine` for benchmarking
-- DSH-native tools beat shell equivalents: use the `read`/`rg`/`glob` tools (ripgrep/fd-backed)
-  instead of spawning `cat`/`grep`/`find` in bash. Spawn bash only when a native tool cannot do
-  the job; when a pipeline is unavoidable, still prefer rg/fd/bat/jq over grep/find/cat/sed.
-- Keep legacy tools only when correctness/portability demands them: scripts meant for
-  non-NixOS/remote hosts, POSIX-only contexts, or flags with no rg/fd equivalent.
-  Gotcha: `rg -r` means *replace*, not recursive; recursive is the default.
-
-Automation: desktop only, CDP is not used (hard rule)
-- CDP is not needed and is not used: headless chromium and dsh-browser were removed (2026-08); the
-  browser tool must not be called at all — GUI interaction only through the `desktop` tool; do
-  validation without CDP (e.g., a DOM stub in Node instead of a headless browser).
-- Prefer the `desktop` tool (computer-use-linux: real windows, AT-SPI semantic selectors,
-  grim screenshots → local vision) for HUMAN-LIKE GUI interaction — working an application or
-  a website as the user would (click/type/scroll by element name, read the actual screen).
-- Never drive the pointer through raw `ydotool`/uinput: clicks, drags and scrolls go through the
-  `desktop` tool, whose CUL backend owns the virtual pointer. A hand-rolled `ydotool click 0x40`
-  is a left-button *down only* — `0x41`/`0x42`/`0x43` are the down-only codes for the other
-  buttons, a full left click is `0xC0`, and `0x80` is the left up. The down event sticks in the
-  kernel for the rest of the session and Hyprland then swallows every real click, while the cursor
-  still moves (kanata registers the `ydotoold` device as an input source, so the held button shows
-  up on two virtual devices). This is not hypothetical: on 2026-09-11 an agent ran
-  `ydotool click 0x40` without the release and left the left button stuck for 18 hours. If it
-  happens anyway, release it with `ydotool click 0x80` (left up) or
+- The browser tool is not used; GUI work goes through the `desktop` tool. Headless chromium and
+  dsh-browser were removed. The one CDP exception on this host is the rutracker workflow's live
+  Vivaldi session (skill `rutracker`); do not build new CDP automation.
+- Never drive the pointer with raw `ydotool`/uinput: clicks, drags and scrolls go through the
+  `desktop` tool. A hand-rolled `ydotool click 0x40` is button-down only and can leave the left
+  button stuck; release it with `ydotool click 0x80` or
   `systemctl --user restart ydotoold.service`.
-- Screenshots from the desktop tool go through local VL models (qwen2.5vl) — data never leaves the host.
-- Downscale captures before vision: `magick shot.png -resize 1280x small.png` — full-res 4K
-  screenshots exceed the local VL context (4096 tokens). Desktop tool verified live end-to-end
-  (screenshot → vision reading of real windows).
+- Screenshots stay local (qwen2.5vl). Downscale 4K captures before vision:
+  `magick shot.png -resize 1280x small.png`.
 
-Builds: substitution through the proxy
-- `cache.nixos.org` is unreliable for direct connections from this region (it answers, but with
-  `HTTP/2 framing layer` errors and timeouts; `download.qt.io` and `codeload.github.com` are blocked
-  outright), while it answers reliably through the sing-box SOCKS5 proxy, which `nix-daemon` now
-  uses (`systemd.services.nix-daemon.environment`, flag `features.net.nixDaemonProxy`). Binary
-  substitution is enabled again, and the deploy recipes run without `--option substitute false`.
-  The daemon's list is pinned to `cache.nixos.org` by a `NIX_CONFIG` override in
-  `modules/nix/settings.nix`: Determinate's installer re-adds `install.determinate.systems` from
-  `/etc/nix/nix.conf` after the NixOS-generated config, and that cache's broken auth makes a
-  narinfo lookup hang for the stalled-download-timeout instead of 404ing.
-  Root's own builds bypass the daemon — root opens the local store directly, the daemon log has no
-  `user root` connections — so they read `/etc/nix/nix.conf` itself; the same module therefore also
-  pins `substituters` in `/root/.config/nix/nix.conf` (tmpfiles-managed), which is what keeps a
-  bare `sudo nixos-rebuild switch` off the dead cache.
-- Pass `--option substitute false` for one-off debugging/comparison builds, and whenever
-  `sing-box-proxy` is down (then every substitute lookup stalls instead of falling back):
-  `nix build .#nixosConfigurations.trantor.config.system.build.toplevel --dry-run --option substitute false`
-  A substituter that stalls costs minutes per lookup; `--option substituters https://cache.nixos.org/`
-  narrows the list when `install.determinate.systems` hangs.
-- Sandboxed builds still have no network at all, so a source that is neither in the store nor in a
-  binary cache cannot be fetched by the build itself. `just seed` (`scripts/dev/nix-seed-fods.sh`)
-  prefetches such sources client-side through SOCKS5 — run it when a build fails on a blocked URL.
-- Rollout (rebuild+switch) needs root, and the agent finishes it itself: build the closure, then
-  `just agent-switch "$(readlink -f result)"`. That writes the verified toplevel into
-  `/etc/nixos/.agent/switch-request` and starts the root-owned `nixos-agent-switch.service`, which
-  re-builds the flake as the main user, **refuses** when the tree no longer builds that toplevel,
-  activates the verified store path as root and logs the
-  run (HEAD, dirty files, artifact) to the journal — `modules/security/agent-switch.nix`,
-  `features.security.agentSwitch`. The blanket `nixos-rebuild` NOPASSWD entry stays removed on
-  purpose: it was passwordless arbitrary root, since the flake it activates lives in the
-  user-writable `/etc/nixos`. The agent-switch mechanism is the one deliberate, narrow exception (a
-  polkit rule for one unit and the `start` verb), and the
-  tradeoff is unchanged and known: whoever can write the flake can request a switch, i.e. root.
-  `features.security.tpmSudo` is off (`hosts/trantor/default.nix`, and there is no `/dev/tpmrm0` on
-  this host). Never ask for the password; keep the whitelist as narrow as it is — that unit is the
-  only sanctioned addition.
-- Agent-side rollout, in order: `git status` clean/intentional (the switch consumes the working tree,
-  so foreign edits get baked in — the unit prints the dirty-file list into the journal rather than
-  guessing) → `just fmt` → `just lint` → build the closure
-  (`rom build .#nixosConfigurations.trantor.config.system.build.toplevel -- --out-link result`,
-  adding `--option substitute false` only when the proxy is down) → verify what the build actually contains (grep the store paths
-  `result` points at) → `just agent-switch "$(readlink -f result)"`. Hand the switch over to the human
-  only when the mechanism is off or not activated yet, or when the change *is* the mechanism:
-  `just switch-sudo`, which builds as the user and gives root only the profile update and the
-  activation. `sudo nixos-rebuild switch` is not an option any more: its build runs as root, root
-  cannot fetch the private `aurora` `git+ssh` input, and the evaluation stops at `error: Failed to
-  fetch git repository 'ssh://git@github.com/neg-serg/aurora'` (2026-11-26; see
-  `.agent/workflows/rebuild.md`).
-- The activation still needs root even in that recipe: `/nix/var/nix/profiles` is `drwxr-xr-x root
-  root`, so `switch-sudo` escalates exactly the profile update and `switch-to-configuration`.
-  `nixos-rebuild` does not escalate by itself, so a bare run would build everything and then fail.
-- Passwordless `sudo` exists only for the narrow entries in `modules/security/default.nix`
-  (`systemctl start/stop xray` — with sudo's `""` exact-arguments marker —, `reboot`,
-  `poweroff`, `suspend`, `dmesg`, `ryzenadj`, `gpu-oc`); everything else,
-  `sudo -n` included, prompts. The agent switch is not in this list: it is triggered by a polkit
-  rule for one unit and the `start` verb.
-- The user's own switch binding is the `rebuild` scratchpad (`Super+Shift+N`), which runs
-  `env -C /etc/nixos just deploy` — the rom build plus `switch-to-configuration` (the same steps as
-  `nixos-rebuild switch`).
-- `just check` and `just flag` still pass the flag; the deploy targets do not, because
-  substitution now works through the proxy. Keep that split in mind for new recipes: substitute,
-  unless the target is a check or a one-off comparison.
-- Bare `nix …` works inside a sandboxed agent session again: `packages/local-bin/bin/nix`
-  renders to `~/.local/bin/nix`, ahead of `/run/current-system/sw/bin` on PATH, and keeps the
-  fetcher cache writable. Landlock makes `[ -w ]` and `mkdir -p` succeed on `~/.cache/nix`
-  while the real open is denied, so the wrapper probes with an actual file create and only
-  then points `XDG_CACHE_HOME` at `${TMPDIR:-/tmp}/nix-cache-<uid>` (`NIX_SANDBOX_CACHE`
-  overrides it; `NIX_SANDBOX_VERBOSE=1` reports the choice). Outside a sandbox it is a pure
-  passthrough. `scripts/dev/check-nix-wrapper.sh` (flake check `nix-wrapper-guard`) pins that
-  conditionality, so a shim that swallows nix fails `just check` instead of the command.
+Builds and substitution
+
+- `cache.nixos.org` is unreliable directly and answers through the sing-box SOCKS5 proxy, which
+  `nix-daemon` uses (`features.net.nixDaemonProxy`); root's `/root/.config/nix/nix.conf` is pinned
+  to the same cache by tmpfiles (`modules/nix/settings.nix`). Deploy targets substitute.
+- `just check` and `just flag` pass `--option substitute false`; the deploy/switch targets do not.
+  Use it for one-off debugging and whenever the proxy is down (stalled lookups cost minutes).
+- Sandboxed builds have no network: prefetch blocked sources with `just seed`
+  (`scripts/dev/nix-seed-fods.sh`).
+- In a sandboxed agent session bare `nix` works through `packages/local-bin/bin/nix` →
+  `~/.local/bin/nix`, which keeps the fetcher cache writable; outside a sandbox it is a
+  passthrough. Guard: `scripts/dev/check-nix-wrapper.sh` (flake check `nix-wrapper-guard`).
+
+Privileges
+
+- Passwordless sudo is limited to the entries in `modules/security/default.nix`: `systemctl
+  start/stop xray` (with sudo's `""` exact-arguments marker), `reboot`, `poweroff`, `suspend`,
+  `dmesg`, `ryzenadj`, `gpu-oc`, `glm-usbmon-priv`. Everything else prompts, `sudo -n` included.
 
 Commit style
-- Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/trantor] …`, `[dev/pkgs] …`, `[docs] …`.
-- Common scopes: nixpkgs, flake/*, core/*, hosts/<hostname>, dev/*, cli/*, hardware/*, media/*, servers/*, modules/*, packages/*, docs, ci, refactor.
-- Subjects must be in imperative mood, short and specific, without a trailing period.
+
+- Use a bracketed scope prefix consistent with history: `[media/audio] ...`, `[hosts/trantor] ...`,
+  `[docs] ...`.
+- Common scopes: nixpkgs, flake/*, core/*, hosts/<hostname>, dev/*, cli/*, hardware/*, media/*,
+  servers/*, modules/*, packages/*, docs, ci, refactor.
+- Imperative, short, specific, no trailing period.
 - Examples:
   - `[media/audio] Add SuperCollider live-coding stack`
   - `[hosts/trantor] Tune cooling profile`
