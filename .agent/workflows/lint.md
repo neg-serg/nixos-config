@@ -54,6 +54,25 @@ bash scripts/dev/check-all-syntax.sh               # a single gate
 Nix code | | `statix` | Nix linter | | `ruff` | Python linter | | `black` | Python formatter | |
 `shellcheck` | Shell script linter |
 
+## Prose
+
+The `prose` gate runs `vale` at error level over tracked Markdown — `Vale.Spelling` (a real
+spellchecker) and `Vale.Repetition` — so a typo fails `just lint`. The rules and their levels live
+in `files/vale/.vale.ini`, the same file neovim's nvim-lint reads; the project vocabulary is
+`files/vale/styles/config/vocabularies/Base/accept.txt`, so add an identifier there instead of
+disabling a rule.
+
+The Google style is vendored: home-manager links `StylesPath` into the nix store, where `vale sync`
+cannot write. Update it through the recipe, which fetches the upstream tag and re-stamps the version
+in `.vale.ini`:
+
+```bash
+just vale-update          # latest vale-cli/Google release
+just vale-update v0.7.2   # a pinned tag
+```
+
+A rebuild is needed before the editor sees a new style; the gate reads the checkout already.
+
 ## Fix Common Issues
 
 ### Nix formatting:

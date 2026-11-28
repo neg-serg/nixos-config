@@ -369,6 +369,29 @@ gate_markdown_language() {
   bash "$REPO_ROOT/scripts/dev/check-markdown-language.sh"
 }
 
+# Vale prose lint, error level only: a real spellchecker (Vale.Spelling) plus the
+# Google rules that are not house-style opinions. The rule list stays in
+# files/vale/.vale.ini — the one config the editor uses too — but its StylesPath
+# is the deployed store copy, which lags the checkout and may not have the
+# vocabulary yet, so the gate rewrites that line to point at the tree and runs
+# with --no-global.
+gate_prose() {
+  if ! command -v vale > /dev/null 2>&1; then
+    printf '%s\n' "${c_warn}vale not found — skipping prose lint${c_reset}"
+    return 0
+  fi
+  local cfg rc=0
+  cfg=$(mktemp "${TMPDIR:-/tmp}/vale.XXXXXXXX.ini")
+  sed "s#^StylesPath = .*#StylesPath = $REPO_ROOT/files/vale/styles#" \
+    "$REPO_ROOT/files/vale/.vale.ini" > "$cfg"
+  git ls-files -z -- '*.md' \
+    | xargs -0 -r vale --no-global --config "$cfg" --minAlertLevel=error \
+      --output=line \
+    || rc=$?
+  rm -f -- "$cfg"
+  return "$rc"
+}
+
 gate_repo_stats() {
   bash "$REPO_ROOT/scripts/dev/repo-stats.sh" --check "$REPO_ROOT"
 }
@@ -404,6 +427,7 @@ GATES=(
   absolute_home
   doc_links
   markdown_language
+  prose
   repo_stats
   all_syntax
   shell_palette
