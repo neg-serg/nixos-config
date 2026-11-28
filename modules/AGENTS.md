@@ -10,8 +10,8 @@ Guidelines
 - Follow the layout in `modules/README.md`: put new modules in the appropriate domain folder — the
   domain's `default.nix` auto-imports sibling `.nix` files and module subdirectories via
   `neg.importDir` (no `modules.nix` registration exists).
-- Define new options in `modules/features/<domain>.nix` and refresh option docs
-  (`OPTIONS.md`/generated outputs) when behavior changes.
+- Define new options in `modules/features/<domain>.nix`; update `OPTIONS.md` when a flag's
+  composition or behavior changes. `OPTIONS.md` is human-curated — there is no generator.
 - Reuse existing helpers (`lib.neg.*`, `mkDefault`/`mkForce` patterns) instead of ad-hoc wiring;
   avoid drive-by refactors.
 - Per-user systemd units go through `lib/systemd-user.nix`: use `mkUserService` for module-shaped

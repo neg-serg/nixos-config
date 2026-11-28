@@ -9,8 +9,8 @@ Guidelines
 
 - Keep changes isolated to the relevant host directory; share logic via modules/profiles instead of
   copy-pasting between hosts.
-- Match the existing split files (`hardware.nix`, `networking.nix`, `services/`, `extra.nix`,
-  `virtualisation/`) and keep host glue light.
+- Match the existing split (`hardware.nix`, `networking.nix`, `services/`, the notify/telegram
+  units, `unbound-hosts.nix`) and keep host glue light.
 - Do not embed secrets; pull them from `secrets/` or options.
 - Use feature toggles in `modules/features/` (or host profiles) rather than ad-hoc host hacks
   whenever possible.

@@ -35,10 +35,10 @@ Guidelines
   `prev.callPackage (inputs.nix-optimized + "/<package>/package.nix")` and keeps the `pkgs.neg.*`
   attribute names. Do not add a Nix patch stack back into this tree.
 - The SuperCollider live-coding stack is no longer packaged here either: UGen plugins, sclang
-  quarks, Dirt-Samples, VST hosting and their shared `mkScQuark`/`mkScPlugin` builders live in
-  `github:neg-serg/nixos-music` (live checkout `~/src/nix/nixos-music`) and arrive as the
-  `nixos-music` flake input, reachable as `pkgs.music.<name>`. Do not add an SC package back into
-  this tree.
+  quarks, Dirt-Samples, VST hosting and their shared `mkScQuark`/`mkScPlugin` builders live in the
+  `nixos-music` repository (live checkout `~/src/nix/nixos-music`, consumed as a `git+file:` input
+  until it is pushed to GitHub) and arrive as the `nixos-music` flake input, reachable as
+  `pkgs.music.<name>`. Do not add an SC package back into this tree.
 - `aurora`, `aurora-headphones` and `aurora-plugins` are no longer packaged here either: the
   player's recipe (`nix/package.nix`, with its desktop entry, icon and the `runtime-libs.nix` list
   the devShell shares) lives in `github:neg-serg/aurora` (live checkout `~/src/nix/aurora`, consumed
