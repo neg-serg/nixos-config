@@ -5,12 +5,9 @@
   ...
 }:
 let
-  lockDir = config.lib.neg.path "files/gui/hypr/hyprlock";
-  lockNames = builtins.attrNames (builtins.readDir lockDir);
   # Fragment shaders for HyprWindowShade: linked as a directory so the paths in
   # hyprwindowshade.lua (~/.config/hypr/shaders/<name>.glsl) resolve.
   shadeDir = config.lib.neg.path "files/gui/hypr/shaders";
-  lockDirLive = config.lib.neg.live "files/gui/hypr/hyprlock";
   shadeDirLive = config.lib.neg.live "files/gui/hypr/shaders";
   shadeNames = builtins.attrNames (builtins.readDir shadeDir);
   ruHotkeys = config.features.input.ruHotkeys or { };
@@ -29,8 +26,6 @@ in
         ".config/hypr/hyprland.conf".text = hyprlandConfText;
 
         ".config/hypr/hyprland.lua".text = hyprlandLuaText;
-
-        ".config/hypr/hyprlock.conf".text = config.lib.neg.readFile "files/gui/hypr/hyprlock.conf";
 
         # HyprWindowShade rules (per-window / per-layer fragment shaders). Pushed
         # into the running session by hyprwindowshade-setup, same load-then-push
@@ -95,7 +90,6 @@ in
 -- See ~/.config/hypr/hyprland.lua for reference
 ";
       }
-      // (neg.mkDirLinks ".config/hypr/hyprlock" lockDirLive lockNames)
       // (neg.mkDirLinks ".config/hypr/shaders" shadeDirLive shadeNames)
       // lib.optionalAttrs ruHotkeysEnabled {
         # Config of the layout daemon (features.input.ruHotkeys, see

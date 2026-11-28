@@ -53,7 +53,7 @@
 # - Everything Hyprland lives under `modules/user/nix-maid/hyprland/` (one domain): `main.nix`
 #   assembles `environment.nix` (the `hyprland.conf` text) and `hyprlandLuaText` (the
 #   `@<plugin>_setup@` placeholder substitution in `hyprland.lua`), `files.nix` (home-file links:
-#   `hyprland.lua`, the plugin settings files, `hyprlock.conf`, `hypridle.conf`) and `services.nix`
+#   `hyprland.lua`, the plugin settings files, `hypridle.conf`) and `services.nix`
 #   (systemd user services + the Hyprland-related package set). The generated helpers are added to
 #   `environment.systemPackages`.
 # - The start hook in `hyprland.lua` execs every helper; `hyprcapture-setup` and
@@ -226,13 +226,11 @@
 #   `shade reload`. It calls the plugin through `hyprctl eval` and swallows the spurious "expected a
 #   dispatcher" failure the plugin cannot avoid. No keybinds are bound on purpose: the effects are
 #   per-window and transitory, and the bar of SUPER+SHIFT is already full.
-# - **Shaders shipped**: `crt` (curved glass, scanlines, phosphor triads, chroma misalignment,
-#   vignette), `vhs` (tracking bands, chroma bleed, tape noise, rolling head-switching bar), `amber`
-#   (monochrome amber-phosphor monitor with glow), `noir` (hard B/W with animated film grain), plus
-#   `pixelate` and `dim_unfocused`. `hyprwindowshade.lua` attaches `pixelate` to the Telegram window
-#   while it is unfocused; `dim_unfocused` is *not* attached anywhere by default — it used to dim the
-#   terminals whenever they lost focus, and losing focus happens every time a scratchpad is pulled up,
-#   so the request was to drop that. It stays available per window via `shade on dim_unfocused`.
+# - **Shaders shipped**: `pixelate` and `dim_unfocused`. `hyprwindowshade.lua` attaches `pixelate`
+#   to the Telegram window while it is unfocused; `dim_unfocused` is *not* attached anywhere by
+#   default — it used to dim the terminals whenever they lost focus, and losing focus happens every
+#   time a scratchpad is pulled up, so the request was to drop that. It stays available per window
+#   via `shade on dim_unfocused`.
 # - **Verified** in a nested 0.56.2 instance: `classshader` on a window drops its unique colour count
 #   292 → 1; the rule from `hyprwindowshade.lua` leaves an unfocused window at 0.1445 mean luminance /
 #   0.237 saturation against 0.2356 / 0.496 focused — exactly the shader's 0.62 and 0.55 constants;
