@@ -67,8 +67,8 @@ in
     # keeps the user unit, the secrets and the feature flag.
     sing-box-proxy = inputs.sing-box-proxy.packages.${prev.stdenv.hostPlatform.system}.default; # sing-box SOCKS proxy controller (on/off/status/refresh/gen/run)
     # Extracted to github:neg-serg/shtoy, which owns the crate, its packaging
-    # and the CLI check. The host keeps the shader collection under
-    # files/gui/shtoy and the local-bin symlink.
+    # and the CLI check. The host keeps only the local-bin symlink; shaders are
+    # imported from shadertoy.com into ~/.cache/shtoy at use time.
     shtoy = inputs.shtoy.packages.${prev.stdenv.hostPlatform.system}.default; # Run Shadertoy shaders fullscreen in esshader
   };
 }
