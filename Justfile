@@ -230,6 +230,15 @@ commit *args:
 lint:
     bash "{{repo_root}}/scripts/dev/lint.sh" "{{repo_root}}"
 
+# Refresh the vendored Google prose style from an upstream tag (default: the
+# latest release of vale-cli/Google) and re-stamp the version in
+# files/vale/.vale.ini. The style is vendored because StylesPath is a read-only
+# store copy, which is also why `vale sync` cannot replace the update: the
+# recipe fetches through the contents API instead. A rebuild is needed before
+# the editor sees the new rules; `lint`'s prose gate reads the checkout already.
+vale-update tag="":
+    bash "{{repo_root}}/scripts/dev/vale-update.sh" {{tag}}
+
 # Resolve repo paths by name (see lib/README.md → Which resolver, where):
 #   just paths keys files --any  what to write in Nix for files/…
 #   just paths keys modules --any
